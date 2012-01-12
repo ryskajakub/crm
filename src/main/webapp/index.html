@@ -1,0 +1,29 @@
+<lift:surround with="default" at="content">
+    <h2>Index!</h2>
+    <table>
+        <lift:Index>
+            <index:header>
+                <tr>
+                    <td><a id="companyDesc">▽</a>Firma<a id="companyAsc">△</a></td>
+                    <td>Datum příštího servisu<a id="indexAsc">△</a></td>
+                </tr>
+            </index:header>
+            <index:row>
+                <tr>
+                    <td>
+                        <entry:company>
+                            <a/>
+                        </entry:company>
+                    </td>
+                    <td>
+                        <entry:date/>
+                    </td>
+                    <entry:rowStart>
+                        <td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+                    </entry:rowStart>
+                </tr>
+            </index:row>
+        </lift:Index>
+    </table>
+</lift:surround>
+

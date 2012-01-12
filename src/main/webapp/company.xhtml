@@ -1,0 +1,139 @@
+<lift:surround with="default" at="content">
+    <h2>Firma</h2>
+
+    <h2>
+        <lift:CompanySnip.archive>
+            <a>Archiv</a>
+            <span>Archiv</span>
+        </lift:CompanySnip.archive>
+    </h2>
+
+    <lift:CompanySnip form="post">
+        <table>
+            <tr>
+                <th>Položka</th>
+                <th>Hodnota</th>
+                <th>Příklad</th>
+            </tr>
+
+            <tr>
+                <td>Jména(oddělená znakem |)</td>
+                <td>
+                    <input:names/>
+                </td>
+                <td>
+                    2e plus|Energoekonom
+                </td>
+            </tr>
+            <tr>
+                <td>Adresa</td>
+                <td>
+                    <input:address/>
+                </td>
+                <td>
+                    Trabantská 270, Praha
+                </td>
+            </tr>
+            <tr>
+                <td>Přednost</td>
+                <td>
+                    <input:priorityDays/>
+                </td>
+                <td>
+                    50
+                </td>
+            </tr>
+            <tr>
+                <td>Zobraz v indexu</td>
+                <td>
+                    <input:showInIndex/>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Ulož</td>
+                <td>
+                    <input:submit/>
+                </td>
+            </tr>
+        </table>
+    </lift:CompanySnip>
+    <h2>Servis:</h2>
+    <lift:CompanySnip.machines form="post">
+        <input:newMachine>
+            <h3><a>+</a> Stroje:</h3>
+        </input:newMachine>
+        <table>
+            <input:row>
+                <tr>
+                    <td>
+                        <machine:addPart>
+                            <a>+</a>
+                        </machine:addPart>
+                    </td>
+                    <td>
+                        <machine:type>
+                            <a/>
+                        </machine:type>
+                    </td>
+                    <td>
+                        <machine:manufacturer/>
+                    </td>
+                    <td>
+                        <machine:machineHours/>
+                    </td>
+                    <td>
+                        <machine:checkbox/>
+                    </td>
+                </tr>
+            </input:row>
+        </table>
+        <h3>Servismeni:</h3>
+        <input:selectServiceman/>
+        <ul>
+            <input:servicemanEntry>
+                <li>
+                    <span id="name"/>
+                    <a href="javascript://"/>
+                </li>
+                <span id="servicemanPlaceholder"/>
+            </input:servicemanEntry>
+            <span id="servicemanPlaceholder"/>
+        </ul>
+        <h3>Další informace:</h3>
+        <table>
+            <tr>
+                <td>Typ:</td>
+                <td>
+                    <input:type/>
+                </td>
+            </tr>
+            <tr>
+                <td>Datum:</td>
+                <td>
+                    <input:date class="datepicker"/>
+                </td>
+            </tr>
+            <tr>
+                <td>Výsledek:</td>
+                <td>
+                    <input:result/>
+                </td>
+            </tr>
+            <tr>
+                <td>Ulož:</td>
+                <td>
+                    <input:submit/>
+                </td>
+            </tr>
+        </table>
+    </lift:CompanySnip.machines>
+    <h2>Kontaktní osoby:</h2>
+    <lift:CompanySnip.people>
+        <ul>
+            <elem:anchor>
+                <li><a/></li>
+            </elem:anchor>
+        </ul>
+    </lift:CompanySnip.people>
+</lift:surround>

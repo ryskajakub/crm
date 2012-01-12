@@ -1,0 +1,142 @@
+<lift:surround with="default" at="content">
+    <h2>Ňáká věc</h2>
+    <lift:ServiceableSnip form="post">
+        <table>
+            <tr>
+                <th>Položka</th>
+                <th>Hodnota</th>
+                <th>Příklad</th>
+            </tr>
+            <tr>
+                <td>Označení</td>
+                <td>
+                    <input:specification id="specification"/>
+                </td>
+                <td>BK150</td>
+            </tr>
+            <tr>
+                <td>Náleží k</td>
+                <td>
+                    <input:parent id="parent"/>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Firma</td>
+                <td>
+                    <input:company id="company"/>
+                </td>
+                <td></td>
+            </tr>
+            <tr>
+                <td>Sériové číslo</td>
+                <td>
+                    <input:serialNumber/>
+                </td>
+                <td>550e8400-e29b-41d4-a716-446655440000</td>
+            </tr>
+            <tr>
+                <td>Datum prodeje:</td>
+                <td>
+                    <input:dateSold class="datepicker"/>
+                </td>
+                <td>1.1.2000</td>
+            </tr>
+            <tr>
+                <td>Uvedení do provozu</td>
+                <td>
+                    <input:intoService class="datepicker"/>
+                </td>
+                <td>1.7.2000</td>
+            </tr>
+            <tr>
+                <td>Výrobce</td>
+                <td>
+                    <input:manufacturer id="manufacturer"/>
+                </td>
+                <td>Remeza</td>
+            </tr>
+            <tr>
+                <td>Výkon(kW)</td>
+                <td>
+                    <input:power id="power"/>
+                </td>
+                <td>3.5</td>
+            </tr>
+            <tr>
+                <td>Kategorie</td>
+                <td>
+                    <input:type id="type"/>
+                </td>
+                <td>Šroubový</td>
+            </tr>
+            <tr>
+                <td>Poznámka</td>
+                <td>
+                    <input:note/>
+                </td>
+                <td>Má lososovou barvu. Když se zapne, dívkám se podlamují kolena.</td>
+            </tr>
+            <tr>
+                <td>Interval(dní)</td>
+                <td>
+                    <input:interval id="intervalDays"/>
+                </td>
+                <td id="insertInterval">
+                    365
+                    <a class="730">2 roky</a>
+                    <a class="365">1 rok</a>
+                    <a class="242">⅔ roku</a>
+                    <a class="183">½ roku</a>
+                </td>
+            </tr>
+            <tr>
+                <td>Ulož</td>
+                <td>
+                    <input:submit/>
+                </td>
+                <td></td>
+            </tr>
+        </table>
+    </lift:ServiceableSnip>
+    <script type="text/javascript">
+        $new(document).ready(function(){
+            $new("a").click(function(e){
+                var days = $new(this).attr("class");
+                $new("#intervalDays").val(days);
+            });
+            var start = "/autocomplete/serviceable/"
+            function addAutocomplete(idName){
+                function getUrl(){
+                    var inputVal = $new("#" + idName).val();
+                    var rest = start + idName + "/";
+                    return rest + inputVal;
+                }
+                function auto(){
+                    $new("#" + idName).autocomplete({source:getUrl()});
+                }
+                $new("#" + idName).keyup(auto);
+                auto();
+            }
+            addAutocomplete("manufacturer");
+            addAutocomplete("specification");
+            $new("#specification").keyup(function(e){
+                if(e.which == 13){
+                    $new.ajax(
+                        start + "fillin/specification/" + $new("#specification").val(),{
+                        success: function(data){
+                            var result = eval('(' + data + ')');
+                            $new("#manufacturer").val(result.manufacturer);
+                            $new("#intervalDays").val(result.intervalDays);
+                            $new("#type").val(result.type1);
+                            var power = result.power.value
+                            if($new.isNumeric(power)){
+                                $new("#power").val(power);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</lift:surround>
