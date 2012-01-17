@@ -87,7 +87,7 @@ object Model {
       serial_number VARCHAR(100),
       power DOUBLE,
       type1 VARCHAR(100),
-      note VARCHAR(2000),
+      note VARCHAR(2000) NOT NULL,
       specification VARCHAR(100) NOT NULL,
       interval_days INT,
       FOREIGN KEY (company_id) REFERENCES company(company_id),
