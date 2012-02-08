@@ -11,7 +11,7 @@ import net.liftweb.http.rest._
 import jr.model.Logic
 import net.liftweb.json.Serialization
 
-object  ServiceableRest extends RestHelper {
+object ServiceableRest extends RestHelper {
   val columnsServed = List("specification","manufacturer")
   serve {
     case Req("autocomplete" :: "serviceable" :: column :: query :: Nil, _, GetRequest) if columnsServed.contains(column) =>
