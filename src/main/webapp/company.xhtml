@@ -35,7 +35,7 @@
                 </td>
             </tr>
             <tr>
-                <td>Přednost</td>
+                <td>Přednost v seznamu kompresorů(dni)</td>
                 <td>
                     <input:priorityDays/>
                 </td>
@@ -128,12 +128,16 @@
             </tr>
         </table>
     </lift:CompanySnip.machines>
-    <h2>Kontaktní osoby:</h2>
+
     <lift:CompanySnip.people>
+        <people:newPerson>
+            <h3><a>+</a> Kontaktní osoby:</h3>
+        </people:newPerson>
         <ul>
-            <elem:anchor>
+            <people:elem>
                 <li><a/></li>
-            </elem:anchor>
+            </people:elem>
         </ul>
     </lift:CompanySnip.people>
+
 </lift:surround>

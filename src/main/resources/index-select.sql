@@ -1,4 +1,4 @@
-select company_id, names, ADDDATE(service_date,INTERVAL priority_days DAY) as service_date, priority_days, service_type from(
+select company_id, names, ADDDATE(service_date,INTERVAL priority_days DAY) as service_date, priority_days, service_type, service_date as real_service_date from(
     select * from(
         select
             company.company_id,

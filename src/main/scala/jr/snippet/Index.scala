@@ -22,7 +22,8 @@ class Index(sorting: Sorting) {
       "header" -%> {
         "#companyAsc [href]" #> Spec.index.toLoc.calcHref(SortingCompanyAsc) &
           "#companyDesc [href]" #> Spec.index.toLoc.calcHref(SortingCompanyDesc) &
-          "#indexAsc [href]" #> Spec.index.toLoc.calcHref(Sorting())
+          "#indexAsc [href]" #> Spec.index.toLoc.calcHref(Sorting()) &
+          "#indexDesc [href]" #> Spec.index.toLoc.calcHref(SortingDesc.apply)
       },
       "row" -%> {
         (in: NodeSeq) =>
@@ -40,12 +41,15 @@ class Index(sorting: Sorting) {
                 val classSelector = "td [class]" #> serviceType
                 if (serviceType == "delay") {
                   val number = (255 - (255.0 / maxInterval * im.priorityDays).toInt).toString
-                  "td [style]" #> "background-color:rgb(255,%s,%s)".format(number,number) &
+                  "td [style]" #> "background-color:rgb(255,%s,%s)".format(number, number) &
                     classSelector
                 } else {
                   classSelector
                 }
               },
+              "realDate" -%> Text(im.realServiceDate.map {
+                Misc.dateFormat.print(_)
+              }.getOrElse("n/a")),
               "company" -%> {
                 "a *" #> im.company.name.split("\\|")(0) &
                   "a [href]" #> Spec.company.toLoc.calcHref(Company(id = Full(im.companyId)))

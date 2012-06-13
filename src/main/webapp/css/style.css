@@ -1,0 +1,22 @@
+#insertInterval a{
+    color:blue;
+    text-decoration:underline;
+    cursor:pointer;
+}
+.none{
+    background-color:yellow;
+}
+div#content{
+    margin-top:80px;
+}
+ul#menu{
+    position:absolute;
+    top:0px;
+    left:0px;
+    display:block;
+}
+ul#menu li{
+    display:inline;
+}
+
+

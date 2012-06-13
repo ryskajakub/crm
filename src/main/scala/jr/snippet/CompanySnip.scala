@@ -203,13 +203,16 @@ class CompanySnip(c: Company) {
     c.id match {
       case Full(id) =>
         val peopleForCompany: List[Person] = Logic.getPeopleForCompany(id)
-        peopleForCompany.flatMap((p: Person) => {
-          Helpers.bind("elem", in,
-            "anchor" -%> {
-              "a [href]" #> Spec.person.toLoc.calcHref(p) &
-                "a *" #> p.name
+        Helpers.bind(
+          "people",
+          in,
+          "newPerson" -%> "a [href]" #> Spec.person.toLoc.calcHref(Person(companyId = Full(id))),
+          "elem" -%>
+            "li" #> peopleForCompany.map((x: Person) => {
+              "a [href]" #> Spec.person.toLoc.calcHref(x) &
+                "a *" #> x.name
             })
-        })
+        )
       case _ =>
         NodeSeq.Empty
     }
@@ -244,3 +247,4 @@ class PersonSnip(p: Person) {
     )
   }
 }
+

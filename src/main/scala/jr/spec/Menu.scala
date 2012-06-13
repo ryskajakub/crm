@@ -12,16 +12,34 @@ import _root_.net.liftweb.sitemap.Loc._
 import jr.model._
 
 object Spec {
-  val index = Menu.param[Sorting]("index", "index", (x: String) => {
+  val index = Menu.param[Sorting]("index", "Seznam", (x: String) => {
     Sorting.find.lift(x) orElse Some(Sorting())
   }, (x => x.repr)) / "index" >> Value(Sorting())
-  val company = Menu.param[Company]("company", "company", (x: String) => Full(Logic.getCompany(x)),
+  val company = Menu.param[Company]("company", "Firma", (x: String) => Full(Logic.getCompany(x)),
     (x: Company) => (x.id.map(_.toString).openOr("new"))) / "company" >> Value(Company.apply())
-  val service = Menu.param[Service]("service", "service", (x: String) => Logic.getService(x),
+  val service = Menu.param[Service]("service", "Servis", (x: String) => Logic.getService(x),
     (x: Service) => (x.id.map(_.toString).openOr("new"))) / "service" >> Hidden
-  val person = Menu.param[Person]("person", "person", (x: String) => Full(Logic.getPerson(x)),
-    (x: Person) => (x.id.map(_.toString).openOr("new"))) / "person" >> Value(Person.apply())
-  val serviceable = Menu.param[Serviceable]("serviceable", "serviceable",
+  val person = Menu.param[Person]("person", "Osoba",
+    (x: String) => {
+      x.toList match {
+        case '#' :: (companyId@(_)) =>
+          Misc.parse2Int(companyId.mkString).flatMap {
+            (x: Int) => Logic.ensurePersonExists(x.toLong)
+          }
+        case _ => Full(Logic.getPerson(x).copy(isServiceman = false))
+      }
+    } ,
+    (x: Person) => {
+      (x.id, x.companyId) match {
+        case (Full(id), _) =>
+          id.toString
+        case (_, Full(companyId)) =>
+          '#' + companyId.toString
+        case _ =>
+          "new"
+      }
+    }) / "person" >> Value(Person.apply(isServiceman = false))
+  val serviceable = Menu.param[Serviceable]("serviceable", "Kompresor",
     (x: String) => {
       x.toList match {
         case '#' :: (companyId@(_)) =>
@@ -41,7 +59,7 @@ object Spec {
         case Full(Left(parentId)) => "$" + parentId
         case _ => (x.id.map(_.toString).openOr("new"))
       }
-    }) / "serviceable" >> Value(Serviceable.apply())
+    }) / "serviceable" >> Value(Serviceable.apply()) >> Hidden
   val archive = Menu.param[(Box[(Service, List[(Option[Int], Serviceable)])], List[Service])]("archive", "archive", (x: String) => Logic.getArchive(x),
     (x: (Box[(Service, List[(Option[Int], Serviceable)])], List[Service])) => {
       val service = x._1

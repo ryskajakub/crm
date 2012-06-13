@@ -1,23 +1,33 @@
 package jr.model
 
-import com.twitter.querulous.evaluator._
 import _root_.net.liftweb.common._
 import org.joda.time.DateMidnight
+import java.util.Properties
+import org.apache.commons.pool.impl.GenericObjectPool
+import org.apache.commons.dbcp.{PoolableConnectionFactory, PoolingDataSource, DriverManagerConnectionFactory}
+import java.sql.ResultSet
+import org.apache.commons.dbutils.{ResultSetHandler, QueryRunner}
 
-case class Sorting(sql:String = "COALESCE(service_date,'9999-01-01') asc", repr:String = "indexAsc")
+case class Sorting(sql: String = "COALESCE(service_date,'9999-01-01') asc", repr: String = "indexAsc")
 
-object Sorting{
-  val find = Map(mapifySql(Sorting()),mapifySql(SortingCompanyAsc),mapifySql(SortingCompanyDesc))
-  def mapifySql(s:Sorting) = (s.repr,s)
+object SortingDesc {
+  def apply = Sorting(sql = "COALESCE(service_date,'0000-01-01') desc", repr = "indexDesc")
 }
 
-case object SortingCompanyAsc extends Sorting("names asc","companyAsc")
-case object SortingCompanyDesc extends Sorting("names desc","companyDesc")
+object Sorting {
+  val find = Map(mapifySql(Sorting()), mapifySql(SortingCompanyAsc), mapifySql(SortingCompanyDesc))
+
+  def mapifySql(s: Sorting) = (s.repr, s)
+}
+
+case object SortingCompanyAsc extends Sorting("names asc", "companyAsc")
+
+case object SortingCompanyDesc extends Sorting("names desc", "companyDesc")
 
 class PartHours(var idPart: Box[Long], var machineHours: Box[Int])
 
 case class IndexMapped(company: String, serviceDate: Option[DateMidnight] = None, serviceType: Option[Char],
-                       companyId: Long, priorityDays: Int)
+                       companyId: Long, priorityDays: Int, realServiceDate: Option[DateMidnight])
 
 case class Service(id: Box[Long] = Empty, date1: DateMidnight = new DateMidnight(), planned: Boolean = true,
                    result: String = "", type1: Char = 'p', companyId: Long = 0L) {
@@ -43,9 +53,50 @@ case class Serviceable(id: Box[Long] = Empty,
                        intervalDays: Int = 365, dateSold: Box[DateMidnight] = Empty)
 
 object Model {
+
+  def funToResultSetHandler[A](x: ResultSet => A): ResultSetHandler[Box[A]] = {
+    new ResultSetHandler[Box[A]] {
+      def handle(p1: ResultSet): Box[A] = {
+        if (p1.next()) {
+          Full[A](x.apply(p1))
+        } else {
+          Empty
+        }
+      }
+    }
+  }
+
+  def funToResultSetHandlerMany[A](x: ResultSet => A): ResultSetHandler[List[A]] = {
+    new ResultSetHandler[List[A]] {
+      def handle(p1: ResultSet) = {
+        def addList(list: List[A]): List[A] = {
+          if (p1.next()) {
+            addList(x.apply(p1) :: list)
+          } else {
+            list
+          }
+        }
+        addList(Nil)
+      }
+    }
+  }
+
   // create database crm character set utf8 collate utf8_czech_ci
-  val queryEvaluator = QueryEvaluator("localhost", "crm", "crm", "crm",
-    Map("characterEncoding" -> "UTF-8", "characterSetResults" -> "UTF-8"))
+  //val queryEvaluator = QueryEvaluator("localhost", "crm", "crm", "crm",
+  // val queryEvaluator = QueryEvaluator("mysql", "jakubryska_name_glassfish", "jaku5_glassfish", "mGZbDuJjVj",
+  //  Map("characterEncoding" -> "UTF-8", "characterretResults" -> "UTF-8", "autoReconnect" -> "true"))
+  Class.forName("com.mysql.jdbc.Driver")
+  val props = new Properties
+  props.setProperty("user", "jaku5_glassfish")
+  props.setProperty("password", "mGZbDuJjVj")
+  props.setProperty("characterEncoding", "UTF-8")
+  props.setProperty("characterSetResults", "UTF-8")
+  val url = "jdbc:mysql://mysql:3306/jakubryska_name_glassfish"
+  val connectionFactory = new DriverManagerConnectionFactory(url, props)
+  val connectionPool = new GenericObjectPool(null);
+  val poolableFactory = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null, false, true)
+  val poolingDataSource = new PoolingDataSource(connectionPool)
+  val queryRunner = new QueryRunner(poolingDataSource)
   val config = """
     config(
       key1 VARCHAR(10) PRIMARY KEY,
@@ -121,35 +172,21 @@ object Model {
       FOREIGN KEY(serviceman_id) REFERENCES person(person_id)
     )
   """
-  val inserts = List[(String, List[String])]()
   val before = "create table if not exists "
   val after = "engine = InnoDB"
   val tables = List(company, person, service, serviceable, servicePart, serviceman)
 
   def init() {
-    queryEvaluator.transaction {
-      tr =>
-        for (t <- tables) {
-          try {
-            tr.execute(before + t + after)
-          } catch {
-            case tr: Throwable =>
-              println(t)
-              println(tr)
-          }
-        }
+    for (t <- tables) {
+      try {
+        queryRunner.update(before + t + after)
+      } catch {
+        case tr: Throwable =>
+          println(t)
+          println(tr)
+      }
     }
   }
 
-  for (i <- inserts) {
-    queryEvaluator.transaction {
-      tr =>
-        try {
-          tr.execute(i._1, i._2: _*)
-        } catch {
-          case t: Throwable =>
-        }
-    }
-  }
 }
 

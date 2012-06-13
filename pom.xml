@@ -27,6 +27,11 @@
             <name>Scala-Tools Dependencies Repository for Releases</name>
             <url>http://scala-tools.org/repo-releases</url>
         </repository>
+        <repository>
+            <id>twttr</id>
+            <name>maven repo</name>
+            <url>http://maven.twttr.com/</url>
+        </repository>
     </repositories>
 
     <pluginRepositories>
@@ -39,9 +44,19 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.twitter</groupId>
-            <artifactId>querulous_2.8.1</artifactId>
-            <version>1.5.4</version>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.19</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-dbutils</groupId>
+            <artifactId>commons-dbutils</artifactId>
+            <version>1.4</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-dbcp</groupId>
+            <artifactId>commons-dbcp</artifactId>
+            <version>1.4</version>
         </dependency>
         <dependency>
             <groupId>net.liftweb</groupId>
@@ -150,6 +165,7 @@
                     <scanIntervalSeconds>5</scanIntervalSeconds>
                 </configuration>
             </plugin>
+<!--
             <plugin>
                 <groupId>net.sf.alchim</groupId>
                 <artifactId>yuicompressor-maven-plugin</artifactId>
@@ -165,6 +181,7 @@
                     <nosuffix>true</nosuffix>
                 </configuration>
             </plugin>
+-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-idea-plugin</artifactId>
@@ -210,3 +227,4 @@
         </plugins>
     </reporting>
 </project>
+
