@@ -28,9 +28,16 @@ object Misc {
 
   def parse2JodaDate(x: String) = {
     try {
-      Full(DateMidnight.parse(x, dateFormat))
+	 
+	    val dateFull = x.trim.split("\\.")
+	    val day = if( dateFull(0).size == 1) "0" + dateFull(0) else dateFull(0)
+	    val month = if( dateFull(1).size == 1) "0" + dateFull(1) else dateFull(1)
+	    val full = day + "." + month + "." + dateFull(2)
+	  
+      Full(DateMidnight.parse(full, dateFormat))
     } catch {
       case t: Throwable =>
+	      print(t)
         Empty
     }
   }

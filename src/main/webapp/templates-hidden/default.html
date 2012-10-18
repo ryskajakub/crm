@@ -19,7 +19,10 @@
     <script type="text/javascript">
         <![CDATA[
             $new(document).ready(function(){
-                $new(".datepicker").datepicker();
+                $new(".datepicker").datepicker({
+            changeMonth: true,
+            changeYear: true
+        });
                 $new("#company").change(function(){
                     var first = $new("#parent option:first").val();
                     $new("#parent").val(first);

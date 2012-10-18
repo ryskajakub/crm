@@ -165,7 +165,7 @@ class CompanySnip(c: Company) {
               NodeSeq.Empty
             }
           },
-          "type" -%> SHtml.selectObj(List(('n' -> "normální"), ('o' -> "oprava"), ('p' -> "plánovaná")), Full(service.type1), {
+	       "type" -%> SHtml.selectObj(List(('n' -> "normální"), ('o' -> "oprava"), ('p' -> "plánovaná")), Full(service.type1), {
             (x: Char) => {
               service = service.copy(type1 = x)
             }

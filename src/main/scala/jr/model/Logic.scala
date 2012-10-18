@@ -158,17 +158,21 @@ object Logic {
   def save(service: Service, list: List[PartHours], servicemen: Set[Long]) {
     if (list.isEmpty) return
     val id = service.id match {
-      case Full(id) =>
+      case Full(id) if id != 0 =>
         Model.queryRunner.update("update service set date1 = ?, type1 = ?, result = ? where service_id = ?",
           Misc.mysqlDateFormat.print(service.date1), service.type1.toString,
           service.result, id.asInstanceOf[AnyRef])
         Model.queryRunner.update("delete from service_part where service_id = ?", id)
         Full(id)
       case _ =>
-        Model.queryRunner.update("insert into service(date1, type1, result) values (?,?,?)",
+	      val connection = Model.ds.getConnection
+        Model.queryRunner.update(connection,"insert into service(date1, type1, result) values (?,?,?)",
           Misc.mysqlDateFormat.print(service.date1), service.type1.toString, service.result)
-        lastInsertId
+        val a = lastInsertId(connection)
+	println("YYYYYY" + a)
+	a
     }
+    println("XXXXXXXX" + id)
     for {
       partHour <- list
       serviceableId <- partHour.idPart.toList
@@ -299,10 +303,11 @@ object Logic {
         Full(serviceable)
       case _ =>
         val str = sureNamesList.mkString(",")
-        Model.queryRunner.update(
+	val conn = Model.ds.getConnection
+        Model.queryRunner.update(conn,
           "insert into serviceable (%s) values(?,?,?,?,?,?,?,?,?,?)".format(str), sureValues.map(
             _.asInstanceOf[AnyRef]): _*)
-        Full(serviceable.copy(id = lastInsertId))
+        Full(serviceable.copy(id = lastInsertId(conn)))
     }
   }
 
@@ -380,13 +385,14 @@ object Logic {
           person.companyId.map(_.asInstanceOf[AnyRef]).orNull, person.mail, id.asInstanceOf[AnyRef])
         Full(person)
       case _ =>
-        Model.queryRunner.update(
+	      val conn = Model.ds.getConnection
+        Model.queryRunner.update(conn,
           "insert into person(fax, name, telephone, cell_phone, position, company_id, mail, is_serviceman) " +
             "values(?,?,?,?,?,?,?,?)",
           person.fax, person.name, person.telephone, person.cellPhone, person.position,
           person.companyId.map(_.asInstanceOf[AnyRef]).orNull, person.mail,
           person.isServiceman.asInstanceOf[AnyRef])
-        Full(person.copy(id = lastInsertId))
+        Full(person.copy(id = lastInsertId(conn)))
     }
   }
 
@@ -395,6 +401,11 @@ object Logic {
       Model.funToResultSetHandler(rs => rs.getLong(1)))
   }
 
+	  def lastInsertId(conn:Connection): Box[Long] = {
+    Model.queryRunner.query(conn,"select LAST_INSERT_ID()",
+      Model.funToResultSetHandler(rs => rs.getLong(1)))
+  }
+	
   def save(company: Company): Company = {
     company.id match {
       case Full(id) =>
@@ -403,9 +414,10 @@ object Logic {
           company.address, company.names, company.showInIndex.asInstanceOf[AnyRef], company.priorityDays.asInstanceOf[AnyRef], id.asInstanceOf[AnyRef])
         company
       case _ =>
-        Model.queryRunner.update("insert into company(address, names, show_in_index, priority_days) values(?,?,?,?)",
+	      val conn = Model.ds.getConnection
+        Model.queryRunner.update(conn,"insert into company(address, names, show_in_index, priority_days) values(?,?,?,?)",
           company.address, company.names, company.showInIndex.asInstanceOf[AnyRef], company.priorityDays.asInstanceOf[AnyRef])
-        company.copy(id = lastInsertId)
+        company.copy(id = lastInsertId(conn))
     }
   }
 

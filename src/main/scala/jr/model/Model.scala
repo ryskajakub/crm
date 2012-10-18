@@ -4,18 +4,21 @@ import _root_.net.liftweb.common._
 import org.joda.time.DateMidnight
 import java.util.Properties
 import org.apache.commons.pool.impl.GenericObjectPool
+import javax.naming.Context
+import javax.naming.InitialContext
+import javax.sql.DataSource
 import org.apache.commons.dbcp.{PoolableConnectionFactory, PoolingDataSource, DriverManagerConnectionFactory}
 import java.sql.ResultSet
 import org.apache.commons.dbutils.{ResultSetHandler, QueryRunner}
 
-case class Sorting(sql: String = "COALESCE(service_date,'9999-01-01') asc", repr: String = "indexAsc")
+case class Sorting(sql: String = "COALESCE(service_date,'0000-01-01') asc", repr: String = "indexAsc")
 
 object SortingDesc {
-  def apply = Sorting(sql = "COALESCE(service_date,'0000-01-01') desc", repr = "indexDesc")
+  def apply = Sorting(sql = "COALESCE(service_date,'9999-01-01') desc", repr = "indexDesc")
 }
 
 object Sorting {
-  val find = Map(mapifySql(Sorting()), mapifySql(SortingCompanyAsc), mapifySql(SortingCompanyDesc))
+  val find = Map(mapifySql(Sorting()), mapifySql(SortingCompanyAsc), mapifySql(SortingCompanyDesc), mapifySql(SortingDesc.apply))
 
   def mapifySql(s: Sorting) = (s.repr, s)
 }
@@ -30,7 +33,7 @@ case class IndexMapped(company: String, serviceDate: Option[DateMidnight] = None
                        companyId: Long, priorityDays: Int, realServiceDate: Option[DateMidnight])
 
 case class Service(id: Box[Long] = Empty, date1: DateMidnight = new DateMidnight(), planned: Boolean = true,
-                   result: String = "", type1: Char = 'p', companyId: Long = 0L) {
+                   result: String = "", type1: Char = 'n', companyId: Long = 0L) {
   def getServicemen = {
     Logic.getServicemen(id)
   }
@@ -52,7 +55,7 @@ case class Serviceable(id: Box[Long] = Empty,
                        manufacturer: String = "", power: Box[Double] = Empty, note: String = "",
                        intervalDays: Int = 365, dateSold: Box[DateMidnight] = Empty)
 
-object Model {
+class Model{
 
   def funToResultSetHandler[A](x: ResultSet => A): ResultSetHandler[Box[A]] = {
     new ResultSetHandler[Box[A]] {
@@ -81,10 +84,15 @@ object Model {
     }
   }
 
-  // create database crm character set utf8 collate utf8_czech_ci
-  //val queryEvaluator = QueryEvaluator("localhost", "crm", "crm", "crm",
-  // val queryEvaluator = QueryEvaluator("mysql", "jakubryska_name_glassfish", "jaku5_glassfish", "mGZbDuJjVj",
-  //  Map("characterEncoding" -> "UTF-8", "characterretResults" -> "UTF-8", "autoReconnect" -> "true"))
+	/*
+	import javax.annotation.Resource;
+	@Resource(name = "")
+	val ds:DataSource = null
+	*/
+var initContext:InitialContext = new InitialContext()
+var envContext:Context = initContext.lookup("java:/comp/env").asInstanceOf[Context]
+var ds:DataSource = envContext.lookup("jdbc/TestDB").asInstanceOf[DataSource]
+	/*
   Class.forName("com.mysql.jdbc.Driver")
   val props = new Properties
   props.setProperty("user", "jaku5_glassfish")
@@ -97,6 +105,8 @@ object Model {
   val poolableFactory = new PoolableConnectionFactory(connectionFactory, connectionPool, null, null, false, true)
   val poolingDataSource = new PoolingDataSource(connectionPool)
   val queryRunner = new QueryRunner(poolingDataSource)
+  */
+  val queryRunner = new QueryRunner(ds)
   val config = """
     config(
       key1 VARCHAR(10) PRIMARY KEY,
@@ -176,7 +186,7 @@ object Model {
   val after = "engine = InnoDB"
   val tables = List(company, person, service, serviceable, servicePart, serviceman)
 
-  def init() {
+  def initDB() {
     for (t <- tables) {
       try {
         queryRunner.update(before + t + after)
@@ -190,3 +200,4 @@ object Model {
 
 }
 
+object Model extends Model

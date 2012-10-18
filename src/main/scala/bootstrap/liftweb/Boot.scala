@@ -21,13 +21,10 @@ class Boot {
 
     // Build SiteMap
     LiftRules.setSiteMap(SiteMap(Spec.entries: _*))
-
-    Model.init()
+    Model.initDB()
   }
 
-  private
-
-  def makeUtf8(req: HTTPRequest) {
+  private def makeUtf8(req: HTTPRequest) {
     req.setCharacterEncoding("UTF-8")
   }
 
