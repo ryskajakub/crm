@@ -10,36 +10,19 @@
             type="text/javascript"></script>
     <script type="text/javascript" id="jqueryui" src="/js/jquery-ui-1.8.16.custom.min.js"></script>
     <script type="text/javascript" id="jqueryuics" src="/js/jquery.ui.datepicker-cs.js"></script>
-    <script type="text/javascript">
+     <script type="text/javascript">
         <![CDATA[
             var $new = $.noConflict(true);
         ]]>
     </script>
     <script id="jquery" src="/classpath/jquery.js" type="text/javascript"></script>
-    <script type="text/javascript">
-        <![CDATA[
-            $new(document).ready(function(){
-                $new(".datepicker").datepicker({
-            changeMonth: true,
-            changeYear: true
-        });
-                $new("#company").change(function(){
-                    var first = $new("#parent option:first").val();
-                    $new("#parent").val(first);
-                });
-                $new("#parent").change(function(){
-                    var first = $new("#company option:first").val();
-                    $new("#company").val(first);
-                });
-            });
-        ]]>
-    </script>
+   <script type="text/javascript" src="/js/javascript.js"></script>
 </head>
 
 <body>
-    <lift:Menu.builder top:id="menu"/>
     <div id="content">
-        <lift:bind name="content"/>
+	    <lift:Menu.builder top:id="menu"/><div id="in-content">
+        <lift:bind name="content"/></div>
     </div>
 </body>
 </html>

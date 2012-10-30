@@ -1,7 +1,7 @@
 <lift:surround with="default" at="content">
     <h2>Stroj/příslušentství</h2>
     <lift:ServiceableSnip form="post">
-        <table>
+        <table id="serviceable">
             <tr>
                 <th>Položka</th>
                 <th>Hodnota</th>
@@ -17,14 +17,14 @@
             <tr>
                 <td>Náleží k</td>
                 <td>
-                    <input:parent id="parent"/>
+                    <input:parent disabled="disabled" id="parent"/>
                 </td>
                 <td></td>
             </tr>
             <tr>
                 <td>Firma</td>
                 <td>
-                    <input:company id="company"/>
+                    <input:company disabled="disabled" id="company"/>
                 </td>
                 <td></td>
             </tr>

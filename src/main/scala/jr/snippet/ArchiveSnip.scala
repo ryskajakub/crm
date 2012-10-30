@@ -51,7 +51,7 @@ class ArchiveSnip(x: (Box[(Service, List[(Option[Int], Serviceable)])], List[Ser
     "li *" #> services.map {
       s =>
         "a [href]" #> Spec.archive.toLoc.calcHref((Full(s, Nil), Nil)) &
-          "a *" #> Misc.dateFormat.print(s.date1)
+          "a *" #> (Misc.dateFormat.print(s.date1) + " ")
     }
   }
 

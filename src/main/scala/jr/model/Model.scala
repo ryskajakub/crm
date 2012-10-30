@@ -2,12 +2,9 @@ package jr.model
 
 import _root_.net.liftweb.common._
 import org.joda.time.DateMidnight
-import java.util.Properties
-import org.apache.commons.pool.impl.GenericObjectPool
 import javax.naming.Context
 import javax.naming.InitialContext
 import javax.sql.DataSource
-import org.apache.commons.dbcp.{PoolableConnectionFactory, PoolingDataSource, DriverManagerConnectionFactory}
 import java.sql.ResultSet
 import org.apache.commons.dbutils.{ResultSetHandler, QueryRunner}
 
@@ -53,7 +50,22 @@ case class Serviceable(id: Box[Long] = Empty,
                        type1: String = "", specification: String = "",
                        intoService: Box[DateMidnight] = Empty, serialNumber: Box[String] = Empty,
                        manufacturer: String = "", power: Box[Double] = Empty, note: String = "",
-                       intervalDays: Int = 365, dateSold: Box[DateMidnight] = Empty)
+                       intervalDays: Int = 365, dateSold: Box[DateMidnight] = Empty){
+	def getCompany:Box[Company] = {
+		parentCompany.flatMap((either:Either[Long,Long]) => {
+				val compBox:Box[Company] = either match {
+					case Right(companyId) =>
+						Full(Logic.getCompany(companyId.toString))
+					case Left(parentId) =>
+						val svc = Logic.getServiceable(parentId.toString)
+						val prnt = svc.id.map{(x:Long) => Logic.getServiceable(x.toString)}
+						val companyBox = prnt.flatMap{(x:Serviceable) => x.getCompany}
+						companyBox
+				}
+				compBox
+			})
+	}
+		       }
 
 class Model{
 
@@ -90,8 +102,11 @@ class Model{
 	val ds:DataSource = null
 	*/
 var initContext:InitialContext = new InitialContext()
-var envContext:Context = initContext.lookup("java:/comp/env").asInstanceOf[Context]
+       /*
+var envContext:Context = initContext.lookup("java:comp/env").asInstanceOf[Context]
 var ds:DataSource = envContext.lookup("jdbc/TestDB").asInstanceOf[DataSource]
+*/
+var ds:DataSource = initContext.lookup("jdbc/TestDB").asInstanceOf[DataSource]
 	/*
   Class.forName("com.mysql.jdbc.Driver")
   val props = new Properties

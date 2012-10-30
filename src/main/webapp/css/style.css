@@ -7,7 +7,10 @@
     background-color:yellow;
 }
 div#content{
-    margin-top:80px;
+	margin:0px auto;
+	width:950px;
+	position:relative;
+
 }
 ul#menu{
     position:absolute;
@@ -18,5 +21,26 @@ ul#menu{
 ul#menu li{
     display:inline;
 }
-
-
+div#in-content{
+	padding-top:80px;
+}
+table, #infoStatus {
+	border: 2px solid grey;
+	border-radius:10px;
+}
+.horizontal-line{
+	width:949px;
+	border-top:2px solid grey;
+}
+form{
+	position:relative;
+}
+#infoStatus{
+	width:200px;
+	top:1px;
+	right:1px;
+	position:absolute;
+}
+#serviceable select{
+	
+}

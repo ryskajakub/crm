@@ -9,7 +9,7 @@
     </h2>
 
     <lift:CompanySnip form="post">
-        <table>
+        <table id="new-company">
             <tr>
                 <th>Položka</th>
                 <th>Hodnota</th>
@@ -58,12 +58,12 @@
             </tr>
         </table>
     </lift:CompanySnip>
-    <h2>Servis:</h2>
-    <lift:CompanySnip.machines form="post">
+    <lift:CompanySnip.machines form="post"><input:label>
+	    <h2 class="horizontal-line">Servis:</h2><div id="infoStatus"><ul><li class="chooseItem">Vyber alespoň jednu položku na servis</li></ul></div></input:label>
         <input:newMachine>
             <h3><a>+</a> Stroje:</h3>
         </input:newMachine>
-        <table>
+        <table class="machines">
             <input:row>
                 <tr>
                     <td>
@@ -78,7 +78,7 @@
                     </td>
                     <td>
                         <machine:manufacturer/>
-                    </td>
+                    </td><td><machine:archive><a>Archiv</a></machine:archive></td>
                     <td>
                         Motohodiny:<machine:machineHours/>
                     </td>

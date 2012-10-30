@@ -67,9 +67,9 @@ class ServiceableSnip(s: Serviceable) {
         (x: String) => serviceable = serviceable.copy(intervalDays = Misc.parse2Int(x).openOr(0))),
       "submit" -%> SHtml.submit("Ulož!", () => {
         val saved = Logic.save(serviceable)
-        saved match {
-          case Full(se) =>
-            S.redirectTo(Spec.serviceable.toLoc.calcHref(se))
+        saved.flatMap(_.getCompany) match {
+          case Full(cmp) =>
+            S.redirectTo(Spec.company.toLoc.calcHref(cmp))
           case _ =>
         }
       })
@@ -87,7 +87,8 @@ class CompanySnip(c: Company) {
         "a [href]" #> Spec.archive.toLoc.calcHref(Pair(Full(Service(companyId = f), Nil), Nil)) &
           "span" #> ""
       case _ =>
-        "a" #> ""
+        "a" #> "" &
+	"span" #> ""
     }
   }
 
@@ -103,6 +104,12 @@ class CompanySnip(c: Company) {
         val servicemanIds = MSet[Long]()
         var servicemanEntry = NodeSeq.Empty
         Helpers.bind("input", in,
+		     "label" -%> {(xhtml:NodeSeq) => 
+			if(machinesForCompany.size > 0)
+				xhtml
+			else
+				NodeSeq.Empty
+		     },
           "newMachine" -%> {
             "a [href]" #> Spec.serviceable.toLoc.calcHref(Serviceable(parentCompany = Full(Right(id))))
           },

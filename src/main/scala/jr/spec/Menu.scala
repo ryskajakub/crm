@@ -15,11 +15,11 @@ object Spec {
   val index = Menu.param[Sorting]("index", "Seznam", (x: String) => {
     Sorting.find.lift(x) orElse Some(Sorting())
   }, (x => x.repr)) / "index" >> Value(Sorting())
-  val company = Menu.param[Company]("company", "Firma", (x: String) => Full(Logic.getCompany(x)),
+  val company = Menu.param[Company]("company", "Nová Firma", (x: String) => Full(Logic.getCompany(x)),
     (x: Company) => (x.id.map(_.toString).openOr("new"))) / "company" >> Value(Company.apply())
   val service = Menu.param[Service]("service", "Servis", (x: String) => Logic.getService(x),
     (x: Service) => (x.id.map(_.toString).openOr("new"))) / "service" >> Hidden
-  val person = Menu.param[Person]("person", "Osoba",
+  val person = Menu.param[Person]("person", "Nová Osoba",
     (x: String) => {
       x.toList match {
         case '#' :: (companyId@(_)) =>
