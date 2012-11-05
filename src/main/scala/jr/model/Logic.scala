@@ -234,6 +234,25 @@ object Logic {
       """.format(data, st, data, st), List.fill(2)(companyId))
   }
 
+	/*
+  def serviceMapper(rs: ResultSet): Service = {
+    Service(id = Full(rs.getLong("service_id")), date1 = new DateMidnight(rs.getDate("service_date")),
+      type1 = rs.getString("service_type").head, result = rs.getString("result"), companyId = rs.getLong("company_id"))
+  }
+  */
+	def getServices(x:Long): List[Service] = {
+	Model.queryRunner.query(
+		"""select date1 as service_date, service_id, service.type1 as service_type,
+		result, company_id
+ from serviceable 
+		join service_part using(serviceable_id)
+			join service using(service_id)
+			where serviceable_id = ?
+""", Model.funToResultSetHandlerMany(rs => serviceMapper(rs))
+				, x.asInstanceOf[AnyRef]
+	)
+	}
+
   def findServiceFor(company: Company): Pair[Service, List[Long]] = {
     val maybeService = company.id.flatMap {
       (x: Long) => {

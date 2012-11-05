@@ -119,6 +119,7 @@ class CompanySnip(c: Company) {
                 val (serviceable, part) = x
                 val machineHours = Logic.getMachineHours(serviceable)
                 Helpers.bind("machine", xhtml,
+			     "archive" -%> {"a [href]" #> Spec.matrixArchive.toLoc.calcHref(serviceable) },
                   "addPart" -%> {
                     if (serviceable.parentCompany.get.isLeft) {
                       "a" #> ""

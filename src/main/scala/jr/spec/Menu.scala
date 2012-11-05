@@ -12,6 +12,7 @@ import _root_.net.liftweb.sitemap.Loc._
 import jr.model._
 
 object Spec {
+	val matrixArchive = Menu.param[Serviceable]("matrixArchive","Tabulka - archive",(x:String) => Full(Logic.getServiceable(x)), (x:Serviceable) => (x.id.map(_.toString).openOr("new"))) / "matrixArchive" >> Hidden
   val index = Menu.param[Sorting]("index", "Seznam", (x: String) => {
     Sorting.find.lift(x) orElse Some(Sorting())
   }, (x => x.repr)) / "index" >> Value(Sorting())
@@ -74,6 +75,6 @@ object Spec {
     }) / "archive" >> Hidden
 
   def entries = {
-    List(index, company, person, serviceable, service, archive)
+	  List(index, company, person, serviceable, service, archive, matrixArchive)
   }
 }

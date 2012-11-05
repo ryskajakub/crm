@@ -73,3 +73,18 @@ class ArchiveSnip(x: (Box[(Service, List[(Option[Int], Serviceable)])], List[Ser
     }
   }
 }
+class MatrixSnip(s:Serviceable){
+  def render(in:NodeSeq):NodeSeq = {
+	  val services = s.getArchive
+	  services.flatMap{(service:Service) => 
+    Helpers.bind("matrix",in,
+	"date" -%> Text(Misc.dateFormat.print(service.date1)),
+      "type" -%> Text(service.type1.toString),
+      "result" -%> Text(service.result)
+	  )
+	  }
+  }
+  def name(in:NodeSeq):NodeSeq = {
+	  Text(s.manufacturer + " " + s.specification)
+  }
+}

@@ -1,6 +1,15 @@
 
 <lift:surround with="default" at="content">
-    <lift:ArchiveSnip.matrix>
-    </lift:ArchiveSnip.martix>
+<table>
+	<tr><th colspan="3">Archiv servisů na: <lift:MatrixSnip.name/></th></tr>
+	<tr><th>Datum</th><th>Typ</th><th>Výsledek</th></tr>
+    <lift:MatrixSnip>
+	<tr>
+		<td><matrix:date/></td>
+		<td><matrix:type/></td>
+		<td><matrix:result/></td>
+	</tr>
+    </lift:MatrixSnip>
+</table>
    
 </lift:surround>

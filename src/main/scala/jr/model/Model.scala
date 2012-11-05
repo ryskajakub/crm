@@ -51,6 +51,13 @@ case class Serviceable(id: Box[Long] = Empty,
                        intoService: Box[DateMidnight] = Empty, serialNumber: Box[String] = Empty,
                        manufacturer: String = "", power: Box[Double] = Empty, note: String = "",
                        intervalDays: Int = 365, dateSold: Box[DateMidnight] = Empty){
+	def getArchive:List[Service] = {
+		(for{
+			i <- id.toList
+		} yield {
+			Logic.getServices(i)
+		}).flatten
+	}
 	def getCompany:Box[Company] = {
 		parentCompany.flatMap((either:Either[Long,Long]) => {
 				val compBox:Box[Company] = either match {
