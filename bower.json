@@ -1,0 +1,18 @@
+{
+  "name": "crm",
+  "version": "0.0.0",
+  "homepage": "https://github.com/coubeatczech/crm",
+  "authors": [
+    "Jakub Ryška <ryskajakub@seznam.cz>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {}
+}
