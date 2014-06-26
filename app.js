@@ -8,11 +8,8 @@ requirejs.config({
 });
 
 requirejs(
-  ["jquery", "underscore", "backbone", "backbonelocalstorage"],
-  function ($, _, BB, LS) {
-    console.log($);
-    console.log(_);
-    console.log(BB);
-    console.log(LS);
+  ["scripts/main"],
+  function (main) {
+    main.run();
   }
 );
