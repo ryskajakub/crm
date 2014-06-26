@@ -5,6 +5,7 @@ module.exports = function(grunt) {
       dist: {
         options: {
           sassDir: "sass"
+          , require: "singularitygs"
         }
       }
     } ,
