@@ -12,11 +12,6 @@ require.config({
   }
 });
 
-require(['react', 'jsx!bower_components/jsx-requirejs-plugin/js/components/Timer'], function(React, Timer) {
-  var start = new Date();
-
-  // Mount the JSX component in the app container
-  React.renderComponent(
-      Timer({start: start}),
-      document.getElementById('js-app-container'));
+require(['react', 'jsx!app'], function(React, App) {
+  
 });
