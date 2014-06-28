@@ -1,4 +1,4 @@
-define(['react'], function(React) {
+define(["react", "backbone"], function(React, Backbone) {
 
   var originalData = [
     { author: "John Resig", comment: "JQuery rulez!!!" } 
