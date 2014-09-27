@@ -31,10 +31,21 @@
 			</thead>
 			<tbody>
 				{{#each model}}
-					<tr><td>{{title}}</td><td>{{format-date date}}</td></tr>
+					<tr>
+						<td>
+							{{#link-to 'company' id}}
+								{{title}}
+							{{/link-to}}
+						</td>
+						<td>{{format-date date}}</td>
+					</tr>
 				{{/each}}
 			</tbody>
 		</table>
+	</script>
+
+	<script type="text/x-handlebars" data-template-name="company">
+		<h4>{{model}}</h4>
 	</script>
 
 	<script src="js/libs/moment-with-locales.min.js"></script>
