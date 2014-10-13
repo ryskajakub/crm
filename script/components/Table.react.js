@@ -31,7 +31,7 @@ var Table = React.createClass({
 		}, []);
 
   	return (
-			<table>
+			<table className="table table-stripped">
 				<thead>
 					<tr><th>Column 4</th></tr>
 				</thead>
