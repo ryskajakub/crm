@@ -11,9 +11,9 @@
 
 var React = require('react');
 
-var Table = require('./components/Table.react');
+var AppMainPage = require('./components/AppMainPage.react');
 
 React.renderComponent(
-  <Table />,
+  <AppMainPage />,
   document.getElementById('crm-app')
 );

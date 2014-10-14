@@ -5,20 +5,11 @@ var CompanyConstants = require('../constants/CompanyConstants');
 
 var CHANGE_EVENT = "change";
 
-var companies = {
-	1: {
-		"name": "Firma 1"
-		, "days": 10
-	},
-	2: {
-		"name": "Firma 2"
-		, "days": 20
-	}
-};
+var company = null;
 
-var CompaniesStore = merge(EventEmitter.prototype, {
-  getAll: function() {
-    return companies;
+var CompanyDetailStore = merge(EventEmitter.prototype, {
+  get: function() {
+    return {"company": company};
   },
 
   emitChange: function() {
@@ -45,14 +36,18 @@ AppDispatcher.register(function(payload) {
 
   switch(action.actionType) {
 
+		case CompanyConstants.COMPANY_SHOW_DETAIL:
+			company = action.companyId;
+		break;
+
     default:
       return true;
   }
 
-  CompaniesStore.emitChange();
+  CompanyDetailStore.emitChange();
   return true; // No errors.  Needed by promise in Dispatcher.
 
 });
 
 
-module.exports = CompaniesStore;
+module.exports = CompanyDetailStore;

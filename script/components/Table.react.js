@@ -13,6 +13,18 @@ var Table = React.createClass({
 		return CompaniesStore.getAll();
   },
 
+  componentDidMount: function() {
+    CompaniesStore.addChangeListener(this.onNewState);
+  },
+
+  componentWillUnmount: function() {
+    CompaniesStore.removeChangeListener(this.onNewState);
+  },
+
+	onNewState: function () {
+		this.setState(CompaniesStore.getAll());
+	},
+
   /**
    * @return {object}
    */

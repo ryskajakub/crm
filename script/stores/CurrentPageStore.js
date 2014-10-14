@@ -5,20 +5,17 @@ var CompanyConstants = require('../constants/CompanyConstants');
 
 var CHANGE_EVENT = "change";
 
-var companies = {
-	1: {
-		"name": "Firma 1"
-		, "days": 10
-	},
-	2: {
-		"name": "Firma 2"
-		, "days": 20
-	}
-};
+var currentPage;
 
-var CompaniesStore = merge(EventEmitter.prototype, {
-  getAll: function() {
-    return companies;
+var setPage = function(page) {
+	currentPage = {"page" : page };
+}
+
+setPage(CompanyConstants.PAGE_MAIN);
+
+var CurrentPageStore = merge(EventEmitter.prototype, {
+  get: function() {
+    return currentPage;
   },
 
   emitChange: function() {
@@ -45,14 +42,24 @@ AppDispatcher.register(function(payload) {
 
   switch(action.actionType) {
 
+		case CompanyConstants.RETURN_TO_MAIN_PAGE:
+			setPage(CompanyConstants.PAGE_MAIN);
+			CurrentPageStore.emitChange();
+		break;
+
+		case CompanyConstants.COMPANY_SHOW_DETAIL:
+			setPage(CompanyConstants.PAGE_COMPANY_DETAIL);
+			CurrentPageStore.emitChange();
+		break;
+
     default:
       return true;
   }
 
-  CompaniesStore.emitChange();
+  CurrentPageStore.emitChange();
   return true; // No errors.  Needed by promise in Dispatcher.
 
 });
 
 
-module.exports = CompaniesStore;
+module.exports = CurrentPageStore;
