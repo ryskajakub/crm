@@ -4,17 +4,13 @@
 
 var React = require("react");
 var _ = require("underscore");
-
-var getTable = function () {
-	return {
-		"rows": [1, 2, 4, 5]
-	};
-}
+var CompanyRow = require("./CompanyRow.react");
+var CompaniesStore = require("../stores/CompaniesStore");
 
 var Table = React.createClass({
 
   getInitialState: function() {
-		return getTable();
+		return CompaniesStore.getAll();
   },
 
   /**
@@ -22,10 +18,11 @@ var Table = React.createClass({
    */
   render: function() {
 
-		var rows = this.state.rows;
+		var rows = this.state;
 
-		var rowsHtml = _.reduce(rows, function(acc, elem) {
-			var elem = <tr><td>{elem}</td></tr>;
+		var rowsHtml = _.reduce(rows, function(acc, value, key) {
+			var elem = 
+				<CompanyRow companyRow={value} key={key} />
 			acc.push(elem);
 			return acc;
 		}, []);
@@ -33,7 +30,7 @@ var Table = React.createClass({
   	return (
 			<table className="table table-stripped">
 				<thead>
-					<tr><th>Column 4</th></tr>
+					<tr><th>Název</th><th>Detail</th></tr>
 				</thead>
 				<tbody>
 					{rowsHtml}
