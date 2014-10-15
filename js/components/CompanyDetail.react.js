@@ -4,13 +4,12 @@
 var React = require('react');
 var CompanyStore = require("../stores/CompanyStore");
 
-var CompanyRow = React.createClass({
+var CompanyDetail = React.createClass({
 
   /**
    * @return {object}
    */
   render: function() {
-
 		return(
 			<div>{this.state.name}</div>
 		);
@@ -38,4 +37,4 @@ var CompanyRow = React.createClass({
 
 });
 
-module.exports = CompanyRow;
+module.exports = CompanyDetail;

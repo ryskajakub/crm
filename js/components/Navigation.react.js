@@ -18,6 +18,7 @@ var Navigation = React.createClass({
 			<div>
 				<ul>
 					<Link to='table'>Main Page</Link>
+					<Link to='company-new'>Nová firma</Link>
 				</ul>
 				<this.props.activeRouteHandler />
 			</div>
