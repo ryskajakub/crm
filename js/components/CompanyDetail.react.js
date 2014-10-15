@@ -2,13 +2,9 @@
  * @jsx React.DOM
  */
 var React = require('react');
-var CompanyDetailStore = require("../stores/CompanyDetailStore");
+var CompanyStore = require("../stores/CompanyStore");
 
 var CompanyRow = React.createClass({
-
-  getInitialState: function() {
-		return CompanyDetailStore.get();
-  },
 
   /**
    * @return {object}
@@ -16,22 +12,28 @@ var CompanyRow = React.createClass({
   render: function() {
 
 		return(
-			<div>Company detail</div>
+			<div>{this.state.name}</div>
 		);
 	}
 
+	, getInitialState: function () {
+		return this.getCompanyById(this.props.params.companyId);
+	}
+
+	, getCompanyById: function(id) {
+		return CompanyStore.get(id);
+	}
+
   , componentDidMount: function() {
-    CompanyDetailStore.addChangeListener(this.onChange);
+    CompanyStore.addChangeListener(this.onChange);
   }
 
   , componentWillUnmount: function() {
-    CompanyDetailStore.removeChangeListener(this.onChange);
+    CompanyStore.removeChangeListener(this.onChange);
   }
 
 	, onChange: function() {
-		this.setState(
-			CompanyDetailStore.get()
-		);
+		this.setState(this.getCompanyById(this.props.params.companyId));
 	}
 
 });
