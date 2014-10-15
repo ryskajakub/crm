@@ -24,7 +24,7 @@ var routes = (
 	<Routes location="history">
 		<Route path="/" handler={Navigation}>
 			<Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
-			<DefaultRoute handler={Table} />
+			<DefaultRoute name="table" handler={Table} />
 		</Route>
 	</Routes>
 );

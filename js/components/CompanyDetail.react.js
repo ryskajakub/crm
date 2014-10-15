@@ -16,7 +16,7 @@ var CompanyRow = React.createClass({
   render: function() {
 
 		return(
-			<div>{this.state.company}</div>
+			<div>Company detail</div>
 		);
 	}
 

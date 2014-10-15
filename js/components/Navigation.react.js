@@ -5,6 +5,9 @@
 var React = require("react");
 var CompanyActions = require("../actions/CompanyActions")
 
+var Router = require('react-router');
+var Link = Router.Link;
+
 var Navigation = React.createClass({
 
   /**
@@ -14,7 +17,7 @@ var Navigation = React.createClass({
   	return (
 			<div>
 				<ul>
-					<a href="#">Main Page</a>
+					<Link to='table'>Main Page</Link>
 				</ul>
 				<this.props.activeRouteHandler />
 			</div>
