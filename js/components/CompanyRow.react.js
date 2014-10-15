@@ -5,6 +5,9 @@
 var React = require('react');
 var CompanyActions = require('../actions/CompanyActions');
 
+var Router = require('react-router');
+var Link = Router.Link;
+
 var CompanyRow = React.createClass({
 
   /**
@@ -14,15 +17,12 @@ var CompanyRow = React.createClass({
     var companyRow = this.props.companyRow;
 		return(
 			<tr>
-				<td><a href="javascript://" onClick={this.onClick}>{companyRow["name"]}</a></td>
+				<td>
+					<Link to='company-detail' params={{companyId: this.props.key}}>{companyRow["name"]}</Link>
+				</td>
 				<td>{companyRow["days"]}</td>
 			</tr>
 		);
-	}
-
-	, onClick: function() {
-		var companyId = this.props.key;
-		CompanyActions.showCompanyDetail(companyId);
 	}
 
 });

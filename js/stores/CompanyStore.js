@@ -16,8 +16,8 @@ var companies = {
 	}
 };
 
-var CompaniesStore = merge(EventEmitter.prototype, {
-  getAll: function() {
+var CompanyStore = merge(EventEmitter.prototype, {
+  get: function() {
     return companies;
   },
 
@@ -49,10 +49,10 @@ AppDispatcher.register(function(payload) {
       return true;
   }
 
-  CompaniesStore.emitChange();
+  CompanyStore.emitChange();
   return true; // No errors.  Needed by promise in Dispatcher.
 
 });
 
 
-module.exports = CompaniesStore;
+module.exports = CompanyStore;

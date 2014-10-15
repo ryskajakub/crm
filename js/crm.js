@@ -16,8 +16,19 @@ var Route = Router.Route;
 var Routes = Router.Routes;
 var DefaultRoute = Router.DefaultRoute;
 
-var App = require('./components/App.react');
+var Navigation = require("./components/Navigation.react");
+var CompanyDetail = require("./components/CompanyDetail.react");
+var Table = require("./components/Table.react");
+
+var routes = (
+	<Routes location="history">
+		<Route path="/" handler={Navigation}>
+			<Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
+			<DefaultRoute handler={Table} />
+		</Route>
+	</Routes>
+);
 
 React.renderComponent(
-	<App /> , document.getElementById('crm-app')
+	routes, document.getElementById('crm-app')
 );

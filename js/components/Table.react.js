@@ -5,24 +5,24 @@
 var React = require("react");
 var _ = require("underscore");
 var CompanyRow = require("./CompanyRow.react");
-var CompaniesStore = require("../stores/CompaniesStore");
+var CompanyStore = require("../stores/CompanyStore");
 
 var Table = React.createClass({
 
   getInitialState: function() {
-		return CompaniesStore.getAll();
+		return CompanyStore.get();
   },
 
   componentDidMount: function() {
-    CompaniesStore.addChangeListener(this.onNewState);
+    CompanyStore.addChangeListener(this.onNewState);
   },
 
   componentWillUnmount: function() {
-    CompaniesStore.removeChangeListener(this.onNewState);
+    CompanyStore.removeChangeListener(this.onNewState);
   },
 
 	onNewState: function () {
-		this.setState(CompaniesStore.getAll());
+		this.setState(CompanyStore.get());
 	},
 
   /**
@@ -42,7 +42,7 @@ var Table = React.createClass({
   	return (
 			<table className="table table-stripped">
 				<thead>
-					<tr><th>Název</th><th>Detail</th></tr>
+					<tr><th>Název</th><th>Dny</th></tr>
 				</thead>
 				<tbody>
 					{rowsHtml}
