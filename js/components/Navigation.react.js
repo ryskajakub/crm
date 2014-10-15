@@ -14,16 +14,12 @@ var Navigation = React.createClass({
   	return (
 			<div>
 				<ul>
-					<a href="javascript://" onClick={this.onClick}>Main Page</a>
+					<a href="#">Main Page</a>
 				</ul>
-				{this.props.children}
+				<this.props.activeRouteHandler />
 			</div>
   	);
   }
-
-	, onClick: function() {
-		CompanyActions.returnToMainPage();
-	}
 
 });
 

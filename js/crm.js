@@ -10,10 +10,14 @@
  */
 
 var React = require('react');
+var Router = require('react-router');
 
-var TodoApp = require('./components/TodoApp.react');
+var Route = Router.Route;
+var Routes = Router.Routes;
+var DefaultRoute = Router.DefaultRoute;
+
+var App = require('./components/App.react');
 
 React.renderComponent(
-  <TodoApp />,
-  document.getElementById('todoapp')
+	<App /> , document.getElementById('crm-app')
 );

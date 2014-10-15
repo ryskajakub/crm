@@ -21,8 +21,6 @@ var CompanyActions = {
 			actionType: CompanyConstants.RETURN_TO_MAIN_PAGE
 		}
 
-		console.log(object);
-
 		AppDispatcher.handleViewAction(object);
 	}
 
