@@ -8,6 +8,26 @@ var CompanyActions = require("../actions/CompanyActions")
 var Router = require('react-router');
 var Link = Router.Link;
 
+var B = require("react-bootstrap"); 
+var Navbar = B.Navbar;
+var Nav = B.Nav;
+var NavItem = B.NavItem;
+
+var NavLink = React.createClass({
+
+  /**
+   * @return {object}
+   */
+  render: function() {
+  	return (
+			<li>
+				<Link to={this.props.to}>{this.props.children}</Link>
+			</li>
+  	);
+  }
+
+});
+
 var Navigation = React.createClass({
 
   /**
@@ -16,10 +36,12 @@ var Navigation = React.createClass({
   render: function() {
   	return (
 			<div>
-				<ul>
-					<Link to='table'>Main Page</Link>
-					<Link to='company-new'>Nová firma</Link>
-				</ul>
+				<Navbar>
+					<Nav>
+						<NavLink to='table'>Hlavní strana</NavLink>
+						<NavLink to='company-new'>Nová firma</NavLink>
+					</Nav>
+				</Navbar>
 				<this.props.activeRouteHandler />
 			</div>
   	);

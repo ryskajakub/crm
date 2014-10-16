@@ -6,6 +6,7 @@ var React = require("react");
 var _ = require("underscore");
 var CompanyRow = require("./CompanyRow.react");
 var CompanyStore = require("../stores/CompanyStore");
+var BTable = require("react-bootstrap").Table;
 
 var Table = React.createClass({
 
@@ -40,14 +41,14 @@ var Table = React.createClass({
 		}, []);
 
   	return (
-			<table className="table table-stripped">
+			<BTable striped bordered>
 				<thead>
 					<tr><th>Název</th><th>Dny</th></tr>
 				</thead>
 				<tbody>
 					{rowsHtml}
 				</tbody>
-			</table>
+			</BTable>
   	);
   }
 
