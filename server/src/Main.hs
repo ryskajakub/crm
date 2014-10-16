@@ -1,8 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Snap.Core (route, writeBS, method, Snap, Method(GET))
+import Snap.Core (route, writeBS, method, Snap, Method(GET), putResponse, emptyResponse)
 import Snap.Http.Server (quickHttpServe)
+import Control.Monad.IO.Class (liftIO)
 
 main :: IO ()
 main = quickHttpServe site
@@ -10,7 +11,8 @@ main = quickHttpServe site
 site :: Snap ()
 site =
   route [("/api",
-    route [("/foo",
-      method GET (writeBS "bar")
+    route [("/company/new", do 
+      liftIO $ putStrLn "AHOJ" 
+      method GET $ putResponse emptyResponse
     )]
   )]
