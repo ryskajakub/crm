@@ -1,0 +1,19 @@
+server {
+
+  server_name crm;
+
+  root /var/www/crm;
+
+	location /api {
+		proxy_pass http://localhost:8000;
+	}
+
+	location /client {
+		try_files /$uri /client/index.html;
+	}
+
+	location / {
+		try_files /client/$uri /client/index.html;
+	}
+
+}
