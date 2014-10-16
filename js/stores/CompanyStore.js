@@ -2,6 +2,7 @@ var AppDispatcher = require('../dispatcher/AppDispatcher');
 var EventEmitter = require('events').EventEmitter;
 var merge = require('react/lib/merge');
 var CompanyConstants = require('../constants/CompanyConstants');
+var _ = require("underscore");
 
 var CHANGE_EVENT = "change";
 
@@ -16,8 +17,16 @@ var companies = {
 	}
 };
 
+var id = 2;
+
 var CompanyStore = merge(EventEmitter.prototype, {
-  get: function(id) {
+
+	nextId: function () {
+		id += 1;
+		return id;
+	}
+
+  , get: function(id) {
 		return (
 			(id === undefined) ?
 			companies :
@@ -44,10 +53,19 @@ var CompanyStore = merge(EventEmitter.prototype, {
   }
 });
 
+function addCompany(company) {
+	var key = _.keys(company)[0];
+	companies[key] = company[key];
+}
+
 AppDispatcher.register(function(payload) {
   var action = payload.action;
 
-  switch(action.actionType) {
+  switch(action.type) {
+
+		case CompanyConstants.SERVER_CREATED_COMPANY:
+			addCompany(action.company);
+		break;
 
     default:
       return true;
