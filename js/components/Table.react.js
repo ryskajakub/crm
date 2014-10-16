@@ -7,6 +7,7 @@ var _ = require("underscore");
 var CompanyRow = require("./CompanyRow.react");
 var CompanyStore = require("../stores/CompanyStore");
 var BTable = require("react-bootstrap").Table;
+var DocumentTitle = require('react-document-title');
 
 var Table = React.createClass({
 
@@ -41,14 +42,16 @@ var Table = React.createClass({
 		}, []);
 
   	return (
-			<BTable striped bordered>
-				<thead>
-					<tr><th>Název</th><th>Dny</th></tr>
-				</thead>
-				<tbody>
-					{rowsHtml}
-				</tbody>
-			</BTable>
+			<DocumentTitle title={"CRM - Seznam firem"}>
+				<BTable striped bordered>
+					<thead>
+						<tr><th>Název</th><th>Dny</th></tr>
+					</thead>
+					<tbody>
+						{rowsHtml}
+					</tbody>
+				</BTable>
+			</DocumentTitle>
   	);
   }
 
