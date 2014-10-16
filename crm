@@ -1,0 +1,13 @@
+server {
+
+	server_name crm;
+
+	root /var/www/crm;
+	index index.html;
+
+	location / {
+		try_files $uri /$uri /index.html;
+	}
+
+}
+
