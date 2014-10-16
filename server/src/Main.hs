@@ -19,6 +19,7 @@ site =
       liftIO $ do
         connection <- connect connectionInfo
         execute connection createCompanyQuery ("123" :: String, 345 :: Int)
+        close connection
       method GET $ putResponse emptyResponse
     )]
   )]
