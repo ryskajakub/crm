@@ -1,8 +1,8 @@
 {
   "name": "todomvc-flux",
-  "version": "0.0.2",
-  "description": "Example Flux architecture.",
-  "repository": "https://github.com/facebook/flux",
+  "version": "0.0.0",
+  "description": "crm.",
+  "repository": "https://github.com/coubeatczche/crm",
   "main": "js/crm.js",
   "dependencies": {
     "flux": "^2.0.0",
@@ -25,7 +25,7 @@
     "build": "NODE_ENV=production browserify . | uglifyjs -cm > js/bundle.min.js",
     "test": "jest"
   },
-  "author": "Bill Fisher",
+  "author": "Jakub Ryška",
   "browserify": {
     "transform": [
       "reactify",
@@ -33,6 +33,6 @@
     ]
   },
   "jest": {
-    "rootDir": "./script"
+    "rootDir": "./js"
   }
 }
