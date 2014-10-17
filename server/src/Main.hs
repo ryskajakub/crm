@@ -4,13 +4,18 @@
 
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode, Response)
+import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode)
 import Snap.Http.Server (quickHttpServe)
+
 import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo)
+
 import Control.Monad.IO.Class (liftIO)
+import Control.Exception (try, SomeException)
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
 import Data.Aeson(decode)
+
+import Data.Int(Int64)
 
 data Company = Company {
   name :: String
@@ -38,9 +43,11 @@ site =
         response <- case maybeCompany of
           Just (company) -> liftIO $ do
             connection <- connect connectionInfo
-            execute connection createCompanyQuery (name company, days company)
+            queryResult <- (try $ (execute connection createCompanyQuery (name company, days company))) :: IO (Either SomeException Int64)
             close connection
-            return emptyResponse
+            return $ case queryResult of
+              Left err -> setResponseCode 409 emptyResponse
+              _ -> emptyResponse
           Nothing ->
             return $ setResponseCode 400 emptyResponse
         putResponse response

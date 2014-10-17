@@ -3,4 +3,5 @@ create table Company (
   , name varchar(255) not null
   , days mediumint not null
   , primary key(id)
+  , unique(name)
 );
