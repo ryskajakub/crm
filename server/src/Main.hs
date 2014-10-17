@@ -10,7 +10,7 @@ import Snap.Http.Server (quickHttpServe)
 import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo)
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Exception (try, SomeException)
+import Control.Exception (try, SomeException, bracket)
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
 import Data.Aeson(decode)
@@ -42,11 +42,12 @@ site =
         maybeCompany <- return $ (decode requestBody :: Maybe Company)
         response <- case maybeCompany of
           Just (company) -> liftIO $ do
-            connection <- connect connectionInfo
-            queryResult <- (try $ (execute connection createCompanyQuery (name company, days company))) :: IO (Either SomeException Int64)
-            close connection
+            queryResult <- bracket
+              (connect connectionInfo)
+              (close)
+              (\connection -> (try $ (execute connection createCompanyQuery (name company, days company)) :: IO (Either SomeException Int64)))
             return $ case queryResult of
-              Left err -> setResponseCode 409 emptyResponse
+              Left _ -> setResponseCode 409 emptyResponse
               _ -> emptyResponse
           Nothing ->
             return $ setResponseCode 400 emptyResponse
