@@ -4,25 +4,30 @@
 
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode)
+import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS)
 import Snap.Http.Server (quickHttpServe)
 
-import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo)
+import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID)
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, SomeException, bracket)
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
-import Data.Aeson(decode)
+import Data.Aeson(decode, encode)
 
-import Data.Int(Int64)
+import Data.Word(Word64)
 
 data Company = Company {
   name :: String
   , days :: Int
 } deriving (Show)
 
+data IdResponse = IdResponse {
+  id :: Int
+}
+
 $(deriveJSON defaultOptions ''Company)
+$(deriveJSON defaultOptions ''IdResponse)
 
 connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
@@ -40,21 +45,28 @@ site =
       method POST $ do
         requestBody <- readRequestBody 1024
         maybeCompany <- return $ (decode requestBody :: Maybe Company)
-        response <- case maybeCompany of
-          Just (company) -> liftIO $ bracket
-            (connect connectionInfo)
-            (close)
-            (\connection ->
-              let
-                queryResult = (try $ (execute connection createCompanyQuery (name company, days company)) :: IO (Either SomeException Int64))
-                response = fmap (\queryResult -> case queryResult of
-                  Left _ -> setResponseCode 409 emptyResponse
-                  _ -> emptyResponse) queryResult
-              in
-                response
-            )
+        case maybeCompany of
+          Just (company) ->
+            (=<<) (\x -> x) (liftIO $ bracket
+              (connect connectionInfo)
+              (close)
+              (\connection ->
+                let
+                  queryResult = (try $ do
+                    execute connection createCompanyQuery (name company, days company)
+                    insertID connection) :: IO (Either SomeException Word64)
+                  response = (fmap (\qr -> case qr of
+                    Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
+                    Right recordId ->
+                      let
+                        encodedId = encode $ IdResponse $ fromIntegral recordId
+                      in
+                        writeLBS encodedId
+                    ) queryResult) :: IO (Snap ())
+                in
+                  response
+              ))
           Nothing ->
-            return $ setResponseCode 400 emptyResponse
-        putResponse response
+            (putResponse $ setResponseCode 400 emptyResponse)
     )]
   )]
