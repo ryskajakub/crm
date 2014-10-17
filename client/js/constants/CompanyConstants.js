@@ -10,4 +10,5 @@ module.exports = keyMirror({
 	, PAGE_MAIN: null
 	, PAGE_COMPANY_DETAIL: null
 	, SERVER_CREATED_COMPANY: null
+	, SERVER_CREATE_COMPANY_FAIL: null
 });

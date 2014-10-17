@@ -25,6 +25,15 @@ var CompanyActions = {
 					, company: createdCompany
 				});
 			}
+			, error: function(error) {
+				var status = error.status;
+				if (409 === status) {
+					AppDispatcher.handleServerAction({
+						type: CompanyConstants.SERVER_CREATE_COMPANY_FAIL
+						, companyNameError: "Takové jméno firmy již existuje"
+					})
+				}
+			}
 		});
 	}
 };

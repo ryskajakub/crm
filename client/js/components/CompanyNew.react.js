@@ -13,6 +13,7 @@ var Input = B.Input;
 var Button = B.Button;
 
 var CompanyActions = require("../actions/CompanyActions")
+var CompanyFormStore = require("../stores/CompanyFormStore")
 
 var CompanyNew = React.createClass({
 
@@ -22,7 +23,20 @@ var CompanyNew = React.createClass({
 		return {
 			"companyName": ""
 			, "companyDays": ""
+			, "companyNameError": ""
 		};
+	}
+
+  , componentDidMount: function() {
+    CompanyFormStore.addChangeListener(this.onNewState);
+  }
+
+  , componentWillUnmount: function() {
+    CompanyFormStore.removeChangeListener(this.onNewState);
+  }
+
+	, onNewState: function () {
+		this.setState(CompanyFormStore.get());
 	}
 
   /**
@@ -34,7 +48,8 @@ var CompanyNew = React.createClass({
 				<Grid>
 					<Row>
 						<Col lg={6} lgOffset={3}>
-							<Input type="text" label="Jméno firmy" valueLink={this.linkState("companyName")} />
+							<Input type="text" label="Jméno firmy" valueLink={this.linkState("companyName")} 
+								help={this.state.companyNameError} />
 							<Input type="text" label="Dny" valueLink={this.linkState("companyDays")} />
 							<Button bsStyle="primary" bsSize="large" onClick={this.click}>Vytvořit</Button>
 						</Col>
