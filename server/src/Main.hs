@@ -41,14 +41,18 @@ site =
         requestBody <- readRequestBody 1024
         maybeCompany <- return $ (decode requestBody :: Maybe Company)
         response <- case maybeCompany of
-          Just (company) -> liftIO $ do
-            queryResult <- bracket
-              (connect connectionInfo)
-              (close)
-              (\connection -> (try $ (execute connection createCompanyQuery (name company, days company)) :: IO (Either SomeException Int64)))
-            return $ case queryResult of
-              Left _ -> setResponseCode 409 emptyResponse
-              _ -> emptyResponse
+          Just (company) -> liftIO $ bracket
+            (connect connectionInfo)
+            (close)
+            (\connection ->
+              let
+                queryResult = (try $ (execute connection createCompanyQuery (name company, days company)) :: IO (Either SomeException Int64))
+                response = fmap (\queryResult -> case queryResult of
+                  Left _ -> setResponseCode 409 emptyResponse
+                  _ -> emptyResponse) queryResult
+              in
+                response
+            )
           Nothing ->
             return $ setResponseCode 400 emptyResponse
         putResponse response
