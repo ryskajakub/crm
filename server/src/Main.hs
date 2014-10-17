@@ -4,14 +4,13 @@
 
 module Main where
 
-import Snap.Core (route, writeBS, method, Snap, Method(GET, POST), putResponse, emptyResponse, readRequestBody)
+import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody)
 import Snap.Http.Server (quickHttpServe)
-import Database.MySQL.Simple (defaultConnectInfo, Query, query, connect, connectDatabase, execute, close)
+import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
 import Data.Aeson(decode)
-import Data.ByteString.Lazy.Char8(unpack)
 
 data Company = Company {
   name :: String
@@ -20,7 +19,10 @@ data Company = Company {
 
 $(deriveJSON defaultOptions ''Company)
 
+connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
+
+createCompanyQuery :: Query
 createCompanyQuery = "insert into Company(name, days) values (?, ?)"
 
 main :: IO ()
