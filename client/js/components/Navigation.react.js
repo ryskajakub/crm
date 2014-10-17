@@ -19,11 +19,11 @@ var NavLink = React.createClass({
    * @return {object}
    */
   render: function() {
-  	return (
-			<li>
-				<Link to={this.props.to}>{this.props.children}</Link>
-			</li>
-  	);
+    return (
+      <li>
+        <Link to={this.props.to}>{this.props.children}</Link>
+      </li>
+    );
   }
 
 });
@@ -34,17 +34,17 @@ var Navigation = React.createClass({
    * @return {object}
    */
   render: function() {
-  	return (
-			<div>
-				<Navbar>
-					<Nav>
-						<NavLink to='table'>Hlavní strana</NavLink>
-						<NavLink to='company-new'>Nová firma</NavLink>
-					</Nav>
-				</Navbar>
-				<this.props.activeRouteHandler />
-			</div>
-  	);
+    return (
+      <div>
+        <Navbar>
+          <Nav>
+            <NavLink to='table'>Hlavní strana</NavLink>
+            <NavLink to='company-new'>Nová firma</NavLink>
+          </Nav>
+        </Navbar>
+        <this.props.activeRouteHandler />
+      </div>
+    );
   }
 
 });

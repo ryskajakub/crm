@@ -17,15 +17,15 @@ var CompanyFormStore = require("../stores/CompanyFormStore")
 
 var CompanyNew = React.createClass({
 
-	mixins: [LinkedStateMixin]
+  mixins: [LinkedStateMixin]
 
-	, getInitialState: function() {
-		return {
-			"companyName": ""
-			, "companyDays": ""
-			, "companyNameError": ""
-		};
-	}
+  , getInitialState: function() {
+    return {
+      "companyName": ""
+      , "companyDays": ""
+      , "companyNameError": ""
+    };
+  }
 
   , componentDidMount: function() {
     CompanyFormStore.addChangeListener(this.onNewState);
@@ -35,39 +35,39 @@ var CompanyNew = React.createClass({
     CompanyFormStore.removeChangeListener(this.onNewState);
   }
 
-	, onNewState: function () {
-		this.setState(CompanyFormStore.get());
-	}
+  , onNewState: function () {
+    this.setState(CompanyFormStore.get());
+  }
 
   /**
    * @return {object}
    */
   , render: function() {
-		return(
-			<DocumentTitle title={"CRM - Nová firma"}>
-				<Grid>
-					<Row>
-						<Col lg={6} lgOffset={3}>
-							<Input type="text" label="Jméno firmy" valueLink={this.linkState("companyName")} 
-								help={this.state.companyNameError} />
-							<Input type="text" label="Dny" valueLink={this.linkState("companyDays")} />
-							<Button bsStyle="primary" bsSize="large" onClick={this.click}>Vytvořit</Button>
-						</Col>
-					</Row>
-				</Grid>
-			</DocumentTitle>
-		);
-	}
+    return(
+      <DocumentTitle title={"CRM - Nová firma"}>
+        <Grid>
+          <Row>
+            <Col lg={6} lgOffset={3}>
+              <Input type="text" label="Jméno firmy" valueLink={this.linkState("companyName")} 
+                help={this.state.companyNameError} />
+              <Input type="text" label="Dny" valueLink={this.linkState("companyDays")} />
+              <Button bsStyle="primary" bsSize="large" onClick={this.click}>Vytvořit</Button>
+            </Col>
+          </Row>
+        </Grid>
+      </DocumentTitle>
+    );
+  }
 
-	, click: function() {
-		var company = {
-			"name": this.state.companyName
-			, "days": parseInt(this.state.companyDays)
-		}
+  , click: function() {
+    var company = {
+      "name": this.state.companyName
+      , "days": parseInt(this.state.companyDays)
+    }
 
-		CompanyActions.createCompany(company);
+    CompanyActions.createCompany(company);
 
-	}
+  }
 
 });
 

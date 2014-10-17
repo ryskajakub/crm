@@ -13,5 +13,5 @@ var React = require('react');
 var TheApp = require("./components/TheApp.react");
 
 React.renderComponent(
-	TheApp, document.getElementById('crm-app')
+  TheApp, document.getElementById('crm-app')
 );

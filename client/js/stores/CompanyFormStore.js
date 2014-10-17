@@ -11,11 +11,11 @@ var companyNameError = "";
 var CompanyFormStore = merge(EventEmitter.prototype, {
 
   get: function() {
-		return (
-			{
-				"companyNameError" : companyNameError
-			}
-		);
+    return (
+      {
+        "companyNameError" : companyNameError
+      }
+    );
   },
 
   emitChange: function() {
@@ -38,16 +38,16 @@ var CompanyFormStore = merge(EventEmitter.prototype, {
 });
 
 function setCompanyNameError(newCompanyNameError) {
-	companyNameError = newCompanyNameError;
+  companyNameError = newCompanyNameError;
 }
 
 AppDispatcher.register(function(payload) {
   var action = payload.action;
 
   switch(action.type) {
-		case CompanyConstants.SERVER_CREATE_COMPANY_FAIL:
-			setCompanyNameError(action.companyNameError);
-		break;
+    case CompanyConstants.SERVER_CREATE_COMPANY_FAIL:
+      setCompanyNameError(action.companyNameError);
+    break;
 
     default:
       return true;

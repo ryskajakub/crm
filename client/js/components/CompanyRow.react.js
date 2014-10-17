@@ -15,15 +15,15 @@ var CompanyRow = React.createClass({
    */
   render: function() {
     var companyRow = this.props.companyRow;
-		return(
-			<tr>
-				<td>
-					<Link to='company-detail' params={{companyId: this.props.key}}>{companyRow["name"]}</Link>
-				</td>
-				<td>{companyRow["days"]}</td>
-			</tr>
-		);
-	}
+    return(
+      <tr>
+        <td>
+          <Link to='company-detail' params={{companyId: this.props.key}}>{companyRow["name"]}</Link>
+        </td>
+        <td>{companyRow["days"]}</td>
+      </tr>
+    );
+  }
 
 });
 

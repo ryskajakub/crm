@@ -7,24 +7,24 @@ var _ = require("underscore");
 var CHANGE_EVENT = "change";
 
 var companies = {
-	1: {
-		"name": "Firma 1"
-		, "days": 10
-	},
-	2: {
-		"name": "Firma 2"
-		, "days": 20
-	}
+  1: {
+    "name": "Firma 1"
+    , "days": 10
+  },
+  2: {
+    "name": "Firma 2"
+    , "days": 20
+  }
 };
 
 var CompanyStore = merge(EventEmitter.prototype, {
 
   get: function(id) {
-		return (
-			(id === undefined) ?
-			companies :
-			companies[id]
-		);
+    return (
+      (id === undefined) ?
+      companies :
+      companies[id]
+    );
   },
 
   emitChange: function() {
@@ -47,8 +47,8 @@ var CompanyStore = merge(EventEmitter.prototype, {
 });
 
 function addCompany(company) {
-	var key = _.keys(company)[0];
-	companies[key] = company[key];
+  var key = _.keys(company)[0];
+  companies[key] = company[key];
 }
 
 AppDispatcher.register(function(payload) {
@@ -56,9 +56,9 @@ AppDispatcher.register(function(payload) {
 
   switch(action.type) {
 
-		case CompanyConstants.SERVER_CREATED_COMPANY:
-			addCompany(action.company);
-		break;
+    case CompanyConstants.SERVER_CREATED_COMPANY:
+      addCompany(action.company);
+    break;
 
     default:
       return true;

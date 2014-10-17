@@ -14,13 +14,13 @@ var CompanyNew = require("./CompanyNew.react");
 var Table = require("./Table.react");
 
 var TheApp = (
-	<Routes location="history">
-		<Route path="/" handler={Navigation}>
-			<Route name="company-new" path="/company/new" handler={CompanyNew} />
-			<Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
-			<DefaultRoute name="table" handler={Table} />
-		</Route>
-	</Routes>
+  <Routes location="history">
+    <Route path="/" handler={Navigation}>
+      <Route name="company-new" path="/company/new" handler={CompanyNew} />
+      <Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
+      <DefaultRoute name="table" handler={Table} />
+    </Route>
+  </Routes>
 );
 
 module.exports = TheApp

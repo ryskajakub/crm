@@ -10,18 +10,18 @@ var CompanyDetail = React.createClass({
    * @return {object}
    */
   render: function() {
-		return(
-			<div>{this.state.name}</div>
-		);
-	}
+    return(
+      <div>{this.state.name}</div>
+    );
+  }
 
-	, getInitialState: function () {
-		return this.getCompanyById(this.props.params.companyId);
-	}
+  , getInitialState: function () {
+    return this.getCompanyById(this.props.params.companyId);
+  }
 
-	, getCompanyById: function(id) {
-		return CompanyStore.get(id);
-	}
+  , getCompanyById: function(id) {
+    return CompanyStore.get(id);
+  }
 
   , componentDidMount: function() {
     CompanyStore.addChangeListener(this.onChange);
@@ -31,9 +31,9 @@ var CompanyDetail = React.createClass({
     CompanyStore.removeChangeListener(this.onChange);
   }
 
-	, onChange: function() {
-		this.setState(this.getCompanyById(this.props.params.companyId));
-	}
+  , onChange: function() {
+    this.setState(this.getCompanyById(this.props.params.companyId));
+  }
 
 });
 

@@ -12,7 +12,7 @@ var DocumentTitle = require('react-document-title');
 var Table = React.createClass({
 
   getInitialState: function() {
-		return CompanyStore.get();
+    return CompanyStore.get();
   },
 
   componentDidMount: function() {
@@ -23,36 +23,36 @@ var Table = React.createClass({
     CompanyStore.removeChangeListener(this.onNewState);
   },
 
-	onNewState: function () {
-		this.setState(CompanyStore.get());
-	},
+  onNewState: function () {
+    this.setState(CompanyStore.get());
+  },
 
   /**
    * @return {object}
    */
   render: function() {
 
-		var rows = this.state;
+    var rows = this.state;
 
-		var rowsHtml = _.reduce(rows, function(acc, value, key) {
-			var elem = 
-				<CompanyRow companyRow={value} key={key} />
-			acc.push(elem);
-			return acc;
-		}, []);
+    var rowsHtml = _.reduce(rows, function(acc, value, key) {
+      var elem = 
+        <CompanyRow companyRow={value} key={key} />
+      acc.push(elem);
+      return acc;
+    }, []);
 
-  	return (
-			<DocumentTitle title={"CRM - Seznam firem"}>
-				<BTable striped bordered>
-					<thead>
-						<tr><th>Název</th><th>Dny</th></tr>
-					</thead>
-					<tbody>
-						{rowsHtml}
-					</tbody>
-				</BTable>
-			</DocumentTitle>
-  	);
+    return (
+      <DocumentTitle title={"CRM - Seznam firem"}>
+        <BTable striped bordered>
+          <thead>
+            <tr><th>Název</th><th>Dny</th></tr>
+          </thead>
+          <tbody>
+            {rowsHtml}
+          </tbody>
+        </BTable>
+      </DocumentTitle>
+    );
   }
 
 });
