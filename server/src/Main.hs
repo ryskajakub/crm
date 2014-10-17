@@ -4,7 +4,7 @@
 
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS)
+import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError)
 import Snap.Http.Server (quickHttpServe)
 
 import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID)
@@ -16,6 +16,9 @@ import Data.Aeson.TH(deriveJSON, defaultOptions)
 import Data.Aeson(decode, encode)
 
 import Data.Word(Word64)
+
+import Data.ByteString.Lazy(toStrict)
+import Data.ByteString(append)
 
 data Company = Company {
   name :: String
@@ -66,7 +69,8 @@ site =
                 in
                   response
               ))
-          Nothing ->
+          Nothing -> do
+            logError $ ("Failed to parse: ") `append` (toStrict requestBody)
             (putResponse $ setResponseCode 400 emptyResponse)
     )]
   )]

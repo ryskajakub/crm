@@ -17,16 +17,9 @@ var companies = {
 	}
 };
 
-var id = 2;
-
 var CompanyStore = merge(EventEmitter.prototype, {
 
-	nextId: function () {
-		id += 1;
-		return id;
-	}
-
-  , get: function(id) {
+  get: function(id) {
 		return (
 			(id === undefined) ?
 			companies :
