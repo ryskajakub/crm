@@ -4,21 +4,37 @@
 
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError)
+import Snap.Core (route, method, Snap, Method(POST, GET), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError)
 import Snap.Http.Server (quickHttpServe)
 
-import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID)
+import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID, query_, Connection)
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, SomeException, bracket)
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
-import Data.Aeson(decode, encode)
+import Data.Aeson(decode, encode, ToJSON, Value, toJSON, Object)
 
 import Data.Word(Word64)
-
 import Data.ByteString.Lazy(toStrict)
 import Data.ByteString(append)
+import Data.HashMap.Strict(singleton, HashMap)
+import Data.Text(pack, Text)
+
+data IdToObject a = IdToObject {
+  idValue :: Int
+  , object :: a
+}
+
+instance (ToJSON a) => ToJSON (IdToObject a) where 
+  toJSON idToObject =
+    let 
+      objectAsJson = toJSON $ object idToObject :: Value
+      text = (pack $ show $ idValue idToObject) :: Text
+      map = singleton text objectAsJson :: HashMap Text Value
+      value = toJSON map :: Value
+    in
+      value
 
 data Company = Company {
   name :: String
