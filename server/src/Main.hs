@@ -36,7 +36,7 @@ main = quickHttpServe site
 site :: Snap ()
 site =
   route [("/api",
-    route [("/company/new",
+    route [("/companies/new",
       method POST $ do
         requestBody <- readRequestBody 1024
         maybeCompany <- return $ (decode requestBody :: Maybe Company)
