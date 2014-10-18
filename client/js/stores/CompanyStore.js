@@ -6,16 +6,7 @@ var _ = require("underscore");
 
 var CHANGE_EVENT = "change";
 
-var companies = {
-  1: {
-    "name": "Firma 1"
-    , "days": 10
-  },
-  2: {
-    "name": "Firma 2"
-    , "days": 20
-  }
-};
+var companies = {};
 
 var CompanyStore = merge(EventEmitter.prototype, {
 
@@ -51,13 +42,17 @@ function addCompany(company) {
   companies[key] = company[key];
 }
 
-AppDispatcher.register(function(payload) {
+CompanyStore.dispatchToken = AppDispatcher.register(function(payload) {
   var action = payload.action;
 
   switch(action.type) {
 
     case CompanyConstants.SERVER_CREATED_COMPANY:
       addCompany(action.company);
+    break;
+
+    case CompanyConstants.SERVER_INITIAL_COMPANIES:
+      companies = action.companies
     break;
 
     default:
