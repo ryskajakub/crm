@@ -21,20 +21,7 @@ import Data.ByteString(append)
 import Data.HashMap.Strict(singleton, HashMap)
 import Data.Text(pack, Text)
 
-data IdToObject a = IdToObject {
-  idValue :: Int
-  , object :: a
-}
-
-instance (ToJSON a) => ToJSON (IdToObject a) where 
-  toJSON idToObject =
-    let 
-      objectAsJson = toJSON $ object idToObject :: Value
-      text = (pack $ show $ idValue idToObject) :: Text
-      map = singleton text objectAsJson :: HashMap Text Value
-      value = toJSON map :: Value
-    in
-      value
+import Server.Data(IdToObject, object, idValue)
 
 data Company = Company {
   name :: String
