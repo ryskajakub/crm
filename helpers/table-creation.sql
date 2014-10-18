@@ -1,7 +1,7 @@
 create table Company (
-  id mediumint not null auto_increment
+  id int not null auto_increment
   , name varchar(255) not null
-  , days mediumint not null
+  , days int not null
   , primary key(id)
   , unique(name)
 );

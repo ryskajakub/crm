@@ -19,7 +19,7 @@ import Data.ByteString(append)
 import Data.HashMap.Strict(singleton, HashMap)
 import Data.Text(pack, Text)
 
-import Server.Data(IdToObject, object, idValue, IdResponse(IdResponse), name, days, Company)
+import Server.Data(IdToObject(IdToObject), object, idValue, IdResponse(IdResponse), name, days, Company(Company))
 
 connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
@@ -27,8 +27,15 @@ connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
 createCompanyQuery :: Query
 createCompanyQuery = "insert into Company(name, days) values (?, ?)"
 
+getAllCompaniesQuery :: Query
+getAllCompaniesQuery = "select id, name, days from Company order by name desc"
+
 main :: IO ()
 main = quickHttpServe site
+
+executeWithConnection :: (Connection -> IO a) -> IO a
+executeWithConnection f =
+  bracket (connect connectionInfo) (close) (f)
 
 site :: Snap ()
 site =
@@ -61,5 +68,14 @@ site =
           Nothing -> do
             logError $ ("Failed to parse: ") `append` (toStrict requestBody)
             (putResponse $ setResponseCode 400 emptyResponse)
+    ), ("/companies",
+      method GET $ (=<<) (\x -> x) $ liftIO $ do
+        rows <- executeWithConnection (\connection -> do
+          rows <- query_ connection getAllCompaniesQuery
+          return $ fmap (\(id, name, days) ->
+            IdToObject {idValue = id, object = Company name days}
+            ) rows
+          )
+        return $ writeLBS $ encode rows
     )]
   )]
