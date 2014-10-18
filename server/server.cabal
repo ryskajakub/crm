@@ -10,6 +10,17 @@ Category:            Web
 Build-type:          Simple
 Cabal-version:       >=1.2
 
+test-suite my-test
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: MainTestSuite.hs
+  build-depends:     
+    base                      >= 4     && < 5,
+    test-framework,
+    test-framework-hunit,
+    HUnit,
+    containers == 0.5.*
+
 Executable server
   hs-source-dirs: src
   main-is: Main.hs
