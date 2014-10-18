@@ -10,16 +10,14 @@ import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabas
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, SomeException, bracket)
 
-import Data.Aeson.TH(deriveJSON, defaultOptions)
-import Data.Aeson(decode, encode, ToJSON, Value, toJSON, Object)
-
+import Data.Aeson(decode, encode, ToJSON, Value, toJSON)
 import Data.Word(Word64)
 import Data.ByteString.Lazy(toStrict)
 import Data.ByteString(append)
-import Data.HashMap.Strict(singleton, HashMap)
+
 import Data.Text(pack, Text)
 
-import Server.Data(IdToObject(IdToObject), object, idValue, IdResponse(IdResponse), name, days, Company(Company))
+import Server.Data(IdResponse(IdResponse), name, days, Company(Company))
 import Server.Util(hashmapize)
 
 connectionInfo :: ConnectInfo
@@ -73,10 +71,10 @@ site =
       method GET $ (=<<) (\x -> x) $ liftIO $ do
         rows <- executeWithConnection (\connection -> do
           rows <- query_ connection getAllCompaniesQuery
-          return $ toJSON $ hashmapize $ fmap (\(id, name, days) ->
+          return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays) ->
             let 
-              key = pack $ show (id :: Int) :: Text
-              value = toJSON $ Company {name = name, days = days} :: Value
+              key = pack $ show (companyId :: Int) :: Text
+              value = toJSON $ Company {name = companyName, days = companyDays} :: Value
             in (key, value) :: (Text, Value)
             ) rows
           )
