@@ -20,6 +20,7 @@ import Data.HashMap.Strict(singleton, HashMap)
 import Data.Text(pack, Text)
 
 import Server.Data(IdToObject(IdToObject), object, idValue, IdResponse(IdResponse), name, days, Company(Company))
+import Server.Util(hashmapize)
 
 connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
@@ -72,10 +73,13 @@ site =
       method GET $ (=<<) (\x -> x) $ liftIO $ do
         rows <- executeWithConnection (\connection -> do
           rows <- query_ connection getAllCompaniesQuery
-          return $ fmap (\(id, name, days) ->
-            IdToObject {idValue = id, object = Company name days}
+          return $ toJSON $ hashmapize $ fmap (\(id, name, days) ->
+            let 
+              key = pack $ show (id :: Int) :: Text
+              value = toJSON $ Company {name = name, days = days} :: Value
+            in (key, value) :: (Text, Value)
             ) rows
           )
-        return $ writeLBS $ encode rows
+        return $ writeLBS $ encode rows :: IO (Snap ())
     )]
   )]
