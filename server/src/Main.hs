@@ -1,6 +1,4 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Main where
 
@@ -21,19 +19,7 @@ import Data.ByteString(append)
 import Data.HashMap.Strict(singleton, HashMap)
 import Data.Text(pack, Text)
 
-import Server.Data(IdToObject, object, idValue)
-
-data Company = Company {
-  name :: String
-  , days :: Int
-} deriving (Show)
-
-data IdResponse = IdResponse {
-  id :: Int
-}
-
-$(deriveJSON defaultOptions ''Company)
-$(deriveJSON defaultOptions ''IdResponse)
+import Server.Data(IdToObject, object, idValue, IdResponse(IdResponse), name, days, Company)
 
 connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }

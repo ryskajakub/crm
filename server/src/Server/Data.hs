@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Server.Data where
 
 import Data.Aeson.TH(deriveJSON, defaultOptions)
@@ -10,6 +12,18 @@ data IdToObject a = IdToObject {
   idValue :: Int
   , object :: a
 }
+
+data Company = Company {
+  name :: String
+  , days :: Int
+} deriving (Show)
+
+data IdResponse = IdResponse {
+  id :: Int
+}
+
+$(deriveJSON defaultOptions ''Company)
+$(deriveJSON defaultOptions ''IdResponse)
 
 instance (ToJSON a) => ToJSON (IdToObject a) where 
   toJSON idToObject =
