@@ -40,42 +40,40 @@ executeWithConnection f =
 site :: Snap ()
 site =
   route [("/api",
-    route [("/companies",
-      route [("/new",
-        method POST $ do
-          requestBody <- readRequestBody 1024
-          maybeCompany <- return $ (decode requestBody :: Maybe Company)
-          case maybeCompany of
-            Just (company) ->
-              join $ liftIO $ executeWithConnection (\connection ->
-                let
-                  queryResult = (try $ do
-                    execute connection createCompanyQuery (name company, days company)
-                    insertID connection) :: IO (Either SomeException Word64)
-                in (fmap (\qr -> case qr of
-                    Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
-                    Right recordId ->
-                      let
-                        encodedId = encode $ IdResponse $ fromIntegral recordId
-                      in
-                        writeLBS encodedId
-                    ) queryResult) :: IO (Snap ())
-              )
-            Nothing -> do
-              logError $ ("Failed to parse: ") `append` (toStrict requestBody)
-              (putResponse $ setResponseCode 400 emptyResponse)
-      ), ("/companies",
-        method GET $ join $ liftIO $ do
-          rows <- executeWithConnection (\connection -> do
-            rows <- query_ connection getAllCompaniesQuery
-            return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays) ->
+    route [("/companies/new",
+      method POST $ do
+        requestBody <- readRequestBody 1024
+        maybeCompany <- return $ (decode requestBody :: Maybe Company)
+        case maybeCompany of
+          Just (company) ->
+            join $ liftIO $ executeWithConnection (\connection ->
               let
-                key = pack $ show (companyId :: Int) :: Text
-                value = toJSON $ Company {name = companyName, days = companyDays} :: Value
-              in (key, value) :: (Text, Value)
-              ) rows
+                queryResult = (try $ do
+                  execute connection createCompanyQuery (name company, days company)
+                  insertID connection) :: IO (Either SomeException Word64)
+              in (fmap (\qr -> case qr of
+                  Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
+                  Right recordId ->
+                    let
+                      encodedId = encode $ IdResponse $ fromIntegral recordId
+                    in
+                      writeLBS encodedId
+                  ) queryResult) :: IO (Snap ())
             )
-          return $ writeLBS $ encode rows :: IO (Snap ())
-      )]
+          Nothing -> do
+            logError $ ("Failed to parse: ") `append` (toStrict requestBody)
+            (putResponse $ setResponseCode 400 emptyResponse)
+    ), ("/companies",
+      method GET $ join $ liftIO $ do
+        rows <- executeWithConnection (\connection -> do
+          rows <- query_ connection getAllCompaniesQuery
+          return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays) ->
+            let
+              key = pack $ show (companyId :: Int) :: Text
+              value = toJSON $ Company {name = companyName, days = companyDays} :: Value
+            in (key, value) :: (Text, Value)
+            ) rows
+          )
+        return $ writeLBS $ encode rows :: IO (Snap ())
     )]
   )]
