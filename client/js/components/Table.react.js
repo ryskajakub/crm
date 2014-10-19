@@ -6,13 +6,20 @@ var React = require("react");
 var _ = require("underscore");
 var CompanyRow = require("./CompanyRow.react");
 var CompanyStore = require("../stores/CompanyStore");
-var BTable = require("react-bootstrap").Table;
+
+var B = require("react-bootstrap");
+var BTable = B.Table;
+var Button = B.Button;
+
 var DocumentTitle = require('react-document-title');
 
 var Table = React.createClass({
 
   getInitialState: function() {
-    return CompanyStore.get();
+    return {
+      "rows": CompanyStore.get()
+      , "showActive": false
+    }
   },
 
   componentDidMount: function() {
@@ -24,15 +31,20 @@ var Table = React.createClass({
   },
 
   onNewState: function () {
-    this.setState(CompanyStore.get());
+    this.setState({"rows": CompanyStore.get()});
   },
+
+  showActive: function () {
+    this.setState({"showActive": !this.state.showActive});
+  }
 
   /**
    * @return {object}
    */
-  render: function() {
+  , render: function() {
 
-    var rows = this.state;
+    var rows = this.state.rows;
+    var activeText = this.state.showActive ? "Skrýt aktivní" : "Ukázat aktivní";
 
     var rowsHtml = _.reduce(rows, function(acc, value, key) {
       var elem = 
@@ -41,16 +53,20 @@ var Table = React.createClass({
       return acc;
     }, []);
 
+
     return (
       <DocumentTitle title={"CRM - Seznam firem"}>
-        <BTable striped bordered>
-          <thead>
-            <tr><th>Název</th><th>Dny</th></tr>
-          </thead>
-          <tbody>
-            {rowsHtml}
-          </tbody>
-        </BTable>
+        <main>
+          <Button bsStyle="primary" onClick={this.showActive}>{activeText}</Button>
+          <BTable striped bordered>
+            <thead>
+              <tr><th>Název</th><th>Dny</th></tr>
+            </thead>
+            <tbody>
+              {rowsHtml}
+            </tbody>
+          </BTable>
+        </main>
       </DocumentTitle>
     );
   }
