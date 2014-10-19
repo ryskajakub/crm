@@ -7,6 +7,7 @@ import Snap.Http.Server (quickHttpServe)
 
 import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID, query_, Connection)
 
+import Control.Monad (join)
 import Control.Monad.IO.Class (liftIO)
 import Control.Exception (try, SomeException, bracket)
 
@@ -46,30 +47,25 @@ site =
           maybeCompany <- return $ (decode requestBody :: Maybe Company)
           case maybeCompany of
             Just (company) ->
-              (=<<) (\x -> x) (liftIO $ bracket
-                (connect connectionInfo)
-                (close)
-                (\connection ->
-                  let
-                    queryResult = (try $ do
-                      execute connection createCompanyQuery (name company, days company)
-                      insertID connection) :: IO (Either SomeException Word64)
-                    response = (fmap (\qr -> case qr of
-                      Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
-                      Right recordId ->
-                        let
-                          encodedId = encode $ IdResponse $ fromIntegral recordId
-                        in
-                          writeLBS encodedId
-                      ) queryResult) :: IO (Snap ())
-                  in
-                    response
-                ))
+              join $ liftIO $ executeWithConnection (\connection ->
+                let
+                  queryResult = (try $ do
+                    execute connection createCompanyQuery (name company, days company)
+                    insertID connection) :: IO (Either SomeException Word64)
+                in (fmap (\qr -> case qr of
+                    Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
+                    Right recordId ->
+                      let
+                        encodedId = encode $ IdResponse $ fromIntegral recordId
+                      in
+                        writeLBS encodedId
+                    ) queryResult) :: IO (Snap ())
+              )
             Nothing -> do
               logError $ ("Failed to parse: ") `append` (toStrict requestBody)
               (putResponse $ setResponseCode 400 emptyResponse)
       ), ("/companies",
-        method GET $ (=<<) (\x -> x) $ liftIO $ do
+        method GET $ join $ liftIO $ do
           rows <- executeWithConnection (\connection -> do
             rows <- query_ connection getAllCompaniesQuery
             return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays) ->
