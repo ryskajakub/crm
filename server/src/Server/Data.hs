@@ -2,7 +2,7 @@
 
 module Server.Data where
 
-import Data.Aeson.TH(deriveJSON, defaultOptions)
+import Data.Aeson.TH(deriveJSON, defaultOptions, deriveToJSON)
 import Data.Aeson(decode, encode, ToJSON, Value, toJSON, Object)
 
 import Data.HashMap.Strict(singleton, HashMap, insert)
@@ -22,5 +22,15 @@ data IdResponse = IdResponse {
   id :: Int
 }
 
+data OkResponse = OkResponse {
+  ok :: String
+}
+
+data FailResponse = FailResponse {
+  fail :: String
+}
+
 $(deriveJSON defaultOptions ''Company)
 $(deriveJSON defaultOptions ''IdResponse)
+$(deriveToJSON defaultOptions ''OkResponse)
+$(deriveToJSON defaultOptions ''FailResponse)

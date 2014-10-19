@@ -2,10 +2,11 @@
 
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST, GET), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError)
+import Snap.Core (route, method, Snap, Method(POST, GET), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError, getRequest, rqParam)
 import Snap.Http.Server (quickHttpServe)
 
-import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID, query_, Connection)
+import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID, query_, Connection, query)
+import Database.MySQL.Simple.Types(Only(Only))
 
 import Control.Monad (join)
 import Control.Monad.IO.Class (liftIO)
@@ -14,11 +15,12 @@ import Control.Exception (try, SomeException, bracket)
 import Data.Aeson(decode, encode, ToJSON, Value, toJSON)
 import Data.Word(Word64)
 import Data.ByteString.Lazy(toStrict)
-import Data.ByteString(append)
+import Data.ByteString(append, intercalate)
 
-import Data.Text(pack, Text)
+import Data.Text(pack, Text, unpack)
+import Data.Text.Encoding(decodeUtf8)
 
-import Server.Data(IdResponse(IdResponse), name, days, Company(Company))
+import Server.Data(IdResponse(IdResponse), name, days, Company(Company), FailResponse(FailResponse), OkResponse(OkResponse))
 import Server.Util(hashmapize)
 
 connectionInfo :: ConnectInfo
@@ -30,6 +32,9 @@ createCompanyQuery = "insert into Company(name, days) values (?, ?)"
 getAllCompaniesQuery :: Query
 getAllCompaniesQuery = "select id, name, days from Company order by name desc"
 
+checkCompanyNameForAvailabilityQuery :: Query
+checkCompanyNameForAvailabilityQuery = "select id from Company where name = ?"
+
 main :: IO ()
 main = quickHttpServe site
 
@@ -40,7 +45,23 @@ executeWithConnection f =
 site :: Snap ()
 site =
   route [("/api",
-    route [("/companies/new",
+    route [("/companies/:name/availability", 
+      method GET $ do
+        request <- getRequest
+        let companyNameToBeCheckedMaybe = fmap (unpack . decodeUtf8 . intercalate "") (rqParam "name" request)
+        case companyNameToBeCheckedMaybe of
+          Just(companyNameToBeChecked) ->
+            join $ liftIO $ executeWithConnection (\connection -> do 
+              queryResult <- query connection checkCompanyNameForAvailabilityQuery 
+                (Only $ companyNameToBeChecked) :: IO ([Only Int])
+              let 
+                isTheNameTaken = (length queryResult) == 1
+                responseBody = if isTheNameTaken
+                  then toJSON $ FailResponse companyNameToBeChecked
+                  else toJSON $ OkResponse companyNameToBeChecked
+              return $ writeLBS $ encode responseBody )
+          Nothing -> (putResponse $ setResponseCode 500 emptyResponse)
+    ), ("/companies/new",
       method POST $ do
         requestBody <- readRequestBody 1024
         maybeCompany <- return $ (decode requestBody :: Maybe Company)
