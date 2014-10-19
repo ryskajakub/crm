@@ -35,6 +35,19 @@ var CompanyActions = {
         }
       }
     });
+  } ,
+  checkNameAvailability: function(enteredName) {
+    var encodedName = encodeURIComponent(enteredName);
+    $.ajax({
+      url: "/api/companies/" + encodedName + "/availability"
+      , success: function(data) {
+        var response = JSON.parse(data);
+        AppDispatcher.handleServerAction({
+          type: CompanyConstants.CHECK_AVAILABILITY
+          , companyNameAvailability: response
+        });
+      }
+    });
   }
 };
 

@@ -7,6 +7,7 @@ var _ = require("underscore");
 var CHANGE_EVENT = "change";
 
 var companyNameError = "";
+var companyNameAvailability = {};
 
 var CompanyFormStore = merge(EventEmitter.prototype, {
 
@@ -14,6 +15,7 @@ var CompanyFormStore = merge(EventEmitter.prototype, {
     return (
       {
         "companyNameError" : companyNameError
+        , "companyNameAvailability" : companyNameAvailability
       }
     );
   },
@@ -47,6 +49,10 @@ AppDispatcher.register(function(payload) {
   switch(action.type) {
     case CompanyConstants.SERVER_CREATE_COMPANY_FAIL:
       setCompanyNameError(action.companyNameError);
+    break;
+
+    case CompanyConstants.CHECK_AVAILABILITY:
+      companyNameAvailability = action.companyNameAvailability;
     break;
 
     default:
