@@ -39,7 +39,9 @@ var CompanyNew = React.createClass({
   }
 
   , onNewState: function () {
-    this.setState(CompanyFormStore.get());
+    var store = CompanyFormStore.get("new");
+    console.log(store);
+    this.setState(store);
   }
 
   , displayLoading: function () {

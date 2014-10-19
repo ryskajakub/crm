@@ -6,18 +6,16 @@ var _ = require("underscore");
 
 var CHANGE_EVENT = "change";
 
-var companyNameError = "";
-var companyNameAvailability = {};
+var companyForms = [];
 
 var CompanyFormStore = merge(EventEmitter.prototype, {
 
-  get: function() {
-    return (
-      {
-        "companyNameError" : companyNameError
-        , "companyNameAvailability" : companyNameAvailability
-      }
-    );
+  get: function(id) {
+    if (undefined === companyForms[id]) {
+      return getDefaults();
+    } else {
+      return companyForms[id];
+    }
   },
 
   emitChange: function() {
@@ -39,8 +37,28 @@ var CompanyFormStore = merge(EventEmitter.prototype, {
   }
 });
 
-function setCompanyNameError(newCompanyNameError) {
-  companyNameError = newCompanyNameError;
+function setFieldForId(id, field, value) {
+  if (undefined === companyForms[id]) {
+    companyForms[id] = getDefaults();
+  }
+  companyForms[id][field] = value;
+}
+
+function setCompanyNameError(id, newCompanyNameError) {
+  setFieldForId(id, "newCompanyNameError", newCompanyNameError);
+}
+
+function setCompanyNameAvailability(id, companyNameAvailability) {
+  setFieldForId(id, "companyNameAvailability", companyNameAvailability);
+}
+
+function getDefaults() {
+  return (
+    {
+      "companyNameError" : ""
+      , "companyNameAvailability" : {}
+    }
+  );
 }
 
 AppDispatcher.register(function(payload) {
@@ -48,11 +66,11 @@ AppDispatcher.register(function(payload) {
 
   switch(action.type) {
     case CompanyConstants.SERVER_CREATE_COMPANY_FAIL:
-      setCompanyNameError(action.companyNameError);
+      setCompanyNameError("new", action.companyNameError);
     break;
 
     case CompanyConstants.CHECK_AVAILABILITY:
-      companyNameAvailability = action.companyNameAvailability;
+      setCompanyNameAvailability("new", action.companyNameAvailability);
     break;
 
     default:
