@@ -16,6 +16,7 @@ data IdToObject a = IdToObject {
 data Company = Company {
   name :: String
   , days :: Int
+  , active :: Bool
 } deriving (Show)
 
 data IdResponse = IdResponse {

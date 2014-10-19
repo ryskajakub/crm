@@ -9,7 +9,7 @@ var $ = require("jquery");
 
 var CompanyActions = {
   createCompany: function(company) {
-    var companyAsJSON = JSON.stringify(company)
+    var companyAsJSON = JSON.stringify(company);
     $.ajax({
       data: companyAsJSON
       , contentType: "application/json"

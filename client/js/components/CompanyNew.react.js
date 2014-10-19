@@ -26,6 +26,7 @@ var CompanyNew = React.createClass({
       "companyName": ""
       , "companyDays": ""
       , "companyNameError": ""
+      , "companyActive": false
       , "companyNameAvailability" : {}
     };
   }
@@ -66,6 +67,12 @@ var CompanyNew = React.createClass({
     }
   }
 
+  , changeActive: function(event) {
+    this.setState({
+      "companyActive" : !this.state.companyActive
+    });
+  }
+
   /**
    * @return {object}
    */
@@ -86,6 +93,7 @@ var CompanyNew = React.createClass({
               <Input type="text" label="Jméno firmy" onChange={this.checkNameAvailability}
                 help={companyNameHelp} />
               <Input type="text" label="Dny" valueLink={this.linkState("companyDays")} />
+              <Input type="checkbox" label="Aktivní" onChange={this.changeActive} />
               <Button bsStyle="primary" bsSize="large" onClick={this.click}>Vytvořit</Button>
             </Col>
           </Row>
@@ -98,6 +106,7 @@ var CompanyNew = React.createClass({
     var company = {
       "name": this.state.companyName
       , "days": parseInt(this.state.companyDays)
+      , "active": this.state.companyActive
     }
 
     CompanyActions.createCompany(company);

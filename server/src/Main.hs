@@ -20,17 +20,17 @@ import Data.ByteString(append, intercalate)
 import Data.Text(pack, Text, unpack)
 import Data.Text.Encoding(decodeUtf8)
 
-import Server.Data(IdResponse(IdResponse), name, days, Company(Company), FailResponse(FailResponse), OkResponse(OkResponse))
+import Server.Data(IdResponse(IdResponse), name, days, active, Company(Company), FailResponse(FailResponse), OkResponse(OkResponse))
 import Server.Util(hashmapize)
 
 connectionInfo :: ConnectInfo
 connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
 
 createCompanyQuery :: Query
-createCompanyQuery = "insert into Company(name, days) values (?, ?)"
+createCompanyQuery = "insert into Company(name, days, active) values (?, ?, ?)"
 
 getAllCompaniesQuery :: Query
-getAllCompaniesQuery = "select id, name, days from Company order by name desc"
+getAllCompaniesQuery = "select id, name, days, active from Company order by name desc"
 
 checkCompanyNameForAvailabilityQuery :: Query
 checkCompanyNameForAvailabilityQuery = "select id from Company where name = ?"
@@ -70,7 +70,7 @@ site =
             join $ liftIO $ executeWithConnection (\connection ->
               let
                 queryResult = (try $ do
-                  execute connection createCompanyQuery (name company, days company)
+                  execute connection createCompanyQuery (name company, days company, active company)
                   insertID connection) :: IO (Either SomeException Word64)
               in (fmap (\qr -> case qr of
                   Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
@@ -88,10 +88,10 @@ site =
       method GET $ join $ liftIO $ do
         rows <- executeWithConnection (\connection -> do
           rows <- query_ connection getAllCompaniesQuery
-          return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays) ->
+          return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays, companyActive) ->
             let
               key = pack $ show (companyId :: Int) :: Text
-              value = toJSON $ Company {name = companyName, days = companyDays} :: Value
+              value = toJSON $ Company {name = companyName, days = companyDays, active = companyActive} :: Value
             in (key, value) :: (Text, Value)
             ) rows
           )
