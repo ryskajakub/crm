@@ -18,7 +18,7 @@ var Table = React.createClass({
   getInitialState: function() {
     return {
       "rows": CompanyStore.get()
-      , "showActive": false
+      , "showInactive": true
     }
   },
 
@@ -34,8 +34,8 @@ var Table = React.createClass({
     this.setState({"rows": CompanyStore.get()});
   },
 
-  showActive: function () {
-    this.setState({"showActive": !this.state.showActive});
+  showInactive: function () {
+    this.setState({"showInactive": !this.state.showInactive});
   }
 
   /**
@@ -44,10 +44,17 @@ var Table = React.createClass({
   , render: function() {
 
     var rows = this.state.rows;
-    var activeText = this.state.showActive ? "Skrýt aktivní" : "Ukázat aktivní";
+    var activeText = this.state.showInactive ? "Skrýt neaktivní" : "Ukázat neaktivní";
 
-    var rowsHtml = _.reduce(rows, function(acc, value, key) {
-      var elem = 
+    var rowsFilteredByActive =
+      (this.state.showInactive)
+      ? rows
+      : _.filter(rows, function (row) {
+        return (row.active);
+      });
+
+    var rowsHtml = _.reduce(rowsFilteredByActive, function(acc, value, key) {
+      var elem =
         <CompanyRow companyRow={value} key={key} />
       acc.push(elem);
       return acc;
@@ -57,7 +64,7 @@ var Table = React.createClass({
     return (
       <DocumentTitle title={"CRM - Seznam firem"}>
         <main>
-          <Button bsStyle="primary" onClick={this.showActive}>{activeText}</Button>
+          <Button bsStyle="primary" onClick={this.showInactive}>{activeText}</Button>
           <BTable striped bordered>
             <thead>
               <tr><th>Název</th><th>Dny</th></tr>
