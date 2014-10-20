@@ -8,7 +8,7 @@ var PlannedMaintenances = React.createClass({
   render: function() {
 
     return (
-      <div>Planned maintenances</div>
+      <h1>Tato sekce není udělaná - sem se nekoukej :-)</h1>
     );
   }
 
