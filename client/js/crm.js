@@ -12,6 +12,8 @@
 var React = require('react');
 var TheApp = require("./components/TheApp.react");
 
+window.React = React;
+
 React.renderComponent(
   TheApp, document.getElementById('crm-app')
 );

@@ -28,6 +28,7 @@ var NavLink = React.createClass({
 
 });
 
+
 var Navigation = React.createClass({
 
   /**
@@ -39,6 +40,7 @@ var Navigation = React.createClass({
         <Navbar>
           <Nav>
             <NavLink to='table'>Hlavní strana</NavLink>
+            <NavLink to='planned-maintenances'>Naplánované servisy</NavLink>
             <NavLink to='company-new'>Nová firma</NavLink>
           </Nav>
         </Navbar>
