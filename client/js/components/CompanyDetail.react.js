@@ -8,6 +8,31 @@ var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
 var ListGroupItem = B.ListGroupItem;
 var Jumbotron = B.Jumbotron;
+var Grid = B.Grid;
+var Col = B.Col;
+var Row = B.Row;
+var Well = B.Well;
+
+var Machine = React.createClass({
+  render: function() {
+
+    var type = this.props.type;
+    var lastMaintenance = this.props.lastMaintenance;
+    var imageSource = this.props.imageSource;
+
+    return(
+      <Col md={6}>
+        <Well>
+          <ListGroup>
+            <ListGroupItem><strong>Typ</strong> {type}</ListGroupItem>
+            <ListGroupItem><strong>Poslední servis</strong> {lastMaintenance}</ListGroupItem>
+          </ListGroup>
+          <img src={imageSource} />
+        </Well>
+      </Col>
+    );
+  }
+});
 
 var CompanyDetail = React.createClass({
 
@@ -19,16 +44,25 @@ var CompanyDetail = React.createClass({
     var company = this.state.company;
 
     return(
-      <Jumbotron>
+      <main>
         <section>
-          <h1>{company.name}</h1>
-          <ListGroup>
-            <ListGroupItem>Brandýs nad labem</ListGroupItem>
-            <ListGroupItem>p. Jelínek</ListGroupItem>
-            <ListGroupItem>721 650 194</ListGroupItem>
-          </ListGroup>
+          <Jumbotron>
+            <h1>{company.name}</h1>
+            <ListGroup>
+              <ListGroupItem>Brandýs nad labem</ListGroupItem>
+              <ListGroupItem>p. Jelínek</ListGroupItem>
+              <ListGroupItem>721 650 194</ListGroupItem>
+            </ListGroup>
+          </Jumbotron>
         </section>
-      </Jumbotron>
+        <section>
+          <Grid>
+            <Row className="show-grid">
+              <Machine type="BK 15" imageSource="/images/remeza-bk15e.jpg" lastMaintenance="2.8.2014" />
+            </Row>
+          </Grid>
+        </section>
+      </main>
     );
   }
 
