@@ -2,7 +2,10 @@
  * @jsx React.DOM
  */
 var React = require('react');
+var _ = require("underscore");
+
 var CompanyStore = require("../stores/CompanyStore");
+var MachineStore = require("../stores/MachineStore");
 
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
@@ -42,6 +45,13 @@ var CompanyDetail = React.createClass({
   render: function() {
 
     var company = this.state.company;
+    var machinesInCompany = this.state.machines;
+
+    var array = [];
+    _.forEach(machinesInCompany, function(value, key) {
+      var machine = (<Machine kep={key} type={value.type} imageSource={value.image} lastMaintenance={value.lastMaintenance} />);
+      array.push(machine);
+    })
 
     return(
       <main>
@@ -58,13 +68,26 @@ var CompanyDetail = React.createClass({
         <section>
           <Grid>
             <Row className="show-grid">
-              <Machine type="BK 15" imageSource="/images/remeza-bk15e.jpg" lastMaintenance="2.8.2014" />
-              <Machine type="C-50.AB360" imageSource="/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg" lastMaintenance="2.8.2013" />
+              {array}
             </Row>
           </Grid>
         </section>
       </main>
     );
+  }
+
+  , componentDidMount: function() {
+    CompanyStore.addChangeListener(this.onNewState);
+    MachineStore.addChangeListener(this.onNewState);
+  }
+
+  , componentWillUnmount: function() {
+    CompanyStore.removeChangeListener(this.onNewState);
+    MachineStore.removeChangeListener(this.onNewState);
+  }
+
+  , onNewState: function () {
+    this.setState(this.getInitialState());
   }
 
   , getInitialState: function () {
@@ -73,8 +96,10 @@ var CompanyDetail = React.createClass({
 
   , getCompanyById: function(id) {
     var company = CompanyStore.get(id);
+    var machines = MachineStore.getByCompanyId(id);
     return {
       "company": company
+      , "machines": machines
     };
   }
 

@@ -25,4 +25,6 @@ var TheApp = (
   </Routes>
 );
 
+require("../actions/LocalInitialActions");
+
 module.exports = TheApp

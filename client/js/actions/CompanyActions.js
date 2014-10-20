@@ -7,8 +7,6 @@ var CompanyConstants = require('../constants/CompanyConstants');
 var CompanyStore = require('../stores/CompanyStore');
 var $ = require("jquery");
 
-require("./LocalInitialActions");
-
 var CompanyActions = {
   createCompany: function(company) {
     var companyAsJSON = JSON.stringify(company);
