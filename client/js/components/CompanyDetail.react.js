@@ -27,11 +27,11 @@ var CompanyDetail = React.createClass({
     var company = this.state.company;
     var machinesInCompany = this.state.machines;
 
-    var array = [];
-    _.forEach(machinesInCompany, function(value, key) {
+    var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<Machine kep={key} type={value.type} imageSource={value.image} lastMaintenance={value.lastMaintenance} />);
-      array.push(machine);
-    })
+      acc.push(machine);
+      return acc;
+    }, []);
 
     return(
       <main>
@@ -48,7 +48,7 @@ var CompanyDetail = React.createClass({
         <section>
           <Grid>
             <Row className="show-grid">
-              {array}
+              {machinesTags}
             </Row>
           </Grid>
         </section>
