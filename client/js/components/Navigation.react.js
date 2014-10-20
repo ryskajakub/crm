@@ -12,6 +12,7 @@ var B = require("react-bootstrap");
 var Navbar = B.Navbar;
 var Nav = B.Nav;
 var NavItem = B.NavItem;
+var Glyphicon = B.Glyphicon;
 
 var NavLink = React.createClass({
 
@@ -39,8 +40,8 @@ var Navigation = React.createClass({
       <div>
         <Navbar>
           <Nav>
-            <NavLink to='table'>Hlavní strana</NavLink>
-            <NavLink to='planned-maintenances'>Naplánované servisy</NavLink>
+            <NavLink to='table'><Glyphicon glyph="list" /> Seznam firem</NavLink>
+            <NavLink to='planned-maintenances'><Glyphicon glyph="calendar" /> Naplánované servisy</NavLink>
           </Nav>
         </Navbar>
         <this.props.activeRouteHandler />
