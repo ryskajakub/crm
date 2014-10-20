@@ -6,16 +6,19 @@ var id = 0;
 
 var companies = {};
 
-function createCompany(name) {
+function createCompany(name, nextService) {
   var company = {
     name: name
     , active: true
   };
   companies[id] = company;
+  if (undefined !== nextService) {
+    companies[id].nextService = nextService;
+  }
   id += 1;
 }
 
-createCompany("Continental");
+createCompany("Continental", "2.8.2015");
 createCompany("České dráhy");
 createCompany("FOMA Bohemia");
 createCompany("Kand");
@@ -44,8 +47,8 @@ function createMachine(companyId, image, type, lastMaintenance) {
   machineId += 1;
 }
 
-createMachine(0, "/images/remeza-bk15e.jpg", "BK 15", "2.8.2014");
-createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.AB360", "2.8.2013");
+createMachine(0, "/images/remeza-bk15e.jpg", "BK 15", "2.8.2015");
+createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.AB360", "2.9.2015");
 
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MACHINES

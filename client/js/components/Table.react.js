@@ -6,6 +6,7 @@ var React = require("react");
 var _ = require("underscore");
 var CompanyRow = require("./CompanyRow.react");
 var CompanyStore = require("../stores/CompanyStore");
+var Moment = require("../utils/Moment");
 
 var B = require("react-bootstrap");
 var BTable = B.Table;
@@ -59,7 +60,6 @@ var Table = React.createClass({
       acc.push(elem);
       return acc;
     }, []);
-
 
     return (
       <DocumentTitle title={"CRM - Seznam firem"}>

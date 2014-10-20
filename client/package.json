@@ -11,7 +11,8 @@
     "react-router": "~0.9.4",
     "react-document-title": "^0.1.1",
     "react-bootstrap": "~0.12.0",
-    "jquery": "~2.1.1"
+    "jquery": "~2.1.1",
+    "moment": "~2.8.3"
   },
   "devDependencies": {
     "browserify": "~4.2.2",
