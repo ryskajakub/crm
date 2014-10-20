@@ -66,7 +66,7 @@ var Table = React.createClass({
         <main>
           <BTable striped bordered>
             <thead>
-              <tr><th>Název</th><th>Servis za</th></tr>
+              <tr><th>Název firmy</th><th>Platnost servisu vyprší za</th></tr>
             </thead>
             <tbody>
               {rowsHtml}
