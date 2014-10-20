@@ -24,6 +24,8 @@ var CompanyRow = React.createClass({
       var now = Moment()
       var difference = Moment.duration(now.diff(nextService));
       maintenanceAfter = difference.humanize();
+    } else {
+      maintenanceAfter = Moment.duration(1, "years").humanize();
     }
 
     return(
