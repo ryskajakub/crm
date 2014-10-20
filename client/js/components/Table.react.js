@@ -64,10 +64,9 @@ var Table = React.createClass({
     return (
       <DocumentTitle title={"CRM - Seznam firem"}>
         <main>
-          <Button bsStyle="primary" onClick={this.showInactive}>{activeText}</Button>
           <BTable striped bordered>
             <thead>
-              <tr><th>Název</th><th>Dny</th></tr>
+              <tr><th>Název</th><th>Servis za</th></tr>
             </thead>
             <tbody>
               {rowsHtml}

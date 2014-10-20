@@ -41,7 +41,6 @@ var Navigation = React.createClass({
           <Nav>
             <NavLink to='table'>Hlavní strana</NavLink>
             <NavLink to='planned-maintenances'>Naplánované servisy</NavLink>
-            <NavLink to='company-new'>Nová firma</NavLink>
           </Nav>
         </Navbar>
         <this.props.activeRouteHandler />
