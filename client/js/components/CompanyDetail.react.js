@@ -4,14 +4,31 @@
 var React = require('react');
 var CompanyStore = require("../stores/CompanyStore");
 
+var B = require("react-bootstrap");
+var ListGroup = B.ListGroup;
+var ListGroupItem = B.ListGroupItem;
+var Jumbotron = B.Jumbotron;
+
 var CompanyDetail = React.createClass({
 
   /**
    * @return {object}
    */
   render: function() {
+
+    var company = this.state.company;
+
     return(
-      <div>{this.state.name}</div>
+      <Jumbotron>
+        <section>
+          <h1>{company.name}</h1>
+          <ListGroup>
+            <ListGroupItem>Brandýs nad labem</ListGroupItem>
+            <ListGroupItem>p. Jelínek</ListGroupItem>
+            <ListGroupItem>721 650 194</ListGroupItem>
+          </ListGroup>
+        </section>
+      </Jumbotron>
     );
   }
 
@@ -20,19 +37,10 @@ var CompanyDetail = React.createClass({
   }
 
   , getCompanyById: function(id) {
-    return CompanyStore.get(id);
-  }
-
-  , componentDidMount: function() {
-    CompanyStore.addChangeListener(this.onChange);
-  }
-
-  , componentWillUnmount: function() {
-    CompanyStore.removeChangeListener(this.onChange);
-  }
-
-  , onChange: function() {
-    this.setState(this.getCompanyById(this.props.params.companyId));
+    var company = CompanyStore.get(id);
+    return {
+      "company": company
+    };
   }
 
 });
