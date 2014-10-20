@@ -7,6 +7,7 @@ var _ = require("underscore");
 var CompanyStore = require("../stores/CompanyStore");
 var MachineStore = require("../stores/MachineStore");
 var Machine = require("./Machine.react");
+var MaintenanceForm = require("./MaintenanceForm.react");
 
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
@@ -49,6 +50,11 @@ var CompanyDetail = React.createClass({
           <Grid>
             <Row className="show-grid">
               {machinesTags}
+            </Row>
+            <Row>
+              <Col md={12}>
+                <MaintenanceForm />
+              </Col>
             </Row>
           </Grid>
         </section>
