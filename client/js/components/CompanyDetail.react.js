@@ -59,6 +59,7 @@ var CompanyDetail = React.createClass({
           <Grid>
             <Row className="show-grid">
               <Machine type="BK 15" imageSource="/images/remeza-bk15e.jpg" lastMaintenance="2.8.2014" />
+              <Machine type="C-50.AB360" imageSource="/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg" lastMaintenance="2.8.2013" />
             </Row>
           </Grid>
         </section>
