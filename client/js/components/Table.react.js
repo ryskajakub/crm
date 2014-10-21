@@ -12,6 +12,7 @@ var Router = require('react-router');
 var B = require("react-bootstrap");
 var BTable = B.Table;
 var Button = B.Button;
+var Glyphicon = B.Glyphicon;
 
 var DocumentTitle = require('react-document-title');
 
@@ -65,14 +66,21 @@ var Table = React.createClass({
     return (
       <DocumentTitle title={"CRM - Seznam firem"}>
         <main>
-          <BTable striped bordered>
-            <thead>
-              <tr><th>Název firmy</th><th>Platnost servisu vyprší za</th></tr>
-            </thead>
-            <tbody>
-              {rowsHtml}
-            </tbody>
-          </BTable>
+          <section>
+            <a href="javascript://">
+              <Glyphicon glyph="plus" /> Přidat firmu
+            </a>
+          </section>
+          <section>
+            <BTable striped bordered>
+              <thead>
+                <tr><th>Název firmy</th><th>Platnost servisu vyprší za</th></tr>
+              </thead>
+              <tbody>
+                {rowsHtml}
+              </tbody>
+            </BTable>
+          </section>
         </main>
       </DocumentTitle>
     );

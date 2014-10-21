@@ -37,7 +37,7 @@ var PlannedMaintenances = React.createClass({
             <a href="javascript://">Upravit</a>
           </td>
           <td>
-            <a href="javascript://">Uzavřít</a>
+            <Link to="record-maintenance" params={{companyId: "abc", maintenanceId: "abc"}}>Uzavřít</Link>
           </td>
         </tr>;
       acc.push(row);
