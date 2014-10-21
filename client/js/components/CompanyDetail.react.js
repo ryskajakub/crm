@@ -17,6 +17,8 @@ var Grid = B.Grid;
 var Col = B.Col;
 var Row = B.Row;
 var Well = B.Well;
+var Input = B.Input;
+var Button = B.Button;
 
 var CompanyDetail = React.createClass({
 
