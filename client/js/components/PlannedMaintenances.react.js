@@ -28,10 +28,16 @@ var PlannedMaintenances = React.createClass({
       var row = 
         <tr>
           <td>
-            <Link to='maintenance'>{elem[0]}</Link>
+            <a href="javascript://">{elem[0]}</a>
           </td>
           <td>
             {elem[1]}
+          </td>
+          <td>
+            <a href="javascript://">Upravit</a>
+          </td>
+          <td>
+            <a href="javascript://">Uzavřít</a>
           </td>
         </tr>;
       acc.push(row);
@@ -43,7 +49,7 @@ var PlannedMaintenances = React.createClass({
         <main>
           <Table striped bordered>
             <thead>
-              <tr><th>Název firmy</th><th>Servis naplánován</th></tr>
+              <tr><th>Název firmy</th><th>Servis naplánován</th><th>Upravit plán servisu</th><th>Uzavřít servis</th></tr>
             </thead>
             <tbody>
               {rows}
