@@ -12,6 +12,18 @@ var Panel = B.Panel;
 var Button = B.Button;
 var Glyphicon = B.Glyphicon;
 
+var PanelInfoable = React.createClass({
+  render: function() {
+    var selected = false;
+    var header = this.props.header;
+    return (
+      selected
+      ? (<Panel header={header} bsStyle="info">{this.props.children}</Panel>)
+      : (<Panel header={header}>{this.props.children}</Panel>)
+    );
+  }
+});
+
 var Machine = React.createClass({
 
   render: function() {
@@ -22,8 +34,7 @@ var Machine = React.createClass({
 
     return(
       <Col md={2}>
-        <Panel>
-          <h4>{type}</h4>
+        <PanelInfoable header={type}>
           <dl>
             <dt>Další servis</dt>
             <dd>{lastMaintenance}</dd>
@@ -32,7 +43,7 @@ var Machine = React.createClass({
           <a href="javascript://">
             <Glyphicon glyph="plus" /> Zařadit do servisu
           </a>
-        </Panel>
+        </PanelInfoable>
       </Col>
     );
   }
