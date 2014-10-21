@@ -27,21 +27,21 @@ var MonthLink = React.createClass({
 
     if (this.state["checked"]) {
       return (
-        <li><a className="bg-primary" onClick={this.noop}>{asString}</a></li>
+        <li><a href='javascript://' onClick={this.click} className="bg-primary">{asString}</a></li>
       );
     } else {
       return (
-        <li><a onClick={this.noop}>{asString}</a></li>
+        <li><a href='javascript://' onClick={this.click}>{asString}</a></li>
       );
     }
   }
 
   , getInitialState: function() {
-    return {};
+    return {"checked": false};
   }
 
-  , noop: function() {
-    this.setState({"checked": true});
+  , click: function() {
+    this.setState({"checked": !this.state.checked});
   }
 
 });
@@ -79,7 +79,7 @@ var MaintenanceForm = React.createClass({
         <ul className="list-inline">
           {monthsDOM}
         </ul>
-        <Input type="textarea" label="Poznámka" />
+        <Input type="textarea" label="Poznámka" rows="5" />
         <Button bsStyle="primary">Naplánuj servis</Button>
       </Well>
     );
