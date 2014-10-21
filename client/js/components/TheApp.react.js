@@ -12,6 +12,7 @@ var Navigation = require("./Navigation.react");
 var CompanyDetail = require("./CompanyDetail.react");
 var CompanyNew = require("./CompanyNew.react");
 var PlannedMaintenances = require("./PlannedMaintenances.react");
+var Maintenance = require("./Maintenance.react");
 var Table = require("./Table.react");
 
 var TheApp = (
@@ -20,6 +21,7 @@ var TheApp = (
       <Route name="planned-maintenances" path="/planned-maintenances" handler={PlannedMaintenances} />
       <Route name="company-new" path="/company/new" handler={CompanyNew} />
       <Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
+      <Route name="maintenance" path="/maintenance" handler={Maintenance} />
       <DefaultRoute name="table" handler={Table} />
     </Route>
   </Routes>
