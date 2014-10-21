@@ -76,6 +76,7 @@ var MaintenanceForm = React.createClass({
     return(
       <Well>
         <h2>Naplánování servisu</h2>
+        <strong>Datum</strong>
         <ul className="list-inline">
           {monthsDOM}
         </ul>

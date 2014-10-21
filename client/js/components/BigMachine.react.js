@@ -12,7 +12,7 @@ var Panel = B.Panel;
 var Button = B.Button;
 var Glyphicon = B.Glyphicon;
 
-var Machine = React.createClass({
+var BigMachine = React.createClass({
 
   render: function() {
 
@@ -21,22 +21,18 @@ var Machine = React.createClass({
     var imageSource = this.props.image;
 
     return(
-      <Col md={2}>
+      <Col md={4}>
         <Panel>
-          <h4>{type}</h4>
+          <h2><a href="javascript://">{type}</a></h2>
           <dl>
             <dt>Další servis</dt>
             <dd>{lastMaintenance}</dd>
           </dl>
-          <img src={imageSource} width="120" />
-          <a href="javascript://">
-            <Glyphicon glyph="plus" /> Zařadit do servisu
-          </a>
+          <img src={imageSource} width="240" />
         </Panel>
       </Col>
     );
   }
-
 });
 
-module.exports = Machine;
+module.exports = BigMachine;

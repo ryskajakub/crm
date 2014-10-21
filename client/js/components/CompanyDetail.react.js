@@ -3,11 +3,11 @@
  */
 var React = require('react');
 var _ = require("underscore");
+var Router = require('react-router');
 
 var CompanyStore = require("../stores/CompanyStore");
 var MachineStore = require("../stores/MachineStore");
-var Machine = require("./Machine.react");
-var MaintenanceForm = require("./MaintenanceForm.react");
+var BigMachine = require("./BigMachine.react");
 
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
@@ -19,6 +19,8 @@ var Row = B.Row;
 var Well = B.Well;
 var Input = B.Input;
 var Button = B.Button;
+var Panel = B.Panel;
+var Link = Router.Link;
 
 var CompanyDetail = React.createClass({
 
@@ -29,9 +31,10 @@ var CompanyDetail = React.createClass({
 
     var company = this.state.company;
     var machinesInCompany = this.state.machines;
+    var id = this.props.params.companyId;
 
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
-      var machine = (<Machine kep={key} type={value.type} imageSource={value.image} lastMaintenance={value.lastMaintenance} />);
+      var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
       acc.push(machine);
       return acc;
     }, []);
@@ -50,12 +53,16 @@ var CompanyDetail = React.createClass({
         </section>
         <section>
           <Grid>
-            <Row className="show-grid">
+            <Row>
               {machinesTags}
             </Row>
             <Row>
               <Col md={12}>
-                <MaintenanceForm />
+                <Panel>
+                  <Link to='maintenance' params={{companyId: id, maintenanceId: "new"}}> 
+                    Naplánovat servis
+                  </Link>
+                </Panel>
               </Col>
             </Row>
           </Grid>

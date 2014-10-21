@@ -21,7 +21,7 @@ var TheApp = (
       <Route name="planned-maintenances" path="/planned-maintenances" handler={PlannedMaintenances} />
       <Route name="company-new" path="/company/new" handler={CompanyNew} />
       <Route name="company-detail" path="/company/:companyId" handler={CompanyDetail} />
-      <Route name="maintenance" path="/maintenance" handler={Maintenance} />
+      <Route name="maintenance" path="/company/:companyId/maintenance/:maintenanceId" handler={Maintenance} />
       <DefaultRoute name="table" handler={Table} />
     </Route>
   </Routes>
