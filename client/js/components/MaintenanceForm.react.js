@@ -69,6 +69,14 @@ var MaintenanceForm = React.createClass({
     this.setState({"employeeId": key});
   }
 
+  , subtractMonth: function() {
+    this.setState({"calendar": this.state.calendar.subtract(1, "months")});
+  }
+
+  , addMonth: function() {
+    this.setState({"calendar": this.state.calendar.add(1, "months")});
+  }
+
   , render: function() {
 
     var now = Moment();
@@ -99,9 +107,9 @@ var MaintenanceForm = React.createClass({
     var popover =
       <Popover placement="bottom" positionLeft={0} positionTop={40}>
         <div className="relative">
-          <a className="leftPager" href="javascript://">&lt;&lt;</a>
-          <a className="rightPager" href="javascript://">&gt;&gt;</a>
-          <Month date={Moment().add(-50, "months")} onClick={this.handleCalendarClick}>
+          <a className="leftPager" onClick={this.subtractMonth} href="javascript://">&lt;&lt;</a>
+          <a className="rightPager" onClick={this.addMonth} href="javascript://">&gt;&gt;</a>
+          <Month date={this.state.calendar} onClick={this.handleCalendarClick}>
             <Day onClick={this.handleCalendarClick} />
           </Month>
         </div>
@@ -176,6 +184,7 @@ var MaintenanceForm = React.createClass({
       "maintenanceDate": null
       , "calendarPickerShown": true
       , "employeeId": null
+      , "calendar": Moment()
     });
   }
 
