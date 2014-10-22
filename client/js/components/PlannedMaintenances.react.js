@@ -9,6 +9,9 @@ var Moment = require("../utils/Moment");
 var Router = require('react-router');
 var B = require("react-bootstrap");
 
+var listenToStoreMixin = require("../utils/listenToStoreMixin");
+var MaintenanceStore = require("../stores/MaintenanceStore");
+
 var Table = B.Table;
 var Link = Router.Link;
 
@@ -16,13 +19,13 @@ var DocumentTitle = require('react-document-title');
 
 var PlannedMaintenances = React.createClass({
 
-  render: function() {
+  mixins: [listenToStoreMixin(MaintenanceStore, "maintenances", function(component, store) {
+    return store.get();
+  })]
 
-    var planned = [
-      ["CAHA", "1.11.2014"]
-      , ["ZICO", "5.11.2014"]
-      , ["VTP - trigema", "10.11.2014"]
-    ];
+  , render: function() {
+
+    var planned = [];
 
     var rows = _.reduce(planned, function(acc, elem) {
       var row = 

@@ -77,3 +77,27 @@ AppDispatcher.handleServerAction({
   type: CompanyConstants.SERVER_INITIAL_EMPLOYEES
   , employees: employees
 });
+
+// maintenances
+var maintenanceId = 0;
+var maintenances = {};
+
+function createMaintenance(date, companyId, machines, note, serviceman) {
+  var maintenance = {
+    "date" : date
+    , "companyId": companyId
+    , "machinesIds": machines
+    , "note": note
+    , "serviceman": serviceman
+  };
+  maintenances[maintenanceId] = maintenance;
+  maintenanceId += 1;
+}
+
+createMaintenance(Moment().add(5, "months"), 0, [0, 1], "Bude třeba vyměnit filtr", 0);
+createMaintenance(Moment().add(10, "months"), 0, [0], "Bude třeba vyměnit řemen", 1);
+
+AppDispatcher.handleServerAction({
+  type: MachineConstants.SERVER_INITIAL_MAINTENANCES
+  , maintenances: maintenances
+});
