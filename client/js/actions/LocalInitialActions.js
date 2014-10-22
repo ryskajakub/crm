@@ -3,6 +3,7 @@ var CompanyConstants = require("../constants/CompanyConstants");
 var MachineConstants = require("../constants/MachineConstants");
 var Moment = require("../utils/Moment");
 
+// companies
 var id = 0;
 
 var companies = {};
@@ -34,6 +35,7 @@ AppDispatcher.handleServerAction({
   , companies: companies
 });
 
+// machines
 var machineId = 0;
 var machines = {};
 
@@ -54,4 +56,24 @@ createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.A
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MACHINES
   , machines: machines
+});
+
+// employees
+var employeeId = 0;
+var employees = {};
+
+function createEmployee(name) {
+  var employee = {
+    "name": name
+  };
+  employees[employeeId] = employee;
+  employeeId += 1;
+}
+
+createEmployee("Kutička");
+createEmployee("Mandlík");
+
+AppDispatcher.handleServerAction({
+  type: CompanyConstants.SERVER_INITIAL_EMPLOYEES
+  , employees: employees
 });

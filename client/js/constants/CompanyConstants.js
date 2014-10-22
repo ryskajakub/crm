@@ -12,5 +12,6 @@ module.exports = keyMirror({
   , SERVER_CREATED_COMPANY: null
   , SERVER_CREATE_COMPANY_FAIL: null
   , SERVER_INITIAL_COMPANIES: null
+  , SERVER_INITIAL_EMPLOYEES: null
   , CHECK_AVAILABILITY: null
 });

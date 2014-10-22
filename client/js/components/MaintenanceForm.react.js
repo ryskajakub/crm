@@ -8,6 +8,9 @@ var Calendar = ReactCalendar.Calendar;
 var Month = ReactCalendar.Month;
 var Day = ReactCalendar.Day;
 
+var EmployeeStore = require("../stores/EmployeeStore");
+var listenToStoreMixin = require("../utils/listenToStoreMixin");
+
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
 var ListGroupItem = B.ListGroupItem;
@@ -20,6 +23,8 @@ var Input = B.Input;
 var Button = B.Button;
 var Popover = B.Popover;
 var Glyphicon = B.Glyphicon;
+var MenuItem = B.MenuItem;
+var DropdownButton = B.DropdownButton;
 var Moment = require("../utils/Moment");
 var _ = require("underscore");
 
@@ -55,7 +60,15 @@ var MonthLink = React.createClass({
 
 var MaintenanceForm = React.createClass({
 
-  render: function() {
+  mixins: [listenToStoreMixin(EmployeeStore, "employees", function(component, store) {
+    return store.get();
+  })]
+
+  , selectEmployee: function(key) {
+    this.setState({"employeeId": key});
+  }
+
+  , render: function() {
 
     var now = Moment();
     var month = now.month();
@@ -82,22 +95,34 @@ var MaintenanceForm = React.createClass({
 
     var maintenanceDate = this.state["maintenanceDate"];
 
-    var popover = 
+    var popover =
       <Popover placement="bottom" positionLeft={0} positionTop={125}>
         <Month date={Moment().subtract(100, "months")} onClick={this.handleCalendarClick}>
           <Day onClick={this.handleCalendarClick} />
         </Month>
       </Popover>
 
+    var employees = _.reduce(this.state.employees, function(acc, elem, key) {
+      acc.push(<MenuItem key={key} href="javascript://">{elem.name}</MenuItem>);
+      return acc;
+    }, []);
+
+    var selectedEmployee = 
+      (null === this.state.employeeId)
+      ? this.state.employees["0"]
+      : this.state.employees[this.state.employeeId];
 
     return(
       <Grid>
         <Row>
           <Col md={6} mdOffset={3}>
             <h2>Naplánování servisu</h2>
-            <Input addonBefore={<Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />} 
+            <Input addonBefore={<Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />}
               type="text" label="Datum" value={maintenanceDate} onClick={this.showCalendarPicker} />
             {this.state["calendarPickerShown"] ? popover : ""}
+            <DropdownButton className="scrollable-menu" onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
+              {employees}
+            </DropdownButton>
             <Input type="textarea" label="Poznámka" rows="5" />
             <Button bsStyle="primary">Naplánuj servis</Button>
           </Col>
@@ -115,18 +140,22 @@ var MaintenanceForm = React.createClass({
   }
 
   , getInitialState: function() {
-    return({"maintenanceDate": null, "calendarPickerShown": false});
+    return({
+      "maintenanceDate": null
+      , "calendarPickerShown": false
+      , "employeeId": null
+    });
   }
-  
+
   , handleCalendarClick: function(name, moment, event) {
     event.stopPropagation();
-    var formattedDate = 
-      ("Day" === name) 
+    var formattedDate =
+      ("Day" === name)
       ? moment.format("D.MMMM YYYY (dddd)")
       : moment.format("MMMM YYYY") ;
 
     this.setState({"maintenanceDate": formattedDate, "calendarPickerShown": false});
-    
+
   }
 
 });
