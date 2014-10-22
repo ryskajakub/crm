@@ -24,12 +24,13 @@ html {
 .rc-Month {
   display: inline-block;
   vertical-align: top;
-  margin: 0 0 10px 10px;
 }
 .rc-Month-header {
   text-align: center;
   font-weight: bolder;
   cursor: pointer;
+  margin-left: 50px;
+  margin-right: 50px;
 }
 .rc-Month-header:hover {
   background-color: #5bc0de;
@@ -87,4 +88,13 @@ html {
 }
 .rc-Day--current {
   background-color: #428bca;
+}
+
+.leftPager {
+  position:absolute;
+  left:5px;
+}
+.rightPager {
+  position:absolute;
+  right:5px;
 }

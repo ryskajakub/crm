@@ -25,6 +25,7 @@ var Popover = B.Popover;
 var Glyphicon = B.Glyphicon;
 var MenuItem = B.MenuItem;
 var DropdownButton = B.DropdownButton;
+
 var Moment = require("../utils/Moment");
 var _ = require("underscore");
 
@@ -97,9 +98,13 @@ var MaintenanceForm = React.createClass({
 
     var popover =
       <Popover placement="bottom" positionLeft={0} positionTop={40}>
-        <Month date={Moment().subtract(100, "months")} onClick={this.handleCalendarClick}>
-          <Day onClick={this.handleCalendarClick} />
-        </Month>
+        <div className="relative">
+          <a className="leftPager" href="javascript://">&lt;&lt;</a>
+          <a className="rightPager" href="javascript://">&gt;&gt;</a>
+          <Month date={Moment().add(-50, "months")} onClick={this.handleCalendarClick}>
+            <Day onClick={this.handleCalendarClick} />
+          </Month>
+        </div>
       </Popover>
 
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {
@@ -133,7 +138,6 @@ var MaintenanceForm = React.createClass({
             </div>
           </Col>
         </Row>
-
 
         <Row className="form-group">
           <label className="control-label col-md-1 col-md-offset-3">
@@ -170,7 +174,7 @@ var MaintenanceForm = React.createClass({
   , getInitialState: function() {
     return({
       "maintenanceDate": null
-      , "calendarPickerShown": false
+      , "calendarPickerShown": true
       , "employeeId": null
     });
   }
