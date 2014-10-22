@@ -96,7 +96,7 @@ var MaintenanceForm = React.createClass({
     var maintenanceDate = this.state["maintenanceDate"];
 
     var popover =
-      <Popover placement="bottom" positionLeft={0} positionTop={125}>
+      <Popover placement="bottom" positionLeft={0} positionTop={40}>
         <Month date={Moment().subtract(100, "months")} onClick={this.handleCalendarClick}>
           <Day onClick={this.handleCalendarClick} />
         </Month>
@@ -107,27 +107,55 @@ var MaintenanceForm = React.createClass({
       return acc;
     }, []);
 
-    var selectedEmployee = 
+    var selectedEmployee =
       (null === this.state.employeeId)
       ? this.state.employees["0"]
       : this.state.employees[this.state.employeeId];
 
     return(
-      <Grid>
+      <form className="form-horizontal relative">
         <Row>
-          <Col md={6} mdOffset={3}>
-            <h2>Naplánování servisu</h2>
-            <Input addonBefore={<Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />}
-              type="text" label="Datum" value={maintenanceDate} onClick={this.showCalendarPicker} />
-            {this.state["calendarPickerShown"] ? popover : ""}
-            <DropdownButton className="scrollable-menu" onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
+          <Col md={5} mdOffset={4}><h2>Servis</h2></Col>
+        </Row>
+
+        <Row className="form-group">
+          <label className="control-label col-md-1 col-md-offset-3">
+            Datum
+          </label>
+          <Col md={5}>
+            <div className="input-group relative">
+              <div className="input-group-addon">
+                <Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />
+              </div>
+              <input type="text" onClick={this.showCalendarPicker} className="form-control"
+                value={maintenanceDate} />
+              {this.state["calendarPickerShown"] ? popover : ""}
+            </div>
+          </Col>
+        </Row>
+
+
+        <Row className="form-group">
+          <label className="control-label col-md-1 col-md-offset-3">
+            Servisman
+          </label>
+          <div className="col-md-5">
+            <DropdownButton label="tvl" className="scrollable-menu" onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
               {employees}
             </DropdownButton>
-            <Input type="textarea" label="Poznámka" rows="5" />
+          </div>
+        </Row>
+
+        <Input type="textarea" rows="5" label="Poznámka"
+          labelClassName="col-md-1 col-md-offset-3" wrapperClassName="col-md-5" />
+
+        <Row className="form-group">
+          <Col md={5} mdOffset={4}>
             <Button bsStyle="primary">Naplánuj servis</Button>
           </Col>
         </Row>
-      </Grid>
+
+      </form>
     );
   }
 

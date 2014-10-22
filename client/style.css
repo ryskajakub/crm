@@ -7,6 +7,9 @@ html {
   max-height: 200px;
   overflow-x: hidden;
 }
+.relative {
+  position: relative;
+}
 .cell {
   display: inline-block;
   width: 32px;
