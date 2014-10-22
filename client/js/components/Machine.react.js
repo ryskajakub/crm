@@ -28,18 +28,20 @@ var Machine = React.createClass({
 
   render: function() {
 
-    var type = this.props.type;
-    var lastMaintenance = this.props.maintenanceDate;
-    var imageSource = this.props.image;
+    var machine = this.props.machine;
+
+    var type = machine.type;
+    var nextMaintenance = machine.nextMaintenance.format("MMMM YYYY");
+    var image = machine.image;
 
     return(
       <Col md={2}>
         <PanelInfoable header={type}>
           <dl>
             <dt>Další servis</dt>
-            <dd>{lastMaintenance}</dd>
+            <dd>{nextMaintenance}</dd>
           </dl>
-          <img src={imageSource} width="120" />
+          <img src={image} width="120" />
           <a href="javascript://">
             <Glyphicon glyph="plus" /> Zařadit do servisu
           </a>

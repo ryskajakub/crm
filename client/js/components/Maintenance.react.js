@@ -4,25 +4,37 @@
 var React = require('react');
 
 var Moment = require("../utils/Moment");
+var listenToStoreMixin = require("../utils/listenToStoreMixin");
 
 var Machine = require("./Machine.react");
 var MaintenanceForm = require("./MaintenanceForm.react");
 
+var MachineStore = require("../stores/MachineStore");
+
 var B = require("react-bootstrap");
 var Row = B.Row;
 
+var _ = require("underscore");
+
 var Maintenance = React.createClass({
 
-  render: function() {
+  mixins: [listenToStoreMixin(MachineStore, "machines", function(component, store) {
+    return store.getByCompanyId(component.props.params.companyId);
+  })]
+
+  , render: function() {
+
+    var machines = _.reduce(this.state.machines, function (acc, value, key) {
+      var element = <Machine key={key} machine={value} />
+      acc.push(element);
+      return acc;
+    }, []);
 
     return (
       <main>
         <h1>Servis</h1>
         <h2>Continental</h2>
-        <Row>
-          <Machine image="/images/remeza-bk15e.jpg" type="BK 15" maintenanceDate="4 měsíce" />
-          <Machine image="/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg" type="C-50.AB360" maintenanceDate="5 měsíců" />
-        </Row>
+        <Row>{machines}</Row>
         <MaintenanceForm />
       </main>
     );

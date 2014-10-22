@@ -1,6 +1,7 @@
 var AppDispatcher = require('../dispatcher/AppDispatcher');
 var CompanyConstants = require("../constants/CompanyConstants");
 var MachineConstants = require("../constants/MachineConstants");
+var Moment = require("../utils/Moment");
 
 var id = 0;
 
@@ -36,19 +37,19 @@ AppDispatcher.handleServerAction({
 var machineId = 0;
 var machines = {};
 
-function createMachine(companyId, image, type, lastMaintenance) {
+function createMachine(companyId, image, type, nextMaintenance) {
   var machine = {
     "companyId": companyId
     , "image": image
     , "type": type
-    , "lastMaintenance": lastMaintenance
+    , "nextMaintenance": nextMaintenance
   }
   machines[machineId] = machine;
   machineId += 1;
 }
 
-createMachine(0, "/images/remeza-bk15e.jpg", "BK 15", "2.8.2015");
-createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.AB360", "2.9.2015");
+createMachine(0, "/images/remeza-bk15e.jpg", "BK 15", Moment().year(2015).month(2));
+createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.AB360", Moment().year(2015).month(3));
 
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MACHINES
