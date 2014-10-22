@@ -12,9 +12,11 @@ var Panel = B.Panel;
 var Button = B.Button;
 var Glyphicon = B.Glyphicon;
 
+var togglableStateMixin = require("../utils/togglableStateMixin");
+
 var PanelInfoable = React.createClass({
   render: function() {
-    var selected = false;
+    var selected = this.props.selected;
     var header = this.props.header;
     return (
       selected
@@ -26,7 +28,9 @@ var PanelInfoable = React.createClass({
 
 var Machine = React.createClass({
 
-  render: function() {
+  mixins: [togglableStateMixin()]
+
+  , render: function() {
 
     var machine = this.props.machine;
 
@@ -34,15 +38,17 @@ var Machine = React.createClass({
     var nextMaintenance = machine.nextMaintenance.format("MMMM YYYY");
     var image = machine.image;
 
+    console.log(this.state);
+
     return(
       <Col md={2}>
-        <PanelInfoable header={type}>
+        <PanelInfoable header={type} selected={this.state.active}>
           <dl>
             <dt>Další servis</dt>
             <dd>{nextMaintenance}</dd>
           </dl>
           <img src={image} width="120" />
-          <a href="javascript://">
+          <a href="javascript://" onClick={this.toggle}>
             <Glyphicon glyph="plus" /> Zařadit do servisu
           </a>
         </PanelInfoable>
