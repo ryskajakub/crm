@@ -158,7 +158,7 @@ var MaintenanceForm = React.createClass({
           </div>
         </Row>
 
-        <Input type="textarea" rows="5" label="Poznámka"
+        <Input type="textarea" rows="6" label="Poznámka"
           labelClassName="col-md-1 col-md-offset-3" wrapperClassName="col-md-5" />
 
         <Row className="form-group">
@@ -182,7 +182,7 @@ var MaintenanceForm = React.createClass({
   , getInitialState: function() {
     return({
       "maintenanceDate": null
-      , "calendarPickerShown": true
+      , "calendarPickerShown": false
       , "employeeId": null
       , "calendar": Moment()
     });
