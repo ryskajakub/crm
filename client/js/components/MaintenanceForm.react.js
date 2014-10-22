@@ -3,6 +3,11 @@
  */
 var React = require('react');
 
+var ReactCalendar = require("react-calendar");
+var Calendar = ReactCalendar.Calendar;
+var Month = ReactCalendar.Month;
+var Day = ReactCalendar.Day;
+
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
 var ListGroupItem = B.ListGroupItem;
@@ -13,6 +18,8 @@ var Row = B.Row;
 var Well = B.Well;
 var Input = B.Input;
 var Button = B.Button;
+var Popover = B.Popover;
+var Glyphicon = B.Glyphicon;
 var Moment = require("../utils/Moment");
 var _ = require("underscore");
 
@@ -73,28 +80,53 @@ var MaintenanceForm = React.createClass({
       return acc;
     }, []);
 
+    var maintenanceDate = this.state["maintenanceDate"];
+
+    var popover = 
+      <Popover placement="bottom" positionLeft={0} positionTop={125}>
+        <Month date={Moment().subtract(100, "months")} onClick={this.handleCalendarClick}>
+          <Day onClick={this.handleCalendarClick} />
+        </Month>
+      </Popover>
+
+
     return(
       <Grid>
         <Row>
-          <Col md={12}>
+          <Col md={6} mdOffset={3}>
             <h2>Naplánování servisu</h2>
-            <strong>Datum</strong>
-          </Col>
-          <Col md={6}>
-            <ul className="list-inline">
-              {monthsDOM}
-            </ul>
-          </Col>
-          <Col md={6}>
-            Kalendář
-          </Col>
-          <Col md={12}>
+            <Input addonBefore={<Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />} 
+              type="text" label="Datum" value={maintenanceDate} onClick={this.showCalendarPicker} />
+            {this.state["calendarPickerShown"] ? popover : ""}
             <Input type="textarea" label="Poznámka" rows="5" />
             <Button bsStyle="primary">Naplánuj servis</Button>
           </Col>
         </Row>
       </Grid>
     );
+  }
+
+  , showCalendarPickerToggle: function() {
+    this.setState({"calendarPickerShown": !this.state["calendarPickerShown"]});
+  }
+
+  , showCalendarPicker: function() {
+    this.setState({"calendarPickerShown": true});
+  }
+
+  , getInitialState: function() {
+    return({"maintenanceDate": null, "calendarPickerShown": false});
+  }
+  
+  , handleCalendarClick: function(name, moment, event) {
+    event.stopPropagation();
+    var formattedDate = 
+      ("Day" === name) 
+      ? moment.format("D.MMMM YYYY (dddd)")
+      : moment.format("MMMM YYYY") ;
+
+    this.setState({"maintenanceDate": formattedDate, "calendarPickerShown": false});
+    
   }
 
 });
