@@ -74,15 +74,26 @@ var MaintenanceForm = React.createClass({
     }, []);
 
     return(
-      <Well>
-        <h2>Naplánování servisu</h2>
-        <strong>Datum</strong>
-        <ul className="list-inline">
-          {monthsDOM}
-        </ul>
-        <Input type="textarea" label="Poznámka" rows="5" />
-        <Button bsStyle="primary">Naplánuj servis</Button>
-      </Well>
+      <Grid>
+        <Row>
+          <Col md={12}>
+            <h2>Naplánování servisu</h2>
+            <strong>Datum</strong>
+          </Col>
+          <Col md={6}>
+            <ul className="list-inline">
+              {monthsDOM}
+            </ul>
+          </Col>
+          <Col md={6}>
+            Kalendář
+          </Col>
+          <Col md={12}>
+            <Input type="textarea" label="Poznámka" rows="5" />
+            <Button bsStyle="primary">Naplánuj servis</Button>
+          </Col>
+        </Row>
+      </Grid>
     );
   }
 
