@@ -38,8 +38,6 @@ var Machine = React.createClass({
     var nextMaintenance = machine.nextMaintenance.format("MMMM YYYY");
     var image = machine.image;
 
-    console.log(this.state);
-
     return(
       <Col md={2}>
         <PanelInfoable header={type} selected={this.state.active}>
@@ -49,7 +47,11 @@ var Machine = React.createClass({
           </dl>
           <img src={image} width="120" />
           <a href="javascript://" onClick={this.toggle}>
-            <Glyphicon glyph="plus" /> Zařadit do servisu
+            {
+              (this.state.active)
+              ? <span><Glyphicon glyph="minus" /> Odebrat</span>
+              : <span><Glyphicon glyph="plus" /> Zařadit do servisu</span>
+            }
           </a>
         </PanelInfoable>
       </Col>
