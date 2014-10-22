@@ -10,6 +10,7 @@ var Day = ReactCalendar.Day;
 
 var EmployeeStore = require("../stores/EmployeeStore");
 var listenToStoreMixin = require("../utils/listenToStoreMixin");
+var MaintenanceActions = require("../actions/MaintenanceActions");
 
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
@@ -163,12 +164,16 @@ var MaintenanceForm = React.createClass({
 
         <Row className="form-group">
           <Col md={5} mdOffset={4}>
-            <Button bsStyle="primary">Naplánuj servis</Button>
+            <Button bsStyle="primary" onClick={this.makeTheMaintenancePlan}>Naplánuj servis</Button>
           </Col>
         </Row>
 
       </form>
     );
+  }
+
+  , makeTheMaintenancePlan: function() {
+    MaintenanceActions.recordMaintenancePlan();
   }
 
   , showCalendarPickerToggle: function() {
