@@ -13,6 +13,8 @@ var MaintenanceStore = require("../stores/MaintenanceStore");
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
 
+var LinkedStateMixin = require("react/lib/LinkedStateMixin");
+
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
 var ListGroupItem = B.ListGroupItem;
@@ -33,12 +35,25 @@ var _ = require("underscore");
 
 var MaintenanceForm = React.createClass({
 
-  mixins: [listenToStoresMixin([EmployeeStore, MaintenanceStore])]
+  mixins: [
+    listenToStoresMixin([EmployeeStore, MaintenanceStore])
+    , LinkedStateMixin
+  ]
 
   , computeStateFromStores: function() {
     var employees = EmployeeStore.get();
     var maintenance = MaintenanceStore.get(this.props.maintenanceId);
-    this.setState({"employeeId": maintenance.employeeId, "employees": employees});
+
+    this.setState({
+      "employeeId": maintenance.employeeId
+      , "employees": employees
+      , "maintenanceDate": {
+        "date": maintenance.date.date
+        , "accuracy": maintenance.date.accuracy
+      }
+      , "note": maintenance.note
+      , "calendar": maintenance.date.date
+    });
   }
 
   , selectEmployee: function(employeeId) {
@@ -56,6 +71,15 @@ var MaintenanceForm = React.createClass({
   , render: function() {
 
     var maintenanceDate = this.state["maintenanceDate"];
+
+    var formattedDate =
+      (undefined === maintenanceDate["date"]) 
+      ? ""
+      : (
+        "Day" === maintenanceDate["accuracy"]
+        ? maintenanceDate["date"].format("D.MMMM YYYY (dddd)")
+        : maintenanceDate["date"].format("MMMM YYYY")
+      );
 
     var popover =
       <Popover placement="bottom" positionLeft={0} positionTop={40}>
@@ -95,7 +119,7 @@ var MaintenanceForm = React.createClass({
                 <Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />
               </div>
               <input type="text" onClick={this.showCalendarPicker} className="form-control"
-                value={maintenanceDate} />
+                value={formattedDate} onChange={function() {}} />
               {this.state["calendarPickerShown"] ? popover : ""}
             </div>
           </Col>
@@ -112,7 +136,7 @@ var MaintenanceForm = React.createClass({
           </div>
         </Row>
 
-        <Input type="textarea" rows="6" label="Poznámka"
+        <Input type="textarea" rows="6" label="Poznámka" valueLink={this.linkState("note")}
           labelClassName="col-md-1 col-md-offset-3" wrapperClassName="col-md-5" />
 
         <Row className="form-group">
@@ -139,7 +163,7 @@ var MaintenanceForm = React.createClass({
 
   , getInitialState: function() {
     return({
-      "maintenanceDate": null
+      "maintenanceDate": {}
       , "calendarPickerShown": false
       , "employeeId": null
       , "calendar": Moment()
@@ -148,13 +172,7 @@ var MaintenanceForm = React.createClass({
 
   , handleCalendarClick: function(name, moment, event) {
     event.stopPropagation();
-    var formattedDate =
-      ("Day" === name)
-      ? moment.format("D.MMMM YYYY (dddd)")
-      : moment.format("MMMM YYYY") ;
-
-    this.setState({"maintenanceDate": formattedDate, "calendarPickerShown": false});
-
+    this.setState({"maintenanceDate": {"date": moment, "accuracy": name}, "calendarPickerShown": false});
   }
 
 });
