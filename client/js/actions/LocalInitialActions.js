@@ -52,6 +52,8 @@ function createMachine(companyId, image, type, nextMaintenance) {
 
 createMachine(0, "/images/remeza-bk15e.jpg", "BK 15", Moment().year(2015).month(2));
 createMachine(0, "/images/pistovy-kompresor-remeza-360-l-min-400-v.jpg", "C-50.AB360", Moment().year(2015).month(3));
+createMachine(1, "/images/atlas2.jpg", "Z 55-900", Moment().year(2015).month(5));
+createMachine(1, "/images/atlas1.jpg", "XAHS 836", Moment().year(2015).month(7));
 
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MACHINES
@@ -96,6 +98,7 @@ function createMaintenance(date, companyId, machines, note, serviceman) {
 
 createMaintenance(Moment().add(5, "months"), 0, [0, 1], "Bude třeba vyměnit filtr", 0);
 createMaintenance(Moment().add(10, "months"), 0, [0], "Bude třeba vyměnit řemen", 1);
+createMaintenance(Moment().add(11, "months"), 1, [2], "Bude třeba vyhodit atlas copco compresory", 1);
 
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MAINTENANCES
