@@ -30,36 +30,6 @@ var DropdownButton = B.DropdownButton;
 var Moment = require("../utils/Moment");
 var _ = require("underscore");
 
-var MonthLink = React.createClass({
-
-  render: function() {
-    var year = this.props.year;
-    var month = this.props.month;
-
-    var momentObject = Moment().set("year", year).set("month", month);
-    var asString = momentObject.format("MMMM YYYY");
-
-    if (this.state["checked"]) {
-      return (
-        <li><a href='javascript://' onClick={this.click} className="bg-primary">{asString}</a></li>
-      );
-    } else {
-      return (
-        <li><a href='javascript://' onClick={this.click}>{asString}</a></li>
-      );
-    }
-  }
-
-  , getInitialState: function() {
-    return {"checked": false};
-  }
-
-  , click: function() {
-    this.setState({"checked": !this.state.checked});
-  }
-
-});
-
 var MaintenanceForm = React.createClass({
 
   mixins: [listenToStoreSimpleMixin(EmployeeStore, "employees", function(component, store) {
@@ -79,29 +49,6 @@ var MaintenanceForm = React.createClass({
   }
 
   , render: function() {
-
-    var now = Moment();
-    var month = now.month();
-    var year = now.year();
-
-    function addYear(range, year) {
-      return _.map(range, function(month) {
-        return {
-          "month": month
-          , "year": year
-        };
-      });
-    }
-
-    var thisYear = _.range(month, 12);
-    var nextYear = _.range(0, month);
-    var months = _.union(addYear(thisYear, year), addYear(nextYear, year + 1));
-
-    var monthsDOM = _.reduce(months, function(acc, date) {
-      var domElem = <MonthLink year={date.year} month={date.month} />;
-      acc.push(domElem);
-      return acc;
-    }, []);
 
     var maintenanceDate = this.state["maintenanceDate"];
 
