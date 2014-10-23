@@ -57,6 +57,7 @@ var MaintenanceForm = React.createClass({
   }
 
   , selectEmployee: function(employeeId) {
+    var employeeIdMaybeNull = (employeeId === -1 ? null : employeeId);
     this.setState({"employeeId": employeeId});
   }
 
@@ -73,7 +74,7 @@ var MaintenanceForm = React.createClass({
     var maintenanceDate = this.state["maintenanceDate"];
 
     var formattedDate =
-      (undefined === maintenanceDate["date"]) 
+      (undefined === maintenanceDate["date"])
       ? ""
       : (
         "Day" === maintenanceDate["accuracy"]
@@ -92,7 +93,7 @@ var MaintenanceForm = React.createClass({
         </div>
       </Popover>
 
-    var noEmployeeSelected = (<MenuItem key={null} href="javascript://">---</MenuItem>);
+    var noEmployeeSelected = (<MenuItem key={-1} href="javascript://">---</MenuItem>);
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {
       acc.push(<MenuItem key={key} href="javascript://">{elem.name}</MenuItem>);
       return acc;
@@ -130,7 +131,8 @@ var MaintenanceForm = React.createClass({
             Servisman
           </label>
           <div className="col-md-5">
-            <DropdownButton label="tvl" className="scrollable-menu" onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
+            <DropdownButton className="scrollable-menu" 
+              onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
               {employees}
             </DropdownButton>
           </div>
