@@ -4,7 +4,7 @@
 var React = require('react');
 
 var Moment = require("../utils/Moment");
-var listenToStoreMixin = require("../utils/listenToStoreMixin");
+var listenToStoreSimpleMixin = require("../utils/listenToStoreSimpleMixin");
 
 var Machine = require("./Machine.react");
 var MaintenanceForm = require("./MaintenanceForm.react");
@@ -18,7 +18,7 @@ var _ = require("underscore");
 
 var Maintenance = React.createClass({
 
-  mixins: [listenToStoreMixin(MachineStore, "machines", function(component, store) {
+  mixins: [listenToStoreSimpleMixin(MachineStore, "machines", function(component, store) {
     return store.getByCompanyId(component.props.params.companyId);
   })]
 

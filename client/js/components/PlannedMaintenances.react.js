@@ -9,7 +9,7 @@ var Moment = require("../utils/Moment");
 var Router = require('react-router');
 var B = require("react-bootstrap");
 
-var listenToStoreMixin = require("../utils/listenToStoreMixin");
+var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceStore = require("../stores/MaintenanceStore");
 var CompanyStore = require("../stores/CompanyStore");
 
@@ -20,7 +20,7 @@ var DocumentTitle = require('react-document-title');
 
 var PlannedMaintenances = React.createClass({
 
-  mixins: [listenToStoreMixin([CompanyStore, MaintenanceStore])]
+  mixins: [listenToStoresMixin([CompanyStore, MaintenanceStore])]
 
   , computeStateFromStores: function() {
     var maintenances = MaintenanceStore.get();

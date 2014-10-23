@@ -9,7 +9,7 @@ var Month = ReactCalendar.Month;
 var Day = ReactCalendar.Day;
 
 var EmployeeStore = require("../stores/EmployeeStore");
-var listenToStoreMixin = require("../utils/listenToStoreMixin");
+var listenToStoreSimpleMixin = require("../utils/listenToStoreSimpleMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
 
 var B = require("react-bootstrap");
@@ -62,7 +62,7 @@ var MonthLink = React.createClass({
 
 var MaintenanceForm = React.createClass({
 
-  mixins: [listenToStoreMixin(EmployeeStore, "employees", function(component, store) {
+  mixins: [listenToStoreSimpleMixin(EmployeeStore, "employees", function(component, store) {
     return store.get();
   })]
 
