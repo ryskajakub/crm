@@ -33,6 +33,9 @@ var DropdownButton = B.DropdownButton;
 var Moment = require("../utils/Moment");
 var _ = require("underscore");
 
+// key for the element in array, which is needed for array, null is not accepted
+var NULL_KEY = -1;
+
 var MaintenanceForm = React.createClass({
 
   mixins: [
@@ -57,7 +60,7 @@ var MaintenanceForm = React.createClass({
   }
 
   , selectEmployee: function(employeeId) {
-    var employeeIdMaybeNull = (employeeId === -1 ? null : employeeId);
+    var employeeIdMaybeNull = (employeeId === NULL_KEY ? null : employeeId);
     this.setState({"employeeId": employeeId});
   }
 
@@ -93,14 +96,14 @@ var MaintenanceForm = React.createClass({
         </div>
       </Popover>
 
-    var noEmployeeSelected = (<MenuItem key={-1} href="javascript://">---</MenuItem>);
+    var noEmployeeSelected = (<MenuItem key={NULL_KEY} href="javascript://">---</MenuItem>);
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {
       acc.push(<MenuItem key={key} href="javascript://">{elem.name}</MenuItem>);
       return acc;
     }, [noEmployeeSelected]);
 
     var selectedEmployee =
-      (null === this.state.employeeId)
+      (NULL_KEY === this.state.employeeId)
       ? {"name": "---"}
       : this.state.employees[this.state.employeeId];
 
