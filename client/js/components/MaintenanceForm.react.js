@@ -66,8 +66,8 @@ var MaintenanceForm = React.createClass({
     return store.get();
   })]
 
-  , selectEmployee: function(key) {
-    this.setState({"employeeId": key});
+  , selectEmployee: function(employeeId) {
+    this.setState({"employeeId": employeeId});
   }
 
   , subtractMonth: function() {
@@ -116,14 +116,15 @@ var MaintenanceForm = React.createClass({
         </div>
       </Popover>
 
+    var noEmployeeSelected = (<MenuItem key={null} href="javascript://">---</MenuItem>);
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {
       acc.push(<MenuItem key={key} href="javascript://">{elem.name}</MenuItem>);
       return acc;
-    }, []);
+    }, [noEmployeeSelected]);
 
     var selectedEmployee =
       (null === this.state.employeeId)
-      ? this.state.employees["0"]
+      ? {}
       : this.state.employees[this.state.employeeId];
 
     return(
