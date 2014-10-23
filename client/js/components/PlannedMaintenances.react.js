@@ -11,6 +11,7 @@ var B = require("react-bootstrap");
 
 var listenToStoreMixin = require("../utils/listenToStoreMixin");
 var MaintenanceStore = require("../stores/MaintenanceStore");
+var CompanyStore = require("../stores/CompanyStore");
 
 var Table = B.Table;
 var Link = Router.Link;
@@ -19,25 +20,31 @@ var DocumentTitle = require('react-document-title');
 
 var PlannedMaintenances = React.createClass({
 
-  mixins: [listenToStoreMixin(MaintenanceStore, "maintenances", function(component, store) {
-    return store.get();
-  })]
+  mixins: [listenToStoreMixin([CompanyStore, MaintenanceStore])]
+
+  , computeStateFromStores: function() {
+    var maintenances = MaintenanceStore.get();
+    var maintenancesWithCompanyName = _.map(maintenances, function(maintenance) {
+      var company = CompanyStore.get(maintenance.companyId);
+      maintenance["companyName"] = company["name"];
+      return maintenance;
+    });
+    return {"maintenances": maintenancesWithCompanyName};
+  }
 
   , render: function() {
 
-    var planned = [];
-
-    var rows = _.reduce(planned, function(acc, elem) {
+    var rows = _.reduce(this.state["maintenances"], function(acc, elem, key) {
       var row = 
         <tr>
           <td>
-            <a href="javascript://">{elem[0]}</a>
+            <Link to='company-detail' params={{companyId: elem["companyId"]}}>{elem["companyName"]}</Link>
           </td>
           <td>
-            {elem[1]}
+            {elem["date"].format("MMMM YYYY")}
           </td>
           <td>
-            <a href="javascript://">Upravit</a>
+            <Link to="maintenance" params={{companyId: elem["companyId"], maintenanceId: key}}>Přeplánovat</Link>
           </td>
           <td>
             <Link to="record-maintenance" params={{companyId: "abc", maintenanceId: "abc"}}>Uzavřít</Link>
