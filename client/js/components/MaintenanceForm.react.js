@@ -9,7 +9,8 @@ var Month = ReactCalendar.Month;
 var Day = ReactCalendar.Day;
 
 var EmployeeStore = require("../stores/EmployeeStore");
-var listenToStoreSimpleMixin = require("../utils/listenToStoreSimpleMixin");
+var MaintenanceStore = require("../stores/MaintenanceStore");
+var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
 
 var B = require("react-bootstrap");
@@ -32,9 +33,13 @@ var _ = require("underscore");
 
 var MaintenanceForm = React.createClass({
 
-  mixins: [listenToStoreSimpleMixin(EmployeeStore, "employees", function(component, store) {
-    return store.get();
-  })]
+  mixins: [listenToStoresMixin([EmployeeStore, MaintenanceStore])]
+
+  , computeStateFromStores: function() {
+    var employees = EmployeeStore.get();
+    var maintenance = MaintenanceStore.get(this.props.maintenanceId);
+    this.setState({"employeeId": maintenance.employeeId, "employees": employees});
+  }
 
   , selectEmployee: function(employeeId) {
     this.setState({"employeeId": employeeId});
@@ -71,7 +76,7 @@ var MaintenanceForm = React.createClass({
 
     var selectedEmployee =
       (null === this.state.employeeId)
-      ? {}
+      ? {"name": "---"}
       : this.state.employees[this.state.employeeId];
 
     return(

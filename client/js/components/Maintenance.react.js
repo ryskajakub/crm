@@ -49,7 +49,7 @@ var Maintenance = React.createClass({
         <h1>Servis</h1>
         <h2>{company["name"]}</h2>
         <Row>{machines}</Row>
-        <MaintenanceForm />
+        <MaintenanceForm maintenanceId={this.props.params.maintenanceId} />
       </main>
     );
   }

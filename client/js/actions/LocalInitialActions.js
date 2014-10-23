@@ -90,7 +90,7 @@ function createMaintenance(date, companyId, machines, note, serviceman) {
     , "companyId": companyId
     , "machinesIds": machines
     , "note": note
-    , "serviceman": serviceman
+    , "employeeId": serviceman
   };
   maintenances[maintenanceId] = maintenance;
   maintenanceId += 1;
