@@ -44,7 +44,7 @@ var MaintenanceForm = React.createClass({
     var employees = EmployeeStore.get();
     var maintenance = MaintenanceStore.get(this.props.maintenanceId);
 
-    this.setState({
+    return {
       "employeeId": maintenance.employeeId
       , "employees": employees
       , "maintenanceDate": {
@@ -53,7 +53,7 @@ var MaintenanceForm = React.createClass({
       }
       , "note": maintenance.note
       , "calendar": maintenance.date.date
-    });
+    };
   }
 
   , selectEmployee: function(employeeId) {
@@ -131,7 +131,7 @@ var MaintenanceForm = React.createClass({
             Servisman
           </label>
           <div className="col-md-5">
-            <DropdownButton className="scrollable-menu" 
+            <DropdownButton className="scrollable-menu"
               onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
               {employees}
             </DropdownButton>
@@ -161,15 +161,6 @@ var MaintenanceForm = React.createClass({
 
   , showCalendarPicker: function() {
     this.setState({"calendarPickerShown": true});
-  }
-
-  , getInitialState: function() {
-    return({
-      "maintenanceDate": {}
-      , "calendarPickerShown": false
-      , "employeeId": null
-      , "calendar": Moment()
-    });
   }
 
   , handleCalendarClick: function(name, moment, event) {
