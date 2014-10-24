@@ -30,6 +30,10 @@ var Machine = React.createClass({
 
   mixins: [togglableStateMixin()]
 
+  , componentWillMount: function() {
+    this.setState({"active": this.props.selected});
+  }
+
   , render: function() {
 
     var machine = this.props.machine;

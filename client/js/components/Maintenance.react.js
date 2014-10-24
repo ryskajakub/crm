@@ -25,10 +25,7 @@ var Maintenance = React.createClass({
     var maintenanceId = this.props.params.maintenanceId;
     var maintenance = MaintenanceStore.get(maintenanceId);
     var company = CompanyStore.get(maintenance["companyId"]);
-    var machines = _.map(maintenance.machinesIds, function(machineId) {
-      var machine = MachineStore.get(machineId);
-      return machine;
-    });
+    var machines = MachineStore.getByCompanyId(maintenance["companyId"]);
     return ({
       "maintenance": maintenance
       , "company": company
@@ -42,7 +39,8 @@ var Maintenance = React.createClass({
     var company = this.state["company"];
 
     var machines = _.reduce(this.state.machines, function (acc, value, key) {
-      var element = <Machine key={key} machine={value} />
+      var selected = _.contains(maintenance["machinesIds"], parseInt(key));
+      var element = <Machine key={key} machine={value} selected={selected} />
       acc.push(element);
       return acc;
     }, []);
