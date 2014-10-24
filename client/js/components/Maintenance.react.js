@@ -23,9 +23,9 @@ var Maintenance = React.createClass({
 
   , computeStateFromStores: function () {
     var maintenanceId = this.props.params.maintenanceId;
-    var maintenance = MaintenanceStore.get(maintenanceId);
-    var company = CompanyStore.get(maintenance["companyId"]);
-    var machines = MachineStore.getByCompanyId(maintenance["companyId"]);
+    var maintenance = MaintenanceStore.get(maintenanceId) || {};
+    var company = CompanyStore.get(this.props.params.companyId);
+    var machines = MachineStore.getByCompanyId(this.props.params.companyId);
     return ({
       "maintenance": maintenance
       , "company": company

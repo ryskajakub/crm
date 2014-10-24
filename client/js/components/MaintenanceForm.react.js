@@ -46,17 +46,17 @@ var MaintenanceForm = React.createClass({
 
   , computeStateFromStores: function() {
     var employees = EmployeeStore.get();
-    var maintenance = MaintenanceStore.get(this.props.maintenanceId);
+    var maintenance = MaintenanceStore.get(this.props.maintenanceId) || {};
 
     return {
-      "employeeId": maintenance.employeeId
+      "employeeId": (undefined === maintenance.employeeId ? NULL_KEY : maintenance.employeeId)
       , "employees": employees
-      , "maintenanceDate": {
+      , "maintenanceDate": (undefined === maintenance.date ? {} : {
         "date": maintenance.date.date
         , "accuracy": maintenance.date.accuracy
-      }
+      })
       , "note": maintenance.note
-      , "calendar": maintenance.date.date
+      , "calendar": (undefined === maintenance.date ? Moment() : maintenance.date.date)
     };
   }
 
@@ -84,7 +84,7 @@ var MaintenanceForm = React.createClass({
 
     var popover = 
       <CalendarPopover handleCalendarClick={this.handleCalendarClick} 
-        calendar={maintenanceDate["date"].clone()}
+        calendar={this.state.calendar.clone()}
         closeCalendar={this.closeCalendar} />;
 
     var noEmployeeSelected = (<MenuItem key={NULL_KEY} href="javascript://">---</MenuItem>);
