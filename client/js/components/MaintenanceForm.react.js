@@ -12,6 +12,7 @@ var EmployeeStore = require("../stores/EmployeeStore");
 var MaintenanceStore = require("../stores/MaintenanceStore");
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
+var CalendarPopover = require("./CalendarPopover.react");
 
 var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 
@@ -64,12 +65,8 @@ var MaintenanceForm = React.createClass({
     this.setState({"employeeId": employeeId});
   }
 
-  , subtractMonth: function() {
-    this.setState({"calendar": this.state.calendar.subtract(1, "months")});
-  }
-
-  , addMonth: function() {
-    this.setState({"calendar": this.state.calendar.add(1, "months")});
+  , closeCalendar: function() {
+    this.setState({"calendarPickerShown": false});
   }
 
   , render: function() {
@@ -85,16 +82,10 @@ var MaintenanceForm = React.createClass({
         : maintenanceDate["date"].format("MMMM YYYY")
       );
 
-    var popover =
-      <Popover placement="bottom" positionLeft={0} positionTop={40}>
-        <div className="relative">
-          <a className="leftPager" onClick={this.subtractMonth} href="javascript://">&lt;&lt;</a>
-          <a className="rightPager" onClick={this.addMonth} href="javascript://">&gt;&gt;</a>
-          <Month date={this.state.calendar} onClick={this.handleCalendarClick}>
-            <Day onClick={this.handleCalendarClick} />
-          </Month>
-        </div>
-      </Popover>
+    var popover = 
+      <CalendarPopover handleCalendarClick={this.handleCalendarClick} 
+        calendar={maintenanceDate["date"].clone()}
+        closeCalendar={this.closeCalendar} />;
 
     var noEmployeeSelected = (<MenuItem key={NULL_KEY} href="javascript://">---</MenuItem>);
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {

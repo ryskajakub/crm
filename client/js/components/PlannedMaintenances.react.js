@@ -41,7 +41,7 @@ var PlannedMaintenances = React.createClass({
             <Link to='company-detail' params={{companyId: elem["companyId"]}}>{elem["companyName"]}</Link>
           </td>
           <td>
-            {elem["date"].format("MMMM YYYY")}
+            {elem["date"]["date"].format("MMMM YYYY")}
           </td>
           <td>
             <Link to="maintenance" params={{companyId: elem["companyId"], maintenanceId: key}}>Přeplánovat</Link>
