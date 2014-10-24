@@ -75,6 +75,14 @@ var RecordMaintenance = React.createClass({
         <h2>{this.state.company["name"]}</h2>
         <Grid>
           {machines}
+          <Row>
+            <form className="form-horizontal">
+              <Input type="textarea" label="Zápis" labelClassName="col-md-2" wrapperClassName="col-md-10" />
+              <Col md={10} mdOffset={2}>
+                <Button bsStyle="primary">Uzavři servis</Button>
+              </Col>
+            </form>
+          </Row>
         </Grid>
       </main>
     );
