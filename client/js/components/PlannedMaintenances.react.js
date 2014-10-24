@@ -5,6 +5,7 @@ var React = require('react');
 
 var _ = require("underscore");
 var Moment = require("../utils/Moment");
+var formatDate = require("../utils/formatDate");
 
 var Router = require('react-router');
 var B = require("react-bootstrap");
@@ -41,7 +42,7 @@ var PlannedMaintenances = React.createClass({
             <Link to='company-detail' params={{companyId: elem["companyId"]}}>{elem["companyName"]}</Link>
           </td>
           <td>
-            {elem["date"]["date"].format("MMMM YYYY")}
+            {formatDate(elem["date"])}
           </td>
           <td>
             <Link to="maintenance" params={{companyId: elem["companyId"], maintenanceId: key}}>Přeplánovat</Link>

@@ -13,6 +13,7 @@ var MaintenanceStore = require("../stores/MaintenanceStore");
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
 var CalendarPopover = require("./CalendarPopover.react");
+var formatDate = require("../utils/formatDate");
 
 var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 
@@ -76,11 +77,7 @@ var MaintenanceForm = React.createClass({
     var formattedDate =
       (undefined === maintenanceDate["date"])
       ? ""
-      : (
-        "Day" === maintenanceDate["accuracy"]
-        ? maintenanceDate["date"].format("D.MMMM YYYY (dddd)")
-        : maintenanceDate["date"].format("MMMM YYYY")
-      );
+      : formatDate(maintenanceDate);
 
     var popover = 
       <CalendarPopover handleCalendarClick={this.handleCalendarClick} 
