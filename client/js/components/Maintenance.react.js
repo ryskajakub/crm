@@ -25,7 +25,15 @@ var Maintenance = React.createClass({
     var maintenanceId = this.props.params.maintenanceId;
     var maintenance = MaintenanceStore.get(maintenanceId);
     var company = CompanyStore.get(maintenance["companyId"]);
-    return ({"maintenance": maintenance, "company": company});
+    var machines = _.map(maintenance.machinesIds, function(machineId) {
+      var machine = MachineStore.get(machineId);
+      return machine;
+    });
+    return ({
+      "maintenance": maintenance
+      , "company": company
+      , "machines": machines
+    });
   }
 
   , render: function() {
