@@ -9,6 +9,13 @@ var Moment = require("../utils/Moment");
 var Router = require('react-router');
 var B = require("react-bootstrap");
 
+var listenToStoresMixin = require("../utils/listenToStoresMixin");
+var MachineStore = require("../stores/MachineStore");
+var MaintenanceStore = require("../stores/MaintenanceStore");
+var CompanyStore = require("../stores/CompanyStore");
+
+var Machine = require("./Machine.react");
+
 var Table = B.Table;
 var Link = Router.Link;
 var Well = B.Well;
@@ -18,29 +25,47 @@ var Glyphicon = B.Glyphicon;
 var ButtonToolbar = B.ButtonToolbar;
 var DropdownButton = B.DropdownButton;
 var MenuItem = B.MenuItem;
+var Grid = B.Grid;
+var Col = B.Col;
+var Row = B.Row;
 
 var DocumentTitle = require('react-document-title');
 
 var RecordMaintenance = React.createClass({
 
-  render: function() {
+  mixins: [listenToStoresMixin([MachineStore, MaintenanceStore, CompanyStore])]
+
+  , computeStateFromStores: function () {
+    var maintenanceId = this.props.params.maintenanceId;
+    var maintenance = MaintenanceStore.get(maintenanceId);
+    var company = CompanyStore.get(maintenance.companyId);
+    var machines = MachineStore.getByCompanyId(maintenance.companyId);
+    return ({
+      "maintenance": maintenance
+      , "company": company
+      , "machines": machines
+    });
+  }
+
+  , render: function() {
+
+    var machines = _.reduce(this.state.machines, function(acc, machine, machineId) {
+      var element = 
+        <Row key={machineId}>
+          <Machine selected={false} machine={machine} />
+        </Row>;
+      acc.push(element);
+      return acc;
+    }, []);
+
     return (
-      <Well>
-        <h2>Zaznamenej servis</h2>
-        <h3>ZICO</h3>
-        <strong>Datum: </strong>5.11.2014
-        <div>
-          <strong>Technik: </strong>
-          <ButtonToolbar>
-            <DropdownButton title="vyber">
-              <MenuItem>Kutička</MenuItem>
-              <MenuItem>Mandlík</MenuItem>
-            </DropdownButton>
-          </ButtonToolbar>
-        </div>
-        <Input type="textarea" label="Poznámka" rows="5" />
-        <Button bsStyle="primary"><Glyphicon glyph="ok" /> Zaznamenej servis</Button>
-      </Well>
+      <main>
+        <h1>Zaznamenej servis</h1>
+        <h2>{this.state.company["name"]}</h2>
+        <Grid>
+          {machines}
+        </Grid>
+      </main>
     );
   }
 

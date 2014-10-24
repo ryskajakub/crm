@@ -47,7 +47,7 @@ var PlannedMaintenances = React.createClass({
             <Link to="maintenance" params={{companyId: elem["companyId"], maintenanceId: key}}>Přeplánovat</Link>
           </td>
           <td>
-            <Link to="record-maintenance" params={{companyId: "abc", maintenanceId: "abc"}}>Uzavřít</Link>
+            <Link to="record-maintenance" params={{maintenanceId: key}}>Uzavřít</Link>
           </td>
         </tr>;
       acc.push(row);
