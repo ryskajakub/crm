@@ -19,11 +19,6 @@ var _ = require("underscore");
 
 var Maintenance = React.createClass({
 
-/*
-  mixins: [listenToStoreSimpleMixin(MachineStore, "machines", function(component, store) {
-    return store.getByCompanyId(component.props.params.companyId);
-  })]
-*/
   mixins: [listenToStoresMixin([MachineStore, MaintenanceStore, CompanyStore])]
 
   , computeStateFromStores: function () {
