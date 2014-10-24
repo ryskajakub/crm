@@ -28,6 +28,7 @@ var MenuItem = B.MenuItem;
 var Grid = B.Grid;
 var Col = B.Col;
 var Row = B.Row;
+var Panel = B.Panel;
 
 var DocumentTitle = require('react-document-title');
 
@@ -52,7 +53,17 @@ var RecordMaintenance = React.createClass({
     var machines = _.reduce(this.state.machines, function(acc, machine, machineId) {
       var element = 
         <Row key={machineId}>
-          <Machine selected={false} machine={machine} />
+          <Col md={2}>
+            <Panel header={machine.type}>
+              <img src={machine.image} width="120" />
+            </Panel>
+          </Col>
+          <Col md={2}>
+            <Input type="text" label="Počet motohodin" />
+          </Col>
+          <Col md={4}>
+            <Input type="textarea" label="Poznámka" rows={5} />
+          </Col>
         </Row>;
       acc.push(element);
       return acc;
