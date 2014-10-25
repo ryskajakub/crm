@@ -43,13 +43,15 @@ var CompanyDetail = React.createClass({
       return acc;
     }, []);
 
+    var editAction = (editing)
+      ? <Link to='company-detail' params={{"companyId": id}}><Glyphicon glyph="ok" className="goRight" /></Link>
+      : <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link> ;
+
     return(
       <main>
         <section>
           <Jumbotron>
-            <h1>{company.name} - {company.plant}
-              <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link>
-            </h1>
+            <h1>{company.name} - {company.plant} {editAction}</h1>
             <dl className="dl-horizontal">
               <dt>Adresa</dt>
               <dd><EditableField initialValue={company.address} editing={editing} /></dd>
