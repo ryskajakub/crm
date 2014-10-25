@@ -11,7 +11,11 @@ var companies = {};
 function createCompany(name, nextService) {
   var company = {
     name: name
+    , plant: "I"
     , active: true
+    , contact: "p. Jelínek"
+    , phone: "721 650 194"
+    , address: "Brandýs nad labem"
   };
   companies[id] = company;
   if (undefined !== nextService) {

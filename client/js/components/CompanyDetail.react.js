@@ -43,11 +43,11 @@ var CompanyDetail = React.createClass({
       <main>
         <section>
           <Jumbotron>
-            <h1>{company.name}</h1>
+            <h1>{company.name} - {company.plant}</h1>
             <ListGroup>
-              <ListGroupItem>Brandýs nad labem</ListGroupItem>
-              <ListGroupItem>p. Jelínek</ListGroupItem>
-              <ListGroupItem>721 650 194</ListGroupItem>
+              <ListGroupItem>{company.address}</ListGroupItem>
+              <ListGroupItem>{company.contact}</ListGroupItem>
+              <ListGroupItem>{company.phone}</ListGroupItem>
             </ListGroup>
           </Jumbotron>
         </section>
