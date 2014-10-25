@@ -8,6 +8,7 @@ var Router = require('react-router');
 var CompanyStore = require("../stores/CompanyStore");
 var MachineStore = require("../stores/MachineStore");
 var BigMachine = require("./BigMachine.react");
+var EditableField = require("./EditableField.react");
 
 var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
@@ -50,7 +51,7 @@ var CompanyDetail = React.createClass({
               <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link>
             </h1>
             <ListGroup>
-              <ListGroupItem>{company.address}</ListGroupItem>
+              <ListGroupItem><EditableField initialValue={company.address} editing={true} /></ListGroupItem>
               <ListGroupItem>{company.contact}</ListGroupItem>
               <ListGroupItem>{company.phone}</ListGroupItem>
             </ListGroup>
