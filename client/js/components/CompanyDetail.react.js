@@ -13,6 +13,7 @@ var B = require("react-bootstrap");
 var ListGroup = B.ListGroup;
 var ListGroupItem = B.ListGroupItem;
 var Jumbotron = B.Jumbotron;
+var Glyphicon = B.Glyphicon;
 var Grid = B.Grid;
 var Col = B.Col;
 var Row = B.Row;
@@ -33,6 +34,8 @@ var CompanyDetail = React.createClass({
     var machinesInCompany = this.state.machines;
     var id = this.props.params.companyId;
 
+    var editing = this.props;
+
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
       acc.push(machine);
@@ -43,7 +46,9 @@ var CompanyDetail = React.createClass({
       <main>
         <section>
           <Jumbotron>
-            <h1>{company.name} - {company.plant}</h1>
+            <h1>{company.name} - {company.plant}
+              <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link>
+            </h1>
             <ListGroup>
               <ListGroupItem>{company.address}</ListGroupItem>
               <ListGroupItem>{company.contact}</ListGroupItem>
@@ -59,7 +64,7 @@ var CompanyDetail = React.createClass({
             <Row>
               <Col md={12}>
                 <Panel>
-                  <Link to='maintenance' params={{companyId: id, maintenanceId: "new"}}> 
+                  <Link to='maintenance' params={{companyId: id, maintenanceId: "new"}}>
                     Naplánovat servis
                   </Link>
                 </Panel>

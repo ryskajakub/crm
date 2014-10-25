@@ -2,6 +2,10 @@ html {
   overflow-y: scroll;
 }
 
+.goRight {
+  float: right;
+}
+
 .scrollable-menu {
   height: auto;
   max-height: 200px;
