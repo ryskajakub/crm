@@ -50,11 +50,10 @@ var CompanyDetail = React.createClass({
             <h1>{company.name} - {company.plant}
               <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link>
             </h1>
-            <ListGroup>
-              <ListGroupItem><EditableField initialValue={company.address} editing={editing} /></ListGroupItem>
-              <ListGroupItem>{company.contact}</ListGroupItem>
-              <ListGroupItem>{company.phone}</ListGroupItem>
-            </ListGroup>
+            <dl className="dl-horizontal">
+              <dt>Adresa</dt>
+              <dd><EditableField initialValue={company.address} editing={editing} /></dd>
+            </dl>
           </Jumbotron>
         </section>
         <section>
