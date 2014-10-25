@@ -55,6 +55,10 @@ var CompanyDetail = React.createClass({
             <dl className="dl-horizontal">
               <dt>Adresa</dt>
               <dd><EditableField initialValue={company.address} editing={editing} /></dd>
+              <dt>Kontakt</dt>
+              <dd><EditableField initialValue={company.contact} editing={editing} /></dd>
+              <dt>Telefon</dt>
+              <dd><EditableField initialValue={company.phone} editing={editing} /></dd>
             </dl>
           </Jumbotron>
         </section>
