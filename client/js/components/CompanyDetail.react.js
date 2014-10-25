@@ -80,6 +80,11 @@ var CompanyDetail = React.createClass({
           <Grid>
             <Row>
               {machinesTags}
+              <Col md={4}>
+                <Panel>
+                  <h2><Link to='machine-detail' params={{companyId: id, machineId: "new"}}>Nový stroj</Link></h2>
+                </Panel>
+              </Col>
             </Row>
             <Row>
               <Col md={12}>
