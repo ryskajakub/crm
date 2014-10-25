@@ -14,6 +14,7 @@ var MaintenanceStore = require("../stores/MaintenanceStore");
 
 var B = require("react-bootstrap");
 var Row = B.Row;
+var Grid = B.Grid;
 
 var _ = require("underscore");
 
@@ -49,8 +50,12 @@ var Maintenance = React.createClass({
       <main>
         <h1>Servis</h1>
         <h2>{company["name"]}</h2>
-        <Row>{machines}</Row>
-        <MaintenanceForm maintenanceId={this.props.params.maintenanceId} />
+        <Grid>
+          <Row>{machines}</Row>
+          <Row>
+            <MaintenanceForm maintenanceId={this.props.params.maintenanceId} />
+          </Row>
+        </Grid>
       </main>
     );
   }
