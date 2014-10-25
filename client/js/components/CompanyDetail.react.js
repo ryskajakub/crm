@@ -35,7 +35,7 @@ var CompanyDetail = React.createClass({
     var machinesInCompany = this.state.machines;
     var id = this.props.params.companyId;
 
-    var editing = this.props;
+    var editing = (this.props.name == "company-edit") ? true : false;
 
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
@@ -51,7 +51,7 @@ var CompanyDetail = React.createClass({
               <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link>
             </h1>
             <ListGroup>
-              <ListGroupItem><EditableField initialValue={company.address} editing={true} /></ListGroupItem>
+              <ListGroupItem><EditableField initialValue={company.address} editing={editing} /></ListGroupItem>
               <ListGroupItem>{company.contact}</ListGroupItem>
               <ListGroupItem>{company.phone}</ListGroupItem>
             </ListGroup>

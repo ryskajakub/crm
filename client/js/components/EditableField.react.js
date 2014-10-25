@@ -30,7 +30,7 @@ var EditableField = React.createClass({
     return (
       editing
       ? <Input type="text" value={value} />
-      : value
+      : <span>{value}</span>
     );
   }
 
