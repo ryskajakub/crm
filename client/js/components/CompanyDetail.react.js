@@ -4,6 +4,7 @@
 var React = require('react');
 var _ = require("underscore");
 var Router = require('react-router');
+var LinkedStateMixin = require('react/lib/LinkedStateMixin');
 
 var CompanyStore = require("../stores/CompanyStore");
 var MachineStore = require("../stores/MachineStore");
@@ -26,10 +27,17 @@ var Link = Router.Link;
 
 var CompanyDetail = React.createClass({
 
+  mixins: [LinkedStateMixin]
+
+  , saveEdit: function() {
+    console.log("saving edit!");
+    console.log(this.state);
+  }
+
   /**
    * @return {object}
    */
-  render: function() {
+  , render: function() {
 
     var company = this.state.company;
     var machinesInCompany = this.state.machines;
@@ -44,8 +52,14 @@ var CompanyDetail = React.createClass({
     }, []);
 
     var editAction = (editing)
-      ? <Link to='company-detail' params={{"companyId": id}}><Glyphicon glyph="ok" className="goRight" /></Link>
+      ? <Glyphicon glyph="ok" className="goRight" onClick={this.saveEdit} />
       : <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link> ;
+
+    var setValue = function(field) {
+      return function(value) {
+        console.log(value);
+      }
+    }
 
     return(
       <main>
@@ -54,11 +68,11 @@ var CompanyDetail = React.createClass({
             <h1>{company.name} - {company.plant} {editAction}</h1>
             <dl className="dl-horizontal">
               <dt>Adresa</dt>
-              <dd><EditableField initialValue={company.address} editing={editing} /></dd>
+              <dd><EditableField setValue={setValue("address")} initialValue={company.address} editing={editing} /></dd>
               <dt>Kontakt</dt>
-              <dd><EditableField initialValue={company.contact} editing={editing} /></dd>
+              <dd><EditableField setValue={setValue("contact")} initialValue={company.contact} editing={editing} /></dd>
               <dt>Telefon</dt>
-              <dd><EditableField initialValue={company.phone} editing={editing} /></dd>
+              <dd><EditableField setValue={setValue("phone")} initialValue={company.phone} editing={editing} /></dd>
             </dl>
           </Jumbotron>
         </section>
