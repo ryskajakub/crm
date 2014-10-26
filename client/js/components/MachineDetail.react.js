@@ -103,21 +103,26 @@ var MachineDetail = React.createClass({
                   <h1>Nové zařízení</h1>
                 </Col>
               </Row>
+              <Row>
+                <Col mdOffset={2} md={10}>
+                  <h2>Údaje od výrobce</h2>
+                </Col>
+              </Row>
               <Input id="machine-type" type="text" label="Typ" valueLink={this.linkState("type")}
                 labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
               <Input id="machine-manufacturer" type="text" label="Výrobce" valueLink={this.linkState("manufacturer")}
                 labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
-              <Input type="text" label="Výr. čislo" valueLink={this.linkState("serialNumber")}
-                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
-              <Input type="text" label="Označení" valueLink={this.linkState("mark")}
-                help="Označení stroje v rámci firmy aby se poznaly 2 stejného typu"
-                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
               <Row className="form-group">
                 <Col md={10} mdOffset={2}>
-                  <h2>Intervaly servisů</h2>
+                  <h4>Intervaly servisů</h4>
                 </Col>
               </Row>
               {serviceIntervals}
+              <Row>
+                <Col mdOffset={2} md={10}>
+                  <h2>Specifické informace</h2>
+                </Col>
+              </Row>
               <Row className="form-group">
                 <Col md={2} className="control-label">
                   <label>Úv. stav</label>
@@ -139,6 +144,11 @@ var MachineDetail = React.createClass({
                   />
                 </Col>
               </Row>
+              <Input type="text" label="Výr. čislo" valueLink={this.linkState("serialNumber")}
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Input type="text" label="Označení" valueLink={this.linkState("mark")}
+                help="Označení stroje v rámci firmy aby se poznaly 2 stejného typu"
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
               <Row className="form-group">
                 <Col mdOffset={2} md={10}>
                   <Button bsStyle="primary">Zadej zařízení do systému</Button>
