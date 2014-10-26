@@ -10,13 +10,13 @@ var Moment = require("../utils/Moment");
 var Router = require('react-router');
 
 var B = require("react-bootstrap");
-var BTable = B.Table;
+var Table = B.Table;
 var Button = B.Button;
 var Glyphicon = B.Glyphicon;
 
 var DocumentTitle = require('react-document-title');
 
-var Table = React.createClass({
+var CompaniesList = React.createClass({
 
   getInitialState: function() {
     return {
@@ -72,14 +72,14 @@ var Table = React.createClass({
             </a>
           </section>
           <section>
-            <BTable striped bordered>
+            <Table striped bordered>
               <thead>
                 <tr><th>Název firmy</th><th>Platnost servisu vyprší za</th></tr>
               </thead>
               <tbody>
                 {rowsHtml}
               </tbody>
-            </BTable>
+            </Table>
           </section>
         </main>
       </DocumentTitle>
@@ -88,4 +88,4 @@ var Table = React.createClass({
 
 });
 
-module.exports = Table;
+module.exports = CompaniesList;

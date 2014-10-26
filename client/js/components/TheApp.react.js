@@ -15,7 +15,7 @@ var PlannedMaintenances = require("./PlannedMaintenances.react");
 var Maintenance = require("./Maintenance.react");
 var RecordMaintenance = require("./RecordMaintenance.react");
 var MachineDetail = require("./MachineDetail.react");
-var Table = require("./Table.react");
+var CompaniesList = require("./CompaniesList.react");
 
 var TheApp = (
   <Routes location="history">
@@ -27,7 +27,7 @@ var TheApp = (
       <Route name="company-edit" path="/company/:companyId/edit" handler={CompanyDetail} />
       <Route name="maintenance" path="/company/:companyId/maintenance/:maintenanceId" handler={Maintenance} />
       <Route name="record-maintenance" path="/record-maintenance/:maintenanceId" handler={RecordMaintenance} />
-      <DefaultRoute name="table" handler={Table} />
+      <DefaultRoute name="table" handler={CompaniesList} />
     </Route>
   </Routes>
 );
