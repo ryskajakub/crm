@@ -18,6 +18,7 @@ var CalendarField = require("./calendar/CalendarField.react");
 var $ = require("jquery");
 window.jQuery = $;
 var ui = require("../../bower_components/jquery-ui/jquery-ui");
+var jasny = require("../../bower_components/jasny-bootstrap/dist/js/jasny-bootstrap");
 
 var CalendarPopover = require("./calendar/CalendarPopover.react");
 
@@ -146,6 +147,24 @@ var MachineDetail = React.createClass({
               </Row>
               <Input type="text" label="Výr. čislo" valueLink={this.linkState("serialNumber")}
                 labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Row className="form-group">
+                <Col md={2} className="control-label">
+                  <label>Fotky</label>
+                </Col>
+                <Col md={10}>
+                  <div className="fileinput fileinput-new" data-provides="fileinput">
+                    <div className="fileinput-preview thumbnail" data-trigger="fileinput" style={{width: "200px", height: "150px;"}}></div>
+                    <div>
+                      <span className="btn btn-default btn-file">
+                        <span className="fileinput-new">Select image</span>
+                        <span className="fileinput-exists">Change</span>
+                        <input type="file" name="..." />
+                      </span>
+                      <a href="#" className="btn btn-default fileinput-exists" data-dismiss="fileinput">Remove</a>
+                    </div>
+                  </div>
+                </Col>
+              </Row>
               <Input type="text" label="Označení" valueLink={this.linkState("mark")}
                 help="Označení stroje v rámci firmy aby se poznaly 2 stejného typu"
                 labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
