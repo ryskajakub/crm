@@ -25,6 +25,30 @@ var MachineDetail = React.createClass({
 
   mixins: [LinkedStateMixin]
 
+  , statics: {
+    serviceIntervalRow: function(key, label) {
+      return (
+        <Row className="form-group" key={key}>
+          <Col md={2} className="control-label">
+            <label>{label}</label>
+          </Col>
+          <Col md={1} className="control-label">
+            <label>mth:</label>
+          </Col>
+          <Col md={4}>
+            <input type="text" className="form-control" />
+          </Col>
+          <Col md={1} className="control-label">
+            <label>dny:</label>
+          </Col>
+          <Col md={4}>
+            <input type="text" className="form-control" />
+          </Col>
+        </Row>
+      );
+    }
+  }
+
   , getInitialState: function() {
     return {
       "type": ""
@@ -64,6 +88,11 @@ var MachineDetail = React.createClass({
   }
 
   , render: function() {
+
+    var serviceIntervals = _.map(["Úvodní", "Pravidelný", "Generální"], function(label, key) {
+      return MachineDetail.serviceIntervalRow("key-" + key, label);
+    });
+
     return(
       <Grid>
         <Row>
@@ -85,9 +114,10 @@ var MachineDetail = React.createClass({
                 labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
               <Row className="form-group">
                 <Col md={10} mdOffset={2}>
-                  Řada servisů - TODO
+                  <h2>Intervaly servisů</h2>
                 </Col>
               </Row>
+              {serviceIntervals}
               <Row className="form-group">
                 <Col md={2} className="control-label">
                   <label>Úv. stav</label>
