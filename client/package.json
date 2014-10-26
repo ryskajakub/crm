@@ -15,22 +15,11 @@
     "moment": "~2.8.3"
   },
   "devDependencies": {
-    "browserify": "~4.2.2",
-    "envify": "~2.0.1",
-    "jest-cli": "~0.1.17",
-    "reactify": "~0.14.0",
-    "uglify-js": "~2.4.15",
-    "watchify": "~2.0.0",
     "webpack": "~1.4.9",
     "jsx-loader": "~0.11.2"
   },
   "scripts": {
-    "build": "NODE_ENV=production browserify . | uglifyjs -cm > js/bundle.min.js",
-    "start": "webpack",
-    "test": "jest"
+    "start": "webpack --progress --color --watch"
   },
-  "author": "Jakub Ryška",
-  "jest": {
-    "rootDir": "./js"
-  }
+  "author": "Jakub Ryška"
 }
