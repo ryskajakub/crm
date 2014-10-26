@@ -9,6 +9,9 @@ html {
 .relative {
   position: relative;
 }
+.nowrap {
+  white-space: nowrap;
+}
 
 /* button dropdown bootstrap */
 .scrollable-menu {

@@ -60,7 +60,7 @@ var CalendarPopover = React.createClass({
 
     return (
       <Popover placement="bottom" positionLeft={0} positionTop={40} id="calendar-popover">
-        <div className="relative">
+        <div className="nowrap relative">
           <a className="prevMonthPager" onClick={this.changeCalendar(-1, "months")} href="javascript://">&lt;</a>
           <a className="nextMonthPager" onClick={this.changeCalendar(1, "months")} href="javascript://">&gt;</a>
           <a className="prevYearPager" onClick={this.changeCalendar(-1, "years")} href="javascript://">&lt;&lt;</a>

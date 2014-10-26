@@ -130,13 +130,13 @@ var MachineDetail = React.createClass({
                 <Col md={1} className="control-label">
                   <label>mth:</label>
                 </Col>
-                <Col md={2}>
+                <Col md={3}>
                   <input type="text" className="form-control" />
                 </Col>
                 <Col md={1} className="control-label">
                   <label>dne:</label>
                 </Col>
-                <Col md={6}>
+                <Col md={5}>
                   <CalendarField
                     setValue={this.setMachineStartDate}
                     allowMonth={true}
