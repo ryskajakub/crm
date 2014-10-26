@@ -17,6 +17,8 @@ var $ = require("jquery");
 window.jQuery = $;
 var ui = require("../../bower_components/jquery-ui/jquery-ui");
 
+var CalendarPopover = require("./calendar/CalendarPopover.react");
+
 var MachineDetail = React.createClass({
 
   mixins: [LinkedStateMixin]

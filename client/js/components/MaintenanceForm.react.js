@@ -12,8 +12,7 @@ var EmployeeStore = require("../stores/EmployeeStore");
 var MaintenanceStore = require("../stores/MaintenanceStore");
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceActions = require("../actions/MaintenanceActions");
-var CalendarPopover = require("./CalendarPopover.react");
-var formatDate = require("../utils/formatDate");
+var CalendarField = require("./calendar/CalendarField.react");
 
 var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 
@@ -66,23 +65,9 @@ var MaintenanceForm = React.createClass({
     this.setState({"employeeId": employeeId});
   }
 
-  , closeCalendar: function() {
-    this.setState({"calendarPickerShown": false});
-  }
-
   , render: function() {
 
     var maintenanceDate = this.state["maintenanceDate"];
-
-    var formattedDate =
-      (undefined === maintenanceDate["date"])
-      ? ""
-      : formatDate(maintenanceDate);
-
-    var popover = 
-      <CalendarPopover handleCalendarClick={this.handleCalendarClick} 
-        calendar={this.state.calendar.clone()}
-        closeCalendar={this.closeCalendar} />;
 
     var noEmployeeSelected = (<MenuItem key={NULL_KEY} href="javascript://">---</MenuItem>);
     var employees = _.reduce(this.state.employees, function(acc, elem, key) {
@@ -107,14 +92,11 @@ var MaintenanceForm = React.createClass({
               Datum
             </label>
             <Col md={10}>
-              <div className="input-group relative">
-                <div className="input-group-addon">
-                  <Glyphicon glyph="calendar" onClick={this.showCalendarPickerToggle} />
-                </div>
-                <input type="text" onClick={this.showCalendarPicker} className="form-control"
-                  value={formattedDate} onChange={function() {}} />
-                {this.state["calendarPickerShown"] ? popover : ""}
-              </div>
+              <CalendarField 
+                setValue={this.setMaintenanceDate} 
+                initialDate={this.state.calendar.clone()} 
+                allowMonth={true}
+              />
             </Col>
           </Row>
 
@@ -148,17 +130,8 @@ var MaintenanceForm = React.createClass({
     MaintenanceActions.recordMaintenancePlan();
   }
 
-  , showCalendarPickerToggle: function() {
-    this.setState({"calendarPickerShown": !this.state["calendarPickerShown"]});
-  }
-
-  , showCalendarPicker: function() {
-    this.setState({"calendarPickerShown": true});
-  }
-
-  , handleCalendarClick: function(name, moment, event) {
-    event.stopPropagation();
-    this.setState({"maintenanceDate": {"date": moment, "accuracy": name}, "calendarPickerShown": false});
+  , setMaintenanceDate: function(accuracy, moment, event) {
+    this.setState({"maintenanceDate": {"date": moment, "accuracy": accuracy}});
   }
 
 });
