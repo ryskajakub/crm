@@ -36,12 +36,11 @@ var CalendarPopover = React.createClass({
     });
   }
 
-  , subtractMonth: function(event) {
-    this.setState({"calendar": this.state.calendar.subtract(1, "months")});
-  }
-
-  , addMonth: function(event) {
-    this.setState({"calendar": this.state.calendar.add(1, "months")});
+  , changeCalendar: function(value, field) {
+    var t = this;
+    return function() {
+      t.setState({"calendar": t.state.calendar.add(value, field)});
+    }
   }
 
   , getInitialState: function() {
@@ -62,10 +61,10 @@ var CalendarPopover = React.createClass({
     return (
       <Popover placement="bottom" positionLeft={0} positionTop={40} id="calendar-popover">
         <div className="relative">
-          <a className="prevMonthPager" onClick={this.subtractMonth} href="javascript://">&lt;</a>
-          <a className="nextMonthPager" onClick={this.addMonth} href="javascript://">&gt;</a>
-          <a className="prevYearPager" onClick={this.subtractYear} href="javascript://">&lt;&lt;</a>
-          <a className="nextYearPager" onClick={this.addYear} href="javascript://">&gt;&gt;</a>
+          <a className="prevMonthPager" onClick={this.changeCalendar(-1, "months")} href="javascript://">&lt;</a>
+          <a className="nextMonthPager" onClick={this.changeCalendar(1, "months")} href="javascript://">&gt;</a>
+          <a className="prevYearPager" onClick={this.changeCalendar(-1, "years")} href="javascript://">&lt;&lt;</a>
+          <a className="nextYearPager" onClick={this.changeCalendar(1, "years")} href="javascript://">&gt;&gt;</a>
           <Month date={calendar} onClick={this.handleCalendarClick}>
             <Day onClick={this.handleCalendarClick} />
           </Month>
