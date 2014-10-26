@@ -43,7 +43,7 @@ var CompanyDetail = React.createClass({
     var machinesInCompany = this.state.machines;
     var id = this.props.params.companyId;
 
-    var editing = (this.props.name == "company-edit") ? true : false;
+    var editing = (this.props.name == "company-edit" || this.props.name === "company-new") ? true : false;
 
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
@@ -76,27 +76,30 @@ var CompanyDetail = React.createClass({
             </dl>
           </Jumbotron>
         </section>
-        <section>
-          <Grid>
-            <Row>
-              {machinesTags}
-              <Col md={4}>
-                <Panel>
-                  <h2><Link to='machine-detail' params={{companyId: id, machineId: "new"}}>Nový stroj</Link></h2>
-                </Panel>
-              </Col>
-            </Row>
-            <Row>
-              <Col md={12}>
-                <Panel>
-                  <Link to='maintenance' params={{companyId: id, maintenanceId: "new"}}>
-                    Naplánovat servis
-                  </Link>
-                </Panel>
-              </Col>
-            </Row>
-          </Grid>
-        </section>
+        {
+          ("company-new" === this.props.name) ? "" :
+            <section>
+              <Grid>
+                <Row>
+                  {machinesTags}
+                  <Col md={4}>
+                    <Panel>
+                      <h2><Link to='machine-detail' params={{companyId: id, machineId: "new"}}>Nový stroj</Link></h2>
+                    </Panel>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col md={12}>
+                    <Panel>
+                      <Link to='maintenance' params={{companyId: id, maintenanceId: "new"}}>
+                        Naplánovat servis
+                      </Link>
+                    </Panel>
+                  </Col>
+                </Row>
+              </Grid>
+            </section>
+        }
       </main>
     );
   }
