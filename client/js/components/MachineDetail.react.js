@@ -9,6 +9,7 @@ var Col = B.Col;
 var Row = B.Row;
 var Input = B.Input;
 
+var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 var _ = require("underscore");
 
 var $ = require("jquery");
@@ -17,7 +18,15 @@ var ui = require("../../bower_components/jquery-ui/jquery-ui");
 
 var MachineDetail = React.createClass({
 
-  componentDidMount: function() {
+  mixins: [LinkedStateMixin]
+
+  , getInitialState: function() {
+    return {
+      "type": ""
+    };
+  }
+
+  , componentDidMount: function() {
     $("#machine-type").autocomplete({
       source: [
         "ActionScript",
@@ -57,9 +66,35 @@ var MachineDetail = React.createClass({
                   <h1>Nové zařízení</h1>
                 </Col>
               </Row>
-              <Row>
-                <Col mdOffset={2} md={10}>
-                  <Input id="machine-type" type="text" />
+              <Input id="machine-type" type="text" label="Typ" valueLink={this.linkState("type")}
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Input id="machine-manufacturer" type="text" label="Výrobce" valueLink={this.linkState("manufacturer")}
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Input type="text" label="Výr. čislo" valueLink={this.linkState("serialNumber")}
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Input type="text" label="Označení" valueLink={this.linkState("mark")}
+                help="Označení stroje v rámci firmy aby se poznaly 2 stejného typu"
+                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Row className="form-group">
+                <Col md={10} mdOffset={2}>
+                  Řada servisů - TODO
+                </Col>
+              </Row>
+              <Row className="form-group">
+                <Col md={2} className="control-label">
+                  <label>Úv. stav</label>
+                </Col>
+                <Col md={1} className="control-label">
+                  <label>mth:</label>
+                </Col>
+                <Col md={2}>
+                  <input type="text" className="form-control" />
+                </Col>
+                <Col md={1} className="control-label" mdOffset={1}>
+                  <label>dne:</label>
+                </Col>
+                <Col md={5}>
+                  <input type="text" className="form-control" />
                 </Col>
               </Row>
             </form>
