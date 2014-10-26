@@ -16,7 +16,16 @@ var Glyphicon = B.Glyphicon;
 
 var DocumentTitle = require('react-document-title');
 
+var Router = require('react-router');
+var Navigation = Router.Navigation;
+
 var CompaniesList = React.createClass({
+
+  mixins: [Navigation]
+
+  , goToNewCompany: function() {
+    this.transitionTo("company-new");
+  }, 
 
   getInitialState: function() {
     return {
@@ -67,9 +76,9 @@ var CompaniesList = React.createClass({
       <DocumentTitle title={"CRM - Seznam firem"}>
         <main>
           <section>
-            <a href="javascript://">
+            <Button onClick={this.goToNewCompany}>
               <Glyphicon glyph="plus" /> Přidat firmu
-            </a>
+            </Button>
           </section>
           <section>
             <Table striped bordered>
