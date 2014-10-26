@@ -23,14 +23,23 @@ var CalendarField = React.createClass({
     setValue: React.PropTypes.func.isRequired
     , initialDate: React.PropTypes.object // TODO validate it's a moment, not just object #20
     , allowMonth: React.PropTypes.bool
-    , yearPrevNext: React.PropTypes.bool 
+    , yearPrevNext: React.PropTypes.bool
     , initialAccuracy: React.PropTypes.string
+  }
+
+  , initialDateOrNow: function() {
+    var moment = this.props.initialDate;
+    return (
+      (moment === undefined)
+      ? Moment()
+      : moment.clone()
+    );
   }
 
   , getInitialState: function() {
     return ({
       "shown": false
-      , "pickedDate": this.props.initialDate.clone() || Moment()
+      , "pickedDate": this.initialDateOrNow()
       , "accuracy": this.props.initialAccuracy
     });
   }
@@ -58,10 +67,10 @@ var CalendarField = React.createClass({
 
   , render: function () {
 
-    var calendarPopover = 
-      <CalendarPopover 
+    var calendarPopover =
+      <CalendarPopover
         setValue={this.setValue}
-        calendar={this.props.initialDate.clone()}
+        calendar={this.initialDateOrNow()}
         closeCalendar={this.closeCalendar}
       />
 

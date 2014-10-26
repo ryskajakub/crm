@@ -13,6 +13,8 @@ var Button = B.Button;
 var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 var _ = require("underscore");
 
+var CalendarField = require("./calendar/CalendarField.react");
+
 var $ = require("jquery");
 window.jQuery = $;
 var ui = require("../../bower_components/jquery-ui/jquery-ui");
@@ -58,6 +60,9 @@ var MachineDetail = React.createClass({
     });
   }
 
+  , setMachineStartDate: function(accuracy, date) {
+  }
+
   , render: function() {
     return(
       <Grid>
@@ -93,11 +98,15 @@ var MachineDetail = React.createClass({
                 <Col md={2}>
                   <input type="text" className="form-control" />
                 </Col>
-                <Col md={1} className="control-label" mdOffset={1}>
+                <Col md={1} className="control-label">
                   <label>dne:</label>
                 </Col>
-                <Col md={5}>
-                  <input type="text" className="form-control" />
+                <Col md={6}>
+                  <CalendarField
+                    setValue={this.setMachineStartDate}
+                    allowMonth={true}
+                    yearPrevNext={true}
+                  />
                 </Col>
               </Row>
               <Row className="form-group">

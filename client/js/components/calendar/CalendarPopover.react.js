@@ -46,7 +46,7 @@ var CalendarPopover = React.createClass({
   , getInitialState: function() {
     return {calendar: this.props.calendar || Moment()};
   }
-  
+
   , handleCalendarClick: function(accuracy, moment, event) {
     event.stopPropagation();
     if (undefined !== this.props.setValue) {
