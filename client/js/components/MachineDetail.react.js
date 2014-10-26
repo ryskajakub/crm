@@ -33,16 +33,16 @@ var MachineDetail = React.createClass({
           <Col md={2} className="control-label">
             <label>{label}</label>
           </Col>
-          <Col md={1} className="control-label">
+          <Col md={2} className="control-label">
             <label>mth:</label>
           </Col>
-          <Col md={4}>
+          <Col md={3}>
             <input type="text" className="form-control" />
           </Col>
-          <Col md={1} className="control-label">
-            <label>dny:</label>
+          <Col md={2} className="control-label">
+            <label>měsíce:</label>
           </Col>
-          <Col md={4}>
+          <Col md={3}>
             <input type="text" className="form-control" />
           </Col>
         </Row>
