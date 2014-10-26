@@ -18,54 +18,23 @@ var DocumentTitle = require('react-document-title');
 
 var Router = require('react-router');
 var Navigation = Router.Navigation;
+var listenToStoreSimpleMixin = require("../utils/listenToStoreSimpleMixin");
 
 var CompaniesList = React.createClass({
 
-  mixins: [Navigation]
+  mixins: [Navigation, listenToStoreSimpleMixin(CompanyStore, "companies", function(component, store) {
+    return store.get();
+  })]
 
   , goToNewCompany: function() {
     this.transitionTo("company-new");
-  }, 
-
-  getInitialState: function() {
-    return {
-      "rows": CompanyStore.get()
-      , "showInactive": true
-    }
-  },
-
-  componentDidMount: function() {
-    CompanyStore.addChangeListener(this.onNewState);
-  },
-
-  componentWillUnmount: function() {
-    CompanyStore.removeChangeListener(this.onNewState);
-  },
-
-  onNewState: function () {
-    this.setState({"rows": CompanyStore.get()});
-  },
-
-  showInactive: function () {
-    this.setState({"showInactive": !this.state.showInactive});
   }
 
-  /**
-   * @return {object}
-   */
   , render: function() {
 
-    var rows = this.state.rows;
-    var activeText = this.state.showInactive ? "Skrýt neaktivní" : "Ukázat neaktivní";
+    var rows = this.state.companies;
 
-    var rowsFilteredByActive =
-      (this.state.showInactive)
-      ? rows
-      : _.filter(rows, function (row) {
-        return (row.active);
-      });
-
-    var rowsHtml = _.reduce(rowsFilteredByActive, function(acc, value, key) {
+    var rowsHtml = _.reduce(rows, function(acc, value, key) {
       var elem =
         <CompanyRow companyRow={value} key={key} />
       acc.push(elem);
