@@ -8,6 +8,7 @@ var Grid = B.Grid;
 var Col = B.Col;
 var Row = B.Row;
 var Input = B.Input;
+var Button = B.Button;
 
 var LinkedStateMixin = require("react/lib/LinkedStateMixin");
 var _ = require("underscore");
@@ -95,6 +96,11 @@ var MachineDetail = React.createClass({
                 </Col>
                 <Col md={5}>
                   <input type="text" className="form-control" />
+                </Col>
+              </Row>
+              <Row className="form-group">
+                <Col mdOffset={2} md={10}>
+                  <Button bsStyle="primary">Zadej zařízení do systému</Button>
                 </Col>
               </Row>
             </form>
