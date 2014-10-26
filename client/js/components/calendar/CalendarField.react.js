@@ -23,7 +23,6 @@ var CalendarField = React.createClass({
     setValue: React.PropTypes.func.isRequired
     , initialDate: React.PropTypes.object // TODO validate it's a moment, not just object #20
     , allowMonth: React.PropTypes.bool
-    , yearPrevNext: React.PropTypes.bool
     , initialAccuracy: React.PropTypes.string
   }
 
@@ -72,6 +71,7 @@ var CalendarField = React.createClass({
         setValue={this.setValue}
         calendar={this.initialDateOrNow()}
         closeCalendar={this.closeCalendar}
+        allowMonth={this.props.allowMonth}
       />
 
     var pickedDate = this.state.pickedDate;

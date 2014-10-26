@@ -98,11 +98,20 @@ html {
   background-color: #428bca;
 }
 
-.leftPager {
+/* next and previous year/month links */
+.prevMonthPager {
+  position:absolute;
+  left:30px;
+}
+.nextMonthPager {
+  position:absolute;
+  right:30px;
+}
+.prevYearPager {
   position:absolute;
   left:5px;
 }
-.rightPager {
+.nextYearPager {
   position:absolute;
   right:5px;
 }

@@ -21,6 +21,7 @@ var CalendarPopover = React.createClass({
     calendar: React.PropTypes.object // TODO validate it's a moment, not just object #20
     , setValue: React.PropTypes.func
     , closeCalendar: React.PropTypes.func
+    , initialAccuracy: React.PropTypes.string
   }
 
   , componentDidMount: function() {
@@ -61,8 +62,10 @@ var CalendarPopover = React.createClass({
     return (
       <Popover placement="bottom" positionLeft={0} positionTop={40} id="calendar-popover">
         <div className="relative">
-          <a className="leftPager" onClick={this.subtractMonth} href="javascript://">&lt;&lt;</a>
-          <a className="rightPager" onClick={this.addMonth} href="javascript://">&gt;&gt;</a>
+          <a className="prevMonthPager" onClick={this.subtractMonth} href="javascript://">&lt;</a>
+          <a className="nextMonthPager" onClick={this.addMonth} href="javascript://">&gt;</a>
+          <a className="prevYearPager" onClick={this.subtractYear} href="javascript://">&lt;&lt;</a>
+          <a className="nextYearPager" onClick={this.addYear} href="javascript://">&gt;&gt;</a>
           <Month date={calendar} onClick={this.handleCalendarClick}>
             <Day onClick={this.handleCalendarClick} />
           </Month>
