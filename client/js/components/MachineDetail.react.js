@@ -9,9 +9,44 @@ var Col = B.Col;
 var Row = B.Row;
 var Input = B.Input;
 
+var _ = require("underscore");
+
+var $ = require("jquery");
+window.jQuery = $;
+var ui = require("../../bower_components/jquery-ui/jquery-ui");
+
 var MachineDetail = React.createClass({
 
-  render: function() {
+  componentDidMount: function() {
+    $("#machine-type").autocomplete({
+      source: [
+        "ActionScript",
+        "AppleScript",
+        "Asp",
+        "BASIC",
+        "C",
+        "C++",
+        "Clojure",
+        "COBOL",
+        "ColdFusion",
+        "Erlang",
+        "Fortran",
+        "Groovy",
+        "Haskell",
+        "Java",
+        "JavaScript",
+        "Lisp",
+        "Perl",
+        "PHP",
+        "Python",
+        "Ruby",
+        "Scala",
+        "Scheme"
+      ]
+    });
+  }
+
+  , render: function() {
     return(
       <Grid>
         <Row>
@@ -22,8 +57,11 @@ var MachineDetail = React.createClass({
                   <h1>Nové zařízení</h1>
                 </Col>
               </Row>
-              <Input type="text" label="Typ" onChange={this.changeTypeText}
-                labelClassName="col-md-2" wrapperClassName="col-md-10" groupClassName="row" />
+              <Row>
+                <Col mdOffset={2} md={10}>
+                  <Input id="machine-type" type="text" />
+                </Col>
+              </Row>
             </form>
           </Col>
         </Row>

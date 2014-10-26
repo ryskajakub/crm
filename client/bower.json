@@ -1,0 +1,12 @@
+{
+  "name": "client",
+  "version": "0.0.0",
+  "homepage": "https://github.com/coubeatczech/crm",
+  "authors": [
+    "Jakub Ryška <ryskajakub@seznam.cz>"
+  ],
+  "private": true,
+  "dependencies": {
+    "jquery-ui": "1.11.2"
+  }
+}
