@@ -1,100 +1,36 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Main where
 
-import Snap.Core (route, method, Snap, Method(POST, GET), putResponse, emptyResponse, readRequestBody, setResponseCode, writeLBS, logError, getRequest, rqParam)
+import Control.Monad.IO.Class (liftIO)
+
+import Data.Text (pack)
+
 import Snap.Http.Server (quickHttpServe)
 
-import Database.MySQL.Simple (defaultConnectInfo, Query, connect, connectDatabase, execute, close, ConnectInfo, insertID, query_, Connection, query)
-import Database.MySQL.Simple.Types(Only(Only))
+import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
+import Rest.Driver.Snap (apiToHandler')
+import Rest.Resource (Resource, mkResourceId, Void, name, schema, list)
+import Rest.Schema (Schema, named, withListing)
+import Rest.Dictionary.Combinators (jsonO, someO)
+import Rest.Handler (ListHandler, mkListing)
 
-import Control.Monad (join)
-import Control.Monad.IO.Class (liftIO)
-import Control.Exception (try, SomeException, bracket)
+listing :: ListHandler IO
+listing = mkListing (jsonO . someO) (\_ -> return $ return [pack "ahoj", pack "pse"])
 
-import Data.Aeson(decode, encode, ToJSON, Value, toJSON)
-import Data.Word(Word64)
-import Data.ByteString.Lazy(toStrict)
-import Data.ByteString(append, intercalate)
+dogSchema :: Schema Void () Void
+dogSchema = withListing () (named [])
 
-import Data.Text(pack, Text, unpack)
-import Data.Text.Encoding(decodeUtf8)
+dog :: Resource IO IO Void () Void
+dog = mkResourceId {
+    list = \_ -> listing
+    , name = "dogs"
+    , schema = dogSchema
+  }
 
-import Server.Data(IdResponse(IdResponse), name, days, active, Company(Company), FailResponse(FailResponse), OkResponse(OkResponse))
-import Server.Util(hashmapize)
+router :: Router IO IO
+router = root `compose` route dog
 
-connectionInfo :: ConnectInfo
-connectionInfo = defaultConnectInfo { connectDatabase = "crm" }
-
-createCompanyQuery :: Query
-createCompanyQuery = "insert into Company(name, days, active) values (?, ?, ?)"
-
-getAllCompaniesQuery :: Query
-getAllCompaniesQuery = "select id, name, days, active from Company order by name desc"
-
-checkCompanyNameForAvailabilityQuery :: Query
-checkCompanyNameForAvailabilityQuery = "select id from Company where name = ?"
+api :: Api IO
+api = [(mkVersion 1 0 0, Some1 router)]
 
 main :: IO ()
-main = quickHttpServe site
-
-executeWithConnection :: (Connection -> IO a) -> IO a
-executeWithConnection f =
-  bracket (connect connectionInfo) (close) (f)
-
-site :: Snap ()
-site =
-  route [("/api",
-    route [("/companies/:name/availability", 
-      method GET $ do
-        request <- getRequest
-        let companyNameToBeCheckedMaybe = fmap (unpack . decodeUtf8 . intercalate "") (rqParam "name" request)
-        case companyNameToBeCheckedMaybe of
-          Just(companyNameToBeChecked) ->
-            join $ liftIO $ executeWithConnection (\connection -> do 
-              queryResult <- query connection checkCompanyNameForAvailabilityQuery 
-                (Only $ companyNameToBeChecked) :: IO ([Only Int])
-              let 
-                isTheNameTaken = (length queryResult) == 1
-                responseBody = if isTheNameTaken
-                  then toJSON $ FailResponse companyNameToBeChecked
-                  else toJSON $ OkResponse companyNameToBeChecked
-              return $ writeLBS $ encode responseBody )
-          Nothing -> (putResponse $ setResponseCode 500 emptyResponse)
-    ), ("/companies/new",
-      method POST $ do
-        requestBody <- readRequestBody 1024
-        maybeCompany <- return $ (decode requestBody :: Maybe Company)
-        case maybeCompany of
-          Just (company) ->
-            join $ liftIO $ executeWithConnection (\connection ->
-              let
-                queryResult = (try $ do
-                  execute connection createCompanyQuery (name company, days company, active company)
-                  insertID connection) :: IO (Either SomeException Word64)
-              in (fmap (\qr -> case qr of
-                  Left _ -> putResponse $ setResponseCode 409 emptyResponse :: Snap()
-                  Right recordId ->
-                    let
-                      encodedId = encode $ IdResponse $ fromIntegral recordId
-                    in
-                      writeLBS encodedId
-                  ) queryResult) :: IO (Snap ())
-            )
-          Nothing -> do
-            logError $ ("Failed to parse: ") `append` (toStrict requestBody)
-            (putResponse $ setResponseCode 400 emptyResponse)
-    ), ("/companies",
-      method GET $ join $ liftIO $ do
-        rows <- executeWithConnection (\connection -> do
-          rows <- query_ connection getAllCompaniesQuery
-          return $ toJSON $ hashmapize $ fmap (\(companyId, companyName, companyDays, companyActive) ->
-            let
-              key = pack $ show (companyId :: Int) :: Text
-              value = toJSON $ Company {name = companyName, days = companyDays, active = companyActive} :: Value
-            in (key, value) :: (Text, Value)
-            ) rows
-          )
-        return $ writeLBS $ encode rows :: IO (Snap ())
-    )]
-  )]
+main = quickHttpServe $ apiToHandler' liftIO api
