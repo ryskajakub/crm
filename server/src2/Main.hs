@@ -7,11 +7,11 @@
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeFamilies               #-}
-import           Control.Monad.IO.Class  (liftIO)
-import           Control.Monad.Logger    (runStderrLoggingT)
-import           Database.Persist
-import           Database.Persist.Postgresql
-import           Database.Persist.TH
+import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Logger (runStderrLoggingT)
+import Database.Persist (insert, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity)
+import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
+import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Person
