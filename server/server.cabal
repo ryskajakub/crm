@@ -39,21 +39,13 @@ Executable server
     text                      >= 1.2.0.0,
     rest-snap                 == 0.1.17.14,
     rest-core                 == 0.33.1
+    , persistent == 2.1.0.2
+    , persistent-postgresql == 2.1.0.1
+    , persistent-template == 2.1
+    , monad-logger == 0.3.8
 
   if impl(ghc >= 6.12.0)
     ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
                  -fno-warn-unused-do-bind
   else
     ghc-options: -threaded -Wall -fwarn-tabs -funbox-strict-fields -O2
-
-Executable per
-  default-language:  Haskell2010
-  ghc-options:       -Wall
-  main-is:           Main.hs
-  hs-source-dirs:    src2
-  build-depends:
-      base >= 4.6 && < 4.8
-    , persistent == 2.1.0.2
-    , persistent-postgresql == 2.1.0.1
-    , persistent-template == 2.1
-    , monad-logger == 0.3.8
