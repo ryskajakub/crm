@@ -10,8 +10,8 @@
 
 module Main where
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Logger (runStderrLoggingT)
+import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT)
 
 import Data.Text (pack)
 
@@ -53,11 +53,20 @@ router = root `compose` route dog
 api :: Api IO
 api = [(mkVersion 1 0 0, Some1 router)]
 
-main1 :: IO ()
-main1 = quickHttpServe $ apiToHandler' liftIO api
+main :: IO ()
+main = quickHttpServe $ apiToHandler' liftIO api
 
 connStr = "dbname=crm user=coub"
 
+io :: IO ()
+io = putStrLn "XX"
+
+lifted :: NoLoggingT IO ()
+lifted = liftIO io
+
+wpsp = withPostgresqlPool connStr 10 $ \pool -> lifted
+
+{-
 main :: IO ()
 main = runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do
   flip runSqlPersistMPool pool $ do
@@ -67,3 +76,4 @@ main = runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do
     janeId <- insert $ Person "Jane Doe"
 
     delete janeId
+-}
