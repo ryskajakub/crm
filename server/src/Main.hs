@@ -94,11 +94,11 @@ api' = [(mkVersion 1 0 0, Some1 $ router')]
 api :: ConnectionPool -> Api IO
 api pool = [(mkVersion 1 0 0, Some1 $ router pool)]
 
-liftReader :: Dependencies a -> Snap a
-liftReader = undefined
+liftReader :: ConnectionPool -> Dependencies a -> Snap a
+liftReader pool deps = liftIO $ runReaderT deps pool
 
 main :: IO ()
 main =
-  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ quickHttpServe $ apiToHandler' liftReader api')
+  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ quickHttpServe $ apiToHandler' (liftReader pool) api')
 
 connStr = "dbname=crm user=coub"
