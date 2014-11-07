@@ -13,6 +13,7 @@ module Main where
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
 import Control.Monad.Error (ErrorT)
+import Control.Monad.Reader (ReaderT, asks, mapReaderT)
 
 import Data.Text (pack, Text)
 
@@ -31,11 +32,20 @@ import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
+type Dependencies a = ReaderT ConnectionPool IO a
+
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Dog
   name String
   deriving Show
 |]
+
+insertDog' :: ReaderT ConnectionPool IO ()
+insertDog' =
+  let
+    io2 = asks (\pool -> insertDog pool)
+    io1 = mapReaderT (\io2 -> io2 >>= (\x -> x)) io2
+  in io1
 
 insertDog :: ConnectionPool -> IO ()
 insertDog pool = 
