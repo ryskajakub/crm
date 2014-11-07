@@ -11,7 +11,7 @@
 module Main where
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT)
+import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
 
 import Data.Text (pack)
 
@@ -62,7 +62,7 @@ io :: IO ()
 io = putStrLn "XX"
 
 lifted :: NoLoggingT IO ()
-lifted = liftIO io
+lifted = NoLoggingT io
 
 wpsp = withPostgresqlPool connStr 10 $ \pool -> lifted
 
