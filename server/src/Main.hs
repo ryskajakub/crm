@@ -51,19 +51,8 @@ insertDog pool =
     runMigration migrateAll
     insert_ $ Dog "Azor"
 
-doSomeIO :: ConnectionPool -> IO [Text]
-doSomeIO pool = do
-  insertDog pool
-  return [pack "ahoj", pack "pse"]
-
-errorTy :: ConnectionPool -> ErrorT (Reason ()) IO [Text]
-errorTy pool = liftIO $ doSomeIO pool
-
 listing' :: ListHandler Dependencies
 listing' = mkListing (jsonO . someO) (const $ insertDog' >> return [pack "XXX"])
-
-listing :: ConnectionPool -> ListHandler IO
-listing pool = mkListing (jsonO . someO) (\_ -> errorTy pool)
 
 dogSchema :: Schema Void () Void
 dogSchema = withListing () (named [])
@@ -75,24 +64,11 @@ dog' = mkResourceId {
   , schema = dogSchema
   }
 
-dog :: ConnectionPool -> Resource IO IO Void () Void
-dog pool = mkResourceId {
-    list = \_ -> listing pool
-    , name = "dogs"
-    , schema = dogSchema
-  }
-
 router' :: Router Dependencies Dependencies
 router' = root `compose` (route dog')
 
-router :: ConnectionPool -> Router IO IO
-router pool = root `compose` (route (dog pool))
-
 api' :: Api Dependencies
 api' = [(mkVersion 1 0 0, Some1 $ router')]
-
-api :: ConnectionPool -> Api IO
-api pool = [(mkVersion 1 0 0, Some1 $ router pool)]
 
 liftReader :: ConnectionPool -> Dependencies a -> Snap a
 liftReader pool deps = liftIO $ runReaderT deps pool
