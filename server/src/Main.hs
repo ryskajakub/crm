@@ -12,8 +12,9 @@ module Main where
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
+import Control.Monad.Error (ErrorT)
 
-import Data.Text (pack)
+import Data.Text (pack, Text)
 
 import Snap.Http.Server (quickHttpServe)
 
@@ -23,60 +24,57 @@ import Rest.Resource (Resource, mkResourceId, Void, name, schema, list)
 import Rest.Schema (Schema, named, withListing)
 import Rest.Dictionary.Combinators (jsonO, someO)
 import Rest.Handler (ListHandler, mkListing)
+import Rest.Types.Error (Reason)
 
-import Database.Persist (insert, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity)
+import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity)
 import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Person
+Dog
   name String
   deriving Show
 |]
 
-listing :: ListHandler IO
-listing = mkListing (jsonO . someO) (\_ -> return $ return [pack "ahoj", pack "pse"])
+insertDog :: ConnectionPool -> IO ()
+insertDog pool = 
+  flip runSqlPersistMPool pool $ do
+    runMigration migrateAll
+    insert_ $ Dog "Azor"
+
+doSomeIO :: ConnectionPool -> IO [Text]
+doSomeIO pool = do
+  insertDog pool
+  return [pack "ahoj", pack "pse"]
+
+errorTy :: ConnectionPool -> ErrorT (Reason ()) IO [Text]
+errorTy pool = liftIO $ doSomeIO pool
+
+listing :: ConnectionPool -> ListHandler IO
+listing pool = mkListing (jsonO . someO) (\_ -> errorTy pool)
 
 dogSchema :: Schema Void () Void
 dogSchema = withListing () (named [])
 
-dog :: Resource IO IO Void () Void
-dog = mkResourceId {
-    list = \_ -> listing
+dog :: ConnectionPool -> Resource IO IO Void () Void
+dog pool = mkResourceId {
+    list = \_ -> listing pool
     , name = "dogs"
     , schema = dogSchema
   }
 
-router :: Router IO IO
-router = root `compose` route dog
+router :: ConnectionPool -> Router IO IO
+router pool = root `compose` ( route ( dog pool ))
 
-api :: Api IO
--- api = [(mkVersion 1 0 0, Some1 router)]
-api = undefined
+api :: ConnectionPool -> Api IO
+api pool = [(mkVersion 1 0 0, Some1 $ router pool)]
 
-sn :: IO ()
-sn = quickHttpServe $ (apiToHandler' liftIO api)
+sn :: ConnectionPool -> IO ()
+sn pool = quickHttpServe $ (apiToHandler' liftIO $ api pool)
 
 main :: IO ()
 main =
-  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT sn)
+  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ sn pool)
 
 connStr = "dbname=crm user=coub"
-
-{-
-lifted :: ConnectionPool -> NoLoggingT IO ()
-lifted pool = NoLoggingT io
--}
-
-{-
-main :: IO ()
-main = runStderrLoggingT $ withPostgresqlPool connStr 10 $ \pool -> liftIO $ do
-  flip runSqlPersistMPool pool $ do
-    runMigration migrateAll
-
-    johnId <- insert $ Person "John Doe"
-    janeId <- insert $ Person "Jane Doe"
-
-    delete janeId
--}

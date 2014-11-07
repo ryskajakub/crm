@@ -39,6 +39,7 @@ Executable server
     text                      >= 1.2.0.0,
     rest-snap                 == 0.1.17.14,
     rest-core                 == 0.33.1
+    , rest-types == 1.11.1
     , persistent == 2.1.0.2
     , persistent-postgresql == 2.1.0.1
     , persistent-template == 2.1
