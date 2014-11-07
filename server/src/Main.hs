@@ -25,6 +25,7 @@ import Rest.Dictionary.Combinators (jsonO, someO)
 import Rest.Handler (ListHandler, mkListing)
 
 import Database.Persist (insert, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity)
+import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
@@ -51,20 +52,22 @@ router :: Router IO IO
 router = root `compose` route dog
 
 api :: Api IO
-api = [(mkVersion 1 0 0, Some1 router)]
+-- api = [(mkVersion 1 0 0, Some1 router)]
+api = undefined
+
+sn :: IO ()
+sn = quickHttpServe $ (apiToHandler' liftIO api)
 
 main :: IO ()
-main = quickHttpServe $ apiToHandler' liftIO api
+main =
+  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT sn)
 
 connStr = "dbname=crm user=coub"
 
-io :: IO ()
-io = putStrLn "XX"
-
-lifted :: NoLoggingT IO ()
-lifted = NoLoggingT io
-
-wpsp = withPostgresqlPool connStr 10 $ \pool -> lifted
+{-
+lifted :: ConnectionPool -> NoLoggingT IO ()
+lifted pool = NoLoggingT io
+-}
 
 {-
 main :: IO ()
