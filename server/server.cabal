@@ -39,7 +39,7 @@ Executable run-server
     base >= 4.6 && < 4.8
     , server
 
-Executable gen
+Executable crm-gen-client
   default-language:  Haskell2010
   ghc-options:       -Wall
   main-is:           Main.hs
