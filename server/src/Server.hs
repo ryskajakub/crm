@@ -10,7 +10,7 @@
 {-# LANGUAGE KindSignatures #-}
 
 module Server (
-  api
+  api, main
 ) where
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
