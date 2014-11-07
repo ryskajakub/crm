@@ -12,8 +12,8 @@ module Main where
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
-import Control.Monad.Error (ErrorT)
-import Control.Monad.Reader (ReaderT, asks, mapReaderT)
+import Control.Monad.Error (ErrorT(ErrorT), Error)
+import Control.Monad.Reader (ReaderT, ask, mapReaderT)
 
 import Data.Text (pack, Text)
 
@@ -32,7 +32,7 @@ import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
-type Dependencies a = ReaderT ConnectionPool IO a
+type Dependencies = ReaderT ConnectionPool IO
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Dog
@@ -40,12 +40,8 @@ Dog
   deriving Show
 |]
 
-insertDog' :: ReaderT ConnectionPool IO ()
-insertDog' =
-  let
-    io2 = asks (\pool -> insertDog pool)
-    io1 = mapReaderT (\io2 -> io2 >>= (\x -> x)) io2
-  in io1
+insertDog' :: (Error a) => ErrorT a (ReaderT ConnectionPool IO) ()
+insertDog' = ask >>= \pool -> liftIO $ insertDog pool
 
 insertDog :: ConnectionPool -> IO ()
 insertDog pool = 
@@ -61,6 +57,9 @@ doSomeIO pool = do
 errorTy :: ConnectionPool -> ErrorT (Reason ()) IO [Text]
 errorTy pool = liftIO $ doSomeIO pool
 
+listing' :: ListHandler Dependencies
+listing' = mkListing (jsonO . someO) (const $ insertDog' >> return [pack "XXX"])
+
 listing :: ConnectionPool -> ListHandler IO
 listing pool = mkListing (jsonO . someO) (\_ -> errorTy pool)
 
@@ -75,7 +74,7 @@ dog pool = mkResourceId {
   }
 
 router :: ConnectionPool -> Router IO IO
-router pool = root `compose` ( route ( dog pool ))
+router pool = root `compose` (route (dog pool))
 
 api :: ConnectionPool -> Api IO
 api pool = [(mkVersion 1 0 0, Some1 $ router pool)]
