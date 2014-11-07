@@ -14,11 +14,12 @@ module Main where
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
 import Control.Monad.Error (ErrorT(ErrorT), Error)
-import Control.Monad.Reader (ReaderT, ask, mapReaderT)
+import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
 
 import Data.Text (pack, Text)
 
 import Snap.Http.Server (quickHttpServe)
+import Snap.Core (Snap)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Driver.Snap (apiToHandler')
@@ -67,6 +68,13 @@ listing pool = mkListing (jsonO . someO) (\_ -> errorTy pool)
 dogSchema :: Schema Void () Void
 dogSchema = withListing () (named [])
 
+dog' :: Resource Dependencies Dependencies Void () Void
+dog' = mkResourceId {
+  list = const listing'
+  , name = "dogs"
+  , schema = dogSchema
+  }
+
 dog :: ConnectionPool -> Resource IO IO Void () Void
 dog pool = mkResourceId {
     list = \_ -> listing pool
@@ -74,17 +82,23 @@ dog pool = mkResourceId {
     , schema = dogSchema
   }
 
+router' :: Router Dependencies Dependencies
+router' = root `compose` (route dog')
+
 router :: ConnectionPool -> Router IO IO
 router pool = root `compose` (route (dog pool))
+
+api' :: Api Dependencies
+api' = [(mkVersion 1 0 0, Some1 $ router')]
 
 api :: ConnectionPool -> Api IO
 api pool = [(mkVersion 1 0 0, Some1 $ router pool)]
 
-sn :: ConnectionPool -> IO ()
-sn pool = quickHttpServe $ (apiToHandler' liftIO $ api pool)
+liftReader :: Dependencies a -> Snap a
+liftReader = undefined
 
 main :: IO ()
 main =
-  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ sn pool)
+  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ quickHttpServe $ apiToHandler' liftReader api')
 
 connStr = "dbname=crm user=coub"
