@@ -7,6 +7,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures #-}
 
 module Main where
 
@@ -32,7 +33,7 @@ import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
-type Dependencies = ReaderT ConnectionPool IO
+type Dependencies = (ReaderT ConnectionPool IO :: * -> *)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 Dog
