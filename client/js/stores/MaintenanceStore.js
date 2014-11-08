@@ -40,6 +40,12 @@ var MaintenanceStore = merge(storeEvents(), merge(EventEmitter.prototype, {
     );
   }
 
+  , getByCompanyId: function(companyId) {
+    return _.pick(maintenances, function(value, key) {
+      return (value.companyId == companyId);
+    });
+  }
+
 }));
 
 function addMaintenances(maintenances_) {

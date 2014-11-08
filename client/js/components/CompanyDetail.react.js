@@ -94,7 +94,7 @@ var CompanyDetail = React.createClass({
                 <Row>
                   <Col md={12}>
                     <Panel>
-                      <Link to='maintenances-list' params={{companyId: id, maintenanceId: "new"}}>
+                      <Link to='maintenances-list' params={{companyId: id}}>
                         Historie servisů
                       </Link>
                     </Panel>
