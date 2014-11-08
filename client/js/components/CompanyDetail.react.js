@@ -29,11 +29,6 @@ var CompanyDetail = React.createClass({
 
   mixins: [LinkedStateMixin]
 
-  , saveEdit: function() {
-    console.log("saving edit!");
-    console.log(this.state);
-  }
-
   /**
    * @return {object}
    */
@@ -43,8 +38,8 @@ var CompanyDetail = React.createClass({
     var machinesInCompany = this.state.machines;
     var id = this.props.params.companyId;
 
-    var editing = (this.props.name === "company-edit" || this.props.name === "company-new");
     var creating = (this.props.name === "company-new");
+    var editing = (this.props.name === "company-edit" || creating);
 
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
