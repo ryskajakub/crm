@@ -34,13 +34,11 @@ var EditableField = React.createClass({
    * @return {object}
    */
   , render: function() {
-    var editing = true;
-    var other = {"label": "b"};
-    var editingState = (undefined === editing ? false : editing);
+    var editing = (undefined === this.props.editing ? false : this.props.editing);
     var value = this.state.value;
     var t = this;
     return (
-      editingState
+      editing
       ? (function() {
           var input = <Input type="text" value={value} onChange={t.onChange} />;
           var propsFromParent = _.omit(t.props, ["initialValue", "editing", "setValue"]);
