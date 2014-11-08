@@ -104,9 +104,8 @@ var MaintenanceForm = React.createClass({
             <label className="control-label col-md-2">
               Servisman
             </label>
-            <div className="col-md-10">
-              <DropdownButton className="scrollable-menu"
-                onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
+            <div className="col-md-10 scrollable-menu">
+              <DropdownButton onSelect={this.selectEmployee} title={selectedEmployee["name"]}>
                 {employees}
               </DropdownButton>
             </div>

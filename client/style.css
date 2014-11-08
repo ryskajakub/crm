@@ -22,7 +22,7 @@ html {
 }
 
 /* button dropdown bootstrap */
-.scrollable-menu {
+.scrollable-menu ul.dropdown-menu{
   height: auto;
   max-height: 200px;
   overflow-x: hidden;
