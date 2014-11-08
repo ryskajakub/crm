@@ -14,14 +14,14 @@ var EditableField = React.createClass({
   mixins: [LinkedStateMixin]
 
   , propTypes: {
-    initialValue: PropTypes.string.isRequired
+    initialValue: PropTypes.string
     , editing: PropTypes.bool
     , setValue: PropTypes.func.isRequired
   }
 
   , getInitialState: function () {
     return {
-      "value": this.props.initialValue
+      "value": (this.props.initialValue === undefined ? "" : this.props.initialValue)
     }
   }
 
@@ -34,11 +34,19 @@ var EditableField = React.createClass({
    * @return {object}
    */
   , render: function() {
-    var editing = (undefined === this.props.editing ? false : this.props.editing);
+    var editing = true;
+    var other = {"label": "b"};
+    var editingState = (undefined === editing ? false : editing);
     var value = this.state.value;
+    var t = this;
     return (
-      editing
-      ? <Input type="text" value={value} onChange={this.onChange} />
+      editingState
+      ? (function() {
+          var input = <Input type="text" value={value} onChange={t.onChange} />;
+          var propsFromParent = _.omit(t.props, ["initialValue", "editing", "setValue"]);
+          _.extend(input.props, propsFromParent);
+          return input;
+        })()
       : <span>{value}</span>
     );
   }

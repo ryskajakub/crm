@@ -3,6 +3,14 @@ html {
   overflow-y: scroll;
 }
 
+.inline {
+  display: inline-block;
+  width: 400px;
+}
+.inline label {
+  font-size: 16px;
+}
+
 .goRight {
   float: right;
 }

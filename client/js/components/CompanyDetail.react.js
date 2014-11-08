@@ -65,7 +65,12 @@ var CompanyDetail = React.createClass({
       <main>
         <section>
           <Jumbotron>
-            <h1>{company.name} - {company.plant} {editAction}</h1>
+            <h1>
+              <EditableField setValue={setValue("name")} initialValue={company.name} editing={editing} groupClassName="inline" />
+              -
+              <EditableField setValue={setValue("plant")} initialValue={company.plant} editing={editing} groupClassName="inline" />
+              {editAction}
+            </h1>
             <dl className="dl-horizontal">
               <dt>Adresa</dt>
               <dd><EditableField setValue={setValue("address")} initialValue={company.address} editing={editing} /></dd>
