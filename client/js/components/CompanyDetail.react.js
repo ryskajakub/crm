@@ -43,7 +43,8 @@ var CompanyDetail = React.createClass({
     var machinesInCompany = this.state.machines;
     var id = this.props.params.companyId;
 
-    var editing = (this.props.name == "company-edit" || this.props.name === "company-new") ? true : false;
+    var editing = (this.props.name === "company-edit" || this.props.name === "company-new");
+    var creating = (this.props.name === "company-new");
 
     var machinesTags = _.reduce(machinesInCompany, function(acc, value, key) {
       var machine = (<BigMachine key={key} type={value.type} image={value.image} maintenanceDate={value.lastMaintenance} />);
@@ -51,9 +52,16 @@ var CompanyDetail = React.createClass({
       return acc;
     }, []);
 
-    var editAction = (editing)
-      ? <Glyphicon glyph="ok" className="goRight" onClick={this.saveEdit} />
+    var editLink = (editing)
+      ? ""
       : <Link to='company-edit' params={{"companyId": id}}><Glyphicon glyph="pencil" className="goRight" /></Link> ;
+
+    var editConfirm = (editing)
+      ? [
+          <dt key={"key-1"}/>
+          , <dd key={"key-2"}><Button bsStyle="primary">{creating ? "Vytvoř" : "Zedituj"}</Button></dd>
+        ]
+      : "";
 
     var setValue = function(field) {
       return function(value) {
@@ -66,12 +74,12 @@ var CompanyDetail = React.createClass({
         <section>
           <Jumbotron>
             <h1>
-              <EditableField setValue={setValue("name")} initialValue={company.name} editing={editing} 
+              <EditableField setValue={setValue("name")} initialValue={company.name} editing={editing}
                 groupClassName="inline" label="Jméno firmy" />
               -
-              <EditableField setValue={setValue("plant")} initialValue={company.plant} editing={editing} 
+              <EditableField setValue={setValue("plant")} initialValue={company.plant} editing={editing}
                 groupClassName="inline" label="Označení pobočky" />
-              {editAction}
+              {editLink}
             </h1>
             <dl className="dl-horizontal">
               <dt>Adresa</dt>
@@ -80,6 +88,7 @@ var CompanyDetail = React.createClass({
               <dd><EditableField setValue={setValue("contact")} initialValue={company.contact} editing={editing} /></dd>
               <dt>Telefon</dt>
               <dd><EditableField setValue={setValue("phone")} initialValue={company.phone} editing={editing} /></dd>
+              {editConfirm}
             </dl>
           </Jumbotron>
         </section>
