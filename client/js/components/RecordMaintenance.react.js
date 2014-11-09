@@ -15,6 +15,7 @@ var MaintenanceStore = require("../stores/MaintenanceStore");
 var CompanyStore = require("../stores/CompanyStore");
 
 var Machine = require("./Machine.react");
+var EditableField = require("./EditableField.react");
 
 var Table = B.Table;
 var Link = Router.Link;
@@ -29,6 +30,7 @@ var Grid = B.Grid;
 var Col = B.Col;
 var Row = B.Row;
 var Panel = B.Panel;
+
 
 var DocumentTitle = require('react-document-title');
 
@@ -50,6 +52,8 @@ var RecordMaintenance = React.createClass({
 
   , render: function() {
 
+    var editing = (this.props.name === "record-maintenance");
+
     var machines = _.reduce(this.state.machines, function(acc, machine, machineId) {
       var element = 
         <Row key={machineId}>
@@ -59,10 +63,12 @@ var RecordMaintenance = React.createClass({
             </Panel>
           </Col>
           <Col md={2}>
-            <Input type="text" label="Počet motohodin" />
+            <label class="control-label">Počet motohodin</label>
+            <EditableField setValue={function() {}} editing={editing} />
           </Col>
           <Col md={4}>
-            <Input type="textarea" label="Poznámka" rows={5} />
+            <label class="control-label">Poznámka</label>
+            <EditableField type="textarea" rows={5} setValue={function() {}} editing={editing} />
           </Col>
         </Row>;
       acc.push(element);
