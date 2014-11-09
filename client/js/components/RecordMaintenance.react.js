@@ -51,28 +51,35 @@ var RecordMaintenance = React.createClass({
   }
 
   , render: function() {
-
+    var t = this;
     var editing = (this.props.name === "record-maintenance");
-
     var machines = _.reduce(this.state.machines, function(acc, machine, machineId) {
-      var element = 
-        <Row key={machineId}>
-          <Col md={2}>
-            <Panel header={machine.type}>
-              <img src={machine.image} width="120" />
-            </Panel>
-          </Col>
-          <Col md={2}>
-            <label class="control-label">Počet motohodin</label>
-            <EditableField setValue={function() {}} editing={editing} />
-          </Col>
-          <Col md={4}>
-            <label class="control-label">Poznámka</label>
-            <EditableField type="textarea" rows={5} setValue={function() {}} editing={editing} />
-          </Col>
-        </Row>;
-      acc.push(element);
-      return acc;
+
+      var machineServiceData = _.find(t.state.maintenance.machines, function(obj) {
+        return obj.machineId === parseInt(machineId);
+      });
+      if (undefined !== machineServiceData) {
+        var element = 
+          <Row key={machineId}>
+            <Col md={2}>
+              <Panel header={machine.type}>
+                <img src={machine.image} width="120" />
+              </Panel>
+            </Col>
+            <Col md={2}>
+              <label class="control-label">Počet motohodin</label>
+              <EditableField setValue={function() {}} editing={editing} initialValue={machineServiceData.mth} />
+            </Col>
+            <Col md={4}>
+              <label class="control-label">Poznámka</label>
+              <EditableField type="textarea" rows={5} setValue={function() {}} editing={editing} initialValue={machineServiceData.note} />
+            </Col>
+          </Row>;
+        acc.push(element);
+        return acc;
+      } else {
+        return acc;
+      }
     }, []);
 
     return (
