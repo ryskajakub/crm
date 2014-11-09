@@ -2,14 +2,15 @@
  * @jsx React.DOM
  */
 var React = require('react');
+var R = require('react-router');
+var B = require("react-bootstrap");
+
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceStore = require("../stores/MaintenanceStore");
 var EmployeeStore = require("../stores/EmployeeStore");
 var CompanyStore = require("../stores/CompanyStore");
 
 var formatDate = require("../utils/formatDate");
-
-var B = require("react-bootstrap");
 
 var MaintenancesList = React.createClass({
 
@@ -34,7 +35,12 @@ var MaintenancesList = React.createClass({
     var maintenances = _.map(this.state.maintenances, function (obj, key) {
       var date = formatDate(obj.date);
       var person = obj.employeeName;
-      return <tr key={key}><td>{date}</td><td>{person}</td></tr>;
+      return (
+        <tr key={key}>
+          <td><R.Link to='view-maintenance' params={{maintenanceId: key}}>{date}</R.Link></td>
+          <td>{person}</td>
+        </tr>
+      );
     });
     return (
       <main>
