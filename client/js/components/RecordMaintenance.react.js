@@ -59,7 +59,7 @@ var RecordMaintenance = React.createClass({
         return obj.machineId === parseInt(machineId);
       });
       if (undefined !== machineServiceData) {
-        var element = 
+        var element =
           <Row key={machineId}>
             <Col md={2}>
               <Panel header={machine.type}>
@@ -67,12 +67,12 @@ var RecordMaintenance = React.createClass({
               </Panel>
             </Col>
             <Col md={2}>
-              <label class="control-label">Počet motohodin</label>
-              <EditableField setValue={function() {}} editing={editing} initialValue={machineServiceData.mth} />
+              <EditableField label="Počet motohodin" setValue={function() {}}
+                editing={editing} initialValue={machineServiceData.mth} />
             </Col>
             <Col md={4}>
-              <label class="control-label">Poznámka</label>
-              <EditableField type="textarea" rows={5} setValue={function() {}} editing={editing} initialValue={machineServiceData.note} />
+              <EditableField label="Poznámka" type="textarea" rows={5} setValue={function() {}}
+                editing={editing} initialValue={machineServiceData.note} />
             </Col>
           </Row>;
         acc.push(element);

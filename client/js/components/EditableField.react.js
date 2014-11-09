@@ -17,6 +17,7 @@ var EditableField = React.createClass({
     initialValue: PropTypes.string
     , editing: PropTypes.bool
     , setValue: PropTypes.func.isRequired
+    , displayHideLabel: PropTypes.bool
   }
 
   , getInitialState: function () {
@@ -45,7 +46,8 @@ var EditableField = React.createClass({
           _.extend(input.props, propsFromParent);
           return input;
         })()
-      : <span>{value}</span>
+      : <span>{(this.props.label === undefined || this.props.displayHideLabel === true) ? "" : 
+          <strong>{this.props.label}: </strong>}<span>{value}</span></span>
     );
   }
 
