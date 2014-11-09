@@ -95,7 +95,7 @@ function createMaintenance(date, accuracy, companyId, machines, note, serviceman
       , "accuracy": accuracy
     }
     , "companyId": companyId
-    , "machinesIds": machines
+    , "machines": machines
     , "note": note
     , "employeeId": serviceman
   };
@@ -103,9 +103,9 @@ function createMaintenance(date, accuracy, companyId, machines, note, serviceman
   maintenanceId += 1;
 }
 
-createMaintenance(Moment().add(5, "months"), "Day", 0, [0, 1], "Bude třeba vyměnit filtr", 0);
-createMaintenance(Moment().add(10, "months"), "Month", 0, [0], "Bude třeba vyměnit řemen", 1);
-createMaintenance(Moment().add(11, "months"), "Day", 1, [2], "Bude třeba vyhodit atlas copco compresory", 1);
+createMaintenance(Moment().add(5, "months"), "Day", 0, [{"machineId": 0}, {"machineId": 1}], "Bude třeba vyměnit filtr", 0);
+createMaintenance(Moment().add(10, "months"), "Month", 0, [{"machineId": 0}], "Bude třeba vyměnit řemen", 1);
+createMaintenance(Moment().add(11, "months"), "Day", 1, [{"machineId": 2}], "Bude třeba vyhodit atlas copco compresory", 1);
 
 AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MAINTENANCES

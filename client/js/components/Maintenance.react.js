@@ -40,7 +40,8 @@ var Maintenance = React.createClass({
     var company = this.state["company"];
 
     var machines = _.reduce(this.state.machines, function (acc, value, key) {
-      var selected = _.contains(maintenance["machinesIds"], parseInt(key));
+      var machinesIds = _.pluck(maintenance.machines, "machineId");
+      var selected = _.contains(machinesIds, parseInt(key));
       var element = <Machine key={key} machine={value} selected={selected} />
       acc.push(element);
       return acc;
