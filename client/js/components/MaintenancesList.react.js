@@ -5,6 +5,7 @@ var React = require('react');
 var listenToStoresMixin = require("../utils/listenToStoresMixin");
 var MaintenanceStore = require("../stores/MaintenanceStore");
 var EmployeeStore = require("../stores/EmployeeStore");
+var CompanyStore = require("../stores/CompanyStore");
 
 var formatDate = require("../utils/formatDate");
 
@@ -12,7 +13,7 @@ var B = require("react-bootstrap");
 
 var MaintenancesList = React.createClass({
 
-  mixins: [listenToStoresMixin([MaintenanceStore, EmployeeStore])]
+  mixins: [listenToStoresMixin([MaintenanceStore, EmployeeStore, CompanyStore])]
 
   , computeStateFromStores: function() {
     var companyId = this.props.params.companyId
@@ -22,7 +23,11 @@ var MaintenancesList = React.createClass({
       maintenance["employeeName"] = employee["name"];
       return maintenance;
     });
-    return {"maintenances": maintenancesWithEmployeeName};
+    var companyName = CompanyStore.get(companyId).name;
+    return {
+      "maintenances": maintenancesWithEmployeeName
+      , "companyName": companyName
+    };
   }
 
   , render: function () {
@@ -32,14 +37,17 @@ var MaintenancesList = React.createClass({
       return <tr key={key}><td>{date}</td><td>{person}</td></tr>;
     });
     return (
-      <B.Table striped bordered>
-        <thead>
-          <tr><th>Datum</th><th>Servisman</th></tr>
-        </thead>
-        <tbody>
-          {maintenances}
-        </tbody>
-      </B.Table>
+      <main>
+        <strong>Servisy - {this.state.companyName}</strong>
+        <B.Table striped bordered>
+          <thead>
+            <tr><th>Datum</th><th>Servisman</th></tr>
+          </thead>
+          <tbody>
+            {maintenances}
+          </tbody>
+        </B.Table>
+      </main>
     );
   }
 });
