@@ -88,13 +88,15 @@ var RecordMaintenance = React.createClass({
         <h2>{this.state.company["name"]}</h2>
         <Grid>
           {machines}
-          <Row>
-            <form className="form-horizontal">
-              <Input type="textarea" label="Zápis" labelClassName="col-md-2" wrapperClassName="col-md-10" />
-              <Col md={10} mdOffset={2}>
-                <Button bsStyle="primary">Uzavři servis</Button>
-              </Col>
-            </form>
+          <Row className="form-horizontal">
+            <label className="control-label col-md-2">Zápis</label>
+            <div className="col-md-10">
+              <EditableField type="textarea" initialValue={this.state.maintenance["note"]} 
+                setValue={function() {}} editing={editing} rows={5} />
+            </div>
+            <Col md={10} mdOffset={2}>
+              <Button bsStyle="primary">Uzavři servis</Button>
+            </Col>
           </Row>
         </Grid>
       </main>
