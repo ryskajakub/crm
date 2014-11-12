@@ -39,22 +39,25 @@ import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLow
 type Dependencies = (ReaderT ConnectionPool IO :: * -> *)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Dog
+Company
   name String
+  plant String
+  contact String
+  phone String
+  address String
   deriving Show
 |]
 
-insertDog' :: (Error a) => ErrorT a (ReaderT ConnectionPool IO) ()
-insertDog' = ask >>= \pool -> liftIO $ insertDog pool
+performDb :: (Error a) => (ConnectionPool -> IO()) -> ErrorT a (ReaderT ConnectionPool IO) ()
+performDb action = ask >>= \pool -> liftIO $ action pool
 
-insertDog :: ConnectionPool -> IO ()
-insertDog pool = 
-  flip runSqlPersistMPool pool $ do
-    runMigration migrateAll
-    insert_ $ Dog "Azor"
+insertPerson :: ConnectionPool -> IO ()
+insertPerson = runSqlPersistMPool $ do
+  runMigration migrateAll
+  insert_ $ Company "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
 
 listing' :: ListHandler Dependencies
-listing' = mkListing (jsonO . someO) (const $ insertDog' >> return [pack "XXX"])
+listing' = mkListing (jsonO . someO) (const $ (performDb insertPerson) >> return [pack "XXX"])
 
 dogSchema :: Schema Void () Void
 dogSchema = withListing () (named [])
