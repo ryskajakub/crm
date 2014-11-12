@@ -20,7 +20,7 @@ function listenToStoreSimpleMixin(store, resultName, fetch) {
 
     , handleStoresChanged: function() {
       if (this.isMounted()) {
-        this.setState(getInitialState());
+        this.setState(this.getInitialState());
       }
     }
   };
