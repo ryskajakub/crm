@@ -29,6 +29,9 @@ Library
     , monad-logger == 0.3.8
     , text >= 0.8
     , transformers >= 0.4
+    , regular
+    , json-schema
+    , aeson
 
 Executable run-server
   default-language:  Haskell2010
