@@ -38,8 +38,8 @@ import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler, mkConstHandler)
 import Rest.Types.Error (Reason)
 
-import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity, entityVal)
-import Database.Persist.Sql (ConnectionPool)
+import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity, entityVal, entityKey)
+import Database.Persist.Sql (ConnectionPool, fromSqlKey)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
@@ -47,7 +47,7 @@ import Generics.Regular
 import GHC.Generics
 
 import Debug.Trace(trace)
-import Data.Aeson.Types (toJSON)
+import Data.Aeson.Types (toJSON, ToJSON)
 import Data.Aeson (encode)
 
 type Dependencies = (ReaderT ConnectionPool IO :: * -> *)
@@ -73,8 +73,12 @@ performDb action = ask >>= \pool -> liftIO $ action pool
 insertCompany :: Company -> ConnectionPool -> IO ()
 insertCompany company = runSqlPersistMPool $ insert_ company
 
-selectAllCompanies :: ConnectionPool -> IO [Company]
-selectAllCompanies = runSqlPersistMPool (liftM (map entityVal) (selectList [] []))
+selectAllCompanies :: ConnectionPool -> IO [(Integer, Company)]
+selectAllCompanies = runSqlPersistMPool (liftM (map (\e -> let
+  v = entityVal e
+  k = toInteger $ fromSqlKey $ entityKey e
+  in (k, v)
+  )) (selectList [] []))
 
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
