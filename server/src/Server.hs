@@ -81,13 +81,13 @@ listing' = mkListing (jsonO . someO) (const $ (performDb $ insertCompany $ let
   in trace(show json)(c)
   ) >> return [pack "XXX"])
 
-companySchema :: Schema Void () Void
+companySchema :: Schema Company () Void
 companySchema = withListing () (named [])
 
 companyCreate :: Handler Dependencies
 companyCreate = mkInputHandler (jsonI . someI) (\company -> performDb $ insertCompany company)
 
-companyResource :: Resource Dependencies Dependencies Void () Void
+companyResource :: Resource Dependencies Dependencies Company () Void
 companyResource = mkResourceId {
   list = const listing'
   , name = "company"
