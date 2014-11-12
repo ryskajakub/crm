@@ -20,6 +20,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
 import Control.Monad.Error (ErrorT(ErrorT), Error)
 import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
+import Control.Monad (liftM)
 
 import Data.Text (pack, Text)
 import Data.JSON.Schema.Generic (gSchema)
@@ -75,9 +76,7 @@ insertCompany company = runSqlPersistMPool $ do
   insert_ $ company
 
 selectAllCompanies :: ConnectionPool -> IO [Company]
-selectAllCompanies pool = do
-  companies <- (runSqlPersistMPool (selectList [] []) pool)
-  return $ map entityVal companies
+selectAllCompanies = runSqlPersistMPool (liftM (map entityVal) (selectList [] [])) 
 
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
