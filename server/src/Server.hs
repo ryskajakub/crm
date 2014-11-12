@@ -20,7 +20,7 @@ import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
 import Control.Monad.Error (ErrorT(ErrorT), Error)
 import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
-import Control.Monad (liftM)
+import Control.Monad (liftM, forM_)
 
 import Data.Text (pack, Text)
 import Data.JSON.Schema.Generic (gSchema)
@@ -32,7 +32,7 @@ import Snap.Core (Snap)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Driver.Snap (apiToHandler')
-import Rest.Resource (Resource, mkResourceId, Void, name, schema, list, create, statics)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, create, statics, name)
 import Rest.Schema (Schema, named, withListing, static)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler, mkConstHandler)
@@ -82,10 +82,16 @@ listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
 companyCreate :: Handler Dependencies
 companyCreate = mkInputHandler (jsonI . someI) (\company -> performDb $ insertCompany company)
 
+companies :: [Company]
+companies = let
+  companyBase = Company "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
+  companyNames = ["Continental","České dráhy","FOMA Bohemia","Kand","Metrostav","Neumann","PREX","Stachema Kolín","Valsabbia"]
+  in map (\name -> companyBase { companyName = name }) companyNames
+
 createCompanyData :: ConnectionPool -> IO ()
-createCompanyData = runSqlPersistMPool $ do 
+createCompanyData = runSqlPersistMPool $ do
   runMigration migrateAll
-  insert_ $ Company "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
+  forM_ companies (\c -> insert_ c)
 
 createSampleData :: Handler Dependencies
 createSampleData = mkConstHandler id (performDb createCompanyData)
