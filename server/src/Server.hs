@@ -9,7 +9,9 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 
-module Main where
+module Server (
+  api, main
+) where
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
@@ -67,14 +69,14 @@ dog' = mkResourceId {
 router' :: Router Dependencies Dependencies
 router' = root `compose` (route dog')
 
-api' :: Api Dependencies
-api' = [(mkVersion 1 0 0, Some1 $ router')]
+api :: Api Dependencies
+api = [(mkVersion 1 0 0, Some1 $ router')]
 
 liftReader :: ConnectionPool -> Dependencies a -> Snap a
 liftReader pool deps = liftIO $ runReaderT deps pool
 
 main :: IO ()
 main =
-  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ quickHttpServe $ apiToHandler' (liftReader pool) api')
+  runNoLoggingT $ withPostgresqlPool connStr 10 (\pool -> NoLoggingT $ quickHttpServe $ apiToHandler' (liftReader pool) api)
 
 connStr = "dbname=crm user=coub"
