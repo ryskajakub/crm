@@ -32,10 +32,10 @@ import Snap.Core (Snap)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Driver.Snap (apiToHandler')
-import Rest.Resource (Resource, mkResourceId, Void, name, schema, list, create)
-import Rest.Schema (Schema, named, withListing)
+import Rest.Resource (Resource, mkResourceId, Void, name, schema, list, create, statics)
+import Rest.Schema (Schema, named, withListing, static)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler)
+import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler, mkConstHandler)
 import Rest.Types.Error (Reason)
 
 import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity, entityVal)
@@ -71,28 +71,35 @@ performDb :: (Error a) => (ConnectionPool -> IO b) -> ErrorT a (ReaderT Connecti
 performDb action = ask >>= \pool -> liftIO $ action pool
 
 insertCompany :: Company -> ConnectionPool -> IO ()
-insertCompany company = runSqlPersistMPool $ do
-  runMigration migrateAll
-  insert_ $ company
+insertCompany company = runSqlPersistMPool $ insert_ company
 
 selectAllCompanies :: ConnectionPool -> IO [Company]
-selectAllCompanies = runSqlPersistMPool (liftM (map entityVal) (selectList [] [])) 
+selectAllCompanies = runSqlPersistMPool (liftM (map entityVal) (selectList [] []))
 
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
 
-companySchema :: Schema Company () Void
-companySchema = withListing () (named [])
-
 companyCreate :: Handler Dependencies
 companyCreate = mkInputHandler (jsonI . someI) (\company -> performDb $ insertCompany company)
 
-companyResource :: Resource Dependencies Dependencies Company () Void
+createCompanyData :: ConnectionPool -> IO ()
+createCompanyData = runSqlPersistMPool $ do 
+  runMigration migrateAll
+  insert_ $ Company "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
+
+createSampleData :: Handler Dependencies
+createSampleData = mkConstHandler id (performDb createCompanyData)
+
+companySchema :: Schema Company () ()
+companySchema = withListing () (named [("migrate", static () )])
+
+companyResource :: Resource Dependencies Dependencies Company () ()
 companyResource = mkResourceId {
   list = const listing
   , name = "company"
   , schema = companySchema
   , create = Just companyCreate
+  , statics = const $ createSampleData
   }
 
 router' :: Router Dependencies Dependencies
