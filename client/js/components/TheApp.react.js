@@ -34,4 +34,6 @@ var TheApp = (
   </Routes>
 );
 
-module.exports = TheApp
+require("../actions/LoadInitialActions");
+
+module.exports = TheApp;

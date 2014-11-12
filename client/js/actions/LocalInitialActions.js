@@ -1,44 +1,13 @@
-var AppDispatcher = require('../dispatcher/AppDispatcher');
-var CompanyConstants = require("../constants/CompanyConstants");
-var MachineConstants = require("../constants/MachineConstants");
-var Moment = require("../utils/Moment");
+// move this sample data to server
 
-// companies
-var id = 0;
-
-var companies = {};
-
-function createCompany(name, nextService) {
-  var company = {
-    name: name
-    , plant: "I"
-    , active: true
-    , contact: "p. Jelínek"
-    , phone: "721 650 194"
-    , address: "Brandýs nad labem"
-  };
-  companies[id] = company;
-  if (undefined !== nextService) {
-    companies[id].nextService = nextService;
-  }
-  id += 1;
-}
-
-createCompany("Continental", "2.8.2015");
-createCompany("České dráhy");
-createCompany("FOMA Bohemia");
-createCompany("Kand");
-createCompany("Metrostav");
-createCompany("Neumann");
-createCompany("PREX");
-createCompany("Stachema Kolín");
-createCompany("Valsabbia");
-
+/*
 AppDispatcher.handleServerAction({
   type: CompanyConstants.SERVER_INITIAL_COMPANIES
   , companies: companies
 });
+*/
 
+/*
 // machines
 var machineId = 0;
 var machines = {};
@@ -112,3 +81,4 @@ AppDispatcher.handleServerAction({
   type: MachineConstants.SERVER_INITIAL_MAINTENANCES
   , maintenances: maintenances
 });
+*/
