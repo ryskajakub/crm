@@ -37,7 +37,7 @@ import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler)
 import Rest.Types.Error (Reason)
 
-import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity)
+import Database.Persist (insert_, delete, deleteWhere, selectList, (==.), SelectOpt(LimitTo), get, Entity, entityVal)
 import Database.Persist.Sql (ConnectionPool)
 import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPersistMPool)
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
@@ -66,7 +66,7 @@ type instance PF Company = PFCompany
 
 instance JS.JSONSchema Company where schema = gSchema
 
-performDb :: (Error a) => (ConnectionPool -> IO()) -> ErrorT a (ReaderT ConnectionPool IO) ()
+performDb :: (Error a) => (ConnectionPool -> IO b) -> ErrorT a (ReaderT ConnectionPool IO) b
 performDb action = ask >>= \pool -> liftIO $ action pool
 
 insertCompany :: Company -> ConnectionPool -> IO ()
@@ -74,12 +74,13 @@ insertCompany company = runSqlPersistMPool $ do
   runMigration migrateAll
   insert_ $ company
 
-listing' :: ListHandler Dependencies
-listing' = mkListing (jsonO . someO) (const $ (performDb $ insertCompany $ let
-  c = Company "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
-  json = encode $ toJSON c
-  in trace(show json)(c)
-  ) >> return [pack "XXX"])
+selectAllCompanies :: ConnectionPool -> IO [Company]
+selectAllCompanies pool = do
+  companies <- (runSqlPersistMPool (selectList [] []) pool)
+  return $ map entityVal companies
+
+listing :: ListHandler Dependencies
+listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
 
 companySchema :: Schema Company () Void
 companySchema = withListing () (named [])
@@ -89,7 +90,7 @@ companyCreate = mkInputHandler (jsonI . someI) (\company -> performDb $ insertCo
 
 companyResource :: Resource Dependencies Dependencies Company () Void
 companyResource = mkResourceId {
-  list = const listing'
+  list = const listing
   , name = "company"
   , schema = companySchema
   , create = Just companyCreate
