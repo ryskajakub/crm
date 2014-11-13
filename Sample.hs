@@ -4,11 +4,22 @@ module Hello where
 import FFI
 
 data ReactClass
+
+class Renderable a
+
 data ReactInstance
+instance Renderable ReactInstance
+
+data DOMElement
+instance Renderable DOMElement
+
 data Attributes = Attributes { className :: String }
 
-declareReactClass :: String -> ReactClass
+declareReactClass :: DOMElement -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
+
+constructDOMElement :: String -> String -> DOMElement
+constructDOMElement = ffi " constructDOMElement(%1, %2) "
 
 classInstance :: ReactClass -> Attributes -> ReactInstance
 classInstance = ffi " %1(%2) "
@@ -18,6 +29,7 @@ placeInstance = ffi " renderReact(%1) "
 
 main :: Fay ()
 main = do
-  let clazz = declareReactClass "h4"
+  let content = constructDOMElement "h4" "AHOJKY děcka"
+  let clazz = declareReactClass content
   let inst = classInstance clazz (Attributes "blue")
   placeInstance inst

@@ -1,12 +1,15 @@
-var declareReactClass = function(header) {
+var constructDOMElement = function(elementName, children) {
+  return React.DOM[elementName](null, children);
+}
+var declareReactClass = function(element) {
   return React.createClass({
     render: function() {
       return (
-        React.DOM[header](this.props, header)
+        element
       );
     }
   });
-};
+}
 var renderReact = function(component) {
   React.renderComponent (
     component, document.getElementById('main')
