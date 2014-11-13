@@ -21,6 +21,9 @@ declareReactClass = ffi " declareReactClass(%1) "
 constructDOMElement :: String -> String -> DOMElement
 constructDOMElement = ffi " constructDOMElement(%1, %2) "
 
+constructDOMElementWithChildren :: String -> DOMElement -> DOMElement
+constructDOMElementWithChildren = ffi "constructDOMElement(%1, %2)"
+
 classInstance :: ReactClass -> Attributes -> ReactInstance
 classInstance = ffi " %1(%2) "
 
@@ -30,6 +33,7 @@ placeInstance = ffi " renderReact(%1) "
 main :: Fay ()
 main = do
   let content = constructDOMElement "h4" "AHOJKY děcka"
-  let clazz = declareReactClass content
+  let div = constructDOMElementWithChildren "div" content
+  let clazz = declareReactClass div
   let inst = classInstance clazz (Attributes "blue")
   placeInstance inst
