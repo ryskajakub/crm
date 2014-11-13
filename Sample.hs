@@ -6,19 +6,17 @@ import FFI
 
 data ReactClass
 
-class Renderable a
-
 data ReactInstance
-instance Renderable ReactInstance
 
 data DOMElement
-instance Renderable DOMElement
-instance Renderable String
 
 data Attributes = Attributes { className :: String }
 
 declareReactClass :: DOMElement -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
+
+declareReactClass' :: ReactInstance -> ReactClass
+declareReactClass' = ffi " declareReactClass(%1) "
 
 constructDOMElement :: String -> String -> DOMElement
 constructDOMElement = ffi " constructDOMElement(%1, %2) "
@@ -37,9 +35,10 @@ placeInstance = ffi " renderReact(%1) "
 
 main :: Fay ()
 main = do
+  let inputField = classInstance (declareReactClass $ constructDOMElement "input" "") (Attributes "red")
   let span = constructDOMElement "span" "JAJ"
   let label = constructDOMElement "label" "DDD"
   let div = constructDOMElementArray "div" [span, label]
-  let clazz = declareReactClass div
+  let clazz = declareReactClass' inputField
   let inst = classInstance clazz (Attributes "blue")
   placeInstance inst
