@@ -1,4 +1,5 @@
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
 module Hello where
 
 import FFI
@@ -12,6 +13,7 @@ instance Renderable ReactInstance
 
 data DOMElement
 instance Renderable DOMElement
+instance Renderable String
 
 data Attributes = Attributes { className :: String }
 
@@ -24,6 +26,9 @@ constructDOMElement = ffi " constructDOMElement(%1, %2) "
 constructDOMElementWithChildren :: String -> DOMElement -> DOMElement
 constructDOMElementWithChildren = ffi "constructDOMElement(%1, %2)"
 
+constructDOMElementArray :: String -> [DOMElement] -> DOMElement
+constructDOMElementArray = ffi "constructDOMElement(%1, %2)"
+
 classInstance :: ReactClass -> Attributes -> ReactInstance
 classInstance = ffi " %1(%2) "
 
@@ -32,8 +37,9 @@ placeInstance = ffi " renderReact(%1) "
 
 main :: Fay ()
 main = do
-  let content = constructDOMElement "h4" "AHOJKY děcka"
-  let div = constructDOMElementWithChildren "div" content
+  let span = constructDOMElement "span" "JAJ"
+  let label = constructDOMElement "label" "DDD"
+  let div = constructDOMElementArray "div" [span, label]
   let clazz = declareReactClass div
   let inst = classInstance clazz (Attributes "blue")
   placeInstance inst
