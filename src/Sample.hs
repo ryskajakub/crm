@@ -10,7 +10,7 @@ import Fay.Text
 data DOMElement
 data ReactClass
 
-data InnerData = InnerData { 
+data InnerData = InnerData {
   companyName :: Text
   , anything :: Int
 }
