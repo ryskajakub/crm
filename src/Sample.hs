@@ -8,16 +8,17 @@ import Fay.Text
 data DOMElement
 data ReactClass
 
-data InnerData = InnerData {
-  companyName :: String
+data InnerData = InnerData { 
+  companyName :: Text
+  , anything :: Int
 }
 data SetState
 
-data ReactData = ReactData {
-  render :: (InnerData, SetState) -> DOMElement
+data ReactData a = ReactData {
+  render :: (a, SetState) -> DOMElement
   , componentDidMount :: Fay()
   , displayName :: String
-  , getInitialState :: InnerData
+  , getInitialState :: a
 }
 
 data Attributes = Attributes {
@@ -25,7 +26,7 @@ data Attributes = Attributes {
   , onClick :: Fay()
 }
 
-declareReactClass :: ReactData -> ReactClass
+declareReactClass :: ReactData a -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
 
 setState :: SetState -> InnerData -> Fay()
@@ -50,15 +51,34 @@ placeElement = ffi " renderReact(%1) "
 
 render' :: (InnerData, SetState) -> DOMElement
 render' (d, ss) = let
-  text = pack $ (companyName d)
-  click2 = setState ss (InnerData "AAAAAAAAAAAA")
+  text = companyName d
+  click2 = setState ss (InnerData (pack "AAAAAAAAAAAA") 5)
   in constructDOMElement "span" (Attributes "blue" click2) text
+
+attr :: Attributes
+attr = Attributes "" (return ())
+
+data DifferentInnerData = DifferentInnerData {
+  header :: Text
+}
+
+differentClass :: DOMElement
+differentClass = let
+  dd = DifferentInnerData $ pack "Big header"
+  data' = ReactData {
+    render = \(state, _) -> constructDOMElement "h1" attr (header state)
+    , componentDidMount = return ()
+    , displayName = "SpanClass2"
+    , getInitialState = dd
+  }
+  element = classInstance (declareReactClass data')
+  in element
 
 main :: Fay ()
 main = do
   let
     afterMount = putStrLn("component did mount!!!")
-    innerData = InnerData "Firma1"
+    innerData = InnerData (pack "Firma1") 8
     reactData = ReactData {
       render = render'
       , componentDidMount = afterMount
@@ -66,4 +86,4 @@ main = do
       , getInitialState = innerData
     }
     spanClass = classInstance (declareReactClass reactData)
-  placeElement spanClass
+  placeElement (constructDOMElementArray "div" (Attributes "blue" (return ())) [spanClass, differentClass])
