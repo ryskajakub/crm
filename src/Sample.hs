@@ -3,6 +3,7 @@
 module Hello where
 
 import FFI
+import Fay.Text
 
 data DOMElement
 data ReactClass
@@ -32,8 +33,13 @@ data Attributes = Attributes {
 declareReactClass :: ReactData -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
 
-constructDOMElement :: String -> Attributes -> String -> DOMElement
-constructDOMElement = ffi " constructDOMElement(%*) "
+class Renderable a
+
+instance Renderable Text
+instance Renderable DOMElement
+
+constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
+constructDOMElement = ffi " constructDOMElement(%1, %2, Fay$$_(%3)) "
 
 constructDOMElementWithChildren :: String -> Attributes -> DOMElement -> DOMElement
 constructDOMElementWithChildren = ffi "constructDOMElement(%*)"
@@ -48,7 +54,10 @@ placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
 render' :: (InnerData, Props) -> DOMElement
-render' (d, p) = constructDOMElement "a" (Attributes "blue" clickHandler) ((companyName d) ++ [' '] ++ (color p))
+render' (d, p) = let
+  text = pack $ (companyName d) ++ [' '] ++ (color p)
+  e = constructDOMElement "span" (Attributes "blue" (return ())) text
+  in constructDOMElement "span" (Attributes "blue" (click p)) e
 
 clickHandler :: Fay()
 clickHandler = putStrLn("clicked")

@@ -1,9 +1,13 @@
 var constructDOMElement = function(elementName, attributes, children) {
+
   console.log(attributes);
-  return React.DOM[elementName](attributes, children);
+
+  return React.DOM[elementName]({
+    className: attributes.className
+    , onClick: function () { attributes.onClick()() }
+  }, children);
 }
 var declareReactClass = function(data) {
-
   return React.createClass({
     render: function() {
       return data.render([this.state, this.props]);

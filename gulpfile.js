@@ -6,7 +6,7 @@ var faySources = 'src/*.hs'
 gulp.task('fay-compile', function() {
   return gulp.src('src/Sample.hs', {read: false})
     .pipe(shell([
-      "fay --pretty <%= file.path %> --output Sample.js"
+      "fay --pretty <%= file.path %> --package fay-text --output Sample.js"
     ]))
 });
 
