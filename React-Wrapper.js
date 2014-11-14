@@ -1,8 +1,18 @@
 var constructDOMElement = function(elementName, attributes, children) {
   return React.DOM[elementName](attributes, children);
 }
-var declareReactClass = function(r) {
-  return React.createClass(r);
+var declareReactClass = function(data) {
+
+  return React.createClass({
+    render: function() {
+      return data.render(this.state);
+    }
+    , displayName: data.displayName
+    , getInitialState: function() {
+      return data.getInitialState
+    }
+    , componentDidMount: data.componentDidMount
+  });
 }
 var renderReact = function(component) {
   React.renderComponent (

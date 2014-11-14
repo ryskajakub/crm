@@ -7,10 +7,16 @@ import FFI
 data DOMElement
 data ReactClass
 
+data InnerData = InnerData {
+  employees :: [String]
+  , companyName :: String
+}
+
 data ReactData = ReactData {
-  render :: () -> DOMElement
+  render :: InnerData -> DOMElement
   , componentDidMount :: Fay()
   , displayName :: String
+  , getInitialState :: InnerData
 }
 
 data Attributes = Attributes { className :: String }
@@ -38,6 +44,12 @@ main = do
   let
     afterMount = putStrLn("component did mount!!!")
     span = constructDOMElement "span" (Attributes "blueish") "JAJ"
-    reactData = ReactData (const span) (afterMount) "SpanClass"
+    innerData = InnerData ["Karel", "Milan"] "Firma1"
+    reactData = ReactData {
+      render = \d -> constructDOMElement "span" (Attributes "blue") (companyName d)
+      , componentDidMount = afterMount 
+      , displayName = "SpanClass"
+      , getInitialState = innerData
+    }
     spanClass = classInstance (declareReactClass reactData) (Attributes "red")
   placeElement spanClass
