@@ -9,6 +9,7 @@ data ReactClass
 
 data ReactData = ReactData {
   render :: () -> DOMElement
+  , componentDidMount :: () -> Fay()
   , displayName :: String
 }
 
@@ -34,6 +35,9 @@ placeElement = ffi " renderReact(%1) "
 
 main :: Fay ()
 main = do
-  let span = constructDOMElement "span" (Attributes "blueish") "JAJ"
-  let spanClass = classInstance (declareReactClass $ ReactData (const span) "SpanClass") (Attributes "red")
+  let 
+    afterMount = putStrLn("component did mount!!!")
+    span = constructDOMElement "span" (Attributes "blueish") "JAJ"
+    reactData = ReactData (const span) (const afterMount) "SpanClass"
+    spanClass = classInstance (declareReactClass reactData) (Attributes "red")
   placeElement spanClass

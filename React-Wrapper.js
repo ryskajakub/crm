@@ -5,6 +5,7 @@ var declareReactClass = function(r) {
   return React.createClass({
     render: r.render
     , displayName: r.displayName
+    , componentDidMount: r.componentDidMount
   });
 }
 var renderReact = function(component) {
