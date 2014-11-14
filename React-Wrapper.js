@@ -5,7 +5,7 @@ var declareReactClass = function(data) {
 
   return React.createClass({
     render: function() {
-      return data.render(this.state);
+      return data.render([this.state, this.props]);
     }
     , displayName: data.displayName
     , getInitialState: function() {

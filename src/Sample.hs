@@ -12,8 +12,12 @@ data InnerData = InnerData {
   , companyName :: String
 }
 
+data Props = Props {
+  color :: String
+}
+
 data ReactData = ReactData {
-  render :: InnerData -> DOMElement
+  render :: (InnerData, Props) -> DOMElement
   , componentDidMount :: Fay()
   , displayName :: String
   , getInitialState :: InnerData
@@ -33,7 +37,7 @@ constructDOMElementWithChildren = ffi "constructDOMElement(%*)"
 constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
 constructDOMElementArray = ffi "constructDOMElement(%*)"
 
-classInstance :: ReactClass -> Attributes -> DOMElement
+classInstance :: ReactClass -> Props -> DOMElement
 classInstance = ffi " %1(%2) "
 
 placeElement :: DOMElement -> Fay ()
@@ -46,10 +50,10 @@ main = do
     span = constructDOMElement "span" (Attributes "blueish") "JAJ"
     innerData = InnerData ["Karel", "Milan"] "Firma1"
     reactData = ReactData {
-      render = \d -> constructDOMElement "span" (Attributes "blue") (companyName d)
-      , componentDidMount = afterMount 
+      render = \(d, p) -> constructDOMElement "span" (Attributes "blue") ((companyName d) ++ [' '] ++ (color p))
+      , componentDidMount = afterMount
       , displayName = "SpanClass"
       , getInitialState = innerData
     }
-    spanClass = classInstance (declareReactClass reactData) (Attributes "red")
+    spanClass = classInstance (declareReactClass reactData) (Props "red")
   placeElement spanClass
