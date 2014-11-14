@@ -1,13 +1,10 @@
-var constructDOMElement = function(elementName, children) {
-  return React.DOM[elementName](null, children);
+var constructDOMElement = function(elementName, attributes, children) {
+  return React.DOM[elementName](attributes, children);
 }
-var declareReactClass = function(element) {
+var declareReactClass = function(r) {
   return React.createClass({
-    render: function() {
-      return (
-        element
-      );
-    }
+    render: r.render
+    , displayName: r.displayName
   });
 }
 var renderReact = function(component) {
