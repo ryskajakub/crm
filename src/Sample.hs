@@ -36,9 +36,6 @@ instance Renderable DOMElement
 constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
 constructDOMElement = ffi " constructDOMElement(%1, %2, Fay$$_(%3)) "
 
-constructDOMElementWithChildren :: String -> Attributes -> DOMElement -> DOMElement
-constructDOMElementWithChildren = ffi "constructDOMElement(%*)"
-
 constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
 constructDOMElementArray = ffi "constructDOMElement(%*)"
 
