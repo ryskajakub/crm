@@ -4,7 +4,12 @@ var constructDOMElement = function(elementName, attributes, children) {
 
   return React.DOM[elementName]({
     className: attributes.className
-    , onClick: function () { attributes.onClick()() }
+    , onClick: function () { 
+      try {
+        attributes.onClick()() 
+      } catch (err) {
+      }
+    }
   }, children);
 }
 var declareReactClass = function(data) {

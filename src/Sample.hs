@@ -56,7 +56,7 @@ placeElement = ffi " renderReact(%1) "
 render' :: (InnerData, Props) -> DOMElement
 render' (d, p) = let
   text = pack $ (companyName d) ++ [' '] ++ (color p)
-  e = constructDOMElement "span" (Attributes "blue" (return ())) text
+  e = constructDOMElement "span" (Attributes "nothing" (return ())) text
   in constructDOMElement "span" (Attributes "blue" (click p)) e
 
 clickHandler :: Fay()
