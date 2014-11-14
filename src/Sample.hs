@@ -9,8 +9,7 @@ data DOMElement
 data ReactClass
 
 data InnerData = InnerData {
-  employees :: [String]
-  , companyName :: String
+  companyName :: String
 }
 data SetState
 
@@ -29,10 +28,10 @@ data Attributes = Attributes {
 declareReactClass :: ReactData -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
 
-class Renderable a
-
 setState :: SetState -> InnerData -> Fay()
 setState = ffi " %1(%2) "
+
+class Renderable a
 
 instance Renderable Text
 instance Renderable DOMElement
@@ -52,18 +51,14 @@ placeElement = ffi " renderReact(%1) "
 render' :: (InnerData, SetState) -> DOMElement
 render' (d, ss) = let
   text = pack $ (companyName d)
-  click2 = setState ss (InnerData [] "AAAAAAAAAAAA")
-  e = constructDOMElement "span" (Attributes "nothing" click2) text
-  in constructDOMElement "span" (Attributes "blue" clickHandler) e
-
-clickHandler :: Fay()
-clickHandler = putStrLn("clicked")
+  click2 = setState ss (InnerData "AAAAAAAAAAAA")
+  in constructDOMElement "span" (Attributes "blue" click2) text
 
 main :: Fay ()
 main = do
   let
     afterMount = putStrLn("component did mount!!!")
-    innerData = InnerData ["Karel", "Milan"] "Firma1"
+    innerData = InnerData "Firma1"
     reactData = ReactData {
       render = render'
       , componentDidMount = afterMount
