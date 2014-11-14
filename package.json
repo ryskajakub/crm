@@ -10,6 +10,7 @@
   "license": "BSD-2-Clause",
   "devDependencies": {
     "gulp": "~3.8.10",
-    "gulp-shell": "~0.2.10"
+    "gulp-shell": "~0.2.10",
+    "gulp-mocha": "~1.1.1"
   }
 }

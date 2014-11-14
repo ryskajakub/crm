@@ -1,5 +1,6 @@
 var gulp = require("gulp");
 var shell = require("gulp-shell");
+var mocha = require("gulp-mocha");
 
 var faySources = 'src/*.hs'
 
@@ -17,6 +18,11 @@ gulp.task('watch', function() {
 gulp.task('copy-resources', function() {
   return gulp.src('files/*')
     .pipe(gulp.dest('build/'))
+});
+
+gulp.task('test', function() {
+  return gulp.src('test/*.js', {read: false})
+    .pipe(mocha());
 });
 
 gulp.task('default', ['copy-resources', 'watch']);
