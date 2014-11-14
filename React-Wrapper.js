@@ -1,4 +1,5 @@
 var constructDOMElement = function(elementName, attributes, children) {
+  console.log(attributes);
   return React.DOM[elementName](attributes, children);
 }
 var declareReactClass = function(data) {

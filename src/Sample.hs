@@ -14,6 +14,7 @@ data InnerData = InnerData {
 
 data Props = Props {
   color :: String
+  , click :: Fay()
 }
 
 data ReactData = ReactData {
@@ -23,7 +24,10 @@ data ReactData = ReactData {
   , getInitialState :: InnerData
 }
 
-data Attributes = Attributes { className :: String }
+data Attributes = Attributes {
+  className :: String
+  , onClick :: Fay()
+}
 
 declareReactClass :: ReactData -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
@@ -43,17 +47,22 @@ classInstance = ffi " %1(%2) "
 placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
+render' :: (InnerData, Props) -> DOMElement
+render' (d, p) = constructDOMElement "a" (Attributes "blue" clickHandler) ((companyName d) ++ [' '] ++ (color p))
+
+clickHandler :: Fay()
+clickHandler = putStrLn("clicked")
+
 main :: Fay ()
 main = do
   let
     afterMount = putStrLn("component did mount!!!")
-    span = constructDOMElement "span" (Attributes "blueish") "JAJ"
     innerData = InnerData ["Karel", "Milan"] "Firma1"
     reactData = ReactData {
-      render = \(d, p) -> constructDOMElement "span" (Attributes "blue") ((companyName d) ++ [' '] ++ (color p))
+      render = render'
       , componentDidMount = afterMount
       , displayName = "SpanClass"
       , getInitialState = innerData
     }
-    spanClass = classInstance (declareReactClass reactData) (Props "red")
+    spanClass = classInstance (declareReactClass reactData) (Props "red" clickHandler)
   placeElement spanClass
