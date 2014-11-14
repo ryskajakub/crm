@@ -1,21 +1,14 @@
 var constructDOMElement = function(elementName, attributes, children) {
-
-  console.log(attributes);
-
   return React.DOM[elementName]({
     className: attributes.className
-    , onClick: function () { 
-      try {
-        attributes.onClick()() 
-      } catch (err) {
-      }
-    }
+    , onClick: attributes.onClick
   }, children);
 }
 var declareReactClass = function(data) {
   return React.createClass({
     render: function() {
-      return data.render(this.state);
+      var t = this;
+      return data.render([this.state, function(state) { t.setState(state);} ]);
     }
     , displayName: data.displayName
     , getInitialState: function() {

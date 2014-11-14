@@ -12,9 +12,10 @@ data InnerData = InnerData {
   employees :: [String]
   , companyName :: String
 }
+data SetState
 
 data ReactData = ReactData {
-  render :: InnerData -> DOMElement
+  render :: (InnerData, SetState) -> DOMElement
   , componentDidMount :: Fay()
   , displayName :: String
   , getInitialState :: InnerData
@@ -29,6 +30,9 @@ declareReactClass :: ReactData -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
 
 class Renderable a
+
+setState :: SetState -> InnerData -> Fay()
+setState = ffi " %1(%2) "
 
 instance Renderable Text
 instance Renderable DOMElement
@@ -45,10 +49,11 @@ classInstance = ffi " %1(null) "
 placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
-render' :: InnerData -> DOMElement
-render' d = let
+render' :: (InnerData, SetState) -> DOMElement
+render' (d, ss) = let
   text = pack $ (companyName d)
-  e = constructDOMElement "span" (Attributes "nothing" (return ())) text
+  click2 = setState ss (InnerData [] "AAAAAAAAAAAA")
+  e = constructDOMElement "span" (Attributes "nothing" click2) text
   in constructDOMElement "span" (Attributes "blue" clickHandler) e
 
 clickHandler :: Fay()
