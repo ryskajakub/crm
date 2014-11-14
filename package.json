@@ -1,0 +1,15 @@
+{
+  "name": "haskell-react",
+  "version": "0.0.0",
+  "description": "",
+  "main": "React-Wrapper.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "BSD-2-Clause",
+  "devDependencies": {
+    "gulp": "~3.8.10",
+    "gulp-shell": "~0.2.10"
+  }
+}
