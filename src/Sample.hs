@@ -1,5 +1,7 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module Hello where
 
 import FFI
@@ -65,8 +67,9 @@ data DifferentInnerData = DifferentInnerData {
 differentClass :: DOMElement
 differentClass = let
   dd = DifferentInnerData $ pack "Big header"
+  attr ss = Attributes "" (setState ss (DifferentInnerData "BBBB"))
   data' = ReactData {
-    render = \(state, _) -> constructDOMElement "h1" attr (header state)
+    render = \(state, ss) -> constructDOMElement "h1" (attr ss) (header state)
     , componentDidMount = return ()
     , displayName = "SpanClass2"
     , getInitialState = dd
