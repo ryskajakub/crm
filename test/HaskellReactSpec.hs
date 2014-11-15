@@ -28,3 +28,13 @@ singleElement = let
     , getInitialState = innerData
   }
   in classInstance (declareReactClass reactData)
+
+element :: DOMElement
+element = let
+  innerData = ReactState (pack "Element") 0
+  reactData = (defaultReactData innerData) {
+    render = \reactInstance -> let
+      mounted = isMounted reactInstance
+      in constructDOMElement "h1" defaultAttributes (pack $ show mounted)
+  }
+  in classInstance (declareReactClass reactData)

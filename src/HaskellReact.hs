@@ -54,6 +54,9 @@ setState = ffi " %1['setState'](Fay$$_(%2)) "
 state :: ReactInstance a -> a
 state = ffi " %1['state'] "
 
+isMounted :: ReactInstance a -> Bool
+isMounted = ffi " %1['isMounted']() "
+
 class Renderable a
 
 instance Renderable Text
