@@ -5,7 +5,7 @@ var clean = require('gulp-clean');
 
 var faySources = 'src/*.hs'
 
-gulp.task('compile', function() {
+gulp.task('compile', ['copy-resources'] , function() {
   return gulp.src('src/Sample.hs', {read: false})
     .pipe(shell([
       "fay --pretty <%= file.path %> --package fay-text --output build/Sample.js"

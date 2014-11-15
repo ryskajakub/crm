@@ -1,9 +1,10 @@
 
 describe("A suite", function() {
   it("contains spec with an expectation", function() {
-    var render = Fay$$_(Class.singleElement,true);
+    var singleElement = Fay$$_(Class.singleElement,true);
     var ReactTestUtils = React.addons.TestUtils;
-    var instance = ReactTestUtils.renderIntoDocument(render);
-    expect(instance.getDOMNode().className === "blue").toBe(true);
+    var rendered = ReactTestUtils.renderIntoDocument(singleElement).getDOMNode();
+    expect(rendered.className).toEqual("blue");
+    expect(rendered.innerText).toEqual("Firma1");
   });
 });

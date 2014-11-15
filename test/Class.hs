@@ -1,12 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 module Class where
 
 import Sample
+import Fay.Text (pack)
 
 singleElement :: DOMElement
 singleElement = let
-  innerData = InnerData ("Firma1") 8
+  innerData = InnerData (pack "Firma1") 8
   reactData = ReactData {
     render = render'
     , componentDidMount = return ()

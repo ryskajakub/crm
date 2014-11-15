@@ -1,6 +1,5 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Sample where
 
@@ -67,7 +66,7 @@ data DifferentInnerData = DifferentInnerData {
 differentClass :: DOMElement
 differentClass = let
   dd = DifferentInnerData $ pack "Big header"
-  attr ss = Attributes "" (setState ss (DifferentInnerData "BBBB"))
+  attr ss = Attributes "" (setState ss (DifferentInnerData $ pack "BBBB"))
   data' = ReactData {
     render = \(state, ss) -> constructDOMElement "h1" (attr ss) (header state)
     , componentDidMount = return ()
