@@ -11,10 +11,6 @@ import "fay-base" Data.Maybe (fromMaybe)
 data DOMElement
 data ReactClass
 
-data InnerData = InnerData {
-  companyName :: Text
-  , anything :: Int
-}
 data SetState a
 
 data ReactData a = ReactData {
@@ -54,29 +50,5 @@ classInstance = ffi " %1(null) "
 placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
-data DifferentInnerData = DifferentInnerData {
-  header :: Maybe Text
-}
-
 getType :: SyntheticMouseEvent -> String
 getType = ffi " %1['type'] "
-
-differentClass :: DOMElement
-differentClass = let
-  dd = DifferentInnerData $ Just $ pack "Big header"
-  attr ss = Attributes "" (\event -> do
-    let type' = getType event
-    putStrLn type'
-    setState ss (DifferentInnerData $ Just $ pack type')
-    )
-  data' = ReactData {
-    render = \(state, ss) -> constructDOMElement "h1" (attr ss) (fromMaybe (pack "default") (header state))
-    , componentDidMount = return ()
-    , displayName = "SpanClass2"
-    , getInitialState = dd
-  }
-  element = classInstance (declareReactClass data')
-  in element
-
-main :: Fay ()
-main = placeElement (constructDOMElement "div" (Attributes "blue" (const $ return ())) differentClass)
