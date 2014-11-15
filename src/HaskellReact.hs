@@ -50,12 +50,6 @@ classInstance = ffi " %1(null) "
 placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
-render' :: (InnerData, SetState InnerData) -> DOMElement
-render' (d, ss) = let
-  text = companyName d
-  click2 = setState ss (InnerData (pack "AAAAAAAAAAAA") 5)
-  in constructDOMElement "span" (Attributes "blue" click2) text
-
 attr :: Attributes
 attr = Attributes "" (return ())
 
@@ -82,7 +76,7 @@ main = do
     afterMount = putStrLn("component did mount!!!")
     innerData = InnerData (pack "Firma1") 8
     reactData = ReactData {
-      render = render'
+      render = const $ constructDOMElement "h1" (Attributes "" (return ())) (pack "YAY")
       , componentDidMount = afterMount
       , displayName = "SpanClass"
       , getInitialState = innerData

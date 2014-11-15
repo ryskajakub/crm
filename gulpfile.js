@@ -13,7 +13,7 @@ gulp.task('compile', ['copy-resources'] , function() {
 });
 
 gulp.task('watch', function() {
-  gulp.watch(faySources, ['fay-compile']);
+  gulp.watch(faySources, ['compile']);
 });
 
 gulp.task('copy-resources', function() {
