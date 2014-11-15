@@ -1,6 +1,7 @@
 var gulp = require("gulp");
 var shell = require("gulp-shell");
 var concat = require("gulp-concat");
+var clean = require('gulp-clean');
 
 var faySources = 'src/*.hs'
 
@@ -51,6 +52,11 @@ gulp.task('create-single-test-file', function () {
 gulp.task('execute-tests', function() {
   return gulp.src('test_build/*.test.js', {read: false})
     .pipe(mocha());
+});
+
+gulp.task('clean', function () {
+  return gulp.src(['test_build/', 'build/', 'test_single/'], {read: false})
+    .pipe(clean());
 });
 
 gulp.task('test', ['copy-test-resources', 'test-compile']);
