@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+module Test where
+
 import Sample
 
 twoClasses :: Fay ()

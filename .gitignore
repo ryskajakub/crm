@@ -2,3 +2,4 @@ Sample.js
 node_modules/
 build/
 test_build/
+test_single/
