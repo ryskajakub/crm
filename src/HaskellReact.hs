@@ -11,13 +11,14 @@ import Prelude hiding (id)
 
 data DOMElement
 data ReactClass
-
 data SetState a
+data SyntheticMouseEvent
 
 data ReactData a = ReactData {
   render :: (a, SetState a) -> DOMElement
   , componentWillMount :: Fay()
   , componentDidMount :: Fay()
+  , componentWillUnmount :: Fay()
   , displayName :: String
   , getInitialState :: a
 }
@@ -27,6 +28,7 @@ defaultReactData initialState = ReactData {
   render = const $ constructDOMElement "div" defaultAttributes (pack "")
   , componentWillMount = return ()
   , componentDidMount = return ()
+  , componentWillUnmount = return ()
   , displayName = "<HaskellReactClass>"
   , getInitialState = initialState
 }
@@ -42,8 +44,6 @@ defaultAttributes = Attributes {
   , onClick = const $ return ()
   , id = ""
 }
-
-data SyntheticMouseEvent
 
 declareReactClass :: ReactData a -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
