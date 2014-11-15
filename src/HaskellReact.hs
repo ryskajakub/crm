@@ -26,8 +26,10 @@ data ReactData a = ReactData {
 
 data Attributes = Attributes {
   className :: String
-  , onClick :: Fay()
+  , onClick :: SyntheticMouseEvent -> Fay()
 }
+
+data SyntheticMouseEvent
 
 declareReactClass :: ReactData a -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
@@ -52,17 +54,21 @@ classInstance = ffi " %1(null) "
 placeElement :: DOMElement -> Fay ()
 placeElement = ffi " renderReact(%1) "
 
-attr :: Attributes
-attr = Attributes "" (return ())
-
 data DifferentInnerData = DifferentInnerData {
   header :: Maybe Text
 }
 
+getType :: SyntheticMouseEvent -> String
+getType = ffi " %1['type'] "
+
 differentClass :: DOMElement
 differentClass = let
   dd = DifferentInnerData $ Just $ pack "Big header"
-  attr ss = Attributes "" (setState ss (DifferentInnerData $ Nothing))
+  attr ss = Attributes "" (\event -> do
+    let type' = getType event
+    putStrLn type'
+    setState ss (DifferentInnerData $ Just $ pack type')
+    )
   data' = ReactData {
     render = \(state, ss) -> constructDOMElement "h1" (attr ss) (fromMaybe (pack "default") (header state))
     , componentDidMount = return ()
@@ -73,4 +79,4 @@ differentClass = let
   in element
 
 main :: Fay ()
-main = placeElement (constructDOMElement "div" (Attributes "blue" (return ())) differentClass)
+main = placeElement (constructDOMElement "div" (Attributes "blue" (const $ return ())) differentClass)

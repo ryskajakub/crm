@@ -14,7 +14,7 @@ data ReactState = ReactState {
 render' :: (ReactState, SetState ReactState) -> DOMElement
 render' (data', ss) = let
   text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
-  onClick = setState ss (data' { countClicks = countClicks data' + 1} )
+  onClick = const $ setState ss (data' { countClicks = countClicks data' + 1} )
   in constructDOMElement "a" (Attributes "blue" onClick) text
 
 singleElement :: DOMElement

@@ -14,10 +14,11 @@ gulp.task('compile', ['copy-resources'] , function() {
 
 gulp.task('watch', function() {
   gulp.watch(faySources, ['compile']);
+  gulp.watch('files/*.js', ['copy-resources']);
 });
 
 gulp.task('copy-resources', function() {
-  return gulp.src('files/*')
+  return gulp.src(['files/*.js', 'files/*.html'])
     .pipe(gulp.dest('build/'));
 });
 
