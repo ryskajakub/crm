@@ -26,7 +26,7 @@ gulp.task('copy-test-resources', function() {
     .pipe(gulp.dest('test_build/'));
 });
 
-gulp.task('test-compile', function () {
+gulp.task('test-compile', ['copy-test-resources'] , function () {
   return gulp.src('test/Class.hs', {read: false})
     .pipe(shell([
       "fay --pretty <%= file.path %> --package fay-text --include src/ --output test_build/<%= mkJsFileName(file.path) %>"
@@ -43,15 +43,10 @@ gulp.task('test-compile', function () {
     }))
 });
 
-gulp.task('create-single-test-file', function () {
+gulp.task('test-file', ['test-compile', 'copy-test-resources'], function () {
   return gulp.src('test_build/*.js')
     .pipe(concat('all.js'))
     .pipe(gulp.dest('./test_single/'));
-});
-
-gulp.task('execute-tests', function() {
-  return gulp.src('test_build/*.test.js', {read: false})
-    .pipe(mocha());
 });
 
 gulp.task('clean', function () {
@@ -59,5 +54,8 @@ gulp.task('clean', function () {
     .pipe(clean());
 });
 
-gulp.task('test', ['copy-test-resources', 'test-compile']);
+gulp.task('test-watch', function() {
+  gulp.watch('test/*.js', ['test-file']);
+});
+
 gulp.task('default', ['copy-resources', 'watch']);
