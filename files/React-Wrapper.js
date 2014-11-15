@@ -7,10 +7,7 @@ var constructDOMElement = function(elementName, attributes, children) {
 var declareReactClass = function(data) {
   return React.createClass({
     render: function() {
-      var t = this;
-      return data.render([this.state, function(state) { 
-        t.setState(state);
-      } ]);
+      return data.render(this);
     }
     , displayName: data.displayName
     , getInitialState: function() {

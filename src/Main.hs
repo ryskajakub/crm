@@ -19,13 +19,13 @@ data DifferentInnerData = DifferentInnerData {
 differentClass :: DOMElement
 differentClass = let
   dd = DifferentInnerData $ Just $ pack "Big header"
-  attr ss = Attributes { onClick = (\event -> do
+  attr reactInstance = Attributes { onClick = (\event -> do
     let type' = getType event
     putStrLn type'
-    setState ss (DifferentInnerData $ Just $ pack type')
+    setState reactInstance (DifferentInnerData $ Just $ pack type')
     ) }
   data' = (defaultReactData dd) {
-    render = \(state, ss) -> constructDOMElement "h1" (attr ss) (fromMaybe (pack "default") (header state))
+    render = \(reactInstance) -> constructDOMElement "h1" (attr reactInstance) (fromMaybe (pack "default") (header $ state reactInstance))
     , componentDidMount = return ()
     , displayName = "SpanClass2"
   }

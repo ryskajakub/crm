@@ -11,11 +11,11 @@ import Prelude hiding (id)
 
 data DOMElement
 data ReactClass
-data SetState a
+data ReactInstance a
 data SyntheticMouseEvent
 
 data ReactData a = ReactData {
-  render :: (a, SetState a) -> DOMElement
+  render :: ReactInstance a -> DOMElement
   , componentWillMount :: Fay()
   , componentDidMount :: Fay()
   , componentWillUnmount :: Fay()
@@ -48,8 +48,11 @@ defaultAttributes = Attributes {
 declareReactClass :: ReactData a -> ReactClass
 declareReactClass = ffi " declareReactClass(%1) "
 
-setState :: SetState a -> a -> Fay()
-setState = ffi " %1(Fay$$_(%2)) "
+setState :: ReactInstance a -> a -> Fay()
+setState = ffi " %1['setState'](Fay$$_(%2)) "
+
+state :: ReactInstance a -> a
+state = ffi " %1['state'] "
 
 class Renderable a
 

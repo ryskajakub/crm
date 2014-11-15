@@ -11,7 +11,7 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
-render' :: (ReactState, SetState ReactState) -> DOMElement
+render' :: (ReactState, ReactInstance ReactState) -> DOMElement
 render' (data', ss) = let
   text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
   onClick = const $ setState ss (data' { countClicks = countClicks data' + 1} )
