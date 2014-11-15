@@ -1,6 +1,9 @@
+
 describe("A suite", function() {
   it("contains spec with an expectation", function() {
-    Fay$$_(Class.twoClasses,true);
-    expect(true).toBe(true);
+    var render = Fay$$_(Class.singleElement,true);
+    var ReactTestUtils = React.addons.TestUtils;
+    var instance = ReactTestUtils.renderIntoDocument(render);
+    expect(instance.getDOMNode().className === "blue").toBe(true);
   });
 });
