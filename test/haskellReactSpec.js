@@ -1,6 +1,4 @@
 
-
-
 describe("A suite", function() {
   it("contains spec with an expectation", function() {
     var singleElement = Fay$$_(HaskellReactSpec.singleElement,true);

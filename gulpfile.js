@@ -33,11 +33,15 @@ gulp.task('test-compile', ['copy-test-resources'] , function () {
     ]))
 });
 
-gulp.task('test-file', ['test-compile', 'copy-test-resources'], function () {
+var assemblyTestFile = function () {
   return gulp.src('test_build/*.js')
     .pipe(concat('all.js'))
     .pipe(gulp.dest('./test_single/'));
-});
+}
+
+gulp.task('test-file', ['test-compile', 'copy-test-resources'], assemblyTestFile);
+
+gulp.task('test-file-without-compile', ['copy-test-resources'], assemblyTestFile);
 
 gulp.task('clean', function () {
   return gulp.src(['test_build/', 'build/', 'test_single/'], {read: false})
@@ -45,7 +49,6 @@ gulp.task('clean', function () {
 });
 
 gulp.task('test-watch', function() {
-  gulp.watch(['test/*.js', 'test/*.hs', 'src/*.hs'], ['test-file']);
+  gulp.watch(['test/*.hs', 'src/*.hs'], ['test-file']);
+  gulp.watch(['test/*.js'], ['test-file-without-compile']);
 });
-
-gulp.task('default', ['copy-resources', 'watch']);
