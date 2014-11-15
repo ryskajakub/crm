@@ -11,11 +11,12 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
-render' :: (ReactState, ReactInstance ReactState) -> DOMElement
-render' (data', ss) = let
+render' :: ReactInstance ReactState -> DOMElement
+render' reactInstance = let
+  data' = state reactInstance
   text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
-  onClick = const $ setState ss (data' { countClicks = countClicks data' + 1} )
-  in constructDOMElement "a" (Attributes "blue" onClick) text
+  onClick = const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
+  in constructDOMElement "a" (defaultAttributes { className = "blue", onClick = onClick }) text
 
 singleElement :: DOMElement
 singleElement = let
