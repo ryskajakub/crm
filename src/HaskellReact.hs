@@ -1,10 +1,12 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE PackageImports #-}
 
 module HaskellReact where
 
 import FFI
 import Fay.Text
+import "fay-base" Data.Maybe
 
 data DOMElement
 data ReactClass
@@ -54,15 +56,15 @@ attr :: Attributes
 attr = Attributes "" (return ())
 
 data DifferentInnerData = DifferentInnerData {
-  header :: Text
+  header :: Maybe Text
 }
 
 differentClass :: DOMElement
 differentClass = let
-  dd = DifferentInnerData $ pack "Big header"
-  attr ss = Attributes "" (setState ss (DifferentInnerData $ pack "BBBB"))
+  dd = DifferentInnerData $ Just $ pack "Big header"
+  attr ss = Attributes "" (setState ss (DifferentInnerData $ Nothing))
   data' = ReactData {
-    render = \(state, ss) -> constructDOMElement "h1" (attr ss) (header state)
+    render = \(state, ss) -> constructDOMElement "h1" (attr ss) (fromMaybe (pack "default") (header state))
     , componentDidMount = return ()
     , displayName = "SpanClass2"
     , getInitialState = dd
@@ -70,14 +72,18 @@ differentClass = let
   element = classInstance (declareReactClass data')
   in element
 
+r :: (InnerData, SetState InnerData) -> DOMElement
+r (innerData, ss) = let
+  click = setState ss (InnerData (pack "abc") 88888)
+  in constructDOMElement "h1" (Attributes "" click) ((companyName innerData) `append` (pack $ show $ anything innerData))
+
 main :: Fay ()
 main = do
   let
-    afterMount = putStrLn("component did mount!!!")
     innerData = InnerData (pack "Firma1") 8
     reactData = ReactData {
-      render = const $ constructDOMElement "h1" (Attributes "" (return ())) (pack "YAY")
-      , componentDidMount = afterMount
+      render = r
+      , componentDidMount = return ()
       , displayName = "SpanClass"
       , getInitialState = innerData
     }
