@@ -24,11 +24,10 @@ differentClass = let
     putStrLn type'
     setState ss (DifferentInnerData $ Just $ pack type')
     )
-  data' = ReactData {
+  data' = (defaultReactData dd) {
     render = \(state, ss) -> constructDOMElement "h1" (attr ss) (fromMaybe (pack "default") (header state))
     , componentDidMount = return ()
     , displayName = "SpanClass2"
-    , getInitialState = dd
   }
   element = classInstance (declareReactClass data')
   in element

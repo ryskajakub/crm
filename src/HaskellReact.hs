@@ -15,14 +15,29 @@ data SetState a
 
 data ReactData a = ReactData {
   render :: (a, SetState a) -> DOMElement
+  , componentWillMount :: Fay()
   , componentDidMount :: Fay()
   , displayName :: String
   , getInitialState :: a
 }
 
+defaultReactData :: a -> ReactData a 
+defaultReactData initialState = ReactData {
+  render = const $ constructDOMElement "div" defaultAttributes (pack "")
+  , componentWillMount = return ()
+  , componentDidMount = return ()
+  , displayName = "<HaskellReactClass>"
+  , getInitialState = initialState
+}
+
 data Attributes = Attributes {
   className :: String
   , onClick :: SyntheticMouseEvent -> Fay()
+}
+
+defaultAttributes = Attributes {
+  className = ""
+  , onClick = const $ return ()
 }
 
 data SyntheticMouseEvent
