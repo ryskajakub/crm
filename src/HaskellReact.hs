@@ -5,8 +5,8 @@
 module HaskellReact where
 
 import FFI
-import Fay.Text
-import "fay-base" Data.Maybe
+import "fay-base" Data.Text (Text, append, showInt, pack)
+import "fay-base" Data.Maybe (fromMaybe)
 
 data DOMElement
 data ReactClass
@@ -72,20 +72,5 @@ differentClass = let
   element = classInstance (declareReactClass data')
   in element
 
-r :: (InnerData, SetState InnerData) -> DOMElement
-r (innerData, ss) = let
-  click = setState ss (InnerData (pack "abc") 88888)
-  in constructDOMElement "h1" (Attributes "" click) ((companyName innerData) `append` (pack $ show $ anything innerData))
-
 main :: Fay ()
-main = do
-  let
-    innerData = InnerData (pack "Firma1") 8
-    reactData = ReactData {
-      render = r
-      , componentDidMount = return ()
-      , displayName = "SpanClass"
-      , getInitialState = innerData
-    }
-    spanClass = classInstance (declareReactClass reactData)
-  placeElement (constructDOMElementArray "div" (Attributes "blue" (return ())) [spanClass, differentClass])
+main = placeElement (constructDOMElement "div" (Attributes "blue" (return ())) differentClass)

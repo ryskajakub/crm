@@ -1,17 +1,25 @@
+{-# LANGUAGE PackageImports #-}
+
 module HaskellReactSpec where
 
 import HaskellReact
-import Fay.Text (pack)
+import "fay-base" Data.Text (Text, append, showInt, pack)
+import "fay-base" Data.Maybe (fromMaybe)
 
-render' :: (InnerData, SetState InnerData) -> DOMElement
-render' (d, ss) = let
-  text = companyName d
-  click2 = setState ss (InnerData (pack "AAAAAAAAAAAA") 5)
-  in constructDOMElement "span" (Attributes "blue" click2) text
+data ReactState = ReactState {
+  header1 :: Text
+  , countClicks :: Int
+}
+
+render' :: (ReactState, SetState ReactState) -> DOMElement
+render' (data', ss) = let
+  text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
+  onClick = setState ss (data' { countClicks = countClicks data' + 1} )
+  in constructDOMElement "a" (Attributes "blue" onClick) text
 
 singleElement :: DOMElement
 singleElement = let
-  innerData = InnerData (pack "Firma1") 8
+  innerData = ReactState (pack "The header") 0
   reactData = ReactData {
     render = render'
     , componentDidMount = return ()
