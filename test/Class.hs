@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test where
+module Class where
 
 import Sample
 
@@ -16,4 +16,5 @@ twoClasses = do
       , getInitialState = innerData
     }
     spanClass = classInstance (declareReactClass reactData)
-  placeElement (constructDOMElementArray "div" (Attributes "blue" (return ())) [spanClass, differentClass])
+  putStrLn "ahoj"
+  -- placeElement (constructDOMElementArray "div" (Attributes "blue" (return ())) [spanClass, differentClass])

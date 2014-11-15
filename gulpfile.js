@@ -29,18 +29,8 @@ gulp.task('copy-test-resources', function() {
 gulp.task('test-compile', ['copy-test-resources'] , function () {
   return gulp.src('test/Class.hs', {read: false})
     .pipe(shell([
-      "fay --pretty <%= file.path %> --package fay-text --include src/ --output test_build/<%= mkJsFileName(file.path) %>"
-    ], {
-      templateData: {
-        mkJsFileName: function (path) {
-          var splittedPath = path.split('/');
-          var fileName = splittedPath[splittedPath.length - 1];
-          var splittedFileName = fileName.split('.');
-          splittedFileName[splittedFileName.length - 1] = 'js';
-          return splittedFileName.join('.');
-        }
-      }
-    }))
+      "fay --library --strict test/Class.hs --pretty --package fay-text --include src/ --output test_build/Class.js <%= file.path %> "
+    ]))
 });
 
 gulp.task('test-file', ['test-compile', 'copy-test-resources'], function () {
@@ -55,7 +45,7 @@ gulp.task('clean', function () {
 });
 
 gulp.task('test-watch', function() {
-  gulp.watch('test/*.js', ['test-file']);
+  gulp.watch(['test/*.js', 'test/*.hs', 'src/*.hs'], ['test-file']);
 });
 
 gulp.task('default', ['copy-resources', 'watch']);
