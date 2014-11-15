@@ -7,6 +7,7 @@ module HaskellReact where
 import FFI
 import "fay-base" Data.Text (Text, append, showInt, pack)
 import "fay-base" Data.Maybe (fromMaybe)
+import Prelude hiding (id)
 
 data DOMElement
 data ReactClass
@@ -33,11 +34,13 @@ defaultReactData initialState = ReactData {
 data Attributes = Attributes {
   className :: String
   , onClick :: SyntheticMouseEvent -> Fay()
+  , id :: String
 }
 
 defaultAttributes = Attributes {
   className = ""
   , onClick = const $ return ()
+  , id = ""
 }
 
 data SyntheticMouseEvent
