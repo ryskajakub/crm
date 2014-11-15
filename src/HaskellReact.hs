@@ -1,7 +1,7 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Sample where
+module HaskellReact where
 
 import FFI
 import Fay.Text

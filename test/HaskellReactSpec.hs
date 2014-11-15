@@ -1,6 +1,6 @@
-module Class where
+module HaskellReactSpec where
 
-import Sample
+import HaskellReact
 import Fay.Text (pack)
 
 singleElement :: DOMElement
