@@ -1,15 +1,18 @@
 var constructDOMElement = function(elementName, attributes, children, moreAttributes) {
   var obj = {};
+  var escapeKey = function(key) {
+    return (key.charAt(key.length - 1) === '_' ? key.substring(0, key.length - 1) : key);
+  }
   var addAttributes = function (attrs) {
     for (key in attrs) {
       if (key !== "instance") {
         var value = attrs[key];
         if (undefined === value["instance"]) {
-          obj[key] = value;
+          obj[escapeKey(key)] = value;
         } else {
           if (value["instance"] === "Just") {
             var theValue = value["slot1"];
-            obj[key] = theValue;
+            obj[escapeKey(key)] = theValue;
           }
         }
       }
@@ -17,6 +20,13 @@ var constructDOMElement = function(elementName, attributes, children, moreAttrib
   }
   addAttributes(attributes);
   addAttributes(moreAttributes);
+/*
+  if (obj.onChange) {
+    obj.onChange = function(event) {
+      console.log(event['target']["value"]);
+    }
+  }
+*/
   return React.DOM[elementName](obj, children);
 }
 var declareReactClass = function(data) {

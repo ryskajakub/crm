@@ -3,13 +3,16 @@
 module HaskellReactSpec where
 
 import HaskellReact
-import "fay-base" Data.Text (Text, append, showInt, pack)
+import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
 import "fay-base" Data.Maybe (fromMaybe)
+import Prelude hiding (span)
 
 data ReactState = ReactState {
   header1 :: Text
   , countClicks :: Int
 }
+
+data SimpleState = SimpleState { number :: Int }
 
 render' :: ReactInstance ReactState -> DOMElement
 render' reactInstance = let
@@ -50,3 +53,18 @@ aElement = let
       in a defaultAttributes aAttr (pack "Google")
   }
   in classInstance (declareReactClass reactData)
+
+relatedElements :: DOMElement
+relatedElements = let
+  reactData = (defaultReactData (SimpleState 0)) {
+    render = \reactInstance -> let
+      spanElement = span (pack "Num: " `append` (pack $ show $ number $ state reactInstance))
+      inputElement = input defaultAttributes (defaultInputAttributes {
+        onChange = Just $ \changeEvent -> do
+          let e = eventValue changeEvent
+          putStrLn e
+          setState reactInstance (SimpleState $ length $ e )
+      }) (pack "")
+      divElement = constructDOMElementArray "div" defaultAttributes [spanElement, inputElement]
+      in divElement }
+  in declareAndRun reactData

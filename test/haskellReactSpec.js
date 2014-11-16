@@ -21,4 +21,13 @@ describe("Haskell React", function() {
     expect(rendered.innerText).toEqual("Google");
     expect(rendered.getAttribute("href")).toEqual("http://google.com");
   });
+  it("can link two elements", function () {
+    var component = Fay$$_(HaskellReactSpec.relatedElements, true);
+    var ReactTestUtils = React.addons.TestUtils;
+    var rendered = ReactTestUtils.renderIntoDocument(component);
+    var input = ReactTestUtils.findRenderedDOMComponentWithTag(rendered, "input");
+    ReactTestUtils.Simulate.change(input.getDOMNode(), { target: { value: 'abcde' } });
+    var span = ReactTestUtils.findRenderedDOMComponentWithTag(rendered, "span");
+    expect(span.getDOMNode().innerText).toEqual("Num: 5");
+  });
 });
