@@ -34,27 +34,10 @@ span = span' defaultAttributes
 div :: (Renderable x) => Attributes -> x -> DOMElement
 div = ffi " constructDOMElement(\"span\", %1, Fay$$_(%2)) "
 
-data InputAttributes = InputAttributes {
-  type_ :: String
-  , value :: Maybe String
-  , checked :: Maybe String
-  , onChange :: Maybe (SyntheticEvent -> Fay ())
-}
-
 data SyntheticEvent
 
 eventValue :: SyntheticEvent -> Fay String
 eventValue = ffi " %1['target']['value'] "
-
-defaultInputAttributes = InputAttributes {
-  type_ = "text"
-  , value = Nothing
-  , checked = Nothing
-  , onChange = Nothing
-}
-
-input :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
-input = ffi " constructDOMElement(\"input\", %1, Fay$$_(%3), %2) "
 
 data ReactClass
 data ReactInstance a

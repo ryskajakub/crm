@@ -3,7 +3,7 @@ var shell = require("gulp-shell");
 var concat = require("gulp-concat");
 var clean = require('gulp-clean');
 
-var faySources = 'src/*.hs'
+var faySources = 'src/**/*.hs'
 
 gulp.task('compile', ['copy-resources'] , function() {
   return gulp.src('src/*.hs', {read: false})
@@ -50,6 +50,6 @@ gulp.task('clean', function () {
 });
 
 gulp.task('test-watch', function() {
-  gulp.watch(['test/*.hs', 'src/*.hs'], ['test-file']);
+  gulp.watch(['test/*.hs', faySources], ['test-file']);
   gulp.watch(['test/*.js', 'files/*.js'], ['test-file-without-compile']);
 });

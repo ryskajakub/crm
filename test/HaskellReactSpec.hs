@@ -6,6 +6,7 @@ import HaskellReact
 import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
 import "fay-base" Data.Maybe (fromMaybe)
 import Prelude hiding (span)
+import Tag.Input
 
 data ReactState = ReactState {
   header1 :: Text
