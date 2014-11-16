@@ -14,6 +14,7 @@ data InnerData = InnerData {
 main :: Fay ()
 main = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "AHOJ")) {
   render = \reactInstance ->
-    input defaultAttributes (defaultInputAttributes {
-      onChange = Just $ \changeEvent -> putStrLn $ eventValue changeEvent }) (pack "")
+    return $ input defaultAttributes (defaultInputAttributes {
+      onChange = Just $ \changeEvent -> eventValue changeEvent >>= putStrLn
+    }) (pack "")
 }

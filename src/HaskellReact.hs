@@ -73,7 +73,7 @@ constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
 constructDOMElementArray = ffi "constructDOMElement(%*)"
 
 data ReactData a = ReactData {
-  render :: ReactInstance a -> DOMElement
+  render :: ReactInstance a -> Fay DOMElement
   , componentWillMount :: Fay()
   , componentDidMount :: Fay()
   , componentWillUnmount :: Fay()
@@ -83,7 +83,7 @@ data ReactData a = ReactData {
 
 defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
-  render = const $ constructDOMElement "div" defaultAttributes (pack "")
+  render = const $ return $ constructDOMElement "div" defaultAttributes (pack "")
   , componentWillMount = return ()
   , componentDidMount = return ()
   , componentWillUnmount = return ()
@@ -112,10 +112,10 @@ declareAndRun = classInstance . declareReactClass
 setState :: ReactInstance a -> a -> Fay()
 setState = ffi " %1['setState'](Fay$$_(%2)) "
 
-state :: ReactInstance a -> a
+state :: ReactInstance a -> Fay a
 state = ffi " %1['state'] "
 
-isMounted :: ReactInstance a -> Bool
+isMounted :: ReactInstance a -> Fay Bool
 isMounted = ffi " %1['isMounted']() "
 
 classInstance :: ReactClass -> DOMElement
