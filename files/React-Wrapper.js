@@ -1,8 +1,23 @@
-var constructDOMElement = function(elementName, attributes, children) {
-  return React.DOM[elementName]({
-    className: attributes.className
-    , onClick: attributes.onClick
-  }, children);
+var constructDOMElement = function(elementName, attributes, children, moreAttributes) {
+  var obj = {};
+  var addAttributes = function (attrs) {
+    for (key in attrs) {
+      if (key !== "instance") {
+        var value = attrs[key];
+        if (undefined === value["instance"]) {
+          obj[key] = value;
+        } else {
+          if (value["instance"] === "Just") {
+            var theValue = value["slot1"];
+            obj[key] = theValue;
+          }
+        }
+      }
+    }
+  }
+  addAttributes(attributes);
+  addAttributes(moreAttributes);
+  return React.DOM[elementName](obj, children);
 }
 var declareReactClass = function(data) {
   return React.createClass({

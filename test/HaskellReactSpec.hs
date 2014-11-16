@@ -38,3 +38,15 @@ element = let
       in constructDOMElement "h1" defaultAttributes (pack $ show mounted)
   }
   in classInstance (declareReactClass reactData)
+
+aElement :: DOMElement
+aElement = let
+  innerData = ReactState (pack "AElement") 0
+  reactData = (defaultReactData innerData) {
+    render = \reactInstance -> let
+      aAttr = aAttributesDefaults {
+        href = Just $ pack $ "http://google.com"
+      }
+      in a defaultAttributes aAttr (pack "Google")
+  }
+  in classInstance (declareReactClass reactData)

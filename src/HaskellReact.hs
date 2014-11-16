@@ -9,10 +9,37 @@ import "fay-base" Data.Text (Text, append, showInt, pack)
 import "fay-base" Data.Maybe (fromMaybe)
 import Prelude hiding (id)
 
-data DOMElement
+type URL = Text
+type Rel = Text
+type Target = Text
+
+data AAttributes = AAttributes {
+  href :: Maybe URL
+  , rel :: Maybe Rel
+  , target :: Maybe Target
+}
+
+aAttributesDefaults :: AAttributes
+aAttributesDefaults = AAttributes Nothing Nothing Nothing
+
+a :: (Renderable x) => Attributes -> AAttributes -> x -> DOMElement
+a = ffi " constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
+
 data ReactClass
 data ReactInstance a
 data SyntheticMouseEvent
+data DOMElement
+
+class Renderable a
+
+instance Renderable Text
+instance Renderable DOMElement
+
+constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
+constructDOMElement = ffi " constructDOMElement(%1, %2, Fay$$_(%3)) "
+
+constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
+constructDOMElementArray = ffi "constructDOMElement(%*)"
 
 data ReactData a = ReactData {
   render :: ReactInstance a -> DOMElement
@@ -23,7 +50,7 @@ data ReactData a = ReactData {
   , getInitialState :: a
 }
 
-defaultReactData :: a -> ReactData a 
+defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
   render = const $ constructDOMElement "div" defaultAttributes (pack "")
   , componentWillMount = return ()
@@ -56,17 +83,6 @@ state = ffi " %1['state'] "
 
 isMounted :: ReactInstance a -> Bool
 isMounted = ffi " %1['isMounted']() "
-
-class Renderable a
-
-instance Renderable Text
-instance Renderable DOMElement
-
-constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
-constructDOMElement = ffi " constructDOMElement(%1, %2, Fay$$_(%3)) "
-
-constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
-constructDOMElementArray = ffi "constructDOMElement(%*)"
 
 classInstance :: ReactClass -> DOMElement
 classInstance = ffi " %1(null) "

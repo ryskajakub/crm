@@ -51,5 +51,5 @@ gulp.task('clean', function () {
 
 gulp.task('test-watch', function() {
   gulp.watch(['test/*.hs', 'src/*.hs'], ['test-file']);
-  gulp.watch(['test/*.js'], ['test-file-without-compile']);
+  gulp.watch(['test/*.js', 'files/*.js'], ['test-file-without-compile']);
 });
