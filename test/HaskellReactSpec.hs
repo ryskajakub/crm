@@ -61,9 +61,9 @@ relatedElements = let
       spanElement = span (pack "Num: " `append` (pack $ show $ number $ state reactInstance))
       inputElement = input defaultAttributes (defaultInputAttributes {
         onChange = Just $ \changeEvent -> do
-          let e = eventValue changeEvent
-          putStrLn e
-          setState reactInstance (SimpleState $ length $ e )
+          value <- eventValue changeEvent
+          let ss = SimpleState $ length value
+          (setState reactInstance ss)
       }) (pack "")
       divElement = constructDOMElementArray "div" defaultAttributes [spanElement, inputElement]
       in divElement }

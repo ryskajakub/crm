@@ -43,8 +43,8 @@ data InputAttributes = InputAttributes {
 
 data SyntheticEvent
 
-eventValue :: SyntheticEvent -> String
-eventValue = ffi " Fay$$_(%1)['target']['value'] "
+eventValue :: SyntheticEvent -> Fay String
+eventValue = ffi " %1['target']['value'] "
 
 defaultInputAttributes = InputAttributes {
   type_ = "text"
