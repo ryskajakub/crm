@@ -16,7 +16,7 @@ render' reactInstance = let
   data' = state reactInstance
   text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
   onClick = const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
-  in constructDOMElement "a" (defaultAttributes { className = "blue", onClick = onClick }) text
+  in constructDOMElement "a" (defaultAttributes { className = Just "blue", onClick = Just onClick }) text
 
 singleElement :: DOMElement
 singleElement = let

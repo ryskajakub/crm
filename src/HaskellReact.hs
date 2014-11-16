@@ -61,15 +61,15 @@ defaultReactData initialState = ReactData {
 }
 
 data Attributes = Attributes {
-  className :: String
-  , onClick :: SyntheticMouseEvent -> Fay()
-  , id :: String
+  className :: Maybe String
+  , onClick :: Maybe ( SyntheticMouseEvent -> Fay() )
+  , id :: Maybe String
 }
 
 defaultAttributes = Attributes {
-  className = ""
-  , onClick = const $ return ()
-  , id = ""
+  className = Nothing
+  , onClick = Nothing
+  , id = Nothing
 }
 
 declareReactClass :: ReactData a -> ReactClass
