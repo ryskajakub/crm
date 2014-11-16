@@ -6,7 +6,6 @@ module HaskellReact where
 
 import FFI
 import "fay-base" Data.Text (Text, append, showInt, pack)
-import "fay-base" Data.Maybe (fromMaybe)
 import Prelude hiding (id, span)
 
 type URL = Text
@@ -14,13 +13,13 @@ type Rel = Text
 type Target = Text
 
 data AAttributes = AAttributes {
-  href :: Maybe URL
-  , rel :: Maybe Rel
-  , target :: Maybe Target
+  href :: Defined URL
+  , rel :: Defined Rel
+  , target :: Defined Target
 }
 
 aAttributesDefaults :: AAttributes
-aAttributesDefaults = AAttributes Nothing Nothing Nothing
+aAttributesDefaults = AAttributes Undefined Undefined Undefined
 
 a :: (Renderable x) => Attributes -> AAttributes -> x -> DOMElement
 a = ffi " constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
@@ -75,15 +74,15 @@ defaultReactData initialState = ReactData {
 }
 
 data Attributes = Attributes {
-  className :: Maybe String
-  , onClick :: Maybe ( SyntheticMouseEvent -> Fay() )
-  , id :: Maybe String
+  className :: Defined String
+  , onClick :: Defined ( SyntheticMouseEvent -> Fay() )
+  , id :: Defined String
 }
 
 defaultAttributes = Attributes {
-  className = Nothing
-  , onClick = Nothing
-  , id = Nothing
+  className = Undefined
+  , onClick = Undefined
+  , id = Undefined
 }
 
 declareReactClass :: ReactData a -> ReactClass

@@ -2,9 +2,9 @@
 
 module HaskellReactSpec where
 
+import FFI (Defined(Defined))
 import HaskellReact
 import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
-import "fay-base" Data.Maybe (fromMaybe)
 import Prelude hiding (span)
 import Tag.Input (input, defaultInputAttributes, onChange)
 
@@ -20,7 +20,7 @@ render' reactInstance = do
   data' <- state reactInstance
   let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
       onClick = const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
-  return $ constructDOMElement "a" (defaultAttributes { className = Just "blue", onClick = Just onClick }) text
+  return $ constructDOMElement "a" (defaultAttributes { className = Defined "blue", onClick = Defined onClick }) text
 
 singleElement :: DOMElement
 singleElement = let
@@ -49,7 +49,7 @@ aElement = let
   reactData = (defaultReactData innerData) {
     render = \reactInstance -> return $ let
       aAttr = aAttributesDefaults {
-        href = Just $ pack $ "http://google.com"
+        href = Defined $ pack $ "http://google.com"
       }
       in a defaultAttributes aAttr (pack "Google")
   }
@@ -62,7 +62,7 @@ relatedElements = let
       actualState <- state reactInstance
       let spanElement = span (pack "Num: " `append` (pack $ show $ number actualState))
           inputElement = input defaultAttributes (defaultInputAttributes {
-            onChange = Just $ \changeEvent -> do
+            onChange = Defined $ \changeEvent -> do
               value <- eventValue changeEvent
               let ss = SimpleState $ length value
               (setState reactInstance ss)

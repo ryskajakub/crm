@@ -6,27 +6,12 @@ var constructDOMElement = function(elementName, attributes, children, moreAttrib
   var addAttributes = function (attrs) {
     for (key in attrs) {
       if (key !== "instance") {
-        var value = attrs[key];
-        if (undefined === value["instance"]) {
-          obj[escapeKey(key)] = value;
-        } else {
-          if (value["instance"] === "Just") {
-            var theValue = value["slot1"];
-            obj[escapeKey(key)] = theValue;
-          }
-        }
+        obj[key] = attrs[key];
       }
     }
   }
   addAttributes(attributes);
   addAttributes(moreAttributes);
-/*
-  if (obj.onChange) {
-    obj.onChange = function(event) {
-      console.log(event['target']["value"]);
-    }
-  }
-*/
   return React.DOM[elementName](obj, children);
 }
 var declareReactClass = function(data) {
