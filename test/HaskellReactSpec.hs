@@ -27,7 +27,6 @@ singleElement = let
   innerData = ReactState (pack "The header") 0
   reactData = ReactData {
     render = render'
-    , componentDidMount = return ()
     , displayName = "SpanClass"
     , getInitialState = innerData
   }

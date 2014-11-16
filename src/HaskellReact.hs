@@ -56,9 +56,9 @@ constructDOMElementArray = ffi "constructDOMElement(%*)"
 
 data ReactData a = ReactData {
   render :: ReactInstance a -> Fay DOMElement
-  , componentWillMount :: Fay()
-  , componentDidMount :: Fay()
-  , componentWillUnmount :: Fay()
+  , componentWillMount :: ReactInstance a -> Fay()
+  , componentDidMount :: ReactInstance a -> Fay()
+  , componentWillUnmount :: ReactInstance a -> Fay()
   , displayName :: String
   , getInitialState :: a
 }
@@ -66,9 +66,9 @@ data ReactData a = ReactData {
 defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
   render = const $ return $ constructDOMElement "div" defaultAttributes (pack "")
-  , componentWillMount = return ()
-  , componentDidMount = return ()
-  , componentWillUnmount = return ()
+  , componentWillMount = const $ return ()
+  , componentDidMount = const $ return ()
+  , componentWillUnmount = const $ return ()
   , displayName = "<HaskellReactClass>"
   , getInitialState = initialState
 }
