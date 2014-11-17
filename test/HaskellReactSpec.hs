@@ -15,20 +15,20 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
+render' = \reactInstance -> do
+  data' <- state reactInstance
+  let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
+  let onClick = Defined $ const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
+  return $ constructDOMElement "a" defaultAttributes { className = Defined "blue", onClick = onClick } text
+
 singleElement :: DOMElement
 singleElement = let
   innerData = ReactState (pack "The header") 0
   reactData = (defaultReactData innerData) {
-    render = \reactInstance -> do
-      data' <- state reactInstance
-      let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
-      let onClick = const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
-      let attrs = defaultAttributes { onClick = Defined onClick }
-      return $ constructDOMElement "a" attrs text
+    render = render'
     , displayName = "SpanClass"
-    , getInitialState = innerData
   }
-  in classInstance (declareReactClass reactData)
+  in declareAndRun reactData
 
 element :: DOMElement
 element = let
