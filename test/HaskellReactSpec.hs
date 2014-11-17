@@ -8,12 +8,12 @@ import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
 import Prelude hiding (span)
 import Tag.Input (input, defaultInputAttributes, onChange)
 
+data SimpleState = SimpleState { number :: Int }
+
 data ReactState = ReactState {
   header1 :: Text
   , countClicks :: Int
 }
-
-data SimpleState = SimpleState { number :: Int }
 
 render' :: ReactInstance ReactState -> Fay DOMElement
 render' reactInstance = do
