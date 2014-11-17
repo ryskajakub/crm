@@ -24,8 +24,8 @@ aAttributesDefaults = AAttributes Undefined Undefined Undefined
 a :: (Renderable x) => Attributes -> AAttributes -> x -> DOMElement
 a = ffi " constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
 
-span' :: (Renderable a) => Attributes -> a -> DOMElement
-span' = ffi " constructDOMElement(\"span\", %1, Fay$$_(%2)) "
+span' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+span' = ffi " constructDOMElement(\"span\", %1, %2) "
 
 span :: (Renderable x) => x -> DOMElement
 span = span' defaultAttributes

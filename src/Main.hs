@@ -14,7 +14,13 @@ data InnerData = InnerData {
 }
 
 main :: Fay ()
-main = flux
+main = let
+  inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
+    render = \reactInstance ->
+      let spanElement = span $ pack "text"
+      in return $ spanElement
+    }
+  in placeElement inst
 
 flux :: Fay ()
 flux = do
