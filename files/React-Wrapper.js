@@ -17,9 +17,9 @@ var constructDOMElement = function(elementName, attributes, children, moreAttrib
 var declareReactClass = function(data) {
   return React.createClass({
     render: function() { return data.render(this); }
-    , componentWillMount: function () { var t = this; return Fay$$_(function() { data.componentWillMount(t); }) }
-    , componentDidMount: function () { var t = this; return Fay$$_(function() { data.componentDidMount(t); }) }
-    , componentWillUnmount: function () { var t = this; return Fay$$_(function() { data.componentWillUnmount(t); }) }
+    , componentWillMount: function () { return data.componentWillMount(this); }
+    , componentDidMount: function () { data.componentDidMount(this); }
+    , componentWillUnmount: function () { return data.componentWillUnmount(this); }
     , displayName: data.displayName
     , getInitialState: function() {
       var initialState = Fay$$_(data.getInitialState);
