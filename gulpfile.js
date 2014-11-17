@@ -8,7 +8,7 @@ var faySources = 'src/**/*.hs'
 gulp.task('compile', ['copy-resources'] , function() {
   return gulp.src('src/*.hs', {read: false})
     .pipe(shell([
-      "fay --pretty <%= file.path %> --include src/ --output build/HaskellReact.js"
+      "fay --Wall --pretty <%= file.path %> --include src/ --output build/HaskellReact.js"
     ]))
 });
 
@@ -30,7 +30,7 @@ gulp.task('copy-test-resources', function() {
 gulp.task('test-compile', ['copy-test-resources'] , function () {
   return gulp.src('test/*.hs', {read: false})
     .pipe(shell([
-      "fay --library --strict test/*.hs --pretty --include src/ --output test_build/HaskellReactSpec.js <%= file.path %> "
+      "fay --Wall --library --strict test/*.hs --pretty --include src/ --output test_build/HaskellReactSpec.js <%= file.path %> "
     ]))
 });
 

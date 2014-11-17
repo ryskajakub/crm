@@ -4,7 +4,7 @@ module HaskellReactSpec where
 
 import FFI (Defined(Defined))
 import HaskellReact
-import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
+import "fay-base" Data.Text (Text, append, showInt, pack)
 import Prelude hiding (span)
 import Tag.Input (input, defaultInputAttributes, onChange)
 
@@ -15,11 +15,12 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
+render' :: ReactInstance ReactState -> Fay DOMElement
 render' = \reactInstance -> do
   data' <- state reactInstance
   let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
-  let onClick = Defined $ const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
-  return $ constructDOMElement "a" defaultAttributes { className = Defined "blue", onClick = onClick } text
+  let onClickHandler = Defined $ const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
+  return $ constructDOMElement "a" defaultAttributes { className = Defined "blue", onClick = onClickHandler } text
 
 singleElement :: DOMElement
 singleElement = let
@@ -44,7 +45,7 @@ aElement :: DOMElement
 aElement = let
   innerData = ReactState (pack "AElement") 0
   reactData = (defaultReactData innerData) {
-    render = \reactInstance -> return $ let
+    render = const $ return $ let
       aAttr = aAttributesDefaults {
         href = Defined $ pack $ "http://google.com"
       }

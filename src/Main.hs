@@ -3,7 +3,7 @@
 module Main where
 
 import FFI
-import "fay-base" Data.Text (Text, append, showInt, pack, unpack)
+import "fay-base" Data.Text (Text, pack)
 import HaskellReact
 import Tag.Input
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
@@ -16,7 +16,7 @@ data InnerData = InnerData {
 main :: Fay ()
 main = let
   inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = \reactInstance ->
+    render = const $
       let spanElement = span $ pack "text"
       in return $ spanElement
     }

@@ -31,7 +31,7 @@ module Tag.Input (
 import HaskellReact
 import FFI
 
-newtype InputType = InputType { inputType :: String }
+newtype InputType = InputType String
 
 button :: InputType
 button = InputType "button"
@@ -110,6 +110,7 @@ data InputAttributes = InputAttributes {
   , onChange :: Defined (SyntheticEvent -> Fay ())
 }
 
+defaultInputAttributes :: InputAttributes
 defaultInputAttributes = InputAttributes {
   type' = InputType "text"
   , value = Undefined

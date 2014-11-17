@@ -5,7 +5,7 @@
 module HaskellReact where
 
 import FFI
-import "fay-base" Data.Text (Text, append, showInt, pack)
+import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (id, span)
 
 type URL = Text
@@ -79,6 +79,7 @@ data Attributes = Attributes {
   , id :: Defined String
 }
 
+defaultAttributes :: Attributes
 defaultAttributes = Attributes {
   className = Undefined
   , onClick = Undefined
