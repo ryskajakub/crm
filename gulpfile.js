@@ -10,30 +10,29 @@ var faySources = 'src/**/*.hs'
 
 gulp.task('copy-resources', function() {
   return gulp.src(['files/*.html'])
-    .pipe(gulp.dest('webpack_build/'));
+    .pipe(gulp.dest('build/'));
 });
 
 gulp.task('compile', function() {
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([
-      "fay --Wall --pretty <%= file.path %> --include src/ --output build/HaskellReact.js"
+      "fay --Wall --pretty <%= file.path %> --include src/ --output tmp/HaskellReact.js"
     ]));
 });
 
 gulp.task('webpack', ['compile', 'copy-resources'], function () {
-  return gulp.src('build/HaskellReact.js', {read: false})
+  return gulp.src('tmp/HaskellReact.js', {read: false})
     .pipe(webpack({
-      entry: "./build/HaskellReact.js"
+      entry: "./tmp/HaskellReact.js"
       , output: {
         filename: "haskell-react-packed.js"
       }
     }))
-    .pipe(gulp.dest('webpack_build/'));
+    .pipe(gulp.dest('build/'));
 })
 
 gulp.task('watch', function() {
-  gulp.watch(faySources, ['compile']);
-  gulp.watch('files/*.js', ['copy-resources']);
+  gulp.watch([faySources, 'files/*.html', 'files/*.js'], ['webpack']);
 });
 
 // test
