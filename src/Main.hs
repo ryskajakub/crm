@@ -58,8 +58,10 @@ reactBootstrap' = foreignReactInstance' requireReactBootstrap
 
 bootstrap :: Fay ()
 bootstrap = let
-  button = reactBootstrap "DropdownButton" primary $
+  button = reactBootstrap' "DropdownButton" primary [
     reactBootstrap "MenuItem" Empty (pack "Action")
+    , reactBootstrap "MenuItem" Empty (pack "Action 2")
+    ]
   in placeElement button
 
 flux :: Fay ()
