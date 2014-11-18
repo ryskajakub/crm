@@ -25,7 +25,8 @@ list :: DOMElement
 list = div [
   span $ pack "elem 1"
   , span $ pack "elem 2"
-  , elem " elem 3"
+  , textElement " elem 3"
+  , phantom bootstrap
   ]
 
 some :: Fay ()
@@ -58,23 +59,21 @@ reactBootstrap :: (Renderable b)
                => String -- ^ The name of the Bootstrap class
                -> Automatic a -- The props passed to the instance
                -> b -- The children passed to the instance
-               -> DOMElement
+               -> ReactInstance
 reactBootstrap = foreignReact requireReactBootstrap
 
 reactBootstrap' :: (Renderable b)
                 => String
                 -> Automatic a
                 -> [b]
-                -> DOMElement
+                -> ReactInstance
 reactBootstrap' = foreignReact' requireReactBootstrap
 
-bootstrap :: Fay ()
-bootstrap = let
-  button = reactBootstrap' "DropdownButton" primary [
-    reactBootstrap "MenuItem" Empty (pack "Action")
-    , reactBootstrap "MenuItem" Empty (pack "Action 2")
-    ]
-  in placeElement button
+bootstrap :: ReactInstance
+bootstrap = reactBootstrap' "DropdownButton" primary [
+  phantom $ reactBootstrap "MenuItem" Empty (pack "Action") :: DOMElement
+  , phantom $ reactBootstrap "MenuItem" Empty (pack "Action 2") :: DOMElement
+  ]
 
 flux :: Fay ()
 flux = do

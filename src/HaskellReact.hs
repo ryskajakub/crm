@@ -21,11 +21,11 @@ data AAttributes = AAttributes {
 class CommonJSModule a
 
 foreignReact :: (CommonJSModule b, Renderable c)
-             => Automatic b -> String -> Automatic a -> Automatic c -> DOMElement
+             => Automatic b -> String -> Automatic a -> Automatic c -> ReactInstance
 foreignReact = ffi " %1[%2](%3, %4) "
 
 foreignReact' :: (CommonJSModule b, Renderable c)
-              => Automatic b -> String -> Automatic a -> [Automatic c] -> DOMElement
+              => Automatic b -> String -> Automatic a -> [Automatic c] -> ReactInstance
 foreignReact' = ffi " %1[%2](%3, %4) "
 
 
@@ -64,16 +64,17 @@ data SyntheticEvent
 eventValue :: SyntheticEvent -> Fay String
 eventValue = ffi " %1['target']['value'] "
 
-elementize :: Text -> DOMElement
-elementize = ffi " %1 "
+phantom :: a -> b
+phantom = ffi " %1 "
 
-elem :: String -> DOMElement
-elem = elementize . pack
+textElement :: String -> DOMElement
+textElement = phantom . pack
 
 data ReactClass
 data ReactThis a
 data SyntheticMouseEvent
 data DOMElement
+data ReactInstance
 
 class Renderable a
 
@@ -121,10 +122,10 @@ defaultAttributes = Attributes {
 declareReactClass :: ReactData a -> ReactClass
 declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1) "
 
-declareAndRun :: ReactData a -> DOMElement
+declareAndRun :: ReactData a -> ReactInstance
 declareAndRun = classInstance . declareReactClass
 
-setState :: ReactThis a -> a -> Fay()
+setState :: ReactThis a -> a -> Fay ()
 setState = ffi " %1['setState'](Fay$$_(%2)) "
 
 state :: ReactThis a -> Fay a
@@ -133,10 +134,10 @@ state = ffi " %1['state'] "
 isMounted :: ReactThis a -> Fay Bool
 isMounted = ffi " %1['isMounted']() "
 
-classInstance :: ReactClass -> DOMElement
+classInstance :: ReactClass -> ReactInstance
 classInstance = ffi " %1(null) "
 
-placeElement :: DOMElement -> Fay ()
+placeElement :: ReactInstance -> Fay ()
 placeElement = ffi " require('../files/ReactWrapper').renderReact(%1) "
 
 getType :: SyntheticMouseEvent -> String
