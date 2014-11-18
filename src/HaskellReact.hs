@@ -78,14 +78,18 @@ data ReactInstance
 
 class Renderable a
 
+instance (Renderable a) => Renderable [a]
 instance Renderable Text
 instance Renderable DOMElement
 
-constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
-constructDOMElement = ffi " require('../files/ReactWrapper').constructDOMElement(%1, %2, Fay$$_(%3)) "
-
-constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
-constructDOMElementArray = ffi " require('../files/ReactWrapper').constructDOMElement(%*) "
+-- | Unsafely create a html tag
+constructDOMElement :: (Renderable a) 
+                    => String -- name of tag
+                    -> Attributes -- html attributes common for all elements
+                    -> Automatic b -- tag specific attributes
+                    -> Automatic a -- child
+                    -> DOMElement
+constructDOMElement = ffi " require('../files/ReactWrapper').constructDOMElement(%1, %2, %4, %3) "
 
 data ReactData a = ReactData {
   render :: ReactThis a -> Fay DOMElement
@@ -98,13 +102,15 @@ data ReactData a = ReactData {
 
 defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
-  render = const $ return $ constructDOMElement "div" defaultAttributes (pack "")
+  render = const $ return $ constructDOMElement "div" defaultAttributes (NoAttributes {}) (pack "")
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
   , displayName = "<HaskellReactClass>"
   , getInitialState = initialState
 }
+
+data NoAttributes = NoAttributes {}
 
 data Attributes = Attributes {
   className :: Defined String

@@ -14,7 +14,7 @@ data InnerData = InnerData {
 }
 
 main :: Fay ()
-main = runInReact list
+main = flux
 
 runInReact :: DOMElement -> Fay ()
 runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
@@ -22,8 +22,9 @@ runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData
   }
 
 list :: DOMElement
-list = div [
-  span $ pack "elem 1"
+list = constructDOMElement "div" defaultAttributes (Empty{}) [
+  a defaultAttributes aAttributesDefaults (pack "Anchor")
+  , span $ pack "elem 1"
   , span $ pack "elem 2"
   , textElement " elem 3"
   , phantom bootstrap
@@ -86,7 +87,7 @@ flux = do
       putStrLn ("rendered")
       actualState <- state reactInstance
       let spanElement = span $ header actualState
-      return $ constructDOMElementArray "div" defaultAttributes [inputElement, spanElement]
+      return $ constructDOMElement "div" defaultAttributes (NoAttributes {}) [inputElement, spanElement]
     , componentDidMount = \reactInstance -> do
       putStrLn ("component mounted")
       subscribeChangeAndRead var (\v -> setState reactInstance (InnerData $ v))
