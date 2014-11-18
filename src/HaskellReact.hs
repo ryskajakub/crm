@@ -7,6 +7,8 @@ module HaskellReact where
 import FFI
 import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (id, span)
+import Event
+import Tag.Construct
 
 type URL = Text
 type Rel = Text
@@ -59,11 +61,6 @@ ul' = ffi " require('../files/ReactWrapper').constructDOMElement(\"ul\", %1, %2)
 ul :: (Renderable x) => [Automatic x] -> DOMElement
 ul = ul' defaultAttributes
 
-data SyntheticEvent
-
-eventValue :: SyntheticEvent -> Fay String
-eventValue = ffi " %1['target']['value'] "
-
 phantom :: a -> b
 phantom = ffi " %1 "
 
@@ -72,24 +69,7 @@ textElement = phantom . pack
 
 data ReactClass
 data ReactThis a
-data SyntheticMouseEvent
-data DOMElement
 data ReactInstance
-
-class Renderable a
-
-instance (Renderable a) => Renderable [a]
-instance Renderable Text
-instance Renderable DOMElement
-
--- | Unsafely create a html tag
-constructDOMElement :: (Renderable a) 
-                    => String -- name of tag
-                    -> Attributes -- html attributes common for all elements
-                    -> Automatic b -- tag specific attributes
-                    -> Automatic a -- child
-                    -> DOMElement
-constructDOMElement = ffi " require('../files/ReactWrapper').constructDOMElement(%1, %2, %4, %3) "
 
 data ReactData a = ReactData {
   render :: ReactThis a -> Fay DOMElement
@@ -102,27 +82,12 @@ data ReactData a = ReactData {
 
 defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
-  render = const $ return $ constructDOMElement "div" defaultAttributes (NoAttributes {}) (pack "")
+  render = const $ return $ constructDOMElement "div" defaultAttributes defaultAttributes (pack "")
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
   , displayName = "<HaskellReactClass>"
   , getInitialState = initialState
-}
-
-data NoAttributes = NoAttributes {}
-
-data Attributes = Attributes {
-  className :: Defined String
-  , onClick :: Defined ( SyntheticMouseEvent -> Fay() )
-  , id :: Defined String
-}
-
-defaultAttributes :: Attributes
-defaultAttributes = Attributes {
-  className = Undefined
-  , onClick = Undefined
-  , id = Undefined
 }
 
 declareReactClass :: ReactData a -> ReactClass

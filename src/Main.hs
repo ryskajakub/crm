@@ -4,10 +4,12 @@ module Main where
 
 import FFI
 import "fay-base" Data.Text (Text, pack)
-import HaskellReact
-import Tag.Input (input, defaultInputAttributes, onChange)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
+import HaskellReact
+import Tag.Construct
+import Tag.Input (input, defaultInputAttributes, onChange)
 import Prelude hiding (span, div, elem)
+import Event
 
 data InnerData = InnerData {
   header :: Text
@@ -87,7 +89,7 @@ flux = do
       putStrLn ("rendered")
       actualState <- state reactInstance
       let spanElement = span $ header actualState
-      return $ constructDOMElement "div" defaultAttributes (NoAttributes {}) [inputElement, spanElement]
+      return $ constructDOMElement "div" defaultAttributes defaultAttributes [inputElement, spanElement]
     , componentDidMount = \reactInstance -> do
       putStrLn ("component mounted")
       subscribeChangeAndRead var (\v -> setState reactInstance (InnerData $ v))

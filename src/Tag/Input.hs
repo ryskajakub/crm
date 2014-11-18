@@ -28,8 +28,9 @@ module Tag.Input (
   , week
 ) where
 
-import HaskellReact
+import Tag.Construct
 import FFI
+import Event
 
 newtype InputType = InputType String
 
