@@ -22,16 +22,16 @@ aAttributesDefaults :: AAttributes
 aAttributesDefaults = AAttributes Undefined Undefined Undefined
 
 a :: (Renderable x) => Attributes -> AAttributes -> x -> DOMElement
-a = ffi " constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
+a = ffi " require('../files/ReactWrapper').constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
 
 span' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
-span' = ffi " constructDOMElement(\"span\", %1, %2) "
+span' = ffi " require('../files/ReactWrapper').constructDOMElement(\"span\", %1, %2) "
 
 span :: (Renderable x) => x -> DOMElement
 span = span' defaultAttributes
 
 div :: (Renderable x) => Attributes -> x -> DOMElement
-div = ffi " constructDOMElement(\"span\", %1, Fay$$_(%2)) "
+div = ffi " require('../files/ReactWrapper').constructDOMElement(\"span\", %1, Fay$$_(%2)) "
 
 data SyntheticEvent
 
@@ -49,10 +49,10 @@ instance Renderable Text
 instance Renderable DOMElement
 
 constructDOMElement :: (Renderable a) => String -> Attributes -> a -> DOMElement
-constructDOMElement = ffi " constructDOMElement(%1, %2, Fay$$_(%3)) "
+constructDOMElement = ffi " require('../files/ReactWrapper').constructDOMElement(%1, %2, Fay$$_(%3)) "
 
 constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
-constructDOMElementArray = ffi "constructDOMElement(%*)"
+constructDOMElementArray = ffi " require('../files/ReactWrapper').constructDOMElement(%*) "
 
 data ReactData a = ReactData {
   render :: ReactInstance a -> Fay DOMElement
@@ -87,7 +87,7 @@ defaultAttributes = Attributes {
 }
 
 declareReactClass :: ReactData a -> ReactClass
-declareReactClass = ffi " declareReactClass(%1) "
+declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1) "
 
 declareAndRun :: ReactData a -> DOMElement
 declareAndRun = classInstance . declareReactClass
@@ -105,7 +105,7 @@ classInstance :: ReactClass -> DOMElement
 classInstance = ffi " %1(null) "
 
 placeElement :: DOMElement -> Fay ()
-placeElement = ffi " renderReact(%1) "
+placeElement = ffi " require('../files/ReactWrapper').renderReact(%1) "
 
 getType :: SyntheticMouseEvent -> String
 getType = ffi " %1['type'] "

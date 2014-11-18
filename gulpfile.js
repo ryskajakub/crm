@@ -2,25 +2,41 @@ var gulp = require("gulp");
 var shell = require("gulp-shell");
 var concat = require("gulp-concat");
 var clean = require('gulp-clean');
+var webpack = require('gulp-webpack');
 
 var faySources = 'src/**/*.hs'
 
-gulp.task('compile', ['copy-resources'] , function() {
-  return gulp.src('src/*.hs', {read: false})
+// main
+
+gulp.task('copy-resources', function() {
+  return gulp.src(['files/*.html'])
+    .pipe(gulp.dest('webpack_build/'));
+});
+
+gulp.task('compile', function() {
+  return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([
       "fay --Wall --pretty <%= file.path %> --include src/ --output build/HaskellReact.js"
-    ]))
+    ]));
 });
+
+gulp.task('webpack', ['compile', 'copy-resources'], function () {
+  return gulp.src('build/HaskellReact.js', {read: false})
+    .pipe(webpack({
+      entry: "./build/HaskellReact.js"
+      , output: {
+        filename: "haskell-react-packed.js"
+      }
+    }))
+    .pipe(gulp.dest('webpack_build/'));
+})
 
 gulp.task('watch', function() {
   gulp.watch(faySources, ['compile']);
   gulp.watch('files/*.js', ['copy-resources']);
 });
 
-gulp.task('copy-resources', function() {
-  return gulp.src(['files/*.js', 'files/*.html'])
-    .pipe(gulp.dest('build/'));
-});
+// test
 
 gulp.task('copy-test-resources', function() {
   return gulp.src(['test/*.js', 'files/*.js'])
@@ -44,12 +60,14 @@ gulp.task('test-file', ['test-compile', 'copy-test-resources'], assemblyTestFile
 
 gulp.task('test-file-without-compile', ['copy-test-resources'], assemblyTestFile);
 
-gulp.task('clean', function () {
-  return gulp.src(['test_build/', 'build/', 'test_single/'], {read: false})
-    .pipe(clean());
-});
-
 gulp.task('test-watch', function() {
   gulp.watch(['test/*.hs', faySources], ['test-file']);
   gulp.watch(['test/*.js', 'files/*.js'], ['test-file-without-compile']);
+});
+
+// other
+
+gulp.task('clean', function () {
+  return gulp.src(['test_build/', 'build/', 'test_single/'], {read: false})
+    .pipe(clean());
 });

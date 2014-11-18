@@ -1,3 +1,5 @@
+var React = require("react");
+
 var constructDOMElement = function(elementName, attributes, children, moreAttributes) {
   var obj = {};
   var escapeKey = function(key) {
@@ -18,19 +20,10 @@ var declareReactClass = function(data) {
   return React.createClass({
     render: function() { return data.render(this); }
     , componentWillMount: function () { return data.componentWillMount(this); }
-    , componentDidMount: function () { data.componentDidMount(this); }
+    , componentDidMount: function () { return data.componentDidMount(this); }
     , componentWillUnmount: function () { return data.componentWillUnmount(this); }
     , displayName: data.displayName
-    , getInitialState: function() {
-      var initialState = Fay$$_(data.getInitialState);
-      var object = {};
-      for (var key in initialState) {
-        if ("instance" !== key) {
-          object[key] = Fay$$_(initialState[key]);
-        }
-      }
-      return object;
-    }
+    , getInitialState: function () { return data.getInitialState; } 
   });
 }
 var renderReact = function(component) {
@@ -38,3 +31,11 @@ var renderReact = function(component) {
     component, document.getElementById('main')
   );
 }
+
+var ReactWrapper = {
+  renderReact: renderReact
+  , declareReactClass : declareReactClass
+  , constructDOMElement : constructDOMElement
+}
+
+module.exports = ReactWrapper;
