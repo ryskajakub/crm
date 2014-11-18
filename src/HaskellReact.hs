@@ -64,6 +64,12 @@ data SyntheticEvent
 eventValue :: SyntheticEvent -> Fay String
 eventValue = ffi " %1['target']['value'] "
 
+elementize :: Text -> DOMElement
+elementize = ffi " %1 "
+
+elem :: String -> DOMElement
+elem = elementize . pack
+
 data ReactClass
 data ReactInstance a
 data SyntheticMouseEvent

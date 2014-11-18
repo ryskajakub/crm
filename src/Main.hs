@@ -7,7 +7,7 @@ import "fay-base" Data.Text (Text, pack)
 import HaskellReact
 import Tag.Input (input, defaultInputAttributes, onChange)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
-import Prelude hiding (span, div)
+import Prelude hiding (span, div, elem)
 
 data InnerData = InnerData {
   header :: Text
@@ -25,6 +25,7 @@ list :: DOMElement
 list = div [
   span $ pack "elem 1"
   , span $ pack "elem 2"
+  , elem " elem 3"
   ]
 
 some :: Fay ()
