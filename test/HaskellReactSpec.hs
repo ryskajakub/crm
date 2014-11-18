@@ -15,7 +15,7 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
-render' :: ReactInstance ReactState -> Fay DOMElement
+render' :: ReactThis ReactState -> Fay DOMElement
 render' = \reactInstance -> do
   data' <- state reactInstance
   let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')

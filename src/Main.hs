@@ -59,14 +59,14 @@ reactBootstrap :: (Renderable b)
                -> Automatic a -- The props passed to the instance
                -> b -- The children passed to the instance
                -> DOMElement
-reactBootstrap = foreignReactInstance requireReactBootstrap
+reactBootstrap = foreignReact requireReactBootstrap
 
 reactBootstrap' :: (Renderable b)
                 => String
                 -> Automatic a
                 -> [b]
                 -> DOMElement
-reactBootstrap' = foreignReactInstance' requireReactBootstrap
+reactBootstrap' = foreignReact' requireReactBootstrap
 
 bootstrap :: Fay ()
 bootstrap = let

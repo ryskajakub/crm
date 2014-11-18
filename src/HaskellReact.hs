@@ -20,13 +20,13 @@ data AAttributes = AAttributes {
 
 class CommonJSModule a
 
-foreignReactInstance :: (CommonJSModule b, Renderable c) 
-                     => Automatic b -> String -> Automatic a -> Automatic c -> DOMElement
-foreignReactInstance = ffi " %1[%2](%3, %4) "
+foreignReact :: (CommonJSModule b, Renderable c)
+             => Automatic b -> String -> Automatic a -> Automatic c -> DOMElement
+foreignReact = ffi " %1[%2](%3, %4) "
 
-foreignReactInstance' :: (CommonJSModule b, Renderable c) 
-                     => Automatic b -> String -> Automatic a -> [Automatic c] -> DOMElement
-foreignReactInstance' = ffi " %1[%2](%3, %4) "
+foreignReact' :: (CommonJSModule b, Renderable c)
+              => Automatic b -> String -> Automatic a -> [Automatic c] -> DOMElement
+foreignReact' = ffi " %1[%2](%3, %4) "
 
 
 aAttributesDefaults :: AAttributes
@@ -71,7 +71,7 @@ elem :: String -> DOMElement
 elem = elementize . pack
 
 data ReactClass
-data ReactInstance a
+data ReactThis a
 data SyntheticMouseEvent
 data DOMElement
 
@@ -87,10 +87,10 @@ constructDOMElementArray :: String -> Attributes -> [DOMElement] -> DOMElement
 constructDOMElementArray = ffi " require('../files/ReactWrapper').constructDOMElement(%*) "
 
 data ReactData a = ReactData {
-  render :: ReactInstance a -> Fay DOMElement
-  , componentWillMount :: ReactInstance a -> Fay()
-  , componentDidMount :: ReactInstance a -> Fay()
-  , componentWillUnmount :: ReactInstance a -> Fay()
+  render :: ReactThis a -> Fay DOMElement
+  , componentWillMount :: ReactThis a -> Fay()
+  , componentDidMount :: ReactThis a -> Fay()
+  , componentWillUnmount :: ReactThis a -> Fay()
   , displayName :: String
   , getInitialState :: a
 }
@@ -124,13 +124,13 @@ declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1)
 declareAndRun :: ReactData a -> DOMElement
 declareAndRun = classInstance . declareReactClass
 
-setState :: ReactInstance a -> a -> Fay()
+setState :: ReactThis a -> a -> Fay()
 setState = ffi " %1['setState'](Fay$$_(%2)) "
 
-state :: ReactInstance a -> Fay a
+state :: ReactThis a -> Fay a
 state = ffi " %1['state'] "
 
-isMounted :: ReactInstance a -> Fay Bool
+isMounted :: ReactThis a -> Fay Bool
 isMounted = ffi " %1['isMounted']() "
 
 classInstance :: ReactClass -> DOMElement
