@@ -4,16 +4,13 @@
 
 module HaskellReact (
   module HaskellReact.Tag.Construct
+  , module HaskellReact.Tag.Simple
   , module HaskellReact.Event
   , foreignReact , foreignReact'
   , AAttributes(..)
   , aAttributesDefaults
   , CommonJSModule
   , a
-  , span, span'
-  , div, div'
-  , ul, ul'
-  , li, li'
   , textElement
   , ReactClass, ReactThis, ReactInstance
   , ReactData(..)
@@ -34,6 +31,7 @@ import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (id, span, div)
 import HaskellReact.Event
 import HaskellReact.Tag.Construct
+import HaskellReact.Tag.Simple
 
 type URL = Text
 type Rel = Text
@@ -60,30 +58,6 @@ aAttributesDefaults = AAttributes Undefined Undefined Undefined
 
 a :: (Renderable x) => Attributes -> AAttributes -> x -> DOMElement
 a = ffi " require('../files/ReactWrapper').constructDOMElement(\"a\", %1, Fay$$_(%3), %2) "
-
-span' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
-span' = ffi " require('../files/ReactWrapper').constructDOMElement(\"span\", %1, %2) "
-
-span :: (Renderable x) => x -> DOMElement
-span = span' defaultAttributes
-
-div' :: (Renderable a) => Attributes -> [Automatic a] -> DOMElement
-div' = ffi " require('../files/ReactWrapper').constructDOMElement(\"div\", %1, %2) "
-
-div :: (Renderable a) => [Automatic a] -> DOMElement
-div = div' defaultAttributes
-
-li' :: (Renderable x) => Attributes -> Automatic x -> DOMElement
-li' = ffi " require('../files/ReactWrapper').constructDOMElement(\"li\", %1, %2) "
-
-li :: (Renderable x) => Automatic x -> DOMElement
-li = li' defaultAttributes
-
-ul' :: (Renderable x) => Attributes -> [Automatic x] -> DOMElement
-ul' = ffi " require('../files/ReactWrapper').constructDOMElement(\"ul\", %1, %2) "
-
-ul :: (Renderable x) => [Automatic x] -> DOMElement
-ul = ul' defaultAttributes
 
 phantom :: a -> b
 phantom = ffi " %1 "

@@ -15,6 +15,8 @@ instance (Renderable a) => Renderable [a]
 instance Renderable Text
 instance Renderable DOMElement
 
+data NoAttributes = NoAttributes {}
+
 data Attributes = Attributes {
   className :: Defined String
   , onClick :: Defined ( SyntheticMouseEvent -> Fay() )
@@ -35,4 +37,5 @@ constructDOMElement :: (Renderable a)
                     -> Automatic b -- tag specific attributes
                     -> Automatic a -- child
                     -> DOMElement
+
 constructDOMElement = ffi " require('../files/ReactWrapper').constructDOMElement(%1, %2, %4, %3) "
