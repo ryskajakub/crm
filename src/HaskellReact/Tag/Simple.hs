@@ -1,4 +1,4 @@
-module HaskellReact.Tag.Simple(
+module HaskellReact.Tag.Simple (
   span, span'
   , div, div'
   , li, li'
