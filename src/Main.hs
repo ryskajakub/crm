@@ -25,8 +25,15 @@ some = let
     }
   in placeElement inst
 
+data ButtonData = ButtonData {
+  bsStyle :: Defined String
+  , title :: Defined String
+}
+
+data Empty = Empty {}
+
 primary :: ButtonData
-primary = ButtonData { bsStyle = Defined "primary" }
+primary = ButtonData { bsStyle = Defined "primary", title = Defined "Buttonek" }
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap
@@ -35,15 +42,24 @@ requireReactBootstrap :: ReactBootstrap
 requireReactBootstrap = ffi " require(\"react-bootstrap\") "
 
 -- | Creates an instance of a React Bootstrap class
-reactBootstrap :: String -- ^ The name of the Bootstrap class
+reactBootstrap :: (Renderable b)
+               => String -- ^ The name of the Bootstrap class
                -> Automatic a -- The props passed to the instance
-               -> String -- The children passed to the instance
+               -> b -- The children passed to the instance
                -> DOMElement
 reactBootstrap = foreignReactInstance requireReactBootstrap
 
+reactBootstrap' :: (Renderable b)
+                => String
+                -> Automatic a
+                -> [b]
+                -> DOMElement
+reactBootstrap' = foreignReactInstance' requireReactBootstrap
+
 bootstrap :: Fay ()
 bootstrap = let
-  button = reactBootstrap "Button" primary "Hit me now YAY!"
+  button = reactBootstrap "DropdownButton" primary $
+    reactBootstrap "MenuItem" Empty (pack "Action")
   in placeElement button
 
 flux :: Fay ()
