@@ -6,10 +6,8 @@ import FFI
 import "fay-base" Data.Text (Text, pack)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
 import HaskellReact
-import Tag.Construct
-import Tag.Input (input, defaultInputAttributes, onChange)
+import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
 import Prelude hiding (span, div, elem)
-import Event
 
 data InnerData = InnerData {
   header :: Text

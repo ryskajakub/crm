@@ -1,4 +1,4 @@
-module Event where
+module HaskellReact.Event where
 
 import FFI (ffi)
 

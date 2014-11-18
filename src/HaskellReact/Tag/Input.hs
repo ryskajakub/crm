@@ -1,4 +1,4 @@
-module Tag.Input (
+module HaskellReact.Tag.Input (
   InputAttributes(..)
   , defaultInputAttributes
   , input
@@ -28,9 +28,9 @@ module Tag.Input (
   , week
 ) where
 
-import Tag.Construct
+import HaskellReact.Tag.Construct
+import HaskellReact.Event
 import FFI
-import Event
 
 newtype InputType = InputType String
 

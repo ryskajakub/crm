@@ -2,13 +2,38 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE PackageImports #-}
 
-module HaskellReact where
+module HaskellReact (
+  module HaskellReact.Tag.Construct
+  , module HaskellReact.Event
+  , foreignReact , foreignReact'
+  , AAttributes(..)
+  , aAttributesDefaults
+  , CommonJSModule
+  , a
+  , span, span'
+  , div, div'
+  , ul, ul'
+  , li, li'
+  , textElement
+  , ReactClass, ReactThis, ReactInstance
+  , ReactData(..)
+  , defaultReactData
+  , declareReactClass
+  , declareAndRun
+  , setState
+  , state
+  , isMounted
+  , classInstance
+  , placeElement
+  , getType
+  , phantom
+) where 
 
 import FFI
 import "fay-base" Data.Text (Text, pack)
-import Prelude hiding (id, span)
-import Event
-import Tag.Construct
+import Prelude hiding (id, span, div)
+import HaskellReact.Event
+import HaskellReact.Tag.Construct
 
 type URL = Text
 type Rel = Text
@@ -29,7 +54,6 @@ foreignReact = ffi " %1[%2](%3, %4) "
 foreignReact' :: (CommonJSModule b, Renderable c)
               => Automatic b -> String -> Automatic a -> [Automatic c] -> ReactInstance
 foreignReact' = ffi " %1[%2](%3, %4) "
-
 
 aAttributesDefaults :: AAttributes
 aAttributesDefaults = AAttributes Undefined Undefined Undefined

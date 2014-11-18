@@ -1,8 +1,8 @@
 {-# LANGUAGE PackageImports #-}
 
-module Tag.Construct where
+module HaskellReact.Tag.Construct where
 
-import Event
+import HaskellReact.Event
 import FFI (Defined(Undefined), ffi, Automatic)
 import "fay-base" Data.Text (Text)
 import Prelude hiding (id)
