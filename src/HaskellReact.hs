@@ -41,8 +41,23 @@ span' = ffi " require('../files/ReactWrapper').constructDOMElement(\"span\", %1,
 span :: (Renderable x) => x -> DOMElement
 span = span' defaultAttributes
 
-div :: (Renderable x) => Attributes -> x -> DOMElement
-div = ffi " require('../files/ReactWrapper').constructDOMElement(\"span\", %1, Fay$$_(%2)) "
+div' :: (Renderable a) => Attributes -> [Automatic a] -> DOMElement
+div' = ffi " require('../files/ReactWrapper').constructDOMElement(\"div\", %1, %2) "
+
+div :: (Renderable a) => [Automatic a] -> DOMElement
+div = div' defaultAttributes
+
+li' :: (Renderable x) => Attributes -> Automatic x -> DOMElement
+li' = ffi " require('../files/ReactWrapper').constructDOMElement(\"li\", %1, %2) "
+
+li :: (Renderable x) => Automatic x -> DOMElement
+li = li' defaultAttributes
+
+ul' :: (Renderable x) => Attributes -> [Automatic x] -> DOMElement
+ul' = ffi " require('../files/ReactWrapper').constructDOMElement(\"ul\", %1, %2) "
+
+ul :: (Renderable x) => [Automatic x] -> DOMElement
+ul = ul' defaultAttributes
 
 data SyntheticEvent
 

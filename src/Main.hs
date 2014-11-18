@@ -7,14 +7,25 @@ import "fay-base" Data.Text (Text, pack)
 import HaskellReact
 import Tag.Input (input, defaultInputAttributes, onChange)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
-import Prelude hiding (span)
+import Prelude hiding (span, div)
 
 data InnerData = InnerData {
   header :: Text
 }
 
 main :: Fay ()
-main = bootstrap
+main = runInReact list
+
+runInReact :: DOMElement -> Fay ()
+runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
+    render = const $ return element
+  }
+
+list :: DOMElement
+list = div [
+  span $ pack "elem 1"
+  , span $ pack "elem 2"
+  ]
 
 some :: Fay ()
 some = let
