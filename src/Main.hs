@@ -5,7 +5,7 @@ module Main where
 import FFI
 import "fay-base" Data.Text (Text, pack)
 import HaskellReact
-import Tag.Input
+import Tag.Input (input, defaultInputAttributes, onChange)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
 import Prelude hiding (span)
 
@@ -14,13 +14,37 @@ data InnerData = InnerData {
 }
 
 main :: Fay ()
-main = let
+main = bootstrap
+
+some :: Fay ()
+some = let
   inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
     render = const $
       let spanElement = span $ pack "text"
       in return $ spanElement
     }
   in placeElement inst
+
+primary :: ButtonData
+primary = ButtonData { bsStyle = Defined "primary" }
+
+data ReactBootstrap
+instance CommonJSModule ReactBootstrap
+
+requireReactBootstrap :: ReactBootstrap
+requireReactBootstrap = ffi " require(\"react-bootstrap\") "
+
+-- | Creates an instance of a React Bootstrap class
+reactBootstrap :: String -- ^ The name of the Bootstrap class
+               -> Automatic a -- The props passed to the instance
+               -> String -- The children passed to the instance
+               -> DOMElement
+reactBootstrap = foreignReactInstance requireReactBootstrap
+
+bootstrap :: Fay ()
+bootstrap = let
+  button = reactBootstrap "Button" primary "Hit me now YAY!"
+  in placeElement button
 
 flux :: Fay ()
 flux = do

@@ -18,6 +18,16 @@ data AAttributes = AAttributes {
   , target :: Defined Target
 }
 
+data ButtonData = ButtonData {
+  bsStyle :: Defined String
+}
+
+class CommonJSModule a
+
+-- name of react class in module -> props -> children -> module name -> react instance
+foreignReactInstance :: (CommonJSModule b) => Automatic b -> String -> Automatic a -> String -> DOMElement
+foreignReactInstance = ffi " %1[%2](%3, %4) "
+
 aAttributesDefaults :: AAttributes
 aAttributesDefaults = AAttributes Undefined Undefined Undefined
 

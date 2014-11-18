@@ -8,9 +8,14 @@ var faySources = 'src/**/*.hs'
 
 // main
 
-gulp.task('copy-resources', function() {
+gulp.task('copy-resources', ['copy-bootstrap'], function() {
   return gulp.src(['files/*.html'])
     .pipe(gulp.dest('build/'));
+});
+
+gulp.task('copy-bootstrap', function () {
+  return gulp.src(['bootstrap/**/*'], {base: 'bootstrap'})
+    .pipe(gulp.dest('build/bootstrap'));
 });
 
 gulp.task('compile', function() {
@@ -29,7 +34,7 @@ gulp.task('webpack', ['compile', 'copy-resources'], function () {
       }
     }))
     .pipe(gulp.dest('build/'));
-})
+});
 
 gulp.task('watch', function() {
   gulp.watch([faySources, 'files/*.html', 'files/*.js'], ['webpack']);
