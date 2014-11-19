@@ -7,6 +7,7 @@ module HaskellReact.Tag.Hyperlink(
   , rel
   , target
   , defaultHyperlinkAttributes
+  , aAttr
   , Rel
   , alternate
   , author
@@ -91,6 +92,9 @@ top = HyperlinkTarget "_top"
 
 framename :: String -> HyperlinkTarget
 framename = HyperlinkTarget
+
+aAttr :: HyperlinkAttributes
+aAttr = defaultHyperlinkAttributes
 
 defaultHyperlinkAttributes :: HyperlinkAttributes
 defaultHyperlinkAttributes = HyperlinkAttributes {

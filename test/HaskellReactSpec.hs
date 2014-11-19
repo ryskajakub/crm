@@ -7,7 +7,7 @@ import HaskellReact
 import "fay-base" Data.Text (Text, append, showInt, pack)
 import Prelude hiding (span, div)
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
-import HaskellReact.Tag.Hyperlink (defaultHyperlinkAttributes, a, href)
+import HaskellReact.Tag.Hyperlink (a, href, aAttr)
 
 data SimpleState = SimpleState { number :: Int }
 
@@ -46,11 +46,8 @@ aElement :: ReactInstance
 aElement = let
   innerData = ReactState (pack "AElement") 0
   reactData = (defaultReactData innerData) {
-    render = const $ return $ let
-      aAttr = defaultHyperlinkAttributes {
-        href = Defined $ "http://google.com"
-      }
-      in a aAttr (pack "Google")
+    render = const $ return $ 
+      a (aAttr {href = Defined $ "http://google.com"}) (pack "Google")
   }
   in classInstance (declareReactClass reactData)
 
