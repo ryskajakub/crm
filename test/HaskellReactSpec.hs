@@ -2,7 +2,7 @@
 
 module HaskellReactSpec where
 
-import FFI (Defined(Defined))
+import FFI (Defined(Defined), ffi)
 import HaskellReact
 import "fay-base" Data.Text (Text, append, showInt, pack)
 import Prelude hiding (span, div)
@@ -69,3 +69,6 @@ relatedElements = let
       return divElement
     }
   in declareAndRun reactData
+
+main :: Fay ()
+main =  ffi "  module.exports = HaskellReactSpec "

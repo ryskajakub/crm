@@ -42,27 +42,27 @@ gulp.task('watch', function() {
 
 // test
 
-gulp.task('copy-test-resources', function() {
-  return gulp.src(['test/*.js', 'files/*.js'])
-    .pipe(gulp.dest('test_build/'));
-});
-
-gulp.task('test-compile', ['copy-test-resources'] , function () {
+gulp.task('test-compile', function () {
   return gulp.src('test/*.hs', {read: false})
     .pipe(shell([
-      "fay --Wall --library --strict test/*.hs --pretty --include src/ --output test_build/HaskellReactSpec.js <%= file.path %> "
+      "fay --Wall --strict test/*.hs --pretty --include src/ --output tmp/HaskellReactSpec.js <%= file.path %> "
     ]))
 });
 
-var assemblyTestFile = function () {
-  return gulp.src('test_build/*.js')
-    .pipe(concat('all.js'))
-    .pipe(gulp.dest('./test_single/'));
-}
+var testWebpack = function () {
+  return gulp.src('test/haskellReactSpec.js', {read: false})
+    .pipe(webpack({
+      entry: "./test/haskellReactSpec.js"
+      , output: {
+        filename: "haskell-react-spec-packed.js"
+      }
+    }))
+    .pipe(gulp.dest('test_build/'));
+};
 
-gulp.task('test-file', ['test-compile', 'copy-test-resources'], assemblyTestFile);
+gulp.task('test-file', ['test-compile'], testWebpack);
 
-gulp.task('test-file-without-compile', ['copy-test-resources'], assemblyTestFile);
+gulp.task('test-file-without-compile', testWebpack);
 
 gulp.task('test-watch', function() {
   gulp.watch(['test/*.hs', faySources], ['test-file']);
@@ -72,6 +72,6 @@ gulp.task('test-watch', function() {
 // other
 
 gulp.task('clean', function () {
-  return gulp.src(['test_build/', 'build/', 'test_single/'], {read: false})
+  return gulp.src(['test_build/', 'build/'], {read: false})
     .pipe(clean());
 });
