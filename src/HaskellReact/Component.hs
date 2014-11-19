@@ -5,13 +5,16 @@ module HaskellReact.Component where
 import FFI (ffi, Automatic)
 import "fay-base" Data.Text (pack)
 import HaskellReact.Tag.Construct
+import HaskellReact.Tag.Simple (div)
+import HaskellReact.ReadFay (ReadFay, readFayReturn)
+import Prelude hiding (div)
 
 data ReactClass
 data ReactThis a
 data ReactInstance
 
 data ReactData a = ReactData {
-  render :: ReactThis a -> Fay DOMElement
+  render :: ReactThis a -> ReadFay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
   , componentWillMount :: ReactThis a -> Fay()
   , componentDidMount :: ReactThis a -> Fay()
   , componentWillUnmount :: ReactThis a -> Fay()
@@ -21,7 +24,7 @@ data ReactData a = ReactData {
 
 defaultReactData :: a -> ReactData a
 defaultReactData initialState = ReactData {
-  render = const $ return $ constructDOMElement "div" defaultAttributes defaultAttributes (pack "")
+  render = const $ readFayReturn $ div $ pack ""
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
@@ -38,7 +41,7 @@ declareAndRun = classInstance . declareReactClass
 setState :: ReactThis a -> Automatic a -> Fay ()
 setState = ffi " %1['setState'](%2) "
 
-state :: ReactThis a -> Fay a
+state :: ReactThis a -> ReadFay a
 state = ffi " %1['state'] "
 
 isMounted :: ReactThis a -> Fay Bool

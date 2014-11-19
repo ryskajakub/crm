@@ -1,4 +1,5 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 module Main where
 
@@ -9,6 +10,8 @@ import HaskellReact
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
 import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href, target), blank)
 import Prelude hiding (span, div, elem)
+import qualified Prelude as P
+import HaskellReact.ReadFay (RF(RF), rf, readFayReturn)
 
 data InnerData = InnerData {
   header :: Text
@@ -19,7 +22,7 @@ main = runInReact list
 
 runInReact :: DOMElement -> Fay ()
 runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = const $ return element
+    render = const $ readFayReturn element
   }
 
 list :: DOMElement
@@ -36,7 +39,7 @@ some = let
   inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
     render = const $
       let spanElement = span $ pack "text"
-      in return $ spanElement
+      in readFayReturn $ spanElement
     }
   in placeElement inst
 
@@ -74,11 +77,10 @@ flux :: Fay ()
 flux = do
   var <- newVar $ pack "Initial state"
   let inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = \reactInstance -> do
+    render = \reactInstance -> let RF return (>>=) (>>) = rf in do
       let inputElement = input defaultAttributes (defaultInputAttributes {
-        onChange = Defined $ \changeEvent -> eventValue changeEvent >>= set var . pack
+        onChange = Defined $ \changeEvent -> eventValue changeEvent P.>>= (set var . pack)
       }) (pack "")
-      putStrLn ("rendered")
       actualState <- state reactInstance
       let spanElement = span $ header actualState
       return $ constructDOMElement "div" defaultAttributes defaultAttributes [inputElement, spanElement]

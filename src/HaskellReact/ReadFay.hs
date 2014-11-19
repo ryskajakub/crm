@@ -3,31 +3,47 @@
 
 module HaskellReact.ReadFay (
   ReadFay
-  , RF
+  , RF(RF)
   , rf
+  , readFayReturn
+  , readFayBind
+  , readFayThen
 ) where
 
-import Prelude
+import qualified Prelude as P
+import Prelude hiding((>>=), (>>), return)
 
 newtype ReadFay a = ReadFay { runReadFay :: Fay a }
 
 data RF = RF { 
-  readFayReturn :: forall a. a -> ReadFay a
-  , readFayBind :: forall a b. ReadFay a -> (a -> ReadFay b) -> ReadFay b
-  , readFayThen :: forall a b. ReadFay a -> ReadFay b -> ReadFay b
+  return :: forall a. a -> ReadFay a
+  , bind :: forall a b. ReadFay a -> (a -> ReadFay b) -> ReadFay b
+  , then' :: forall a b. ReadFay a -> ReadFay b -> ReadFay b
 }
+
+readFayReturn :: a -> ReadFay a
+readFayReturn a = ReadFay $ P.return a
+
+readFayBind :: ReadFay a -> (a -> ReadFay b) -> ReadFay b
+readFayBind a b = ReadFay $ runReadFay a P.>>= (runReadFay . b)
+
+readFayThen :: ReadFay a -> ReadFay b -> ReadFay b
+readFayThen a b = ReadFay $ runReadFay a P.>> runReadFay b
 
 rf :: RF
 rf = RF {
-  readFayReturn = \x -> ReadFay $ return x
-  , readFayBind = \a b -> ReadFay $ runReadFay a >>= (runReadFay . b)
-  , readFayThen = \a b -> ReadFay $ runReadFay a >> runReadFay b
+  return = readFayReturn
+  , bind = readFayBind
+  , then' = readFayThen
 }
 
--- | Example usage fo the ReadFay in the do notation
+{-
+Example usage of the ReadFay in the do notation
+
 doNotation :: ReadFay ()
 doNotation = let RF return (>>=) (>>) = rf in do
   b <- return ()
   x <- return ()
   return ()
   return ()
+-}
