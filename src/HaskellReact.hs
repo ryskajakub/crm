@@ -75,7 +75,7 @@ data ReactData a = ReactData {
   , componentDidMount :: ReactThis a -> Fay()
   , componentWillUnmount :: ReactThis a -> Fay()
   , displayName :: String
-  , getInitialState :: a
+  , getInitialState :: () -> a
 }
 
 defaultReactData :: a -> ReactData a
@@ -85,7 +85,7 @@ defaultReactData initialState = ReactData {
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
   , displayName = "<HaskellReactClass>"
-  , getInitialState = initialState
+  , getInitialState = const $ initialState
 }
 
 declareReactClass :: ReactData a -> ReactClass

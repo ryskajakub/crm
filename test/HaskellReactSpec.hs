@@ -71,4 +71,4 @@ relatedElements = let
   in declareAndRun reactData
 
 main :: Fay ()
-main =  ffi "  module.exports = HaskellReactSpec "
+main =  ffi " (function() { var obj = {}; obj['HaskellReactSpec'] = HaskellReactSpec; obj['FayDD'] = Fay$$_; module.exports = obj; })() "

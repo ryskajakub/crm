@@ -18,12 +18,14 @@ var constructDOMElement = function(elementName, attributes, children, moreAttrib
 }
 var declareReactClass = function(data) {
   return React.createClass({
-    render: function() { return data.render(this); }
+    render: function() {
+      return data.render(this);
+    }
     , componentWillMount: function () { return data.componentWillMount(this); }
     , componentDidMount: function () { return data.componentDidMount(this); }
     , componentWillUnmount: function () { return data.componentWillUnmount(this); }
     , displayName: data.displayName
-    , getInitialState: function () { return data.getInitialState; } 
+    , getInitialState: data.getInitialState
   });
 }
 var renderReact = function(component) {
