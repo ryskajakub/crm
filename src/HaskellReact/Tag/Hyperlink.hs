@@ -1,6 +1,6 @@
 {-# LANGUAGE PackageImports #-}
 
-module HaskellReact.Tag.Anchor where
+module HaskellReact.Tag.Hyperlink where
 
 import FFI (Defined(Undefined))
 import HaskellReact.Tag.Construct
@@ -10,21 +10,21 @@ type URL = Text
 type Rel = Text
 type Target = Text
 
-data AnchorAttributes = AnchorAttributes {
+data HyperlinkAttributes = HyperlinkAttributes {
   href :: Defined URL
   , rel :: Defined Rel
   , target :: Defined Target
 }
 
-defaultAnchorAttributes :: AnchorAttributes
-defaultAnchorAttributes = AnchorAttributes {
+defaultHyperlinkAttributes :: HyperlinkAttributes
+defaultHyperlinkAttributes = HyperlinkAttributes {
   href = Undefined
   , rel = Undefined
   , target = Undefined
 }
 
-a' :: (Renderable a) => Attributes -> AnchorAttributes -> a -> DOMElement
+a' :: (Renderable a) => Attributes -> HyperlinkAttributes -> a -> DOMElement
 a' = constructDOMElement "a" 
 
-a :: (Renderable a) => AnchorAttributes -> a -> DOMElement
+a :: (Renderable a) => HyperlinkAttributes -> a -> DOMElement
 a = a' defaultAttributes

@@ -120,4 +120,4 @@ defaultInputAttributes = InputAttributes {
 }
 
 input :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
-input = constructDOMElement "input" 
+input = constructDOMElement "input"

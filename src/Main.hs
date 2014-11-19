@@ -7,7 +7,7 @@ import "fay-base" Data.Text (Text, pack)
 import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
 import HaskellReact
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
-import HaskellReact.Tag.Anchor (a, defaultAnchorAttributes, AnchorAttributes(href))
+import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href))
 import Prelude hiding (span, div, elem)
 
 data InnerData = InnerData {
@@ -24,7 +24,7 @@ runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData
 
 list :: DOMElement
 list = constructDOMElement "div" defaultAttributes (Empty {}) [
-  a (defaultAnchorAttributes { href = Defined $ pack "http://seznam.cz/" }) $ pack "Link"
+  a (defaultHyperlinkAttributes { href = Defined $ pack "http://seznam.cz/" }) $ pack "Link"
   , span $ pack "elem 1"
   , span $ pack "elem 2"
   , textElement " elem 3"
