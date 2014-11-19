@@ -94,8 +94,8 @@ declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1)
 declareAndRun :: ReactData a -> ReactInstance
 declareAndRun = classInstance . declareReactClass
 
-setState :: ReactThis a -> a -> Fay ()
-setState = ffi " %1['setState'](Fay$$_(%2)) "
+setState :: ReactThis a -> Automatic a -> Fay ()
+setState = ffi " %1['setState'](%2) "
 
 state :: ReactThis a -> Fay a
 state = ffi " %1['state'] "
