@@ -53,9 +53,9 @@ placeElement = ffi " require('../files/ReactWrapper').renderReact(%1) "
 class CommonJSModule a
 
 foreignReact :: (CommonJSModule b, Renderable c)
-             => Automatic b 
-             -> String 
-             -> Automatic a 
+             => Automatic b
+             -> String
+             -> Automatic a
              -> Automatic c
              -> ReactInstance
 foreignReact = ffi " %1[%2](%3, %4) "

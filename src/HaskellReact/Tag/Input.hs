@@ -120,4 +120,4 @@ defaultInputAttributes = InputAttributes {
 }
 
 input :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
-input = ffi " require('../files/ReactWrapper').constructDOMElement(\"input\", %1, Fay$$_(%3), %2) "
+input = constructDOMElement "input" 
