@@ -14,7 +14,7 @@ data InnerData = InnerData {
 }
 
 main :: Fay ()
-main = flux
+main = runInReact list
 
 runInReact :: DOMElement -> Fay ()
 runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
@@ -59,19 +59,12 @@ requireReactBootstrap = ffi " require(\"react-bootstrap\") "
 reactBootstrap :: (Renderable b)
                => String -- ^ The name of the Bootstrap class
                -> Automatic a -- The props passed to the instance
-               -> b -- The children passed to the instance
+               -> Automatic b -- The children passed to the instance
                -> ReactInstance
 reactBootstrap = foreignReact requireReactBootstrap
 
-reactBootstrap' :: (Renderable b)
-                => String
-                -> Automatic a
-                -> [b]
-                -> ReactInstance
-reactBootstrap' = foreignReact' requireReactBootstrap
-
 bootstrap :: ReactInstance
-bootstrap = reactBootstrap' "DropdownButton" primary [
+bootstrap = reactBootstrap "DropdownButton" primary [
   phantom $ reactBootstrap "MenuItem" Empty (pack "Action") :: DOMElement
   , phantom $ reactBootstrap "MenuItem" Empty (pack "Action 2") :: DOMElement
   ]
