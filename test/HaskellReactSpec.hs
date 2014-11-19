@@ -47,7 +47,7 @@ aElement = let
   innerData = ReactState (pack "AElement") 0
   reactData = (defaultReactData innerData) {
     render = const $ return $ 
-      a (aAttr {href = Defined $ "http://google.com"}) (pack "Google")
+      a (aAttr {href = Defined $ pack $ "http://google.com"}) (pack "Google")
   }
   in classInstance (declareReactClass reactData)
 

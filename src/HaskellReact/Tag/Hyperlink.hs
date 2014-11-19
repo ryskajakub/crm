@@ -31,8 +31,9 @@ module HaskellReact.Tag.Hyperlink(
 
 import FFI (Defined(Undefined))
 import HaskellReact.Tag.Construct
+import "fay-base" Data.Text (Text)
 
-type URL = String
+type URL = Text
 newtype Rel = Rel String
 newtype HyperlinkTarget = HyperlinkTarget String
 
