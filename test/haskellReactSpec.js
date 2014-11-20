@@ -13,6 +13,7 @@ describe("Haskell React", function() {
     ReactTestUtils.Simulate.click(rendered);
     expect(rendered.innerText).toEqual("The header 2");
   });
+/*
   it("component correctly displays isMounted", function () {
     var component = Fay$$_(HaskellReactSpec.element, true);
     var rendered = ReactTestUtils.renderIntoDocument(component).getDOMNode();
@@ -32,4 +33,5 @@ describe("Haskell React", function() {
     var span = ReactTestUtils.findRenderedDOMComponentWithTag(rendered, "span");
     expect(span.getDOMNode().innerText).toEqual("Num: 5");
   });
+*/
 });

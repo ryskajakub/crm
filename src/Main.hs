@@ -5,43 +5,34 @@ module Main where
 
 import FFI
 import "fay-base" Data.Text (Text, pack)
-import "fay-base" Data.Var (newVar, set, subscribeChangeAndRead)
-import HaskellReact
-import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
 import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href, target), blank)
 import Prelude hiding (span, div, elem)
 import qualified Prelude as P
-import HaskellReact.ReadFay (RF(RF), rf, readFayReturn)
+import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay)
+import HaskellReact
 
 data InnerData = InnerData {
   header :: Text
 }
 
 main :: Fay ()
-main = runInReact list
+main = runInReact $ span $ pack "elem1"
 
 runInReact :: DOMElement -> Fay ()
-runInReact element = placeElement $ declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = const $ readFayReturn element
-  }
+runInReact element = placeElement $ declareAndRun $ ((defaultReactData 
+  (InnerData $ pack "ahoj")
+  (const $ readFayReturn element)) {
+    componentWillUnmount = const $ undefined
+  })
 
 list :: DOMElement
 list = constructDOMElement "div" defaultAttributes (Empty {}) [
-  a (defaultHyperlinkAttributes { href = Defined "http://seznam.cz/", target = Defined blank }) $ pack "Link"
+  a (defaultHyperlinkAttributes { href = Defined $ pack "http://seznam.cz/", target = Defined blank }) $ pack "Link"
   , span $ pack "elem 1"
   , span $ pack "elem 2"
   , textElement " elem 3"
   , phantom bootstrap
   ]
-
-some :: Fay ()
-some = let
-  inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = const $
-      let spanElement = span $ pack "text"
-      in readFayReturn $ spanElement
-    }
-  in placeElement inst
 
 data ButtonData = ButtonData {
   bsStyle :: Defined String
@@ -72,21 +63,3 @@ bootstrap = reactBootstrap "DropdownButton" primary [
   phantom $ reactBootstrap "MenuItem" Empty (pack "Action") :: DOMElement
   , phantom $ reactBootstrap "MenuItem" Empty (pack "Action 2") :: DOMElement
   ]
-
-flux :: Fay ()
-flux = do
-  var <- newVar $ pack "Initial state"
-  let inst = declareAndRun $ (defaultReactData (InnerData $ pack "ahoj")) {
-    render = \reactInstance -> let RF return (>>=) (>>) = rf in do
-      let inputElement = input defaultAttributes (defaultInputAttributes {
-        onChange = Defined $ \changeEvent -> eventValue changeEvent P.>>= (set var . pack)
-      }) (pack "")
-      actualState <- state reactInstance
-      let spanElement = span $ header actualState
-      return $ constructDOMElement "div" defaultAttributes defaultAttributes [inputElement, spanElement]
-    , componentDidMount = \reactInstance -> do
-      putStrLn ("component mounted")
-      subscribeChangeAndRead var (\v -> setState reactInstance (InnerData $ v))
-      return ()
-  }
-  placeElement inst

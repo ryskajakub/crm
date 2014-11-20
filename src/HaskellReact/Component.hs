@@ -1,20 +1,32 @@
 {-# LANGUAGE PackageImports #-}
 
-module HaskellReact.Component where
+module HaskellReact.Component (
+  ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
+  , ReactClass
+  , ReactThis
+  , ReactInstance
+  , defaultReactData
+  , declareReactClass
+  , declareAndRun
+  , setState
+  , state
+  , isMounted
+  , classInstance
+  , placeElement
+  , CommonJSModule
+  , foreignReact 
+) where
 
 import FFI (ffi, Automatic)
-import "fay-base" Data.Text (pack)
 import HaskellReact.Tag.Construct
-import HaskellReact.Tag.Simple (div)
-import HaskellReact.ReadFay (ReadFay, readFayReturn)
-import Prelude hiding (div)
+import HaskellReact.ReadFay (ReadFay, runReadFay)
 
 data ReactClass
 data ReactThis a
 data ReactInstance
 
 data ReactData a = ReactData {
-  render :: ReactThis a -> ReadFay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
+  render :: ReactThis a -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
   , componentWillMount :: ReactThis a -> Fay()
   , componentDidMount :: ReactThis a -> Fay()
   , componentWillUnmount :: ReactThis a -> Fay()
@@ -22,9 +34,9 @@ data ReactData a = ReactData {
   , getInitialState :: () -> a
 }
 
-defaultReactData :: a -> ReactData a
-defaultReactData initialState = ReactData {
-  render = const $ readFayReturn $ div $ pack ""
+defaultReactData :: a -> (ReactThis a -> ReadFay DOMElement) -> ReactData a
+defaultReactData initialState safeRender = ReactData {
+  render = runReadFay . safeRender
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
@@ -44,7 +56,7 @@ setState = ffi " %1['setState'](%2) "
 state :: ReactThis a -> ReadFay a
 state = ffi " %1['state'] "
 
-isMounted :: ReactThis a -> Fay Bool
+isMounted :: ReactThis a -> ReadFay Bool
 isMounted = ffi " %1['isMounted']() "
 
 classInstance :: ReactClass -> ReactInstance

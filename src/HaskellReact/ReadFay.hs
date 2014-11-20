@@ -8,6 +8,7 @@ module HaskellReact.ReadFay (
   , readFayReturn
   , readFayBind
   , readFayThen
+  , runReadFay
 ) where
 
 import qualified Prelude as P
