@@ -2,17 +2,21 @@
 {-# LANGUAGE RankNTypes #-}
 
 module HaskellReact.ReadFay (
-  ReadFay
-  , RF(RF)
+  ReadFay ()
+  , RF (RF)
   , rf
   , readFayReturn
   , readFayBind
   , readFayThen
   , runReadFay
+  , isMounted
+  , state
 ) where
 
 import qualified Prelude as P
 import Prelude hiding((>>=), (>>), return)
+import FFI (ffi)
+import HaskellReact.ComponentData (ReactThis)
 
 newtype ReadFay a = ReadFay { runReadFay :: Fay a }
 
@@ -37,6 +41,18 @@ rf = RF {
   , bind = readFayBind
   , then' = readFayThen
 }
+
+isMounted' :: ReactThis a -> Fay Bool
+isMounted' = ffi " %1['isMounted']() "
+
+isMounted :: ReactThis a -> ReadFay Bool
+isMounted = ReadFay . isMounted'
+
+state' :: ReactThis a -> Fay a
+state' = ffi " %1['state'] "
+
+state :: ReactThis a -> ReadFay a
+state = ReadFay . state'
 
 {-
 Example usage of the ReadFay in the do notation

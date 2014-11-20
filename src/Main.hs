@@ -8,7 +8,7 @@ import "fay-base" Data.Text (Text, pack)
 import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href, target), blank)
 import Prelude hiding (span, div, elem)
 import qualified Prelude as P
-import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay)
+import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay, isMounted)
 import HaskellReact
 
 data InnerData = InnerData {
@@ -16,14 +16,17 @@ data InnerData = InnerData {
 }
 
 main :: Fay ()
-main = runInReact $ span $ pack "elem1"
+main = runInReact list
+
+data ReactState = ReactState {
+  header1 :: Text
+  , countClicks :: Int
+}
 
 runInReact :: DOMElement -> Fay ()
 runInReact element = placeElement $ declareAndRun $ ((defaultReactData 
   (InnerData $ pack "ahoj")
-  (const $ readFayReturn element)) {
-    componentWillUnmount = const $ undefined
-  })
+  (const $ readFayReturn element)))
 
 list :: DOMElement
 list = constructDOMElement "div" defaultAttributes (Empty {}) [

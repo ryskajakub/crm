@@ -1,7 +1,8 @@
 {-# LANGUAGE PackageImports #-}
 
 module HaskellReact.Component (
-  ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
+  --ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
+  ReactData (..)
   , ReactClass
   , ReactThis
   , ReactInstance
@@ -9,8 +10,6 @@ module HaskellReact.Component (
   , declareReactClass
   , declareAndRun
   , setState
-  , state
-  , isMounted
   , classInstance
   , placeElement
   , CommonJSModule
@@ -20,9 +19,9 @@ module HaskellReact.Component (
 import FFI (ffi, Automatic)
 import HaskellReact.Tag.Construct
 import HaskellReact.ReadFay (ReadFay, runReadFay)
+import HaskellReact.ComponentData (ReactThis)
 
 data ReactClass
-data ReactThis a
 data ReactInstance
 
 data ReactData a = ReactData {
@@ -52,12 +51,6 @@ declareAndRun = classInstance . declareReactClass
 
 setState :: ReactThis a -> Automatic a -> Fay ()
 setState = ffi " %1['setState'](%2) "
-
-state :: ReactThis a -> ReadFay a
-state = ffi " %1['state'] "
-
-isMounted :: ReactThis a -> ReadFay Bool
-isMounted = ffi " %1['isMounted']() "
 
 classInstance :: ReactClass -> ReactInstance
 classInstance = ffi " %1(null) "

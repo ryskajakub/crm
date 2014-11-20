@@ -9,7 +9,7 @@ import "fay-base" Data.Text (Text, append, showInt, pack)
 import Prelude hiding (span, div)
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
 import HaskellReact.Tag.Hyperlink (a, href, aAttr)
-import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay)
+import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay, state, isMounted)
 
 data SimpleState = SimpleState { number :: Int }
 
@@ -28,29 +28,25 @@ render' = \reactInstance -> let RF return (>>=) _ = rf in do
 singleElement :: ReactInstance
 singleElement = let
   innerData = ReactState (pack "The header") 0
-  reactData = (defaultReactData innerData) {
-    render = runReadFay . render'
-    , displayName = "SpanClass"
-  }
+  reactData = (defaultReactData innerData) (render')
   in declareAndRun reactData
 
 element :: ReactInstance
 element = let
   innerData = ReactState (pack "Element") 0
-  reactData = (defaultReactData innerData) {
-    render = \reactInstance -> runReadFay $ let RF return (>>=) _ = rf in do
+  reactData = (defaultReactData innerData) (
+    \reactInstance -> let RF return (>>=) _ = rf in do
       mounted <- isMounted reactInstance
       readFayReturn $ constructDOMElement "h1" defaultAttributes defaultAttributes (pack $ show mounted)
-  }
+    )
   in classInstance (declareReactClass reactData)
 
 aElement :: ReactInstance
 aElement = let
   innerData = ReactState (pack "AElement") 0
-  reactData = (defaultReactData innerData) {
-    render = const $ runReadFay $ readFayReturn $
-      a (aAttr {href = Defined $ pack "http://google.com"}) (pack "Google")
-  }
+  reactData = (defaultReactData innerData) (
+    const $ readFayReturn $ a (aAttr {href = Defined $ pack "http://google.com"}) (pack "Google")
+    )
   in classInstance (declareReactClass reactData)
 
 onChange' :: ReactThis SimpleState -> SyntheticEvent -> Fay ()
@@ -61,8 +57,8 @@ onChange' reactInstance changeEvent = do
 
 relatedElements :: ReactInstance
 relatedElements = let
-  reactData = (defaultReactData (SimpleState 0)) {
-    render = \reactInstance -> runReadFay $ let RF return (>>=) _ = rf in do
+  reactData = (defaultReactData (SimpleState 0)) (
+    \reactInstance -> let RF return (>>=) _ = rf in do
       actualState <- state reactInstance
       let spanElement = span (pack "Num: " `append` (pack $ show $ number actualState))
           inputElement = input defaultAttributes (defaultInputAttributes {
@@ -70,7 +66,7 @@ relatedElements = let
           }) (pack "")
           divElement = div [spanElement, inputElement]
       return divElement
-    }
+      )
   in declareAndRun reactData
 
 main :: Fay ()
