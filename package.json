@@ -1,24 +1,13 @@
 {
-  "name": "haskell-react",
-  "version": "0.0.0",
-  "description": "",
-  "main": "React-Wrapper.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
-  "license": "BSD-2-Clause",
   "devDependencies": {
     "gulp": "~3.8.10",
     "gulp-shell": "~0.2.10",
+    "gulp-concat": "~2.4.1",
+    "gulp-clean": "~0.3.1",
+    "gulp-webpack": "~1.0.0",
     "karma": "~0.12.25",
     "karma-chrome-launcher": "~0.1.5",
     "karma-jasmine": "~0.2.3",
-    "gulp-concat": "~2.4.1",
-    "gulp-clean": "~0.3.1",
-    "react-bootstrap": "~0.13.0",
-    "gulp-webpack": "~1.0.0",
-    "react": "~0.12.1",
-    "react-router": "~0.10.2"
+    "react": "~0.12.1"
   }
 }
