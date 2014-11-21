@@ -1,4 +1,5 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE EmptyDataDecls #-}
 
 module HaskellReact.Tag.Construct where
 

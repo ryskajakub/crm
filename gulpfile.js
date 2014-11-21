@@ -3,13 +3,13 @@ var shell = require("gulp-shell");
 var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
 
-var faySources = 'src/**/*.hs'
+var faySources = 'src/**/*.hs';
 
 gulp.task('test-compile', function () {
   return gulp.src('test/*.hs', {read: false})
     .pipe(shell([
       "fay --Wall --strict test/*.hs --pretty --include src/ --output tmp/HaskellReactSpec.js <%= file.path %> "
-    ]))
+    ]));
 });
 
 var testWebpack = function () {

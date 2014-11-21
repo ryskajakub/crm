@@ -1,3 +1,5 @@
+{-# LANGUAGE EmptyDataDecls #-}
+
 module HaskellReact.Event where
 
 import FFI (ffi)
