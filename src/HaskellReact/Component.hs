@@ -20,7 +20,7 @@ import HaskellReact.Tag.Construct
 import HaskellReact.ReadFay (ReadFay, runReadFay)
 import HaskellReact.ComponentData (ReactThis)
 
-data ReactClass
+data ReactClass a
 data ReactInstance
 
 data ReactData a b = ReactData {
@@ -42,7 +42,7 @@ defaultReactData initialState safeRender = ReactData {
   , getInitialState = const $ initialState
 }
 
-declareReactClass :: ReactData a b -> ReactClass
+declareReactClass :: ReactData a b -> ReactClass b
 declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1) "
 
 declareAndRun :: ReactData a b -> ReactInstance
@@ -51,8 +51,13 @@ declareAndRun = classInstance . declareReactClass
 setState :: ReactThis a b -> Automatic a -> Fay ()
 setState = ffi " %1['setState'](%2) "
 
-classInstance :: ReactClass -> ReactInstance
+-- | Create propless react instance
+classInstance :: ReactClass a -> ReactInstance
 classInstance = ffi " %1(null) "
+
+-- | Pass the props to the React Class
+classInstance' :: ReactClass a -> Automatic a -> ReactInstance
+classInstance' = ffi " %1(%2) "
 
 placeElement :: ReactInstance -> Fay ()
 placeElement = ffi " require('../files/ReactWrapper').renderReact(%1) "
