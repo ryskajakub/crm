@@ -9,7 +9,7 @@ module HaskellReact.Component (
   , declareReactClass
   , declareAndRun
   , setState
-  , classInstance
+  , classInstance, classInstance'
   , placeElement
   , CommonJSModule
   , foreignReact 
