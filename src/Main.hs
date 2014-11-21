@@ -15,6 +15,21 @@ data InnerData = InnerData {
   header :: Text
 }
 
+data RouterData = RouterData {
+  location :: String
+}
+
+data RouteData a = RouteData {
+  path :: String
+  , handler :: ReactClass a
+}
+
+router = let 
+  slashClass = declareReactClass
+  in reactRouter "Routes" (RouterData "history") [
+    reactRouter "Route" (RouteData "/" $ declareInReact list) ([] :: [DOMElement])
+  ]
+
 main :: Fay ()
 main = runInReact list
 
@@ -23,10 +38,13 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
-runInReact :: DOMElement -> Fay ()
-runInReact element = placeElement $ declareAndRun $ ((defaultReactData 
+declareInReact :: DOMElement -> ReactClass a
+declareInReact element = declareReactClass $ (defaultReactData 
   (InnerData $ pack "ahoj")
-  (const $ readFayReturn element)))
+  (const $ readFayReturn element))
+
+runInReact :: DOMElement -> Fay ()
+runInReact = placeElement . classInstance . declareInReact
 
 list :: DOMElement
 list = constructDOMElement "div" defaultAttributes (Empty {}) [
@@ -34,6 +52,7 @@ list = constructDOMElement "div" defaultAttributes (Empty {}) [
   , span $ pack "elem 1"
   , span $ pack "elem 2"
   , textElement " elem 3"
+  , span $ pack "elem 4"
   , phantom bootstrap
   ]
 
@@ -56,10 +75,23 @@ requireReactBootstrap = ffi " require(\"react-bootstrap\") "
 -- | Creates an instance of a React Bootstrap class
 reactBootstrap :: (Renderable b)
                => String -- ^ The name of the Bootstrap class
-               -> Automatic a -- The props passed to the instance
-               -> Automatic b -- The children passed to the instance
+               -> Automatic a -- ^ The props passed to the instance
+               -> Automatic b -- ^ The children passed to the instance
                -> ReactInstance
 reactBootstrap = foreignReact requireReactBootstrap
+
+data ReactRouter
+instance CommonJSModule ReactRouter
+
+requireReactRouter :: ReactRouter
+requireReactRouter = ffi " require(\"react-router\") "
+
+reactRouter :: Renderable b
+            => String -- ^ The name of the ReactRouter class
+            -> Automatic a -- ^ Props that will be passed to the instance
+            -> Automatic b -- ^ The children passed to the instance
+            -> ReactInstance
+reactRouter = foreignReact requireReactRouter
 
 bootstrap :: ReactInstance
 bootstrap = reactBootstrap "DropdownButton" primary [

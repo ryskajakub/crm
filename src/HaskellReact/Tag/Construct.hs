@@ -6,12 +6,14 @@ import HaskellReact.Event
 import FFI (Defined(Undefined), ffi, Automatic)
 import "fay-base" Data.Text (Text)
 import Prelude hiding (id)
+import HaskellReact.ComponentData (ReactInstance)
 
 data DOMElement
 
 class Renderable a
 
 instance (Renderable a) => Renderable [a]
+instance Renderable ReactInstance
 instance Renderable Text
 instance Renderable DOMElement
 
