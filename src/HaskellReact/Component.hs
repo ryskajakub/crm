@@ -1,8 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 
 module HaskellReact.Component (
-  --ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
-  ReactData (..)
+  ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
   , ReactClass
   , ReactThis
   , ReactInstance
