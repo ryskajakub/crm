@@ -1,3 +1,3 @@
 module HaskellReact.ComponentData where
 
-data ReactThis a
+data ReactThis a b

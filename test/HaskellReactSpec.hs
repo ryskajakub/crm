@@ -18,7 +18,7 @@ data ReactState = ReactState {
   , countClicks :: Int
 }
 
-render' :: ReactThis ReactState -> ReadFay DOMElement
+render' :: ReactThis ReactState b -> ReadFay DOMElement
 render' = \reactInstance -> let RF return (>>=) _ = rf in do
   data' <- state reactInstance
   let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
@@ -49,7 +49,7 @@ aElement = let
     )
   in classInstance (declareReactClass reactData)
 
-onChange' :: ReactThis SimpleState -> SyntheticEvent -> Fay ()
+onChange' :: ReactThis SimpleState b -> SyntheticEvent -> Fay ()
 onChange' reactInstance changeEvent = do
   value <- eventValue changeEvent
   let ss = SimpleState $ length value

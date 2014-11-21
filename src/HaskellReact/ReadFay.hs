@@ -42,17 +42,23 @@ rf = RF {
   , then' = readFayThen
 }
 
-isMounted' :: ReactThis a -> Fay Bool
+isMounted' :: ReactThis a b -> Fay Bool
 isMounted' = ffi " %1['isMounted']() "
 
-isMounted :: ReactThis a -> ReadFay Bool
+isMounted :: ReactThis a b -> ReadFay Bool
 isMounted = ReadFay . isMounted'
 
-state' :: ReactThis a -> Fay a
+state' :: ReactThis a b -> Fay a
 state' = ffi " %1['state'] "
 
-state :: ReactThis a -> ReadFay a
+state :: ReactThis a b -> ReadFay a
 state = ReadFay . state'
+
+props' :: ReactThis a b -> Fay b
+props' = ffi " %1['props'] "
+
+props :: ReactThis a b -> ReadFay b
+props = ReadFay . props'
 
 {-
 Example usage of the ReadFay in the do notation

@@ -24,16 +24,16 @@ import HaskellReact.ComponentData (ReactThis)
 data ReactClass
 data ReactInstance
 
-data ReactData a = ReactData {
-  render :: ReactThis a -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
-  , componentWillMount :: ReactThis a -> Fay()
-  , componentDidMount :: ReactThis a -> Fay()
-  , componentWillUnmount :: ReactThis a -> Fay()
+data ReactData a b = ReactData {
+  render :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
+  , componentWillMount :: ReactThis a b -> Fay()
+  , componentDidMount :: ReactThis a b -> Fay()
+  , componentWillUnmount :: ReactThis a b -> Fay()
   , displayName :: String
   , getInitialState :: () -> a
 }
 
-defaultReactData :: a -> (ReactThis a -> ReadFay DOMElement) -> ReactData a
+defaultReactData :: a -> (ReactThis a b -> ReadFay DOMElement) -> ReactData a b
 defaultReactData initialState safeRender = ReactData {
   render = runReadFay . safeRender
   , componentWillMount = const $ return ()
@@ -43,13 +43,13 @@ defaultReactData initialState safeRender = ReactData {
   , getInitialState = const $ initialState
 }
 
-declareReactClass :: ReactData a -> ReactClass
+declareReactClass :: ReactData a b -> ReactClass
 declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1) "
 
-declareAndRun :: ReactData a -> ReactInstance
+declareAndRun :: ReactData a b -> ReactInstance
 declareAndRun = classInstance . declareReactClass
 
-setState :: ReactThis a -> Automatic a -> Fay ()
+setState :: ReactThis a b -> Automatic a -> Fay ()
 setState = ffi " %1['setState'](%2) "
 
 classInstance :: ReactClass -> ReactInstance
