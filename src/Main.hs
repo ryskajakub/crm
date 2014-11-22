@@ -17,14 +17,26 @@ data InnerData = InnerData {
   header :: Text
 }
 
-router :: ReactInstance
-router = let 
-  in reactRouter "Routes" (RouterData "history") [
-    reactRouter "Route" (RouteData "/" $ declareInReact list) ([] :: [DOMElement])
-  ]
+data' :: ReactData Empty a
+data' = defaultReactData (Empty {}) (
+  const $ readFayReturn $ 
+    div [
+      span $ pack "AAAAAA"
+      , span $ reactRouter "RouteHandler" (Empty {}) ([] :: [DOMElement])
+    ]
+  )
+
+navigation :: ReactClass a
+navigation = declareReactClass data'
+
+router :: Fay ()
+router = runRouter $
+  reactRouter "Route" (RouteData "/" $ navigation) (
+    reactRouter "Route" (RouteData "users" $ declareInReact $ div $ pack "LLL") ([] :: [DOMElement])
+  )
 
 main :: Fay ()
-main = runInReact list
+main = router
 
 data ReactState = ReactState {
   header1 :: Text
@@ -44,8 +56,9 @@ list = constructDOMElement "div" defaultAttributes (Empty {}) [
   a (defaultHyperlinkAttributes { href = Defined $ pack "http://seznam.cz/", target = Defined blank }) $ pack "Link"
   , span $ pack "elem 1"
   , span $ pack "elem 2"
-  , textElement " elem 3"
+  , textElement "elem 3"
   , span $ pack "elem 4"
+  , span $ pack "elem 5"
   , phantom bootstrap
   ]
 
