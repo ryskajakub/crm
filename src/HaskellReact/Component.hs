@@ -12,7 +12,7 @@ module HaskellReact.Component (
   , classInstance, classInstance'
   , placeElement
   , CommonJSModule
-  , foreignReact 
+  , foreignReact
 ) where
 
 import FFI (ffi, Automatic)
@@ -40,7 +40,21 @@ defaultReactData initialState safeRender = ReactData {
 }
 
 declareReactClass :: ReactData a b -> ReactClass b
-declareReactClass = ffi " require('../files/ReactWrapper').declareReactClass(%1) "
+declareReactClass = ffi "\
+\ (function(data) {\
+  \ var React = require('react');\
+  \ return React.createClass({\
+    \ render: function() {\
+      \ return data.render(this);\
+    \ }\
+    \ , componentWillMount: function () { return data.componentWillMount(this); }\
+    \ , componentDidMount: function () { return data.componentDidMount(this); }\
+    \ , componentWillUnmount: function () { return data.componentWillUnmount(this); }\
+    \ , displayName: data.displayName\
+    \ , getInitialState: data.getInitialState\
+  \ });\
+\ })(%1)\
+\ "
 
 declareAndRun :: ReactData a b -> ReactInstance
 declareAndRun = classInstance . declareReactClass
@@ -57,7 +71,14 @@ classInstance' :: ReactClass a -> Automatic a -> ReactInstance
 classInstance' = ffi " %1(%2) "
 
 placeElement :: ReactInstance -> Fay ()
-placeElement = ffi " require('../files/ReactWrapper').renderReact(%1) "
+placeElement = ffi "\
+\ (function(component) {\
+  \ var React = require('react');\
+  \ React.renderComponent (\
+    \ component, document.getElementById('main')\
+  \ );\
+\ })(%1)\
+\ "
 
 class CommonJSModule a
 
