@@ -8,24 +8,17 @@ import "fay-base" Data.Text (Text, pack)
 import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href, target), blank)
 import Prelude hiding (span, div, elem)
 import qualified Prelude as P
-import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay, isMounted)
+import HaskellReact.ReadFay (readFayReturn)
+import HaskellReact.Router
+import HaskellReact.Bootstrap
 import HaskellReact
 
 data InnerData = InnerData {
   header :: Text
 }
 
-data RouterData = RouterData {
-  location :: String
-}
-
-data RouteData a = RouteData {
-  path :: String
-  , handler :: ReactClass a
-}
-
+router :: ReactInstance
 router = let 
-  slashClass = declareReactClass
   in reactRouter "Routes" (RouterData "history") [
     reactRouter "Route" (RouteData "/" $ declareInReact list) ([] :: [DOMElement])
   ]
@@ -56,42 +49,10 @@ list = constructDOMElement "div" defaultAttributes (Empty {}) [
   , phantom bootstrap
   ]
 
-data ButtonData = ButtonData {
-  bsStyle :: Defined String
-  , title :: Defined String
-}
-
 data Empty = Empty {}
 
 primary :: ButtonData
 primary = ButtonData { bsStyle = Defined "primary", title = Defined "Buttonek" }
-
-data ReactBootstrap
-instance CommonJSModule ReactBootstrap
-
-requireReactBootstrap :: ReactBootstrap
-requireReactBootstrap = ffi " require(\"react-bootstrap\") "
-
--- | Creates an instance of a React Bootstrap class
-reactBootstrap :: (Renderable b)
-               => String -- ^ The name of the Bootstrap class
-               -> Automatic a -- ^ The props passed to the instance
-               -> Automatic b -- ^ The children passed to the instance
-               -> ReactInstance
-reactBootstrap = foreignReact requireReactBootstrap
-
-data ReactRouter
-instance CommonJSModule ReactRouter
-
-requireReactRouter :: ReactRouter
-requireReactRouter = ffi " require(\"react-router\") "
-
-reactRouter :: Renderable b
-            => String -- ^ The name of the ReactRouter class
-            -> Automatic a -- ^ Props that will be passed to the instance
-            -> Automatic b -- ^ The children passed to the instance
-            -> ReactInstance
-reactRouter = foreignReact requireReactRouter
 
 bootstrap :: ReactInstance
 bootstrap = reactBootstrap "DropdownButton" primary [
