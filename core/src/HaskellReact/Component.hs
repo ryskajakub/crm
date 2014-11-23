@@ -89,9 +89,3 @@ foreignReact :: (CommonJSModule b, Renderable c)
              -> Automatic c -- ^ children passed to the React class
              -> ReactInstance
 foreignReact = ffi " %1[%2](%3, %4) "
-
-foreignReactClass :: (CommonJSModule a)
-                  => Automatic a -- ^ module imported with CommonJS's @require()@
-                  -> String -- ^ name of the property in the module
-                  -> ReactClass b
-foreignReactClass = ffi " %1[%2] "

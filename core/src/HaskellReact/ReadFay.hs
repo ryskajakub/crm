@@ -11,6 +11,7 @@ module HaskellReact.ReadFay (
   , runReadFay
   , isMounted
   , state
+  , props
 ) where
 
 import qualified Prelude as P
