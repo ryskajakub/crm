@@ -27,8 +27,8 @@ navigation = declareReactClass data'
 
 router :: Fay ()
 router = runRouter $
-  reactRouter "Route" (RouteData "/" $ navigation) (
-    reactRouter "Route" (RouteData "users" $ declareInReact $ div $ pack "LLL") ([] :: [DOMElement])
+  route (RouteData "/" $ navigation) (
+    route (RouteData "users" $ declareInReact $ div $ pack "LLL") ([] :: [DOMElement])
   )
 
 declareInReact :: DOMElement -> ReactClass a

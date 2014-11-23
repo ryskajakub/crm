@@ -36,7 +36,7 @@ gulp.task('webpack', ['compile', 'copy-resources'], function () {
 });
 
 gulp.task('watch', function() {
-  gulp.watch([faySources, 'files/*.html'], ['webpack']);
+  gulp.watch([faySources, 'files/*', '../../haskell-react/core/src/**/*.hs', '../../haskell-react/wrappers/src/**/*.hs'], ['webpack']);
 });
 
 // other
