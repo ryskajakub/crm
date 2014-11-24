@@ -28,13 +28,13 @@ render' = \reactInstance -> let RF return (>>=) _ = rf in do
 singleElement :: ReactInstance
 singleElement = let
   innerData = ReactState (pack "The header") 0
-  reactData = (defaultReactData innerData) (render')
+  reactData = (defaultReactData (pack "SingleElement") innerData) (render')
   in declareAndRun reactData
 
 element :: ReactInstance
 element = let
   innerData = ReactState (pack "Element") 0
-  reactData = (defaultReactData innerData) (
+  reactData = (defaultReactData (pack "Element") innerData) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       mounted <- isMounted reactInstance
       readFayReturn $ constructDOMElement "h1" defaultAttributes defaultAttributes (pack $ show mounted)
@@ -44,7 +44,7 @@ element = let
 aElement :: ReactInstance
 aElement = let
   innerData = ReactState (pack "AElement") 0
-  reactData = (defaultReactData innerData) (
+  reactData = (defaultReactData (pack "Anchor1") innerData) (
     const $ readFayReturn $ a (aAttr {href = Defined $ pack "http://google.com"}) (pack "Google")
     )
   in classInstance (declareReactClass reactData)
@@ -57,7 +57,7 @@ onChange' reactInstance changeEvent = do
 
 relatedElements :: ReactInstance
 relatedElements = let
-  reactData = (defaultReactData (SimpleState 0)) (
+  reactData = (defaultReactData (pack "Simple1") (SimpleState 0)) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       actualState <- state reactInstance
       let spanElement = span (pack "Num: " `append` (pack $ show $ number actualState))
