@@ -7,6 +7,8 @@ module HaskellReact.Component (
   , ReactInstance
   , defaultReactData
   , declareReactClass
+  , statelessReactData
+  , declareStateless
   , declareAndRun
   , setState
   , classInstance, classInstance'
@@ -15,29 +17,40 @@ module HaskellReact.Component (
   , foreignReact
 ) where
 
-import FFI (ffi, Automatic)
+import FFI (ffi, Automatic, Ptr)
 import HaskellReact.Tag.Construct
 import HaskellReact.ReadFay (ReadFay, runReadFay)
 import HaskellReact.ComponentData (ReactThis, ReactClass, ReactInstance)
+import "fay-base" Data.Text (Text)
 
 data ReactData a b = ReactData {
   render :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
   , componentWillMount :: ReactThis a b -> Fay()
   , componentDidMount :: ReactThis a b -> Fay()
   , componentWillUnmount :: ReactThis a b -> Fay()
-  , displayName :: String
+  , displayName :: Text
   , getInitialState :: () -> a
 }
 
-defaultReactData :: a -> (ReactThis a b -> ReadFay DOMElement) -> ReactData a b
-defaultReactData initialState safeRender = ReactData {
+defaultReactData :: Text -> a -> (ReactThis a b -> ReadFay DOMElement) -> ReactData a b
+defaultReactData className initialState safeRender = ReactData {
   render = runReadFay . safeRender
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
   , componentWillUnmount = const $ return ()
-  , displayName = "<HaskellReactClass>"
+  , displayName = className
   , getInitialState = const $ initialState
 }
+
+statelessReactData :: Text
+                   -> (ReactThis () b -> ReadFay DOMElement) -- | Render function
+                   -> ReactData () b -- | React class
+statelessReactData className render' = defaultReactData className () render'
+
+declareStateless :: Text
+                 -> (ReactThis () b -> ReadFay DOMElement) -- | Render function
+                 -> ReactClass b
+declareStateless className = declareReactClass . statelessReactData className
 
 declareReactClass :: ReactData a b -> ReactClass b
 declareReactClass = ffi "\
@@ -64,11 +77,13 @@ setState = ffi " %1['setState'](%2) "
 
 -- | Create propless react instance
 classInstance :: ReactClass a -> ReactInstance
-classInstance = ffi " %1(null) "
+classInstance = ffi " (function () { return require('react')['createElement'](%1); })() "
 
 -- | Pass the props to the React Class
-classInstance' :: ReactClass a -> Automatic a -> ReactInstance
-classInstance' = ffi " %1(%2) "
+classInstance' :: ReactClass a -- | React class to instantiate
+               -> Automatic a -- | Props
+               -> ReactInstance
+classInstance' = ffi " (function () { return require('react')['createElement'](%1, %2); })() "
 
 placeElement :: ReactInstance -> Fay ()
 placeElement = ffi "\
@@ -88,4 +103,4 @@ foreignReact :: (CommonJSModule b, Renderable c)
              -> Automatic a -- ^ props passed to the React class
              -> Automatic c -- ^ children passed to the React class
              -> ReactInstance
-foreignReact = ffi " %1[%2](%3, %4) "
+foreignReact = ffi " (function () { return (require('react')['createElement'])(%1[%2], %3, %4); })() "

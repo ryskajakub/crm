@@ -1,6 +1,8 @@
+{-# LANGUAGE PackageImports #-}
+
 module HaskellReact.Bootstrap where
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance)
+import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Empty (Empty))
 import FFI (ffi, Automatic, Defined)
 
 data ReactBootstrap
@@ -12,7 +14,7 @@ data ButtonData = ButtonData {
 }
 
 requireReactBootstrap :: ReactBootstrap
-requireReactBootstrap = ffi " require(\"react-bootstrap\") "
+requireReactBootstrap = ffi " require('react-bootstrap') "
 
 -- | Creates an instance of a React Bootstrap class
 reactBootstrap :: (Renderable b)
@@ -21,3 +23,13 @@ reactBootstrap :: (Renderable b)
                -> Automatic b -- ^ The children passed to the instance
                -> ReactInstance
 reactBootstrap = foreignReact requireReactBootstrap
+
+navBar :: Renderable a
+       => Automatic a 
+       -> ReactInstance
+navBar children = reactBootstrap "Navbar" (Empty {}) children
+
+nav :: Renderable a
+    => Automatic a
+    -> ReactInstance
+nav children = reactBootstrap "Nav" (Empty {}) children

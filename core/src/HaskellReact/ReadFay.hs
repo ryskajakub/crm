@@ -64,6 +64,8 @@ props = ReadFay . props'
 {-
 Example usage of the ReadFay in the do notation
 
+{-# LANGUAGE RebindableSyntax #-}
+
 doNotation :: ReadFay ()
 doNotation = let RF return (>>=) (>>) = rf in do
   b <- return ()

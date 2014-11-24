@@ -63,12 +63,3 @@ list = constructDOMElement "div" defaultAttributes (Empty {}) [
   ]
 
 data Empty = Empty {}
-
-primary :: ButtonData
-primary = ButtonData { bsStyle = Defined "primary", title = Defined "Buttonek" }
-
-bootstrap :: ReactInstance
-bootstrap = reactBootstrap "DropdownButton" primary [
-  phantom $ reactBootstrap "MenuItem" Empty (pack "Action") :: DOMElement
-  , phantom $ reactBootstrap "MenuItem" Empty (pack "Action 2") :: DOMElement
-  ]
