@@ -5,7 +5,7 @@ module HaskellReact.Component (
   , ReactClass
   , ReactThis
   , ReactInstance
-  , defaultReactData
+  , reactData
   , declareReactClass
   , statelessReactData
   , declareStateless
@@ -32,8 +32,8 @@ data ReactData a b = ReactData {
   , getInitialState :: () -> a
 }
 
-defaultReactData :: Text -> a -> (ReactThis a b -> ReadFay DOMElement) -> ReactData a b
-defaultReactData className initialState safeRender = ReactData {
+reactData :: Text -> a -> (ReactThis a b -> ReadFay DOMElement) -> ReactData a b
+reactData className initialState safeRender = ReactData {
   render = runReadFay . safeRender
   , componentWillMount = const $ return ()
   , componentDidMount = const $ return ()
@@ -45,7 +45,7 @@ defaultReactData className initialState safeRender = ReactData {
 statelessReactData :: Text
                    -> (ReactThis () b -> ReadFay DOMElement) -- | Render function
                    -> ReactData () b -- | React class
-statelessReactData className render' = defaultReactData className () render'
+statelessReactData className render' = reactData className () render'
 
 declareStateless :: Text
                  -> (ReactThis () b -> ReadFay DOMElement) -- | Render function

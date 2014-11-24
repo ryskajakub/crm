@@ -29,26 +29,26 @@ render' = \reactInstance -> let RF return (>>=) _ = rf in do
 singleElement :: ReactInstance
 singleElement = let
   innerData = ReactState ("The header") 0
-  reactData = (defaultReactData ("SingleElement") innerData) (render')
-  in declareAndRun reactData
+  reactData' = (reactData ("SingleElement") innerData) (render')
+  in declareAndRun reactData'
 
 element :: ReactInstance
 element = let
   innerData = ReactState ("Element") 0
-  reactData = (defaultReactData ("Element") innerData) (
+  reactData' = (reactData ("Element") innerData) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       mounted <- isMounted reactInstance
       readFayReturn $ constructDOMElement "h1" defaultAttributes defaultAttributes (pack $ show mounted)
     )
-  in classInstance (declareReactClass reactData)
+  in classInstance (declareReactClass reactData')
 
 aElement :: ReactInstance
 aElement = let
   innerData = ReactState ("AElement") 0
-  reactData = (defaultReactData ("Anchor1") innerData) (
+  reactData' = (reactData ("Anchor1") innerData) (
     const $ readFayReturn $ a (aAttr {href = Defined "http://google.com"}) ("Google")
     )
-  in classInstance (declareReactClass reactData)
+  in classInstance (declareReactClass reactData')
 
 onChange' :: ReactThis SimpleState b -> SyntheticEvent -> Fay ()
 onChange' reactInstance changeEvent = do
@@ -58,7 +58,7 @@ onChange' reactInstance changeEvent = do
 
 relatedElements :: ReactInstance
 relatedElements = let
-  reactData = (defaultReactData ("Simple1") (SimpleState 0)) (
+  reactData' = (reactData ("Simple1") (SimpleState 0)) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       actualState <- state reactInstance
       let spanElement = span ("Num: " `append` (pack $ show $ number actualState))
@@ -68,7 +68,7 @@ relatedElements = let
           divElement = div [spanElement, inputElement]
       return divElement
       )
-  in declareAndRun reactData
+  in declareAndRun reactData'
 
 main :: Fay ()
 main =  ffi " (function() { var obj = {}; obj['HaskellReactSpec'] = HaskellReactSpec; obj['FayDD'] = Fay$$_; module.exports = obj; })() "
