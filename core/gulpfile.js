@@ -28,7 +28,7 @@ gulp.task('test-file', ['test-compile'], testWebpack);
 gulp.task('test-file-without-compile', testWebpack);
 
 gulp.task('test-watch', function() {
-  gulp.watch(['test/*.hs', faySources, ''], ['test-file']);
+  gulp.watch(['test/*.hs', faySources], ['test-file']);
   gulp.watch(['test/*.js', 'files/*.js'], ['test-file-without-compile']);
 });
 
