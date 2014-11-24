@@ -21,9 +21,9 @@ instance Renderable DOMElement
 data NoAttributes = NoAttributes {}
 
 data Attributes = Attributes {
-  className :: Defined String
+  className :: Defined Text
   , onClick :: Defined ( SyntheticMouseEvent -> Fay() )
-  , id :: Defined String
+  , id :: Defined Text
 }
 
 defaultAttributes :: Attributes
@@ -35,7 +35,7 @@ defaultAttributes = Attributes {
 
 -- | Unsafely create a html tag
 constructDOMElement :: (Renderable a)
-                    => String -- name of tag
+                    => Text -- name of tag
                     -> Attributes -- html attributes common for all elements
                     -> Automatic b -- tag specific attributes
                     -> Automatic a -- child

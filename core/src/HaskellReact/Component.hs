@@ -99,7 +99,7 @@ class CommonJSModule a
 
 foreignReact :: (CommonJSModule b, Renderable c)
              => Automatic b -- ^ module imported with CommonJS's @require()@
-             -> String -- ^ name of the property in the module
+             -> Text -- ^ name of the property in the module
              -> Automatic a -- ^ props passed to the React class
              -> Automatic c -- ^ children passed to the React class
              -> ReactInstance

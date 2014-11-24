@@ -1,3 +1,7 @@
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module HaskellReact.Tag.Input (
   InputAttributes(..)
   , defaultInputAttributes
@@ -31,8 +35,9 @@ module HaskellReact.Tag.Input (
 import HaskellReact.Tag.Construct
 import HaskellReact.Event
 import FFI
+import "fay-base" Data.Text (Text, fromString)
 
-newtype InputType = InputType String
+newtype InputType = InputType Text
 
 button :: InputType
 button = InputType "button"
@@ -106,8 +111,8 @@ week = InputType "week"
 
 data InputAttributes = InputAttributes {
   type' :: InputType
-  , value :: Defined String
-  , checked :: Defined String
+  , value :: Defined Text
+  , checked :: Defined Text
   , onChange :: Defined (SyntheticEvent -> Fay ())
 }
 

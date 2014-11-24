@@ -1,4 +1,6 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module HaskellReact.Tag.Hyperlink(
   a , a'
@@ -31,11 +33,11 @@ module HaskellReact.Tag.Hyperlink(
 
 import FFI (Defined(Undefined))
 import HaskellReact.Tag.Construct
-import "fay-base" Data.Text (Text)
+import "fay-base" Data.Text (Text, fromString)
 
 type URL = Text
-newtype Rel = Rel String
-newtype HyperlinkTarget = HyperlinkTarget String
+newtype Rel = Rel Text
+newtype HyperlinkTarget = HyperlinkTarget Text
 
 data HyperlinkAttributes = HyperlinkAttributes {
   href :: Defined URL
@@ -91,7 +93,7 @@ self = HyperlinkTarget "_self"
 top :: HyperlinkTarget
 top = HyperlinkTarget "_top"
 
-framename :: String -> HyperlinkTarget
+framename :: Text -> HyperlinkTarget
 framename = HyperlinkTarget
 
 aAttr :: HyperlinkAttributes

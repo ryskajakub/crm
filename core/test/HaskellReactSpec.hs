@@ -1,12 +1,13 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module HaskellReactSpec where
 
 import FFI (Defined(Defined), ffi)
 import HaskellReact
-import "fay-base" Data.Text (Text, append, showInt, pack)
-import Prelude hiding (span, div)
+import "fay-base" Data.Text (Text, append, showInt, pack, fromString, length)
+import Prelude hiding (span, div, length)
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
 import HaskellReact.Tag.Hyperlink (a, href, aAttr)
 import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay, state, isMounted)
@@ -21,20 +22,20 @@ data ReactState = ReactState {
 render' :: ReactThis ReactState b -> ReadFay DOMElement
 render' = \reactInstance -> let RF return (>>=) _ = rf in do
   data' <- state reactInstance
-  let text = (header1 data') `append` (pack " ") `append` (showInt $ countClicks data')
+  let text = (header1 data') `append` (" ") `append` (showInt $ countClicks data')
   let onClickHandler = Defined $ const $ setState reactInstance (data' { countClicks = countClicks data' + 1} )
   readFayReturn $ constructDOMElement "a" (defaultAttributes { className = Defined "blue", onClick = onClickHandler }) defaultAttributes text
 
 singleElement :: ReactInstance
 singleElement = let
-  innerData = ReactState (pack "The header") 0
-  reactData = (defaultReactData (pack "SingleElement") innerData) (render')
+  innerData = ReactState ("The header") 0
+  reactData = (defaultReactData ("SingleElement") innerData) (render')
   in declareAndRun reactData
 
 element :: ReactInstance
 element = let
-  innerData = ReactState (pack "Element") 0
-  reactData = (defaultReactData (pack "Element") innerData) (
+  innerData = ReactState ("Element") 0
+  reactData = (defaultReactData ("Element") innerData) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       mounted <- isMounted reactInstance
       readFayReturn $ constructDOMElement "h1" defaultAttributes defaultAttributes (pack $ show mounted)
@@ -43,9 +44,9 @@ element = let
 
 aElement :: ReactInstance
 aElement = let
-  innerData = ReactState (pack "AElement") 0
-  reactData = (defaultReactData (pack "Anchor1") innerData) (
-    const $ readFayReturn $ a (aAttr {href = Defined $ pack "http://google.com"}) (pack "Google")
+  innerData = ReactState ("AElement") 0
+  reactData = (defaultReactData ("Anchor1") innerData) (
+    const $ readFayReturn $ a (aAttr {href = Defined "http://google.com"}) ("Google")
     )
   in classInstance (declareReactClass reactData)
 
@@ -57,13 +58,13 @@ onChange' reactInstance changeEvent = do
 
 relatedElements :: ReactInstance
 relatedElements = let
-  reactData = (defaultReactData (pack "Simple1") (SimpleState 0)) (
+  reactData = (defaultReactData ("Simple1") (SimpleState 0)) (
     \reactInstance -> let RF return (>>=) _ = rf in do
       actualState <- state reactInstance
-      let spanElement = span (pack "Num: " `append` (pack $ show $ number actualState))
+      let spanElement = span ("Num: " `append` (pack $ show $ number actualState))
           inputElement = input defaultAttributes (defaultInputAttributes {
             onChange = Defined $ \changeEvent -> onChange' reactInstance changeEvent
-          }) (pack "")
+          }) ("")
           divElement = div [spanElement, inputElement]
       return divElement
       )

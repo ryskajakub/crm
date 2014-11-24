@@ -1,3 +1,7 @@
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 module HaskellReact.Tag.Simple (
   span, span'
   , div, div'
@@ -8,9 +12,10 @@ module HaskellReact.Tag.Simple (
 import HaskellReact.Tag.Construct
 import FFI (Automatic)
 import Prelude hiding (div, span)
+import "fay-base" Data.Text (Text, fromString)
 
 constructSimple :: Renderable a 
-               => String 
+               => Text 
                -> Attributes 
                -> Automatic a 
                -> DOMElement
