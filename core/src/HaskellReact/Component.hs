@@ -25,9 +25,9 @@ import "fay-base" Data.Text (Text)
 
 data ReactData a b = ReactData {
   render :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
-  , componentWillMount :: ReactThis a b -> Fay()
-  , componentDidMount :: ReactThis a b -> Fay()
-  , componentWillUnmount :: ReactThis a b -> Fay()
+  , componentWillMount :: ReactThis a b -> Fay ()
+  , componentDidMount :: ReactThis a b -> Fay ()
+  , componentWillUnmount :: ReactThis a b -> Fay ()
   , displayName :: Text
   , getInitialState :: () -> a
 }

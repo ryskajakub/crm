@@ -1,6 +1,11 @@
 {-# LANGUAGE EmptyDataDecls #-}
 
-module HaskellReact.ComponentData where
+module HaskellReact.ComponentData ( 
+  Empty(Empty)
+  , ReactClass
+  , ReactThis
+  , ReactInstance
+) where
 
 data Empty = Empty {}
 
