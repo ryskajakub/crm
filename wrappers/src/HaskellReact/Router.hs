@@ -1,17 +1,20 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 module HaskellReact.Router where
 
 import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactClass, ReactInstance, DOMElement, Empty (Empty))
-import "fay-base" Data.Text (Text)
+import "fay-base" Data.Text (Text, fromString)
 import FFI (ffi, Automatic, Defined(Defined, Undefined))
+import Prelude hiding (fromString)
 
 requireReactRouter :: ReactRouter
 requireReactRouter = ffi " require('react-router') "
 
 reactRouter :: Renderable b
-            => String -- ^ The name of the ReactRouter class
+            => Text -- ^ The name of the ReactRouter class
             -> Automatic a -- ^ Props that will be passed to the instance
             -> Automatic b -- ^ The children passed to the instance
             -> ReactInstance
@@ -21,12 +24,12 @@ data ReactRouter
 instance CommonJSModule ReactRouter
 
 data RouteData = forall a. RouteData {
-  path :: Defined String
+  path :: Defined Text
   , handler :: ReactClass a
   , name :: Defined Text
 }
 
-routeProps :: Text -> ReactClass a -> Defined String -> RouteData
+routeProps :: Text -> ReactClass a -> Defined Text -> RouteData
 routeProps name handler path = RouteData path handler (Defined name)
 
 newtype DefaultRouteProps = DefaultRouteProps { routeData :: RouteData }

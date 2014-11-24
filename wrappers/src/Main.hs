@@ -1,12 +1,13 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Main where
 
 import FFI
-import "fay-base" Data.Text (Text, pack)
+import "fay-base" Data.Text (Text, fromString)
 import HaskellReact.Tag.Hyperlink (a, defaultHyperlinkAttributes, HyperlinkAttributes(href, target), blank)
-import Prelude hiding (span, div, elem)
+import Prelude hiding (span, div, elem, fromString)
 import qualified Prelude as P
 import HaskellReact.ReadFay (readFayReturn)
 import HaskellReact.Router
@@ -17,23 +18,25 @@ data InnerData = InnerData {
   header :: Text
 }
 
-data' :: ReactData Empty a
-data' = defaultReactData (Empty {}) (
+navigation :: ReactClass a
+navigation = declareReactClass $ reactData "Navigation" (Empty {}) (
   const $ readFayReturn $ 
     div [
-      span $ pack "AAAAAA"
-      , span $ reactRouter "RouteHandler" (Empty {}) ([] :: [DOMElement])
+      span $ "AAAAAA"
+      , span $ routeHandler
     ]
   )
 
-navigation :: ReactClass a
-navigation = declareReactClass data'
-
 router :: Fay ()
 router = runRouter $
-  reactRouter "Route" (RouteData "/" $ navigation) (
-    reactRouter "Route" (RouteData "users" $ declareInReact $ div $ pack "LLL") ([] :: [DOMElement])
-  )
+  route (routeProps "root" navigation (Defined "/")) [
+    reactInstance2DOM $ route 
+      (routeProps "users" (declareInReact $ div $ "LLL") (Defined "users"))
+      ([] :: [DOMElement])
+    , reactInstance2DOM $ route
+      (routeProps "aaa" (declareInReact $ div $ "aaa") (Defined "aaa"))
+      ([] :: [DOMElement])
+  ]
 
 main :: Fay ()
 main = router
@@ -44,22 +47,19 @@ data ReactState = ReactState {
 }
 
 declareInReact :: DOMElement -> ReactClass a
-declareInReact element = declareReactClass $ (defaultReactData 
-  (InnerData $ pack "ahoj")
+declareInReact element = declareReactClass $ (reactData 
+  "GenericElement"
+  (InnerData "ahoj")
   (const $ readFayReturn element))
 
 runInReact :: DOMElement -> Fay ()
 runInReact = placeElement . classInstance . declareInReact
 
 list :: DOMElement
-list = constructDOMElement "div" defaultAttributes (Empty {}) [
-  a (defaultHyperlinkAttributes { href = Defined $ pack "http://seznam.cz/", target = Defined blank }) $ pack "Link"
-  , span $ pack "elem 1"
-  , span $ pack "elem 2"
-  , textElement "elem 3"
-  , span $ pack "elem 4"
-  , span $ pack "elem 5"
-  , phantom bootstrap
+list = div [
+  a (defaultHyperlinkAttributes { href = Defined $ "http://seznam.cz/", target = Defined blank }) "Link"
+  , span "elem 1"
+  , span "elem 2"
+  , span "elem 4"
+  , span "elem 5"
   ]
-
-data Empty = Empty {}
