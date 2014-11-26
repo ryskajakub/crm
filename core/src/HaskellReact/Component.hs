@@ -97,7 +97,7 @@ placeElement :: ReactInstance -- ^ element to render
 placeElement = ffi "\
 \ (function(component) {\
   \ var React = require('react');\
-  \ React.renderComponent (\
+  \ React.render (\
     \ component, %2\
   \ );\
 \ })(%1)\
