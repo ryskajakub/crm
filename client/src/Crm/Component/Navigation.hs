@@ -21,14 +21,3 @@ navigation router innerElement = declareReactClass $ reactData ("Navigation") (E
       , innerElement
     ]
   )
-{-
-
-data NavLinkData = NavLinkData {
-  to :: Text
-}
-
-navLink :: ReactClass NavLinkData
-navLink = declareStateless ("NavLink") $ \reactThis -> let RF return (>>=) (>>) = rf in do
-  p <- props reactThis
-  readFayReturn $ li $ link (LinkProps $ to p) (to p)
--}
