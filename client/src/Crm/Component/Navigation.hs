@@ -15,8 +15,8 @@ navigation router innerElement = declareReactClass $ reactData ("Navigation") (E
   \reactThis -> readFayReturn $
     div [
       reactInstance2DOM $ navBar $ nav [
-        li $ link "Seznam firem" "" (router)
-        , li $ link "Naplánované servisy" "/company/555" (router)
+        li $ link "Seznam firem" "" router
+        , li $ link "Naplánované servisy" "/company/555" router
       ]
       , innerElement
     ]
