@@ -15,10 +15,10 @@ data DOMElement
 
 class Renderable a
 
+instance Renderable a => Renderable [a]
 instance Renderable ReactInstance
 instance Renderable Text
 instance Renderable DOMElement
-instance Renderable [DOMElement]
 
 text2DOM :: Text -> DOMElement
 text2DOM = unsafeCoerce

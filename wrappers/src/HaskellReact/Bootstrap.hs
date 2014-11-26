@@ -5,15 +5,25 @@
 module HaskellReact.Bootstrap where
 
 import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Empty (Empty))
-import FFI (ffi, Automatic, Defined)
+import FFI (ffi, Automatic, Defined(Undefined))
 import "fay-base" Data.Text (fromString, Text)
+import HaskellReact.Event (SyntheticMouseEvent)
+import Prelude
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap
 
-data ButtonData = ButtonData {
+data ButtonProps = ButtonProps {
   bsStyle :: Defined Text
   , title :: Defined Text
+  , onClick :: Defined (SyntheticMouseEvent -> Fay ())
+}
+
+buttonProps :: ButtonProps
+buttonProps = ButtonProps {
+  bsStyle = Undefined
+  , title = Undefined
+  , onClick = Undefined
 }
 
 requireReactBootstrap :: ReactBootstrap
@@ -36,3 +46,14 @@ nav :: Renderable a
     => Automatic a
     -> ReactInstance
 nav children = reactBootstrap "Nav" (Empty {}) children
+
+button' :: Renderable a
+        => ButtonProps
+        -> Automatic a
+        -> ReactInstance
+button' props children = reactBootstrap "Button" props children
+
+button :: Renderable a
+       => Automatic a
+       -> ReactInstance
+button = button' buttonProps

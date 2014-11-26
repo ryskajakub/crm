@@ -7,6 +7,8 @@ module HaskellReact.Tag.Simple (
   , div, div'
   , li, li'
   , ul, ul'
+  , section
+  , main
 ) where
 
 import HaskellReact.Tag.Construct
@@ -44,3 +46,9 @@ ul' = constructSimple "ul"
 
 ul :: Renderable a => Automatic a -> DOMElement
 ul = ul' defaultAttributes
+
+main :: (Renderable a) => Automatic a -> DOMElement
+main = constructSimple "main" defaultAttributes
+
+section :: (Renderable a) => Automatic a -> DOMElement
+section = constructSimple "section" defaultAttributes
