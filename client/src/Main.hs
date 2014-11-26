@@ -6,30 +6,52 @@ import HaskellReact
 import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (span, div, elem)
 import FFI (ffi, Nullable)
-import HaskellReact.BackboneRouter (startRouter)
+import HaskellReact.BackboneRouter (startRouter, BackboneRouter)
 import Crm.Component.CompaniesList (companiesList)
+import Crm.Component.Navigation
+import Crm.Component.Data
 import Data.Nullable (fromNullable)
 
-data RouterState = Slash | Company Int deriving Show
+import Debug.Trace
+
+mainStartState :: MainState
+mainStartState = MainState {
+  routerState = Slash
+  , router = Nothing
+}
+
+modifyMainState :: RouterState -> MainState -> MainState
+modifyMainState routerState' mainState = mainState {
+  routerState = routerState'
+}
 
 main :: Fay ()
 main = placeElementToBody $ classInstance $ declareReactClass $
-  (reactData (pack "Yay") (Company 5) (\reactThis ->
-    state reactThis `readFayBind` \urlState ->
-    case urlState of
-      Slash -> companiesList 666
-      Company id -> companiesList id
+  (reactData (pack "CrmRouter") (mainStartState) (\reactThis ->
+    state reactThis `readFayBind` \mainState -> let
+      router' = router mainState
+      in case routerState mainState of
+        Slash -> companiesList router' 666
+        Company id' -> companiesList router' id'
   )) {
-    componentWillMount = (\reactThis ->
-      startRouter [(pack "company/:id", \params -> let
+    componentWillMount = \reactThis -> do
+      router' <- startRouter [(pack "company/:id", \params -> let
         companyId' = parseSafely $ head params
         in case companyId' of
-          Just (companyId) -> setState reactThis $ Company companyId
+          Just companyId -> do
+            state' <- runReadFay $ state reactThis
+            let newState = modifyMainState (Company companyId) state'
+            setState reactThis newState
           Nothing -> putStrLn "Unsupported route."
-        ), (pack "", \params -> do
-          setState reactThis Slash
+        ), (pack "", const $ do
+          state' <- (runReadFay $ state reactThis)
+          let newState = modifyMainState Slash state'
+          setState reactThis newState
         )]
-    )
+      state' <- runReadFay $ state reactThis
+      setState reactThis $ state' {
+        router = Just router'
+      }
   }
 
 parseInt :: Text -> Nullable Int

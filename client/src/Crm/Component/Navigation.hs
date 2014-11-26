@@ -2,27 +2,25 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Crm.Component.Navigation (
-  navigation
-) where
+module Crm.Component.Navigation where
 
 import HaskellReact
 import "fay-base" Data.Text (pack, Text, fromString)
 import Prelude hiding (span, div, elem)
 import HaskellReact.Bootstrap (navBar, nav)
+import HaskellReact.BackboneRouter (link, BackboneRouter)
 
-navigation :: DOMElement -> ReactClass a
-navigation innerElement = declareReactClass $ reactData ("Navigation") (Empty {}) (
-  \reactThis ->
-    readFayReturn $
-      div [
-        reactInstance2DOM $ navBar $ nav [
-          li $ "Seznam firem"
-          , li $ "Naplánované servisy"
-        ]
-        , innerElement
+navigation :: Maybe BackboneRouter -> DOMElement -> ReactClass a
+navigation router innerElement = declareReactClass $ reactData ("Navigation") (Empty {}) (
+  \reactThis -> readFayReturn $
+    div [
+      reactInstance2DOM $ navBar $ nav [
+        li $ link "Seznam firem" "" (router)
+        , li $ link "Naplánované servisy" "/company/555" (router)
       ]
-    )
+      , innerElement
+    ]
+  )
 {-
 
 data NavLinkData = NavLinkData {
