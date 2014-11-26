@@ -8,7 +8,7 @@ var faySources = 'src/**/*.hs';
 gulp.task('test-compile', function () {
   return gulp.src('test/*.hs', {read: false})
     .pipe(shell([
-      "fay --Wall --strict test/*.hs --pretty --include src/ --output tmp/HaskellReactSpec.js <%= file.path %> "
+      "fay --package 'fay-dom' --Wall --strict test/*.hs --pretty --include src/ --output tmp/HaskellReactSpec.js <%= file.path %> "
     ]));
 });
 

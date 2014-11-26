@@ -41,6 +41,9 @@ defaultAttributes = Attributes {
   , id = Undefined
 }
 
+mkAttrs :: Attributes
+mkAttrs = defaultAttributes
+
 -- | Unsafely create a html tag
 constructDOMElement :: (Renderable a)
                     => Text -- name of tag

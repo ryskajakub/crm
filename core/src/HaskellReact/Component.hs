@@ -77,7 +77,7 @@ declareReactClass = ffi "\
 declareAndRun :: ReactData a b -> ReactInstance
 declareAndRun = classInstance . declareReactClass
 
-setState :: ReactThis a b -> Automatic a -> Fay ()
+setState :: ReactThis a b -> (Automatic a) -> Fay ()
 setState = ffi " %1['setState'](%2) "
 
 -- | Create propless react instance

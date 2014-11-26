@@ -2,14 +2,13 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module HaskellReact.Tag.Hyperlink(
-  a , a'
+module HaskellReact.Tag.Hyperlink (
+  a , a', a''
   , HyperlinkAttributes(HyperlinkAttributes)
   , href
   , rel
   , target
-  , defaultHyperlinkAttributes
-  , aAttr
+  , defaultHyperlinkAttributes, mkAAttrs
   , Rel
   , alternate
   , author
@@ -31,7 +30,7 @@ module HaskellReact.Tag.Hyperlink(
   , framename
 ) where
 
-import FFI (Defined(Undefined))
+import FFI (Defined(Undefined, Defined))
 import HaskellReact.Tag.Construct
 import "fay-base" Data.Text (Text, fromString)
 
@@ -96,8 +95,8 @@ top = HyperlinkTarget "_top"
 framename :: Text -> HyperlinkTarget
 framename = HyperlinkTarget
 
-aAttr :: HyperlinkAttributes
-aAttr = defaultHyperlinkAttributes
+mkAAttrs :: HyperlinkAttributes
+mkAAttrs = defaultHyperlinkAttributes
 
 defaultHyperlinkAttributes :: HyperlinkAttributes
 defaultHyperlinkAttributes = HyperlinkAttributes {
@@ -106,8 +105,11 @@ defaultHyperlinkAttributes = HyperlinkAttributes {
   , target = Undefined
 }
 
-a' :: (Renderable a) => Attributes -> HyperlinkAttributes -> a -> DOMElement
-a' = constructDOMElement "a" 
+a'' :: (Renderable a) => Attributes -> HyperlinkAttributes -> a -> DOMElement
+a'' = constructDOMElement "a" 
 
-a :: (Renderable a) => HyperlinkAttributes -> a -> DOMElement
-a = a' defaultAttributes
+a' :: (Renderable a) => HyperlinkAttributes -> a -> DOMElement
+a' = a'' defaultAttributes
+
+a :: (Renderable b) => URL -> b -> DOMElement
+a url = a' (mkAAttrs { href = Defined url })

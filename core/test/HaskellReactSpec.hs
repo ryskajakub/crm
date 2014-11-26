@@ -9,7 +9,7 @@ import HaskellReact
 import "fay-base" Data.Text (Text, append, showInt, pack, fromString, length)
 import Prelude hiding (span, div, length)
 import HaskellReact.Tag.Input (input, defaultInputAttributes, onChange)
-import HaskellReact.Tag.Hyperlink (a, href, aAttr)
+import HaskellReact.Tag.Hyperlink (a, href, mkAAttrs)
 import HaskellReact.ReadFay (RF(RF), rf, readFayReturn, ReadFay, runReadFay, state, isMounted)
 
 data SimpleState = SimpleState { number :: Int }
@@ -46,7 +46,7 @@ aElement :: ReactInstance
 aElement = let
   innerData = ReactState ("AElement") 0
   reactData' = (reactData ("Anchor1") innerData) (
-    const $ readFayReturn $ a (aAttr {href = Defined "http://google.com"}) ("Google")
+    const $ readFayReturn $ a "http://google.com" "Google"
     )
   in classInstance (declareReactClass reactData')
 
