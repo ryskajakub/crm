@@ -16,7 +16,7 @@ import Debug.Trace
 
 mainStartState :: MainState
 mainStartState = MainState {
-  routerState = Slash
+  routerState = CompaniesList
   , router = Nothing
 }
 
@@ -31,21 +31,12 @@ main = placeElementToBody $ classInstance $ declareReactClass $
     state reactThis `readFayBind` \mainState -> let
       router' = router mainState
       in case routerState mainState of
-        Slash -> companiesList router' 666
-        Company id' -> companiesList router' id'
+        CompaniesList -> companiesList router'
   )) {
     componentWillMount = \reactThis -> do
-      router' <- startRouter [(pack "company/:id", \params -> let
-        companyId' = parseSafely $ head params
-        in case companyId' of
-          Just companyId -> do
-            state' <- runReadFay $ state reactThis
-            let newState = modifyMainState (Company companyId) state'
-            setState reactThis newState
-          Nothing -> putStrLn "Unsupported route."
-        ), (pack "", const $ do
+      router' <- startRouter [(pack "", const $ do
           state' <- (runReadFay $ state reactThis)
-          let newState = modifyMainState Slash state'
+          let newState = modifyMainState CompaniesList state'
           setState reactThis newState
         )]
       state' <- runReadFay $ state reactThis

@@ -2,7 +2,7 @@ module Crm.Component.Data where
 
 import HaskellReact.BackboneRouter
 
-data RouterState = Slash | Company Int
+data RouterState = CompaniesList
 
 data MainState = MainState {
   routerState :: RouterState

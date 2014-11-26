@@ -16,7 +16,6 @@ navigation router innerElement = declareReactClass $ reactData ("Navigation") (E
     div [
       reactInstance2DOM $ navBar $ nav [
         li $ link "Seznam firem" "" router
-        , li $ link "Naplánované servisy" "/company/555" router
       ]
       , innerElement
     ]
