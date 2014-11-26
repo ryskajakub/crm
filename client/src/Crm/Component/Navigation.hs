@@ -16,7 +16,10 @@ navigation innerElement = declareReactClass $ reactData ("Navigation") (Empty {}
   \reactThis ->
     readFayReturn $
       div [
-        span "navigace"
+        reactInstance2DOM $ navBar $ nav [
+          li $ "Seznam firem"
+          , li $ "Naplánované servisy"
+        ]
         , innerElement
       ]
     )
