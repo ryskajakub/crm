@@ -22,6 +22,9 @@ main = placeElementToBody $ classInstance $ declareReactClass $
         in case companyId' of
           Just (companyId) -> setState reactThis $ Company companyId
           Nothing -> putStrLn "Unsupported route."
+        ), (pack "", \params -> do
+          putStrLn "at root"
+          setState reactThis Slash
         )]
     )
   }
