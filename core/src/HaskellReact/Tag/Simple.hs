@@ -14,11 +14,11 @@ import FFI (Automatic)
 import Prelude hiding (div, span)
 import "fay-base" Data.Text (Text, fromString)
 
-constructSimple :: Renderable a 
-               => Text 
-               -> Attributes 
-               -> Automatic a 
-               -> DOMElement
+constructSimple :: Renderable a
+                => Text
+                -> Attributes
+                -> Automatic a
+                -> DOMElement
 constructSimple name attributes children = constructDOMElement name attributes (NoAttributes {}) children
 
 span' :: Renderable a => Attributes -> Automatic a -> DOMElement

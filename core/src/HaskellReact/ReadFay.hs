@@ -16,7 +16,7 @@ module HaskellReact.ReadFay (
 
 import qualified Prelude as P
 import Prelude hiding((>>=), (>>), return)
-import FFI (ffi)
+import FFI (ffi, Automatic)
 import HaskellReact.ComponentData (ReactThis)
 
 newtype ReadFay a = ReadFay { runReadFay :: Fay a }
@@ -49,13 +49,13 @@ isMounted' = ffi " %1['isMounted']() "
 isMounted :: ReactThis a b -> ReadFay Bool
 isMounted = ReadFay . isMounted'
 
-state' :: ReactThis a b -> Fay a
+state' :: ReactThis a b -> Fay (Automatic a)
 state' = ffi " %1['state'] "
 
 state :: ReactThis a b -> ReadFay a
 state = ReadFay . state'
 
-props' :: ReactThis a b -> Fay b
+props' :: ReactThis a b -> Fay (Automatic b)
 props' = ffi " %1['props'] "
 
 props :: ReactThis a b -> ReadFay b
