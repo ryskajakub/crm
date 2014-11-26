@@ -3,27 +3,31 @@
 module Main where
 
 import HaskellReact
-import "fay-base" Data.Text (pack)
+import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (span, div, elem)
-import HaskellReact.Router
-import Crm.Component.Navigation (navigation)
-import FFI (Defined(Defined, Undefined))
+import FFI (ffi, Nullable)
+import HaskellReact.BackboneRouter (startRouter)
+import Data.Nullable (fromNullable)
+
+data RouterState = Slash | Company Int deriving Show
 
 main :: Fay ()
-main = router
+main = placeElementToBody $ classInstance $ declareReactClass $
+  (reactData (pack "Yay") (Company 5) (\reactThis ->
+    readFayReturn $ div $ pack $ show $ state reactThis
+  )) {
+    componentWillMount = (\reactThis ->
+      startRouter [(pack "company/:id", \params -> let
+        companyId' = parseSafely $ head params
+        in case companyId' of
+          Just (companyId) -> setState reactThis $ Company companyId
+          Nothing -> putStrLn "Unsupported route."
+        )]
+    )
+  }
 
-router :: Fay ()
-router = runRouter $
-  route (RouteData (Defined "/") navigation Undefined) [
-    route (RouteData (Defined "users") (declareInReact $ div $ pack "users") (Defined $ pack "users")) 
-      ([] :: [DOMElement])
-    , defaultRoute $ defaultRouteProps 
-        (Defined $ pack "default") 
-        (declareInReact $ div $ pack "default")
-  ]
+parseInt :: Text -> Nullable Int
+parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; console.log(ret); return ret; })() "
 
-declareInReact :: DOMElement -> ReactClass a
-declareInReact element = declareReactClass $ (defaultReactData
-  (pack "DeclareInReact")
-  (Empty {})
-  (const $ readFayReturn element))
+parseSafely :: Text -> Maybe Int
+parseSafely possibleNumber = fromNullable $ parseInt possibleNumber

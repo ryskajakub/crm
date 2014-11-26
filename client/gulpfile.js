@@ -20,7 +20,7 @@ gulp.task('copy-bootstrap', function () {
 gulp.task('compile', function() {
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([
-      "fay --Wall --pretty <%= file.path %> --include 'src/,../../haskell-react/core/src/,../../haskell-react/wrappers/src/' --output tmp/HaskellReact.js"
+      "fay --Wall --pretty <%= file.path %> --include 'src/,../../haskell-react/core/src/,../../haskell-react/wrappers/src/' --output tmp/HaskellReact.js --package 'fay-dom'"
     ]));
 });
 
