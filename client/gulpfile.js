@@ -17,6 +17,15 @@ gulp.task('copy-bootstrap', function () {
     .pipe(gulp.dest('build/bootstrap'));
 });
 
+gulp.task('generate-rest-client', function () {
+  // just read anything basically
+  return gulp.src('gulpfile.js', {read: false})
+    .pipe(shell([
+      '../server/.cabal-sandbox/bin/crm-gen-client -j > tmp/CrmApi.js'
+    ]))
+});
+
+
 gulp.task('compile', function() {
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([
@@ -24,7 +33,7 @@ gulp.task('compile', function() {
     ]));
 });
 
-gulp.task('webpack', ['compile', 'copy-resources'], function () {
+gulp.task('webpack', ['compile', 'copy-resources', 'generate-rest-client'], function () {
   return gulp.src('tmp/HaskellReact.js', {read: false})
     .pipe(webpack({
       entry: "./tmp/HaskellReact.js"
