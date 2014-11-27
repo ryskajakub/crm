@@ -8,16 +8,12 @@ module Crm.Component.CompaniesList (
 
 import HaskellReact
 import Crm.Component.Navigation (navigation)
+import Crm.Component.Data
 import "fay-base" Data.Text (fromString, Text)
 import Prelude hiding (div)
 import HaskellReact.BackboneRouter (BackboneRouter)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Glyphicon as G
-
-data Company = Company {
-  companyName :: Text
-  , nextMaintenance :: Text
-}
 
 companies :: [Company]
 companies = [
@@ -30,8 +26,8 @@ companiesList :: Maybe BackboneRouter -- ^ Router from which the link can be cre
               -> ReadFay DOMElement
 companiesList router = readFayReturn $ let 
   mkRow company = tr [
-    td $ companyName company
-    , td $ nextMaintenance company
+    td $ name company
+    , td $ plant company
     ]
   rows = map mkRow companies 
   element = main [
