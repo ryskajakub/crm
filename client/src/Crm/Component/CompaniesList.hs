@@ -20,16 +20,24 @@ companies = [
   Company "F 1" "50 dní"
   , Company "F 2" "2 roky"
   , Company "F 5" "8 roků"
+  , Company "F 6" "9 roků"
   ]
+
+companiesListBody :: ReactClass a
+companiesListBody = let
+  data' = reactData "CompaniesListBody" companies (\reactThis ->
+    state reactThis `readFayBind` \companies ->
+      readFayReturn $ tbody $ map (\company ->
+      tr [
+        td $ name company
+        , td $ plant company
+      ]) companies
+    )
+  in declareReactClass data'
 
 companiesList :: Maybe BackboneRouter -- ^ Router from which the link can be created
               -> ReadFay DOMElement
 companiesList router = readFayReturn $ let 
-  mkRow company = tr [
-    td $ name company
-    , td $ plant company
-    ]
-  rows = map mkRow companies 
   element = main [
     section $
       B.button [
@@ -42,7 +50,7 @@ companiesList router = readFayReturn $ let
           th "Název firmy"
           , th "Platnost servisu vyprší za"
         ]
-        , tbody rows
+        , reactInstance2DOM $ classInstance $ companiesListBody
       ]
     ]
   elementWithNavigation = reactInstance2DOM $ classInstance $ navigation router element
