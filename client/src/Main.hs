@@ -13,6 +13,7 @@ import HaskellReact.BackboneRouter (startRouter, BackboneRouter)
 import Crm.Component.CompaniesList (companiesList)
 import Crm.Component.Navigation
 import Crm.Component.Data
+import Crm.Shared.Data
 import Crm.Server (fetchFromServer)
 
 import Debug.Trace
@@ -58,4 +59,4 @@ parseSafely :: Text -> Maybe Int
 parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
 companiesVar :: Fay (Var [Company])
-companiesVar = newVar [Company (pack "1") (pack "2")]
+companiesVar = newVar [Company ("1") ("2")]

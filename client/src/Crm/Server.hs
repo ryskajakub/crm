@@ -3,7 +3,7 @@
 module Crm.Server where
 
 import FFI (ffi)
-import Crm.Component.Data
+import Crm.Shared.Data
 import "fay-base" Data.Text (unpack, pack)
 import Data.Var
 
@@ -25,7 +25,7 @@ fetchCompanies = ffi "\
   \ for (var i = 0; i < data.length - 1; i++ ){\
     \ items[i] = data[i][1];\
     \ items[i]['id'] = data[i][0];\
-    \ items[i]['instance'] = 'company';\
+    \ items[i]['instance'] = 'Company';\
   \ }\
   \ %2(items); \
 \ })\

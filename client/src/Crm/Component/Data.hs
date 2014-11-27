@@ -11,8 +11,3 @@ data MainState = MainState {
   routerState :: RouterState
   , router :: Maybe BackboneRouter
 }
-
-data Company = Company {
-  name :: Text
-  , plant :: Text
-}
