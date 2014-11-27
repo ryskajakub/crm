@@ -6,6 +6,7 @@ import HaskellReact
 import "fay-base" Data.Text (Text, pack)
 import Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
+import Data.Var (Var, newVar)
 import FFI (ffi, Nullable)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter)
@@ -29,13 +30,14 @@ modifyMainState routerState' mainState = mainState {
 
 main :: Fay ()
 main = do
-  fetchFromServer
+  companiesVar' <- companiesVar
+  fetchFromServer companiesVar'
   placeElementToBody $ classInstance $ declareReactClass $
     (reactData (pack "CrmRouter") (mainStartState) (\reactThis ->
       state reactThis `readFayBind` \mainState -> let
         router' = router mainState
         in case routerState mainState of
-          CompaniesList -> companiesList router'
+          CompaniesList -> companiesList router' companiesVar'
     )) {
       componentWillMount = \reactThis -> do
         router' <- startRouter [(pack "", const $ do
@@ -54,3 +56,6 @@ parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === '
 
 parseSafely :: Text -> Maybe Int
 parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
+
+companiesVar :: Fay (Var [Company])
+companiesVar = newVar [Company (pack "1") (pack "2")]

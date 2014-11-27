@@ -2,22 +2,23 @@
 
 module Crm.Server where
 
-import Data.Var
 import FFI (ffi)
 import Crm.Component.Data
-import "fay-base" Data.Text (unpack)
+import "fay-base" Data.Text (unpack, pack)
+import Data.Var
 
-fetchFromServer :: Fay ()
-fetchFromServer = do
+fetchFromServer :: (Var [Company]) -> Fay ()
+fetchFromServer companiesVar = do
   crmApi <- crmApiFacade
-  printlnApi crmApi (\companies -> forM_ companies (\cmp -> putStrLn $ unpack $ name cmp))
+  fetchCompanies crmApi (\companies -> do
+    set companiesVar companies)
 
 data CrmApi
 
-printlnApi :: CrmApi -- ^ Pointer to Crm api phantom
-           -> ([Company] -> Fay ()) -- ^ Callback ran on the fetched data
-           -> Fay ()
-printlnApi = ffi "\
+fetchCompanies :: CrmApi -- ^ Pointer to Crm api phantom
+               -> ([Company] -> Fay ()) -- ^ Callback ran on the fetched data
+               -> Fay ()
+fetchCompanies = ffi "\
 \ %1['Company']['list'](function(d) {\
   \ var data = d.items;\
   \ var items = [];\
@@ -38,6 +39,3 @@ crmApiFacade = ffi "\
   \ return crmApi;\
 \ })() \
 \ "
-
-companiesVar :: Fay (Var [Company])
-companiesVar = newVar []
