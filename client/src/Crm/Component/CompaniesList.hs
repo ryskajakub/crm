@@ -12,7 +12,7 @@ import Crm.Component.Data
 import "fay-base" Data.Text (fromString, Text, unpack)
 import Prelude hiding (div, span)
 import Data.Var (Var, subscribeAndRead)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe, whenJust)
 import Data.Defined (fromDefined)
 import FFI (Defined(Defined, Undefined))
 import HaskellReact.BackboneRouter (BackboneRouter)
@@ -48,6 +48,9 @@ companiesListBody companiesVar = let
           setState reactThis (startingCompaniesState { companies = Defined newCompanies })
           )
         setState reactThis (startingCompaniesState { unsubscribe = Defined unsubscribe' })
+      , componentWillUnmount = \reactThis -> do
+        state' <- runReadFay $ state reactThis
+        whenJust (fromDefined $ unsubscribe state') (\doUnsubscribe -> doUnsubscribe ())
     }
   in declareReactClass data'
 
