@@ -48,6 +48,8 @@ gulp.task('watch', function() {
   gulp.watch([faySources, 'files/*', '../../haskell-react/core/src/**/*.hs', '../../haskell-react/wrappers/src/**/*.hs'], ['webpack']);
 });
 
+gulp.task('default', ['watch']);
+
 // other
 
 gulp.task('clean', function () {

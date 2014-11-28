@@ -1,13 +1,15 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE CPP #-}
 
 module Main where
 
-import HaskellReact
+import HaskellReact hiding (main)
+import "fay-base" Prelude hiding (span, div, elem)
 import "fay-base" Data.Text (Text, pack)
-import Prelude hiding (span, div, elem)
-import Data.Nullable (fromNullable)
+import "fay-base" Data.Nullable (fromNullable)
 import Data.Var (Var, newVar)
-import FFI (ffi, Nullable)
+import "fay-base" FFI (ffi, Nullable)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter)
 import Crm.Component.CompaniesList (companiesList)
@@ -16,6 +18,20 @@ import Crm.Component.Data
 import Crm.Server (fetchFromServer)
 
 import Debug.Trace
+
+-- hack, so the code can be type-checked by hdev-tools,
+-- maybe there is an easier way like compiling the code as library or 
+-- something
+#ifdef FAY
+type TheIO a = Fay a
+fakeCoerce :: Fay () -> TheIO ()
+fakeCoerce = id
+#else
+import qualified "base" Prelude as P
+type TheIO a = P.IO a
+fakeCoerce :: Fay () -> TheIO ()
+fakeCoerce = undefined
+#endif
 
 mainStartState :: MainState
 mainStartState = MainState {
@@ -28,8 +44,8 @@ modifyMainState routerState' mainState = mainState {
   routerState = routerState'
 }
 
-main :: Fay ()
-main = do
+main :: TheIO ()
+main = fakeCoerce $ do
   companiesVar' <- companiesVar
   fetchFromServer companiesVar'
   placeElementToBody $ classInstance $ declareReactClass $

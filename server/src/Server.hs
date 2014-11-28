@@ -11,10 +11,14 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Server (
   api, main
 ) where
+
+import "base" Prelude
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Logger (runStderrLoggingT, runNoLoggingT, NoLoggingT(NoLoggingT))
@@ -22,7 +26,7 @@ import Control.Monad.Error (ErrorT(ErrorT), Error)
 import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
 import Control.Monad (liftM, forM_)
 
-import Data.Text (pack, Text)
+import "text" Data.Text (pack, Text)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Typeable.Internal (Typeable)
@@ -46,7 +50,7 @@ import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLow
 import Generics.Regular
 import GHC.Generics
 
-import Debug.Trace(trace)
+import "base" Debug.Trace(trace)
 import Data.Aeson.Types (toJSON, ToJSON)
 import Data.Aeson (encode)
 

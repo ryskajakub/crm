@@ -52,4 +52,4 @@ Executable crm-gen-client
     , mtl >= 2.0 && < 2.3
     , rest-core == 0.33.*
     , server
-    , rest-gen == 666
+    , rest-gen == 0.16.1.2
