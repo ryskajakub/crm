@@ -47,25 +47,31 @@ import Generics.Regular
 import GHC.Generics
 
 import Debug.Trace(trace)
-import Data.Aeson.Types (toJSON, ToJSON)
-import Data.Aeson (encode)
+import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
+import Data.Aeson (encode, object, (.=), Value(Null))
+
+import Crm.Shared.Data
 
 type Dependencies = (ReaderT ConnectionPool IO :: * -> *)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-Company json
+Company
   name String
   plant String
   contact String
   phone String
   address String
-  deriving Show Typeable Generic
 |]
 
-deriveAll ''Company "PFCompany"
-type instance PF Company = PFCompany
+deriveAll ''SCompany "SPFCompany"
+type instance PF SCompany = SPFCompany
 
-instance JS.JSONSchema Company where schema = gSchema
+instance FromJSON SCompany where
+  parseJSON = const $ undefined
+instance ToJSON SCompany where
+  toJSON _ = Null
+instance JS.JSONSchema SCompany where 
+  schema = gSchema
 
 performDb :: (Error a) => (ConnectionPool -> IO b) -> ErrorT a (ReaderT ConnectionPool IO) b
 performDb action = ask >>= \pool -> liftIO $ action pool
@@ -81,10 +87,16 @@ selectAllCompanies = runSqlPersistMPool (liftM (map (\e -> let
   )) (selectList [] []))
 
 listing :: ListHandler Dependencies
-listing = mkListing (jsonO . someO) (const $ performDb selectAllCompanies)
+listing = mkListing (jsonO . someO) (const $ do 
+    companies <- performDb selectAllCompanies
+    let sdCompanies = map (\company -> SCompany (companyName $ snd company) (companyPlant $ snd company)) companies
+    return sdCompanies
+  )
 
 companyCreate :: Handler Dependencies
-companyCreate = mkInputHandler (jsonI . someI) (\company -> performDb $ insertCompany company)
+companyCreate = mkInputHandler (jsonI . someI) (\company -> 
+  let company' = company :: SCompany
+  in performDb $ insertCompany $ Company "1" "2" "3" "4" "5")
 
 companies :: [Company]
 companies = let
@@ -100,10 +112,10 @@ createCompanyData = runSqlPersistMPool $ do
 createSampleData :: Handler Dependencies
 createSampleData = mkConstHandler id (performDb createCompanyData)
 
-companySchema :: Schema Company () ()
+companySchema :: Schema () () ()
 companySchema = withListing () (named [("migrate", static () )])
 
-companyResource :: Resource Dependencies Dependencies Company () ()
+companyResource :: Resource Dependencies Dependencies () () ()
 companyResource = mkResourceId {
   list = const listing
   , name = "company"
