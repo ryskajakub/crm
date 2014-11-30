@@ -26,6 +26,9 @@ import Data.Text (pack, Text)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Typeable.Internal (Typeable)
+import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
+import Data.Aeson (encode, object, (.=), Value(Null))
+import Data.Maybe (fromJust)
 
 import Snap.Http.Server (quickHttpServe)
 import Snap.Core (Snap)
@@ -44,13 +47,12 @@ import Database.Persist.Postgresql (withPostgresqlPool, runMigration, runSqlPers
 import Database.Persist.TH (mkPersist, mkMigrate, share, sqlSettings, persistLowerCase)
 
 import Generics.Regular
-import GHC.Generics
 
 import Debug.Trace(trace)
-import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
-import Data.Aeson (encode, object, (.=), Value(Null))
 
-import Crm.Shared.Data
+import qualified Crm.Shared.Data as D
+
+import Fay.Convert (showToFay)
 
 type Dependencies = (ReaderT ConnectionPool IO :: * -> *)
 
@@ -63,14 +65,15 @@ Company
   address String
 |]
 
-deriveAll ''SCompany "SPFCompany"
-type instance PF SCompany = SPFCompany
+deriveAll ''D.Company "PFCompany"
+type instance PF D.Company = PFCompany
 
-instance FromJSON SCompany where
+instance FromJSON D.Company where
   parseJSON = const $ undefined
-instance ToJSON SCompany where
-  toJSON _ = Null
-instance JS.JSONSchema SCompany where 
+instance ToJSON D.Company where
+  -- super unsafe
+  toJSON c = trace (show c) ((fromJust . showToFay) c)
+instance JS.JSONSchema D.Company where
   schema = gSchema
 
 performDb :: (Error a) => (ConnectionPool -> IO b) -> ErrorT a (ReaderT ConnectionPool IO) b
@@ -89,13 +92,21 @@ selectAllCompanies = runSqlPersistMPool (liftM (map (\e -> let
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do 
     companies <- performDb selectAllCompanies
-    let sdCompanies = map (\company -> SCompany (companyName $ snd company) (companyPlant $ snd company)) companies
+    let 
+      toSharedCompany company = D.Company 
+        (fromIntegral $ fst company)
+        (companyName $ snd company) 
+        (companyPlant $ snd company) 
+        (companyContact $ snd company) 
+        (companyPhone $ snd company) 
+        (companyAddress $ snd company)
+      sdCompanies = map toSharedCompany companies
     return sdCompanies
   )
 
 companyCreate :: Handler Dependencies
 companyCreate = mkInputHandler (jsonI . someI) (\company -> 
-  let company' = company :: SCompany
+  let company' = company :: D.Company
   in performDb $ insertCompany $ Company "1" "2" "3" "4" "5")
 
 companies :: [Company]
