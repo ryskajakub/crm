@@ -1,10 +1,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE CPP #-}
 
 module Crm.Shared.Data where
 
+#ifndef FAY
 import GHC.Generics
 import Data.Data
+#endif
 
 data Company = Company {
   id :: Int
@@ -13,4 +16,7 @@ data Company = Company {
   , contact :: String
   , phone :: String
   , address :: String
-} deriving (Generic, Typeable, Data, Show)
+} 
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif

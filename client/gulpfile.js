@@ -8,7 +8,7 @@ var sources = [
   'src/'
   , '../../haskell-react/core/src/'
   , '../../haskell-react/wrappers/src/'
-  , './shared/src/'
+  , './shared/'
 ];
 
 var sourcesAsGlob = _.map(sources, function(source) {

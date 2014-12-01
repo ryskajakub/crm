@@ -19,14 +19,7 @@ fetchCompanies :: CrmApi -- ^ Pointer to Crm api phantom
                -> Fay ()
 fetchCompanies = ffi "\
 \ %1['Company']['list'](function(d) {\
-  \ var data = d.items;\
-  \ var items = [];\
-  \ for (var i = 0; i < data.length - 1; i++ ){\
-    \ items[i] = data[i][1];\
-    \ items[i]['id'] = data[i][0];\
-    \ items[i]['instance'] = 'Company';\
-  \ }\
-  \ %2(items); \
+  \ %2(d.items); \
 \ })\
 \ "
 
