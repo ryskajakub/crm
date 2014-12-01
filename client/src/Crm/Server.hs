@@ -4,7 +4,6 @@ module Crm.Server where
 
 import FFI (ffi)
 import Crm.Shared.Data
-import "fay-base" Data.Text (unpack, pack)
 import Data.Var
 
 fetchFromServer :: (Var [Company]) -> Fay ()
