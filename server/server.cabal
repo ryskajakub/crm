@@ -21,10 +21,10 @@ flag server
 
 Library
   default-language:  Haskell2010
-  hs-source-dirs: src
-  ghc-options:       -Wall
+  hs-source-dirs:    src, shared
+  ghc-options:       -Wall -O0
   exposed-modules:
-    Server
+    Server, Crm.Shared.Data
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3
@@ -42,6 +42,7 @@ Library
     , regular
     , json-schema
     , aeson
+    , fay
 
 Executable run-server
   default-language:  Haskell2010
@@ -68,6 +69,6 @@ Executable crm-gen-client
       , mtl >= 2.0 && < 2.3
       , rest-core == 0.33.*
       , server
-      , rest-gen == 0.16.1.2
+      , rest-gen == 0.16.1.*
   else
     buildable: False

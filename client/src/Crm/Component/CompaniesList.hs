@@ -9,7 +9,8 @@ module Crm.Component.CompaniesList (
 import HaskellReact
 import Crm.Component.Navigation (navigation)
 import Crm.Component.Data
-import "fay-base" Data.Text (fromString, Text, unpack)
+import Crm.Shared.Data
+import "fay-base" Data.Text (fromString, Text, unpack, pack)
 import Prelude hiding (div, span)
 import Data.Var (Var, subscribeAndRead)
 import Data.Maybe (fromMaybe, whenJust)
@@ -39,8 +40,8 @@ companiesListBody companiesVar = let
     state reactThis `readFayBind` \companiesListState ->
       readFayReturn $ tbody $ map (\company ->
       tr [
-        td $ name company
-        , td $ plant company
+        td $ pack $ name company
+        , td $ pack $ plant company
       ]) (fromMaybe [] $ fromDefined $ companies companiesListState)
     )) {
       componentDidMount = \reactThis -> do

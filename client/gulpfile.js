@@ -2,8 +2,21 @@ var gulp = require("gulp");
 var shell = require("gulp-shell");
 var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
+var _ = require('underscore');
 
-var faySources = 'src/**/*.hs'
+var sources = [
+  'src/'
+  , '../../haskell-react/core/src/'
+  , '../../haskell-react/wrappers/src/'
+  , './shared/'
+];
+
+var sourcesAsGlob = _.map(sources, function(source) {
+  return source + '**/*.hs';
+});
+var sourcesCommaDelimited = "'" + _.reduce(_.tail(sources), function(acc, elem) {
+  return acc + ',' + elem;
+}, _.head(sources)) + "'";
 
 // main
 
@@ -27,10 +40,9 @@ gulp.task('generate-rest-client', function () {
 
 
 gulp.task('compile', function() {
+  var fayCommand = "fay --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package 'fay-dom'";
   return gulp.src('src/Main.hs', {read: false})
-    .pipe(shell([
-      "fay --Wall --pretty <%= file.path %> --include 'src/,../../haskell-react/core/src/,../../haskell-react/wrappers/src/' --output tmp/HaskellReact.js --package 'fay-dom'"
-    ]));
+    .pipe(shell([fayCommand]));
 });
 
 gulp.task('webpack', ['compile', 'copy-resources', 'generate-rest-client'], function () {
@@ -45,7 +57,8 @@ gulp.task('webpack', ['compile', 'copy-resources', 'generate-rest-client'], func
 });
 
 gulp.task('watch', function() {
-  gulp.watch([faySources, 'files/*', '../../haskell-react/core/src/**/*.hs', '../../haskell-react/wrappers/src/**/*.hs'], ['webpack']);
+  var watchedPaths = _.union(['files/*'], sourcesAsGlob);
+  gulp.watch(watchedPaths, ['webpack']);
 });
 
 gulp.task('default', ['watch']);
