@@ -9,33 +9,21 @@ import Opaleye.Column (Column)
 
 import Data.Profunctor.Product (p2)
 
-import qualified Opaleye.Internal.Unpackspec as U
-import Data.Profunctor.Product.Default (Default)
-import qualified Opaleye.Sql as Sql
-import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, connectPostgreSQL, postgreSQLConnectionString)
+import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 
-import Control.Monad (forM_)
+import Control.Monad.Reader (ReaderT)
 
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Error (ErrorT(ErrorT), Error)
-import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
-import Control.Monad (liftM, forM_)
-
-import Data.Text (pack, Text)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
-import Data.Typeable.Internal (Typeable)
-import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
-import Data.Aeson (encode, object, (.=), Value(Null))
+import Data.Aeson.Types (toJSON, ToJSON)
 import Data.Maybe (fromJust)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
-import Rest.Resource (Resource, mkResourceId, Void, schema, list, create, statics, name)
-import Rest.Schema (Schema, named, withListing, static)
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (ListHandler, mkListing, Handler, mkInputHandler, mkConstHandler)
-import Rest.Types.Error (Reason)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, name)
+import Rest.Schema (Schema, named, withListing)
+import Rest.Dictionary.Combinators (jsonO, someO)
+import Rest.Handler (ListHandler, mkListing)
 
 import Generics.Regular
 
@@ -73,8 +61,6 @@ type Dependencies = (ReaderT Connection IO :: * -> *)
 deriveAll ''Company "PFCompany"
 type instance PF Company = PFCompany
 
-instance FromJSON Company where
-  parseJSON = const $ undefined
 instance ToJSON Company where
   -- super unsafe
   toJSON c = ((fromJust . showToFay) c)
