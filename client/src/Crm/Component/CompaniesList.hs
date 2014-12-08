@@ -40,7 +40,7 @@ companiesListBody companiesVar = let
     state reactThis `readFayBind` \companiesListState ->
       readFayReturn $ tbody $ map (\company ->
       tr [
-        td $ pack $ name company
+        td $ pack $ companyName company
         , td $ pack $ plant company
       ]) (fromMaybe [] $ fromDefined $ companies companiesListState)
     )) {
