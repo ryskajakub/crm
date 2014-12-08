@@ -16,8 +16,6 @@ import Crm.Component.Data
 import Crm.Shared.Data
 import Crm.Server (fetchFromServer)
 
-import Debug.Trace
-
 mainStartState :: MainState
 mainStartState = MainState {
   routerState = CompaniesList

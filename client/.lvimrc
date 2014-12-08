@@ -1,1 +1,1 @@
-../helpers/.lvimrc
+let g:syntastic_haskell_hdevtools_args = '-g-i../../haskell-react/core/src -g-i../../haskell-react/wrappers/src -g-i.cabal-sandbox/share/x86_64-linux-ghc-7.6.3/fay-dom-0.5/src/ -g-i.cabal-sandbox/share/x86_64-linux-ghc-7.6.3/fay-base-0.19.4.1/src/ -g-iclient -g-ishared -g-Wall -g-package"fay-base-0.19.4.1" -gclient/src/NoMain.hs'
