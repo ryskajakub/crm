@@ -1,6 +1,6 @@
 module Main(main) where
 
-import qualified Server as S
+import qualified Server
 
 main :: IO ()
-main = S.main
+main = Server.main

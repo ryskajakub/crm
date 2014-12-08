@@ -33,16 +33,14 @@ Library
     , rest-types == 1.11.1
     , snap-core == 0.9.*
     , snap-server == 0.9.*
-    , persistent == 2.1.0.2
-    , persistent-postgresql == 2.1.0.1
-    , persistent-template == 2.1
-    , monad-logger == 0.3.8
     , text >= 0.8
-    , transformers >= 0.4
     , regular
     , json-schema
     , aeson
     , fay
+    , opaleye
+    , product-profunctors
+    , postgresql-simple
 
 Executable run-server
   default-language:  Haskell2010
