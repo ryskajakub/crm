@@ -17,9 +17,11 @@ import Crm.Component.Data
 import Crm.Shared.Data
 import Crm.Server (fetchFromServer)
 
+import "fay-base" Debug.Trace
+
 mainStartState :: MainState
 mainStartState = MainState {
-  routerState = CompaniesList
+  routerState = CompanyDetail 0
   , router = Nothing
 }
 
@@ -35,10 +37,9 @@ main' = do
   placeElementToBody $ classInstance $ declareReactClass $
     (reactData (pack "CrmRouter") (mainStartState) (\reactThis ->
       state reactThis `readFayBind` \mainState -> let
-        router' = router mainState
         in case routerState mainState of
-          CompaniesList -> companiesList router' companiesVar'
-          CompanyDetail cId -> companyDetail router' companiesVar' cId
+          CompaniesList -> companiesList (router mainState) companiesVar'
+          CompanyDetail cId -> companyDetail (router mainState) companiesVar' cId
     )) {
       componentWillMount = \reactThis -> do
         router' <- startRouter [(pack "", const $ do

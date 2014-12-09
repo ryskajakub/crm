@@ -11,7 +11,7 @@ import Data.Data
 #endif
 
 data Company = Company {
-  id :: Int
+  companyId :: Int
   , companyName :: String
   , plant :: String
   , contact :: String

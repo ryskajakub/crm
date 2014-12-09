@@ -14,12 +14,14 @@ import Prelude hiding (div, span)
 import Data.Var (Var, subscribeAndRead)
 import HaskellReact.BackboneRouter (BackboneRouter)
 
+import "fay-base" Debug.Trace
+
 companyDetail :: Maybe BackboneRouter -- ^ Router from which the link can be created
               -> Var [Company]
               -> Int -- ^ Company id
               -> ReadFay DOMElement
 companyDetail router' companyVar cId = readFayReturn $ let
-  data' = reactData "CompanyDetail" () (\reactThis -> 
+  data' = reactData "CompanyDetail" (Empty {}) (\reactThis ->
       readFayReturn $ reactInstance2DOM $ classInstance $ navigation router' (div "ahoj")
     )
   in reactInstance2DOM $ classInstance $ declareReactClass data'
