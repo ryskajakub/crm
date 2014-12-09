@@ -11,6 +11,7 @@ import "fay-base" Data.Text (Text, pack)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter)
 import Crm.Component.CompaniesList (companiesList)
+import Crm.Component.CompanyDetail (companyDetail)
 import Crm.Component.Navigation
 import Crm.Component.Data
 import Crm.Shared.Data
@@ -37,11 +38,20 @@ main' = do
         router' = router mainState
         in case routerState mainState of
           CompaniesList -> companiesList router' companiesVar'
+          CompanyDetail cId -> companyDetail router' companiesVar' cId
     )) {
       componentWillMount = \reactThis -> do
         router' <- startRouter [(pack "", const $ do
             state' <- (runReadFay $ state reactThis)
             let newState = modifyMainState CompaniesList state'
+            setState reactThis newState
+          ), (pack "companies/:id", \params -> do
+            state' <- (runReadFay $ state reactThis)
+            let
+              companyIdParsed = fromNullable $ parseInt $ head params
+              newState = maybe state' (\cId ->
+                modifyMainState (CompanyDetail cId) state'
+                ) companyIdParsed
             setState reactThis newState
           )]
         state' <- runReadFay $ state reactThis

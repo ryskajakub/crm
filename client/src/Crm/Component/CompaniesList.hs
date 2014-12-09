@@ -20,8 +20,6 @@ import HaskellReact.BackboneRouter (BackboneRouter)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import Debug.Trace
-
 data CompaniesListState = CompaniesListState {
   companies :: Defined [Company]
   , unsubscribe :: Defined (() -> Fay())
