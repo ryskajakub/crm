@@ -21,7 +21,7 @@ import "fay-base" Debug.Trace
 
 mainStartState :: MainState
 mainStartState = MainState {
-  routerState = CompanyDetail 0
+  routerState = CompaniesList
   , router = Nothing
 }
 
