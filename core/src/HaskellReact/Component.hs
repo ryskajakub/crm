@@ -25,12 +25,12 @@ import "fay-base" Data.Text (Text)
 import DOM (Element, getBody)
 
 data ReactData a b = ReactData {
-  render :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
-  , componentWillMount :: ReactThis a b -> Fay ()
-  , componentDidMount :: ReactThis a b -> Fay ()
+  render                 :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
+  , componentWillMount   :: ReactThis a b -> Fay ()
+  , componentDidMount    :: ReactThis a b -> Fay ()
   , componentWillUnmount :: ReactThis a b -> Fay ()
-  , displayName :: Text
-  , getInitialState :: () -> a
+  , displayName          :: Text
+  , getInitialState      :: () -> Automatic a
 }
 
 -- | Constructor for creating ReactData
@@ -67,7 +67,11 @@ declareReactClass = ffi "\
     \ }\
     \ , componentWillMount: function () { return data.componentWillMount(this); }\
     \ , componentDidMount: function () { return data.componentDidMount(this); }\
-    \ , componentWillUnmount: function () { return data.componentWillUnmount(this); }\
+    \ /*\
+    \ , componentWillUnmount: function () {\
+      \ return data. componentWillUnmount (this);\
+    \ }\
+    \ */\
     \ , displayName: data.displayName\
     \ , getInitialState: data.getInitialState\
   \ });\

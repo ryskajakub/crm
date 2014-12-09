@@ -57,3 +57,8 @@ button :: Renderable a
        => Automatic a
        -> ReactInstance
 button = button' buttonProps
+
+table :: Renderable a
+      => Automatic a
+      -> ReactInstance
+table = reactBootstrap "Table" (Empty {})

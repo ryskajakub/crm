@@ -21,3 +21,6 @@ glyphicon glyph = glyphicon' (GlyphiconProps glyph)
 
 plus :: DOMElement
 plus = glyphicon "plus"
+
+list :: DOMElement
+list = glyphicon "list"

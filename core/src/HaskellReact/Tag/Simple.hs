@@ -9,6 +9,11 @@ module HaskellReact.Tag.Simple (
   , ul, ul'
   , section
   , main
+  , tr 
+  , thead
+  , tbody
+  , th
+  , td
 ) where
 
 import HaskellReact.Tag.Construct
@@ -52,3 +57,18 @@ main = constructSimple "main" defaultAttributes
 
 section :: (Renderable a) => Automatic a -> DOMElement
 section = constructSimple "section" defaultAttributes
+
+th :: (Renderable a) => Automatic a -> DOMElement
+th = constructSimple "th" defaultAttributes
+
+tr :: (Renderable a) => Automatic a -> DOMElement
+tr = constructSimple "tr" defaultAttributes
+
+td :: (Renderable a) => Automatic a -> DOMElement
+td = constructSimple "td" defaultAttributes
+
+thead :: (Renderable a) => Automatic a -> DOMElement
+thead = constructSimple "thead" defaultAttributes
+
+tbody :: (Renderable a) => Automatic a -> DOMElement
+tbody = constructSimple "tbody" defaultAttributes
