@@ -15,6 +15,8 @@ module HaskellReact.Tag.Simple (
   , tbody
   , th
   , td
+  , dl
+  , h1
 ) where
 
 import HaskellReact.Tag.Construct
@@ -73,3 +75,9 @@ thead = constructSimple "thead" defaultAttributes
 
 tbody :: (Renderable a) => Automatic a -> DOMElement
 tbody = constructSimple "tbody" defaultAttributes
+
+dl :: (Renderable a) => Automatic a -> DOMElement
+dl = constructSimple "dl" defaultAttributes
+
+h1 :: (Renderable a) => Automatic a -> DOMElement
+h1 = constructSimple "h1" defaultAttributes

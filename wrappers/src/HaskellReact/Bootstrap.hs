@@ -6,7 +6,7 @@
 module HaskellReact.Bootstrap where
 
 import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Empty (Empty))
-import FFI (ffi, Automatic, Defined(Undefined))
+import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import HaskellReact.Event (SyntheticMouseEvent)
 import "fay-base" Prelude
@@ -41,12 +41,12 @@ reactBootstrap = foreignReact requireReactBootstrap
 navBar :: Renderable a
        => Automatic a 
        -> ReactInstance
-navBar children = reactBootstrap "Navbar" (Empty {}) children
+navBar children = reactBootstrap "Navbar" Null children
 
 nav :: Renderable a
     => Automatic a
     -> ReactInstance
-nav children = reactBootstrap "Nav" (Empty {}) children
+nav children = reactBootstrap "Nav" Null children
 
 button' :: Renderable a
         => ButtonProps
@@ -62,4 +62,19 @@ button = button' buttonProps
 table :: Renderable a
       => Automatic a
       -> ReactInstance
-table = reactBootstrap "Table" (Empty {})
+table = reactBootstrap "Table" Null
+
+row :: Renderable a
+    => Automatic a
+    -> ReactInstance
+row = reactBootstrap "Row" Null
+
+jumbotron :: Renderable a
+          => Automatic a
+          -> ReactInstance
+jumbotron = reactBootstrap "Jumbotron" Null
+
+grid :: Renderable a
+     => Automatic a
+     -> ReactInstance
+grid = reactBootstrap "Grid" Null
