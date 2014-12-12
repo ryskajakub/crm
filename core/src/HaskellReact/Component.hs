@@ -15,6 +15,7 @@ module HaskellReact.Component (
   , placeElementToBody
   , CommonJSModule
   , foreignReact
+  , simpleReact, simpleReactBody
 ) where
 
 import FFI (ffi, Automatic)
@@ -23,14 +24,15 @@ import HaskellReact.ReadFay (ReadFay, runReadFay)
 import HaskellReact.ComponentData (ReactThis, ReactClass, ReactInstance)
 import "fay-base" Data.Text (Text)
 import DOM (Element, getBody)
+import Data.Function (fmap)
 
 data ReactData a b = ReactData {
   render                 :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such
   , componentWillMount   :: ReactThis a b -> Fay ()
   , componentDidMount    :: ReactThis a b -> Fay ()
-  , componentWillUnmount :: Automatic (ReactThis a b -> Fay ())
+  , componentWillUnmount :: ReactThis a b -> Fay ()
   , displayName          :: Text
-  , getInitialState      :: () -> Automatic a
+  , getInitialState      :: () -> a
 }
 
 -- | Constructor for creating ReactData
@@ -54,10 +56,10 @@ statelessReactData debugName render' = reactData debugName () render'
 
 declareStateless :: Text
                  -> (ReactThis () b -> ReadFay DOMElement) -- | Render function
-                 -> ReactClass b
+                 -> Fay (ReactClass b)
 declareStateless debugName = declareReactClass . statelessReactData debugName
 
-declareReactClass :: ReactData a b -> ReactClass b
+declareReactClass :: ReactData a b -> Fay (ReactClass b)
 declareReactClass = ffi "\
 \ (function(data) {\
   \ var React = require('react');\
@@ -76,10 +78,10 @@ declareReactClass = ffi "\
 \ })(%1)\
 \ "
 
-declareAndRun :: ReactData a b -> ReactInstance
-declareAndRun = classInstance . declareReactClass
+declareAndRun :: ReactData a b -> Fay ReactInstance
+declareAndRun data' = fmap classInstance (declareReactClass data')
 
-setState :: ReactThis a b -> (Automatic a) -> Fay ()
+setState :: ReactThis a b -> Automatic a -> Fay ()
 setState = ffi " %1['setState'](%2) "
 
 -- | Create propless react instance
@@ -121,3 +123,20 @@ foreignReact :: (CommonJSModule b, Renderable c)
              -> Automatic c -- ^ children passed to the React class
              -> ReactInstance
 foreignReact = ffi " (function () { return (require('react')['createElement'])(%1[%2], %3, %4); })() "
+
+simpleReactBody' :: DOMElement
+                 -> Fay ()
+                 -> Fay ()
+simpleReactBody' elementToRender callbacks = do
+  body <- getBody
+  simpleReact elementToRender body callbacks
+
+simpleReactBody :: DOMElement
+                -> Fay ()
+simpleReactBody element = simpleReactBody' element (return ())
+
+simpleReact :: DOMElement -- ^ element to render
+            -> Element -- ^ point in document where to place the element
+            -> Fay () -- ^ callback to call after the virtual dom is rendered in the browser
+            -> Fay ()
+simpleReact = ffi " require('react').render(%1, %2, %3) "

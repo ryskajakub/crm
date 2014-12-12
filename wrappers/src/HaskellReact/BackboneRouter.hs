@@ -36,15 +36,13 @@ navigate = ffi " %2['navigate'](%1, {trigger: true}) "
 link :: Renderable a
      => Automatic a -- ^ children
      -> Text -- ^ url, that will be navigated to after the user clicks the link
-     -> Maybe BackboneRouter -- ^ router instance where the url will be handled, will create links leading nowhere untile the router is initialized
+     -> BackboneRouter -- ^ router instance where the url will be handled, will create links leading nowhere untile the router is initialized
      -> DOMElement
 link children route router = let
   aAttr = mkAAttrs {
     href = Defined $ pack "javascript://"
   }
   attr = mkAttrs {
-    onClick = case router of 
-      Just router' -> Defined $ const $ navigate route router'
-      Nothing -> Undefined
+    onClick = Defined $ const $ navigate route router
   }
   in a'' attr aAttr children

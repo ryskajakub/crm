@@ -12,5 +12,5 @@ data SyntheticMouseEvent
 eventValue :: SyntheticEvent -> Fay Text
 eventValue = ffi " %1['target']['value'] "
 
-getType :: SyntheticMouseEvent -> Text
+getType :: SyntheticMouseEvent -> Fay Text
 getType = ffi " %1['type'] "
