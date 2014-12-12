@@ -55,4 +55,24 @@ companiesList myData companies = let
 companyDetail :: MyData
               -> Company
               -> DOMElement
-companyDetail myData company = div $ pack $ show company
+companyDetail myData company =
+  main [
+    section $
+      B.jumbotron [
+        h1 $ pack $ companyName company
+        , dl [
+          dt "Adresa"
+          , dd ""
+          , dt "Kontakt"
+          , dd ""
+          , dt "Telefon"
+          , dd ""
+        ]
+      ]
+    , section $ B.grid [
+      B.row $
+        B.col (B.ColProps 12) $
+          B.panel $
+            span "Historie servisů"
+    ]
+  ]
