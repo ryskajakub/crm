@@ -7,15 +7,17 @@ import HaskellReact.Tag.Input
 import Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, set, oneShot, get, waitFor, modify, withUnsubscriber, newRef)
+import Data.Maybe (whenJust)
 import FFI (ffi, Nullable, Defined(Defined))
 import "fay-base" Data.Text (Text, pack, unpack, append)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter, link)
-import Crm.Shared.Data
+import Crm.Shared.Data as D
 import Crm.Server (fetchFromServer)
 import Crm.Component.Navigation (navigation)
 import Crm.Component.Data (MyData(MyData))
 import Crm.Component.CompaniesList (companiesList)
+import Crm.Component.CompanyDetail (companyDetail)
 
 import "fay-base" Debug.Trace
 
@@ -25,17 +27,22 @@ main' = do
   router <- startRouter [(
       pack "", const $ set routerVar' FrontPage
     ), (
-      pack "page/:id", \id -> set routerVar' (OtherPage $ head id)
+      pack "companies/:id", \cId ->
+        let cId' = parseSafely (head cId)
+        in whenJust cId' (\cId'' -> set routerVar' (CompanyDetail cId''))
     )]
   let myData = MyData router
   companiesVar' <- companiesVar
   fetchFromServer companiesVar'
-  _ <- subscribeAndRead routerVar' (\navigationState -> 
+  _ <- subscribeAndRead routerVar' (\navigationState ->
     case navigationState of
       FrontPage -> myWaitFor' companiesVar' (\companies ->
         navigation myData (companiesList myData companies)
         )
-      OtherPage someId -> undefined
+      CompanyDetail cId -> myWaitFor' companiesVar' (\companies ->
+        let company = find (\company -> D.companyId company == cId) companies
+        in whenJust company (\c -> navigation myData (companyDetail myData c))
+        )
     )
   return ()
 
@@ -70,7 +77,7 @@ companiesVar = newVar Nothing
 userInputVar :: Fay (Var String)
 userInputVar = newVar "AHOJ"
 
-data NavigationState = FrontPage | OtherPage { id1 :: Text }
+data NavigationState = FrontPage | CompanyDetail { companyId :: Int }
 
 routerVar :: Fay (Var NavigationState)
 routerVar = newVar FrontPage

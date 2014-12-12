@@ -24,14 +24,18 @@ companiesList :: MyData
               -> [Company]
               -> DOMElement
 companiesList myData companies = let
-  head = 
+  head =
     thead $ tr [
       th "Název firmy"
       , th "Platnost servisu vyprší za"
     ]
   body = map (\company ->
     tr [
-      td $ link (pack $ companyName company) ("/companies/0") (router myData)
+      td $
+        link
+          (pack $ companyName company)
+          ("/companies/" `append` (showInt $ companyId company))
+          (router myData)
       , td $ pack $ plant company
     ]) companies
   in main [
