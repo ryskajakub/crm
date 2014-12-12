@@ -1,5 +1,4 @@
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE PackageImports #-}
 
 module HaskellReact (
@@ -17,3 +16,4 @@ import HaskellReact.Tag.Simple
 import HaskellReact.Component
 import HaskellReact.ComponentData
 import HaskellReact.ReadFay
+import "fay-base" Prelude

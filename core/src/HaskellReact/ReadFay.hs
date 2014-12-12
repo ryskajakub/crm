@@ -1,5 +1,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PackageImports #-}
 
 module HaskellReact.ReadFay (
   ReadFay ()
@@ -14,8 +16,8 @@ module HaskellReact.ReadFay (
   , props
 ) where
 
-import qualified Prelude as P
-import Prelude hiding((>>=), (>>), return)
+import qualified "fay-base" Prelude as P
+import "fay-base" Prelude hiding((>>=), (>>), return)
 import FFI (ffi, Automatic)
 import HaskellReact.ComponentData (ReactThis)
 

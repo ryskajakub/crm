@@ -1,4 +1,5 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Component (
   ReactData (componentWillMount, componentDidMount, componentWillUnmount, displayName)
@@ -22,9 +23,10 @@ import FFI (ffi, Automatic)
 import HaskellReact.Tag.Construct
 import HaskellReact.ReadFay (ReadFay, runReadFay)
 import HaskellReact.ComponentData (ReactThis, ReactClass, ReactInstance)
+import "fay-base" Prelude
 import "fay-base" Data.Text (Text)
 import DOM (Element, getBody)
-import Data.Function (fmap)
+import "fay-base" Data.Function (fmap)
 
 data ReactData a b = ReactData {
   render                 :: ReactThis a b -> Fay DOMElement -- ^ only enable applying read functions to the state instance, forbid setting the state and such

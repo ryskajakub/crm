@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Simple (
   span, span'
@@ -18,7 +19,7 @@ module HaskellReact.Tag.Simple (
 
 import HaskellReact.Tag.Construct
 import FFI (Automatic)
-import Prelude hiding (div, span)
+import "fay-base" Prelude hiding (div, span)
 import "fay-base" Data.Text (Text, fromString)
 
 constructSimple :: Renderable a

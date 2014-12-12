@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Bootstrap where
 
@@ -8,7 +9,7 @@ import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Em
 import FFI (ffi, Automatic, Defined(Undefined))
 import "fay-base" Data.Text (fromString, Text)
 import HaskellReact.Event (SyntheticMouseEvent)
-import Prelude
+import "fay-base" Prelude
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap

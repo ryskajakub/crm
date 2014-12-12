@@ -1,13 +1,14 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Bootstrap.Glyphicon where
 
 import "fay-base" Data.Text (Text, fromString)
 import HaskellReact
 import HaskellReact.Bootstrap
-import Prelude
+import "fay-base" Prelude
 
 data GlyphiconProps = GlyphiconProps {
   glyph :: Text

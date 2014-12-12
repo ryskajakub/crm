@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Construct where
 
@@ -8,7 +9,7 @@ import HaskellReact.Event
 import FFI (Defined(Undefined), ffi, Automatic)
 import "fay-base" Data.Text (Text)
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
-import Prelude hiding (id)
+import "fay-base" Prelude hiding (id)
 import HaskellReact.ComponentData (ReactInstance)
 
 data DOMElement

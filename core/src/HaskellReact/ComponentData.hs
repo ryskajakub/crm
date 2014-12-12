@@ -1,4 +1,6 @@
 {-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PackageImports #-}
 
 module HaskellReact.ComponentData ( 
   Empty(Empty)
@@ -6,6 +8,8 @@ module HaskellReact.ComponentData (
   , ReactThis
   , ReactInstance
 ) where
+
+import "fay-base" Prelude
 
 data Empty = Empty {}
 

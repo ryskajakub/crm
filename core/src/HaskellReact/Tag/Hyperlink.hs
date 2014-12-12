@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Hyperlink (
   a , a', a''
@@ -32,6 +33,7 @@ module HaskellReact.Tag.Hyperlink (
 
 import FFI (Defined(Undefined, Defined))
 import HaskellReact.Tag.Construct
+import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
 
 type URL = Text

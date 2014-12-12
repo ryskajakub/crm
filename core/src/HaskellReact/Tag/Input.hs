@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Input (
   InputAttributes(..)
@@ -35,6 +36,7 @@ module HaskellReact.Tag.Input (
 import HaskellReact.Tag.Construct
 import HaskellReact.Event
 import FFI
+import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
 
 newtype InputType = InputType Text
