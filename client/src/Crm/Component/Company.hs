@@ -2,8 +2,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
 
-module Crm.Component.CompaniesList (
+module Crm.Component.Company (
   companiesList
+  , companyDetail
 ) where
 
 import HaskellReact
@@ -49,3 +50,8 @@ companiesList myData companies = let
         head : body
       ]
     ]
+
+companyDetail :: MyData
+              -> Company
+              -> DOMElement
+companyDetail myData company = div $ pack $ show company

@@ -16,8 +16,7 @@ import Crm.Shared.Data as D
 import Crm.Server (fetchFromServer)
 import Crm.Component.Navigation (navigation)
 import Crm.Component.Data (MyData(MyData))
-import Crm.Component.CompaniesList (companiesList)
-import Crm.Component.CompanyDetail (companyDetail)
+import Crm.Component.Company (companiesList, companyDetail)
 
 import "fay-base" Debug.Trace
 
