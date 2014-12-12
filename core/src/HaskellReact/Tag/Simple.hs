@@ -16,7 +16,10 @@ module HaskellReact.Tag.Simple (
   , th
   , td
   , dl
+  , dt
+  , dd
   , h1
+  , h2
 ) where
 
 import HaskellReact.Tag.Construct
@@ -79,5 +82,14 @@ tbody = constructSimple "tbody" defaultAttributes
 dl :: (Renderable a) => Automatic a -> DOMElement
 dl = constructSimple "dl" defaultAttributes
 
+dt :: (Renderable a) => Automatic a -> DOMElement
+dt = constructSimple "dt" defaultAttributes
+
+dd :: (Renderable a) => Automatic a -> DOMElement
+dd = constructSimple "dd" defaultAttributes
+
 h1 :: (Renderable a) => Automatic a -> DOMElement
 h1 = constructSimple "h1" defaultAttributes
+
+h2 :: (Renderable a) => Automatic a -> DOMElement
+h2 = constructSimple "h2" defaultAttributes

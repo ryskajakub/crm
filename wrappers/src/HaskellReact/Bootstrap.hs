@@ -78,3 +78,18 @@ grid :: Renderable a
      => Automatic a
      -> ReactInstance
 grid = reactBootstrap "Grid" Null
+
+data ColProps = ColProps {
+  md :: Int
+}
+
+col :: Renderable a
+    => ColProps
+    -> Automatic a
+    -> ReactInstance
+col colProps = reactBootstrap "Col" colProps
+
+panel :: Renderable a
+      => Automatic a
+      -> ReactInstance
+panel = reactBootstrap "Panel" Null
