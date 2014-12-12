@@ -1,12 +1,13 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Navigation where
 
 import HaskellReact
 import "fay-base" Data.Text (pack, Text, fromString)
-import Prelude hiding (span, div, elem)
+import "fay-base" Prelude hiding (span, div, elem)
 import HaskellReact.Bootstrap (navBar, nav)
 import HaskellReact.BackboneRouter (link, BackboneRouter)
 import qualified HaskellReact.Bootstrap.Glyphicon as G

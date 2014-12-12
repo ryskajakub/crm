@@ -39,7 +39,7 @@ Library
     , json-schema
     , aeson
     , fay
-    , opaleye
+    , opaleye == 0.3
     , product-profunctors
     , postgresql-simple
 

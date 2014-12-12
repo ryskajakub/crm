@@ -1,6 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Company (
   companiesList
@@ -11,9 +12,9 @@ import HaskellReact
 import Crm.Component.Navigation (navigation)
 import Crm.Shared.Data
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
-import Prelude hiding (div, span, id)
+import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, subscribeAndRead)
-import Data.Maybe (fromMaybe, whenJust, fromJust)
+import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust)
 import Data.Defined (fromDefined)
 import FFI (Defined(Defined, Undefined))
 import HaskellReact.BackboneRouter (BackboneRouter, link)
@@ -37,7 +38,7 @@ companiesList myData companies = let
           (pack $ companyName company)
           ("/companies/" `append` (showInt $ companyId company))
           (router myData)
-      , td $ pack $ plant company
+      , td $ pack $ companyPlant company
     ]) companies
   in main [
     section $

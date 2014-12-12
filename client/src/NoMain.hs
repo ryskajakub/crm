@@ -1,13 +1,14 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module NoMain where
 
 import HaskellReact hiding (main, id)
 import HaskellReact.Tag.Input
-import Prelude hiding (span, div, elem)
+import "fay-base" Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, set, oneShot, get, waitFor, modify, withUnsubscriber, newRef)
-import Data.Maybe (whenJust)
+import "fay-base" Data.Maybe (whenJust)
 import FFI (ffi, Nullable, Defined(Defined))
 import "fay-base" Data.Text (Text, pack, unpack, append)
 

@@ -1,10 +1,12 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Server where
 
 import FFI (ffi)
 import Crm.Shared.Data
 import Data.Var
+import "fay-base" Prelude
 
 fetchFromServer :: Var (Maybe [Company]) -> Fay ()
 fetchFromServer companiesVar = do

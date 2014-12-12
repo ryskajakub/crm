@@ -7,12 +7,14 @@ import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable)
 import Opaleye.Column (Column)
 
-import Data.Profunctor.Product (p2)
+import Data.Profunctor.Product (p3)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
+import Opaleye (PGInt4, PGText)
 
-import Control.Monad.Reader (ReaderT)
+import Control.Monad.Reader (ReaderT, ask)
+import Control.Monad.IO.Class (liftIO)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
@@ -30,17 +32,19 @@ import Generics.Regular
 import Crm.Shared.Data (Company(Company, companyName))
 import Fay.Convert (showToFay)
 
-companiesTable :: Table (Column Int, Column String)
-                        (Column Int, Column String)
-companiesTable = Table "companies" (p2 (
+type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
+
+companiesTable :: Table CompaniesTable CompaniesTable
+companiesTable = Table "companies" (p3 (
     required "id"
     , required "name"
+    , required "plant"
   ))
 
-companiesQuery :: Query (Column Int, Column String)
+companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
 
-runCompaniesQuery :: Connection -> IO [(Int, String)]
+runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
 withConnection :: (Connection -> IO a) -> IO a
@@ -69,14 +73,9 @@ instance JS.JSONSchema Company where
 
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do 
-    return companies
+    rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
+    return $ map (\(cId, cName, plant) -> Company cId cName plant) rows
   )
-
-companies :: [Company]
-companies = let
-  companyBase = Company 0 "Continental" "I" "p.Jelínek" "721 650 194" "Brandýs nad labem"
-  companyNames = ["Continental","České dráhy","FOMA Bohemia","Kand","Metrostav","Neumann","PREX","Stachema Kolín","Valsabbia"]
-  in map (\name' -> companyBase { companyName = name' }) companyNames
 
 companySchema :: Schema () () Void
 companySchema = withListing () (named [])
