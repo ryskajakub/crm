@@ -6,11 +6,11 @@ import FFI (ffi)
 import Crm.Shared.Data
 import Data.Var
 
-fetchFromServer :: (Var [Company]) -> Fay ()
+fetchFromServer :: Var (Maybe [Company]) -> Fay ()
 fetchFromServer companiesVar = do
   crmApi <- crmApiFacade
   fetchCompanies crmApi (\companies -> do
-    set companiesVar companies)
+    set companiesVar $ Just companies)
 
 data CrmApi
 

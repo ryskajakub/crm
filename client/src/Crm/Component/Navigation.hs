@@ -10,14 +10,13 @@ import Prelude hiding (span, div, elem)
 import HaskellReact.Bootstrap (navBar, nav)
 import HaskellReact.BackboneRouter (link, BackboneRouter)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import Crm.Component.Data (MyData, router)
 
-navigation :: Maybe BackboneRouter -> DOMElement -> ReactClass a
-navigation router innerElement = declareReactClass $ reactData ("Navigation") (Empty {}) (
-  \reactThis -> readFayReturn $
-    div [
-      reactInstance2DOM $ navBar $ nav [
-        li $ link [G.list, text2DOM " Seznam firem"] "" router
-      ]
-      , innerElement
+navigation :: MyData -> DOMElement -> Fay ()
+navigation myData body = 
+  simpleReactBody $ div [
+    reactInstance2DOM $ navBar $ nav [
+      li $ link [G.list, text2DOM " Seznam firem"] "" (router myData)
     ]
-  )
+    , body
+  ]
