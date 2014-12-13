@@ -25,6 +25,8 @@ editable edit display initial setValue = if edit
     changeHandler event = do
       value <- eventValue event
       setValue value
-    in I.input (I.mkInputProps)
+    in I.input (I.mkInputProps {
+      I.onChange = Defined changeHandler
+      , I.defaultValue = initial
+      })
   else display
-
