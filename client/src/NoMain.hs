@@ -8,7 +8,7 @@ import HaskellReact.Tag.Input
 import "fay-base" Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, set, oneShot, get, waitFor, modify, withUnsubscriber, newRef)
-import "fay-base" Data.Maybe (whenJust)
+import "fay-base" Data.Maybe (whenJust, isJust)
 import FFI (ffi, Nullable, Defined(Defined))
 import "fay-base" Data.Text (Text, pack, unpack, append)
 
@@ -35,6 +35,7 @@ main' = do
   let myData = MyData router
   companiesVar' <- companiesVar
   machinesVar' <- machinesVar
+  companyDetailPageVar' <- companyDetailPageVar
   fetchCompanies companiesVar'
   fetchMachines machinesVar'
   _ <- subscribeAndRead routerVar' (\navigationState ->
@@ -50,7 +51,13 @@ main' = do
             isMachineInCompany machine = cId' == cId where
               cId' = M.companyId machine
             machinesInCompany = filter isMachineInCompany machines
-            in navigation myData (companyDetail myData company' machinesInCompany))
+            in do
+              unsubscribe <- subscribeAndRead companyDetailPageVar' (\companyDetailPageVar'' -> let
+                editing = isJust companyDetailPageVar''
+                companyDetailPage =
+                  companyDetail editing myData companyDetailPageVar' company' machinesInCompany
+                in navigation myData companyDetailPage )
+              return ())
         ))
     )
   return ()
@@ -85,6 +92,9 @@ companiesVar = newVar Nothing
 
 machinesVar :: Fay (Var (Maybe [M.Machine]))
 machinesVar = newVar Nothing
+
+companyDetailPageVar :: Fay (Var (Maybe Company))
+companyDetailPageVar = newVar Nothing
 
 userInputVar :: Fay (Var String)
 userInputVar = newVar "AHOJ"

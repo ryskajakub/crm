@@ -53,11 +53,13 @@ companiesList myData companies = let
       ]
     ]
 
-companyDetail :: MyData
+companyDetail :: Bool
+              -> MyData
+              -> Var (Maybe Company)
               -> Company
               -> [M.Machine]
               -> DOMElement
-companyDetail myData company machines = let
+companyDetail editing myData var company machines = let
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
