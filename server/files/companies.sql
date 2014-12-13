@@ -7,7 +7,8 @@ create table companies (
 
 drop table machines;
 create table machines (
-  company_id integer
+  id serial
+  , company_id integer
   , name varchar(500)
 );
 

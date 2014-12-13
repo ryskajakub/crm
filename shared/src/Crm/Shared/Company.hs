@@ -4,7 +4,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Shared.Data where
+module Crm.Shared.Company where
 
 #ifndef FAY
 import GHC.Generics

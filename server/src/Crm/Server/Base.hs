@@ -29,10 +29,12 @@ import Rest.Handler (ListHandler, mkListing)
 
 import Generics.Regular
 
-import Crm.Shared.Data (Company(Company, companyName))
+import Crm.Shared.Company (Company(Company, companyName))
+import Crm.Shared.Machine (Machine(Machine))
 import Fay.Convert (showToFay)
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
+type MachinesTable = (Column PGInt4, Column PGInt4, Column PGText)
 
 companiesTable :: Table CompaniesTable CompaniesTable
 companiesTable = Table "companies" (p3 (
@@ -41,11 +43,24 @@ companiesTable = Table "companies" (p3 (
     , required "plant"
   ))
 
+machinesTable :: Table MachinesTable MachinesTable
+machinesTable = Table "machines" (p3 (
+    required "id"
+    , required "company_id"
+    , required "name"
+  ))
+
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
 
+machinesQuery :: Query MachinesTable
+machinesQuery = queryTable machinesTable
+
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
+
+runMachinesQuery :: Connection -> IO[(Int, Int, String)]
+runMachinesQuery connection = runQuery connection machinesQuery
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -71,24 +86,46 @@ instance ToJSON Company where
 instance JS.JSONSchema Company where
   schema = gSchema
 
+deriveAll ''Machine "PFMachine"
+type instance PF Machine = PFMachine
+
+instance ToJSON Machine where
+  toJSON = fromJust . showToFay
+instance JS.JSONSchema Machine where
+  schema = gSchema
+
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do 
     rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-    return $ map (\(cId, cName, plant) -> Company cId cName plant) rows
+    return $ map (\(cId, cName, cPlant) -> Company cId cName cPlant) rows
   )
 
-companySchema :: Schema () () Void
-companySchema = withListing () (named [])
+schema' :: Schema () () Void
+schema' = withListing () (named [])
 
 companyResource :: Resource Dependencies Dependencies () () Void
 companyResource = mkResourceId {
   list = const listing
   , name = "company"
-  , schema = companySchema
+  , schema = schema'
+  }
+
+machineListing :: ListHandler Dependencies
+machineListing = mkListing (jsonO . someO) (const $ do
+    rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
+    return $ map (\(mId, cId, mName) -> Machine mId cId mName) rows
+  )
+
+machineResource :: Resource Dependencies Dependencies () () Void
+machineResource = mkResourceId {
+  list = const machineListing
+  , name = "machines"
+  , schema = schema'
   }
 
 router' :: Router Dependencies Dependencies
 router' = root `compose` (route companyResource)
+               `compose` (route machineResource)
 
 api :: Api Dependencies
 api = [(mkVersion 1 0 0, Some1 $ router')]
