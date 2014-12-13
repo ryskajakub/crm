@@ -14,7 +14,7 @@ import Crm.Shared.Company
 import qualified Crm.Shared.Machine as M
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, subscribeAndRead)
+import Data.Var (Var, subscribeAndRead, set)
 import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust)
 import Data.Defined (fromDefined)
 import FFI (Defined(Defined, Undefined))
@@ -62,7 +62,7 @@ companyDetail :: Bool -- ^ is the page editing mode
 companyDetail editing myData var company machines = let
   machineBox machine =
     B.col (B.ColProps 4) $
-      B.panel [ 
+      B.panel [
         h2 $ span $ pack $ M.machineName machine
         , dl [
           dt "Další servis"
@@ -71,14 +71,13 @@ companyDetail editing myData var company machines = let
       ]
   machineBoxes = map machineBox machines
   in main [
-    section $
-      B.jumbotron [
-        let
-          buttonBody = [G.pencil, HR.text2DOM " Editovat"]
-          buttonProps = B.buttonProps {B.onClick = Defined $ const $ return ()}
-          button = B.button' buttonProps buttonBody
-          in HR.reactInstance2DOM button
-        , h1 $ pack $ companyName company
+    section $ let
+      buttonBody = [G.pencil, HR.text2DOM " Editovat"]
+      buttonHandler _ = set var $ Just company
+      buttonProps = B.buttonProps {B.onClick = Defined buttonHandler}
+      button = HR.reactInstance2DOM $ B.button' buttonProps buttonBody
+      companyBasicInfo = [
+        h1 $ pack $ companyName company
         , dl [
           dt "Adresa"
           , dd ""
@@ -86,8 +85,10 @@ companyDetail editing myData var company machines = let
           , dd ""
           , dt "Telefon"
           , dd ""
+          ]
         ]
-      ]
+      companyBasicInfo' = if editing then companyBasicInfo else button:companyBasicInfo
+      in B.jumbotron companyBasicInfo'
     , section $ B.grid [
       B.row $
         B.col (B.ColProps 12) $
