@@ -3,10 +3,11 @@
 
 module Crm.Server where
 
-import FFI (ffi)
+import FFI (ffi, Automatic)
 import Crm.Shared.Company
 import Data.Var
 import "fay-base" Prelude
+import "fay-base" Data.Text (Text, pack)
 
 fetchFromServer :: Var (Maybe [Company]) -> Fay ()
 fetchFromServer companiesVar = do
@@ -16,12 +17,18 @@ fetchFromServer companiesVar = do
 
 data CrmApi
 
-fetchCompanies :: CrmApi -- ^ Pointer to Crm api phantom
-               -> ([Company] -> Fay ()) -- ^ Callback ran on the fetched data
+fetchCompanies :: CrmApi
+               -> ([Company] -> Fay ())
                -> Fay ()
-fetchCompanies = ffi "\
-\ %1['Companies']['list'](function(d) {\
-  \ %2(d.items); \
+fetchCompanies crmApi callback = fetch crmApi (pack "Companies") callback
+
+fetch :: CrmApi -- ^ Pointer to Crm api phantom
+      -> Text -- ^ Model to fetch
+      -> ([Automatic a] -> Fay ()) -- ^ Callback ran on the fetched data
+      -> Fay ()
+fetch = ffi "\
+\ %1[%2]['list'](function(d) {\
+  \ %3(d.items); \
 \ })\
 \ "
 
