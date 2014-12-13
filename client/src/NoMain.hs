@@ -55,7 +55,7 @@ main' = do
               unsubscribe <- subscribeAndRead companyDetailPageVar' (\companyDetailPageVar'' -> let
                 editing = isJust companyDetailPageVar''
                 companyDetailPage =
-                  companyDetail editing myData companyDetailPageVar' company' machinesInCompany
+                  companyDetail editing myData companyDetailPageVar' companiesVar' company' machinesInCompany
                 in navigation myData companyDetailPage )
               return ())
         ))

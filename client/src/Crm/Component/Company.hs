@@ -10,11 +10,11 @@ module Crm.Component.Company (
 
 import HaskellReact as HR
 import Crm.Component.Navigation (navigation)
-import Crm.Shared.Company
+import Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, subscribeAndRead, set, modify)
+import Data.Var (Var, subscribeAndRead, set, modifyWith, get, modify)
 import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust, onJust)
 import Data.Defined (fromDefined)
 import FFI (Defined(Defined, Undefined))
@@ -24,6 +24,7 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Input as I
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
+import "fay-base" Debug.Trace
 
 companiesList :: MyData
               -> [Company]
@@ -58,10 +59,11 @@ companiesList myData companies = let
 companyDetail :: Bool -- ^ is the page editing mode
               -> MyData -- ^ common read data
               -> Var (Maybe Company) -- ^ variable, that can will be used to store the edited company
+              -> Var (Maybe[Company]) -- ^ var with all the companies in the app
               -> Company -- ^ company, which data are displayed on this screen
               -> [M.Machine] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing myData var company machines = let
+companyDetail editing myData var companiesVar company machines = let
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
@@ -81,16 +83,31 @@ companyDetail editing myData var company machines = let
       headerDisplay = h1 $ pack $ companyName company
       headerSet newHeader = modify var (\c -> onJust (\c' -> c' {companyName = unpack newHeader}) c)
       header = editable editing headerDisplay (pack $ companyName company) headerSet
+      saveHandler _ = modifyWith companiesVar (\companies -> do
+        companyToSave <- get var
+        return $ case (companyToSave, companies) of
+          (Just(companyToSave'), Just(companies')) -> 
+            let (before, after) = break (\c -> C.companyId c == C.companyId company) companies'
+            in Just $ before ++ [companyToSave'] ++ tail after
+          _ -> companies
+          )
+      saveEditButton' = HR.reactInstance2DOM $ B.button' (B.buttonProps {
+        B.onClick = Defined saveHandler
+        , B.bsStyle = Defined "primary"
+        }) "Uložit"
+      saveEditButton = if editing
+        then [saveEditButton']
+        else []
       companyBasicInfo = [
         header
-        , dl [
+        , dl $ [
           dt "Adresa"
           , dd ""
           , dt "Kontakt"
           , dd ""
           , dt "Telefon"
           , dd ""
-          ]
+          ] ++ saveEditButton
         ]
       companyBasicInfo' = if editing then companyBasicInfo else button:companyBasicInfo
       in B.jumbotron companyBasicInfo'
