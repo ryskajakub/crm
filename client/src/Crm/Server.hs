@@ -4,7 +4,7 @@
 module Crm.Server where
 
 import FFI (ffi)
-import Crm.Shared.Data
+import Crm.Shared.Company
 import Data.Var
 import "fay-base" Prelude
 
@@ -20,7 +20,7 @@ fetchCompanies :: CrmApi -- ^ Pointer to Crm api phantom
                -> ([Company] -> Fay ()) -- ^ Callback ran on the fetched data
                -> Fay ()
 fetchCompanies = ffi "\
-\ %1['Company']['list'](function(d) {\
+\ %1['Companies']['list'](function(d) {\
   \ %2(d.items); \
 \ })\
 \ "

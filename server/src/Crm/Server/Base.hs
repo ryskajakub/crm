@@ -106,7 +106,7 @@ schema' = withListing () (named [])
 companyResource :: Resource Dependencies Dependencies () () Void
 companyResource = mkResourceId {
   list = const listing
-  , name = "company"
+  , name = "companies"
   , schema = schema'
   }
 

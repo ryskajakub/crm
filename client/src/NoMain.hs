@@ -13,7 +13,7 @@ import FFI (ffi, Nullable, Defined(Defined))
 import "fay-base" Data.Text (Text, pack, unpack, append)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter, link)
-import Crm.Shared.Data as D
+import Crm.Shared.Company as D
 import Crm.Server (fetchFromServer)
 import Crm.Component.Navigation (navigation)
 import Crm.Component.Data (MyData(MyData))
@@ -41,7 +41,7 @@ main' = do
         )
       CompanyDetail cId -> myWaitFor' companiesVar' (\companies ->
         let company = find (\company -> D.companyId company == cId) companies
-        in whenJust company (\c -> navigation myData (companyDetail myData c))
+        in whenJust company (\c -> navigation myData (companyDetail myData c []))
         )
     )
   return ()

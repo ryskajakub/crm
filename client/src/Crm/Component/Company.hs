@@ -10,7 +10,8 @@ module Crm.Component.Company (
 
 import HaskellReact
 import Crm.Component.Navigation (navigation)
-import Crm.Shared.Data
+import Crm.Shared.Company
+import qualified Crm.Shared.Machine as M
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, subscribeAndRead)
@@ -52,11 +53,26 @@ companiesList myData companies = let
       ]
     ]
 
+
+{-
+        <Panel>
+          <h2><a href="javascript://">{type}</a></h2>
+          <dl>
+            <dt>Další servis</dt>
+            <dd>{lastMaintenance}</dd>
+          </dl>
+          <img src={imageSource} width="240" />
+        </Panel>
+-}
+
+
 companyDetail :: MyData
               -> Company
+              -> [M.Machine]
               -> DOMElement
-companyDetail myData company =
-  main [
+companyDetail myData company machines = let
+  machineBoxes = [B.col (B.ColProps 4) $ B.panel $ h2 "LLL aaa"]
+  in main [
     section $
       B.jumbotron [
         h1 $ pack $ companyName company
@@ -74,5 +90,12 @@ companyDetail myData company =
         B.col (B.ColProps 12) $
           B.panel $
             span "Historie servisů"
+      , B.row (machineBoxes ++ [
+        B.col (B.ColProps 4) $ B.panel $ h2 "Nový stroj"
+      ])
+      , B.row $
+        B.col (B.ColProps 12) $
+          B.panel $
+            span "Naplánovat servis"
     ]
   ]
