@@ -8,7 +8,7 @@ module Crm.Component.Company (
   , companyDetail
 ) where
 
-import HaskellReact
+import HaskellReact as HR
 import Crm.Component.Navigation (navigation)
 import Crm.Shared.Company
 import qualified Crm.Shared.Machine as M
@@ -62,7 +62,7 @@ companyDetail :: Bool -- ^ is the page editing mode
 companyDetail editing myData var company machines = let
   machineBox machine =
     B.col (B.ColProps 4) $
-      B.panel [
+      B.panel [ 
         h2 $ span $ pack $ M.machineName machine
         , dl [
           dt "Další servis"
@@ -73,7 +73,12 @@ companyDetail editing myData var company machines = let
   in main [
     section $
       B.jumbotron [
-        h1 $ pack $ companyName company
+        let
+          buttonBody = [G.pencil, HR.text2DOM " Editovat"]
+          buttonProps = B.buttonProps {B.onClick = Defined $ const $ return ()}
+          button = B.button' buttonProps buttonBody
+          in HR.reactInstance2DOM button
+        , h1 $ pack $ companyName company
         , dl [
           dt "Adresa"
           , dd ""
