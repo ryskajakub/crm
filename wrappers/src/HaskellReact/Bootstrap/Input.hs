@@ -13,10 +13,13 @@ import HaskellReact.Bootstrap
 
 data InputProps = InputProps {
   type_ :: Text
+  , defaultValue :: Text
+  , onChange :: Defined (SyntheticEvent -> Fay ())
+  , placeholder :: Text
 }
 
 mkInputProps :: InputProps
-mkInputProps = InputProps ("text")
+mkInputProps = InputProps "text" "" Undefined ""
 
 input :: InputProps -> DOMElement
 input inputProps = reactInstance2DOM $ reactBootstrap "Input" inputProps ([]::[DOMElement])
