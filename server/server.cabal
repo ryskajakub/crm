@@ -24,7 +24,7 @@ Library
   hs-source-dirs:    src, shared
   ghc-options:       -Wall
   exposed-modules:
-    Server, Crm.Shared.Company, Crm.Shared.Machine, Crm.Server.Base
+    Server, Crm.Shared.Company, Crm.Shared.Machine, Crm.Server.Base, Crm.Shared.Api
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3

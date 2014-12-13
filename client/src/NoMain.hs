@@ -14,7 +14,8 @@ import "fay-base" Data.Text (Text, pack, unpack, append)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter, link)
 import Crm.Shared.Company as D
-import Crm.Server (fetchFromServer)
+import qualified Crm.Shared.Machine as M
+import Crm.Server (fetchCompanies, fetchMachines)
 import Crm.Component.Navigation (navigation)
 import Crm.Component.Data (MyData(MyData))
 import Crm.Component.Company (companiesList, companyDetail)
@@ -33,16 +34,24 @@ main' = do
     )]
   let myData = MyData router
   companiesVar' <- companiesVar
-  fetchFromServer companiesVar'
+  machinesVar' <- machinesVar
+  fetchCompanies companiesVar'
+  fetchMachines machinesVar'
   _ <- subscribeAndRead routerVar' (\navigationState ->
     case navigationState of
       FrontPage -> myWaitFor' companiesVar' (\companies ->
         navigation myData (companiesList myData companies)
         )
       CompanyDetail cId -> myWaitFor' companiesVar' (\companies ->
-        let company = find (\company -> D.companyId company == cId) companies
-        in whenJust company (\c -> navigation myData (companyDetail myData c []))
-        )
+        myWaitFor' machinesVar' (\machines ->
+          let company = find (\company -> D.companyId company == cId) companies
+          in whenJust company (\company' -> let
+            cId = D.companyId company'
+            isMachineInCompany machine = cId' == cId where
+              cId' = M.companyId machine
+            machinesInCompany = filter isMachineInCompany machines
+            in navigation myData (companyDetail myData company' machinesInCompany))
+        ))
     )
   return ()
 
@@ -73,6 +82,9 @@ parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
 companiesVar :: Fay (Var (Maybe [Company]))
 companiesVar = newVar Nothing
+
+machinesVar :: Fay (Var (Maybe [M.Machine]))
+machinesVar = newVar Nothing
 
 userInputVar :: Fay (Var String)
 userInputVar = newVar "AHOJ"

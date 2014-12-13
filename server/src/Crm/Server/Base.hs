@@ -31,6 +31,7 @@ import Generics.Regular
 
 import Crm.Shared.Company (Company(Company, companyName))
 import Crm.Shared.Machine (Machine(Machine))
+import qualified Crm.Shared.Api as A
 import Fay.Convert (showToFay)
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
@@ -106,7 +107,7 @@ schema' = withListing () (named [])
 companyResource :: Resource Dependencies Dependencies () () Void
 companyResource = mkResourceId {
   list = const listing
-  , name = "companies"
+  , name = A.companies
   , schema = schema'
   }
 
@@ -119,7 +120,7 @@ machineListing = mkListing (jsonO . someO) (const $ do
 machineResource :: Resource Dependencies Dependencies () () Void
 machineResource = mkResourceId {
   list = const machineListing
-  , name = "machines"
+  , name = A.machines
   , schema = schema'
   }
 

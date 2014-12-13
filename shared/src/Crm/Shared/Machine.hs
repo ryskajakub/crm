@@ -11,7 +11,7 @@ import GHC.Generics
 import "base" Data.Data
 import "base" Prelude
 #else
-import Prelude
+import "fay-base" Prelude
 #endif
 
 data Machine = Machine {

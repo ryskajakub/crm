@@ -1,32 +1,42 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Server where
+module Crm.Server (
+  fetchCompanies
+  , fetchMachines
+) where
 
 import FFI (ffi, Automatic)
-import Crm.Shared.Company
+import Crm.Shared.Company (Company)
+import Crm.Shared.Machine (Machine)
+import qualified Crm.Shared.Api as A
 import Data.Var
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, pack)
 
-fetchFromServer :: Var (Maybe [Company]) -> Fay ()
-fetchFromServer companiesVar = do
-  crmApi <- crmApiFacade
-  fetchCompanies crmApi (\companies -> do
-    set companiesVar $ Just companies)
-
 data CrmApi
 
-fetchCompanies :: CrmApi
-               -> ([Company] -> Fay ())
+fetchCompanies :: Var (Maybe [Company])
                -> Fay ()
-fetchCompanies crmApi callback = fetch crmApi (pack "Companies") callback
+fetchCompanies var = fetch var (pack A.companiesClient)
 
-fetch :: CrmApi -- ^ Pointer to Crm api phantom
-      -> Text -- ^ Model to fetch
-      -> ([Automatic a] -> Fay ()) -- ^ Callback ran on the fetched data
+fetchMachines :: Var (Maybe [Machine])
+              -> Fay ()
+fetchMachines var = fetch var (pack A.machinesClient)
+
+fetch :: Var (Maybe [a])
+      -> Text
       -> Fay ()
-fetch = ffi "\
+fetch var restApiNode = do
+  crmApi <- crmApiFacade
+  fetch' crmApi restApiNode (\data' -> 
+    set var $ Just data')
+
+fetch' :: CrmApi -- ^ Pointer to Crm api phantom
+       -> Text -- ^ Model to fetch
+       -> ([Automatic a] -> Fay ()) -- ^ Callback ran on the fetched data
+       -> Fay ()
+fetch' = ffi "\
 \ %1[%2]['list'](function(d) {\
   \ %3(d.items); \
 \ })\
