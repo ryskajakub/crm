@@ -124,7 +124,17 @@ foreignReact :: (CommonJSModule b, Renderable c)
              -> Automatic a -- ^ props passed to the React class
              -> Automatic c -- ^ children passed to the React class
              -> ReactInstance
-foreignReact = ffi " (function () { return (require('react')['createElement'])(%1[%2], %3, %4); })() "
+foreignReact = ffi "\
+  \ (function () {\
+    \ var attributes = %3;\
+    \ var escapedAttributes = {};\
+    \ for (key in attributes) {\
+      \ var newKey = (key.charAt(key.length - 1) == '_' ? key.substring(0, key.length - 1) : key);\
+      \ escapedAttributes[newKey] = attributes[key];\
+    \ }\
+    \ return (require('react')['createElement'])(%1[%2], escapedAttributes, %4);\
+  \ })()\
+\ "
 
 simpleReactBody' :: DOMElement
                  -> Fay ()

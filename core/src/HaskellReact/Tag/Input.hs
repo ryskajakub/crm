@@ -6,6 +6,7 @@
 module HaskellReact.Tag.Input (
   InputAttributes(..)
   , defaultInputAttributes
+  , mkInputAttrs
   , input
   , InputType
   , button
@@ -117,6 +118,9 @@ data InputAttributes = InputAttributes {
   , checked :: Defined Text
   , onChange :: Defined (SyntheticEvent -> Fay ())
 }
+
+mkInputAttrs :: InputAttributes
+mkInputAttrs = defaultInputAttributes
 
 defaultInputAttributes :: InputAttributes
 defaultInputAttributes = InputAttributes {

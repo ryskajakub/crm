@@ -25,3 +25,6 @@ plus = glyphicon "plus"
 
 list :: DOMElement
 list = glyphicon "list"
+
+pencil :: DOMElement
+pencil = glyphicon "pencil"
