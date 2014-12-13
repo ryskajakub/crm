@@ -53,12 +53,12 @@ companiesList myData companies = let
       ]
     ]
 
-companyDetail :: Bool
-              -> MyData
-              -> Var (Maybe Company)
-              -> Company
-              -> [M.Machine]
-              -> DOMElement
+companyDetail :: Bool -- ^ is the page editing mode
+              -> MyData -- ^ common read data
+              -> Var (Maybe Company) -- ^ variable, that can will be used to store the edited company
+              -> Company -- ^ company, which data are displayed on this screen
+              -> [M.Machine] -- ^ machines of the company
+              -> DOMElement -- ^ company detail page fraction
 companyDetail editing myData var company machines = let
   machineBox machine =
     B.col (B.ColProps 4) $
