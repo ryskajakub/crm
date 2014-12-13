@@ -14,14 +14,16 @@ import Crm.Shared.Company
 import qualified Crm.Shared.Machine as M
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, subscribeAndRead, set)
-import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust)
+import Data.Var (Var, subscribeAndRead, set, modify)
+import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust, onJust)
 import Data.Defined (fromDefined)
 import FFI (Defined(Defined, Undefined))
 import HaskellReact.BackboneRouter (BackboneRouter, link)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Input as I
 import Crm.Component.Data
+import Crm.Component.Editable (editable)
 
 companiesList :: MyData
               -> [Company]
@@ -76,8 +78,11 @@ companyDetail editing myData var company machines = let
       buttonHandler _ = set var $ Just company
       buttonProps = B.buttonProps {B.onClick = Defined buttonHandler}
       button = HR.reactInstance2DOM $ B.button' buttonProps buttonBody
+      headerDisplay = h1 $ pack $ companyName company
+      headerSet newHeader = modify var (\c -> onJust (\c' -> c' {companyName = unpack newHeader}) c)
+      header = editable editing headerDisplay (pack $ companyName company) headerSet
       companyBasicInfo = [
-        h1 $ pack $ companyName company
+        header
         , dl [
           dt "Adresa"
           , dd ""
