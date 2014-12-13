@@ -53,25 +53,21 @@ companiesList myData companies = let
       ]
     ]
 
-
-{-
-        <Panel>
-          <h2><a href="javascript://">{type}</a></h2>
-          <dl>
-            <dt>Další servis</dt>
-            <dd>{lastMaintenance}</dd>
-          </dl>
-          <img src={imageSource} width="240" />
-        </Panel>
--}
-
-
 companyDetail :: MyData
               -> Company
               -> [M.Machine]
               -> DOMElement
 companyDetail myData company machines = let
-  machineBoxes = [B.col (B.ColProps 4) $ B.panel $ h2 "LLL aaa"]
+  machineBox machine =
+    B.col (B.ColProps 4) $
+      B.panel [
+        h2 $ span $ pack $ M.machineName machine
+        , dl [
+          dt "Další servis"
+          , dd ""
+          ]
+      ]
+  machineBoxes = map machineBox machines
   in main [
     section $
       B.jumbotron [
