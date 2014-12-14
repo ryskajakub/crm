@@ -15,7 +15,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
-import HaskellReact.BackboneRouter (link)
+import HaskellReact.BackboneRouter (link, navigate)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import Crm.Component.Data
@@ -59,7 +59,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> (Int, C.Company) -- ^ company, which data are displayed on this screen
               -> [M.Machine] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing' _ var idCompany machines' = let
+companyDetail editing' myData var idCompany machines' = let
   (id', company') = idCompany
   machineBox machine =
     B.col (B.ColProps 4) $
@@ -90,11 +90,13 @@ companyDetail editing' _ var idCompany machines' = let
             _ -> navigation appState
         })
       header = editable editing' headerDisplay (pack $ C.companyName company') headerSet
-      saveHandler _ = modify var (\appState -> let
-        companies' = companies appState
-        (before, after) = break (\(cId, _) -> cId == id') companies'
-        newCompanies = before ++ [idCompany] ++ tail after
-        in appState { companies = newCompanies })
+      saveHandler _ = do 
+        modify var (\appState -> let
+          companies' = companies appState
+          (before, after) = break (\(cId, _) -> cId == id') companies'
+          newCompanies = before ++ [idCompany] ++ tail after
+          in appState { companies = newCompanies })
+        navigate "" (router myData)
 
       saveEditButton' = HR.reactInstance2DOM $ B.button' (B.buttonProps {
         B.onClick = Defined saveHandler
