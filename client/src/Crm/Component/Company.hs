@@ -9,8 +9,8 @@ module Crm.Component.Company (
 ) where
 
 import HaskellReact as HR
-import Crm.Component.Navigation (navigation)
-import Crm.Shared.Company as C
+import qualified Crm.Component.Navigation (navigation)
+import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
@@ -27,7 +27,7 @@ import Crm.Component.Editable (editable)
 import "fay-base" Debug.Trace
 
 companiesList :: MyData
-              -> [Company]
+              -> [(Int, C.Company)]
               -> DOMElement
 companiesList myData companies = let
   head =
@@ -35,14 +35,15 @@ companiesList myData companies = let
       th "Název firmy"
       , th "Platnost servisu vyprší za"
     ]
-  body = map (\company ->
-    tr [
+  body = tbody $ map (\idCompany ->
+    let (id, company) = idCompany
+    in tr [
       td $
         link
-          (pack $ companyName company)
-          ("/companies/" `append` (showInt $ companyId company))
+          (pack $ C.companyName company)
+          ("/companies/" `append` (showInt id))
           (router myData)
-      , td $ pack $ companyPlant company
+      , td $ pack $ C.companyPlant company
     ]) companies
   in main [
     section $
@@ -52,18 +53,19 @@ companiesList myData companies = let
       ]
     , section $
       B.table [
-        head : body
+        head
+        , body
       ]
     ]
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> MyData -- ^ common read data
-              -> Var (Maybe Company) -- ^ variable, that can will be used to store the edited company
-              -> Var (Maybe[Company]) -- ^ var with all the companies in the app
-              -> Company -- ^ company, which data are displayed on this screen
+              -> Var (AppState) -- ^ app state var, where the editing result can be set
+              -> (Int, C.Company) -- ^ company, which data are displayed on this screen
               -> [M.Machine] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing myData var companiesVar company machines = let
+companyDetail editing myData var idCompany machines = let
+  (id, company') = idCompany
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
@@ -76,21 +78,28 @@ companyDetail editing myData var companiesVar company machines = let
   machineBoxes = map machineBox machines
   in main [
     section $ let
-      buttonBody = [G.pencil, HR.text2DOM " Editovat"]
-      buttonHandler _ = set var $ Just company
-      buttonProps = B.buttonProps {B.onClick = Defined buttonHandler}
-      button = HR.reactInstance2DOM $ B.button' buttonProps buttonBody
-      headerDisplay = h1 $ pack $ companyName company
-      headerSet newHeader = modify var (\c -> onJust (\c' -> c' {companyName = unpack newHeader}) c)
-      header = editable editing headerDisplay (pack $ companyName company) headerSet
-      saveHandler _ = modifyWith companiesVar (\companies -> do
-        companyToSave <- get var
-        return $ case (companyToSave, companies) of
-          (Just(companyToSave'), Just(companies')) -> 
-            let (before, after) = break (\c -> C.companyId c == C.companyId company) companies'
-            in Just $ before ++ [companyToSave'] ++ tail after
-          _ -> companies
-          )
+      editButton = let
+        editButtonBody = [G.pencil, HR.text2DOM " Editovat"]
+        editButtonHandler _ = modify var (\appState ->
+          appState {
+            navigation = case navigation appState of
+              cd @ (CompanyDetail _ _ _ _) -> cd { editing = True }
+              _ -> navigation appState
+          })
+        editButtonProps = B.buttonProps {B.onClick = Defined editButtonHandler}
+        in HR.reactInstance2DOM $ B.button' editButtonProps editButtonBody
+      headerDisplay = h1 $ pack $ C.companyName company'
+      headerSet newHeader = modify var (\appState -> appState {
+          navigation = case navigation appState of
+            cd @ (CompanyDetail _ _ _ _) -> cd { company = company' { C.companyName = unpack $ newHeader } }
+        })
+      header = editable editing headerDisplay (pack $ C.companyName company') headerSet
+      saveHandler _ = modify var (\appState -> let
+        companies' = companies appState
+        (before, after) = break (\(cId, company) -> cId == id) companies'
+        newCompanies = before ++ [idCompany] ++ tail after
+        in appState { companies = newCompanies })
+
       saveEditButton' = HR.reactInstance2DOM $ B.button' (B.buttonProps {
         B.onClick = Defined saveHandler
         , B.bsStyle = Defined "primary"
@@ -109,7 +118,7 @@ companyDetail editing myData var companiesVar company machines = let
           , dd ""
           ] ++ saveEditButton
         ]
-      companyBasicInfo' = if editing then companyBasicInfo else button:companyBasicInfo
+      companyBasicInfo' = if editing then companyBasicInfo else editButton:companyBasicInfo
       in B.jumbotron companyBasicInfo'
     , section $ B.grid [
       B.row $

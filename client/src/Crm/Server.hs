@@ -16,21 +16,20 @@ import "fay-base" Data.Text (Text, pack)
 
 data CrmApi
 
-fetchCompanies :: Var (Maybe [Company])
+fetchCompanies :: ([(Int, Company)] -> Fay ())
                -> Fay ()
 fetchCompanies var = fetch var (pack A.companiesClient)
 
-fetchMachines :: Var (Maybe [Machine])
+fetchMachines :: ([(Int, Machine)] -> Fay ())
               -> Fay ()
 fetchMachines var = fetch var (pack A.machinesClient)
 
-fetch :: Var (Maybe [a])
+fetch :: ([a] -> Fay ())
       -> Text
       -> Fay ()
-fetch var restApiNode = do
+fetch setData restApiNode = do
   crmApi <- crmApiFacade
-  fetch' crmApi restApiNode (\data' -> 
-    set var $ Just data')
+  fetch' crmApi restApiNode setData
 
 fetch' :: CrmApi -- ^ Pointer to Crm api phantom
        -> Text -- ^ Model to fetch

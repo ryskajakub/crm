@@ -13,73 +13,54 @@ import FFI (ffi, Nullable, Defined(Defined))
 import "fay-base" Data.Text (Text, pack, unpack, append)
 
 import HaskellReact.BackboneRouter (startRouter, BackboneRouter, link)
-import Crm.Shared.Company as D
+import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import Crm.Server (fetchCompanies, fetchMachines)
-import Crm.Component.Navigation (navigation)
-import Crm.Component.Data (MyData(MyData))
+import qualified Crm.Component.Navigation as Navigation
+import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail)
 
 import "fay-base" Debug.Trace
 
 main' :: Fay ()
 main' = do
-  routerVar' <- routerVar
-  router <- startRouter [(
-      pack "", const $ set routerVar' FrontPage
+  appVar' <- appVar
+  router' <- startRouter [(
+      pack "", const $ modify appVar' (\appState -> appState { navigation = FrontPage })
     ), (
       pack "companies/:id", \cId ->
         let cId' = parseSafely (head cId)
-        in whenJust cId' (\cId'' -> set routerVar' (CompanyDetail cId''))
+        in whenJust cId' (\cId'' -> do
+          appState <- get appVar'
+          let
+            companies' = companies appState
+            company'' = lookup cId'' companies'
+            machines' = map snd (machines appState)
+          maybe (return ()) (\company' ->
+            modify appVar' (\appState' ->
+              appState' {
+                navigation = CompanyDetail cId'' company' False machines'
+              }
+            )
+            ) company''
+          )
     )]
-  let myData = MyData router
-  companiesVar' <- companiesVar
-  machinesVar' <- machinesVar
-  companyDetailPageVar' <- companyDetailPageVar
-  fetchCompanies companiesVar'
-  fetchMachines machinesVar'
-  _ <- subscribeAndRead routerVar' (\navigationState ->
-    case navigationState of
-      FrontPage -> myWaitFor' companiesVar' (\companies ->
-        navigation myData (companiesList myData companies)
-        )
-      CompanyDetail cId -> myWaitFor' companiesVar' (\companies ->
-        myWaitFor' machinesVar' (\machines ->
-          let company = find (\company -> D.companyId company == cId) companies
-          in whenJust company (\company' -> let
-            cId = D.companyId company'
-            isMachineInCompany machine = cId' == cId where
-              cId' = M.companyId machine
-            machinesInCompany = filter isMachineInCompany machines
-            in do
-              unsubscribe <- subscribeAndRead companyDetailPageVar' (\companyDetailPageVar'' -> let
-                editing = isJust companyDetailPageVar''
-                companyDetailPage =
-                  companyDetail editing myData companyDetailPageVar' companiesVar' company' machinesInCompany
-                in navigation myData companyDetailPage )
-              return ())
-        ))
-    )
+  let myData = MyData router'
+  fetchCompanies (\companies' ->
+    modify appVar' (\appState ->
+      appState { companies = companies' }
+    ))
+  fetchMachines (\machines' ->
+    modify appVar' (\appState ->
+      appState { machines = machines' }
+    ))
+  _ <- subscribeAndRead appVar' (\appState ->
+    case navigation appState of
+      FrontPage -> Navigation.navigation myData (companiesList myData (companies appState))
+      CompanyDetail companyId' company' editing' machines' ->
+        Navigation.navigation myData
+          (companyDetail editing' myData appVar' (companyId', company') machines'))
   return ()
-
-myWaitFor' :: Var (Maybe a) -> (a -> Fay ()) -> Fay ()
-myWaitFor' v f = myWaitFor v id f
-
-myWaitFor :: Var a -> (a -> Maybe b) -> (b -> Fay ()) -> Fay ()
-myWaitFor v p f = do
-  unsubscriber <- newRef Nothing
-  unsubscribe <- subscribeAndRead v (\elem ->
-    case p(elem) of
-      Just r -> do
-        unsubscriber' <- get unsubscriber
-        case unsubscriber' of
-          Just(unsubscribe') -> unsubscribe' ()
-          Nothing -> return ()
-        f(r)
-      Nothing ->
-        return ()
-    )
-  set unsubscriber (Just unsubscribe)
 
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
@@ -87,22 +68,5 @@ parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === '
 parseSafely :: Text -> Maybe Int
 parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
-companiesVar :: Fay (Var (Maybe [Company]))
-companiesVar = newVar Nothing
-
-machinesVar :: Fay (Var (Maybe [M.Machine]))
-machinesVar = newVar Nothing
-
-companyDetailPageVar :: Fay (Var (Maybe Company))
-companyDetailPageVar = newVar Nothing
-
-userInputVar :: Fay (Var String)
-userInputVar = newVar "AHOJ"
-
-data NavigationState = FrontPage | CompanyDetail { companyId :: Int }
-
-routerVar :: Fay (Var NavigationState)
-routerVar = newVar FrontPage
-
-dataVar :: Fay (Var String)
-dataVar = newVar ""
+appVar :: Fay (Var AppState)
+appVar = newVar defaultAppState
