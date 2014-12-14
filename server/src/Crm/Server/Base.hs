@@ -4,42 +4,44 @@
 module Crm.Server.Base where
 
 import Opaleye.QueryArr (Query)
-import Opaleye.Table (Table(Table), required, queryTable)
+import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 
 import Data.Profunctor.Product (p3)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
-import Opaleye (PGInt4, PGText)
+import Opaleye (PGInt4, PGText, arrangeInsertSql, runInsert, pgString)
 
 import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
-import Data.Aeson.Types (toJSON, ToJSON)
+import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
-import Rest.Resource (Resource, mkResourceId, Void, schema, list, name)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create)
 import Rest.Schema (Schema, named, withListing)
-import Rest.Dictionary.Combinators (jsonO, someO)
-import Rest.Handler (ListHandler, mkListing)
+import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
 
 import Generics.Regular
 
-import Crm.Shared.Company (Company(Company, companyName))
+import qualified Crm.Shared.Company as C
 import Crm.Shared.Machine (Machine(Machine))
 import qualified Crm.Shared.Api as A
-import Fay.Convert (showToFay)
+import Fay.Convert (showToFay, readFromFay')
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
+type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
+
 type MachinesTable = (Column PGInt4, Column PGInt4, Column PGText)
 
-companiesTable :: Table CompaniesTable CompaniesTable
+companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
-    required "id"
+    optional "id"
     , required "name"
     , required "plant"
   ))
@@ -78,13 +80,17 @@ withConnection runQ = do
 
 type Dependencies = (ReaderT Connection IO :: * -> *)
 
-deriveAll ''Company "PFCompany"
-type instance PF Company = PFCompany
+deriveAll ''C.Company "PFCompany"
+type instance PF C.Company = PFCompany
 
-instance ToJSON Company where
+instance ToJSON C.Company where
   -- super unsafe
   toJSON c = ((fromJust . showToFay) c)
-instance JS.JSONSchema Company where
+instance FromJSON C.Company where
+  parseJSON value = case (readFromFay' value) of
+    Left error -> fail error
+    Right ok -> return ok
+instance JS.JSONSchema C.Company where
   schema = gSchema
 
 deriveAll ''Machine "PFMachine"
@@ -96,28 +102,41 @@ instance JS.JSONSchema Machine where
   schema = gSchema
 
 listing :: ListHandler Dependencies
-listing = mkListing (jsonO . someO) (const $ do 
-    rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-    return $ map (\(cId, cName, cPlant) -> (cId, Company cName cPlant)) rows
+listing = mkListing (jsonO . someO) (const $ do
+  rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
+  return $ map (\(cId, cName, cPlant) -> (cId, C.Company cName cPlant)) rows
   )
 
-schema' :: Schema () () Void
+schema' :: Schema Void () Void
 schema' = withListing () (named [])
 
-companyResource :: Resource Dependencies Dependencies () () Void
+addCompany :: Connection -- ^ database connection
+           -> C.Company -- ^ company to save in the db
+           -> IO ()
+addCompany connection newCompany = do
+  runInsert connection
+    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany)
+  return ()
+
+createCompanyHandler :: Handler Dependencies
+createCompanyHandler = mkInputHandler (jsonI . someI) (\newCompany ->
+  ask >>= \conn -> liftIO $ addCompany conn newCompany)
+
+companyResource :: Resource Dependencies Dependencies Void () Void
 companyResource = mkResourceId {
   list = const listing
+  , create = Just createCompanyHandler
   , name = A.companies
   , schema = schema'
   }
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
-    rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
-    return $ map (\(mId, cId, mName) -> (mId, Machine cId mName)) rows
+  rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
+  return $ map (\(mId, cId, mName) -> (mId, Machine cId mName)) rows
   )
 
-machineResource :: Resource Dependencies Dependencies () () Void
+machineResource :: Resource Dependencies Dependencies Void () Void
 machineResource = mkResourceId {
   list = const machineListing
   , name = A.machines
