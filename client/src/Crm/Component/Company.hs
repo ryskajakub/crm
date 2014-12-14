@@ -150,7 +150,15 @@ companyPage editing' _ var setCompany company' saveHandler' machines' = let
       companyBasicInfo = [
         header
         , dl $ [
-          dt "Adresa"
+          dt "Označení"
+          , dd $ let
+            plantDisplay = text2DOM $ pack $ C.companyPlant company'
+            setCompanyPlant companyPlant' = let
+              modifiedCompany = company' {
+                C.companyPlant = unpack companyPlant' }
+              in setCompany modifiedCompany
+            in editable editing' plantDisplay (pack $ C.companyPlant company') setCompanyPlant
+          , dt "Adresa"
           , dd ""
           , dt "Kontakt"
           , dd ""
