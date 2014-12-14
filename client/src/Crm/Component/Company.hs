@@ -12,7 +12,7 @@ module Crm.Component.Company (
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))

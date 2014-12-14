@@ -6,7 +6,6 @@ module NoMain where
 import "fay-base" Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, get, modify)
-import "fay-base" Data.Maybe (whenJust)
 import FFI (ffi, Nullable)
 import "fay-base" Data.Text (Text, pack)
 
