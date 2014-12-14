@@ -22,6 +22,7 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
+import Crm.Server (createCompany)
 
 companiesList :: MyData
               -> [(Int, C.Company)]
@@ -65,12 +66,12 @@ companyNew :: MyData
            -> DOMElement
 companyNew myData var company' = let
   editing' = True
-  saveHandler = do
-    let newId = 999 :: Int
-    modify var (\appState -> let
-      companies' = companies appState
-      newCompanies = companies' ++ [(newId, company')]
-      in appState { companies = newCompanies })
+  saveHandler =
+    createCompany company' (\newId ->
+      modify var (\appState -> let
+        companies' = companies appState
+        newCompanies = companies' ++ [(newId, company')]
+        in appState { companies = newCompanies }))
   machines' = []
   setCompany modifiedCompany = modify var (\appState -> appState {
       navigation = case navigation appState of

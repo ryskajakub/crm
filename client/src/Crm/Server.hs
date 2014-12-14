@@ -4,6 +4,7 @@
 module Crm.Server (
   fetchCompanies
   , fetchMachines
+  , createCompany
 ) where
 
 import FFI (ffi, Automatic)
@@ -23,6 +24,13 @@ fetchMachines :: ([(Int, Machine)] -> Fay ())
               -> Fay ()
 fetchMachines var = fetch var (pack A.machinesClient)
 
+createCompany :: Company
+              -> (Int -> Fay())
+              -> Fay ()
+createCompany company callback = do
+  crmApi <- crmApiFacade
+  create' crmApi (pack A.companiesClient) company callback
+
 fetch :: ([a] -> Fay ())
       -> Text
       -> Fay ()
@@ -30,13 +38,24 @@ fetch setData restApiNode = do
   crmApi <- crmApiFacade
   fetch' crmApi restApiNode setData
 
-fetch' :: CrmApi -- ^ Pointer to Crm api phantom
-       -> Text -- ^ Model to fetch
+fetch' :: CrmApi -- ^ pointer to Crm api phantom
+       -> Text -- ^ type of model to fetch
        -> ([Automatic a] -> Fay ()) -- ^ Callback ran on the fetched data
        -> Fay ()
 fetch' = ffi "\
 \ %1[%2]['list'](function(d) {\
   \ %3(d.items); \
+\ })\
+\ "
+
+create' :: CrmApi -- ^ pointer to crm api phantom
+        -> Text -- ^ type of model to create
+        -> Automatic a -- ^ model to create on the server
+        -> (Int -> Fay()) -- ^ callback taking id of the newly created data
+        -> Fay ()
+create' = ffi "\
+\ %1[%2]['create'](%3, function(id) {\
+  \ %4(id);\
 \ })\
 \ "
 
