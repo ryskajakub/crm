@@ -15,6 +15,7 @@ import Crm.Server (fetchCompanies, fetchMachines)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail)
+import Crm.Shared.Machine as M
 
 main' :: Fay ()
 main' = do
@@ -29,11 +30,12 @@ main' = do
           let
             companies' = companies appState
             company'' = lookup cId'' companies'
-            machines' = map snd (machines appState)
+            machinesInCompany = filter ((==)cId'' . M.companyId . snd) (machines appState)
+            machinesNoIds = map snd machinesInCompany
           maybe (return ()) (\company' ->
             modify appVar' (\appState' ->
               appState' {
-                navigation = CompanyDetail cId'' company' False machines'
+                navigation = CompanyDetail cId'' company' False machinesNoIds
               }
             )
             ) company''
