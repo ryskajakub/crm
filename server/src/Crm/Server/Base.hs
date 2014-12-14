@@ -11,7 +11,7 @@ import Data.Profunctor.Product (p3)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
-import Opaleye (PGInt4, PGText, arrangeInsertSql, runInsert, pgString, runInsertReturning)
+import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 
 import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
@@ -20,7 +20,6 @@ import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
-import Data.Int (Int64)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create)
@@ -89,7 +88,7 @@ instance ToJSON C.Company where
   toJSON c = ((fromJust . showToFay) c)
 instance FromJSON C.Company where
   parseJSON value = case (readFromFay' value) of
-    Left error -> fail error
+    Left e -> fail e
     Right ok -> return ok
 instance JS.JSONSchema C.Company where
   schema = gSchema
@@ -118,7 +117,7 @@ addCompany connection newCompany = do
   newId <- runInsertReturning
     connection
     companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany)
-    (\(id ,_ ,_) -> id)
+    (\(id' ,_ ,_) -> id')
   return $ head newId
 
 createCompanyHandler :: Handler Dependencies

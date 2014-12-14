@@ -2,3 +2,4 @@
 :set tabstop=2
 :set shiftwidth=2
 let g:hdevtools_options = '-g-isrc -g-idist/build/autogen -g-ishared -g-Wall -g-package-conf='.FindCabalSandboxRootPackageConf()
+let g:syntastic_haskell_hdevtools_args = '-g-isrc -g-idist/build/autogen -g-ishared -g-Wall -g-package-conf='.FindCabalSandboxRootPackageConf()
