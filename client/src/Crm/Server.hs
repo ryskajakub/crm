@@ -10,7 +10,6 @@ import FFI (ffi, Automatic)
 import Crm.Shared.Company (Company)
 import Crm.Shared.Machine (Machine)
 import qualified Crm.Shared.Api as A
-import Data.Var
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, pack)
 

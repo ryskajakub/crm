@@ -6,10 +6,10 @@
 module Crm.Component.Navigation where
 
 import HaskellReact
-import "fay-base" Data.Text (pack, Text, fromString)
+import "fay-base" Data.Text (fromString)
 import "fay-base" Prelude hiding (span, div, elem)
 import HaskellReact.Bootstrap (navBar, nav)
-import HaskellReact.BackboneRouter (link, BackboneRouter)
+import HaskellReact.BackboneRouter (link)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import Crm.Component.Data (MyData, router)
 

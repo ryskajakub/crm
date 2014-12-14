@@ -9,11 +9,9 @@ module Crm.Component.Editable (
 
 import HaskellReact as HR
 import "fay-base" Prelude
-import "fay-base" Data.Text (Text, fromString, unpack)
+import "fay-base" Data.Text (Text)
 import qualified HaskellReact.Bootstrap.Input as I
-import FFI (Defined (Defined), Nullable(Null))
-
-import "fay-base" Debug.Trace
+import FFI (Defined (Defined))
 
 editable :: Bool -- ^ edit state
          -> DOMElement -- ^ display value

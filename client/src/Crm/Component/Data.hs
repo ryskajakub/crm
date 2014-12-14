@@ -4,7 +4,6 @@
 module Crm.Component.Data where
 
 import HaskellReact.BackboneRouter
-import "fay-base" Data.Text (Text)
 import "fay-base" Prelude
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C

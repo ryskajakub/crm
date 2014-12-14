@@ -3,24 +3,18 @@
 
 module NoMain where
 
-import HaskellReact hiding (main, id)
-import HaskellReact.Tag.Input
 import "fay-base" Prelude hiding (span, div, elem)
 import Data.Nullable (fromNullable)
-import Data.Var (Var, newVar, subscribeAndRead, set, oneShot, get, waitFor, modify, withUnsubscriber, newRef)
-import "fay-base" Data.Maybe (whenJust, isJust)
-import FFI (ffi, Nullable, Defined(Defined))
-import "fay-base" Data.Text (Text, pack, unpack, append)
+import Data.Var (Var, newVar, subscribeAndRead, get, modify)
+import "fay-base" Data.Maybe (whenJust)
+import FFI (ffi, Nullable)
+import "fay-base" Data.Text (Text, pack)
 
-import HaskellReact.BackboneRouter (startRouter, BackboneRouter, link)
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Machine as M
+import HaskellReact.BackboneRouter (startRouter)
 import Crm.Server (fetchCompanies, fetchMachines)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail)
-
-import "fay-base" Debug.Trace
 
 main' :: Fay ()
 main' = do

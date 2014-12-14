@@ -9,42 +9,37 @@ module Crm.Component.Company (
 ) where
 
 import HaskellReact as HR
-import qualified Crm.Component.Navigation (navigation)
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
-import "fay-base" Data.Text (fromString, Text, unpack, pack, append, showInt)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, subscribeAndRead, set, modifyWith, get, modify)
-import "fay-base" Data.Maybe (fromMaybe, whenJust, fromJust, onJust)
-import Data.Defined (fromDefined)
-import FFI (Defined(Defined, Undefined))
-import HaskellReact.BackboneRouter (BackboneRouter, link)
+import Data.Var (Var, modify)
+import FFI (Defined(Defined))
+import HaskellReact.BackboneRouter (link)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Bootstrap.Input as I
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
-import "fay-base" Debug.Trace
 
 companiesList :: MyData
               -> [(Int, C.Company)]
               -> DOMElement
-companiesList myData companies = let
-  head =
+companiesList myData companies' = let
+  head' =
     thead $ tr [
       th "Název firmy"
       , th "Platnost servisu vyprší za"
     ]
   body = tbody $ map (\idCompany ->
-    let (id, company) = idCompany
+    let (id', company') = idCompany
     in tr [
       td $
         link
-          (pack $ C.companyName company)
-          ("/companies/" `append` (showInt id))
+          (pack $ C.companyName company')
+          ("/companies/" `append` (showInt id'))
           (router myData)
-      , td $ pack $ C.companyPlant company
-    ]) companies
+      , td $ pack $ C.companyPlant company'
+    ]) companies'
   in main [
     section $
       B.button [
@@ -53,7 +48,7 @@ companiesList myData companies = let
       ]
     , section $
       B.table [
-        head
+        head'
         , body
       ]
     ]
@@ -64,8 +59,8 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> (Int, C.Company) -- ^ company, which data are displayed on this screen
               -> [M.Machine] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing myData var idCompany machines = let
-  (id, company') = idCompany
+companyDetail editing' _ var idCompany machines' = let
+  (id', company') = idCompany
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
@@ -75,7 +70,7 @@ companyDetail editing myData var idCompany machines = let
           , dd ""
           ]
       ]
-  machineBoxes = map machineBox machines
+  machineBoxes = map machineBox machines'
   in main [
     section $ let
       editButton = let
@@ -92,11 +87,12 @@ companyDetail editing myData var idCompany machines = let
       headerSet newHeader = modify var (\appState -> appState {
           navigation = case navigation appState of
             cd @ (CompanyDetail _ _ _ _) -> cd { company = company' { C.companyName = unpack $ newHeader } }
+            _ -> navigation appState
         })
-      header = editable editing headerDisplay (pack $ C.companyName company') headerSet
+      header = editable editing' headerDisplay (pack $ C.companyName company') headerSet
       saveHandler _ = modify var (\appState -> let
         companies' = companies appState
-        (before, after) = break (\(cId, company) -> cId == id) companies'
+        (before, after) = break (\(cId, _) -> cId == id') companies'
         newCompanies = before ++ [idCompany] ++ tail after
         in appState { companies = newCompanies })
 
@@ -104,7 +100,7 @@ companyDetail editing myData var idCompany machines = let
         B.onClick = Defined saveHandler
         , B.bsStyle = Defined "primary"
         }) "Uložit"
-      saveEditButton = if editing
+      saveEditButton = if editing'
         then [saveEditButton']
         else []
       companyBasicInfo = [
@@ -118,7 +114,7 @@ companyDetail editing myData var idCompany machines = let
           , dd ""
           ] ++ saveEditButton
         ]
-      companyBasicInfo' = if editing then companyBasicInfo else editButton:companyBasicInfo
+      companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
       in B.jumbotron companyBasicInfo'
     , section $ B.grid [
       B.row $
