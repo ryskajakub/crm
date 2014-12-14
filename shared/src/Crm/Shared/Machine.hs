@@ -15,8 +15,7 @@ import "fay-base" Prelude
 #endif
 
 data Machine = Machine {
-  machineId :: Int
-  , companyId :: Int
+  companyId :: Int
   , machineName :: String
 } 
 #ifndef FAY

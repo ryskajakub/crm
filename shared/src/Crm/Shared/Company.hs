@@ -15,8 +15,7 @@ import "fay-base" Prelude
 #endif
 
 data Company = Company {
-  companyId :: Int
-  , companyName :: String
+  companyName :: String
   , companyPlant :: String
 } 
 #ifndef FAY

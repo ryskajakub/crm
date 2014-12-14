@@ -98,7 +98,7 @@ instance JS.JSONSchema Machine where
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do 
     rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-    return $ map (\(cId, cName, cPlant) -> Company cId cName cPlant) rows
+    return $ map (\(cId, cName, cPlant) -> (cId, Company cName cPlant)) rows
   )
 
 schema' :: Schema () () Void
@@ -114,7 +114,7 @@ companyResource = mkResourceId {
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
     rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
-    return $ map (\(mId, cId, mName) -> Machine mId cId mName) rows
+    return $ map (\(mId, cId, mName) -> (mId, Machine cId mName)) rows
   )
 
 machineResource :: Resource Dependencies Dependencies () () Void
