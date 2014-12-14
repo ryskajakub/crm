@@ -14,8 +14,9 @@ import HaskellReact.BackboneRouter (startRouter)
 import Crm.Server (fetchCompanies, fetchMachines)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
-import Crm.Component.Company (companiesList, companyDetail)
-import Crm.Shared.Machine as M
+import Crm.Component.Company (companiesList, companyDetail, companyNew)
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.Company as C
 
 main' :: Fay ()
 main' = do
@@ -23,23 +24,28 @@ main' = do
   router' <- startRouter [(
       pack "", const $ modify appVar' (\appState -> appState { navigation = FrontPage })
     ), (
-      pack "companies/:id", \cId ->
-        let cId' = parseSafely (head cId)
-        in whenJust cId' (\cId'' -> do
-          appState <- get appVar'
-          let
-            companies' = companies appState
-            company'' = lookup cId'' companies'
-            machinesInCompany = filter ((==)cId'' . M.companyId . snd) (machines appState)
-            machinesNoIds = map snd machinesInCompany
-          maybe (return ()) (\company' ->
-            modify appVar' (\appState' ->
-              appState' {
-                navigation = CompanyDetail cId'' company' False machinesNoIds
-              }
+      pack "companies/:id", \params -> let
+        cId = head params
+        in case (parseSafely cId, cId) of
+          (Just(cId''), _) -> do
+            appState <- get appVar'
+            let
+              companies' = companies appState
+              company'' = lookup cId'' companies'
+              machinesInCompany = filter ((==)cId'' . M.companyId . snd) (machines appState)
+              machinesNoIds = map snd machinesInCompany
+            maybe (return ()) (\company' ->
+              modify appVar' (\appState' ->
+                appState' {
+                  navigation = CompanyDetail cId'' company' False machinesNoIds
+                }
+              )
+              ) company''
+          (_, new) | new == (pack "new") -> modify appVar' (\appState ->
+            appState {
+              navigation = CompanyNew C.newCompany }
             )
-            ) company''
-          )
+          _ -> return ()
     )]
   let myData = MyData router'
   fetchCompanies (\companies' ->
@@ -55,7 +61,8 @@ main' = do
       FrontPage -> Navigation.navigation myData (companiesList myData (companies appState))
       CompanyDetail companyId' company' editing' machines' ->
         Navigation.navigation myData
-          (companyDetail editing' myData appVar' (companyId', company') machines'))
+          (companyDetail editing' myData appVar' (companyId', company') machines')
+      CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company'))
   return ()
 
 parseInt :: Text -> Nullable Int

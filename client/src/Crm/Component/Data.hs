@@ -19,6 +19,8 @@ data NavigationState =
     , company :: C.Company
     , editing :: Bool
     , companyMachines :: [M.Machine] }
+  | CompanyNew {
+    company :: C.Company }
 
 data AppState = AppState {
   navigation :: NavigationState
