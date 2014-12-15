@@ -23,21 +23,41 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
-import Crm.Server (createCompany)
+import Crm.Server (createMachine)
 
 machineNew :: MyData
            -> Var AppState
            -> M.Machine
-           -> (M.Machine -> Fay ())
            -> DOMElement
-machineNew myData appVar machine' setMachine =
+machineNew myData appVar machine' =
   let
+    saveNewMachine = createMachine machine'
+    setMachine modifiedMachine = modify appVar (\appState -> appState {
+      navigation = case navigation appState of
+        nm @ (MachineNew _) -> nm { machine = modifiedMachine }
+        _ -> navigation appState
+      })
     machineType = M.machineType machine'
     setMachineTypeName event = do
       value <- eventValue event
-      putStrLn $ unpack value
+      let
+        modifiedMachine = machine' { M.machineType = let
+          modifiedMachineType = case machineType of
+            mt @ (MT.MachineType _ _) -> mt {
+              MT.machineTypeName = unpack $ value }
+            x -> x
+          in modifiedMachineType }
+        in setMachine modifiedMachine
     setMachineTypeManufacturer event = do
-      return ()
+      value <- eventValue event
+      let
+        modifiedMachine = machine' { M.machineType = let
+          newMachineType = case machineType of
+            mt @ (MT.MachineType _ _) -> mt {
+              MT.machineTypeManufacturer = unpack $ value }
+            x -> x
+          in newMachineType }
+        in setMachine modifiedMachine
     setOperationStartDate event = do
       value <- eventValue event
       let
@@ -63,6 +83,7 @@ machineNew myData appVar machine' setMachine =
               div' (class'' ["col-md-9", "col-md-offset-3"]) $
                 BTN.button'
                   (BTN.buttonProps {
-                    BTN.bsStyle = Defined "primary" })
+                    BTN.bsStyle = Defined "primary"
+                    , BTN.onClick = Defined const $ saveNewMachine })
                   "Přidej"
         ]

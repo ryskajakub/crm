@@ -5,6 +5,7 @@ module Crm.Server (
   fetchCompanies
   , fetchMachines
   , createCompany
+  , createMachine
 ) where
 
 import FFI (ffi, Automatic)
@@ -30,6 +31,11 @@ createCompany :: Company
 createCompany company callback = do
   crmApi <- crmApiFacade
   create' crmApi (pack A.companiesClient) company callback
+
+createMachine :: Machine
+              -> (Int -> Fay())
+              -> Fay ()
+createMachine machine callback = undefined
 
 fetch :: ([a] -> Fay ())
       -> Text
