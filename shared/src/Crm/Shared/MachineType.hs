@@ -19,10 +19,11 @@ data MachineType =
   MachineTypeId {
     machineTypeId :: Int }
   | MachineType {
-    machineTypeName :: String }
+    machineTypeName :: String
+    , machineTypeManufacturer :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newMachineType :: MachineType
-newMachineType = MachineType ""
+newMachineType = MachineType "" ""

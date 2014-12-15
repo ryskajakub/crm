@@ -28,38 +28,41 @@ import Crm.Server (createCompany)
 machineNew :: MyData
            -> Var AppState
            -> M.Machine
+           -> (M.Machine -> Fay ())
            -> DOMElement
-machineNew myData appVar machine =
+machineNew myData appVar machine' setMachine =
   let
-    machineType = M.machineType machine
+    machineType = M.machineType machine'
     setMachineTypeName event = do
       value <- eventValue event
       putStrLn $ unpack value
     setMachineTypeManufacturer event = do
-      value <- eventValue event
       return ()
     setOperationStartDate event = do
-      return ()
+      value <- eventValue event
+      let
+        newMachine = machine' {
+          M.machineOperationStartDate = unpack $ value }
+        in setMachine newMachine
     inputRow = I.mkInputProps {
       I.labelClassName = Defined "col-md-3"
-      , I.wrapperClassName = Defined "col-md-9"
-    }
-  in form' (mkAttrs { className = Defined "form-horizontal" }) $
-    B.grid $
-      B.row [
-        I.input $ inputRow {
-          I.label_ = Defined "Typ zařízení"
-          , I.onChange = Defined setMachineTypeName }
-        , I.input $ inputRow {
-          I.label_ = Defined "Výrobce"
-          , I.onChange = Defined setMachineTypeManufacturer }
-        , I.input $ inputRow {
-          I.label_ = Defined "Datum uvedení do provozu"
-          , I.onChange = Defined setOperationStartDate }
-        , div' (class' "form-group") $
-            div' (class'' ["col-md-9", "col-md-offset-3"]) $
-              BTN.button'
-                (BTN.buttonProps {
-                  BTN.bsStyle = Defined "primary" })
-                "Přidej"
-      ]
+      , I.wrapperClassName = Defined "col-md-9" }
+    in form' (mkAttrs { className = Defined "form-horizontal" }) $
+      B.grid $
+        B.row [
+          I.input $ inputRow {
+            I.label_ = Defined "Typ zařízení"
+            , I.onChange = Defined setMachineTypeName }
+          , I.input $ inputRow {
+            I.label_ = Defined "Výrobce"
+            , I.onChange = Defined setMachineTypeManufacturer }
+          , I.input $ inputRow {
+            I.label_ = Defined "Datum uvedení do provozu"
+            , I.onChange = Defined setOperationStartDate }
+          , div' (class' "form-group") $
+              div' (class'' ["col-md-9", "col-md-offset-3"]) $
+                BTN.button'
+                  (BTN.buttonProps {
+                    BTN.bsStyle = Defined "primary" })
+                  "Přidej"
+        ]
