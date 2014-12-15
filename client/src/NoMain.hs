@@ -18,6 +18,7 @@ import Crm.Component.Company (companiesList, companyDetail, companyNew)
 import Crm.Component.Machine (machineNew)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.MachineType as MT
 
 main' :: Fay ()
 main' = do
@@ -53,7 +54,9 @@ main' = do
         let
           companies' = companies appState
           newAppState = case (parseSafely $ head params) of
-            Just(companyId') | isJust $ lookup companyId' companies' -> MachineNew companyId'
+            Just(companyId') | isJust $ lookup companyId' companies' -> let
+              newMachine' = M.newMachine companyId'
+              in MachineNew (newMachine')
             _ -> NotFound
         modify appVar' (\appState' -> appState' { navigation = newAppState })
     )]
@@ -75,7 +78,7 @@ main' = do
         Navigation.navigation myData
           (companyDetail editing' myData appVar' (companyId', company') machines')
       CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
-      MachineNew companyId' -> Navigation.navigation myData (machineNew myData appVar' companyId'))
+      MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine'))
   return ()
 
 parseInt :: Text -> Nullable Int

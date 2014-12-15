@@ -23,7 +23,7 @@ data NavigationState =
     company :: C.Company }
   | NotFound
   | MachineNew {
-    companyId :: Int }
+    machine :: M.Machine }
 
 data AppState = AppState {
   navigation :: NavigationState

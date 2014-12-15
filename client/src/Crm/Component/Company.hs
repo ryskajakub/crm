@@ -115,7 +115,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
-        h2 $ span $ pack $ M.machineName machine
+        h2 $ span $ pack $ M.machineOperationStartDate machine
         , dl [
           dt "Další servis"
           , dd ""
