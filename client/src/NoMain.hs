@@ -8,12 +8,14 @@ import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, get, modify)
 import FFI (ffi, Nullable)
 import "fay-base" Data.Text (Text, pack)
+import "fay-base" Data.Maybe (isJust)
 
 import HaskellReact.BackboneRouter (startRouter)
 import Crm.Server (fetchCompanies, fetchMachines)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
+import Crm.Component.Machine (machineNew)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 
@@ -45,6 +47,15 @@ main' = do
               navigation = CompanyNew C.newCompany }
             )
           _ -> return ()
+    ), (
+      pack "companies/:id/new-machine", \params -> do
+        appState <- get appVar'
+        let
+          companies' = companies appState
+          newAppState = case (parseSafely $ head params) of
+            Just(companyId') | isJust $ lookup companyId' companies' -> MachineNew companyId'
+            _ -> NotFound
+        modify appVar' (\appState' -> appState' { navigation = newAppState })
     )]
   let myData = MyData router'
   fetchCompanies (\companies' ->
@@ -55,13 +66,16 @@ main' = do
     modify appVar' (\appState ->
       appState { machines = machines' }
     ))
-  _ <- subscribeAndRead appVar' (\appState ->
-    case navigation appState of
-      FrontPage -> Navigation.navigation myData (companiesList myData (companies appState))
+  _ <- subscribeAndRead appVar' (\appState -> let
+    frontPage = Navigation.navigation myData (companiesList myData (companies appState))
+    in case navigation appState of
+      FrontPage -> frontPage
+      NotFound -> frontPage
       CompanyDetail companyId' company' editing' machines' ->
         Navigation.navigation myData
           (companyDetail editing' myData appVar' (companyId', company') machines')
-      CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company'))
+      CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
+      MachineNew companyId' -> Navigation.navigation myData (machineNew myData appVar' companyId'))
   return ()
 
 parseInt :: Text -> Nullable Int

@@ -4,7 +4,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Shared.Machine where
+module Crm.Shared.MachineType where
 
 #ifndef FAY
 import GHC.Generics
@@ -14,11 +14,11 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
-data Machine = Machine {
+data MachineType = MachineType {
   machineTypeId :: Int
-  , companyId :: Int
-  , machineName :: String
-} 
+  , machineTypeName :: String
+}
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+

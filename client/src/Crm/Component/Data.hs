@@ -16,11 +16,14 @@ data NavigationState =
   FrontPage
   | CompanyDetail {
     companyId :: Int
-    , company :: C.Company
-    , editing :: Bool
-    , companyMachines :: [M.Machine] }
+  , company :: C.Company
+  , editing :: Bool
+  , companyMachines :: [M.Machine] }
   | CompanyNew {
     company :: C.Company }
+  | NotFound
+  | MachineNew {
+    companyId :: Int }
 
 data AppState = AppState {
   navigation :: NavigationState

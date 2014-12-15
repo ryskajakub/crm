@@ -78,7 +78,7 @@ companyNew myData var company' = let
         cd @ (CompanyNew _) -> cd { company = modifiedCompany }
         _ -> navigation appState
     })
-  in companyPage editing' myData var setCompany company' saveHandler machines'
+  in companyPage editing' myData var setCompany company' (-666) saveHandler machines'
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> MyData -- ^ common read data
@@ -100,17 +100,18 @@ companyDetail editing' myData var idCompany machines' = let
         cd @ (CompanyDetail _ _ _ _) -> cd { company = modifiedCompany }
         _ -> navigation appState
     })
-  in companyPage editing' myData var setCompany company' saveHandler machines'
+  in companyPage editing' myData var setCompany company' id' saveHandler machines'
 
 companyPage :: Bool -- ^ is the page editing mode
             -> MyData -- ^ common read data
             -> Var (AppState) -- ^ app state var, where the editing result can be set
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
             -> C.Company -- ^ company, which data are displayed on this screen
+            -> Int -- ^ company id
             -> Fay () -- ^ handler called when the user hits save
             -> [M.Machine] -- ^ machines of the company
             -> DOMElement -- ^ company detail page fraction
-companyPage editing' _ var setCompany company' saveHandler' machines' = let
+companyPage editing' myData var setCompany company' companyId saveHandler' machines' = let
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
@@ -175,7 +176,12 @@ companyPage editing' _ var setCompany company' saveHandler' machines' = let
           B.panel $
             span "Historie servisů"
       , B.row (machineBoxes ++ [
-        B.col (B.ColProps 4) $ B.panel $ h2 "Nový stroj"
+        let
+          newCompanyUrl = "companies/" `append` showInt companyId `append` "/new-machine"
+          buttonProps = BTN.buttonProps {
+            BTN.onClick = Defined $ const $
+              navigate newCompanyUrl (router myData) }
+          in B.col (B.ColProps 4) $ B.panel $ h2 $ BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
       ])
       , B.row $
         B.col (B.ColProps 12) $
