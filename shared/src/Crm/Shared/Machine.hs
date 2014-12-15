@@ -6,6 +6,8 @@
 
 module Crm.Shared.Machine where
 
+import Crm.Shared.MachineType (MachineType, newMachineType)
+
 #ifndef FAY
 import GHC.Generics
 import "base" Data.Data
@@ -15,10 +17,17 @@ import "fay-base" Prelude
 #endif
 
 data Machine = Machine {
-  machineTypeId :: Int
+  machineType :: MachineType
   , companyId :: Int
-  , machineName :: String
-} 
+  , machineOperationStartDate :: String
+}
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+newMachine :: Int -> Machine
+newMachine companyId' = Machine {
+  machineType = newMachineType
+  , companyId = companyId'
+  , machineOperationStartDate = ""
+  }

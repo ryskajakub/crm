@@ -14,11 +14,15 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
-data MachineType = MachineType {
-  machineTypeId :: Int
-  , machineTypeName :: String
-}
+-- | Machine type can be either an id or the machine type object
+data MachineType =
+  MachineTypeId {
+    machineTypeId :: Int }
+  | MachineType {
+    machineTypeName :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
+newMachineType :: MachineType
+newMachineType = MachineType ""

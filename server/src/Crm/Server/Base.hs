@@ -7,7 +7,7 @@ import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 
-import Data.Profunctor.Product (p3)
+import Data.Profunctor.Product (p3, p4)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
@@ -30,14 +30,19 @@ import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
 import Generics.Regular
 
 import qualified Crm.Shared.Company as C
-import Crm.Shared.Machine (Machine(Machine))
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
 import Fay.Convert (showToFay, readFromFay')
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
 
-type MachinesTable = (Column PGInt4, Column PGInt4, Column PGText)
+type MachinesTable = (Column PGInt4, Column PGInt4, Column PGInt4, Column PGText)
+type MachinesWriteTable = (Maybe (Column PGInt4), Column PGInt4, Column PGInt4, Column PGText)
+
+type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText)
+type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
@@ -46,11 +51,19 @@ companiesTable = Table "companies" (p3 (
     , required "plant"
   ))
 
-machinesTable :: Table MachinesTable MachinesTable
-machinesTable = Table "machines" (p3 (
-    required "id"
+machinesTable :: Table MachinesWriteTable MachinesTable
+machinesTable = Table "machines" (p4 (
+    optional "id"
     , required "company_id"
+    , required "machine_type_id"
+    , required "operation_start"
+  ))
+
+machineTypesTable :: Table MachineTypesWriteTable  MachineTypesTable
+machineTypesTable = Table "machine_types" (p3 (
+    optional "id"
     , required "name"
+    , required "manufacturer"
   ))
 
 companiesQuery :: Query CompaniesTable
@@ -59,11 +72,17 @@ companiesQuery = queryTable companiesTable
 machinesQuery :: Query MachinesTable
 machinesQuery = queryTable machinesTable
 
+machineTypesQuery :: Query MachineTypesTable
+machineTypesQuery = queryTable machineTypesTable
+
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesQuery :: Connection -> IO[(Int, Int, String)]
+runMachinesQuery :: Connection -> IO[(Int, Int, Int, String)]
 runMachinesQuery connection = runQuery connection machinesQuery
+
+runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
+runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -93,12 +112,17 @@ instance FromJSON C.Company where
 instance JS.JSONSchema C.Company where
   schema = gSchema
 
-deriveAll ''Machine "PFMachine"
-type instance PF Machine = PFMachine
+deriveAll ''M.Machine "PFMachine"
+type instance PF M.Machine = PFMachine
 
-instance ToJSON Machine where
+deriveAll ''MT.MachineType "PFMachineType"
+type instance PF MT.MachineType = PFMachineType
+
+instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
-instance JS.JSONSchema Machine where
+instance JS.JSONSchema M.Machine where
+  schema = gSchema
+instance JS.JSONSchema MT.MachineType where
   schema = gSchema
 
 listing :: ListHandler Dependencies
@@ -135,7 +159,8 @@ companyResource = mkResourceId {
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
-  return $ map (\(mId, cId, mName) -> (mId, Machine cId mName)) rows
+  return $ map (\(mId, cId, mtId, operationStart) ->
+    (mId, M.Machine (MT.MachineTypeId mtId) cId operationStart)) rows
   )
 
 machineResource :: Resource Dependencies Dependencies Void () Void
