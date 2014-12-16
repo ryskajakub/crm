@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PackageImports #-}
 
 module Crm.Server.Base where
 
@@ -13,17 +14,19 @@ import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectIn
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 
-import Control.Monad.Reader (ReaderT, ask)
+import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Trans.Class (lift)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
+import Data.Functor.Identity (runIdentity)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
-import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create)
-import Rest.Schema (Schema, named, withListing)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith)
+import Rest.Schema (Schema, named, withListing, unnamedSingle)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
 
@@ -98,9 +101,16 @@ withConnection runQ = do
   return result
 
 type Dependencies = (ReaderT Connection IO :: * -> *)
+type IdDependencies = (ReaderT (Connection, Maybe Int) IO :: * -> *)
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
+
+deriveAll ''M.Machine "PFMachine"
+type instance PF M.Machine = PFMachine
+
+deriveAll ''MT.MachineType "PFMachineType"
+type instance PF MT.MachineType = PFMachineType
 
 instance ToJSON C.Company where
   -- super unsafe
@@ -111,12 +121,6 @@ instance FromJSON C.Company where
     Right ok -> return ok
 instance JS.JSONSchema C.Company where
   schema = gSchema
-
-deriveAll ''M.Machine "PFMachine"
-type instance PF M.Machine = PFMachine
-
-deriveAll ''MT.MachineType "PFMachineType"
-type instance PF MT.MachineType = PFMachineType
 
 instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
@@ -131,8 +135,13 @@ listing = mkListing (jsonO . someO) (const $ do
   return $ map (\(cId, cName, cPlant) -> (cId, C.Company cName cPlant)) rows
   )
 
+type UrlId = Maybe Int
+
 schema' :: Schema Void () Void
 schema' = withListing () (named [])
+
+companySchema :: Schema UrlId () Void
+companySchema = withListing () $ unnamedSingle read
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
@@ -148,13 +157,27 @@ createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
 
-companyResource :: Resource Dependencies Dependencies Void () Void
-companyResource = mkResourceId {
+prepareReader :: ReaderT (Connection, Maybe Int) IO a
+              -> ReaderT (Maybe Int) (ReaderT Connection IO) a
+prepareReader reader = let
+  outer = ask :: Reader (Maybe Int) (Maybe Int)
+  in mapReaderT (\maybeIntIdentity ->
+    let
+      maybeInt = runIdentity maybeIntIdentity
+      inner = ask :: ReaderT Connection IO Connection
+      getA = inner >>= (\connection -> let
+        aa = runReaderT reader (connection, maybeInt)
+        in lift aa)
+    in getA) outer
+
+companyResource :: Resource Dependencies IdDependencies UrlId () Void
+companyResource = (mkResourceReaderWith (\readerConnId ->
+    prepareReader readerConnId
+  )) {
   list = const listing
   , create = Just createCompanyHandler
   , name = A.companies
-  , schema = schema'
-  }
+  , schema = companySchema }
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
