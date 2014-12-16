@@ -161,7 +161,7 @@ addCompany connection newCompany = do
     connection
     companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany)
     (\(id' ,_ ,_) -> id')
-  return $ head newId
+  return $ head newId -- todo safe
 
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
@@ -207,13 +207,13 @@ addMachine connection machine = do
         connection
         machineTypesTable (Nothing, pgString name', pgString manufacturer)
         (\(id', _, _) -> id')
-      return $ head newMachineTypeId
+      return $ head newMachineTypeId -- todo safe
   let M.Machine _ companyId' machineOperationStartDate' = machine
   machineId <- runInsertReturning
     connection
     machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgString machineOperationStartDate')
     (\(id', _, _, _) -> id')
-  return $ head machineId
+  return $ head machineId -- todo safe
 
 createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachine ->
