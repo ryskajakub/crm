@@ -13,9 +13,11 @@ import Data.Profunctor.Product (p3, p4)
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
+import Opaleye.PGTypes (pgInt4)
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Error.Class (throwError)
 import Control.Monad.Trans.Class (lift)
 
 import Data.JSON.Schema.Generic (gSchema)
@@ -26,9 +28,10 @@ import Data.Functor.Identity (runIdentity)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith)
-import Rest.Schema (Schema, named, withListing, unnamedSingle)
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Schema (Schema, named, withListing, unnamedSingle, noListing)
+import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
+import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
 import Generics.Regular
 
@@ -37,6 +40,8 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
 import Fay.Convert (showToFay, readFromFay')
+
+import Safe (readMay)
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
@@ -122,6 +127,11 @@ instance FromJSON C.Company where
 instance JS.JSONSchema C.Company where
   schema = gSchema
 
+instance FromJSON M.Machine where
+  parseJSON value = case (readFromFay' value) of
+    Left e -> fail e
+    Right ok -> return ok
+
 instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
 instance JS.JSONSchema M.Machine where
@@ -141,7 +151,7 @@ schema' :: Schema Void () Void
 schema' = withListing () (named [])
 
 companySchema :: Schema UrlId () Void
-companySchema = withListing () $ unnamedSingle read
+companySchema = withListing () $ unnamedSingle readMay
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
@@ -186,6 +196,39 @@ machineListing = mkListing (jsonO . someO) (const $ do
     (mId, M.Machine (MT.MachineTypeId mtId) cId operationStart)) rows
   )
 
+addMachine :: Connection
+           -> M.Machine
+           -> IO Int -- ^ id of newly created machine
+addMachine connection machine = do
+  machineTypeId <- case M.machineType machine of
+    MT.MachineTypeId id' -> return $ id'
+    MT.MachineType name' manufacturer -> do
+      newMachineTypeId <- runInsertReturning
+        connection
+        machineTypesTable (Nothing, pgString name', pgString manufacturer)
+        (\(id', _, _) -> id')
+      return $ head newMachineTypeId
+  let M.Machine _ companyId' machineOperationStartDate' = machine
+  machineId <- runInsertReturning
+    connection
+    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgString machineOperationStartDate')
+    (\(id', _, _, _) -> id')
+  return $ head machineId
+
+createMachineHandler :: Handler IdDependencies
+createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachine ->
+  ask >>= \(connection, maybeInt) -> case maybeInt of
+    Just(int) -> liftIO $ addMachine connection (newMachine{M.companyId = int})
+    _ -> throwError $ InputError $ ParseError $ "provided id is not a number"
+  )
+
+companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
+companyMachineResource = mkResourceId {
+  name = A.machines
+  , schema = noListing $ named []
+  , create = Just createMachineHandler
+  }
+
 machineResource :: Resource Dependencies Dependencies Void () Void
 machineResource = mkResourceId {
   list = const machineListing
@@ -194,7 +237,7 @@ machineResource = mkResourceId {
   }
 
 router' :: Router Dependencies Dependencies
-router' = root `compose` (route companyResource)
+router' = root `compose` ((route companyResource) `compose` (route companyMachineResource))
                `compose` (route machineResource)
 
 api :: Api Dependencies
