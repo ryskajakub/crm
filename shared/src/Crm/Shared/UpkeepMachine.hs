@@ -20,3 +20,6 @@ data UpkeepMachine = UpkeepMachine {
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+newUpkeepMachine :: Int -> UpkeepMachine
+newUpkeepMachine int = UpkeepMachine "" int

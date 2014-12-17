@@ -27,7 +27,7 @@ data NavigationState =
     machine :: M.Machine }
   | UpkeepNew {
     upkeep :: U.Upkeep 
-  , upkeepMachines :: [M.Machine] }
+  , upkeepMachines :: [(Int, M.Machine)] }
 
 data AppState = AppState {
   navigation :: NavigationState

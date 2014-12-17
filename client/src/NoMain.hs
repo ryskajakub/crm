@@ -80,7 +80,7 @@ main' = do
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (machines appState)
                 newUpkeep = U.newUpkeep
-                in UpkeepNew newUpkeep (map snd machines')
+                in UpkeepNew newUpkeep machines'
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       )]

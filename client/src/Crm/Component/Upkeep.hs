@@ -12,6 +12,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepMachine as UM
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
@@ -22,6 +23,7 @@ import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
+import qualified HaskellReact.Tag.Hyperlink as A
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine)
@@ -29,12 +31,28 @@ import Crm.Server (createMachine)
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
-          -> [M.Machine]
+          -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> DOMElement
-upkeepNew myData appState maintenance machines = let
-  machineRow machine = 
+upkeepNew myData appState upkeep' machines = let
+  machineRow (machineId, machine) = 
     B.row [
-      B.col (B.mkColProps 6) $ span $ pack $ (MT.machineTypeName . M.machineType) machine ,
+      let 
+        content = span $ pack $ (MT.machineTypeName . M.machineType) machine
+        clickHandler = modify appState (\appState' -> case navigation appState' of
+          upkeepNew @ (UpkeepNew _ _) -> let 
+            oldUpkeepMachines = (U.upkeepMachines upkeep')
+            newUpkeepMachines = 
+              case find (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId) oldUpkeepMachines of
+                Just _ -> 
+                  filter (\(UM.UpkeepMachine _ machineId') -> machineId' /= machineId) oldUpkeepMachines
+                Nothing -> (UM.newUpkeepMachine machineId) : oldUpkeepMachines
+            newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
+            in appState' { navigation = upkeepNew { upkeep = newUpkeep } } )
+        link = A.a'' 
+          (mkAttrs{onClick = Defined $ const clickHandler})
+          (A.mkAAttrs)
+          content
+        in B.col (B.mkColProps 6) link ,
       B.col (B.mkColProps 6) $ I.textarea I.mkInputProps ]
   submitButton = let 
     newUpkeepHandler = return ()
