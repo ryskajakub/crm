@@ -30,6 +30,27 @@ import Crm.Server (createMachine)
 
 import Debug.Trace
 
+swap :: (a, b) -> (b, a)
+swap (x, y) = (y, x)
+
+{- | if the element is in the first list, put it in the other one, if the element
+ - is in the other, put in the first list
+ -}
+toggle :: ([a],[a]) -> (a -> Bool) -> ([a],[a])
+toggle lists findElem = let 
+  toggleInternal (list1, list2) runMore = let
+    foundInFirstList = find findElem list1
+    in case foundInFirstList of 
+      Just(elem) -> let
+        filteredList1 = filter (not . findElem) list1
+        addedToList2 = elem : list2
+        result = (filteredList1, addedToList2)
+        in if runMore then result else swap result
+      _ -> if runMore
+        then toggleInternal (list2, list1) False
+        else lists
+  in toggleInternal lists True
+
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
