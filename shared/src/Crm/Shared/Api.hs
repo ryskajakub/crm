@@ -5,6 +5,7 @@
 module Crm.Shared.Api (
   companies, companiesClient
   , machines, machinesClient
+  , upkeep
 ) where
 
 #ifndef FAY
@@ -20,6 +21,9 @@ companies = "companies"
 
 machines :: String
 machines = "machines"
+
+upkeep :: String
+upkeep = "upkeeps"
 
 companiesClient :: String
 companiesClient = firstToUpper companies

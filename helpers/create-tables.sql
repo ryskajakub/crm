@@ -20,6 +20,17 @@ create table machines (
   , operation_start varchar (500)
 );
 
+drop table upkeeps;
+create table upkeeps (
+  id serial ,
+  date_ varchar (500) );
+
+drop table upkeep_machines;
+create table upkeep_machines (
+  upkeep_id integer ,
+  note varchar (500) ,
+  machine_id integer );
+
 insert into companies(name, plant) values ('Continental', 'I');
 insert into companies(name, plant) values ('České dráhy', 'II');
 insert into companies(name, plant) values ('FOMA Bohemia', 'I');

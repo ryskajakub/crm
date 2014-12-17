@@ -13,19 +13,21 @@ import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 
-import Data.Profunctor.Product (p3, p4)
+import Data.Profunctor.Product (p2, p3, p4)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 import Opaleye.Operators ((.==), restrict)
 import Opaleye.PGTypes (pgInt4)
+import Opaleye.Manipulation (runInsert)
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
+import Control.Monad (forM_)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
@@ -46,9 +48,12 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepMachine as UM
 import Fay.Convert (showToFay, readFromFay')
 
 import Safe (readMay)
+import Debug.Trace
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
@@ -58,6 +63,14 @@ type MachinesWriteTable = (Maybe (Column PGInt4), Column PGInt4, Column PGInt4, 
 
 type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText)
 type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
+
+type DBInt = Column PGInt4
+type DBText = Column PGText
+
+type UpkeepTable = (DBInt, DBText)
+type UpkeepWriteTable = (Maybe DBInt, DBText)
+
+type UpkeepMachinesTable = (DBInt, DBText, DBInt)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
@@ -74,12 +87,23 @@ machinesTable = Table "machines" (p4 (
     , required "operation_start"
   ))
 
-machineTypesTable :: Table MachineTypesWriteTable  MachineTypesTable
+machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" (p3 (
     optional "id"
     , required "name"
     , required "manufacturer"
   ))
+
+upkeepTable :: Table UpkeepWriteTable UpkeepTable
+upkeepTable = Table "upkeeps" $ p2 (
+  optional "id" ,
+  required "date_" )
+
+upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
+upkeepMachinesTable = Table "upkeep_machines" $ p3 (
+  required "upkeep_id" ,
+  required "note" ,
+  required "machine_id")
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
@@ -89,6 +113,9 @@ machinesQuery = queryTable machinesTable
 
 machineTypesQuery :: Query MachineTypesTable
 machineTypesQuery = queryTable machineTypesTable
+
+upkeepQuery :: Query UpkeepTable
+upkeepQuery = queryTable upkeepTable
 
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
@@ -135,6 +162,26 @@ type instance PF M.Machine = PFMachine
 
 deriveAll ''MT.MachineType "PFMachineType"
 type instance PF MT.MachineType = PFMachineType
+
+deriveAll ''U.Upkeep "PFUpkeep"
+type instance PF U.Upkeep = PFUpkeep
+
+deriveAll ''UM.UpkeepMachine "PFUpkeepMachine"
+type instance PF UM.UpkeepMachine = PFUpkeepMachine
+
+instance FromJSON U.Upkeep where
+  parseJSON value = case trace (show value) (readFromFay' value) of
+    Left e -> fail e
+    Right ok -> return ok
+instance FromJSON UM.UpkeepMachine where
+  parseJSON value = case readFromFay' value of
+    Left e -> fail e
+    Right ok -> return ok
+
+instance JS.JSONSchema U.Upkeep where
+  schema = gSchema
+instance JS.JSONSchema UM.UpkeepMachine where
+  schema = gSchema
 
 instance ToJSON C.Company where
   -- super unsafe
@@ -215,6 +262,27 @@ machineListing = mkListing (jsonO . someO) (const $ do
     (mId, M.Machine (MT.MachineType mtN mtMf) cId mOs)) rows
   )
 
+addUpkeep :: Connection
+          -> U.Upkeep
+          -> IO Int -- ^ id of the upkeep
+addUpkeep connection upkeep = do
+  upkeepIds <- runInsertReturning
+    connection
+    upkeepTable (Nothing, pgString $ U.upkeepDate upkeep)
+    (\(id',_) -> id')
+  let 
+    upkeepId = head upkeepIds -- TODO safe
+    insertUpkeepMachine upkeepMachine = do
+      _ <- runInsert
+        connection
+        upkeepMachinesTable (
+          pgInt4 upkeepId , 
+          pgString $ UM.upkeepMachineNote upkeepMachine ,
+          pgInt4 $ UM.upkeepMachineMachineId upkeepMachine )
+      return ()
+  forM_ (U.upkeepMachines upkeep) insertUpkeepMachine
+  return $ head upkeepIds
+
 addMachine :: Connection
            -> M.Machine
            -> IO Int -- ^ id of newly created machine
@@ -241,6 +309,13 @@ createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachi
     _ -> throwError $ InputError $ ParseError $ "provided id is not a number"
   )
 
+createUpkeepHandler :: Handler IdDependencies
+createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
+  trace (show newUpkeep) $ ask >>= \(connection, maybeInt) -> case maybeInt of
+    Just(_) -> liftIO $ addUpkeep connection newUpkeep -- todo check that the machines are belonging to this company
+    _ -> throwError $ InputError $ ParseError "provided id is not a number"
+  )
+
 companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
 companyMachineResource = mkResourceId {
   name = A.machines
@@ -255,8 +330,15 @@ machineResource = mkResourceId {
   , schema = schema'
   }
 
+upkeepResource :: Resource IdDependencies IdDependencies Void Void Void
+upkeepResource = mkResourceId {
+  name = A.upkeep ,
+  schema = noListing $ named [] ,
+  create = Just createUpkeepHandler }
+
 router' :: Router Dependencies Dependencies
-router' = root `compose` ((route companyResource) `compose` (route companyMachineResource))
+router' = root `compose` (((route companyResource) `compose` (route companyMachineResource))
+                                                   `compose` (route upkeepResource))
                `compose` (route machineResource)
 
 api :: Api Dependencies
