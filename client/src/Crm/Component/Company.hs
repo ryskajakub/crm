@@ -116,7 +116,7 @@ companyPage :: Bool -- ^ is the page editing mode
             -> DOMElement -- ^ company detail page fraction
 companyPage editing' myData var setCompany company' companyId saveHandler' machines' = let
   machineBox machine =
-    B.col (B.ColProps 4) $
+    B.col (B.mkColProps 4) $
       B.panel [
         h2 $ pack $ (MT.machineTypeName . M.machineType) machine
         , dl [
@@ -175,7 +175,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
       in B.jumbotron companyBasicInfo'
     , section $ B.grid [
       B.row $
-        B.col (B.ColProps 12) $
+        B.col (B.mkColProps 12) $
           B.panel $
             span "Historie servisů"
       , B.row (machineBoxes ++ [
@@ -184,10 +184,10 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
           buttonProps = BTN.buttonProps {
             BTN.onClick = Defined $ const $
               navigate newCompanyUrl (router myData) }
-          in B.col (B.ColProps 4) $ B.panel $ h2 $ BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
+          in B.col (B.mkColProps 4) $ B.panel $ h2 $ BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
       ])
       , B.row $
-        B.col (B.ColProps 12) $
+        B.col (B.mkColProps 12) $
           B.panel $
             span $ link
               "Naplánovat servis"
