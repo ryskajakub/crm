@@ -2,6 +2,11 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PackageImports #-}
 
+{-# LANGUAGE Arrows #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+
 module Crm.Server.Base where
 
 import Opaleye.QueryArr (Query)
@@ -13,12 +18,14 @@ import Data.Profunctor.Product (p3, p4)
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
+import Opaleye.Operators ((.==), restrict)
 import Opaleye.PGTypes (pgInt4)
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Trans.Class (lift)
+import Control.Arrow (returnA)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
@@ -83,6 +90,15 @@ machinesQuery = queryTable machinesTable
 machineTypesQuery :: Query MachineTypesTable
 machineTypesQuery = queryTable machineTypesTable
 
+-- | query, that returns expanded machine type, not just the id
+expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
+expandedMachinesQuery = proc () -> do
+  machineRow @ (_,_,machineTypeId,_) <- machinesQuery -< ()
+  machineTypesRow @ (machineTypeId',_,_) <- machineTypesQuery -< ()
+  restrict -< machineTypeId' .== machineTypeId
+
+  returnA -< (machineRow, machineTypesRow)
+
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
@@ -91,6 +107,9 @@ runMachinesQuery connection = runQuery connection machinesQuery
 
 runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
+
+runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String), (Int, String, String))]
+runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -191,9 +210,9 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runMachinesQuery conn
-  return $ map (\(mId, cId, mtId, operationStart) ->
-    (mId, M.Machine (MT.MachineTypeId mtId) cId operationStart)) rows
+  rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
+  return $ map (\((mId,cId,_,mOs),(_,mtN,mtMf)) ->
+    (mId, M.Machine (MT.MachineType mtN mtMf) cId mOs)) rows
   )
 
 addMachine :: Connection

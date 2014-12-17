@@ -12,6 +12,7 @@ module Crm.Component.Company (
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
@@ -23,6 +24,8 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createCompany)
+
+import Debug.Trace
 
 companiesList :: MyData
               -> [(Int, C.Company)]
@@ -115,10 +118,10 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
-        h2 $ span $ pack $ M.machineOperationStartDate machine
+        h2 $ pack $ (MT.machineTypeName . M.machineType) (trace (show machine) machine)
         , dl [
           dt "Další servis"
-          , dd ""
+          , dd $ pack $ M.machineOperationStartDate machine
           ]
       ]
   machineBoxes = map machineBox machines'
