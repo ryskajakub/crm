@@ -6,11 +6,13 @@
 module HaskellReact.Tag.Construct where
 
 import HaskellReact.Event
-import FFI (Defined(Undefined), ffi, Automatic)
-import "fay-base" Data.Text (Text)
+import FFI (Defined(Defined, Undefined), ffi, Automatic)
+import "fay-base" Data.Text 
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
-import "fay-base" Prelude hiding (id)
+import "fay-base" Prelude hiding (id, intercalate)
 import HaskellReact.ComponentData (ReactInstance)
+
+import "fay-base" Debug.Trace
 
 data DOMElement
 
@@ -44,6 +46,14 @@ defaultAttributes = Attributes {
 
 mkAttrs :: Attributes
 mkAttrs = defaultAttributes
+
+class' :: Text -> Attributes
+class' className' = mkAttrs {
+  className = Defined $ className'
+  }
+
+class'' :: [Text] -> Attributes
+class'' classNames = class' $ intercalate (pack " ") classNames
 
 -- | Unsafely create a html tag
 constructDOMElement :: (Renderable a)

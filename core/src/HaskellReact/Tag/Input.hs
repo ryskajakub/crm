@@ -130,5 +130,8 @@ defaultInputAttributes = InputAttributes {
   , onChange = Undefined
 }
 
-input :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
-input = constructDOMElement "input"
+input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
+input' = constructDOMElement "input"
+
+input :: Attributes -> InputAttributes -> DOMElement
+input a i = input' a i ([]::[DOMElement])

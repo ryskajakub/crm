@@ -16,10 +16,13 @@ data InputProps = InputProps {
   , defaultValue :: Text
   , onChange :: Defined (SyntheticEvent -> Fay ())
   , placeholder :: Text
+  , label_ :: Defined Text
+  , labelClassName :: Defined Text
+  , wrapperClassName :: Defined Text
 }
 
 mkInputProps :: InputProps
-mkInputProps = InputProps "text" "" Undefined ""
+mkInputProps = InputProps "text" "" Undefined "" Undefined Undefined Undefined
 
 input :: InputProps -> DOMElement
 input inputProps = reactInstance2DOM $ reactBootstrap "Input" inputProps ([]::[DOMElement])

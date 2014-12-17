@@ -14,19 +14,6 @@ import "fay-base" Prelude
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap
 
-data ButtonProps = ButtonProps {
-  bsStyle :: Defined Text
-  , title :: Defined Text
-  , onClick :: Defined (SyntheticMouseEvent -> Fay ())
-}
-
-buttonProps :: ButtonProps
-buttonProps = ButtonProps {
-  bsStyle = Undefined
-  , title = Undefined
-  , onClick = Undefined
-}
-
 requireReactBootstrap :: ReactBootstrap
 requireReactBootstrap = ffi " require('react-bootstrap') "
 
@@ -47,17 +34,6 @@ nav :: Renderable a
     => Automatic a
     -> ReactInstance
 nav children = reactBootstrap "Nav" Null children
-
-button' :: Renderable a
-        => ButtonProps
-        -> Automatic a
-        -> ReactInstance
-button' props children = reactBootstrap "Button" props children
-
-button :: Renderable a
-       => Automatic a
-       -> ReactInstance
-button = button' buttonProps
 
 table :: Renderable a
       => Automatic a

@@ -20,7 +20,8 @@ module HaskellReact.Tag.Simple (
   , dd
   , h1
   , h2
-  , form
+  , form, form'
+  , label'
 ) where
 
 import HaskellReact.Tag.Construct
@@ -97,3 +98,9 @@ h2 = constructSimple "h2" defaultAttributes
 
 form :: (Renderable a) => Automatic a -> DOMElement
 form = constructSimple "form" defaultAttributes
+
+form' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+form' = constructSimple "form"
+
+label' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+label' = constructSimple "label"
