@@ -28,14 +28,20 @@ import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine)
 
+import Debug.Trace
+
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> DOMElement
 upkeepNew myData appState upkeep' machines = let
-  machineRow (machineId, machine) = 
-    B.row [
+  machineRow (machineId, machine) = let 
+    checkedMachineIds = map (UM.upkeepMachineMachineId) (U.upkeepMachines upkeep')
+    rowProps = if elem machineId checkedMachineIds
+      then class' "bg-success"
+      else mkAttrs
+    in B.row' rowProps [
       let 
         content = span $ pack $ (MT.machineTypeName . M.machineType) machine
         clickHandler = modify appState (\appState' -> case navigation appState' of
