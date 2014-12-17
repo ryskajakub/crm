@@ -8,6 +8,7 @@ import "fay-base" Prelude
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepMachine as UM
 
 data MyData = MyData {
   router :: BackboneRouter
@@ -27,7 +28,8 @@ data NavigationState =
     machine :: M.Machine }
   | UpkeepNew {
     upkeep :: U.Upkeep 
-  , upkeepMachines :: [(Int, M.Machine)] }
+  , upkeepMachines :: [(Int, M.Machine)]
+  , notCheckedMachines :: [UM.UpkeepMachine] }
 
 data AppState = AppState {
   navigation :: NavigationState

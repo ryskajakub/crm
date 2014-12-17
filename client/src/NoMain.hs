@@ -20,7 +20,10 @@ import Crm.Component.Upkeep (upkeepNew)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.MachineType as MT
+
+import Debug.Trace
 
 main' :: Fay ()
 main' = do
@@ -33,7 +36,7 @@ main' = do
     modify appVar' (\appState ->
       appState { machines = machines' }
     ))
-  waitFor appVar' (\appState -> (not $ null $ machines appState) && (not $ null $ companies appState)) $ 
+  waitFor appVar' (\appState -> (not $ null $ machines appState) && (not $ null $ companies appState)) $
       \_ -> do
     router' <- startRouter [(
         pack "", const $ modify appVar' (\appState -> appState { navigation = FrontPage })
@@ -79,8 +82,8 @@ main' = do
             newAppState = case (parseSafely $ head params) of
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (machines appState)
-                newUpkeep = U.newUpkeep
-                in UpkeepNew newUpkeep machines'
+                notCheckedUpkeepMachines = map (\(id',_) -> UM.newUpkeepMachine id') machines'
+                in UpkeepNew U.newUpkeep machines' notCheckedUpkeepMachines
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       )]
@@ -95,8 +98,8 @@ main' = do
             (companyDetail editing' myData appVar' (companyId', company') machines')
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
-        UpkeepNew upkeep' machines' -> 
-          Navigation.navigation myData (upkeepNew myData appVar' upkeep' machines'))
+        UpkeepNew upkeep' machines' notCheckedMachines' ->
+          Navigation.navigation myData (upkeepNew myData appVar' upkeep' notCheckedMachines' machines'))
     return ()
   return ()
 

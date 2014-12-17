@@ -54,43 +54,50 @@ toggle lists findElem = let
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
+          -> [UM.UpkeepMachine]
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> DOMElement
-upkeepNew myData appState upkeep' machines = let
-  machineRow (machineId, machine) = let 
+upkeepNew myData appState upkeep' notCheckedMachines'' machines = let
+  setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
+  setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
+    upkeepNew @ (UpkeepNew _ _ _) -> let
+      newNavigation = upkeepNew { upkeep = upkeep' }
+      newNavigation' = case notCheckedMachines' of 
+        Just(x) -> newNavigation { notCheckedMachines = x }
+        _ -> newNavigation
+      in appState' { navigation = newNavigation' } )
+  machineRow (machineId, machine) = let
     checkedMachineIds = map (UM.upkeepMachineMachineId) (U.upkeepMachines upkeep')
     rowProps = if elem machineId checkedMachineIds
       then class' "bg-success"
       else mkAttrs
     in B.row' rowProps [
-      let 
+      let
         content = span $ pack $ (MT.machineTypeName . M.machineType) machine
-        clickHandler = modify appState (\appState' -> case navigation appState' of
-          upkeepNew @ (UpkeepNew _ _) -> let 
-            oldUpkeepMachines = (U.upkeepMachines upkeep')
-            newUpkeepMachines = 
-              case find (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId) oldUpkeepMachines of
-                Just _ -> 
-                  filter (\(UM.UpkeepMachine _ machineId') -> machineId' /= machineId) oldUpkeepMachines
-                Nothing -> (UM.newUpkeepMachine machineId) : oldUpkeepMachines
-            newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
-            in appState' { navigation = upkeepNew { upkeep = newUpkeep } } )
-        link = A.a'' 
+        clickHandler = let
+          (newCheckedMachines, newNotCheckedMachines) = toggle (
+            U.upkeepMachines upkeep' , 
+            notCheckedMachines'' ) 
+            (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId)
+          newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
+          in setUpkeep newUpkeep $ Just newNotCheckedMachines
+        link = A.a''
           (mkAttrs{onClick = Defined $ const clickHandler})
           (A.mkAAttrs)
           content
         in B.col (B.mkColProps 6) link ,
-      B.col (B.mkColProps 6) $ I.textarea I.mkInputProps ]
-  submitButton = let 
+      B.col (B.mkColProps 6) $ I.textarea (I.mkInputProps {
+        I.onChange = Defined $ const $ return () })]
+  submitButton = let
     newUpkeepHandler = return ()
     buttonProps = BTN.buttonProps {
-      BTN.bsStyle = Defined "primary" , 
+      BTN.bsStyle = Defined "primary" ,
       BTN.onClick = Defined $ const newUpkeepHandler }
     button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
     in B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ I.input (I.mkInputProps)]
-  in div $ 
-    B.grid $ 
+  in div $
+    B.grid $
       map machineRow machines ++ [dateRow, submitButton]
