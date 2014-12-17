@@ -7,6 +7,7 @@ import HaskellReact.BackboneRouter
 import "fay-base" Prelude
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Upkeep as U
 
 data MyData = MyData {
   router :: BackboneRouter
@@ -24,6 +25,8 @@ data NavigationState =
   | NotFound
   | MachineNew {
     machine :: M.Machine }
+  | UpkeepNew {
+    upkeep :: U.Upkeep }
 
 data AppState = AppState {
   navigation :: NavigationState

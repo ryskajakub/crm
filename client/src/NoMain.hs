@@ -16,8 +16,10 @@ import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
 import Crm.Component.Machine (machineNew)
+import Crm.Component.Upkeep (upkeepNew)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.MachineType as MT
 
 main' :: Fay ()
@@ -59,6 +61,17 @@ main' = do
               in MachineNew (newMachine')
             _ -> NotFound
         modify appVar' (\appState' -> appState' { navigation = newAppState })
+    ), (
+      pack "companies/:id/new-maintenance", \params -> do
+        appState <- get appVar'
+        let
+          companies' = companies appState
+          newAppState = case (parseSafely $ head params) of
+            Just(companyId') | isJust $ lookup companyId' companies' -> let
+              newUpkeep = U.newUpkeep
+              in UpkeepNew (newUpkeep)
+            _ -> NotFound
+        modify appVar' (\appState' -> appState' { navigation = newAppState })
     )]
   let myData = MyData router'
   fetchCompanies (\companies' ->
@@ -78,7 +91,8 @@ main' = do
         Navigation.navigation myData
           (companyDetail editing' myData appVar' (companyId', company') machines')
       CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
-      MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine'))
+      MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
+      UpkeepNew upkeep' -> Navigation.navigation myData (upkeepNew myData appVar' upkeep'))
   return ()
 
 parseInt :: Text -> Nullable Int

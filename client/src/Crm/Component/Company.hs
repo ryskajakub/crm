@@ -189,6 +189,9 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
       , B.row $
         B.col (B.ColProps 12) $
           B.panel $
-            span "Naplánovat servis"
+            span $ link
+              "Naplánovat servis"
+              ("/companies/" `append` (showInt companyId) `append` "/new-maintenance")
+              (router myData)
     ]
   ]
