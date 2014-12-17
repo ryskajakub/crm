@@ -9,6 +9,7 @@ var sources = [
   , '../../haskell-react/core/src/'
   , '../../haskell-react/wrappers/src/'
   , './shared/'
+  , '/home/coub/git/fay-jquery/src'
 ];
 
 var sourcesAsGlob = _.map(sources, function(source) {
@@ -40,7 +41,7 @@ gulp.task('generate-rest-client', function () {
 
 
 gulp.task('compile', function() {
-  var fayCommand = "fay --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package 'fay-dom'";
+  var fayCommand = "fay --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

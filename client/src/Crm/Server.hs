@@ -10,10 +10,11 @@ module Crm.Server (
 
 import FFI (ffi, Automatic)
 import Crm.Shared.Company (Company)
-import Crm.Shared.Machine (Machine)
+import Crm.Shared.Machine (Machine, companyId)
 import qualified Crm.Shared.Api as A
 import "fay-base" Prelude
-import "fay-base" Data.Text (Text, pack)
+import "fay-base" Data.Text (Text, pack, append, showInt, unpack)
+import qualified JQuery as JQ
 
 data CrmApi
 
@@ -35,7 +36,12 @@ createCompany company callback = do
 createMachine :: Machine
               -> (Int -> Fay())
               -> Fay ()
-createMachine machine callback = undefined
+createMachine machine callback =
+  JQ.ajaxPost
+    (pack "/api/v1.0.0/companies/" `append` (showInt $ companyId machine) `append` pack "/machines/")
+    machine
+    callback
+    (const $ const $ const $ return ())
 
 fetch :: ([a] -> Fay ())
       -> Text
