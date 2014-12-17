@@ -68,8 +68,9 @@ main' = do
           companies' = companies appState
           newAppState = case (parseSafely $ head params) of
             Just(companyId') | isJust $ lookup companyId' companies' -> let
+              machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (machines appState)
               newUpkeep = U.newUpkeep
-              in UpkeepNew (newUpkeep)
+              in UpkeepNew newUpkeep (map snd machines')
             _ -> NotFound
         modify appVar' (\appState' -> appState' { navigation = newAppState })
     )]
@@ -92,7 +93,8 @@ main' = do
           (companyDetail editing' myData appVar' (companyId', company') machines')
       CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
       MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
-      UpkeepNew upkeep' -> Navigation.navigation myData (upkeepNew myData appVar' upkeep'))
+      UpkeepNew upkeep' machines' -> 
+        Navigation.navigation myData (upkeepNew myData appVar' upkeep' machines'))
   return ()
 
 parseInt :: Text -> Nullable Int

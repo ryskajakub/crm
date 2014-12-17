@@ -25,6 +25,6 @@ editable edit display initial setValue = if edit
       setValue value
     in I.input (I.mkInputProps {
       I.onChange = Defined changeHandler
-      , I.defaultValue = initial
+      , I.defaultValue = Defined initial
       })
   else display

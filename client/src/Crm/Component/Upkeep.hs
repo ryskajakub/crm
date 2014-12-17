@@ -29,9 +29,15 @@ import Crm.Server (createMachine)
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
+          -> [M.Machine]
           -> DOMElement
-upkeepNew myData appState maintenance =
-  div [
-    "machines"
-    , "ok button"
-  ]
+upkeepNew myData appState maintenance machines = let
+  machineRow machine = 
+    B.row [
+      B.col (B.ColProps 6) $ span $ pack $ (MT.machineTypeName . M.machineType) machine
+      , B.col (B.ColProps 6) $ I.textarea $ I.mkInputProps {
+        I.type_ = "textarea" }
+    ]
+  in div $ 
+    B.grid $
+      map machineRow machines

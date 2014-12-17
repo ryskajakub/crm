@@ -118,7 +118,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
   machineBox machine =
     B.col (B.ColProps 4) $
       B.panel [
-        h2 $ pack $ (MT.machineTypeName . M.machineType) (trace (show machine) machine)
+        h2 $ pack $ (MT.machineTypeName . M.machineType) machine
         , dl [
           dt "Další servis"
           , dd $ pack $ M.machineOperationStartDate machine
