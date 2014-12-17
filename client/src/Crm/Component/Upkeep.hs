@@ -34,10 +34,8 @@ upkeepNew :: MyData
 upkeepNew myData appState maintenance machines = let
   machineRow machine = 
     B.row [
-      B.col (B.mkColProps 6) $ span $ pack $ (MT.machineTypeName . M.machineType) machine
-      , B.col (B.mkColProps 6) $ I.textarea $ I.mkInputProps {
-        I.type_ = "textarea" }
-    ]
+      B.col (B.mkColProps 6) $ span $ pack $ (MT.machineTypeName . M.machineType) machine ,
+      B.col (B.mkColProps 6) $ I.textarea I.mkInputProps ]
   submitButton = let 
     newUpkeepHandler = return ()
     buttonProps = BTN.buttonProps {
@@ -45,6 +43,9 @@ upkeepNew myData appState maintenance machines = let
       BTN.onClick = Defined $ const newUpkeepHandler }
     button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
     in B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
+  dateRow = B.row [
+    B.col (B.mkColProps 6) "Datum" ,
+    B.col (B.mkColProps 6) $ I.input (I.mkInputProps)]
   in div $ 
     B.grid $ 
-      map machineRow machines ++ [submitButton] 
+      map machineRow machines ++ [dateRow, submitButton]
