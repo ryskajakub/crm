@@ -34,8 +34,13 @@ upkeepHistory :: [(Int, U.Upkeep)]
               -> DOMElement
 upkeepHistory upkeeps = let
   upkeepHtml (upkeepId, upkeep) = let
-    upkeepDate = B.row $ (B.col $ B.mkColProps 3) $ pack $ U.upkeepDate upkeep
-    in upkeepDate
+    upkeepMachines = U.upkeepMachines upkeep
+    upkeepDate = B.col (B.mkColProps 12) (pack $ U.upkeepDate upkeep)
+    upkeepMachineHtml upkeepMachine = B.col
+      (B.mkColProps 3)
+      (pack $ UM.upkeepMachineNote upkeepMachine)
+    row = B.row (upkeepDate : map upkeepMachineHtml upkeepMachines)
+    in row
   in div [
     h2 "Historie servisů" ,
     reactInstance2DOM $ B.grid $ map upkeepHtml upkeeps ]
