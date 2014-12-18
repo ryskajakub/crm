@@ -37,10 +37,10 @@ swap (x, y) = (y, x)
  - is in the other, put in the first list
  -}
 toggle :: ([a],[a]) -> (a -> Bool) -> ([a],[a])
-toggle lists findElem = let 
+toggle lists findElem = let
   toggleInternal (list1, list2) runMore = let
     foundInFirstList = find findElem list1
-    in case foundInFirstList of 
+    in case foundInFirstList of
       Just(elem) -> let
         filteredList1 = filter (not . findElem) list1
         addedToList2 = elem : list2
@@ -63,12 +63,15 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
   setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
     upkeepNew @ (UpkeepNew _ _ _ _) -> let
       newNavigation = upkeepNew { upkeep = upkeep' }
-      newNavigation' = case notCheckedMachines' of 
+      newNavigation' = case notCheckedMachines' of
         Just(x) -> newNavigation { notCheckedMachines = x }
         _ -> newNavigation
       in appState' { navigation = newNavigation' } )
   machineRow (machineId, machine) = let
-    checkedMachineIds = map (UM.upkeepMachineMachineId) (U.upkeepMachines upkeep')
+    upkeepMachines = U.upkeepMachines upkeep'
+    thisUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') upkeepMachines
+    thatUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') notCheckedMachines''
+    checkedMachineIds = map (UM.upkeepMachineMachineId) upkeepMachines
     rowProps = if elem machineId checkedMachineIds
       then class' "bg-success"
       else mkAttrs
@@ -77,8 +80,8 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
         content = span $ pack $ (MT.machineTypeName . M.machineType) machine
         clickHandler = let
           (newCheckedMachines, newNotCheckedMachines) = toggle (
-            U.upkeepMachines upkeep' , 
-            notCheckedMachines'' ) 
+            U.upkeepMachines upkeep' ,
+            notCheckedMachines'' )
             (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId)
           newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
           in setUpkeep newUpkeep $ Just newNotCheckedMachines
@@ -87,10 +90,25 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
           (A.mkAAttrs)
           content
         in B.col (B.mkColProps 6) link ,
-      B.col (B.mkColProps 6) $ I.textarea (I.mkInputProps {
-        I.onChange = Defined $ const $ return () })]
+      let
+        inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
+          (Just(upkeepMachine),_) -> I.mkInputProps {
+            I.onChange = Defined $ \event -> do
+              value <- eventValue event
+              let newUpkeepMachine = upkeepMachine { UM.upkeepMachineNote = unpack value }
+              let newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId') ->
+                    if machineId' == machineId
+                      then newUpkeepMachine
+                      else um) upkeepMachines
+              let newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
+              setUpkeep newUpkeep Nothing ,
+            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine }
+          (_,Just(upkeepMachine)) -> I.mkInputProps {
+            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine }
+          _ -> I.mkInputProps
+        in B.col (B.mkColProps 6) $ I.textarea inputProps ]
   submitButton = let
-    newUpkeepHandler = createUpkeep 
+    newUpkeepHandler = createUpkeep
       upkeep'
       companyId' -- todo put there a real company's number, so it can be checked on the server
       (const $ return ())
@@ -102,7 +120,7 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ I.input (I.mkInputProps {
-      I.onChange = Defined $ \event -> do 
+      I.onChange = Defined $ \event -> do
         value <- eventValue event
         let newUpkeep = upkeep' { U.upkeepDate = unpack value }
         setUpkeep newUpkeep Nothing })]
