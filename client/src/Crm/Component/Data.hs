@@ -31,6 +31,10 @@ data NavigationState =
   , upkeepMachines :: [(Int, M.Machine)]
   , notCheckedMachines :: [UM.UpkeepMachine] 
   , companyId :: Int }
+  | UpkeepHistory {
+    upkeeps :: [U.Upkeep]
+  }
+
 
 data AppState = AppState {
   navigation :: NavigationState

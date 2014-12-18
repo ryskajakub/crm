@@ -177,7 +177,10 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
       B.row $
         B.col (B.mkColProps 12) $
           B.panel $
-            span "Historie servisů"
+            span $ link 
+              "Historie servisů"
+              ("/companies/" `append` showInt companyId `append` "/maintenances")
+              (router myData)
       , B.row (machineBoxes ++ [
         let
           newCompanyUrl = "companies/" `append` showInt companyId `append` "/new-machine"

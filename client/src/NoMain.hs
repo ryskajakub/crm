@@ -17,6 +17,7 @@ import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
 import Crm.Component.Machine (machineNew)
 import Crm.Component.Upkeep (upkeepNew)
+import Crm.Component.UpkeepHistory (upkeepHistory)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
@@ -86,6 +87,16 @@ main' = do
                 in UpkeepNew U.newUpkeep machines' notCheckedUpkeepMachines companyId'
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
+      ), (
+        pack "companies/:id/maintenances", \params -> do
+          appState <- get appVar'
+          let
+            companies' = companies appState
+            newAppState = case (parseSafely $ head params) of
+              Just(companyId') | isJust $ lookup companyId' companies' -> let
+                in UpkeepHistory []
+              _ -> NotFound
+          modify appVar' (\appState' -> appState' { navigation = newAppState })
       )]
     let myData = MyData router'
     _ <- subscribeAndRead appVar' (\appState -> let
@@ -100,7 +111,8 @@ main' = do
         MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
         UpkeepNew upkeep' machines' notCheckedMachines' companyId' ->
           Navigation.navigation myData 
-            (upkeepNew myData appVar' upkeep' notCheckedMachines' machines' companyId'))
+            (upkeepNew myData appVar' upkeep' notCheckedMachines' machines' companyId')
+        UpkeepHistory upkeeps' -> Navigation.navigation myData $ upkeepHistory upkeeps')
     return ()
   return ()
 
