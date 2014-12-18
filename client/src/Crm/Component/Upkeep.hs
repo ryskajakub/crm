@@ -104,13 +104,15 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
               setUpkeep newUpkeep Nothing ,
             I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine }
           (_,Just(upkeepMachine)) -> I.mkInputProps {
-            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine }
-          _ -> I.mkInputProps
+            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine ,
+            I.disabled = Defined True }
+          _ -> I.mkInputProps { -- this shouldn't happen, really
+            I.disabled = Defined True }
         in B.col (B.mkColProps 6) $ I.textarea inputProps ]
   submitButton = let
     newUpkeepHandler = createUpkeep
       upkeep'
-      companyId' -- todo put there a real company's number, so it can be checked on the server
+      companyId'
       (const $ return ())
     buttonProps = BTN.buttonProps {
       BTN.bsStyle = Defined "primary" ,
