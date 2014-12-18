@@ -53,3 +53,13 @@ insert into machines(company_id, machine_type_id, operation_start)
   values (2, 1, '2001');
 insert into machines(company_id, machine_type_id, operation_start)
   values (2, 3, '2008');
+
+insert into upkeeps(date_) values ('1999');
+insert into upkeeps(date_) values ('2001');
+insert into upkeeps(date_) values ('2008');
+
+insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'oprava', 1);
+insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'pravidelný', 2);
+insert into upkeep_machines(upkeep_id, note, machine_id) values (2, 'oprava 2', 2);
+
+insert into upkeep_machines(upkeep_id, note, machine_id) values (3, 'údržba', 4);

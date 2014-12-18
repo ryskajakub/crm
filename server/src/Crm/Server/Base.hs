@@ -117,14 +117,23 @@ machineTypesQuery = queryTable machineTypesTable
 upkeepQuery :: Query UpkeepTable
 upkeepQuery = queryTable upkeepTable
 
+upkeepMachinesQuery :: Query UpkeepMachinesTable
+upkeepMachinesQuery = queryTable upkeepMachinesTable
+
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery = proc () -> do
   machineRow @ (_,_,machineTypeId,_) <- machinesQuery -< ()
   machineTypesRow @ (machineTypeId',_,_) <- machineTypesQuery -< ()
   restrict -< machineTypeId' .== machineTypeId
-
   returnA -< (machineRow, machineTypesRow)
+
+expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
+expandedUpkeepsQuery = proc () -> do
+  upkeepRow @ (upkeepId,_) <- upkeepQuery -< ()
+  upkeepMachineRow @ (upkeepId',_,_) <- upkeepMachinesQuery -< ()
+  restrict -< (upkeepId' .== upkeepId)
+  returnA -< (upkeepRow, upkeepMachineRow)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
@@ -137,6 +146,9 @@ runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
 runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String), (Int, String, String))]
 runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
+
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, String), (Int, String, Int))]
+runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -192,6 +204,8 @@ instance FromJSON C.Company where
     Right ok -> return ok
 instance JS.JSONSchema C.Company where
   schema = gSchema
+instance ToJSON U.Upkeep where
+  toJSON = fromJust . showToFay
 
 instance FromJSON M.Machine where
   parseJSON value = case (readFromFay' value) of
@@ -262,6 +276,21 @@ machineListing = mkListing (jsonO . someO) (const $ do
     (mId, M.Machine (MT.MachineType mtN mtMf) cId mOs)) rows
   )
 
+upkeepListing :: ListHandler Dependencies
+upkeepListing = mkListing (jsonO . someO) (const $ do
+  rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
+  return $ foldl (\acc ((upkeepId,date),(_,note,machineId)) ->
+    let
+      addUpkeep' = (upkeepId, U.Upkeep date [UM.UpkeepMachine note machineId])
+      in case acc of
+        [] -> [addUpkeep']
+        (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
+          modifiedUpkeep = upkeep {
+            U.upkeepMachines = UM.UpkeepMachine note machineId : U.upkeepMachines upkeep }
+          in (upkeepId', modifiedUpkeep) : rest
+        _ -> addUpkeep' : acc
+    ) [] rows )
+
 addUpkeep :: Connection
           -> U.Upkeep
           -> IO Int -- ^ id of the upkeep
@@ -270,13 +299,13 @@ addUpkeep connection upkeep = do
     connection
     upkeepTable (Nothing, pgString $ U.upkeepDate upkeep)
     (\(id',_) -> id')
-  let 
+  let
     upkeepId = head upkeepIds -- TODO safe
     insertUpkeepMachine upkeepMachine = do
       _ <- runInsert
         connection
         upkeepMachinesTable (
-          pgInt4 upkeepId , 
+          pgInt4 upkeepId ,
           pgString $ UM.upkeepMachineNote upkeepMachine ,
           pgInt4 $ UM.upkeepMachineMachineId upkeepMachine )
       return ()
@@ -330,6 +359,12 @@ machineResource = mkResourceId {
   , schema = schema'
   }
 
+upkeepTopLevelResource :: Resource Dependencies Dependencies Void () Void
+upkeepTopLevelResource = mkResourceId {
+  list = const upkeepListing ,
+  name = A.upkeep ,
+  schema = schema' }
+
 upkeepResource :: Resource IdDependencies IdDependencies Void Void Void
 upkeepResource = mkResourceId {
   name = A.upkeep ,
@@ -339,7 +374,8 @@ upkeepResource = mkResourceId {
 router' :: Router Dependencies Dependencies
 router' = root `compose` (((route companyResource) `compose` (route companyMachineResource))
                                                    `compose` (route upkeepResource))
-               `compose` (route machineResource)
+               `compose` route machineResource
+               `compose` route upkeepTopLevelResource
 
 api :: Api Dependencies
 api = [(mkVersion 1 0 0, Some1 $ router')]
