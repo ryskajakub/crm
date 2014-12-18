@@ -101,7 +101,11 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
     in B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
-    B.col (B.mkColProps 6) $ I.input (I.mkInputProps)]
+    B.col (B.mkColProps 6) $ I.input (I.mkInputProps {
+      I.onChange = Defined $ \event -> do 
+        value <- eventValue event
+        let newUpkeep = upkeep' { U.upkeepDate = unpack value }
+        setUpkeep newUpkeep Nothing })]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]
