@@ -6,10 +6,12 @@ module Crm.Server (
   , fetchMachines
   , createCompany
   , createMachine
+  , createUpkeep
 ) where
 
 import FFI (ffi, Automatic)
 import Crm.Shared.Company (Company)
+import qualified Crm.Shared.Upkeep as U
 import Crm.Shared.Machine (Machine, companyId)
 import qualified Crm.Shared.Api as A
 import "fay-base" Prelude
@@ -40,6 +42,23 @@ createMachine machine callback =
   JQ.ajaxPost
     (pack "/api/v1.0.0/companies/" `append` (showInt $ companyId machine) `append` pack "/machines/")
     machine
+    callback
+    (const $ const $ const $ return ())
+
+createUpkeep :: U.Upkeep
+             -> Int -- ^ company id
+             -> (Int -> Fay ())
+             -> Fay ()
+createUpkeep upkeep companyId callback =
+  JQ.ajaxPost 
+    (pack "/api/v1.0.0/" `append`
+      pack A.companies `append`
+      pack "/" `append`
+      showInt companyId `append`
+      pack "/" `append` 
+      pack A.upkeep `append`
+      pack "/")
+    upkeep
     callback
     (const $ const $ const $ return ())
 

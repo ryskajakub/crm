@@ -26,7 +26,7 @@ import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Tag.Hyperlink as A
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
-import Crm.Server (createMachine)
+import Crm.Server (createMachine, createUpkeep)
 
 import Debug.Trace
 
@@ -56,11 +56,12 @@ upkeepNew :: MyData
           -> U.Upkeep
           -> [UM.UpkeepMachine]
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
+          -> Int -- ^ company id
           -> DOMElement
-upkeepNew myData appState upkeep' notCheckedMachines'' machines = let
+upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
   setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
-    upkeepNew @ (UpkeepNew _ _ _) -> let
+    upkeepNew @ (UpkeepNew _ _ _ _) -> let
       newNavigation = upkeepNew { upkeep = upkeep' }
       newNavigation' = case notCheckedMachines' of 
         Just(x) -> newNavigation { notCheckedMachines = x }
@@ -89,7 +90,10 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines = let
       B.col (B.mkColProps 6) $ I.textarea (I.mkInputProps {
         I.onChange = Defined $ const $ return () })]
   submitButton = let
-    newUpkeepHandler = return ()
+    newUpkeepHandler = createUpkeep 
+      upkeep'
+      companyId' -- todo put there a real company's number, so it can be checked on the server
+      (const $ return ())
     buttonProps = BTN.buttonProps {
       BTN.bsStyle = Defined "primary" ,
       BTN.onClick = Defined $ const newUpkeepHandler }

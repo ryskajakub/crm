@@ -170,7 +170,7 @@ deriveAll ''UM.UpkeepMachine "PFUpkeepMachine"
 type instance PF UM.UpkeepMachine = PFUpkeepMachine
 
 instance FromJSON U.Upkeep where
-  parseJSON value = case trace (show value) (readFromFay' value) of
+  parseJSON value = case readFromFay' value of
     Left e -> fail e
     Right ok -> return ok
 instance FromJSON UM.UpkeepMachine where
@@ -311,7 +311,7 @@ createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachi
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
-  trace (show newUpkeep) $ ask >>= \(connection, maybeInt) -> case maybeInt of
+  ask >>= \(connection, maybeInt) -> case maybeInt of
     Just(_) -> liftIO $ addUpkeep connection newUpkeep -- todo check that the machines are belonging to this company
     _ -> throwError $ InputError $ ParseError "provided id is not a number"
   )

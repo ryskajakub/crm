@@ -83,7 +83,7 @@ main' = do
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (machines appState)
                 notCheckedUpkeepMachines = map (\(id',_) -> UM.newUpkeepMachine id') machines'
-                in UpkeepNew U.newUpkeep machines' notCheckedUpkeepMachines
+                in UpkeepNew U.newUpkeep machines' notCheckedUpkeepMachines companyId'
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       )]
@@ -98,8 +98,9 @@ main' = do
             (companyDetail editing' myData appVar' (companyId', company') machines')
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
-        UpkeepNew upkeep' machines' notCheckedMachines' ->
-          Navigation.navigation myData (upkeepNew myData appVar' upkeep' notCheckedMachines' machines'))
+        UpkeepNew upkeep' machines' notCheckedMachines' companyId' ->
+          Navigation.navigation myData 
+            (upkeepNew myData appVar' upkeep' notCheckedMachines' machines' companyId'))
     return ()
   return ()
 
