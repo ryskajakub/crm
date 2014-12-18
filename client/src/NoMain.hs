@@ -11,7 +11,7 @@ import "fay-base" Data.Text (Text, pack)
 import "fay-base" Data.Maybe (isJust)
 
 import HaskellReact.BackboneRouter (startRouter)
-import Crm.Server (fetchCompanies, fetchMachines)
+import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
@@ -36,6 +36,10 @@ main' = do
   fetchMachines (\machines' ->
     modify appVar' (\appState ->
       appState { machines = machines' }
+    ))
+  fetchUpkeeps (\upkeeps' ->
+    modify appVar' (\appState ->
+      appState { upkeeps = upkeeps' }
     ))
   waitFor appVar' (\appState -> (not $ null $ machines appState) && (not $ null $ companies appState)) $
       \_ -> do
@@ -94,7 +98,14 @@ main' = do
             companies' = companies appState
             newAppState = case (parseSafely $ head params) of
               Just(companyId') | isJust $ lookup companyId' companies' -> let
-                in UpkeepHistory []
+                companyUpkeeps = filter (\(_,u) -> case u of
+                  U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) -> 
+                    case lookup machineId (machines appState) of
+                      Just(M.Machine _ companyId'' _) -> companyId'' == companyId'
+                      _ -> False
+                  _ -> False
+                  ) (upkeeps appState)
+                in UpkeepHistory companyUpkeeps
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       )]

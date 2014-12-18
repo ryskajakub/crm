@@ -4,6 +4,7 @@
 module Crm.Server (
   fetchCompanies
   , fetchMachines
+  , fetchUpkeeps
   , createCompany
   , createMachine
   , createUpkeep
@@ -27,6 +28,10 @@ fetchCompanies var = fetch var (pack A.companiesClient)
 fetchMachines :: ([(Int, Machine)] -> Fay ())
               -> Fay ()
 fetchMachines var = fetch var (pack A.machinesClient)
+
+fetchUpkeeps :: ([(Int, U.Upkeep)] -> Fay ())
+             -> Fay ()
+fetchUpkeeps var = fetch var (pack A.upkeepsClient)
 
 createCompany :: Company
               -> (Int -> Fay())

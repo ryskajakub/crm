@@ -5,7 +5,7 @@
 module Crm.Shared.Api (
   companies, companiesClient
   , machines, machinesClient
-  , upkeep
+  , upkeep, upkeepsClient
 ) where
 
 #ifndef FAY
@@ -30,6 +30,9 @@ companiesClient = firstToUpper companies
 
 machinesClient :: String
 machinesClient = firstToUpper machines
+
+upkeepsClient :: String
+upkeepsClient = firstToUpper upkeep
 
 firstToUpper :: String -> String
 firstToUpper str = case str of

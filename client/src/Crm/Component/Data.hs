@@ -32,7 +32,7 @@ data NavigationState =
   , notCheckedMachines :: [UM.UpkeepMachine] 
   , companyId :: Int }
   | UpkeepHistory {
-    upkeeps :: [U.Upkeep]
+    companyUpkeeps :: [(Int,U.Upkeep)]
   }
 
 
@@ -40,6 +40,7 @@ data AppState = AppState {
   navigation :: NavigationState
   , companies :: [(Int, C.Company)]
   , machines :: [(Int, M.Machine)]
+  , upkeeps :: [(Int, U.Upkeep)]
 }
 
 defaultAppState :: AppState
@@ -47,4 +48,5 @@ defaultAppState = AppState {
   navigation = FrontPage
   , companies = []
   , machines = []
+  , upkeeps = []
 }

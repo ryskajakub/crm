@@ -28,6 +28,14 @@ import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
 
-upkeepHistory :: [U.Upkeep]
+import Debug.Trace
+
+upkeepHistory :: [(Int, U.Upkeep)]
               -> DOMElement
-upkeepHistory upkeeps = div "upkeep history"
+upkeepHistory upkeeps = let
+  upkeepHtml (upkeepId, upkeep) = let
+    upkeepDate = B.row $ (B.col $ B.mkColProps 3) $ pack $ U.upkeepDate upkeep
+    in upkeepDate
+  in div [
+    h2 "Historie servisů" ,
+    reactInstance2DOM $ B.grid $ map upkeepHtml upkeeps ]
