@@ -17,7 +17,7 @@ create table machines (
   id serial , 
   company_id integer , 
   machine_type_id integer , 
-  operation_start varchar (500) ,
+  operation_start date ,
   initial_mileage integer ,
   mileage_per_year integer );
 
@@ -45,15 +45,15 @@ insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 75
 insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('EK 4', 'Orlík', 365 * 24 * 2);
 
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
-  values (1, 1, '1999', 0, 365 * 24);
+  values (1, 1, '1999-01-01', 0, 365 * 24);
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
-  values (1, 2, '1999', 10000, 365 * 24);
+  values (1, 2, '1999-01-01', 10000, 365 * 24);
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
-  values (1, 3, '2007', 0, 365 * 8);
+  values (1, 3, '2007-01-01', 0, 365 * 8);
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
-  values (2, 1, '2001', 30000, 365 * 12);
+  values (2, 1, '2001-01-01', 30000, 365 * 12);
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
-  values (2, 3, '2008', 0, 365 * 24);
+  values (2, 3, '2008-01-01', 0, 365 * 24);
 
 insert into upkeeps(date_) values ('1999');
 insert into upkeeps(date_) values ('2001');

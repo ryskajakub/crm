@@ -2,8 +2,8 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Shared.Date (
-  Date(..)
+module Crm.Shared.Day (
+  Day(..)
 ) where
 
 #ifndef FAY
@@ -12,5 +12,5 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
--- | newtype over string represented in ISO 8601 format, that is yyyy-mm-dd
-newtype Date = Date { getDate :: String }
+-- | year, month, day
+newtype Day = Day { getDay :: (Integer, Int, Int) } 

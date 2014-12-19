@@ -19,7 +19,7 @@ import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectIn
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 import Opaleye.Operators ((.==), restrict)
-import Opaleye.PGTypes (pgInt4)
+import Opaleye.PGTypes (pgInt4, PGDate, pgDay)
 import Opaleye.Manipulation (runInsert)
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
@@ -34,6 +34,7 @@ import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
 import Data.Functor.Identity (runIdentity)
+import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith)
@@ -50,6 +51,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Day as D
 import Fay.Convert (showToFay, readFromFay')
 
 import Safe (readMay)
@@ -58,14 +60,15 @@ import Debug.Trace
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
 
-type MachinesTable = (DBInt, DBInt, DBInt, Column PGText, DBInt, DBInt)
-type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBText, DBInt, DBInt)
+type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
+type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
 
 type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText, DBInt)
 type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText, DBInt)
 
 type DBInt = Column PGInt4
 type DBText = Column PGText
+type DBDate = Column PGDate
 
 type UpkeepTable = (DBInt, DBText)
 type UpkeepWriteTable = (Maybe DBInt, DBText)
@@ -139,13 +142,13 @@ expandedUpkeepsQuery = proc () -> do
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesQuery :: Connection -> IO[(Int, Int, Int, String, Int, Int)]
+runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int)]
 runMachinesQuery connection = runQuery connection machinesQuery
 
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String, Int, Int), (Int, String, String, Int))]
+runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, String), (Int, String, Int))]
@@ -274,7 +277,8 @@ machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId mOs m3 m4)) rows
+    let (y,m,d) = toGregorian mOs
+    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (fromIntegral y,m,d) m3 m4)) rows
   )
 
 upkeepListing :: ListHandler Dependencies
@@ -325,10 +329,13 @@ addMachine connection machine = do
         machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
         (\(id',_,_,_) -> id')
       return $ head newMachineTypeId -- todo safe
-  let M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
+  let
+    M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
+    (year, month, day') = machineOperationStartDate'
+    day = fromGregorian (toInteger year) month day'
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgString machineOperationStartDate',
+    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay day,
       pgInt4 initialMileage, pgInt4 mileagePerYear)
     (\(id',_, _, _,_,_) -> id')
   return $ head machineId -- todo safe
