@@ -51,21 +51,6 @@ machineNew myData appVar machine' = let
     machine'' = machine' { M.machineType = machineType' }
     in setMachine machine''
   machineType = M.machineType machine'
-  setMachineTypeUpkeepPerMileage :: Int -> Fay ()
-  setMachineTypeUpkeepPerMileage upkeepPerMileage = let
-    modifiedMachine = machine' { M.machineType = let
-      newMachineType = case machineType of
-        mt @ (MT.MachineType _ _ _) -> mt {
-          MT.upkeepPerMileage = upkeepPerMileage }
-        x -> x
-      in newMachineType }
-    in setMachine modifiedMachine
-  setOperationStartDate event = do
-    value <- eventValue event
-    let
-      newMachine = machine' {
-        M.machineOperationStartDate = unpack $ value }
-      in setMachine newMachine
   inputRow = I.mkInputProps {
     I.labelClassName = Defined "col-md-3"
     , I.wrapperClassName = Defined "col-md-9" }
@@ -83,11 +68,12 @@ machineNew myData appVar machine' = let
         I.input $ inputRow {
           I.label_ = Defined "Interval servisu" ,
           I.onChange = Defined $ eventValue >=> (\str -> case parseSafely str of
-            Just(int) -> setMachineTypeUpkeepPerMileage int
+            Just(int) -> setMachineType (\mt -> mt {MT.upkeepPerMileage = int })
             Nothing -> return ())} ,
         I.input $ inputRow {
           I.label_ = Defined "Datum uvedení do provozu" ,
-          I.onChange = Defined setOperationStartDate } ,
+          I.onChange = Defined $ eventString >=> 
+            (\string -> setMachine $ machine' { M.machineOperationStartDate = string } )} ,
         div' (class' "form-group") $
           div' (class'' ["col-md-9", "col-md-offset-3"]) $
             BTN.button'
