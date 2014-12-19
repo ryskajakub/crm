@@ -40,10 +40,16 @@ table :: Renderable a
       -> ReactInstance
 table = reactBootstrap "Table" Null
 
+row' :: Renderable b
+     => a -- ^ props
+     -> b -- ^ children
+     -> ReactInstance
+row' = reactBootstrap "Row" 
+
 row :: Renderable a
-    => Automatic a
+    => a
     -> ReactInstance
-row = reactBootstrap "Row" Null
+row = row' Null
 
 jumbotron :: Renderable a
           => Automatic a
@@ -56,8 +62,11 @@ grid :: Renderable a
 grid = reactBootstrap "Grid" Null
 
 data ColProps = ColProps {
-  md :: Int
-}
+  md :: Int , 
+  mdOffset :: Defined Int }
+
+mkColProps :: Int -> ColProps
+mkColProps int = ColProps int Undefined
 
 col :: Renderable a
     => ColProps

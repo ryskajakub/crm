@@ -102,7 +102,7 @@ mkAAttrs = defaultHyperlinkAttributes
 
 defaultHyperlinkAttributes :: HyperlinkAttributes
 defaultHyperlinkAttributes = HyperlinkAttributes {
-  href = Undefined
+  href = Defined "javascript://"
   , rel = Undefined
   , target = Undefined
 }
