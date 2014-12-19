@@ -1,6 +1,6 @@
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Navigation where
@@ -16,7 +16,7 @@ import Crm.Component.Data (MyData, router)
 navigation :: MyData -> DOMElement -> Fay ()
 navigation myData body = 
   simpleReactBody $ div [
-    reactInstance2DOM $ navBar $ nav [
+    navBar $ nav [
       li $ link [G.list, text2DOM " Seznam firem"] "" (router myData)
     ]
     , body

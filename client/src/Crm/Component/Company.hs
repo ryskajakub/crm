@@ -136,7 +136,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
               _ -> navigation appState
           })
         editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
-        in HR.reactInstance2DOM $ BTN.button' editButtonProps editButtonBody
+        in BTN.button' editButtonProps editButtonBody
       headerDisplay = h1 $ pack $ C.companyName company'
       headerSet newHeader = let
         company'' = company' {
@@ -145,7 +145,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
         in setCompany company''
       header = editable editing' headerDisplay (pack $ C.companyName company') headerSet
       saveHandler _ = saveHandler'
-      saveEditButton' = HR.reactInstance2DOM $ BTN.button' (BTN.buttonProps {
+      saveEditButton' = BTN.button' (BTN.buttonProps {
         BTN.onClick = Defined saveHandler
         , BTN.bsStyle = Defined "primary"
         }) "Uložit"

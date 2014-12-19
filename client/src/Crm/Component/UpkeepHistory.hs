@@ -43,4 +43,4 @@ upkeepHistory upkeeps = let
     in row
   in div [
     h2 "Historie servisů" ,
-    reactInstance2DOM $ B.grid $ map upkeepHtml upkeeps ]
+    B.grid $ map upkeepHtml upkeeps ]
