@@ -13,6 +13,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
+import "fay-base" Data.Maybe (whenJust)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
 import HaskellReact.BackboneRouter (link, navigate)
@@ -72,8 +73,20 @@ machineNew myData appVar machine' = let
             Nothing -> return ())} ,
         I.input $ inputRow {
           I.label_ = Defined "Datum uvedení do provozu" ,
-          I.onChange = Defined $ eventString >=> 
-            (\string -> setMachine $ machine' { M.machineOperationStartDate = string } )} ,
+          I.onChange = Defined $ eventString >=>
+            (\string -> setMachine $ machine' { M.machineOperationStartDate = string })} ,
+        I.input $ inputRow {
+          I.label_ = Defined "Úvodní stav motohodin" ,
+          I.onChange = Defined $ let
+            setInitialMileage :: Int -> Fay ()
+            setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
+            in flip whenJust setInitialMileage . parseSafely <=< eventValue } ,
+        I.input $ inputRow {
+          I.label_ = Defined "Provoz (motohodin/rok)" ,
+          I.onChange = Defined $ let
+            setMileagePerYear :: Int -> Fay ()
+            setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
+            in flip whenJust setMileagePerYear . parseSafely <=< eventValue } ,
         div' (class' "form-group") $
           div' (class'' ["col-md-9", "col-md-offset-3"]) $
             BTN.button'
