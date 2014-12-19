@@ -10,7 +10,6 @@ import FFI (Defined(Defined, Undefined), ffi, Automatic)
 import "fay-base" Data.Text 
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
 import "fay-base" Prelude hiding (id, intercalate)
-import HaskellReact.ComponentData (ReactInstance)
 
 import "fay-base" Debug.Trace
 
@@ -19,15 +18,11 @@ data DOMElement
 class Renderable a
 
 instance Renderable a => Renderable [a]
-instance Renderable ReactInstance
 instance Renderable Text
 instance Renderable DOMElement
 
 text2DOM :: Text -> DOMElement
 text2DOM = unsafeCoerce
-
-reactInstance2DOM :: ReactInstance -> DOMElement
-reactInstance2DOM = unsafeCoerce
 
 data NoAttributes = NoAttributes {}
 

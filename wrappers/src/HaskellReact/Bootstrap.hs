@@ -5,10 +5,9 @@
 
 module HaskellReact.Bootstrap where
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Empty (Empty))
+import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
 import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
-import HaskellReact.Event (SyntheticMouseEvent)
 import "fay-base" Prelude
 
 data ReactBootstrap
@@ -22,43 +21,43 @@ reactBootstrap :: (Renderable b)
                => Text -- ^ The name of the Bootstrap class
                -> a -- ^ The props passed to the instance
                -> b -- ^ The children passed to the instance
-               -> ReactInstance
+               -> DOMElement
 reactBootstrap = foreignReact requireReactBootstrap
 
 navBar :: Renderable a
        => Automatic a 
-       -> ReactInstance
+       -> DOMElement
 navBar children = reactBootstrap "Navbar" Null children
 
 nav :: Renderable a
     => Automatic a
-    -> ReactInstance
+    -> DOMElement
 nav children = reactBootstrap "Nav" Null children
 
 table :: Renderable a
       => Automatic a
-      -> ReactInstance
+      -> DOMElement
 table = reactBootstrap "Table" Null
 
 row' :: Renderable b
      => a -- ^ props
      -> b -- ^ children
-     -> ReactInstance
+     -> DOMElement
 row' = reactBootstrap "Row" 
 
 row :: Renderable a
     => a
-    -> ReactInstance
+    -> DOMElement
 row = row' Null
 
 jumbotron :: Renderable a
           => Automatic a
-          -> ReactInstance
+          -> DOMElement
 jumbotron = reactBootstrap "Jumbotron" Null
 
 grid :: Renderable a
      => Automatic a
-     -> ReactInstance
+     -> DOMElement
 grid = reactBootstrap "Grid" Null
 
 data ColProps = ColProps {
@@ -71,10 +70,10 @@ mkColProps int = ColProps int Undefined
 col :: Renderable a
     => ColProps
     -> Automatic a
-    -> ReactInstance
+    -> DOMElement
 col colProps = reactBootstrap "Col" colProps
 
 panel :: Renderable a
       => Automatic a
-      -> ReactInstance
+      -> DOMElement
 panel = reactBootstrap "Panel" Null

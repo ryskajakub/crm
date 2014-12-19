@@ -6,8 +6,8 @@
 module HaskellReact.Bootstrap.Popover (
   PopoverProps ,
   placementRight, placementLeft, placementBottom, placementTop, 
-  popover
-) where
+  popover ,
+  mkPopoverProps ) where
 
 import HaskellReact
 import HaskellReact.Bootstrap (reactBootstrap)

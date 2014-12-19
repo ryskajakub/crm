@@ -5,7 +5,7 @@
 
 module HaskellReact.Bootstrap.Button where
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, ReactInstance, Empty (Empty))
+import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
 import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import HaskellReact.Event (SyntheticMouseEvent)
@@ -28,10 +28,10 @@ buttonProps = ButtonProps {
 button' :: Renderable a
         => ButtonProps
         -> a
-        -> ReactInstance
+        -> DOMElement
 button' props children = reactBootstrap "Button" props children
 
 button :: Renderable a
        => a
-       -> ReactInstance
+       -> DOMElement
 button = button' buttonProps

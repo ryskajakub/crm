@@ -15,7 +15,7 @@ data GlyphiconProps = GlyphiconProps {
 }
 
 glyphicon' :: GlyphiconProps -> DOMElement
-glyphicon' props = reactInstance2DOM $ reactBootstrap "Glyphicon" props ([]::[DOMElement])
+glyphicon' props = reactBootstrap "Glyphicon" props ([]::[DOMElement])
 
 glyphicon :: Text -> DOMElement
 glyphicon glyph = glyphicon' (GlyphiconProps glyph)

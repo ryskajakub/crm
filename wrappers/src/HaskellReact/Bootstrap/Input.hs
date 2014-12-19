@@ -41,7 +41,7 @@ input inputProps = inputInternal inputProps ([]::[DOMElement])
 
 inputInternal :: (Renderable a) => InputProps -> a -> DOMElement
 inputInternal inputProps children = 
-  reactInstance2DOM $ reactBootstrap "Input" inputProps children
+  reactBootstrap "Input" inputProps children
 
 textarea :: InputProps -> DOMElement
 textarea inputProps = let
