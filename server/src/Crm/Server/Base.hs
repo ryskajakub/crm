@@ -220,6 +220,8 @@ instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
 instance JS.JSONSchema M.Machine where
   schema = gSchema
+instance JS.JSONSchema D.Day where
+  schema = gSchema
 instance JS.JSONSchema MT.MachineType where
   schema = gSchema
 
@@ -278,7 +280,7 @@ machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
     let (y,m,d) = toGregorian mOs
-    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (fromIntegral y,m,d) m3 m4)) rows
+    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (D.Day (fromIntegral y) m d) m3 m4)) rows
   )
 
 upkeepListing :: ListHandler Dependencies
@@ -331,7 +333,7 @@ addMachine connection machine = do
       return $ head newMachineTypeId -- todo safe
   let
     M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
-    (year, month, day') = machineOperationStartDate'
+    D.Day year month day' = machineOperationStartDate'
     day = fromGregorian (toInteger year) month day'
   machineId <- runInsertReturning
     connection
