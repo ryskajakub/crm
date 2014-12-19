@@ -37,22 +37,20 @@ machineNew myData appVar machine' = let
       newMachines = machines' ++ [(machineId, machine')]
       in appState { machines = newMachines })
     navigate "" (router myData))
+  setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
       nm @ (MachineNew _) -> nm { machine = modifiedMachine }
       _ -> navigation appState
     })
+  setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
+  setMachineType modifyMachineType = let
+    machineType' = case M.machineType machine' of
+      mt @ (MT.MachineType _ _ _) -> modifyMachineType mt
+      x -> x
+    machine'' = machine' { M.machineType = machineType' }
+    in setMachine machine''
   machineType = M.machineType machine'
-  setMachineTypeName event = do
-    value <- eventValue event
-    let
-      modifiedMachine = machine' { M.machineType = let
-        modifiedMachineType = case machineType of
-          mt @ (MT.MachineType _ _ _) -> mt {
-            MT.machineTypeName = unpack $ value }
-          x -> x
-        in modifiedMachineType }
-      in setMachine modifiedMachine
   setMachineTypeManufacturer event = do
     value <- eventValue event
     let
@@ -85,8 +83,9 @@ machineNew myData appVar machine' = let
     B.grid $
       B.row [
         I.input $ inputRow {
-          I.label_ = Defined "Typ zařízení"
-          , I.onChange = Defined setMachineTypeName }
+          I.label_ = Defined "Typ zařízení" ,
+          I.onChange = Defined $ eventString >=> 
+              (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))}
         , I.input $ inputRow {
           I.label_ = Defined "Výrobce"
           , I.onChange = Defined setMachineTypeManufacturer }
