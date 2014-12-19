@@ -19,9 +19,9 @@ import "fay-base" Prelude
 data Machine = Machine {
   machineType :: MachineType ,
   companyId :: Int ,
-  machineOperationStartDate :: String {- ,
+  machineOperationStartDate :: String ,
   initialMileage :: Int ,
-  mileagePerYear :: Int -}}
+  mileagePerYear :: Int }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
@@ -30,6 +30,6 @@ newMachine :: Int -> Machine
 newMachine companyId' = Machine {
   machineType = newMachineType ,
   companyId = companyId' ,
-  machineOperationStartDate = "" {-,
+  machineOperationStartDate = "" ,
   initialMileage = 0 ,
-  mileagePerYear = 365 * 24 -}}
+  mileagePerYear = 365 * 24 }

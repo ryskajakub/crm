@@ -13,7 +13,7 @@ import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 
-import Data.Profunctor.Product (p2, p3, p4)
+import Data.Profunctor.Product (p2, p3, p4, p6)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
@@ -58,8 +58,8 @@ import Debug.Trace
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
 
-type MachinesTable = (Column PGInt4, Column PGInt4, Column PGInt4, Column PGText)
-type MachinesWriteTable = (Maybe (Column PGInt4), Column PGInt4, Column PGInt4, Column PGText)
+type MachinesTable = (DBInt, DBInt, DBInt, Column PGText, DBInt, DBInt)
+type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBText, DBInt, DBInt)
 
 type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText, DBInt)
 type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText, DBInt)
@@ -80,20 +80,20 @@ companiesTable = Table "companies" (p3 (
   ))
 
 machinesTable :: Table MachinesWriteTable MachinesTable
-machinesTable = Table "machines" (p4 (
-    optional "id"
-    , required "company_id"
-    , required "machine_type_id"
-    , required "operation_start"
-  ))
+machinesTable = Table "machines" (p6 (
+  optional "id" , 
+  required "company_id" , 
+  required "machine_type_id" , 
+  required "operation_start" ,
+  required "initial_mileage" ,
+  required "mileage_per_year" ))
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" (p4 (
   optional "id" , 
   required "name" , 
   required "manufacturer" ,
-  required "upkeep_per_mileage"
-  ))
+  required "upkeep_per_mileage" ))
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
 upkeepTable = Table "upkeeps" $ p2 (
@@ -124,7 +124,7 @@ upkeepMachinesQuery = queryTable upkeepMachinesTable
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery = proc () -> do
-  machineRow @ (_,_,machineTypeId,_) <- machinesQuery -< ()
+  machineRow @ (_,_,machineTypeId,_,_,_) <- machinesQuery -< ()
   machineTypesRow @ (machineTypeId',_,_,_) <- machineTypesQuery -< ()
   restrict -< machineTypeId' .== machineTypeId
   returnA -< (machineRow, machineTypesRow)
@@ -139,13 +139,13 @@ expandedUpkeepsQuery = proc () -> do
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesQuery :: Connection -> IO[(Int, Int, Int, String)]
+runMachinesQuery :: Connection -> IO[(Int, Int, Int, String, Int, Int)]
 runMachinesQuery connection = runQuery connection machinesQuery
 
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String), (Int, String, String, Int))]
+runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, String), (Int, String, Int))]
@@ -273,8 +273,8 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
-  return $ map (\((mId,cId,_,mOs),(_,mtN,mtMf,mtI)) ->
-    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId mOs)) rows
+  return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
+    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId mOs m3 m4)) rows
   )
 
 upkeepListing :: ListHandler Dependencies
@@ -325,11 +325,12 @@ addMachine connection machine = do
         machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
         (\(id',_,_,_) -> id')
       return $ head newMachineTypeId -- todo safe
-  let M.Machine _ companyId' machineOperationStartDate' = machine
+  let M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgString machineOperationStartDate')
-    (\(id', _, _, _) -> id')
+    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgString machineOperationStartDate',
+      pgInt4 initialMileage, pgInt4 mileagePerYear)
+    (\(id',_, _, _,_,_) -> id')
   return $ head machineId -- todo safe
 
 createMachineHandler :: Handler IdDependencies

@@ -101,7 +101,7 @@ main' = do
                 companyUpkeeps = filter (\(_,u) -> case u of
                   U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) -> 
                     case lookup machineId (machines appState) of
-                      Just(M.Machine _ companyId'' _) -> companyId'' == companyId'
+                      Just(M.Machine _ companyId'' _ _ _) -> companyId'' == companyId'
                       _ -> False
                   _ -> False
                   ) (upkeeps appState)
