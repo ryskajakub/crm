@@ -4,21 +4,32 @@ var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
 var _ = require('underscore');
 
-var sources = [
-  'src/'
-  , '../../haskell-react/core/src/'
-  , '../../haskell-react/wrappers/src/'
-  , './shared/'
-  , '../../fay-jquery/src/'
-  , '../../fay-moment/src/'
-];
+var commonSources = [
+  '../../haskell-react/core/src/' ,
+  '../../haskell-react/wrappers/src/' ,
+  './shared/' ,
+  '../../fay-jquery/src/' ,
+  '../../fay-moment/src/' ];
+var playgroundSources = commonSources.concat('playground/');
+var mainSources = commonSources.concat('src/');
 
-var sourcesAsGlob = _.map(sources, function(source) {
-  return source + '**/*.hs';
-});
-var sourcesCommaDelimited = "'" + _.reduce(_.tail(sources), function(acc, elem) {
-  return acc + ',' + elem;
-}, _.head(sources)) + "'";
+var mkSourcesAsGlob = function(sources) {
+  return _.map(sources, function(source) {
+    return source + '**/*.hs';
+  });
+}
+
+var mkSourcesCommaDelimited = function(sources) {
+  return "'" + _.reduce(_.tail(sources), function(acc, elem) {
+    return acc + ',' + elem;
+  }, _.head(sources)) + "'";
+}
+
+var sourcesAsGlob = mkSourcesAsGlob(mainSources);
+var sourcesCommaDelimited = mkSourcesCommaDelimited(mainSources);
+
+var playgroundSourcesAsGlob = mkSourcesAsGlob(playgroundSources);
+var playgroundSourcesCommaDelimited = mkSourcesCommaDelimited(playgroundSources);
 
 // main
 
@@ -57,13 +68,35 @@ gulp.task('webpack', ['compile', 'copy-resources', 'generate-rest-client'], func
     }))
     .pipe(gulp.dest('build/'));
 });
-
 gulp.task('watch', function() {
   var watchedPaths = _.union(['files/*'], sourcesAsGlob);
   gulp.watch(watchedPaths, ['webpack']);
 });
 
 gulp.task('default', ['watch']);
+
+// playground
+
+gulp.task('playground-compile', function() {
+  var fayCommand = "fay --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js <%= file.path %>";
+  return gulp.src('playground/Main.hs', {read: false})
+    .pipe(shell([fayCommand]));
+});
+
+gulp.task('playground-webpack', ['playground-compile', 'copy-resources'], function () {
+  return gulp.src('tmp/Playground.js', {read: false})
+    .pipe(webpack({
+      entry: "./tmp/Playground.js"
+      , output: {
+        filename: "haskell-react-packed.js"
+      }
+    }))
+    .pipe(gulp.dest('build/'));
+});
+
+gulp.task('playground', function () {
+  gulp.watch(playgroundSourcesAsGlob, ['playground-webpack']);
+});
 
 // other
 
