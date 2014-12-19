@@ -16,6 +16,7 @@ import "fay-base" Data.Function (fmap)
 
 class CommonJSModule a
 
+-- | use an existing react component
 foreignReact :: (CommonJSModule b, Renderable c)
              => Automatic b -- ^ module imported with CommonJS's @require()@
              -> Text -- ^ name of the property in the module
@@ -34,17 +35,20 @@ foreignReact = ffi "\
   \ })()\
 \ "
 
-simpleReactBody' :: DOMElement
+-- | render the element to body and call the callback after the element is rendered
+simpleReactBody' :: DOMElement -- ^ the element to render
+                 -> Fay () -- ^ the callback
                  -> Fay ()
-                 -> Fay ()
-simpleReactBody' elementToRender callbacks = do
+simpleReactBody' elementToRender callback = do
   body <- getBody
-  simpleReact elementToRender body callbacks
+  simpleReact elementToRender body callback
 
+-- | render the element to body
 simpleReactBody :: DOMElement
                 -> Fay ()
 simpleReactBody element = simpleReactBody' element (return ())
 
+-- | render the element to specific point and call the callback after the elment is rendered
 simpleReact :: DOMElement -- ^ element to render
             -> Element -- ^ point in document where to place the element
             -> Fay () -- ^ callback to call after the virtual dom is rendered in the browser
