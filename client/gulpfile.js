@@ -9,7 +9,8 @@ var sources = [
   , '../../haskell-react/core/src/'
   , '../../haskell-react/wrappers/src/'
   , './shared/'
-  , '/home/coub/git/fay-jquery/src'
+  , '../../fay-jquery/src/'
+  , '../../fay-moment/src/'
 ];
 
 var sourcesAsGlob = _.map(sources, function(source) {
