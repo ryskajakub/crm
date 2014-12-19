@@ -19,11 +19,12 @@ data MachineType =
   MachineTypeId {
     machineTypeId :: Int }
   | MachineType {
-    machineTypeName :: String
-    , machineTypeManufacturer :: String }
+    machineTypeName :: String ,
+    machineTypeManufacturer :: String ,
+    upkeepPerMileage :: Int }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newMachineType :: MachineType
-newMachineType = MachineType "" ""
+newMachineType = MachineType "" "" (365 * 24)

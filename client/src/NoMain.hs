@@ -4,11 +4,11 @@
 module NoMain where
 
 import "fay-base" Prelude hiding (span, div, elem)
-import Data.Nullable (fromNullable)
 import Data.Var (Var, newVar, subscribeAndRead, get, modify, waitFor)
 import FFI (ffi, Nullable)
 import "fay-base" Data.Text (Text, pack)
 import "fay-base" Data.Maybe (isJust)
+import Crm.Helpers (parseSafely)
 
 import HaskellReact.BackboneRouter (startRouter)
 import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps)
@@ -126,12 +126,6 @@ main' = do
         UpkeepHistory upkeeps' -> Navigation.navigation myData $ upkeepHistory upkeeps')
     return ()
   return ()
-
-parseInt :: Text -> Nullable Int
-parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
-
-parseSafely :: Text -> Maybe Int
-parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
 appVar :: Fay (Var AppState)
 appVar = newVar defaultAppState

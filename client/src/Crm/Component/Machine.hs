@@ -24,6 +24,7 @@ import qualified HaskellReact.Tag.Input as II
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine)
+import Crm.Helpers (parseSafely)
 
 machineNew :: MyData
            -> Var AppState
@@ -47,7 +48,7 @@ machineNew myData appVar machine' = let
     let
       modifiedMachine = machine' { M.machineType = let
         modifiedMachineType = case machineType of
-          mt @ (MT.MachineType _ _) -> mt {
+          mt @ (MT.MachineType _ _ _) -> mt {
             MT.machineTypeName = unpack $ value }
           x -> x
         in modifiedMachineType }
@@ -57,11 +58,20 @@ machineNew myData appVar machine' = let
     let
       modifiedMachine = machine' { M.machineType = let
         newMachineType = case machineType of
-          mt @ (MT.MachineType _ _) -> mt {
+          mt @ (MT.MachineType _ _ _) -> mt {
             MT.machineTypeManufacturer = unpack $ value }
           x -> x
         in newMachineType }
       in setMachine modifiedMachine
+  setMachineTypeUpkeepPerMileage :: Int -> Fay ()
+  setMachineTypeUpkeepPerMileage upkeepPerMileage = let
+    modifiedMachine = machine' { M.machineType = let
+      newMachineType = case machineType of
+        mt @ (MT.MachineType _ _ _) -> mt {
+          MT.upkeepPerMileage = upkeepPerMileage }
+        x -> x
+      in newMachineType }
+    in setMachine modifiedMachine 
   setOperationStartDate event = do
     value <- eventValue event
     let
@@ -80,6 +90,11 @@ machineNew myData appVar machine' = let
         , I.input $ inputRow {
           I.label_ = Defined "Výrobce"
           , I.onChange = Defined setMachineTypeManufacturer }
+        , I.input $ inputRow {
+          I.label_ = Defined "Interval servisu" ,
+          I.onChange = Defined $ eventValue >=> (\str -> case parseSafely str of
+            Just(int) -> setMachineTypeUpkeepPerMileage int
+            Nothing -> return () ) }
         , I.input $ inputRow {
           I.label_ = Defined "Datum uvedení do provozu"
           , I.onChange = Defined setOperationStartDate }

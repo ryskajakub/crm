@@ -61,8 +61,8 @@ type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
 type MachinesTable = (Column PGInt4, Column PGInt4, Column PGInt4, Column PGText)
 type MachinesWriteTable = (Maybe (Column PGInt4), Column PGInt4, Column PGInt4, Column PGText)
 
-type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText)
-type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
+type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText, DBInt)
+type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText, DBInt)
 
 type DBInt = Column PGInt4
 type DBText = Column PGText
@@ -88,10 +88,11 @@ machinesTable = Table "machines" (p4 (
   ))
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
-machineTypesTable = Table "machine_types" (p3 (
-    optional "id"
-    , required "name"
-    , required "manufacturer"
+machineTypesTable = Table "machine_types" (p4 (
+  optional "id" , 
+  required "name" , 
+  required "manufacturer" ,
+  required "upkeep_per_mileage"
   ))
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
@@ -124,7 +125,7 @@ upkeepMachinesQuery = queryTable upkeepMachinesTable
 expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery = proc () -> do
   machineRow @ (_,_,machineTypeId,_) <- machinesQuery -< ()
-  machineTypesRow @ (machineTypeId',_,_) <- machineTypesQuery -< ()
+  machineTypesRow @ (machineTypeId',_,_,_) <- machineTypesQuery -< ()
   restrict -< machineTypeId' .== machineTypeId
   returnA -< (machineRow, machineTypesRow)
 
@@ -141,10 +142,10 @@ runCompaniesQuery connection = runQuery connection companiesQuery
 runMachinesQuery :: Connection -> IO[(Int, Int, Int, String)]
 runMachinesQuery connection = runQuery connection machinesQuery
 
-runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
+runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String), (Int, String, String))]
+runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, String), (Int, String, String, Int))]
 runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, String), (Int, String, Int))]
@@ -272,8 +273,8 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
-  return $ map (\((mId,cId,_,mOs),(_,mtN,mtMf)) ->
-    (mId, M.Machine (MT.MachineType mtN mtMf) cId mOs)) rows
+  return $ map (\((mId,cId,_,mOs),(_,mtN,mtMf,mtI)) ->
+    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId mOs)) rows
   )
 
 upkeepListing :: ListHandler Dependencies
@@ -318,11 +319,11 @@ addMachine :: Connection
 addMachine connection machine = do
   machineTypeId <- case M.machineType machine of
     MT.MachineTypeId id' -> return $ id'
-    MT.MachineType name' manufacturer -> do
+    MT.MachineType name' manufacturer upkeepPerMileage -> do
       newMachineTypeId <- runInsertReturning
         connection
-        machineTypesTable (Nothing, pgString name', pgString manufacturer)
-        (\(id', _, _) -> id')
+        machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
+        (\(id',_,_,_) -> id')
       return $ head newMachineTypeId -- todo safe
   let M.Machine _ companyId' machineOperationStartDate' = machine
   machineId <- runInsertReturning

@@ -17,17 +17,19 @@ import "fay-base" Prelude
 #endif
 
 data Machine = Machine {
-  machineType :: MachineType
-  , companyId :: Int
-  , machineOperationStartDate :: String
-}
+  machineType :: MachineType ,
+  companyId :: Int ,
+  machineOperationStartDate :: String {- ,
+  initialMileage :: Int ,
+  mileagePerYear :: Int -}}
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newMachine :: Int -> Machine
 newMachine companyId' = Machine {
-  machineType = newMachineType
-  , companyId = companyId'
-  , machineOperationStartDate = ""
-  }
+  machineType = newMachineType ,
+  companyId = companyId' ,
+  machineOperationStartDate = "" {-,
+  initialMileage = 0 ,
+  mileagePerYear = 365 * 24 -}}

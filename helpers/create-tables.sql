@@ -7,18 +7,17 @@ create table companies (
 
 drop table machine_types;
 create table machine_types (
-  id serial
-  , name varchar(500)
-  , manufacturer varchar (500)
-);
+  id serial , 
+  name varchar(500) , 
+  manufacturer varchar (500) ,
+  upkeep_per_mileage integer );
 
 drop table machines;
 create table machines (
-  id serial
-  , company_id integer
-  , machine_type_id integer
-  , operation_start varchar (500)
-);
+  id serial , 
+  company_id integer , 
+  machine_type_id integer , 
+  operation_start varchar (500) );
 
 drop table upkeeps;
 create table upkeeps (
@@ -39,9 +38,9 @@ insert into companies(name, plant) values ('Metrostav', 'I');
 insert into companies(name, plant) values ('Neumann', 'I');
 insert into companies(name, plant) values ('PREX', 'I');
 
-insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
-insert into machine_types(name, manufacturer) values ('BK 75', 'Remeza');
-insert into machine_types(name, manufacturer) values ('EK 4', 'Orlík');
+insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 150', 'Remeza', 365 * 12);
+insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 75', 'Remeza', 365 * 24);
+insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('EK 4', 'Orlík', 365 * 24 * 2);
 
 insert into machines(company_id, machine_type_id, operation_start)
   values (1, 1, '1999');
