@@ -44,5 +44,5 @@ mkPopoverProps placement = PopoverProps (getPlacement placement)
 popover :: Renderable a
         => PopoverProps
         -> a
-        -> ReactInstance
+        -> DOMElement
 popover popoverProps = reactBootstrap "Popover" popoverProps
