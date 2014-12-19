@@ -121,7 +121,7 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
         h2 $ pack $ (MT.machineTypeName . M.machineType) machine
         , dl [
           dt "Další servis"
-          , dd $ pack $ M.machineOperationStartDate machine
+          , dd $ pack $ show $ M.machineOperationStartDate machine
           ]
       ]
   machineBoxes = map machineBox machines'

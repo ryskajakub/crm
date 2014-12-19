@@ -10,6 +10,7 @@ module Crm.Component.Machine (
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.Day as D
 import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
@@ -74,7 +75,7 @@ machineNew myData appVar machine' = let
         I.input $ inputRow {
           I.label_ = Defined "Datum uvedení do provozu" ,
           I.onChange = Defined $ eventString >=>
-            (\string -> setMachine $ machine' { M.machineOperationStartDate = string })} ,
+            (\string -> setMachine $ machine' { M.machineOperationStartDate = D.Day 1970 1 1 })} ,
         I.input $ inputRow {
           I.label_ = Defined "Úvodní stav motohodin" ,
           I.onChange = Defined $ let

@@ -18,7 +18,9 @@ import "fay-base" Prelude
 
 -- | year, month, day
 data Day = Day { 
-  year :: Int ,
-  month :: Int ,
-  day :: Int }
+  year :: Int , 
+  month :: Int , -- ^ 1..12
+  day :: Int } -- ^ 1..31
+#ifndef FAY
   deriving (Generic, Typeable, Data, Show)
+#endif
