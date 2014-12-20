@@ -63,14 +63,17 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
       B.row [
         I.input $ inputRow {
           I.label_ = Defined "Typ zařízení" ,
+          I.defaultValue = Defined $ pack $ MT.machineTypeName machineType ,
           I.onChange = Defined $ eventString >=>
             (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))} ,
         I.input $ inputRow {
           I.label_ = Defined "Výrobce" ,
+          I.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType ,
           I.onChange = Defined $ eventString >=>
             (\string -> setMachineType (\mt -> mt {MT.machineTypeManufacturer = string}))} ,
         I.input $ inputRow {
           I.label_ = Defined "Interval servisu" ,
+          I.defaultValue = Defined $ showInt $ MT.upkeepPerMileage machineType ,
           I.onChange = Defined $ eventValue >=> (\str -> case parseSafely str of
             Just(int) -> setMachineType (\mt -> mt {MT.upkeepPerMileage = int })
             Nothing -> return ())} ,
@@ -94,12 +97,14 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
           ] ,
         I.input $ inputRow {
           I.label_ = Defined "Úvodní stav motohodin" ,
+          I.defaultValue = Defined $ showInt $ M.initialMileage machine' ,
           I.onChange = Defined $ let
             setInitialMileage :: Int -> Fay ()
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue } ,
         I.input $ inputRow {
           I.label_ = Defined "Provoz (motohodin/rok)" ,
+          I.defaultValue = Defined $ showInt $ M.mileagePerYear machine' ,
           I.onChange = Defined $ let
             setMileagePerYear :: Int -> Fay ()
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
