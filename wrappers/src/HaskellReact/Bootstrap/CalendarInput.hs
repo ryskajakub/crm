@@ -14,12 +14,13 @@ import "fay-base" Prelude
 import qualified Moment as M
 import HaskellReact.ReactCalendar as RC
 import qualified HaskellReact.Tag.Input as I
-import FFI (Defined(Defined))
+import "fay-base" FFI (Defined(Defined))
 
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
 monthCalendar :: M.MomentObject -> PickDate -> DOMElement
-monthCalendar moment = RC.month (RC.MonthProps {RC.date = moment})
+monthCalendar moment pickDate = RC.month (RC.MonthProps {RC.date = moment}) (\y m d t ->
+  pickDate y (m + 1) d t)
 
 -- | display the input with calendar set to the date consisting of y m d from the parameters
 dayInput :: Int -- ^ year
@@ -41,7 +42,7 @@ dayInput y m d onDayPick pickerOpen setPickerOpen = let
     then [ P.popover (P.mkPopoverProps P.placementBottom 0 0) $ 
       div' (class'' ["nowrap", "relative"]) $
         let 
-          momentFromParams = M.dayPrecision y m d M.requireMoment 
+          momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
           in monthCalendar momentFromParams onDayPick ]
     else []
   in input : picker 
