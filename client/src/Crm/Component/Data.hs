@@ -25,7 +25,8 @@ data NavigationState =
     company :: C.Company }
   | NotFound
   | MachineNew {
-    machine :: M.Machine }
+    machine :: M.Machine 
+  , operationStartCalendarOpen :: Bool }
   | UpkeepNew {
     upkeep :: U.Upkeep 
   , upkeepMachines :: [(Int, M.Machine)]

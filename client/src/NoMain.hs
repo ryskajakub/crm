@@ -76,7 +76,7 @@ main' = do
             newAppState = case (parseSafely $ head params) of
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 newMachine' = M.newMachine companyId'
-                in MachineNew (newMachine')
+                in MachineNew newMachine' False
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       ), (
@@ -119,7 +119,8 @@ main' = do
           Navigation.navigation myData
             (companyDetail editing' myData appVar' (companyId', company') machines')
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
-        MachineNew machine' -> Navigation.navigation myData (machineNew myData appVar' machine')
+        MachineNew machine' operationStartCalendarOpen' -> 
+          Navigation.navigation myData (machineNew myData appVar' operationStartCalendarOpen' machine')
         UpkeepNew upkeep' machines' notCheckedMachines' companyId' ->
           Navigation.navigation myData 
             (upkeepNew myData appVar' upkeep' notCheckedMachines' machines' companyId')

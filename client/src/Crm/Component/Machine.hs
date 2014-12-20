@@ -23,6 +23,7 @@ import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
+import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine)
@@ -30,9 +31,10 @@ import Crm.Helpers (parseSafely)
 
 machineNew :: MyData
            -> Var AppState
+           -> Bool
            -> M.Machine
            -> DOMElement
-machineNew myData appVar machine' = let
+machineNew myData appVar operationStartCalendarOpen' machine' = let
   saveNewMachine = createMachine machine' (\machineId -> do
     modify appVar (\appState -> let
       machines' = machines appState
@@ -42,7 +44,7 @@ machineNew myData appVar machine' = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
-      nm @ (MachineNew _) -> nm { machine = modifiedMachine }
+      nm @ (MachineNew _ _) -> nm { machine = modifiedMachine }
       _ -> navigation appState
     })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
@@ -72,10 +74,24 @@ machineNew myData appVar machine' = let
           I.onChange = Defined $ eventValue >=> (\str -> case parseSafely str of
             Just(int) -> setMachineType (\mt -> mt {MT.upkeepPerMileage = int })
             Nothing -> return ())} ,
-        I.input $ inputRow {
-          I.label_ = Defined "Datum uvedení do provozu" ,
-          I.onChange = Defined $ eventString >=>
-            (\string -> setMachine $ machine' { M.machineOperationStartDate = D.Day 1970 1 1 })} ,
+        div' (class' "form-group") [
+          label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
+          B.col (B.mkColProps 9) $ let 
+            D.Day y m d _ = M.machineOperationStartDate machine'
+            dayPickHandler year month day precision = case precision of
+              month | month == "Month" -> setDate D.MonthPrecision
+              year | year == "Year" -> setDate D.YearPrecision
+              day | day == "Day" -> setDate D.DayPrecision
+              _ -> return ()
+              where 
+                setDate precision = setMachine $ machine' {
+                  M.machineOperationStartDate = D.Day year month day precision }
+            setPickerOpenness open = modify appVar (\appState -> appState {
+              navigation = case navigation appState of
+                nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
+                _ -> navigation appState })
+            in CI.dayInput y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness
+          ] ,
         I.input $ inputRow {
           I.label_ = Defined "Úvodní stav motohodin" ,
           I.onChange = Defined $ let

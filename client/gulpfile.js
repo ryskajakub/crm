@@ -53,7 +53,7 @@ gulp.task('generate-rest-client', function () {
 
 
 gulp.task('compile', function() {
-  var fayCommand = "fay --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
+  var fayCommand = "fay --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });
@@ -78,7 +78,7 @@ gulp.task('default', ['watch']);
 // playground
 
 gulp.task('playground-compile', function() {
-  var fayCommand = "fay --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js --package fay-dom <%= file.path %>";
+  var fayCommand = "fay --strict Other --library --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js --package fay-dom <%= file.path %>";
   return gulp.src('playground/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

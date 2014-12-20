@@ -5,8 +5,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Day (
-  Day(..)
-) where
+  Day(..) ,
+  Precision(..) ) where
 
 #ifndef FAY
 import GHC.Generics
@@ -20,7 +20,13 @@ import "fay-base" Prelude
 data Day = Day { 
   year :: Int , 
   month :: Int , -- ^ 1..12
-  day :: Int } -- ^ 1..31
+  day :: Int , -- ^ 1..31
+  precision :: Precision }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif
+
+data Precision = DayPrecision | MonthPrecision | YearPrecision
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif

@@ -7,7 +7,7 @@
 module Crm.Shared.Machine where
 
 import Crm.Shared.MachineType (MachineType, newMachineType)
-import Crm.Shared.Day (Day(Day))
+import Crm.Shared.Day (Day(Day), Precision(YearPrecision))
 
 #ifndef FAY
 import GHC.Generics
@@ -31,6 +31,6 @@ newMachine :: Int -> Machine
 newMachine companyId' = Machine {
   machineType = newMachineType ,
   companyId = companyId' ,
-  machineOperationStartDate = Day 1970 0 0 ,
+  machineOperationStartDate = Day 1970 0 0 YearPrecision ,
   initialMileage = 0 ,
   mileagePerYear = 365 * 24 }
