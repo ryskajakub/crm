@@ -31,6 +31,6 @@ newMachine :: Int -> Machine
 newMachine companyId' = Machine {
   machineType = newMachineType ,
   companyId = companyId' ,
-  machineOperationStartDate = Day 1970 0 0 YearPrecision ,
+  machineOperationStartDate = Day 1970 1 1 YearPrecision ,
   initialMileage = 0 ,
   mileagePerYear = 365 * 24 }

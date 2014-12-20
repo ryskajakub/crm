@@ -1,3 +1,5 @@
+{-# OPTIONS -fno-warn-orphans #-}
+
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PackageImports #-}
