@@ -5,8 +5,8 @@ var webpack = require('gulp-webpack');
 var _ = require('underscore');
 
 var commonSources = [
-  '../../haskell-react/core/src/' ,
-  '../../haskell-react/wrappers/src/' ,
+  '../../fay-react/core/src/' ,
+  '../../fay-react/wrappers/src/' ,
   './shared/' ,
   '../../fay-jquery/src/' ,
   '../../fay-moment/src/' ];

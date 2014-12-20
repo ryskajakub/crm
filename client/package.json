@@ -4,7 +4,9 @@
     "react": "~0.12.1",
     "backbone": "~1.1.2",
     "jquery": "~2.1.1",
-    "q": "~1.1.2"
+    "q": "~1.1.2",
+    "moment": "~2.8.4",
+    "react-calendar": "~0.3.0"
   },
   "devDependencies": {
     "webpack": "~1.4.9",
