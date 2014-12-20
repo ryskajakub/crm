@@ -114,7 +114,7 @@ week = InputType "week"
 
 data InputAttributes = InputAttributes {
   type' :: InputType
-  , value :: Defined Text
+  , value_ :: Defined Text
   , checked :: Defined Text
   , onChange :: Defined (SyntheticEvent -> Fay ())
 }
@@ -125,7 +125,7 @@ mkInputAttrs = defaultInputAttributes
 defaultInputAttributes :: InputAttributes
 defaultInputAttributes = InputAttributes {
   type' = InputType "text"
-  , value = Undefined
+  , value_ = Undefined
   , checked = Undefined
   , onChange = Undefined
 }
