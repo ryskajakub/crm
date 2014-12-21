@@ -13,7 +13,7 @@ import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -118,7 +118,11 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
   machineBox machine =
     B.col (B.mkColProps 4) $
       B.panel [
-        h2 $ pack $ (MT.machineTypeName . M.machineType) machine
+        h2 $ 
+          link
+            (pack $ (MT.machineTypeName . M.machineType) machine)
+            ("machines/" <> showInt companyId)
+            (router myData)
         , dl [
           dt "Další servis"
           , dd $ pack $ show $ M.machineOperationStartDate machine

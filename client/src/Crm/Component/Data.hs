@@ -27,6 +27,8 @@ data NavigationState =
   | MachineNew {
     machine :: M.Machine 
   , operationStartCalendarOpen :: Bool }
+  | MachineDetail {
+    machine :: M.Machine }
   | UpkeepNew {
     upkeep :: U.Upkeep 
   , upkeepMachines :: [(Int, M.Machine)]

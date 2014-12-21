@@ -4,8 +4,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Machine (
-  machineNew
-) where
+  machineNew ,
+  machineDetail ) where
 
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
@@ -28,6 +28,11 @@ import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine)
 import Crm.Helpers (parseSafely)
+
+machineDetail :: MyData
+              -> M.Machine
+              -> DOMElement
+machineDetail _ _ = div "machine detail"
 
 machineNew :: MyData
            -> Var AppState

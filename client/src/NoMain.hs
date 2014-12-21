@@ -11,11 +11,11 @@ import "fay-base" Data.Maybe (isJust)
 import Crm.Helpers (parseSafely)
 
 import HaskellReact.BackboneRouter (startRouter)
-import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps)
+import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine)
 import qualified Crm.Component.Navigation as Navigation
-import Crm.Component.Data
+import Crm.Component.Data as D
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
-import Crm.Component.Machine (machineNew)
+import Crm.Component.Machine (machineNew, machineDetail)
 import Crm.Component.Upkeep (upkeepNew)
 import Crm.Component.UpkeepHistory (upkeepHistory)
 import qualified Crm.Shared.Machine as M
@@ -112,6 +112,13 @@ main' = do
                 in UpkeepHistory companyUpkeeps
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
+      ), (
+        pack "machines/:id", \params -> let
+          modify' newState = modify appVar' (\appState' -> appState' { navigation = newState })
+          in case parseSafely $ head params of
+            Just(machineId') -> fetchMachine machineId' (\machine ->
+              modify' $ D.MachineDetail machine )
+            Nothing -> modify' NotFound
       )]
     let myData = MyData router'
     _ <- subscribeAndRead appVar' (\appState -> let
@@ -125,6 +132,7 @@ main' = do
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' operationStartCalendarOpen' -> 
           Navigation.navigation myData (machineNew myData appVar' operationStartCalendarOpen' machine')
+        MachineDetail machine' -> Navigation.navigation myData (machineDetail myData machine')
         UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation myData 
             (upkeepNew myData appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
