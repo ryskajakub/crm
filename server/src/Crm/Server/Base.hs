@@ -43,7 +43,7 @@ import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, 
 import Rest.Schema (Schema, named, withListing, unnamedSingle, noListing)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
-import Rest.Types.Error (DataError(ParseError), Reason(InputError))
+import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError))
 
 import Generics.Regular
 
@@ -297,8 +297,11 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of 
     Just (machineId) -> do
       rows <- liftIO $ runSingleMachineQuery machineId conn
-      return $ map (\(_,a,b,c,d,e) -> M.Machine (MT.MachineTypeId a) b (dayToYmd c) d e) rows
-    Nothing -> throwError $ InputError $ ParseError "provided id is not a number" ))
+      case rows of
+        (_,a,b,c,d,e) : xs | null xs -> 
+          return $ M.Machine (MT.MachineTypeId a) b (dayToYmd c) d e
+        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
