@@ -4,8 +4,8 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Shared.Day (
-  Day(..) ,
+module Crm.Shared.YearMonthDay (
+  YearMonthDay(..) ,
   Precision(..) ) where
 
 #ifndef FAY
@@ -17,7 +17,7 @@ import "fay-base" Prelude
 #endif
 
 -- | year, month, day
-data Day = Day { 
+data YearMonthDay = YearMonthDay { 
   year :: Int , 
   month :: Int , -- ^ 1..12
   day :: Int , -- ^ 1..31

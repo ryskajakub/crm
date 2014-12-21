@@ -10,7 +10,7 @@ module Crm.Component.Machine (
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Day as D
+import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
@@ -80,7 +80,7 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let 
-            D.Day y m d _ = M.machineOperationStartDate machine'
+            D.YearMonthDay y m d _ = M.machineOperationStartDate machine'
             dayPickHandler year month day precision = case precision of
               month | month == "Month" -> setDate D.MonthPrecision
               year | year == "Year" -> setDate D.YearPrecision
@@ -88,7 +88,7 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
               _ -> return ()
               where 
                 setDate precision = setMachine $ machine' {
-                  M.machineOperationStartDate = D.Day year month day precision }
+                  M.machineOperationStartDate = D.YearMonthDay year month day precision }
             setPickerOpenness open = modify appVar (\appState -> appState {
               navigation = case navigation appState of
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }

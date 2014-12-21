@@ -53,7 +53,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Day as D
+import qualified Crm.Shared.YearMonthDay as D
 import Fay.Convert (showToFay, readFromFay')
 
 import Safe (readMay)
@@ -222,7 +222,7 @@ instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
 instance JS.JSONSchema M.Machine where
   schema = gSchema
-instance JS.JSONSchema D.Day where
+instance JS.JSONSchema D.YearMonthDay where
   schema = gSchema
 instance JS.JSONSchema D.Precision where
   schema = gSchema
@@ -284,7 +284,7 @@ machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
     let (y,m,d) = toGregorian mOs
-    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (D.Day (fromIntegral y) m d D.DayPrecision) m3 m4)) rows )
+    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (D.YearMonthDay (fromIntegral y) m d D.DayPrecision) m3 m4)) rows )
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
@@ -336,7 +336,7 @@ addMachine connection machine = do
       return $ head newMachineTypeId -- todo safe
   let
     M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
-    D.Day year month day' _ = machineOperationStartDate'
+    D.YearMonthDay year month day' _ = machineOperationStartDate'
     day = fromGregorian (toInteger year) month day'
   machineId <- runInsertReturning
     connection

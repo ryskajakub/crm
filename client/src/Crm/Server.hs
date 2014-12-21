@@ -13,11 +13,14 @@ module Crm.Server (
 import FFI (ffi, Automatic)
 import Crm.Shared.Company (Company)
 import qualified Crm.Shared.Upkeep as U
-import Crm.Shared.Machine (Machine, companyId)
+import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.YearMonthDay as D
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, pack, append, showInt, unpack)
 import qualified JQuery as JQ
+
+import Debug.Trace
 
 data CrmApi
 
@@ -25,7 +28,7 @@ fetchCompanies :: ([(Int, Company)] -> Fay ())
                -> Fay ()
 fetchCompanies var = fetch var (pack A.companiesClient)
 
-fetchMachines :: ([(Int, Machine)] -> Fay ())
+fetchMachines :: ([(Int, M.Machine)] -> Fay ())
               -> Fay ()
 fetchMachines var = fetch var (pack A.machinesClient)
 
@@ -40,12 +43,12 @@ createCompany company callback = do
   crmApi <- crmApiFacade
   create' crmApi (pack A.companiesClient) company callback
 
-createMachine :: Machine
+createMachine :: M.Machine
               -> (Int -> Fay())
               -> Fay ()
 createMachine machine callback =
-  JQ.ajaxPost
-    (pack "/api/v1.0.0/companies/" `append` (showInt $ companyId machine) `append` pack "/machines/")
+  trace (show $ D.year $ M.machineOperationStartDate machine) $ JQ.ajaxPost
+    (pack "/api/v1.0.0/companies/" `append` (showInt $ M.companyId machine) `append` pack "/machines/")
     machine
     callback
     (const $ const $ const $ return ())

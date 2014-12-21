@@ -32,7 +32,7 @@ Library
     , Crm.Shared.Api
     , Crm.Shared.Upkeep
     , Crm.Shared.UpkeepMachine
-    , Crm.Shared.Day
+    , Crm.Shared.YearMonthDay
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3
