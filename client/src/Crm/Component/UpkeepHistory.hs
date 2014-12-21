@@ -27,6 +27,7 @@ import qualified HaskellReact.Tag.Hyperlink as A
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
+import Crm.Helpers
 
 import Debug.Trace
 
@@ -35,7 +36,7 @@ upkeepHistory :: [(Int, U.Upkeep)]
 upkeepHistory upkeeps = let
   upkeepHtml (upkeepId, upkeep) = let
     upkeepMachines = U.upkeepMachines upkeep
-    upkeepDate = B.col (B.mkColProps 12) (pack $ U.upkeepDate upkeep)
+    upkeepDate = B.col (B.mkColProps 12) (displayDate $ U.upkeepDate upkeep)
     upkeepMachineHtml upkeepMachine = B.col
       (B.mkColProps 3)
       (pack $ UM.upkeepMachineNote upkeepMachine)

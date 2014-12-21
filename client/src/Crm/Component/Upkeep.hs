@@ -12,6 +12,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.UpkeepMachine as UM
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
@@ -24,6 +25,7 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Tag.Hyperlink as A
+import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
@@ -54,14 +56,15 @@ toggle lists findElem = let
 upkeepNew :: MyData
           -> Var AppState
           -> U.Upkeep
+          -> Bool
           -> [UM.UpkeepMachine]
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
-upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
+upkeepNew myData appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
   setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
-    upkeepNew @ (UpkeepNew _ _ _ _) -> let
+    upkeepNew @ (UpkeepNew _ _ _ _ _) -> let
       newNavigation = upkeepNew { upkeep = upkeep' }
       newNavigation' = case notCheckedMachines' of
         Just(x) -> newNavigation { notCheckedMachines = x }
@@ -121,11 +124,21 @@ upkeepNew myData appState upkeep' notCheckedMachines'' machines companyId' = let
     in B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
-    B.col (B.mkColProps 6) $ I.input (I.mkInputProps {
-      I.onChange = Defined $ \event -> do
-        value <- eventValue event
-        let newUpkeep = upkeep' { U.upkeepDate = unpack value }
-        setUpkeep newUpkeep Nothing })]
+    B.col (B.mkColProps 6) $ let
+      D.YearMonthDay y m d _ = U.upkeepDate upkeep'
+      dayPickHandler year month day precision = case precision of
+        month | month == "Month" -> setDate D.MonthPrecision
+        year | year == "Year" -> setDate D.YearPrecision
+        day | day == "Day" -> setDate D.DayPrecision
+        _ -> return ()
+        where 
+          setDate precision = setUpkeep (upkeep' {
+            U.upkeepDate = D.YearMonthDay year month day precision }) Nothing
+      setPickerOpenness open = modify appState (\appState' -> appState' {
+        navigation = case navigation appState' of
+          upkeep'' @ (UpkeepNew _ _ _ _ _) -> upkeep'' { upkeepDatePickerOpen = open }
+          _ -> navigation appState' })
+      in CI.dayInput y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]

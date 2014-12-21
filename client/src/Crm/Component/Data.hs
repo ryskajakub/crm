@@ -31,6 +31,7 @@ data NavigationState =
     upkeep :: U.Upkeep 
   , upkeepMachines :: [(Int, M.Machine)]
   , notCheckedMachines :: [UM.UpkeepMachine] 
+  , upkeepDatePickerOpen :: Bool
   , companyId :: Int }
   | UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)]

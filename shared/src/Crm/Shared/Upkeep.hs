@@ -7,6 +7,7 @@
 module Crm.Shared.Upkeep where
 
 import Crm.Shared.UpkeepMachine
+import Crm.Shared.YearMonthDay as D
 
 #ifndef FAY
 import GHC.Generics
@@ -17,11 +18,11 @@ import "fay-base" Prelude
 #endif
 
 data Upkeep = Upkeep {
-  upkeepDate :: String
-  , upkeepMachines :: [UpkeepMachine]}
+  upkeepDate :: D.YearMonthDay ,
+  upkeepMachines :: [UpkeepMachine] }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-newUpkeep :: Upkeep
-newUpkeep = Upkeep "" []
+newUpkeep :: D.YearMonthDay -> Upkeep
+newUpkeep ymd = Upkeep ymd []

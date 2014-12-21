@@ -21,8 +21,10 @@ import Crm.Component.UpkeepHistory (upkeepHistory)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.MachineType as MT
+import Moment (now, requireMoment, day)
 
 import Debug.Trace
 
@@ -88,7 +90,9 @@ main' = do
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (machines appState)
                 notCheckedUpkeepMachines = map (\(id',_) -> UM.newUpkeepMachine id') machines'
-                in UpkeepNew U.newUpkeep machines' notCheckedUpkeepMachines companyId'
+                (nowYear, nowMonth, nowDay) = day $ now requireMoment
+                nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
+                in UpkeepNew (U.newUpkeep nowYMD) machines' notCheckedUpkeepMachines False companyId'
               _ -> NotFound
           modify appVar' (\appState' -> appState' { navigation = newAppState })
       ), (
@@ -121,9 +125,9 @@ main' = do
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' operationStartCalendarOpen' -> 
           Navigation.navigation myData (machineNew myData appVar' operationStartCalendarOpen' machine')
-        UpkeepNew upkeep' machines' notCheckedMachines' companyId' ->
+        UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation myData 
-            (upkeepNew myData appVar' upkeep' notCheckedMachines' machines' companyId')
+            (upkeepNew myData appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
         UpkeepHistory upkeeps' -> Navigation.navigation myData $ upkeepHistory upkeeps')
     return ()
   return ()
