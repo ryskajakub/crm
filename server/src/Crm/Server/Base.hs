@@ -72,8 +72,8 @@ type DBInt = Column PGInt4
 type DBText = Column PGText
 type DBDate = Column PGDate
 
-type UpkeepTable = (DBInt, DBText)
-type UpkeepWriteTable = (Maybe DBInt, DBText)
+type UpkeepTable = (DBInt, DBDate)
+type UpkeepWriteTable = (Maybe DBInt, DBDate)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt)
 
@@ -153,7 +153,7 @@ runMachineTypesQuery connection = runQuery connection machineTypesQuery
 runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, String), (Int, String, Int))]
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 withConnection :: (Connection -> IO a) -> IO a
@@ -291,7 +291,9 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
   return $ foldl (\acc ((upkeepId,date),(_,note,machineId)) ->
     let
-      addUpkeep' = (upkeepId, U.Upkeep date [UM.UpkeepMachine note machineId])
+      (y,m,d) = toGregorian date
+      ymd = D.YearMonthDay (fromIntegral y) m d D.DayPrecision
+      addUpkeep' = (upkeepId, U.Upkeep ymd [UM.UpkeepMachine note machineId])
       in case acc of
         [] -> [addUpkeep']
         (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
@@ -305,9 +307,12 @@ addUpkeep :: Connection
           -> U.Upkeep
           -> IO Int -- ^ id of the upkeep
 addUpkeep connection upkeep = do
+  let 
+    D.YearMonthDay year month day' _  = U.upkeepDate upkeep
+    day = fromGregorian (toInteger year) month day'
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgString $ U.upkeepDate upkeep)
+    upkeepTable (Nothing, pgDay day)
     (\(id',_) -> id')
   let
     upkeepId = head upkeepIds -- TODO safe

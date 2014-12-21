@@ -24,7 +24,7 @@ create table machines (
 drop table upkeeps;
 create table upkeeps (
   id serial ,
-  date_ varchar (500) );
+  date_ date );
 
 drop table upkeep_machines;
 create table upkeep_machines (
@@ -55,9 +55,9 @@ insert into machines(company_id, machine_type_id, operation_start, initial_milea
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
   values (2, 3, '2008-01-01', 0, 365 * 24);
 
-insert into upkeeps(date_) values ('1999');
-insert into upkeeps(date_) values ('2001');
-insert into upkeeps(date_) values ('2008');
+insert into upkeeps(date_) values ('1999-01-01');
+insert into upkeeps(date_) values ('2001-01-01');
+insert into upkeeps(date_) values ('2008-01-01');
 
 insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'oprava', 1);
 insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'pravidelný', 2);
