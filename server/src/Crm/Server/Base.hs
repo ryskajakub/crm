@@ -20,7 +20,7 @@ import Data.Profunctor.Product (p2, p3, p4, p6)
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
-import Opaleye.Operators ((.==), restrict)
+import Opaleye.Operators ((.==), (.&&), restrict)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay)
 import Opaleye.Manipulation (runInsert)
 
@@ -128,18 +128,15 @@ upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
 
 -- | query, that returns expanded machine type, not just the id
-expandedMachinesQuery :: Query (MachinesTable, MachineTypesTable)
-expandedMachinesQuery = proc () -> do
-  machineRow @ (_,_,machineTypeId,_,_,_) <- machinesQuery -< ()
+expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
+expandedMachinesQuery machineId = proc () -> do
+  machineRow @ (machineId',_,machineTypeId,_,_,_) <- machinesQuery -< ()
   machineTypesRow @ (machineTypeId',_,_,_) <- machineTypesQuery -< ()
-  restrict -< machineTypeId' .== machineTypeId
+  let join = machineTypeId' .== machineTypeId
+  restrict -< (case machineId of
+    Just(machineId'') -> (pgInt4 machineId'' .== machineId') .&& join
+    Nothing -> join )
   returnA -< (machineRow, machineTypesRow)
-
-singleMachineQuery :: Int -> Query (MachinesTable)
-singleMachineQuery machineId = proc () -> do
-  machineRow @ (machineId',_,_,_,_,_) <- machinesQuery -< ()
-  restrict -< machineId' .== (pgInt4 machineId)
-  returnA -< machineRow
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
@@ -157,14 +154,18 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runExpandedMachinesQuery :: Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
-runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
+runExpandedMachinesQuery' :: Maybe Int -> Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+runExpandedMachinesQuery' machineId connection =
+  runQuery connection (expandedMachinesQuery machineId)
+
+runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine)]
+runExpandedMachinesQuery machineId connection = do
+  rows <- runExpandedMachinesQuery' machineId connection
+  return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
+    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows 
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
-
-runSingleMachineQuery :: Int -> Connection -> IO[(Int, Int, Int, Day, Int, Int)]
-runSingleMachineQuery int connection = runQuery connection (singleMachineQuery int)
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -295,19 +296,16 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of 
-    Just (machineId) -> do
-      rows <- liftIO $ runSingleMachineQuery machineId conn
+    maybeId @ (Just (_)) -> do
+      rows <- liftIO $ runExpandedMachinesQuery maybeId conn
       case rows of
-        (_,a,b,c,d,e) : xs | null xs -> 
-          return $ M.Machine (MT.MachineTypeId a) b (dayToYmd c) d e
+        (_,m) : xs | null xs -> return m
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
-  return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows )
+machineListing = mkListing (jsonO . someO) (const $ 
+  ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn )
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
