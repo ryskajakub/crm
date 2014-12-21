@@ -138,7 +138,7 @@ upkeepNew myData appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' mac
         navigation = case navigation appState' of
           upkeep'' @ (UpkeepNew _ _ _ _ _) -> upkeep'' { upkeepDatePickerOpen = open }
           _ -> navigation appState' })
-      in CI.dayInput y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
+      in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]

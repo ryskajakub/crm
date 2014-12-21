@@ -116,7 +116,7 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
               navigation = case navigation appState of
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
                 _ -> navigation appState })
-            in CI.dayInput y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
+            in CI.dayInput editing y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
         row
           "Úvodní stav motohodin"
           (unpack $ showInt $ M.initialMileage machine')
