@@ -25,10 +25,11 @@ Library
   ghc-options:       -Wall
   exposed-modules:
       Server
+    , Crm.Server.Helpers
+    , Crm.Server.Base
     , Crm.Shared.Company
     , Crm.Shared.Machine
     , Crm.Shared.MachineType
-    , Crm.Server.Base
     , Crm.Shared.Api
     , Crm.Shared.Upkeep
     , Crm.Shared.UpkeepMachine

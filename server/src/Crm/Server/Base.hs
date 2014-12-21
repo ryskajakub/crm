@@ -36,7 +36,7 @@ import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
 import Data.Functor.Identity (runIdentity)
-import Data.Time.Calendar (fromGregorian, Day, toGregorian)
+import Data.Time.Calendar (Day)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith)
@@ -54,6 +54,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
+import Crm.Server.Helpers (ymdToDay, dayToYmd)
 import Fay.Convert (showToFay, readFromFay')
 
 import Safe (readMay)
@@ -283,17 +284,14 @@ machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedMachinesQuery conn
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-    let (y,m,d) = toGregorian mOs
-    in (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (D.YearMonthDay (fromIntegral y) m d D.DayPrecision) m3 m4)) rows )
+    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows )
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
   return $ foldl (\acc ((upkeepId,date),(_,note,machineId)) ->
     let
-      (y,m,d) = toGregorian date
-      ymd = D.YearMonthDay (fromIntegral y) m d D.DayPrecision
-      addUpkeep' = (upkeepId, U.Upkeep ymd [UM.UpkeepMachine note machineId])
+      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) [UM.UpkeepMachine note machineId])
       in case acc of
         [] -> [addUpkeep']
         (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
@@ -307,12 +305,9 @@ addUpkeep :: Connection
           -> U.Upkeep
           -> IO Int -- ^ id of the upkeep
 addUpkeep connection upkeep = do
-  let 
-    D.YearMonthDay year month day' _  = U.upkeepDate upkeep
-    day = fromGregorian (toInteger year) month day'
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgDay day)
+    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep)
     (\(id',_) -> id')
   let
     upkeepId = head upkeepIds -- TODO safe
@@ -341,11 +336,9 @@ addMachine connection machine = do
       return $ head newMachineTypeId -- todo safe
   let
     M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
-    D.YearMonthDay year month day' _ = machineOperationStartDate'
-    day = fromGregorian (toInteger year) month day'
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay day,
+    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay $ ymdToDay machineOperationStartDate',
       pgInt4 initialMileage, pgInt4 mileagePerYear)
     (\(id',_, _, _,_,_) -> id')
   return $ head machineId -- todo safe
