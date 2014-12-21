@@ -39,10 +39,10 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
-import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get)
 import Rest.Schema (Schema, named, withListing, unnamedSingle, noListing)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
-import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
+import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
 import Generics.Regular
@@ -135,6 +135,12 @@ expandedMachinesQuery = proc () -> do
   restrict -< machineTypeId' .== machineTypeId
   returnA -< (machineRow, machineTypesRow)
 
+singleMachineQuery :: Int -> Query (MachinesTable)
+singleMachineQuery machineId = proc () -> do
+  machineRow @ (machineId',_,_,_,_,_) <- machinesQuery -< ()
+  restrict -< machineId' .== (pgInt4 machineId)
+  returnA -< machineRow
+
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepId,_) <- upkeepQuery -< ()
@@ -156,6 +162,9 @@ runExpandedMachinesQuery connection = runQuery connection expandedMachinesQuery
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
+
+runSingleMachineQuery :: Int -> Connection -> IO[(Int, Int, Int, Day, Int, Int)]
+runSingleMachineQuery int connection = runQuery connection (singleMachineQuery int)
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -241,6 +250,9 @@ type UrlId = Maybe Int
 schema' :: Schema Void () Void
 schema' = withListing () (named [])
 
+schema'' :: Schema UrlId () Void
+schema'' = withListing () (unnamedSingle readMay)
+
 companySchema :: Schema UrlId () Void
 companySchema = withListing () $ unnamedSingle readMay
 
@@ -279,6 +291,14 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
   , create = Just createCompanyHandler
   , name = A.companies
   , schema = companySchema }
+
+machineSingle :: Handler IdDependencies
+machineSingle = mkConstHandler (jsonO . someO) (
+  ask >>= (\(conn,id') -> case id' of 
+    Just (machineId) -> do
+      rows <- liftIO $ runSingleMachineQuery machineId conn
+      return $ map (\(_,a,b,c,d,e) -> M.Machine (MT.MachineTypeId a) b (dayToYmd c) d e) rows
+    Nothing -> throwError $ InputError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
@@ -364,12 +384,12 @@ companyMachineResource = mkResourceId {
   , create = Just createMachineHandler
   }
 
-machineResource :: Resource Dependencies Dependencies Void () Void
-machineResource = mkResourceId {
-  list = const machineListing
-  , name = A.machines
-  , schema = schema'
-  }
+machineResource :: Resource Dependencies IdDependencies UrlId () Void
+machineResource = (mkResourceReaderWith prepareReader) {
+  list = const machineListing ,
+  get = Just machineSingle ,
+  name = A.machines ,
+  schema = schema'' }
 
 upkeepTopLevelResource :: Resource Dependencies Dependencies Void () Void
 upkeepTopLevelResource = mkResourceId {
