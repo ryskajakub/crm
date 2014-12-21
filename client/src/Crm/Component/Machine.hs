@@ -25,21 +25,29 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import Crm.Component.Data
-import Crm.Component.Editable (editable)
+import Crm.Component.Editable (editable, editable', editableN)
 import Crm.Server (createMachine)
 import Crm.Helpers (parseSafely)
 
 machineDetail :: MyData
               -> M.Machine
               -> DOMElement
-machineDetail _ _ = div "machine detail"
+machineDetail myData machine = div "machine detail"
 
 machineNew :: MyData
            -> Var AppState
            -> Bool
            -> M.Machine
            -> DOMElement
-machineNew myData appVar operationStartCalendarOpen' machine' = let
+machineNew = machineDisplay True
+
+machineDisplay :: Bool
+               -> MyData
+               -> Var AppState
+               -> Bool
+               -> M.Machine
+               -> DOMElement
+machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
   saveNewMachine = createMachine machine' (\machineId -> do
     modify appVar (\appState -> let
       machines' = machines appState
@@ -63,14 +71,22 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
   inputRow = I.mkInputProps {
     I.labelClassName = Defined "col-md-3"
     , I.wrapperClassName = Defined "col-md-9" }
+  row labelText value' onChange' = let
+    attrs = class' "form-control"
+    inputAttrs = II.mkInputAttrs {
+      II.value_ = Defined $ pack value' ,
+      II.onChange = Defined onChange' }
+    input = editableN inputAttrs attrs editing (text2DOM $ pack value')
+    inputWrapper = div' (class' "col-md-9") input
+    labelColumn = label' (class'' ["control-label", "col-md-3"]) (span labelText)
+    in div' (class' "form-group") [ labelColumn , inputWrapper ]
   in form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row [
-        I.input $ inputRow {
-          I.label_ = Defined "Typ zařízení" ,
-          I.defaultValue = Defined $ pack $ MT.machineTypeName machineType ,
-          I.onChange = Defined $ eventString >=>
-            (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))} ,
+        row 
+          "Typ zařízení"
+          (MT.machineTypeName machineType)
+          (eventString >=> (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))) ,
         I.input $ inputRow {
           I.label_ = Defined "Výrobce" ,
           I.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType ,
@@ -98,8 +114,7 @@ machineNew myData appVar operationStartCalendarOpen' machine' = let
               navigation = case navigation appState of
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
                 _ -> navigation appState })
-            in CI.dayInput y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness
-          ] ,
+            in CI.dayInput y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
         I.input $ inputRow {
           I.label_ = Defined "Úvodní stav motohodin" ,
           I.defaultValue = Defined $ showInt $ M.initialMileage machine' ,
