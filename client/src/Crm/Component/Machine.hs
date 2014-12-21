@@ -29,10 +29,13 @@ import Crm.Component.Editable (editable, editable', editableN)
 import Crm.Server (createMachine)
 import Crm.Helpers (parseSafely)
 
-machineDetail :: MyData
+machineDetail :: Bool
+              -> MyData
+              -> Var AppState
+              -> Bool
               -> M.Machine
               -> DOMElement
-machineDetail myData machine = div "machine detail"
+machineDetail = machineDisplay
 
 machineNew :: MyData
            -> Var AppState
@@ -87,17 +90,16 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
           "Typ zařízení"
           (MT.machineTypeName machineType)
           (eventString >=> (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))) ,
-        I.input $ inputRow {
-          I.label_ = Defined "Výrobce" ,
-          I.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType ,
-          I.onChange = Defined $ eventString >=>
-            (\string -> setMachineType (\mt -> mt {MT.machineTypeManufacturer = string}))} ,
-        I.input $ inputRow {
-          I.label_ = Defined "Interval servisu" ,
-          I.defaultValue = Defined $ showInt $ MT.upkeepPerMileage machineType ,
-          I.onChange = Defined $ eventValue >=> (\str -> case parseSafely str of
+        row 
+          "Výrobce"
+          (MT.machineTypeManufacturer machineType)
+          (eventString >=> (\string -> setMachineType (\mt -> mt {MT.machineTypeManufacturer = string}))) ,
+        row
+          "Interval servisu"
+          (unpack $ showInt $ MT.upkeepPerMileage machineType)
+          (eventValue >=> (\str -> case parseSafely str of
             Just(int) -> setMachineType (\mt -> mt {MT.upkeepPerMileage = int })
-            Nothing -> return ())} ,
+            Nothing -> return ())) ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let 
@@ -115,20 +117,20 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
                 _ -> navigation appState })
             in CI.dayInput y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
-        I.input $ inputRow {
-          I.label_ = Defined "Úvodní stav motohodin" ,
-          I.defaultValue = Defined $ showInt $ M.initialMileage machine' ,
-          I.onChange = Defined $ let
+        row
+          "Úvodní stav motohodin"
+          (unpack $ showInt $ M.initialMileage machine')
+          (let
             setInitialMileage :: Int -> Fay ()
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
-            in flip whenJust setInitialMileage . parseSafely <=< eventValue } ,
-        I.input $ inputRow {
-          I.label_ = Defined "Provoz (motohodin/rok)" ,
-          I.defaultValue = Defined $ showInt $ M.mileagePerYear machine' ,
-          I.onChange = Defined $ let
+            in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
+        row
+          "Provoz (motohodin/rok)"
+          (unpack $ showInt $ M.mileagePerYear machine')
+          (let
             setMileagePerYear :: Int -> Fay ()
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
-            in flip whenJust setMileagePerYear . parseSafely <=< eventValue } ,
+            in flip whenJust setMileagePerYear . parseSafely <=< eventValue) ,
         div' (class' "form-group") $
           div' (class'' ["col-md-9", "col-md-offset-3"]) $
             BTN.button'
