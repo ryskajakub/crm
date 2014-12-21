@@ -10,7 +10,7 @@ module Crm.Component.Machine (
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.YearMonthDay as D
+import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
@@ -24,12 +24,12 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
-import Crm.Component.Data
+import Crm.Component.Data as D
 import Crm.Component.Editable (editable, editable', editableN)
 import Crm.Server (createMachine)
 import Crm.Helpers (parseSafely)
 
-machineDetail :: Bool
+machineDetail :: D.FormState
               -> MyData
               -> Var AppState
               -> Bool
@@ -42,15 +42,18 @@ machineNew :: MyData
            -> Bool
            -> M.Machine
            -> DOMElement
-machineNew = machineDisplay True
+machineNew = machineDisplay D.CreateItem
 
-machineDisplay :: Bool
+machineDisplay :: D.FormState
                -> MyData
                -> Var AppState
                -> Bool
                -> M.Machine
                -> DOMElement
-machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
+machineDisplay formState myData appVar operationStartCalendarOpen' machine' = let
+  editing = case formState of
+    D.DisplayItem -> False
+    _ -> True
   saveNewMachine = createMachine machine' (\machineId -> do
     modify appVar (\appState -> let
       machines' = machines appState
@@ -63,6 +66,11 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
       nm @ (MachineNew _ _) -> nm { machine = modifiedMachine }
       _ -> navigation appState
     })
+  setEditing :: Fay ()
+  setEditing = modify appVar (\appState -> appState {
+    navigation = case navigation appState of
+      md @ (MachineDetail m _ _) -> MachineDetail m False D.EditItem
+      _ -> navigation appState })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
   setMachineType modifyMachineType = let
     machineType' = case M.machineType machine' of
@@ -103,15 +111,15 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let 
-            D.YearMonthDay y m d _ = M.machineOperationStartDate machine'
+            YMD.YearMonthDay y m d _ = M.machineOperationStartDate machine'
             dayPickHandler year month day precision = case precision of
-              month | month == "Month" -> setDate D.MonthPrecision
-              year | year == "Year" -> setDate D.YearPrecision
-              day | day == "Day" -> setDate D.DayPrecision
+              month | month == "Month" -> setDate YMD.MonthPrecision
+              year | year == "Year" -> setDate YMD.YearPrecision
+              day | day == "Day" -> setDate YMD.DayPrecision
               _ -> return ()
               where 
                 setDate precision = setMachine $ machine' {
-                  M.machineOperationStartDate = D.YearMonthDay year month day precision }
+                  M.machineOperationStartDate = YMD.YearMonthDay year month day precision }
             setPickerOpenness open = modify appVar (\appState -> appState {
               navigation = case navigation appState of
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
@@ -132,10 +140,20 @@ machineDisplay editing myData appVar operationStartCalendarOpen' machine' = let
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
             in flip whenJust setMileagePerYear . parseSafely <=< eventValue) ,
         div' (class' "form-group") $
-          div' (class'' ["col-md-9", "col-md-offset-3"]) $
-            BTN.button'
-              (BTN.buttonProps {
-                BTN.bsStyle = Defined "primary"
-                , BTN.onClick = Defined $ const saveNewMachine })
-                "Přidej"
-      ]
+          let 
+            saveButtonRow saveLabel = 
+              div' (class'' ["col-md-9", "col-md-offset-3"]) $
+                BTN.button'
+                  (BTN.buttonProps {
+                    BTN.bsStyle = Defined "primary" , 
+                    BTN.onClick = Defined $ const saveNewMachine })
+                  saveLabel
+            editButtonRow = 
+              div' (class' "col-md-3") $
+                BTN.button'
+                  (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
+                  "Edituj"
+            in case formState of 
+              D.DisplayItem -> editButtonRow
+              D.CreateItem -> saveButtonRow "Vytvoř"
+              D.EditItem -> saveButtonRow "Změň" ]

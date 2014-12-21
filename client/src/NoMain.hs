@@ -119,7 +119,7 @@ main' = do
           in case trace (show maybeId) maybeId of
             Just(machineId') -> fetchMachine machineId' (\machine ->
               trace (show machine)
-              (modify' $ MachineDetail machine False False) )
+              (modify' $ MachineDetail machine False D.DisplayItem) )
             _ -> modify' NotFound
       )]
     let myData = MyData router'
@@ -134,8 +134,8 @@ main' = do
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' operationStartCalendarOpen' -> 
           Navigation.navigation myData (machineNew myData appVar' operationStartCalendarOpen' machine')
-        MachineDetail machine' operationStartCalendarOpen' editing -> Navigation.navigation myData
-          (machineDetail editing myData appVar' operationStartCalendarOpen' machine')
+        MachineDetail machine' operationStartCalendarOpen' formState -> Navigation.navigation myData
+          (machineDetail formState myData appVar' operationStartCalendarOpen' machine')
         UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation myData 
             (upkeepNew myData appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
