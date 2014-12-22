@@ -11,12 +11,12 @@ import "fay-base" Data.Maybe (isJust)
 import Crm.Helpers (parseSafely)
 
 import HaskellReact.BackboneRouter (startRouter)
-import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine)
+import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine, fetchPlannedUpkeeps)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Component.Data as D
 import Crm.Component.Company (companiesList, companyDetail, companyNew)
 import Crm.Component.Machine (machineNew, machineDetail)
-import Crm.Component.Upkeep (upkeepNew)
+import Crm.Component.Upkeep (upkeepNew, plannedUpkeeps)
 import Crm.Component.UpkeepHistory (upkeepHistory)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
@@ -119,7 +119,12 @@ main' = do
             Just(machineId') -> fetchMachine machineId' (\machine ->
               modify' $ MachineDetail machine False False machineId')
             _ -> modify' NotFound
-      )]
+      ), (
+        pack "planned", const $
+          fetchPlannedUpkeeps (\plannedUpkeeps -> let
+            newNavigation = PlannedUpkeeps plannedUpkeeps
+            in modify appVar' (\appState -> 
+              appState { navigation = newNavigation })) )]
     let myData = MyData router'
     _ <- subscribeAndRead appVar' (\appState -> let
       frontPage = Navigation.navigation myData (companiesList myData (companies appState))
@@ -138,7 +143,9 @@ main' = do
         UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation myData 
             (upkeepNew myData appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
-        UpkeepHistory upkeeps' -> Navigation.navigation myData $ upkeepHistory upkeeps')
+        UpkeepHistory upkeeps' -> Navigation.navigation myData $ upkeepHistory upkeeps'
+        PlannedUpkeeps plannedUpkeeps' -> Navigation.navigation myData 
+          (plannedUpkeeps myData plannedUpkeeps'))
     return ()
   return ()
 

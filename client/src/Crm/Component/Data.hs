@@ -39,8 +39,9 @@ data NavigationState =
   , upkeepDatePickerOpen :: Bool
   , companyId :: Int }
   | UpkeepHistory {
-    companyUpkeeps :: [(Int,U.Upkeep)]
-  }
+    companyUpkeeps :: [(Int,U.Upkeep)] }
+  | PlannedUpkeeps { 
+    plennedUpkeeps :: [(U.Upkeep, C.Company)] }
 
 data AppState = AppState {
   navigation :: NavigationState

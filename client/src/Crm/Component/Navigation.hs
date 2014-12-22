@@ -17,7 +17,7 @@ navigation :: MyData -> DOMElement -> Fay ()
 navigation myData body = 
   simpleReactBody $ div [
     navBar $ nav [
-      li $ link [G.list, text2DOM " Seznam firem"] "" (router myData)
-    ]
+      li $ link [G.list, text2DOM " Seznam firem"] "" (router myData) ,
+      li $ link [G.list, text2DOM " Naplánované servisy"] "planned" (router myData) ]
     , body
   ]

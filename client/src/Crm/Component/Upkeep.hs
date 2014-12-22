@@ -4,8 +4,8 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Upkeep (
-  upkeepNew
-) where
+  upkeepNew ,
+  plannedUpkeeps ) where
 
 import HaskellReact as HR
 import qualified Crm.Shared.Company as C
@@ -31,6 +31,12 @@ import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
 
 import Debug.Trace
+
+plannedUpkeeps :: MyData
+               -> [(U.Upkeep, C.Company)]
+               -> DOMElement
+plannedUpkeeps myData upkeeps =
+  div "upkeeps"
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
