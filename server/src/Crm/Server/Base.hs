@@ -22,7 +22,7 @@ import Opaleye.RunQuery (runQuery)
 import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 import Opaleye.Operators ((.==), (.&&), restrict)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay)
-import Opaleye.Manipulation (runInsert)
+import Opaleye.Manipulation (runInsert, runUpdate)
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
@@ -37,9 +37,11 @@ import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
 import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day)
+import Data.Int (Int64)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
-import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get)
+import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
+  update )
 import Rest.Schema (Schema, named, withListing, unnamedSingle, noListing)
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
@@ -126,6 +128,16 @@ upkeepQuery = queryTable upkeepTable
 
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
+
+runMachineUpdate :: (Int, M.Machine) -> Connection -> IO Int64
+runMachineUpdate (machineId', machine') connection = 
+  runUpdate connection machinesTable readToWrite condition
+    where
+      condition (machineId,_,_,_,_,_) = machineId .== pgInt4 machineId'
+      readToWrite (_,_,machineTypeId,_,_,_) =
+        (Nothing, pgInt4 $ M.companyId machine', machineTypeId, 
+          pgDay $ ymdToDay $ M.machineOperationStartDate machine', 
+          pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
@@ -293,6 +305,19 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
   , name = A.companies
   , schema = companySchema }
 
+machineUpdate :: Handler IdDependencies
+machineUpdate = mkInputHandler (jsonI . someI) (\machine -> 
+  ask >>= \(conn, id') -> case id' of
+    Just (machineId) -> do
+      _ <- liftIO $ runMachineUpdate (machineId,machine) conn 
+      return ()
+{-
+      case rows of
+        (_,m) : xs | null xs -> return m
+        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+-}
+    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
+
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of 
@@ -389,6 +414,7 @@ machineResource :: Resource Dependencies IdDependencies UrlId () Void
 machineResource = (mkResourceReaderWith prepareReader) {
   list = const machineListing ,
   get = Just machineSingle ,
+  update = Just machineUpdate ,
   name = A.machines ,
   schema = schema'' }
 
