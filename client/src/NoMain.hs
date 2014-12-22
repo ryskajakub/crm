@@ -102,7 +102,7 @@ main' = do
             newAppState = case (parseSafely $ head params) of
               Just(companyId') | isJust $ lookup companyId' companies' -> let
                 companyUpkeeps = filter (\(_,u) -> case u of
-                  U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) -> 
+                  U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) _ -> 
                     case lookup machineId (machines appState) of
                       Just(M.Machine _ companyId'' _ _ _) -> companyId'' == companyId'
                       _ -> False
