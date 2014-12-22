@@ -20,7 +20,7 @@ data NavigationState =
     companyId :: Int
   , company :: C.Company
   , editing :: Bool
-  , companyMachines :: [M.Machine] }
+  , companyMachines :: [(Int, M.Machine)] }
   | CompanyNew {
     company :: C.Company }
   | NotFound

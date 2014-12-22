@@ -57,11 +57,10 @@ main' = do
                 companies' = companies appState
                 company'' = lookup cId'' companies'
                 machinesInCompany = filter ((==)cId'' . M.companyId . snd) (machines appState)
-                machinesNoIds = map snd machinesInCompany
               maybe (return ()) (\company' ->
                 modify appVar' (\appState' ->
                   appState' {
-                    navigation = CompanyDetail cId'' company' False machinesNoIds
+                    navigation = CompanyDetail cId'' company' False machinesInCompany
                   }
                 )
                 ) company''

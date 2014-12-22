@@ -87,7 +87,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> MyData -- ^ common read data
               -> Var (AppState) -- ^ app state var, where the editing result can be set
               -> (Int, C.Company) -- ^ company, which data are displayed on this screen
-              -> [M.Machine] -- ^ machines of the company
+              -> [(Int, M.Machine)] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' myData var idCompany machines' = let
   (id', company') = idCompany
@@ -112,16 +112,16 @@ companyPage :: Bool -- ^ is the page editing mode
             -> C.Company -- ^ company, which data are displayed on this screen
             -> Int -- ^ company id
             -> Fay () -- ^ handler called when the user hits save
-            -> [M.Machine] -- ^ machines of the company
+            -> [(Int, M.Machine)] -- ^ machines of the company
             -> DOMElement -- ^ company detail page fraction
 companyPage editing' myData var setCompany company' companyId saveHandler' machines' = let
-  machineBox machine =
+  machineBox (machineId, machine) =
     B.col (B.mkColProps 4) $
       B.panel [
         h2 $ 
           link
             (pack $ (MT.machineTypeName . M.machineType) machine)
-            ("machines/" <> showInt companyId)
+            ("machines/" <> showInt machineId)
             (router myData)
         , dl [
           dt "Další servis"
