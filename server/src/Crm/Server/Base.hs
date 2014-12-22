@@ -19,10 +19,9 @@ import Data.Profunctor.Product (p2, p3, p4, p6)
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
-import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 import Opaleye.Operators ((.==), (.&&), restrict)
-import Opaleye.PGTypes (pgInt4, PGDate, pgDay)
-import Opaleye.Manipulation (runInsert, runUpdate)
+import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString, pgBool)
+import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
@@ -75,9 +74,10 @@ type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGTe
 type DBInt = Column PGInt4
 type DBText = Column PGText
 type DBDate = Column PGDate
+type DBBool = Column PGBool
 
-type UpkeepTable = (DBInt, DBDate)
-type UpkeepWriteTable = (Maybe DBInt, DBDate)
+type UpkeepTable = (DBInt, DBDate, DBBool)
+type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt)
 
@@ -105,9 +105,10 @@ machineTypesTable = Table "machine_types" (p4 (
   required "upkeep_per_mileage" ))
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
-upkeepTable = Table "upkeeps" $ p2 (
+upkeepTable = Table "upkeeps" $ p3 (
   optional "id" ,
-  required "date_" )
+  required "date_" ,
+  required "closed" )
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ p3 (
@@ -153,25 +154,26 @@ expandedMachinesQuery machineId = proc () -> do
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepId,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
   upkeepMachineRow @ (upkeepId',_,_) <- upkeepMachinesQuery -< ()
   restrict -< (upkeepId' .== upkeepId)
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
   (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
   (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
   companyRow @ (companyPK,_,_) <- companiesQuery -< ()
   restrict -< (upkeepPK .== upkeepFK)
   restrict -< (machineFK .== machinePK)
   restrict -< (companyPK .== companyFK)
+  restrict -< (upkeepClosed .== pgBool False)
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = 
-  AGG.aggregate (p2 (p2(AGG.min, AGG.min), 
+  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.min), 
     p3(AGG.groupBy, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
@@ -193,10 +195,10 @@ runExpandedMachinesQuery machineId connection = do
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
     (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows 
 
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, Int))]
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
-runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, String))]
+runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 withConnection :: (Connection -> IO a) -> IO a
@@ -275,8 +277,7 @@ instance JS.JSONSchema MT.MachineType where
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  return $ map (\(cId, cName, cPlant) -> (cId, C.Company cName cPlant)) rows
-  )
+  return $ map (\(cId, cName, cPlant) -> (cId, C.Company cName cPlant)) rows )
 
 type UrlId = Maybe Int
 
@@ -356,15 +357,15 @@ machineListing = mkListing (jsonO . someO) (const $
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((_,u2),(_,c2,c3)) -> (U.Upkeep (dayToYmd u2) [], C.Company c2 c3)) rows
+  let mappedRows = map (\((_,u2,u3),(_,c2,c3)) -> (U.Upkeep (dayToYmd u2) [] u3, C.Company c2 c3)) rows
   return mappedRows )
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
-  return $ foldl (\acc ((upkeepId,date),(_,note,machineId)) ->
+  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId)) ->
     let
-      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) [UM.UpkeepMachine note machineId])
+      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) [UM.UpkeepMachine note machineId] upkeepClosed)
       in case acc of
         [] -> [addUpkeep']
         (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
@@ -380,8 +381,8 @@ addUpkeep :: Connection
 addUpkeep connection upkeep = do
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep)
-    (\(id',_) -> id')
+    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
+    (\(id',_,_) -> id')
   let
     upkeepId = head upkeepIds -- TODO safe
     insertUpkeepMachine upkeepMachine = do
