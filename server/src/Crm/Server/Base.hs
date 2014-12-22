@@ -23,6 +23,7 @@ import Opaleye (PGInt4, PGText, pgString, runInsertReturning)
 import Opaleye.Operators ((.==), (.&&), restrict)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay)
 import Opaleye.Manipulation (runInsert, runUpdate)
+import qualified Opaleye.Aggregate as AGG
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
@@ -42,7 +43,7 @@ import Data.Int (Int64)
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update )
-import Rest.Schema (Schema, named, withListing, unnamedSingle, noListing)
+import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
 import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError))
@@ -157,6 +158,22 @@ expandedUpkeepsQuery = proc () -> do
   restrict -< (upkeepId' .== upkeepId)
   returnA -< (upkeepRow, upkeepMachineRow)
 
+plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
+plannedUpkeepsQuery = proc () -> do
+  upkeepRow @ (upkeepPK,_) <- upkeepQuery -< ()
+  (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
+  companyRow @ (companyPK,_,_) <- companiesQuery -< ()
+  restrict -< (upkeepPK .== upkeepFK)
+  restrict -< (machineFK .== machinePK)
+  restrict -< (companyPK .== companyFK)
+  returnA -< (upkeepRow, companyRow)
+
+groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
+groupedPlannedUpkeepsQuery = 
+  AGG.aggregate (p2 (p2(AGG.min, AGG.min), 
+    p3(AGG.groupBy, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
@@ -178,6 +195,9 @@ runExpandedMachinesQuery machineId connection = do
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
+
+runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day), (Int, String, String))]
+runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -260,14 +280,19 @@ listing = mkListing (jsonO . someO) (const $ do
 
 type UrlId = Maybe Int
 
-schema' :: Schema Void () Void
-schema' = withListing () (named [])
+schema' :: S.Schema Void () Void
+schema' = S.withListing () (S.named [])
 
-schema'' :: Schema UrlId () Void
-schema'' = withListing () (unnamedSingle readMay)
+data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
-companySchema :: Schema UrlId () Void
-companySchema = withListing () $ unnamedSingle readMay
+upkeepSchema :: S.Schema Void UpkeepsListing Void
+upkeepSchema = S.withListing UpkeepsAll (S.named [("planned", S.listing UpkeepsPlanned)])
+
+schema'' :: S.Schema UrlId () Void
+schema'' = S.withListing () (S.unnamedSingle readMay)
+
+companySchema :: S.Schema UrlId () Void
+companySchema = S.withListing () $ S.unnamedSingle readMay
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
@@ -310,12 +335,8 @@ machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
   ask >>= \(conn, id') -> case id' of
     Just (machineId) -> do
       _ <- liftIO $ runMachineUpdate (machineId,machine) conn 
+      -- todo singal error if the update didn't hit a row
       return ()
-{-
-      case rows of
-        (_,m) : xs | null xs -> return m
-        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
--}
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
 machineSingle :: Handler IdDependencies
@@ -331,6 +352,12 @@ machineSingle = mkConstHandler (jsonO . someO) (
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ 
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn )
+
+upkeepsPlannedListing :: ListHandler Dependencies
+upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
+  rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
+  let mappedRows = map (\((_,u2),(_,c2,c3)) -> (U.Upkeep (dayToYmd u2) [], C.Company c2 c3)) rows
+  return mappedRows )
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
@@ -406,7 +433,7 @@ createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep
 companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
 companyMachineResource = mkResourceId {
   name = A.machines
-  , schema = noListing $ named []
+  , schema = S.noListing $ S.named []
   , create = Just createMachineHandler
   }
 
@@ -418,21 +445,23 @@ machineResource = (mkResourceReaderWith prepareReader) {
   name = A.machines ,
   schema = schema'' }
 
-upkeepTopLevelResource :: Resource Dependencies Dependencies Void () Void
+upkeepTopLevelResource :: Resource Dependencies Dependencies Void UpkeepsListing Void
 upkeepTopLevelResource = mkResourceId {
-  list = const upkeepListing ,
+  list = \listingType -> case listingType of
+    UpkeepsAll -> upkeepListing
+    UpkeepsPlanned -> upkeepsPlannedListing ,
   name = A.upkeep ,
-  schema = schema' }
+  schema = upkeepSchema }
 
 upkeepResource :: Resource IdDependencies IdDependencies Void Void Void
 upkeepResource = mkResourceId {
   name = A.upkeep ,
-  schema = noListing $ named [] ,
+  schema = S.noListing $ S.named [] ,
   create = Just createUpkeepHandler }
 
 router' :: Router Dependencies Dependencies
-router' = root `compose` (((route companyResource) `compose` (route companyMachineResource))
-                                                   `compose` (route upkeepResource))
+router' = root `compose` (((route companyResource) `compose` route companyMachineResource)
+                                                   `compose` route upkeepResource)
                `compose` route machineResource
                `compose` route upkeepTopLevelResource
 
