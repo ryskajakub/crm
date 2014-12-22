@@ -10,7 +10,7 @@ module Crm.Server (
   , createUpkeep
 ) where
 
-import FFI (ffi, Automatic)
+import FFI (ffi, Automatic, Defined(Defined))
 import Crm.Shared.Company (Company)
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
@@ -56,28 +56,46 @@ createMachine :: M.Machine
               -> (Int -> Fay())
               -> Fay ()
 createMachine machine callback =
-  JQ.ajaxPost
-    (pack "/api/v1.0.0/companies/" `append` (showInt $ M.companyId machine) `append` pack "/machines/")
+  ajax
     machine
+    (pack "/api/v1.0.0/companies/" <> (showInt $ M.companyId machine) <> pack "/machines/")
+    (pack "POST")
     callback
-    (const $ const $ const $ return ())
+
+ajax :: a -- data to send
+     -> Text -- url
+     -> Text -- method -- GET | POST
+     -> (b -> Fay ()) -- callback
+     -> Fay ()
+ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
+  JQ.success = Defined $ callback ,
+  JQ.data' = Defined data' ,
+  JQ.url = Defined $ url ,
+  JQ.type' = Defined $ method ,
+  JQ.processData = Defined False ,
+  JQ.contentType = Defined $ pack "application/json" ,
+  JQ.dataType = Defined $ pack "json" }
+
+updateMachine :: (Int, M.Machine)
+              -> Fay ()
+              -> Fay ()
+updateMachine (machineId, machine) callback = ajax
+  machine
+  (pack "/api/v1.0.0/" <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
+  (pack "PUT")
+  (const $ return ())
 
 createUpkeep :: U.Upkeep
              -> Int -- ^ company id
              -> (Int -> Fay ())
              -> Fay ()
 createUpkeep upkeep companyId callback =
-  JQ.ajaxPost 
-    (pack "/api/v1.0.0/" `append`
-      pack A.companies `append`
-      pack "/" `append`
-      showInt companyId `append`
-      pack "/" `append` 
-      pack A.upkeep `append`
-      pack "/")
+  ajax 
     upkeep
+    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <>
+      showInt companyId <> pack "/" <> pack A.upkeep <> pack "/")
+    (pack "POST")
     callback
-    (const $ const $ const $ return ())
 
 fetch :: ([a] -> Fay ())
       -> Text
