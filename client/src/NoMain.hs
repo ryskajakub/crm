@@ -116,10 +116,9 @@ main' = do
         pack "machines/:id", \params -> let
           modify' newState = modify appVar' (\appState' -> appState' { navigation = newState })
           maybeId = parseSafely $ head params
-          in case trace (show maybeId) maybeId of
+          in case maybeId of
             Just(machineId') -> fetchMachine machineId' (\machine ->
-              trace (show machine)
-              (modify' $ MachineDetail machine False D.DisplayItem) )
+              modify' $ MachineDetail machine False False machineId')
             _ -> modify' NotFound
       )]
     let myData = MyData router'
@@ -134,8 +133,9 @@ main' = do
         CompanyNew company' -> Navigation.navigation myData (companyNew myData appVar' company')
         MachineNew machine' operationStartCalendarOpen' -> 
           Navigation.navigation myData (machineNew myData appVar' operationStartCalendarOpen' machine')
-        MachineDetail machine' operationStartCalendarOpen' formState -> Navigation.navigation myData
-          (machineDetail formState myData appVar' operationStartCalendarOpen' machine')
+        MachineDetail machine' operationStartCalendarOpen' formState machineId' ->
+          Navigation.navigation myData (machineDetail formState myData
+            appVar' operationStartCalendarOpen' machine' machineId')
         UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation myData 
             (upkeepNew myData appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')

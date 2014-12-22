@@ -30,7 +30,8 @@ data NavigationState =
   | MachineDetail {
     machine :: M.Machine
   , operationStartCalendarOpen :: Bool
-  , formState :: FormState }
+  , formState :: Bool
+  , machineId :: Int }
   | UpkeepNew {
     upkeep :: U.Upkeep 
   , upkeepMachines :: [(Int, M.Machine)]
@@ -40,8 +41,6 @@ data NavigationState =
   | UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)]
   }
-
-data FormState = CreateItem | EditItem | DisplayItem
 
 data AppState = AppState {
   navigation :: NavigationState
