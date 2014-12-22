@@ -26,12 +26,12 @@ import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import Crm.Component.Data as D
 import Crm.Component.Editable (editable, editable', editableN)
-import Crm.Server (createMachine)
+import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
-              -> Fay () -- ^ on save button click handler
+              -> Fay () -- ^ button on click handler
               -> DOMElement
 saveButtonRow label clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
@@ -61,7 +61,8 @@ machineDetail editing myData appVar calendarOpen machine machineId = machineDisp
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
             "Jdi do editačního módu"
-      saveButtonRow' = saveButtonRow "Edituj" (return ())
+      editMachineAction = updateMachine (machineId, machine) (return ())
+      saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 
 machineNew :: MyData
@@ -91,7 +92,8 @@ machineDisplay editing buttonRow myData appVar operationStartCalendarOpen' machi
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
-      nm @ (MachineNew _ _) -> nm { machine = modifiedMachine }
+      mn @ (MachineNew _ _) -> mn { machine = modifiedMachine }
+      md @ (MachineDetail _ _ _ _) -> md { machine = modifiedMachine }
       _ -> navigation appState
     })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()

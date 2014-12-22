@@ -8,6 +8,7 @@ module Crm.Server (
   , createCompany
   , createMachine
   , createUpkeep
+  , updateMachine
 ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
