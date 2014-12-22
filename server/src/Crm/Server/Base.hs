@@ -173,7 +173,7 @@ plannedUpkeepsQuery = proc () -> do
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = 
-  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.min), 
+  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.boolOr), 
     p3(AGG.groupBy, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
