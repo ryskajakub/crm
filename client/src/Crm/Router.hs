@@ -10,7 +10,7 @@ module Crm.Router (
   CrmRouter ,
   CrmRoute ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
 import "fay-base" Data.Var (Var, modify, get)
@@ -32,6 +32,27 @@ import qualified Crm.Component.Data as D
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
+
+frontPage :: CrmRoute
+frontPage = CrmRoute ""
+
+newCompany :: CrmRoute
+newCompany = CrmRoute "companies/new"
+
+companyDetail :: Int -> CrmRoute
+companyDetail companyId = CrmRoute $ "companies/" <> showInt companyId
+
+newMachine :: Int -> CrmRoute
+newMachine companyId = CrmRoute $ "companies/" <> showInt companyId <> "/new-machine"
+
+newMaintenance :: Int -> CrmRoute
+newMaintenance companyId = CrmRoute $ "companies/" <> showInt companyId <> "/new-maintenance"
+
+maintenances :: Int -> CrmRoute
+maintenances companyId = CrmRoute $ "companies/" <> showInt companyId <> "/maintenances"
+
+machineDetail :: Int -> CrmRoute
+machineDetail machineId = CrmRoute $ "machines/" <> showInt machineId
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = fmap CrmRouter $ BR.startRouter [(
