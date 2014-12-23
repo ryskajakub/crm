@@ -31,7 +31,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
-import Control.Monad (forM_)
+import Control.Monad (forM_, forM)
 
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
@@ -61,7 +61,7 @@ import qualified Crm.Shared.YearMonthDay as D
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
 import Fay.Convert (showToFay, readFromFay')
 
-import Safe (readMay)
+import Safe (readMay, minimumMay)
 import Debug.Trace
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
@@ -143,6 +143,14 @@ runMachineUpdate (machineId', machine') connection =
           pgDay $ ymdToDay $ M.machineOperationStartDate machine', 
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
+machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesInCompanyQuery companyId = proc () -> do
+  m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
+  mt @ (machineTypePK,_,_,_) <- machineTypesQuery -< ()
+  restrict -< (pgInt4 companyId .== companyFK)
+  restrict -< (machineTypeFK .== machineTypePK)
+  returnA -< (m, mt)
+
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
@@ -209,6 +217,18 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
+runMachinesInCompanyQuery' :: Int -> Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+runMachinesInCompanyQuery' companyId connection =
+  runQuery connection (machinesInCompanyQuery companyId)
+
+runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine)]
+runMachinesInCompanyQuery companyId connection = do
+  rows <- (runMachinesInCompanyQuery' companyId connection)
+  return $ map convertExpanded rows
+
+convertExpanded = (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
+  (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4))
+
 runExpandedMachinesQuery' :: Maybe Int -> Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
@@ -216,8 +236,7 @@ runExpandedMachinesQuery' machineId connection =
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
-  return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-    (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows 
+  return $ map convertExpanded rows 
 
 runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int))]
 runLastClosedMaintenanceQuery machineId connection = 
@@ -307,10 +326,27 @@ instance JS.JSONSchema D.Precision where
 instance JS.JSONSchema MT.MachineType where
   schema = gSchema
 
+instance Eq D.YearMonthDay where
+  D.YearMonthDay y m d _ == D.YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
+instance Ord D.YearMonthDay where
+  ymd1 `compare` ymd2 = let
+    D.YearMonthDay y m d _ = ymd1
+    D.YearMonthDay y' m' d' _ = ymd2
+    comp comparison nextComparison = case comparison of
+      GT -> GT
+      LT -> LT
+      EQ -> nextComparison
+    in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
+
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  return $ map (\(cId, cName, cPlant) -> (cId, C.Company cName cPlant)) rows )
+  ask >>= (\conn -> forM rows (\(companyId,cName,cPlant) -> do
+    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+    nextDays <- forM machines (\(machineId, machine) -> do
+      nextServiceDay <- nextService machineId machine id
+      return nextServiceDay )
+    return $ (companyId, C.Company cName cPlant, minimumMay nextDays))))
 
 type UrlId = Maybe Int
 
@@ -373,9 +409,10 @@ machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
       return ()
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
-nextService :: Int -> M.Machine -> ErrorT (Reason ()) IdDependencies (D.YearMonthDay)
+nextService :: Int -> M.Machine -> (a -> Connection) -> ErrorT (Reason ()) (ReaderT a IO) (D.YearMonthDay)
 nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
-  _ operationStartDate _ mileagePerYear) = ask >>= (\(conn,_) -> do
+  _ operationStartDate _ mileagePerYear) getConn = ask >>= (\a -> do
+  let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
   nextDay <- let 
@@ -404,7 +441,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
         _ _ _ mileagePerYear)) <- case rows of
         (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
-      ymd <- nextService machineId machine
+      ymd <- nextService machineId machine fst
       return (machine, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
