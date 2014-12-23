@@ -47,12 +47,18 @@ fetchMachine machineId callback =
     callback
     (const $ const $ const $ return ())
 
+data Items
+
+-- | Unpack the outermost layer of the fetched list in order to get to the data
+items :: Items -> Automatic a
+items = ffi " %1['items'] "
+
 fetchPlannedUpkeeps :: ([(U.Upkeep, Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
     (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/" <> pack A.planned <> pack "/")
-    callback
+    (callback . items)
     (const $ const $ const $ return ())
 
 createCompany :: Company

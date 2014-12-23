@@ -7,17 +7,12 @@ module Crm.Component.Upkeep (
   upkeepNew ,
   plannedUpkeeps ) where
 
-import HaskellReact as HR
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.YearMonthDay as D
-import qualified Crm.Shared.UpkeepMachine as UM
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
+
+import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
@@ -25,6 +20,13 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
+
+import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
@@ -35,8 +37,18 @@ import Debug.Trace
 plannedUpkeeps :: CrmRouter
                -> [(U.Upkeep, C.Company)]
                -> DOMElement
-plannedUpkeeps router upkeeps =
-  div "upkeeps"
+plannedUpkeeps router upkeepCompanies = let
+  head = thead $ tr [
+    th "Název firmy" ,
+    th "Datum" ]
+  body = tbody $ map (\(upkeep, company) ->
+    tr [
+      td $ pack $ C.companyName company ,
+      td $ let 
+        YMD.YearMonthDay y m d prec = U.upkeepDate upkeep 
+        in showInt d <> "." <> showInt m <> "." <> showInt y ]
+    ) upkeepCompanies
+  in trace (show upkeepCompanies) $ main $ B.table [ head , body ]
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
@@ -131,15 +143,15 @@ upkeepNew router appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' mac
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
-      D.YearMonthDay y m d _ = U.upkeepDate upkeep'
+      YMD.YearMonthDay y m d _ = U.upkeepDate upkeep'
       dayPickHandler year month day precision = case precision of
-        month | month == "Month" -> setDate D.MonthPrecision
-        year | year == "Year" -> setDate D.YearPrecision
-        day | day == "Day" -> setDate D.DayPrecision
+        month | month == "Month" -> setDate YMD.MonthPrecision
+        year | year == "Year" -> setDate YMD.YearPrecision
+        day | day == "Day" -> setDate YMD.DayPrecision
         _ -> return ()
         where 
           setDate precision = setUpkeep (upkeep' {
-            U.upkeepDate = D.YearMonthDay year month day precision }) Nothing
+            U.upkeepDate = YMD.YearMonthDay year month day precision }) Nothing
       setPickerOpenness open = modify appState (\appState' -> appState' {
         navigation = case navigation appState' of
           upkeep'' @ (UpkeepNew _ _ _ _ _) -> upkeep'' { upkeepDatePickerOpen = open }
