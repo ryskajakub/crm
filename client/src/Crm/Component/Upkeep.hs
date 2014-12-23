@@ -18,7 +18,6 @@ import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
-import HaskellReact.BackboneRouter (link, navigate)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
@@ -29,6 +28,7 @@ import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
+import Crm.Router (CrmRouter)
 
 import Debug.Trace
 
@@ -53,7 +53,7 @@ toggle lists findElem = let
         else lists
   in toggleInternal lists True
 
-upkeepNew :: MyData
+upkeepNew :: CrmRouter
           -> Var AppState
           -> U.Upkeep
           -> Bool
@@ -61,7 +61,7 @@ upkeepNew :: MyData
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
-upkeepNew myData appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
+upkeepNew router appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
   setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
     upkeepNew @ (UpkeepNew _ _ _ _ _) -> let

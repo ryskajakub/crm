@@ -8,12 +8,19 @@ module Crm.Router (
   navigate ,
   link ,
   CrmRouter ,
-  CrmRoute ) where
+  CrmRoute ,
+  frontPage ,
+  newCompany ,
+  companyDetail ,
+  newMachine ,
+  newMaintenance ,
+  maintenances ,
+  machineDetail ) where
 
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
-import "fay-base" Data.Var (Var, modify, get)
+import Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
 import "fay-base" Data.Maybe (isJust)
 

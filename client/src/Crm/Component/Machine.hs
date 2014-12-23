@@ -7,27 +7,29 @@ module Crm.Component.Machine (
   machineNew ,
   machineDetail ) where
 
-import HaskellReact as HR
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import Data.Var (Var, modify)
-import FFI (Defined(Defined))
-import HaskellReact.BackboneRouter (link, navigate)
+import "fay-base" FFI (Defined(Defined))
+
+import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
+
+import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.MachineType as MT
 import Crm.Component.Data as D
 import Crm.Component.Editable (editable, editable', editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely)
+import Crm.Router (CrmRouter, navigate, frontPage)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -42,14 +44,14 @@ saveButtonRow label clickHandler =
       label
 
 machineDetail :: Bool
-              -> MyData
+              -> CrmRouter
               -> Var AppState
               -> Bool
               -> M.Machine
               -> Int -- id of the machine
               -> DOMElement
-machineDetail editing myData appVar calendarOpen machine machineId = machineDisplay
-  editing button myData appVar calendarOpen machine
+machineDetail editing router appVar calendarOpen machine machineId = machineDisplay
+  editing button router appVar calendarOpen machine
     where
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
@@ -65,30 +67,30 @@ machineDetail editing myData appVar calendarOpen machine machineId = machineDisp
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 
-machineNew :: MyData
+machineNew :: CrmRouter
            -> Var AppState
            -> Bool
            -> M.Machine
            -> DOMElement
-machineNew myData appState calendarOpen machine' = 
-  machineDisplay True buttonRow myData appState calendarOpen machine'
+machineNew router appState calendarOpen machine' = 
+  machineDisplay True buttonRow router appState calendarOpen machine'
     where
       saveNewMachine = createMachine machine' (\machineId -> do
         modify appState (\appState' -> let
           machines' = machines appState'
           newMachines = machines' ++ [(machineId, machine')]
           in appState' { machines = newMachines })
-        navigate "" (router myData))
-      buttonRow = saveButtonRow ("Vytvoř") saveNewMachine
+        navigate frontPage router )
+      buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
-               -> MyData
+               -> CrmRouter
                -> Var AppState
                -> Bool
                -> M.Machine
                -> DOMElement
-machineDisplay editing buttonRow myData appVar operationStartCalendarOpen' machine' = let
+machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machine' = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
