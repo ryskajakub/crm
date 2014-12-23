@@ -14,6 +14,7 @@ module Crm.Server.Base where
 import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
+import Opaleye.Order (orderBy, asc)
 
 import Data.Profunctor.Product (p2, p3, p4, p6)
 
@@ -160,7 +161,7 @@ expandedUpkeepsQuery = proc () -> do
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-plannedUpkeepsQuery = proc () -> do
+plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
   (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
   (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
