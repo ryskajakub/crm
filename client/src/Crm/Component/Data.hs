@@ -10,9 +10,11 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as YMD
+import FFI (Nullable)
 
 data NavigationState =
-  FrontPage
+    FrontPage {
+    companiesNextService :: [(Int, C.Company, Maybe YMD.YearMonthDay)] }
   | CompanyDetail {
     companyId :: Int
   , company :: C.Company
@@ -50,7 +52,7 @@ data AppState = AppState {
 
 defaultAppState :: AppState
 defaultAppState = AppState {
-  navigation = FrontPage
+  navigation = FrontPage []
   , companies = []
   , machines = []
   , upkeeps = []

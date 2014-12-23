@@ -10,9 +10,10 @@ module Crm.Server (
   , createUpkeep
   , updateMachine
   , fetchPlannedUpkeeps
+  , fetchFrontPageData
 ) where
 
-import FFI (ffi, Automatic, Defined(Defined))
+import FFI (ffi, Automatic, Defined(Defined), Nullable)
 import Crm.Shared.Company (Company)
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
@@ -20,6 +21,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, pack, append, showInt, unpack, (<>))
+import "fay-base" Data.Maybe (listToMaybe)
 import qualified JQuery as JQ
 
 import Debug.Trace
@@ -52,6 +54,16 @@ data Items
 -- | Unpack the outermost layer of the fetched list in order to get to the data
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
+
+fetchFrontPageData :: ([(Int, Company, Maybe YMD.YearMonthDay)] -> Fay ())
+                   -> Fay ()
+fetchFrontPageData callback = let
+  lMb [] = []
+  lMb ((a,b,x) : xs) = (a,b,listToMaybe x) : lMb xs
+  in JQ.ajax
+    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/")
+    (callback . lMb . items)
+    (const $ const $ const $ return ())
 
 fetchPlannedUpkeeps :: ([(Int, U.Upkeep, Int, Company)] -> Fay ())
                     -> Fay ()

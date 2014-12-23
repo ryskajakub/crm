@@ -29,7 +29,8 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine, fetchPlannedUpkeeps)
+import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine, fetchPlannedUpkeeps, 
+  fetchFrontPageData )
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -67,7 +68,8 @@ plannedUpkeeps = CrmRoute $ "planned"
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = fmap CrmRouter $ BR.startRouter [(
-    "", const $ modify appVar (\appState -> appState { D.navigation = D.FrontPage })
+  "", const $ fetchFrontPageData (\data' ->
+    modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
     "companies/:id", \params -> let
       cId = head params

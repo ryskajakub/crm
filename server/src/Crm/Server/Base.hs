@@ -36,7 +36,7 @@ import Control.Monad (forM_, forM)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
-import Data.Maybe (fromJust)
+import Data.Maybe (fromJust, maybeToList)
 import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
@@ -346,7 +346,7 @@ listing = mkListing (jsonO . someO) (const $ do
     nextDays <- forM machines (\(machineId, machine) -> do
       nextServiceDay <- nextService machineId machine id
       return nextServiceDay )
-    return $ (companyId, C.Company cName cPlant, minimumMay nextDays))))
+    return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
 
 type UrlId = Maybe Int
 

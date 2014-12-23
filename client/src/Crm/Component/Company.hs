@@ -12,7 +12,9 @@ module Crm.Component.Company (
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
-import FFI (Defined(Defined))
+import FFI (Defined(Defined), Nullable)
+import "fay-base" Data.Nullable (fromNullable)
+import Debug.Trace
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
@@ -22,6 +24,7 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createCompany)
@@ -29,16 +32,17 @@ import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
 
 companiesList :: R.CrmRouter
-              -> [(Int, C.Company)]
+              -> [(Int, C.Company, Maybe YMD.YearMonthDay)]
               -> DOMElement
 companiesList router companies' = let
   head' =
     thead $ tr [
       th "Název firmy"
       , th "Platnost servisu vyprší za"
+      , th "Další servis"
     ]
   body = tbody $ map (\idCompany ->
-    let (id', company') = idCompany
+    let (id', company', nextServiceDate) = idCompany
     in tr [
       td $
         R.link
@@ -46,8 +50,9 @@ companiesList router companies' = let
           (R.companyDetail id')
           router
       , td $ pack $ C.companyPlant company'
+      , td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  in main [
+  in trace (show companies') $ main [
     section $
       let
         buttonProps = BTN.buttonProps {

@@ -47,10 +47,10 @@ main' = do
       \_ -> do
     router <- startRouter appVar'
     _ <- subscribeAndRead appVar' (\appState -> let
-      frontPage = Navigation.navigation router (companiesList router (companies appState))
+      frontPage data' = Navigation.navigation router (companiesList router data')
       in case navigation appState of
-        FrontPage -> frontPage
-        NotFound -> frontPage
+        FrontPage data' -> frontPage data'
+        NotFound -> undefined
         CompanyDetail companyId' company' editing' machines' ->
           Navigation.navigation router
             (companyDetail editing' router appVar' (companyId', company') machines')
