@@ -28,6 +28,7 @@ import qualified Opaleye.Aggregate as AGG
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
+import Control.Monad.Error (ErrorT)
 import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
 import Control.Monad (forM_)
@@ -372,6 +373,28 @@ machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
       return ()
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
+nextService :: Int -> M.Machine -> ErrorT (Reason ()) IdDependencies (D.YearMonthDay)
+nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
+  _ operationStartDate _ mileagePerYear) = ask >>= (\(conn,_) -> do
+  nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
+  lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
+  nextDay <- let 
+    {- compute the next day, when the maintenance needs to be made -}
+    compute :: Day -> Day
+    compute lastServiceDay = let
+      yearsToNextService = fromIntegral upkeepPerMileage / fromIntegral mileagePerYear
+      daysToNextService = truncate $ yearsToNextService * 365
+      nextServiceDay = addDays daysToNextService lastServiceDay
+      in nextServiceDay
+    in case (nextPlannedMaintenance, lastUpkeep) of
+      -- next planned maintenance
+      ((_,date,_) : xs,_) | null xs -> return date
+      -- next maintenance computed from the last upkeep
+      (_,((_,date,_),_) : xs) | null xs -> return $ compute date 
+      -- next maintenance computed from the operation start
+      _ -> return $ compute (ymdToDay operationStartDate)
+  return $ dayToYmd nextDay)
+
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of 
@@ -381,24 +404,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
         _ _ _ mileagePerYear)) <- case rows of
         (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
-      nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
-      lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
-      nextDay <- let 
-        {- compute the next day, when the maintenance needs to be made -}
-        compute :: Day -> Day
-        compute lastServiceDay = let
-          yearsToNextService = fromIntegral upkeepPerMileage / fromIntegral mileagePerYear
-          daysToNextService = truncate $ yearsToNextService * 365
-          nextServiceDay = addDays daysToNextService lastServiceDay
-          in nextServiceDay
-        in case (nextPlannedMaintenance, lastUpkeep) of
-          -- next planned maintenance
-          ((_,date,_) : xs,_) | null xs -> return date
-          -- next maintenance computed from the last upkeep
-          (_,((_,date,_),_) : xs) | null xs -> return $ compute date 
-          -- next maintenance computed from the operation start
-          _ -> return $ compute (ymdToDay $ M.machineOperationStartDate machine)
-      return (machine, dayToYmd nextDay)
+      ymd <- nextService machineId machine
+      return (machine, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
