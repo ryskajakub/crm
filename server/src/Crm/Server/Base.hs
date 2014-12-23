@@ -14,7 +14,7 @@ module Crm.Server.Base where
 import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
-import Opaleye.Order (orderBy, asc)
+import Opaleye.Order (orderBy, asc, limit, desc)
 
 import Data.Profunctor.Product (p2, p3, p4, p6)
 
@@ -37,7 +37,7 @@ import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
 import Data.Maybe (fromJust)
 import Data.Functor.Identity (runIdentity)
-import Data.Time.Calendar (Day)
+import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
@@ -115,7 +115,7 @@ upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ p3 (
   required "upkeep_id" ,
   required "note" ,
-  required "machine_id")
+  required "machine_id" )
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
@@ -152,6 +152,28 @@ expandedMachinesQuery machineId = proc () -> do
     Just(machineId'') -> (pgInt4 machineId'' .== machineId') .&& join
     Nothing -> join )
   returnA -< (machineRow, machineTypesRow)
+
+lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
+lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
+  (machinePK,_,_,_,_,_) <- machinesQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
+  upkeepMachineRow @ (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  restrict -< (pgInt4 machineId .== machinePK)
+  restrict -< (upkeepPK .== upkeepFK)
+  restrict -< (machineFK .== machinePK)
+  restrict -< (pgBool True .== upkeepClosed)
+  returnA -< (upkeepRow, upkeepMachineRow)
+
+nextMaintenanceQuery :: Int -> Query (UpkeepTable)
+nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ proc () -> do
+  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
+  (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  (machinePK,_,_,_,_,_) <- machinesQuery -< ()
+  restrict -< (upkeepClosed .== pgBool False)
+  restrict -< (upkeepPK .== upkeepFK)
+  restrict -< (machineFK .== machinePK)
+  restrict -< (pgInt4 machineId .== machinePK)
+  returnA -< upkeepRow
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
@@ -195,6 +217,13 @@ runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ map (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
     (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4)) rows 
+
+runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int))]
+runLastClosedMaintenanceQuery machineId connection = 
+  runQuery connection (lastClosedMaintenanceQuery machineId)
+
+runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
+runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintenanceQuery machineId)
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
@@ -247,6 +276,8 @@ instance JS.JSONSchema U.Upkeep where
 instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
 
+instance ToJSON D.YearMonthDay where
+  toJSON = fromJust . showToFay
 instance ToJSON C.Company where
   -- super unsafe
   toJSON c = ((fromJust . showToFay) c)
@@ -346,9 +377,28 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of 
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      case rows of
-        (_,m) : xs | null xs -> return m
+      (machineId, machine @ (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
+        _ _ initialMileage mileagePerYear)) <- case rows of
+        (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+      nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
+      lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
+      nextDay <- let 
+        {- compute the next day, when the maintenance needs to be made -}
+        compute :: Day -> Day
+        compute lastServiceDay = let
+          yearsToNextService = fromIntegral upkeepPerMileage / fromIntegral mileagePerYear
+          daysToNextService = truncate $ yearsToNextService * 365
+          nextServiceDay = addDays daysToNextService lastServiceDay
+          in nextServiceDay
+        in case (nextPlannedMaintenance, lastUpkeep) of
+          -- next planned maintenance
+          ((_,date,_) : xs,_) | null xs -> return date
+          -- next maintenance computed from the last upkeep
+          (_,((_,date,_),_) : xs) | null xs -> return $ compute date 
+          -- next maintenance computed from the operation start
+          _ -> return $ compute (ymdToDay $ M.machineOperationStartDate machine)
+      return (machine, dayToYmd nextDay)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
