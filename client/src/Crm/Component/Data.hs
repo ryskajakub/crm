@@ -10,10 +10,6 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 
-data MyData = MyData {
-  router :: BackboneRouter
-}
-
 data NavigationState =
   FrontPage
   | CompanyDetail {

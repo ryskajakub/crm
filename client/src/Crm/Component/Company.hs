@@ -9,28 +9,28 @@ module Crm.Component.Company (
   , companyNew
 ) where
 
-import HaskellReact as HR
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
-import HaskellReact.BackboneRouter (link, navigate)
+
+import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+
+import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createCompany)
+import qualified Crm.Router as R
 
-import Debug.Trace
-
-companiesList :: MyData
+companiesList :: R.CrmRouter
               -> [(Int, C.Company)]
               -> DOMElement
-companiesList myData companies' = let
+companiesList router companies' = let
   head' =
     thead $ tr [
       th "Název firmy"
@@ -40,17 +40,17 @@ companiesList myData companies' = let
     let (id', company') = idCompany
     in tr [
       td $
-        link
+        R.link
           (pack $ C.companyName company')
-          ("/companies/" `append` (showInt id'))
-          (router myData)
+          (R.companyDetail id')
+          router
       , td $ pack $ C.companyPlant company'
     ]) companies'
   in main [
     section $
       let
         buttonProps = BTN.buttonProps {
-          BTN.onClick = Defined $ const $ navigate "/companies/new" (router myData)
+          BTN.onClick = Defined $ const $ R.navigate R.newCompany router
           }
         in BTN.button' buttonProps [
           G.plus
@@ -63,11 +63,11 @@ companiesList myData companies' = let
       ]
     ]
 
-companyNew :: MyData
+companyNew :: R.CrmRouter
            -> Var AppState
            -> C.Company
            -> DOMElement
-companyNew myData var company' = let
+companyNew router var company' = let
   editing' = True
   saveHandler =
     createCompany company' (\newId ->
@@ -81,15 +81,15 @@ companyNew myData var company' = let
         cd @ (CompanyNew _) -> cd { company = modifiedCompany }
         _ -> navigation appState
     })
-  in companyPage editing' myData var setCompany company' (-666) saveHandler machines'
+  in companyPage editing' router var setCompany company' (-666) saveHandler machines'
 
 companyDetail :: Bool -- ^ is the page editing mode
-              -> MyData -- ^ common read data
+              -> R.CrmRouter -- ^ common read data
               -> Var (AppState) -- ^ app state var, where the editing result can be set
               -> (Int, C.Company) -- ^ company, which data are displayed on this screen
               -> [(Int, M.Machine)] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing' myData var idCompany machines' = let
+companyDetail editing' router var idCompany machines' = let
   (id', company') = idCompany
   saveHandler = do
     modify var (\appState -> let
@@ -97,16 +97,16 @@ companyDetail editing' myData var idCompany machines' = let
       (before, after) = break (\(cId, _) -> cId == id') companies'
       newCompanies = before ++ [idCompany] ++ tail after
       in appState { companies = newCompanies })
-    navigate "" (router myData)
+    R.navigate R.frontPage router
   setCompany modifiedCompany = modify var (\appState -> appState {
       navigation = case navigation appState of
         cd @ (CompanyDetail _ _ _ _) -> cd { company = modifiedCompany }
         _ -> navigation appState
     })
-  in companyPage editing' myData var setCompany company' id' saveHandler machines'
+  in companyPage editing' router var setCompany company' id' saveHandler machines'
 
 companyPage :: Bool -- ^ is the page editing mode
-            -> MyData -- ^ common read data
+            -> R.CrmRouter -- ^ common read data
             -> Var (AppState) -- ^ app state var, where the editing result can be set
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
             -> C.Company -- ^ company, which data are displayed on this screen
@@ -114,15 +114,15 @@ companyPage :: Bool -- ^ is the page editing mode
             -> Fay () -- ^ handler called when the user hits save
             -> [(Int, M.Machine)] -- ^ machines of the company
             -> DOMElement -- ^ company detail page fraction
-companyPage editing' myData var setCompany company' companyId saveHandler' machines' = let
+companyPage editing' router var setCompany company' companyId saveHandler' machines' = let
   machineBox (machineId, machine) =
     B.col (B.mkColProps 4) $
       B.panel [
         h2 $ 
-          link
+          R.link
             (pack $ (MT.machineTypeName . M.machineType) machine)
-            ("machines/" <> showInt machineId)
-            (router myData)
+            (R.machineDetail machineId)
+            router
         , dl [
           dt "Další servis"
           , dd $ pack $ show $ M.machineOperationStartDate machine
@@ -181,24 +181,23 @@ companyPage editing' myData var setCompany company' companyId saveHandler' machi
       B.row $
         B.col (B.mkColProps 12) $
           B.panel $
-            span $ link 
+            span $ R.link 
               "Historie servisů"
-              ("/companies/" `append` showInt companyId `append` "/maintenances")
-              (router myData)
+              (R.maintenances companyId)
+              router
       , B.row (machineBoxes ++ [
         let
-          newCompanyUrl = "companies/" `append` showInt companyId `append` "/new-machine"
           buttonProps = BTN.buttonProps {
             BTN.onClick = Defined $ const $
-              navigate newCompanyUrl (router myData) }
+              R.navigate (R.newMachine companyId) router }
           in B.col (B.mkColProps 4) $ B.panel $ h2 $ BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
       ])
       , B.row $
         B.col (B.mkColProps 12) $
           B.panel $
-            span $ link
+            span $ R.link
               "Naplánovat servis"
-              ("/companies/" `append` (showInt companyId) `append` "/new-maintenance")
-              (router myData)
+              (R.newMaintenance companyId)
+              router
     ]
   ]
