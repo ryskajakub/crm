@@ -37,7 +37,7 @@ data NavigationState =
   | UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)] }
   | PlannedUpkeeps { 
-    plennedUpkeeps :: [(U.Upkeep, C.Company)] }
+    plennedUpkeeps :: [(Int, U.Upkeep, Int, C.Company)] }
 
 data AppState = AppState {
   navigation :: NavigationState

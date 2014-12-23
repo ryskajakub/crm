@@ -30,20 +30,23 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
-import Crm.Router (CrmRouter)
+import Crm.Router (CrmRouter, link, companyDetail)
 
 import Debug.Trace
 
 plannedUpkeeps :: CrmRouter
-               -> [(U.Upkeep, C.Company)]
+               -> [(Int, U.Upkeep, Int, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head = thead $ tr [
     th "Název firmy" ,
     th "Datum" ]
-  body = tbody $ map (\(upkeep, company) ->
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
-      td $ pack $ C.companyName company ,
+      td $ link
+        (pack $ C.companyName company)
+        (companyDetail companyId)
+        router ,
       td $ let 
         YMD.YearMonthDay y m d prec = U.upkeepDate upkeep 
         in showInt d <> "." <> showInt m <> "." <> showInt y ]

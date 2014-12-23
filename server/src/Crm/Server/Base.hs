@@ -358,7 +358,8 @@ machineListing = mkListing (jsonO . someO) (const $
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((_,u2,u3),(_,c2,c3)) -> (U.Upkeep (dayToYmd u2) [] u3, C.Company c2 c3)) rows
+  let mappedRows = map (\((uPK,u2,u3),(cPK,c2,c3)) -> 
+        (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
 upkeepListing :: ListHandler Dependencies

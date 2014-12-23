@@ -53,7 +53,7 @@ data Items
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
-fetchPlannedUpkeeps :: ([(U.Upkeep, Company)] -> Fay ())
+fetchPlannedUpkeeps :: ([(Int, U.Upkeep, Int, Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
