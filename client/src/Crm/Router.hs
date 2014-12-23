@@ -137,8 +137,8 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
       modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId' (\machine ->
-          modify' $ D.MachineDetail machine False False machineId')
+        Just(machineId') -> fetchMachine machineId' (\(machine, machineNextService) ->
+          modify' $ D.MachineDetail machine False False machineId' machineNextService)
         _ -> modify' D.NotFound
   ),(
     "planned", const $

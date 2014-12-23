@@ -9,6 +9,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.YearMonthDay as YMD
 
 data NavigationState =
   FrontPage
@@ -27,7 +28,8 @@ data NavigationState =
     machine :: M.Machine
   , operationStartCalendarOpen :: Bool
   , formState :: Bool
-  , machineId :: Int }
+  , machineId :: Int 
+  , machineNextService :: YMD.YearMonthDay }
   | UpkeepNew {
     upkeep :: U.Upkeep 
   , upkeepMachines :: [(Int, M.Machine)]

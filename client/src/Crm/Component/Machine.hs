@@ -49,14 +49,15 @@ machineDetail :: Bool
               -> Bool
               -> M.Machine
               -> Int -- id of the machine
+              -> YMD.YearMonthDay
               -> DOMElement
-machineDetail editing router appVar calendarOpen machine machineId = machineDisplay
+machineDetail editing router appVar calendarOpen machine machineId nextService = machineDisplay
   editing button router appVar calendarOpen machine
     where
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         navigation = case navigation appState of
-          md @ (MachineDetail m _ _ id') -> MachineDetail m False True id'
+          md @ (MachineDetail m _ _ id' ns) -> MachineDetail m False True id' ns
           _ -> navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -95,7 +96,7 @@ machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machi
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
       mn @ (MachineNew _ _) -> mn { machine = modifiedMachine }
-      md @ (MachineDetail _ _ _ _) -> md { machine = modifiedMachine }
+      md @ (MachineDetail _ _ _ _ _) -> md { machine = modifiedMachine }
       _ -> navigation appState
     })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()

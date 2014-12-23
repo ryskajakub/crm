@@ -378,7 +378,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
       (machineId, machine @ (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
-        _ _ initialMileage mileagePerYear)) <- case rows of
+        _ _ _ mileagePerYear)) <- case rows of
         (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
       nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn

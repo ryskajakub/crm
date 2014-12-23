@@ -57,9 +57,9 @@ main' = do
         CompanyNew company' -> Navigation.navigation router (companyNew router appVar' company')
         MachineNew machine' operationStartCalendarOpen' -> 
           Navigation.navigation router (machineNew router appVar' operationStartCalendarOpen' machine')
-        MachineDetail machine' operationStartCalendarOpen' formState machineId' ->
+        MachineDetail machine' operationStartCalendarOpen' formState machineId' nextService ->
           Navigation.navigation router (machineDetail formState router
-            appVar' operationStartCalendarOpen' machine' machineId')
+            appVar' operationStartCalendarOpen' machine' machineId' nextService)
         UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
           Navigation.navigation router 
             (upkeepNew router appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
