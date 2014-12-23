@@ -31,6 +31,7 @@ import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createMachine, createUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail)
+import Crm.Helpers (displayDate)
 
 import Debug.Trace
 
@@ -47,10 +48,7 @@ plannedUpkeeps router upkeepCompanies = let
         (pack $ C.companyName company)
         (companyDetail companyId)
         router ,
-      td $ let 
-        YMD.YearMonthDay y m d prec = U.upkeepDate upkeep 
-        in showInt d <> "." <> showInt m <> "." <> showInt y ]
-    ) upkeepCompanies
+      td $ displayDate $ U.upkeepDate upkeep ]) upkeepCompanies
   in trace (show upkeepCompanies) $ main $ B.table [ head , body ]
 
 swap :: (a, b) -> (b, a)

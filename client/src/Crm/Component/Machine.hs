@@ -7,7 +7,7 @@ module Crm.Component.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt)
+import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import Data.Var (Var, modify)
@@ -28,7 +28,7 @@ import qualified Crm.Shared.MachineType as MT
 import Crm.Component.Data as D
 import Crm.Component.Editable (editable, editable', editableN)
 import Crm.Server (createMachine, updateMachine)
-import Crm.Helpers (parseSafely)
+import Crm.Helpers (parseSafely, displayDate)
 import Crm.Router (CrmRouter, navigate, frontPage)
 
 saveButtonRow :: Renderable a
@@ -51,9 +51,10 @@ machineDetail :: Bool
               -> Int -- id of the machine
               -> YMD.YearMonthDay
               -> DOMElement
-machineDetail editing router appVar calendarOpen machine machineId nextService = machineDisplay
-  editing button router appVar calendarOpen machine
+machineDetail editing router appVar calendarOpen machine machineId nextService = 
+  machineDisplay editing button router appVar calendarOpen machine extraRow
     where
+      extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         navigation = case navigation appState of
@@ -74,7 +75,7 @@ machineNew :: CrmRouter
            -> M.Machine
            -> DOMElement
 machineNew router appState calendarOpen machine' = 
-  machineDisplay True buttonRow router appState calendarOpen machine'
+  machineDisplay True buttonRow router appState calendarOpen machine' []
     where
       saveNewMachine = createMachine machine' (\machineId -> do
         modify appState (\appState' -> let
@@ -84,14 +85,24 @@ machineNew router appState calendarOpen machine' =
         navigate frontPage router )
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
+row :: Renderable a
+    => Text -- ^ label of field
+    -> a -- ^ the other field
+    -> DOMElement
+row labelText otherField = 
+  div' (class' "form-group") [ 
+    label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
+    div' (class' "col-md-9") otherField ]
+
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> CrmRouter
                -> Var AppState
                -> Bool
                -> M.Machine
+               -> [DOMElement]
                -> DOMElement
-machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machine' = let
+machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machine' extraRow = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     navigation = case navigation appState of
@@ -110,27 +121,25 @@ machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machi
   inputRow = I.mkInputProps {
     I.labelClassName = Defined "col-md-3"
     , I.wrapperClassName = Defined "col-md-9" }
-  row labelText value' onChange' = let
+  row' labelText value' onChange' = let
     attrs = class' "form-control"
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
     input = editableN inputAttrs attrs editing (text2DOM $ pack value')
-    inputWrapper = div' (class' "col-md-9") input
-    labelColumn = label' (class'' ["control-label", "col-md-3"]) (span labelText)
-    in div' (class' "form-group") [ labelColumn , inputWrapper ]
+    in row labelText input
   in form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
-      B.row [
-        row
+      B.row $ [
+        row'
           "Typ zařízení"
           (MT.machineTypeName machineType)
           (eventString >=> (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))) ,
-        row
+        row'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (\mt -> mt {MT.machineTypeManufacturer = string}))) ,
-        row
+        row'
           "Interval servisu"
           (unpack $ showInt $ MT.upkeepPerMileage machineType)
           (eventValue >=> (\str -> case parseSafely str of
@@ -153,18 +162,19 @@ machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machi
                 nm @ (MachineNew _ _) -> nm { operationStartCalendarOpen = open }
                 _ -> navigation appState })
             in CI.dayInput editing y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
-        row
+        row'
           "Úvodní stav motohodin"
           (unpack $ showInt $ M.initialMileage machine')
           (let
             setInitialMileage :: Int -> Fay ()
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
-        row
+        row'
           "Provoz (motohodin/rok)"
           (unpack $ showInt $ M.mileagePerYear machine')
           (let
             setMileagePerYear :: Int -> Fay ()
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
-            in flip whenJust setMileagePerYear . parseSafely <=< eventValue) ,
+            in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
+        ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]

@@ -15,4 +15,4 @@ parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
 displayDate :: YMD.YearMonthDay -> Text
 displayDate (YMD.YearMonthDay y m d _) =
-  showInt y <> pack "." <> showInt m <> pack "." <> showInt d
+  showInt d <> pack "." <> showInt m <> pack "." <> showInt y
