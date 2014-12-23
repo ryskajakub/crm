@@ -26,6 +26,7 @@ import Crm.Component.Data
 import Crm.Component.Editable (editable)
 import Crm.Server (createCompany)
 import qualified Crm.Router as R
+import Crm.Helpers (displayDate)
 
 companiesList :: R.CrmRouter
               -> [(Int, C.Company)]
@@ -125,7 +126,7 @@ companyPage editing' router var setCompany company' companyId saveHandler' machi
             router
         , dl [
           dt "Další servis"
-          , dd $ pack $ show $ M.machineOperationStartDate machine
+          , dd $ displayDate $ M.machineOperationStartDate machine
           ]
       ]
   machineBoxes = map machineBox machines'
