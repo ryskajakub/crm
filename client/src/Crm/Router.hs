@@ -30,7 +30,7 @@ import HaskellReact
 import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine, fetchPlannedUpkeeps, 
-  fetchFrontPageData )
+  fetchFrontPageData, fetchCompany )
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -74,19 +74,10 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
     "companies/:id", \params -> let
       cId = head params
       in case (parseSafely cId, cId) of
-        (Just(cId''), _) -> do
-          appState <- get appVar
-          let
-            companies' = D.companies appState
-            company'' = lookup cId'' companies'
-            machinesInCompany = filter ((==)cId'' . M.companyId . snd) (D.machines appState)
-          maybe (return ()) (\company' ->
-            modify appVar (\appState ->
-              appState {
-                D.navigation = D.CompanyDetail cId'' company' False machinesInCompany
-              }
-            )
-            ) company''
+        (Just(cId''), _) ->
+          fetchCompany cId'' (\(company,machines) -> 
+            modify appVar (\appState -> appState {
+              D.navigation = D.CompanyDetail cId'' company False machines }))
         (_, new) | new == "new" -> modify appVar (\appState ->
           appState {
             D.navigation = D.CompanyNew C.newCompany }

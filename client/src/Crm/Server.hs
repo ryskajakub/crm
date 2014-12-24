@@ -11,6 +11,7 @@ module Crm.Server (
   , updateMachine
   , fetchPlannedUpkeeps
   , fetchFrontPageData
+  , fetchCompany
 ) where
 
 import FFI (ffi, Automatic, Defined(Defined), Nullable)
@@ -46,6 +47,15 @@ fetchMachine :: Int -- ^ machine id
 fetchMachine machineId callback = 
   JQ.ajax
     (pack "/api/v1.0.0/machines/" <> showInt machineId <> pack "/")
+    callback
+    (const $ const $ const $ return ())
+
+fetchCompany :: Int -- ^ company id
+             -> ((Company, [(Int, M.Machine)]) -> Fay ()) -- ^ callback
+             -> Fay ()
+fetchCompany companyId callback =
+  JQ.ajax
+    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> showInt companyId <> pack "/")
     callback
     (const $ const $ const $ return ())
 
