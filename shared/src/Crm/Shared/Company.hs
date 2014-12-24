@@ -15,15 +15,13 @@ import "fay-base" Prelude
 #endif
 
 data Company = Company {
-  companyName :: String
-  , companyPlant :: String
-}
+  companyName :: String , 
+  companyPlant :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newCompany :: Company
 newCompany = Company {
-  companyName = ""
-  , companyPlant = ""
-}
+  companyName = "" , 
+  companyPlant = "" }

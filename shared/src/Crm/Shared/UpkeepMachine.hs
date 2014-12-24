@@ -15,8 +15,8 @@ import "fay-base" Prelude
 #endif
 
 data UpkeepMachine = UpkeepMachine {
-  upkeepMachineNote :: String
-  , upkeepMachineMachineId :: Int }
+  upkeepMachineNote :: String , 
+  upkeepMachineMachineId :: Int }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
