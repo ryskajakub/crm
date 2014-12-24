@@ -108,8 +108,7 @@ machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machi
     navigation = case navigation appState of
       mn @ (MachineNew _ _) -> mn { machine = modifiedMachine }
       md @ (MachineDetail _ _ _ _ _) -> md { machine = modifiedMachine }
-      _ -> navigation appState
-    })
+      _ -> navigation appState })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
   setMachineType modifyMachineType = let
     machineType' = case M.machineType machine' of
@@ -119,8 +118,8 @@ machineDisplay editing buttonRow router appVar operationStartCalendarOpen' machi
     in setMachine machine''
   machineType = M.machineType machine'
   inputRow = I.mkInputProps {
-    I.labelClassName = Defined "col-md-3"
-    , I.wrapperClassName = Defined "col-md-9" }
+    I.labelClassName = Defined "col-md-3" , 
+    I.wrapperClassName = Defined "col-md-9" }
   row' labelText value' onChange' = let
     attrs = class' "form-control"
     inputAttrs = II.mkInputAttrs {

@@ -2,34 +2,35 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Server (
-  fetchCompanies
-  , fetchMachines, fetchMachine
-  , fetchUpkeeps
-  , createCompany
-  , createMachine
-  , createUpkeep
-  , updateMachine
-  , fetchPlannedUpkeeps
-  , fetchFrontPageData
-  , fetchCompany
-) where
+  fetchCompanies ,
+  fetchMachines, fetchMachine , 
+  fetchUpkeeps , 
+  createCompany , 
+  createMachine , 
+  createUpkeep , 
+  updateMachine , 
+  fetchPlannedUpkeeps , 
+  fetchFrontPageData , 
+  fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined), Nullable)
-import Crm.Shared.Company (Company)
+import "fay-base" Prelude
+import "fay-base" Data.Text (Text, pack, append, showInt, unpack, (<>))
+import "fay-base" Data.Maybe (listToMaybe)
+
+import qualified JQuery as JQ
+
+import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
-import "fay-base" Prelude
-import "fay-base" Data.Text (Text, pack, append, showInt, unpack, (<>))
-import "fay-base" Data.Maybe (listToMaybe)
-import qualified JQuery as JQ
 
 import Debug.Trace
 
 data CrmApi
 
-fetchCompanies :: ([(Int, Company)] -> Fay ())
+fetchCompanies :: ([(Int, C.Company)] -> Fay ())
                -> Fay ()
 fetchCompanies var = fetch var (pack A.companiesClient)
 
@@ -51,7 +52,7 @@ fetchMachine machineId callback =
     (const $ const $ const $ return ())
 
 fetchCompany :: Int -- ^ company id
-             -> ((Company, [(Int, M.Machine)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(Int, M.Machine)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
@@ -65,7 +66,7 @@ data Items
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
-fetchFrontPageData :: ([(Int, Company, Maybe YMD.YearMonthDay)] -> Fay ())
+fetchFrontPageData :: ([(Int, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
 fetchFrontPageData callback = let
   lMb [] = []
@@ -75,7 +76,7 @@ fetchFrontPageData callback = let
     (callback . lMb . items)
     (const $ const $ const $ return ())
 
-fetchPlannedUpkeeps :: ([(Int, U.Upkeep, Int, Company)] -> Fay ())
+fetchPlannedUpkeeps :: ([(Int, U.Upkeep, Int, C.Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
@@ -83,7 +84,7 @@ fetchPlannedUpkeeps callback =
     (callback . items)
     (const $ const $ const $ return ())
 
-createCompany :: Company
+createCompany :: C.Company
               -> (Int -> Fay())
               -> Fay ()
 createCompany company callback = do

@@ -33,8 +33,6 @@ import Crm.Server (createMachine, createUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail)
 import Crm.Helpers (displayDate)
 
-import Debug.Trace
-
 plannedUpkeeps :: CrmRouter
                -> [(Int, U.Upkeep, Int, C.Company)]
                -> DOMElement
@@ -49,7 +47,7 @@ plannedUpkeeps router upkeepCompanies = let
         (companyDetail companyId)
         router ,
       td $ displayDate $ U.upkeepDate upkeep ]) upkeepCompanies
-  in trace (show upkeepCompanies) $ main $ B.table [ head , body ]
+  in main $ B.table [ head , body ]
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)

@@ -5,6 +5,7 @@ module Crm.Helpers where
 import "fay-base" Data.Text (Text, (<>), showInt, pack)
 import FFI (Nullable, ffi)
 import Data.Nullable (fromNullable)
+
 import qualified Crm.Shared.YearMonthDay as YMD
 
 parseInt :: Text -> Nullable Int

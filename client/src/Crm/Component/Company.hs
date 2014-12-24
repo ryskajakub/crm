@@ -4,10 +4,9 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Company (
-  companiesList
-  , companyDetail
-  , companyNew
-) where
+  companiesList , 
+  companyDetail , 
+  companyNew ) where
 
 import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)

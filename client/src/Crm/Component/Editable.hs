@@ -7,12 +7,13 @@ module Crm.Component.Editable (
   editable, editable',
   editableN ) where
 
-import HaskellReact as HR
 import "fay-base" Prelude as P
 import "fay-base" Data.Text (Text)
+import FFI (Defined (Defined))
+
+import HaskellReact as HR
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Tag.Input as II
-import FFI (Defined (Defined))
 
 editable :: Bool -- ^ edit state
          -> DOMElement -- ^ display value
@@ -33,9 +34,8 @@ editable' inputProps edit display initial setValue = if edit
       value <- eventValue event
       setValue value
     in I.input ((maybe (I.mkInputProps) (P.id) (inputProps)) {
-      I.onChange = Defined changeHandler
-      , I.defaultValue = Defined initial
-      })
+      I.onChange = Defined changeHandler , 
+      I.defaultValue = Defined initial })
   else display
 
 editableN :: II.InputAttributes -- ^ element to display in edit mode

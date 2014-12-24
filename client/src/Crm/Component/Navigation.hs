@@ -20,5 +20,4 @@ navigation router body =
     navBar $ nav [
       li $ link [G.list, text2DOM " Seznam firem"] frontPage router ,
       li $ link [G.list, text2DOM " Naplánované servisy"] plannedUpkeeps router ] ,
-    body
-  ]
+    body ]
