@@ -23,7 +23,7 @@ import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString,
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 
-import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, withReaderT, runReaderT, mapReaderT)
+import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
@@ -44,8 +44,8 @@ import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update )
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
-import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
+import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
 import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError))
 
 import qualified Crm.Shared.Company as C
@@ -59,7 +59,6 @@ import Crm.Server.Helpers (ymdToDay, dayToYmd)
 
 import Fay.Convert (showToFay, readFromFay')
 import Safe (readMay, minimumMay)
-import Debug.Trace
 import Generics.Regular
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
@@ -457,8 +456,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine @ (M.Machine (MT.MachineType _ _ upkeepPerMileage)
-        _ _ _ mileagePerYear)) <- case rows of
+      (machineId, machine @ (M.Machine (MT.MachineType _ _ _)
+        _ _ _ _)) <- case rows of
         (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
       ymd <- nextService machineId machine fst
