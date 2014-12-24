@@ -11,14 +11,12 @@
 
 module Crm.Server.Base where
 
+import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
+
 import Opaleye.QueryArr (Query)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 import Opaleye.Order (orderBy, asc, limit, desc)
-
-import Data.Profunctor.Product (p2, p3, p4, p6)
-
-import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==), (.&&), restrict)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString, pgBool)
@@ -33,6 +31,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
 import Control.Monad (forM_, forM)
 
+import Data.Profunctor.Product (p2, p3, p4, p6)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
@@ -49,8 +48,6 @@ import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI, someE, jsonE)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler, mkIdHandler, mkHandler)
 import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError))
 
-import Generics.Regular
-
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -59,10 +56,11 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
-import Fay.Convert (showToFay, readFromFay')
 
+import Fay.Convert (showToFay, readFromFay')
 import Safe (readMay, minimumMay)
 import Debug.Trace
+import Generics.Regular
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
@@ -85,24 +83,23 @@ type UpkeepMachinesTable = (DBInt, DBText, DBInt)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
-    optional "id"
-    , required "name"
-    , required "plant"
-  ))
+  optional "id" ,
+  required "name" ,
+  required "plant" ))
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" (p6 (
-  optional "id" , 
-  required "company_id" , 
-  required "machine_type_id" , 
+  optional "id" ,
+  required "company_id" ,
+  required "machine_type_id" ,
   required "operation_start" ,
   required "initial_mileage" ,
   required "mileage_per_year" ))
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" (p4 (
-  optional "id" , 
-  required "name" , 
+  optional "id" ,
+  required "name" ,
   required "manufacturer" ,
   required "upkeep_per_mileage" ))
 
@@ -134,13 +131,13 @@ upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
 
 runMachineUpdate :: (Int, M.Machine) -> Connection -> IO Int64
-runMachineUpdate (machineId', machine') connection = 
+runMachineUpdate (machineId', machine') connection =
   runUpdate connection machinesTable readToWrite condition
     where
       condition (machineId,_,_,_,_,_) = machineId .== pgInt4 machineId'
       readToWrite (_,_,machineTypeId,_,_,_) =
-        (Nothing, pgInt4 $ M.companyId machine', machineTypeId, 
-          pgDay $ ymdToDay $ M.machineOperationStartDate machine', 
+        (Nothing, pgInt4 $ M.companyId machine', machineTypeId,
+          pgDay $ ymdToDay $ M.machineOperationStartDate machine',
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
 companyWithMachinesQuery :: Int -> Query (CompaniesTable)
@@ -214,8 +211,8 @@ plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-groupedPlannedUpkeepsQuery = 
-  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.boolOr), 
+groupedPlannedUpkeepsQuery =
+  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.boolOr),
     p3(AGG.groupBy, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
@@ -227,7 +224,7 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runMachinesInCompanyQuery' :: Int -> Connection -> 
+runMachinesInCompanyQuery' :: Int -> Connection ->
   IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
@@ -247,10 +244,10 @@ runExpandedMachinesQuery' machineId connection =
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
-  return $ map convertExpanded rows 
+  return $ map convertExpanded rows
 
 runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int))]
-runLastClosedMaintenanceQuery machineId connection = 
+runLastClosedMaintenanceQuery machineId connection =
   runQuery connection (lastClosedMaintenanceQuery machineId)
 
 runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
@@ -265,11 +262,10 @@ runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQue
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
   let connectInfo = defaultConnectInfo {
-      connectUser = "haskell"
-      , connectDatabase = "crm"
-      , connectPassword = "haskell"
-      , connectHost = "localhost"
-    }
+    connectUser = "haskell" ,
+    connectDatabase = "crm" ,
+    connectPassword = "haskell" ,
+    connectHost = "localhost" }
   conn <- connect connectInfo
   result <- runQ conn
   close conn
@@ -425,21 +421,21 @@ companyResource = (mkResourceReaderWith (\readerConnId ->
   schema = companySchema }
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\machine -> 
+machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
   ask >>= \(conn, id') -> case id' of
     Just (machineId) -> do
-      _ <- liftIO $ runMachineUpdate (machineId,machine) conn 
+      _ <- liftIO $ runMachineUpdate (machineId,machine) conn
       -- todo singal error if the update didn't hit a row
       return ()
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
 nextService :: Int -> M.Machine -> (a -> Connection) -> ErrorT (Reason ()) (ReaderT a IO) (D.YearMonthDay)
-nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
+nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage)
   _ operationStartDate _ mileagePerYear) getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
-  nextDay <- let 
+  nextDay <- let
     {- compute the next day, when the maintenance needs to be made -}
     compute :: Day -> Day
     compute lastServiceDay = let
@@ -451,17 +447,17 @@ nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage)
       -- next planned maintenance
       ((_,date,_) : xs,_) | null xs -> return date
       -- next maintenance computed from the last upkeep
-      (_,((_,date,_),_) : xs) | null xs -> return $ compute date 
+      (_,((_,date,_),_) : xs) | null xs -> return $ compute date
       -- next maintenance computed from the operation start
       _ -> return $ compute (ymdToDay operationStartDate)
   return $ dayToYmd nextDay)
 
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
-  ask >>= (\(conn,id') -> case id' of 
+  ask >>= (\(conn,id') -> case id' of
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine @ (M.Machine (MT.MachineType _ _ upkeepPerMileage) 
+      (machineId, machine @ (M.Machine (MT.MachineType _ _ upkeepPerMileage)
         _ _ _ mileagePerYear)) <- case rows of
         (mId,m) : xs | null xs -> return (mId,m)
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
@@ -470,13 +466,13 @@ machineSingle = mkConstHandler (jsonO . someO) (
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO . someO) (const $ 
+machineListing = mkListing (jsonO . someO) (const $
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn )
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((uPK,u2,u3),(cPK,c2,c3)) -> 
+  let mappedRows = map (\((uPK,u2,u3),(cPK,c2,c3)) ->
         (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
@@ -541,22 +537,19 @@ createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachine ->
   ask >>= \(connection, maybeInt) -> case maybeInt of
     Just(int) -> liftIO $ addMachine connection (newMachine{M.companyId = int})
-    _ -> throwError $ InputError $ ParseError $ "provided id is not a number"
-  )
+    _ -> throwError $ InputError $ ParseError $ "provided id is not a number" )
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
   ask >>= \(connection, maybeInt) -> case maybeInt of
     Just(_) -> liftIO $ addUpkeep connection newUpkeep -- todo check that the machines are belonging to this company
-    _ -> throwError $ InputError $ ParseError "provided id is not a number"
-  )
+    _ -> throwError $ InputError $ ParseError "provided id is not a number" )
 
 companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
 companyMachineResource = mkResourceId {
-  name = A.machines
-  , schema = S.noListing $ S.named []
-  , create = Just createMachineHandler
-  }
+  name = A.machines ,
+  schema = S.noListing $ S.named [] ,
+  create = Just createMachineHandler }
 
 machineResource :: Resource Dependencies IdDependencies UrlId () Void
 machineResource = (mkResourceReaderWith prepareReader) {
