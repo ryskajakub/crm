@@ -143,6 +143,16 @@ runMachineUpdate (machineId', machine') connection =
           pgDay $ ymdToDay $ M.machineOperationStartDate machine', 
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
+companyWithMachinesQuery :: Int -> Query (CompaniesTable)
+companyWithMachinesQuery companyId = proc () -> do
+  c @ (companyPK,_,_) <- companiesQuery -< ()
+  restrict -< (pgInt4 companyId .== companyPK)
+  returnA -< c
+
+runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String)]
+runCompanyWithMachinesQuery companyId connection =
+  runQuery connection (companyWithMachinesQuery companyId)
+
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesInCompanyQuery companyId = proc () -> do
   m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
@@ -217,7 +227,8 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-runMachinesInCompanyQuery' :: Int -> Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+runMachinesInCompanyQuery' :: Int -> Connection -> 
+  IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
@@ -391,14 +402,27 @@ prepareReader reader = let
         in lift aa)
     in getA) outer
 
+singleCompany :: Handler IdDependencies
+singleCompany = mkConstHandler (jsonO . someO) (
+  ask >>= \(conn, id') -> case id' of
+    Just(companyId) -> do
+      rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
+      company <- case rows of
+        (_,c2,c3) : xs | null xs -> return $ C.Company c2 c3
+        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+      machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+      return (company, machines)
+    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
+
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith (\readerConnId ->
     prepareReader readerConnId
   )) {
-  list = const listing
-  , create = Just createCompanyHandler
-  , name = A.companies
-  , schema = companySchema }
+  list = const listing ,
+  create = Just createCompanyHandler ,
+  name = A.companies ,
+  get = Just singleCompany ,
+  schema = companySchema }
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . someI) (\machine -> 
