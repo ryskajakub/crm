@@ -18,7 +18,7 @@ module Crm.Router (
   plannedUpkeeps ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, Text, (<>))
+import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
 import Data.Var (Var, modify, get)
@@ -29,8 +29,7 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchCompanies, fetchMachines, fetchUpkeeps, fetchMachine, fetchPlannedUpkeeps, 
-  fetchFrontPageData, fetchCompany )
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany )
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -93,7 +92,7 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
             newMachine' = M.newMachine companyId'
             in D.MachineNew newMachine' False
           _ -> D.NotFound
-      modify appVar (\appState -> appState { D.navigation = newAppState })
+      modify appVar (\appState' -> appState' { D.navigation = newAppState })
   ),(
     "companies/:id/new-maintenance", \params -> do
       appState <- get appVar
@@ -107,7 +106,7 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
             nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
             in D.UpkeepNew (U.newUpkeep nowYMD) machines' notCheckedUpkeepMachines False companyId'
           _ -> D.NotFound
-      modify appVar (\appState -> appState { D.navigation = newAppState })
+      modify appVar (\appState' -> appState' { D.navigation = newAppState })
   ),(
     "companies/:id/maintenances", \params -> do
       appState <- get appVar
@@ -124,7 +123,7 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
               ) (D.upkeeps appState)
             in D.UpkeepHistory companyUpkeeps
           _ -> D.NotFound
-      modify appVar (\appState -> appState { D.navigation = newAppState })
+      modify appVar (\appState' -> appState' { D.navigation = newAppState })
   ),(
     "machines/:id", \params -> let
       modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
@@ -135,8 +134,8 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
         _ -> modify' D.NotFound
   ),(
     "planned", const $
-      fetchPlannedUpkeeps (\plannedUpkeeps -> let
-        newNavigation = D.PlannedUpkeeps plannedUpkeeps
+      fetchPlannedUpkeeps (\plannedUpkeeps' -> let
+        newNavigation = D.PlannedUpkeeps plannedUpkeeps'
         in modify appVar (\appState -> 
           appState { D.navigation = newNavigation })) )]
 

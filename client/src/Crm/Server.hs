@@ -13,9 +13,9 @@ module Crm.Server (
   fetchFrontPageData , 
   fetchCompany ) where
 
-import FFI (ffi, Automatic, Defined(Defined), Nullable)
+import FFI (ffi, Automatic, Defined(Defined))
 import "fay-base" Prelude
-import "fay-base" Data.Text (Text, pack, append, showInt, unpack, (<>))
+import "fay-base" Data.Text (Text, pack, showInt, (<>))
 import "fay-base" Data.Maybe (listToMaybe)
 
 import qualified JQuery as JQ
@@ -25,8 +25,6 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
-
-import Debug.Trace
 
 data CrmApi
 
@@ -118,7 +116,7 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
 updateMachine :: (Int, M.Machine)
               -> Fay ()
               -> Fay ()
-updateMachine (machineId, machine) callback = ajax
+updateMachine (machineId, machine) _ = ajax
   machine
   (pack "/api/v1.0.0/" <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
   (pack "PUT")

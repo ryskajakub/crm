@@ -7,7 +7,7 @@ module Crm.Component.Upkeep (
   upkeepNew ,
   plannedUpkeeps ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, append, showInt, (<>))
+import "fay-base" Data.Text (fromString, unpack, pack)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -17,7 +17,6 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 
@@ -27,9 +26,8 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
-import Crm.Component.Data
-import Crm.Component.Editable (editable)
-import Crm.Server (createMachine, createUpkeep)
+import qualified Crm.Component.Data as D
+import Crm.Server (createUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail)
 import Crm.Helpers (displayDate)
 
@@ -37,17 +35,17 @@ plannedUpkeeps :: CrmRouter
                -> [(Int, U.Upkeep, Int, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
-  head = thead $ tr [
+  head' = thead $ tr [
     th "Název firmy" ,
     th "Datum" ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
+  body = tbody $ map (\(_, upkeep, companyId, company) ->
     tr [
       td $ link
         (pack $ C.companyName company)
         (companyDetail companyId)
         router ,
       td $ displayDate $ U.upkeepDate upkeep ]) upkeepCompanies
-  in main $ B.table [ head , body ]
+  in main $ B.table [ head' , body ]
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
@@ -60,9 +58,9 @@ toggle lists findElem = let
   toggleInternal (list1, list2) runMore = let
     foundInFirstList = find findElem list1
     in case foundInFirstList of
-      Just(elem) -> let
+      Just(elem') -> let
         filteredList1 = filter (not . findElem) list1
-        addedToList2 = elem : list2
+        addedToList2 = elem' : list2
         result = (filteredList1, addedToList2)
         in if runMore then result else swap result
       _ -> if runMore
@@ -71,22 +69,22 @@ toggle lists findElem = let
   in toggleInternal lists True
 
 upkeepNew :: CrmRouter
-          -> Var AppState
+          -> Var D.AppState
           -> U.Upkeep
           -> Bool
           -> [UM.UpkeepMachine]
           -> [(Int, M.Machine)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
-upkeepNew router appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
+upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
-  setUpkeep upkeep' notCheckedMachines' = modify appState (\appState' -> case navigation appState' of
-    upkeepNew @ (UpkeepNew _ _ _ _ _) -> let
-      newNavigation = upkeepNew { upkeep = upkeep' }
+  setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> case D.navigation appState' of
+    upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> let
+      newNavigation = upkeepNew' { D.upkeep = upkeep }
       newNavigation' = case notCheckedMachines' of
-        Just(x) -> newNavigation { notCheckedMachines = x }
+        Just(x) -> newNavigation { D.notCheckedMachines = x }
         _ -> newNavigation
-      in appState' { navigation = newNavigation' } )
+      in appState' { D.navigation = newNavigation' } )
   machineRow (machineId, machine) = let
     upkeepMachines = U.upkeepMachines upkeep'
     thisUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') upkeepMachines
@@ -105,11 +103,11 @@ upkeepNew router appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' mac
             (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId)
           newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
           in setUpkeep newUpkeep $ Just newNotCheckedMachines
-        link = A.a''
+        link' = A.a''
           (mkAttrs{onClick = Defined $ const clickHandler})
           (A.mkAAttrs)
           content
-        in B.col (B.mkColProps 6) link ,
+        in B.col (B.mkColProps 6) link' ,
       let
         inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
           (Just(upkeepMachine),_) -> I.mkInputProps {
@@ -144,17 +142,17 @@ upkeepNew router appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' mac
     B.col (B.mkColProps 6) $ let
       YMD.YearMonthDay y m d _ = U.upkeepDate upkeep'
       dayPickHandler year month day precision = case precision of
-        month | month == "Month" -> setDate YMD.MonthPrecision
-        year | year == "Year" -> setDate YMD.YearPrecision
-        day | day == "Day" -> setDate YMD.DayPrecision
+        month' | month' == "Month" -> setDate YMD.MonthPrecision
+        year' | year' == "Year" -> setDate YMD.YearPrecision
+        day' | day' == "Day" -> setDate YMD.DayPrecision
         _ -> return ()
         where 
-          setDate precision = setUpkeep (upkeep' {
-            U.upkeepDate = YMD.YearMonthDay year month day precision }) Nothing
+          setDate precision' = setUpkeep (upkeep' {
+            U.upkeepDate = YMD.YearMonthDay year month day precision' }) Nothing
       setPickerOpenness open = modify appState (\appState' -> appState' {
-        navigation = case navigation appState' of
-          upkeep'' @ (UpkeepNew _ _ _ _ _) -> upkeep'' { upkeepDatePickerOpen = open }
-          _ -> navigation appState' })
+        D.navigation = case D.navigation appState' of
+          upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
+          _ -> D.navigation appState' })
       in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
   in div $
     B.grid $

@@ -4,9 +4,6 @@
 module Crm.Component.Data where
 
 import "fay-base" Prelude
-import FFI (Nullable)
-
-import HaskellReact.BackboneRouter
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Company as C
