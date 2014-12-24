@@ -26,7 +26,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Component.Data as D
+import qualified Crm.Data as D
 import Crm.Server (createUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail)
 import Crm.Helpers (displayDate)

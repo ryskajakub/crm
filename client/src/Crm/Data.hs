@@ -1,7 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Component.Data where
+module Crm.Data where
 
 import "fay-base" Prelude
 

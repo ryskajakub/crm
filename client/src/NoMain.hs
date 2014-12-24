@@ -13,7 +13,7 @@ import Crm.Component.Company (companiesList, companyDetail, companyNew)
 import Crm.Component.Machine (machineNew, machineDetail)
 import Crm.Component.Upkeep (upkeepNew, plannedUpkeeps)
 import Crm.Component.UpkeepHistory (upkeepHistory)
-import qualified Crm.Component.Data as D
+import qualified Crm.Data as D
 
 main' :: Fay ()
 main' = do

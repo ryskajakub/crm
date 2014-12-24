@@ -22,7 +22,7 @@ import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Component.Data as D
+import qualified Crm.Data as D
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate)

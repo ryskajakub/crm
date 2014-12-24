@@ -36,7 +36,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Component.Data as D
+import qualified Crm.Data as D
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
