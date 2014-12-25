@@ -7,7 +7,7 @@ module Crm.Component.Autocomplete (
 import HaskellReact
 import JQuery 
 import FFI (ffi)
-import "fay-base" Data.Text (pack, Text)
+import "fay-base" Data.Text (pack, Text, unpack)
 import "fay-base" Prelude
 
 import qualified HaskellReact.Tag.Input as I

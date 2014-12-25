@@ -27,6 +27,7 @@ import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate)
 import Crm.Router (CrmRouter, navigate, frontPage)
+import Crm.Component.Autocomplete (autocompleteInput)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -47,7 +48,7 @@ machineDetail :: Bool
               -> M.Machine
               -> Int -- id of the machine
               -> YMD.YearMonthDay
-              -> DOMElement
+              -> (DOMElement, Fay ())
 machineDetail editing router appVar calendarOpen machine machineId nextService = 
   machineDisplay editing button router appVar calendarOpen machine extraRow
     where
@@ -70,7 +71,7 @@ machineNew :: CrmRouter
            -> Var D.AppState
            -> Bool
            -> M.Machine
-           -> DOMElement
+           -> (DOMElement, Fay ())
 machineNew router appState calendarOpen machine' = 
   machineDisplay True buttonRow router appState calendarOpen machine' []
     where
@@ -98,7 +99,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Bool
                -> M.Machine
                -> [DOMElement]
-               -> DOMElement
+               -> (DOMElement, Fay ())
 machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' extraRow = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
@@ -121,16 +122,13 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' e
       II.onChange = Defined onChange' }
     input = editableN inputAttrs attrs editing (text2DOM $ pack value')
     in row labelText input
-  in form' (mkAttrs { className = Defined "form-horizontal" }) $
+  (machineTypeInput, afterRenderCallback) = autocompleteInput
+  elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
-        div' (class' "form-group") [
-          label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
-          B.col (B.mkColProps 9) $ II.input (mkAttrs) (II.mkInputAttrs) ] ,
-        row'
-          "Typ zařízení"
-          (MT.machineTypeName machineType)
-          (eventString >=> (\string -> setMachineType (\mt -> mt { MT.machineTypeName = string }))) ,
+        row
+          "Typ zařízení" 
+          machineTypeInput ,
         row'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
@@ -174,3 +172,4 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' e
             in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
+  in (elements, afterRenderCallback)

@@ -15,8 +15,8 @@ module Crm.Server (
   fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
-import "fay-base" Prelude
-import "fay-base" Data.Text (Text, pack, showInt, (<>))
+import "fay-base" Prelude hiding (putStrLn)
+import "fay-base" Data.Text (Text, pack, showInt, (<>), putStrLn)
 import "fay-base" Data.Maybe (listToMaybe)
 
 import qualified JQuery as JQ
@@ -32,7 +32,7 @@ data CrmApi
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesAutocomplete text callback =
+fetchMachineTypesAutocomplete text callback = do
   JQ.ajax
     (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/autocomplete/" <> text)
     (callback . items)
