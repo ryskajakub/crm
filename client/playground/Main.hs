@@ -25,35 +25,3 @@ main = let
 main :: BasePrelude.IO ()
 main = undefined
 #endif
-
-data JQueryUI
-
-data Request
-
-getTerm :: Request -> Text
-getTerm = ffi " %1['term'] "
-
-data AutocompleteProps = AutocompleteProps {
-  source :: Request -> ([Text] -> Fay ()) -> Fay () }
-
-jQueryUI :: JQueryUI
-jQueryUI = ffi " (function () { var $ = require('jquery'); require('jquery-ui'); return $; })() "
-
-jQueryUIAutocomplete :: JQueryUI 
-                     -> Text 
-                     -> AutocompleteProps 
-                     -> Fay ()
-jQueryUIAutocomplete = ffi " %1(%2).autocomplete(%3) "
-
-autocompleteInput :: (DOMElement, Fay ())
-autocompleteInput = let 
-  element = I.input
-    mkAttrs
-    I.mkInputAttrs
-  autocomplete = jQueryUIAutocomplete 
-    jQueryUI 
-    (pack "input")
-    (AutocompleteProps (\request response -> let
-      term = getTerm request
-      in response $ term : [pack "aaaaaaaaaaa", pack "bbbb"] ))
-  in (element, autocomplete)
