@@ -7,6 +7,7 @@ module Crm.Shared.Api (
   , machines, machinesClient
   , upkeep, upkeepsClient
   , planned
+  , machineTypes
 ) where
 
 #ifndef FAY
@@ -19,6 +20,9 @@ import "fay-base" Data.Char
 
 companies :: String
 companies = "companies"
+
+machineTypes :: String
+machineTypes = "machine-types"
 
 machines :: String
 machines = "machines"

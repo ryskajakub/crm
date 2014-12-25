@@ -39,6 +39,7 @@ import Data.Maybe (fromJust, maybeToList)
 import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
+import Data.List (intersperse)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -60,6 +61,9 @@ import Crm.Server.Helpers (ymdToDay, dayToYmd)
 import Fay.Convert (showToFay, readFromFay')
 import Safe (readMay, minimumMay)
 import Generics.Regular
+
+import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
 type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
@@ -138,6 +142,15 @@ runMachineUpdate (machineId', machine') connection =
         (Nothing, pgInt4 $ M.companyId machine', machineTypeId,
           pgDay $ ymdToDay $ M.machineOperationStartDate machine',
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
+
+like :: Column a -> Column a -> Column PGBool
+like = C.binOp HPQ.OpLike
+
+machineTypesQuery' :: String -> Query DBText
+machineTypesQuery' mid = proc () -> do
+  (_,name',_,_) <- machineTypesQuery -< ()
+  restrict -< (name' `like` pgString ("%" ++ (intersperse '%' mid) ++ "%"))
+  returnA -< name'
 
 companyWithMachinesQuery :: Int -> Query (CompaniesTable)
 companyWithMachinesQuery companyId = proc () -> do
@@ -245,6 +258,9 @@ runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ map convertExpanded rows
 
+runMachineTypesQuery' :: String -> Connection -> IO[String]
+runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
+
 runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int))]
 runLastClosedMaintenanceQuery machineId connection =
   runQuery connection (lastClosedMaintenanceQuery machineId)
@@ -331,6 +347,8 @@ instance JS.JSONSchema D.Precision where
   schema = gSchema
 instance JS.JSONSchema MT.MachineType where
   schema = gSchema
+instance JS.JSONSchema Char where
+  schema = gSchema
 
 instance Eq D.YearMonthDay where
   D.YearMonthDay y m d _ == D.YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
@@ -366,6 +384,9 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [("planned", S.listing UpkeepsP
 
 schema'' :: S.Schema UrlId () Void
 schema'' = S.withListing () (S.unnamedSingle readMay)
+
+autocompleteSchema :: S.Schema Void String Void
+autocompleteSchema = S.noListing $ S.named [("autocomplete", S.listingBy id)]
 
 companySchema :: S.Schema UrlId () Void
 companySchema = S.withListing () $ S.unnamedSingle readMay
@@ -468,6 +489,10 @@ machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn )
 
+machineTypesListing :: String -> ListHandler Dependencies
+machineTypesListing mid = mkListing (jsonO . someO) (const $ 
+  ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
+
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
@@ -558,6 +583,12 @@ machineResource = (mkResourceReaderWith prepareReader) {
   name = A.machines ,
   schema = schema'' }
 
+machineTypeResource :: Resource Dependencies Dependencies Void String Void
+machineTypeResource = mkResourceId {
+  name = A.machineTypes ,
+  list = machineTypesListing ,
+  schema = autocompleteSchema }
+
 upkeepTopLevelResource :: Resource Dependencies Dependencies Void UpkeepsListing Void
 upkeepTopLevelResource = mkResourceId {
   list = \listingType -> case listingType of
@@ -577,6 +608,7 @@ router' = root `compose` (((route companyResource) `compose` route companyMachin
                                                    `compose` route upkeepResource)
                `compose` route machineResource
                `compose` route upkeepTopLevelResource
+               `compose` route machineTypeResource
 
 api :: Api Dependencies
 api = [(mkVersion 1 0 0, Some1 $ router')]
