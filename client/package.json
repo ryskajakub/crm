@@ -6,7 +6,8 @@
     "jquery": "~2.1.1",
     "q": "~1.1.2",
     "moment": "~2.8.4",
-    "react-calendar": "~0.3.0"
+    "react-calendar": "~0.3.0",
+    "jquery-ui": "~1.10.5"
   },
   "devDependencies": {
     "webpack": "~1.4.9",

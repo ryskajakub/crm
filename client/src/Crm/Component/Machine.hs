@@ -124,6 +124,9 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' e
   in form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
+        div' (class' "form-group") [
+          label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
+          B.col (B.mkColProps 9) $ II.input (mkAttrs) (II.mkInputAttrs) ] ,
         row'
           "Typ zařízení"
           (MT.machineTypeName machineType)

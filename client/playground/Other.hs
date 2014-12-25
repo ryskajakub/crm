@@ -1,10 +1,13 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Other where
+module Other (
+  autocompleteInput ) where
 
-import FFI
+import HaskellReact
+import FFI (ffi)
+import "fay-base" Data.Text (pack, Text)
 import "fay-base" Prelude
 
-arg :: Int -> Int -> Fay ()
-arg a b = putStrLn $ show $ a + b
+import qualified HaskellReact.Tag.Input as I
+

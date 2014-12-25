@@ -78,7 +78,7 @@ gulp.task('default', ['watch']);
 // playground
 
 gulp.task('playground-compile', function() {
-  var fayCommand = "fay --strict Other --library --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js --package fay-dom <%= file.path %>";
+  var fayCommand = "fay --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js --package fay-dom <%= file.path %>";
   return gulp.src('playground/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });
