@@ -11,6 +11,7 @@ module Crm.Server (
   updateMachine , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
+  fetchMachineTypesAutocomplete ,
   fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
@@ -27,6 +28,15 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 
 data CrmApi
+
+fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
+                              -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
+                              -> Fay ()
+fetchMachineTypesAutocomplete text callback =
+  JQ.ajax
+    (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/autocomplete/" <> text)
+    (callback . items)
+    (const $ const $ const $ return ())
 
 fetchCompanies :: ([(Int, C.Company)] -> Fay ())
                -> Fay ()

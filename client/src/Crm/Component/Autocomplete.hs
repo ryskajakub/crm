@@ -12,6 +12,8 @@ import "fay-base" Prelude
 
 import qualified HaskellReact.Tag.Input as I
 
+import Crm.Server (fetchMachineTypesAutocomplete)
+
 data JQueryUI
 
 data Request
@@ -39,8 +41,7 @@ autocompleteInput = let
   autocomplete = jQueryUIAutocomplete 
     jQueryUI 
     (pack "input")
-    (AutocompleteProps (\request response -> let
-      term = getTerm request
-      
-      in response $ term : [pack "aaaaaaaaaaa", pack "bbbb"] ))
+    (AutocompleteProps (\request response -> do
+      let term = getTerm request
+      fetchMachineTypesAutocomplete term response))
   in (element, autocomplete)
