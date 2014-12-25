@@ -6,9 +6,9 @@ module Crm.Component.Autocomplete (
 
 import HaskellReact
 import JQuery 
-import FFI (ffi)
-import "fay-base" Data.Text (pack, Text, unpack)
-import "fay-base" Prelude
+import FFI (ffi, Defined(Defined))
+import "fay-base" Data.Text (pack, Text, unpack, (<>))
+import "fay-base" Prelude hiding (id)
 
 import qualified HaskellReact.Tag.Input as I
 
@@ -33,14 +33,17 @@ jQueryUIAutocomplete :: JQueryUI
                      -> Fay ()
 jQueryUIAutocomplete = ffi " %1(%2).autocomplete(%3) "
 
-autocompleteInput :: (DOMElement, Fay ())
-autocompleteInput = let 
+autocompleteInput :: Attributes -- ^ attributes to the input field
+                  -> Text -- ^ id of the element
+                  -> I.InputAttributes
+                  -> (DOMElement, Fay ())
+autocompleteInput attrs elementId inputAttrs = let 
   element = I.input
-    mkAttrs
-    I.mkInputAttrs
+    (attrs { id = Defined elementId })
+    inputAttrs
   autocomplete = jQueryUIAutocomplete 
     jQueryUI 
-    (pack "input")
+    (pack "#" <> elementId)
     (AutocompleteProps (\request response -> do
       let term = getTerm request
       fetchMachineTypesAutocomplete term response))

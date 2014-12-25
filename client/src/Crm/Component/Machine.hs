@@ -115,20 +115,24 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' e
     machine'' = machine' { M.machineType = machineType' }
     in setMachine machine''
   machineType = M.machineType machine'
+  inputNormalAttrs = class' "form-control"
   row' labelText value' onChange' = let
-    attrs = class' "form-control"
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
-    input = editableN inputAttrs attrs editing (text2DOM $ pack value')
+    input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
     in row labelText input
-  (machineTypeInput, afterRenderCallback) = autocompleteInput
+  (machineTypeInput, afterRenderCallback) = 
+    autocompleteInput 
+      inputNormalAttrs
+      "machine-type-autocomplete"
+      (II.mkInputAttrs { II.defaultValue = Defined (pack $ MT.machineTypeName machineType) })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
         row
           "Typ zařízení" 
-          machineTypeInput ,
+          (if editing then machineTypeInput else (text2DOM $ pack $ MT.machineTypeName machineType)),
         row'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
