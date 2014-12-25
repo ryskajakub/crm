@@ -18,7 +18,7 @@ import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 import Opaleye.Order (orderBy, asc, limit, desc)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Operators ((.==), (.&&), restrict)
+import Opaleye.Operators ((.==), (.&&), restrict, lower)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
@@ -143,13 +143,13 @@ runMachineUpdate (machineId', machine') connection =
           pgDay $ ymdToDay $ M.machineOperationStartDate machine',
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
-like :: Column a -> Column a -> Column PGBool
+like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike
 
 machineTypesQuery' :: String -> Query DBText
 machineTypesQuery' mid = proc () -> do
   (_,name',_,_) <- machineTypesQuery -< ()
-  restrict -< (name' `like` pgString ("%" ++ (intersperse '%' mid) ++ "%"))
+  restrict -< (lower name' `like` (lower $ pgString ("%" ++ (intersperse '%' mid) ++ "%")))
   returnA -< name'
 
 companyWithMachinesQuery :: Int -> Query (CompaniesTable)
