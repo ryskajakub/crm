@@ -44,14 +44,8 @@ data NavigationState =
     plennedUpkeeps :: [(Int, U.Upkeep, Int, C.Company)] }
 
 data AppState = AppState {
-  navigation :: NavigationState , 
-  companies :: [(Int, C.Company)] , 
-  machines :: [(Int, M.Machine)] , 
-  upkeeps :: [(Int, U.Upkeep)] }
+  navigation :: NavigationState }
 
 defaultAppState :: AppState
 defaultAppState = AppState {
-  navigation = FrontPage [] , 
-  companies = [] , 
-  machines = [] , 
-  upkeeps = [] }
+  navigation = FrontPage [] }

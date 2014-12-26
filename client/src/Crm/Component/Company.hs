@@ -53,7 +53,7 @@ companiesList router companies' = let
     section $
       let
         buttonProps = BTN.buttonProps {
-          BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
+          BTN.onClick = Defined $ const $ R.navigate R.frontPage router }
         in BTN.button' buttonProps [
           G.plus , 
           text2DOM "Přidat firmu" ] ,
@@ -69,11 +69,8 @@ companyNew :: R.CrmRouter
 companyNew router var company' = let
   editing' = True
   saveHandler =
-    createCompany company' (\newId ->
-      modify var (\appState -> let
-        companies' = D.companies appState
-        newCompanies = companies' ++ [(newId, company')]
-        in appState { D.companies = newCompanies }))
+    createCompany company' (const $
+      R.navigate R.frontPage router )
   machines' = []
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
@@ -89,12 +86,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var idCompany machines' = let
   (id', company') = idCompany
-  saveHandler = do
-    modify var (\appState -> let
-      companies' = D.companies appState
-      (before, after) = break (\(cId, _) -> cId == id') companies'
-      newCompanies = before ++ [idCompany] ++ tail after
-      in appState { D.companies = newCompanies })
+  saveHandler =
     R.navigate R.frontPage router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of

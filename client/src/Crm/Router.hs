@@ -29,7 +29,7 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany )
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany, fetchUpkeeps)
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -96,18 +96,14 @@ startRouter appVar = let
           )
         _ -> return ()
   ),(
-    "companies/:id/new-machine", \params -> do
-      appState <- get appVar
-      let
-        companies' = D.companies appState
-        newAppState = case (parseSafely $ head params) of
-          Just(companyId') | isJust $ lookup companyId' companies' -> let
-            newMachine' = M.newMachine companyId'
-            in D.MachineNew (newMachine',MT.newMachineType) False
-          _ -> D.NotFound
-      modify appVar (\appState' -> appState' { D.navigation = newAppState })
+    "companies/:id/new-machine", \params ->
+      withCompany
+        params
+        (\companyId (company, machines) -> let
+          newMachine = M.newMachine companyId
+          in D.MachineNew (newMachine, MT.newMachineType) False)
   ),(
-    "companies/:id/new-maintenance", \params -> do
+    "companies/:id/new-maintenance", \params ->
       withCompany
         params
         (\companyId (company, machines) -> let
@@ -116,22 +112,13 @@ startRouter appVar = let
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
           in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
   ),(
-    "companies/:id/maintenances", \params -> do
-      appState <- get appVar
-      let
-        companies' = D.companies appState
-        newAppState = case (parseSafely $ head params) of
-          Just(companyId') | isJust $ lookup companyId' companies' -> let
-            companyUpkeeps = filter (\(_,u) -> case u of
-              U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) _ -> 
-                case lookup machineId (D.machines appState) of
-                  Just(M.Machine companyId'' _ _ _) -> companyId'' == companyId'
-                  _ -> False
-              _ -> False
-              ) (D.upkeeps appState)
-            in D.UpkeepHistory companyUpkeeps
-          _ -> D.NotFound
-      modify appVar (\appState' -> appState' { D.navigation = newAppState })
+    "companies/:id/maintenances", \params ->
+      case (parseSafely $ head params) of
+        Just(companyId) -> 
+          fetchUpkeeps companyId (\upkeeps -> let
+            ns = D.UpkeepHistory upkeeps 
+            in modify' ns)
+        _ -> modify' D.NotFound
   ),(
     "machines/:id", \params -> let
       maybeId = parseSafely $ head params

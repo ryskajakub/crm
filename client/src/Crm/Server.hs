@@ -2,8 +2,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Server (
-  fetchCompanies ,
-  fetchMachines, fetchMachine , 
+  fetchMachine , 
   fetchUpkeeps , 
   createCompany , 
   createMachine , 
@@ -39,17 +38,14 @@ fetchMachineTypesAutocomplete text callback = do
     (callback . items)
     (const $ const $ const $ return ())
 
-fetchCompanies :: ([(Int, C.Company)] -> Fay ())
-               -> Fay ()
-fetchCompanies var = fetch var (pack A.companiesClient)
-
-fetchMachines :: ([(Int, M.Machine)] -> Fay ())
-              -> Fay ()
-fetchMachines var = fetch var (pack A.machinesClient)
-
-fetchUpkeeps :: ([(Int, U.Upkeep)] -> Fay ())
+fetchUpkeeps :: Int -- ^ company id
+             -> ([(Int, U.Upkeep)] -> Fay ()) -- ^ callback
              -> Fay ()
-fetchUpkeeps var = fetch var (pack A.upkeepsClient)
+fetchUpkeeps companyId callback = 
+  JQ.ajax
+    (pack "/api/v1.0.0/companies/" <> showInt companyId <> pack "/upkeeps/")
+    (callback . items)
+    (const $ const $ const $ return ())
 
 fetchMachine :: Int -- ^ machine id
              -> ((M.Machine, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
