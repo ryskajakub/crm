@@ -59,6 +59,8 @@ import qualified Crm.Shared.YearMonthDay as D
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
 
 import Fay.Convert (showToFay, readFromFay')
+import Fay.FFI (Nullable(Nullable, Null))
+
 import Safe (readMay, minimumMay)
 import Generics.Regular
 
@@ -550,8 +552,8 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,machineType) -> do
     rows <- liftIO $ runSingleMachineTypesQuery machineType conn
     idToMachineType <- case rows of
-      (mtId, mtName, m3, m4) : xs | null xs -> return $ (mtId, MT.MachineType mtName m3 m4)
-      [] -> throwError NotFound
+      (mtId, mtName, m3, m4) : xs | null xs -> return $ [ (mtId, MT.MachineType mtName m3 m4) ]
+      [] -> return []
       _ -> throwError NotFound
     return idToMachineType))
 
