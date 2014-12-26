@@ -3,7 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Component.Upkeep (
+module Crm.Page.Upkeep (
   upkeepNew ,
   plannedUpkeeps ) where
 

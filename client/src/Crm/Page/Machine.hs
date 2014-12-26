@@ -3,7 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Component.Machine (
+module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 

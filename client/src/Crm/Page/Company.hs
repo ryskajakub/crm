@@ -3,7 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Component.Company (
+module Crm.Page.Company (
   companiesList , 
   companyDetail , 
   companyNew ) where

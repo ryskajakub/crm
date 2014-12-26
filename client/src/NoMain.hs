@@ -9,10 +9,10 @@ import Data.Var (Var, newVar, subscribeAndRead, modify, waitFor)
 import Crm.Router (startRouter)
 import Crm.Server (fetchUpkeeps)
 import qualified Crm.Component.Navigation as Navigation
-import Crm.Component.Company (companiesList, companyDetail, companyNew)
-import Crm.Component.Machine (machineNew, machineDetail)
-import Crm.Component.Upkeep (upkeepNew, plannedUpkeeps)
-import Crm.Component.UpkeepHistory (upkeepHistory)
+import Crm.Page.Company (companiesList, companyDetail, companyNew)
+import Crm.Page.Machine (machineNew, machineDetail)
+import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps)
+import Crm.Page.UpkeepHistory (upkeepHistory)
 import qualified Crm.Data as D
 
 main' :: Fay ()

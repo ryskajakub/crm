@@ -3,7 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Component.UpkeepHistory (
+module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
 import "fay-base" Data.Text (fromString, pack)
