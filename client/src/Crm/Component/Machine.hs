@@ -151,12 +151,13 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' m
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
           (isNothing machineTypeId) ,
-        row'
+        row''
           "Interval servisu"
           (unpack $ showInt $ MT.upkeepPerMileage machineType)
           (eventValue >=> (\str -> case parseSafely str of
             Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
-            Nothing -> return ())) ,
+            Nothing -> return ())) 
+          (isNothing machineTypeId) ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let
