@@ -263,13 +263,13 @@ runMachinesInCompanyQuery' :: Int -> Connection ->
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
-runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, MT.MachineType)]
+runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
-convertExpanded = (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-  (mId, M.Machine cId (dayToYmd mOs) m3 m4, (MT.MachineType mtN mtMf mtI)))
+convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf,mtI)) ->
+  (mId, M.Machine cId (dayToYmd mOs) m3 m4, mtId, (MT.MachineType mtN mtMf mtI)))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
   -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
@@ -280,7 +280,7 @@ runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
-runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, MT.MachineType)]
+runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ map convertExpanded rows
@@ -406,9 +406,9 @@ instance Ord D.YearMonthDay where
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  ask >>= (\conn -> forM rows (\(companyId,cName,cPlant) -> do
+  ask >>= (\conn -> forM rows (\(companyId, cName, cPlant) -> do
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    nextDays <- forM machines (\(machineId, machine, machineType) -> do
+    nextDays <- forM machines (\(machineId, machine, _, machineType) -> do
       nextServiceDay <- nextService machineId machine machineType id
       return nextServiceDay )
     return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
@@ -524,11 +524,11 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine, machineType) <- case rows of
+      (machineId, machine, machineTypeId, machineType) <- case rows of
         row : xs | null xs -> return row
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
       ymd <- nextService machineId machine machineType fst
-      return (machine, machineType, ymd)
+      return (machine, machineTypeId, machineType, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies

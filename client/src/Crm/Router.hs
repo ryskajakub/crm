@@ -101,7 +101,7 @@ startRouter appVar = let
         params
         (\companyId (company, machines) -> let
           newMachine = M.newMachine companyId
-          in D.MachineNew (newMachine, MT.newMachineType) False)
+          in D.MachineNew newMachine MT.newMachineType Nothing False)
   ),(
     "companies/:id/new-maintenance", \params ->
       withCompany
@@ -123,8 +123,8 @@ startRouter appVar = let
     "machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId' (\(machine, machineType, machineNextService) ->
-          modify' $ D.MachineDetail (machine, machineType) False False machineId' machineNextService)
+        Just(machineId') -> fetchMachine machineId' (\(machine, machineTypeId, machineType, machineNextService) ->
+          modify' $ D.MachineDetail machine machineType machineTypeId False False machineId' machineNextService)
         _ -> modify' D.NotFound
   ),(
     "planned", const $

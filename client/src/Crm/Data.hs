@@ -24,10 +24,14 @@ data NavigationState =
     company :: C.Company } | 
   NotFound | 
   MachineNew {
-    machine :: (M.Machine, MT.MachineType) , 
+    machine :: M.Machine ,
+    machineType :: MT.MachineType , 
+    maybeMachineTypeId :: Maybe Int ,
     operationStartCalendarOpen :: Bool } | 
   MachineDetail {
-    machine :: (M.Machine, MT.MachineType) , 
+    machine :: M.Machine ,
+    machineType :: MT.MachineType , 
+    machineTypeId :: Int ,
     operationStartCalendarOpen :: Bool , 
     formState :: Bool , 
     machineId :: Int , 

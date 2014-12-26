@@ -45,37 +45,40 @@ machineDetail :: Bool
               -> CrmRouter
               -> Var D.AppState
               -> Bool
-              -> (M.Machine, MT.MachineType)
+              -> M.Machine
+              -> Int -- id of the machine type
+              -> MT.MachineType
               -> Int -- id of the machine
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
-machineDetail editing router appVar calendarOpen machine machineId nextService = 
-  machineDisplay editing button router appVar calendarOpen machine extraRow
+machineDetail editing router appVar calendarOpen machine machineId machineType machineTypeId nextService = 
+  machineDisplay editing button router appVar calendarOpen machine machineType (Just machineTypeId) extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineDetail m _ _ id' ns -> D.MachineDetail m False True id' ns
+          D.MachineDetail m mt mtid _ _ id' ns -> D.MachineDetail m mt mtid False True id' ns
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine (machineId, fst machine) (return ())
+      editMachineAction = updateMachine machineId machine (return ())
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 
 machineNew :: CrmRouter
            -> Var D.AppState
            -> Bool
-           -> (M.Machine, MT.MachineType)
+           -> M.Machine
+           -> MT.MachineType
            -> (DOMElement, Fay ())
-machineNew router appState calendarOpen machine' = 
-  machineDisplay True buttonRow router appState calendarOpen machine' []
+machineNew router appState calendarOpen machine' machineType = 
+  machineDisplay True buttonRow router appState calendarOpen machine' machineType Nothing []
     where
-      saveNewMachine = createMachine machine' (const $ navigate frontPage router)
+      saveNewMachine = createMachine machine' machineType (const $ navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 row :: Renderable a
@@ -92,21 +95,23 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> CrmRouter
                -> Var D.AppState
                -> Bool
-               -> (M.Machine, MT.MachineType)
+               -> M.Machine
+               -> MT.MachineType
+               -> Maybe Int -- ^ machine type id
                -> [DOMElement]
                -> (DOMElement, Fay ())
-machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine', machineType) extraRow = let
+machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' machineType machineTypeId extraRow = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew (_,mt) _) -> mn { D.machine = (modifiedMachine,mt) }
-      md @ (D.MachineDetail (_,mt) _ _ _ _) -> md { D.machine = (modifiedMachine,mt) }
+      mn @ (D.MachineNew _ _ _ _) -> mn { D.machine = modifiedMachine }
+      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machine = modifiedMachine }
       _ -> D.navigation appState })
-  setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
+  setMachineType :: MT.MachineType -> Fay ()
   setMachineType modifiedMachineType = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew (m,mt) _) -> mn { D.machine = (m,modifiedMachineType mt) }
-      md @ (D.MachineDetail (m,mt) _ _ _ _) -> md { D.machine = (m,modifiedMachineType mt) }
+      mn @ (D.MachineNew _ _ _ _) -> mn { D.machineType = modifiedMachineType }
+      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineType = modifiedMachineType }
       _ -> D.navigation appState })
   inputNormalAttrs = class' "form-control"
   row' labelText value' onChange' = let
@@ -120,8 +125,9 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine',
       inputNormalAttrs
       (\text -> case text of 
         text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId, machineType) -> putStrLn $ show machineType
-          Nothing -> putStrLn $ unpack "nothing" )
+          Just (machineTypeId', machineType) -> do
+            setMachineType machineType
+          Nothing -> return () )
         _ -> return () )
       "machine-type-autocomplete"
       (II.mkInputAttrs {
@@ -135,12 +141,12 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine',
         row'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
-          (eventString >=> (\string -> setMachineType (\mt -> mt {MT.machineTypeManufacturer = string}))) ,
+          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string }))) ,
         row'
           "Interval servisu"
           (unpack $ showInt $ MT.upkeepPerMileage machineType)
           (eventValue >=> (\str -> case parseSafely str of
-            Just(int) -> setMachineType (\mt -> mt {MT.upkeepPerMileage = int })
+            Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
             Nothing -> return ())) ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
@@ -156,7 +162,7 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine',
                   M.machineOperationStartDate = YMD.YearMonthDay year month day precision' }
             setPickerOpenness open = modify appVar (\appState -> appState {
               D.navigation = case D.navigation appState of
-                nm @ (D.MachineNew _ _) -> nm { D.operationStartCalendarOpen = open }
+                nm @ (D.MachineNew _ _ _ _) -> nm { D.operationStartCalendarOpen = open }
                 _ -> D.navigation appState })
             in CI.dayInput editing y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
         row'
