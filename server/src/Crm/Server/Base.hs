@@ -170,6 +170,16 @@ machinesInCompanyQuery companyId = proc () -> do
   restrict -< (machineTypeFK .== machineTypePK)
   returnA -< (m, mt)
 
+companyUpkeepsQuery :: Int -> Query UpkeepTable
+companyUpkeepsQuery companyId = proc () -> do
+  m @ (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
+  um @ (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  u @ (upkeepPK,_,_) <- upkeepQuery -< ()
+  restrict -< (companyFK .== pgInt4 companyId)
+  restrict -< (machinePK .== machineFK)
+  restrict -< (upkeepFK .== upkeepPK)
+  returnA -< (u)
+
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
@@ -263,6 +273,10 @@ runExpandedMachinesQuery' :: Maybe Int -> Connection
   -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
+
+runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
+runCompanyUpkeepsQuery companyId connection = 
+  runQuery connection (companyUpkeepsQuery companyId)
 
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
@@ -519,6 +533,14 @@ machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)
 
+companyUpkeepsListing :: ListHandler IdDependencies
+companyUpkeepsListing = mkListing (jsonO . someO) (const $
+  ask >>= \(conn,id') -> case id' of
+    Just(id'') -> do
+      rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
+      return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) [] u2)) rows
+    _ -> throwError $ IdentError $ ParseError "there is no such record with that id" )
+
 machineTypesListing :: String -> ListHandler Dependencies
 machineTypesListing mid = mkListing (jsonO . someO) (const $ 
   ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
@@ -639,10 +661,11 @@ upkeepTopLevelResource = mkResourceId {
   name = A.upkeep ,
   schema = upkeepSchema }
 
-upkeepResource :: Resource IdDependencies IdDependencies Void Void Void
+upkeepResource :: Resource IdDependencies IdDependencies Void () Void
 upkeepResource = mkResourceId {
   name = A.upkeep ,
-  schema = S.noListing $ S.named [] ,
+  schema = S.withListing () $ S.named [] ,
+  list = const $ companyUpkeepsListing ,
   create = Just createUpkeepHandler }
 
 router' :: Router Dependencies Dependencies
