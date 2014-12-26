@@ -47,7 +47,7 @@ import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, 
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
-import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError))
+import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError, NotFound))
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -236,6 +236,16 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
+singleMachineTypesQuery :: String -> Query MachineTypesTable
+singleMachineTypesQuery machineTypeName = proc () -> do
+  machineTypeNameRow @ (_,name',_,_) <- machineTypesQuery -< ()
+  restrict -< (name' .== pgString machineTypeName)
+  returnA -< machineTypeNameRow
+
+runSingleMachineTypesQuery :: String -> Connection -> IO[(Int, String, String, Int)]
+runSingleMachineTypesQuery machineTypeName connection = 
+  runQuery connection (singleMachineTypesQuery machineTypeName)
+
 runMachinesInCompanyQuery' :: Int -> Connection ->
   IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runMachinesInCompanyQuery' companyId connection =
@@ -288,6 +298,7 @@ withConnection runQ = do
 
 type Dependencies = (ReaderT Connection IO :: * -> *)
 type IdDependencies = (ReaderT (Connection, Maybe Int) IO :: * -> *)
+type StringIdDependencies = (ReaderT (Connection, String) IO :: * -> *)
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
@@ -330,6 +341,8 @@ instance FromJSON C.Company where
 instance JS.JSONSchema C.Company where
   schema = gSchema
 instance ToJSON U.Upkeep where
+  toJSON = fromJust . showToFay
+instance ToJSON MT.MachineType where
   toJSON = fromJust . showToFay
 
 instance FromJSON M.Machine where
@@ -385,8 +398,10 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [("planned", S.listing UpkeepsP
 schema'' :: S.Schema UrlId () Void
 schema'' = S.withListing () (S.unnamedSingle readMay)
 
-autocompleteSchema :: S.Schema Void String Void
-autocompleteSchema = S.noListing $ S.named [("autocomplete", S.listingBy id)]
+autocompleteSchema :: S.Schema String String Void
+autocompleteSchema = S.noListing $ S.named [(
+  "autocomplete", S.listingBy id ),(
+  "by-type", S.singleBy id)]
 
 companySchema :: S.Schema UrlId () Void
 companySchema = S.withListing () $ S.unnamedSingle readMay
@@ -405,10 +420,10 @@ createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
 
-prepareReader :: ReaderT (Connection, Maybe Int) IO a
-              -> ReaderT (Maybe Int) (ReaderT Connection IO) a
+prepareReader :: ReaderT (Connection, b) IO a
+              -> ReaderT b (ReaderT Connection IO) a
 prepareReader reader = let
-  outer = ask :: Reader (Maybe Int) (Maybe Int)
+  outer = ask
   in mapReaderT (\maybeIntIdentity ->
     let
       maybeInt = runIdentity maybeIntIdentity
@@ -492,6 +507,16 @@ machineListing = mkListing (jsonO . someO) (const $
 machineTypesListing :: String -> ListHandler Dependencies
 machineTypesListing mid = mkListing (jsonO . someO) (const $ 
   ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
+
+machineTypesSingle :: Handler StringIdDependencies
+machineTypesSingle = mkConstHandler (jsonO . someO) (
+  ask >>= (\(conn,machineType) -> do
+    rows <- liftIO $ runSingleMachineTypesQuery machineType conn
+    idToMachineType <- case rows of
+      (mtId, mtName, m3, m4) : xs | null xs -> return $ (mtId, MT.MachineType mtName m3 m4)
+      [] -> throwError NotFound
+      _ -> throwError NotFound
+    return idToMachineType))
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
@@ -583,10 +608,11 @@ machineResource = (mkResourceReaderWith prepareReader) {
   name = A.machines ,
   schema = schema'' }
 
-machineTypeResource :: Resource Dependencies Dependencies Void String Void
-machineTypeResource = mkResourceId {
+machineTypeResource :: Resource Dependencies StringIdDependencies String String Void
+machineTypeResource = (mkResourceReaderWith prepareReader) {
   name = A.machineTypes ,
   list = machineTypesListing ,
+  get = Just machineTypesSingle ,
   schema = autocompleteSchema }
 
 upkeepTopLevelResource :: Resource Dependencies Dependencies Void UpkeepsListing Void
