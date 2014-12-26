@@ -251,19 +251,20 @@ runMachinesInCompanyQuery' :: Int -> Connection ->
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
-runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine)]
+runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, MT.MachineType)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
 convertExpanded = (\((mId,cId,_,mOs,m3,m4),(_,mtN,mtMf,mtI)) ->
-  (mId, M.Machine (MT.MachineType mtN mtMf mtI) cId (dayToYmd mOs) m3 m4))
+  (mId, M.Machine cId (dayToYmd mOs) m3 m4, (MT.MachineType mtN mtMf mtI)))
 
-runExpandedMachinesQuery' :: Maybe Int -> Connection -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+runExpandedMachinesQuery' :: Maybe Int -> Connection 
+  -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
-runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine)]
+runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ map convertExpanded rows
@@ -324,6 +325,13 @@ instance FromJSON UM.UpkeepMachine where
     Left e -> fail e
     Right ok -> return ok
 
+fayInstance value = case readFromFay' value of
+  Left e -> fail e
+  Right ok -> return ok
+
+instance FromJSON MT.MachineType where 
+  parseJSON = fayInstance
+
 instance JS.JSONSchema U.Upkeep where
   schema = gSchema
 instance JS.JSONSchema UM.UpkeepMachine where
@@ -362,6 +370,8 @@ instance JS.JSONSchema MT.MachineType where
   schema = gSchema
 instance JS.JSONSchema Char where
   schema = gSchema
+instance JS.JSONSchema (Either MT.MachineType Int) where
+  schema = gSchema
 
 instance Eq D.YearMonthDay where
   D.YearMonthDay y m d _ == D.YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
@@ -380,8 +390,8 @@ listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
   ask >>= (\conn -> forM rows (\(companyId,cName,cPlant) -> do
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    nextDays <- forM machines (\(machineId, machine) -> do
-      nextServiceDay <- nextService machineId machine id
+    nextDays <- forM machines (\(machineId, machine, machineType) -> do
+      nextServiceDay <- nextService machineId machine machineType id
       return nextServiceDay )
     return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
 
@@ -464,9 +474,13 @@ machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
       return ()
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
-nextService :: Int -> M.Machine -> (a -> Connection) -> ErrorT (Reason ()) (ReaderT a IO) (D.YearMonthDay)
-nextService machineId (M.Machine (MT.MachineType _ _ upkeepPerMileage)
-  _ operationStartDate _ mileagePerYear) getConn = ask >>= (\a -> do
+nextService :: Int 
+            -> M.Machine 
+            -> MT.MachineType 
+            -> (a -> Connection) 
+            -> ErrorT (Reason ()) (ReaderT a IO) (D.YearMonthDay)
+nextService machineId (M.Machine _ operationStartDate _ mileagePerYear) 
+  (MT.MachineType _ _ upkeepPerMileage) getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
@@ -492,11 +506,10 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine @ (M.Machine (MT.MachineType _ _ _)
-        _ _ _ _)) <- case rows of
-        (mId,m) : xs | null xs -> return (mId,m)
+      (machineId, machine, machineType) <- case rows of
+        row : xs | null xs -> return row
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
-      ymd <- nextService machineId machine fst
+      ymd <- nextService machineId machine machineType fst
       return (machine, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
@@ -563,18 +576,19 @@ addUpkeep connection upkeep = do
 
 addMachine :: Connection
            -> M.Machine
+           -> Either MT.MachineType Int
            -> IO Int -- ^ id of newly created machine
-addMachine connection machine = do
-  machineTypeId <- case M.machineType machine of
-    MT.MachineTypeId id' -> return $ id'
-    MT.MachineType name' manufacturer upkeepPerMileage -> do
+addMachine connection machine machineType = do
+  machineTypeId <- case machineType of
+    Right id' -> return $ id'
+    Left (MT.MachineType name' manufacturer upkeepPerMileage) -> do
       newMachineTypeId <- runInsertReturning
         connection
         machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
         (\(id',_,_,_) -> id')
       return $ head newMachineTypeId -- todo safe
   let
-    M.Machine _ companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
+    M.Machine companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
   machineId <- runInsertReturning
     connection
     machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay $ ymdToDay machineOperationStartDate',
@@ -583,9 +597,9 @@ addMachine connection machine = do
   return $ head machineId -- todo safe
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newMachine ->
+createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine,machineType) ->
   ask >>= \(connection, maybeInt) -> case maybeInt of
-    Just(int) -> liftIO $ addMachine connection (newMachine{M.companyId = int})
+    Just(int) -> liftIO $ addMachine connection newMachine machineType
     _ -> throwError $ InputError $ ParseError $ "provided id is not a number" )
 
 createUpkeepHandler :: Handler IdDependencies

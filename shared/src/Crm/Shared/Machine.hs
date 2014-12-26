@@ -18,7 +18,6 @@ import "fay-base" Prelude
 #endif
 
 data Machine = Machine {
-  machineType :: MachineType ,
   companyId :: Int ,
   machineOperationStartDate :: YearMonthDay ,
   initialMileage :: Int ,
@@ -29,7 +28,6 @@ data Machine = Machine {
 
 newMachine :: Int -> Machine
 newMachine companyId' = Machine {
-  machineType = newMachineType ,
   companyId = companyId' ,
   machineOperationStartDate = YearMonthDay 1970 1 1 YearPrecision ,
   initialMileage = 0 ,
