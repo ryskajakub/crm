@@ -5,7 +5,7 @@ module Crm.Component.Autocomplete (
   autocompleteInput ) where
 
 import HaskellReact
-import JQuery 
+import JQuery hiding (select)
 import FFI (ffi, Defined(Defined))
 import "fay-base" Data.Text (pack, Text, unpack, (<>))
 import "fay-base" Prelude hiding (id)
@@ -18,10 +18,18 @@ data JQueryUI
 
 data Request
 
+data UIEvent
+
+data UI
+
 getTerm :: Request -> Text
 getTerm = ffi " %1['term'] "
 
+getUIValue :: UI -> Text
+getUIValue = ffi " %1['item']['value'] "
+
 data AutocompleteProps = AutocompleteProps {
+  select :: UIEvent -> UI -> Fay () ,
   source :: Request -> ([Text] -> Fay ()) -> Fay () }
 
 jQueryUI :: JQueryUI
@@ -34,17 +42,22 @@ jQueryUIAutocomplete :: JQueryUI
 jQueryUIAutocomplete = ffi " %1(%2).autocomplete(%3) "
 
 autocompleteInput :: Attributes -- ^ attributes to the input field
+                  -> (Text -> Fay ()) -- ^ handler for the on change event
                   -> Text -- ^ id of the element
                   -> I.InputAttributes
                   -> (DOMElement, Fay ())
-autocompleteInput attrs elementId inputAttrs = let 
+autocompleteInput attrs onChange elementId inputAttrs = let 
+  onSelect _ ui = onChange (getUIValue ui)
   element = I.input
     (attrs { id = Defined elementId })
-    inputAttrs
+    (inputAttrs {
+      I.onChange = Defined $ eventValue >=> onChange })
   autocomplete = jQueryUIAutocomplete 
     jQueryUI 
     (pack "#" <> elementId)
-    (AutocompleteProps (\request response -> do
-      let term = getTerm request
-      fetchMachineTypesAutocomplete term response))
+    (AutocompleteProps { 
+      select = onSelect , 
+      source = \request response -> do
+        let term = getTerm request
+        fetchMachineTypesAutocomplete term response })
   in (element, autocomplete)
