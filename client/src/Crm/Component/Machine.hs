@@ -9,7 +9,7 @@ module Crm.Component.Machine (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Maybe (whenJust)
+import "fay-base" Data.Maybe (whenJust, isNothing)
 import Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 
@@ -113,13 +113,20 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' m
       mn @ (D.MachineNew _ _ _ _) -> mn { D.machineType = modifiedMachineType }
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineType = modifiedMachineType }
       _ -> D.navigation appState })
-  inputNormalAttrs = class' "form-control"
-  row' labelText value' onChange' = let
+  setMachineTypeId :: Int -> Fay ()
+  setMachineTypeId machineTypeId' = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of
+      mn @ (D.MachineNew _ _ _ _) -> mn { D.maybeMachineTypeId = Just machineTypeId' }
+      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineTypeId = machineTypeId' }
+      _ -> D.navigation appState })
+  row'' labelText value' onChange' editing' = let
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
-    input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
+    input = editableN inputAttrs inputNormalAttrs editing' (text2DOM $ pack value')
     in row labelText input
+  inputNormalAttrs = class' "form-control"
+  row' labelText value' onChange' = row'' labelText value' onChange' editing
   (machineTypeInput, afterRenderCallback) = 
     autocompleteInput 
       inputNormalAttrs
@@ -127,6 +134,7 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' m
         text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId', machineType) -> do
             setMachineType machineType
+            setMachineTypeId machineTypeId'
           Nothing -> return () )
         _ -> return () )
       "machine-type-autocomplete"
@@ -138,10 +146,11 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' m
         row
           "Typ zařízení" 
           (if editing then machineTypeInput else (text2DOM $ pack $ MT.machineTypeName machineType)),
-        row'
+        row''
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
-          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string }))) ,
+          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
+          (isNothing machineTypeId) ,
         row'
           "Interval servisu"
           (unpack $ showInt $ MT.upkeepPerMileage machineType)
