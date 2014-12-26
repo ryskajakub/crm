@@ -329,6 +329,8 @@ fayInstance value = case readFromFay' value of
   Left e -> fail e
   Right ok -> return ok
 
+instance FromJSON MT.MyEither where
+  parseJSON = fayInstance
 instance FromJSON MT.MachineType where 
   parseJSON = fayInstance
 
@@ -370,7 +372,7 @@ instance JS.JSONSchema MT.MachineType where
   schema = gSchema
 instance JS.JSONSchema Char where
   schema = gSchema
-instance JS.JSONSchema (Either MT.MachineType Int) where
+instance JS.JSONSchema MT.MyEither where
   schema = gSchema
 
 instance Eq D.YearMonthDay where
@@ -514,8 +516,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO . someO) (const $
-  ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn )
+machineListing = mkListing (jsonO . someO) (const $ do
+  ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)
 
 machineTypesListing :: String -> ListHandler Dependencies
 machineTypesListing mid = mkListing (jsonO . someO) (const $ 
@@ -576,12 +578,12 @@ addUpkeep connection upkeep = do
 
 addMachine :: Connection
            -> M.Machine
-           -> Either MT.MachineType Int
+           -> MT.MyEither
            -> IO Int -- ^ id of newly created machine
 addMachine connection machine machineType = do
   machineTypeId <- case machineType of
-    Right id' -> return $ id'
-    Left (MT.MachineType name' manufacturer upkeepPerMileage) -> do
+    MT.MyInt id' -> return $ id'
+    MT.MyMachineType (MT.MachineType name' manufacturer upkeepPerMileage) -> do
       newMachineTypeId <- runInsertReturning
         connection
         machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)

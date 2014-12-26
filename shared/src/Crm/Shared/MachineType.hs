@@ -25,3 +25,10 @@ data MachineType = MachineType {
 
 newMachineType :: MachineType
 newMachineType = MachineType "" "" (365 * 24)
+
+data MyEither = 
+  MyMachineType MachineType
+  | MyInt Int
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif
