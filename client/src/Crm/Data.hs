@@ -6,6 +6,7 @@ module Crm.Data where
 import "fay-base" Prelude
 
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -18,22 +19,22 @@ data NavigationState =
     companyId :: Int , 
     company :: C.Company , 
     editing :: Bool , 
-    companyMachines :: [(Int, M.Machine)] } | 
+    companyMachines :: [(Int, M.Machine, MT.MachineType)] } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
   MachineNew {
-    machine :: M.Machine , 
+    machine :: (M.Machine, MT.MachineType) , 
     operationStartCalendarOpen :: Bool } | 
   MachineDetail {
-    machine :: M.Machine , 
+    machine :: (M.Machine, MT.MachineType) , 
     operationStartCalendarOpen :: Bool , 
     formState :: Bool , 
     machineId :: Int , 
     machineNextService :: YMD.YearMonthDay } | 
   UpkeepNew {
     upkeep :: U.Upkeep , 
-    upkeepMachines :: [(Int, M.Machine)] , 
+    upkeepMachines :: [(Int, M.Machine, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool , 
     companyId :: Int } | 

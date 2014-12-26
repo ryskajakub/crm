@@ -45,7 +45,7 @@ machineDetail :: Bool
               -> CrmRouter
               -> Var D.AppState
               -> Bool
-              -> M.Machine
+              -> (M.Machine, MT.MachineType)
               -> Int -- id of the machine
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
@@ -63,24 +63,19 @@ machineDetail editing router appVar calendarOpen machine machineId nextService =
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine (machineId, machine) (return ())
+      editMachineAction = updateMachine (machineId, fst machine) (return ())
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 
 machineNew :: CrmRouter
            -> Var D.AppState
            -> Bool
-           -> M.Machine
+           -> (M.Machine, MT.MachineType)
            -> (DOMElement, Fay ())
 machineNew router appState calendarOpen machine' = 
   machineDisplay True buttonRow router appState calendarOpen machine' []
     where
-      saveNewMachine = createMachine machine' (\machineId -> do
-        modify appState (\appState' -> let
-          machines' = D.machines appState'
-          newMachines = machines' ++ [(machineId, machine')]
-          in appState' { D.machines = newMachines })
-        navigate frontPage router )
+      saveNewMachine = createMachine machine' (const $ navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 row :: Renderable a
@@ -97,24 +92,22 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> CrmRouter
                -> Var D.AppState
                -> Bool
-               -> M.Machine
+               -> (M.Machine, MT.MachineType)
                -> [DOMElement]
                -> (DOMElement, Fay ())
-machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' extraRow = let
+machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine', machineType) extraRow = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew _ _) -> mn { D.machine = modifiedMachine }
-      md @ (D.MachineDetail _ _ _ _ _) -> md { D.machine = modifiedMachine }
+      mn @ (D.MachineNew (_,mt) _) -> mn { D.machine = (modifiedMachine,mt) }
+      md @ (D.MachineDetail (_,mt) _ _ _ _) -> md { D.machine = (modifiedMachine,mt) }
       _ -> D.navigation appState })
   setMachineType :: (MT.MachineType -> MT.MachineType) -> Fay ()
-  setMachineType modifyMachineType = let
-    machineType' = case M.machineType machine' of
-      mt @ (MT.MachineType _ _ _) -> modifyMachineType mt
-      x -> x
-    machine'' = machine' { M.machineType = machineType' }
-    in setMachine machine''
-  machineType = M.machineType machine'
+  setMachineType modifiedMachineType = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of
+      mn @ (D.MachineNew (m,mt) _) -> mn { D.machine = (m,modifiedMachineType mt) }
+      md @ (D.MachineDetail (m,mt) _ _ _ _) -> md { D.machine = (m,modifiedMachineType mt) }
+      _ -> D.navigation appState })
   inputNormalAttrs = class' "form-control"
   row' labelText value' onChange' = let
     inputAttrs = II.mkInputAttrs {

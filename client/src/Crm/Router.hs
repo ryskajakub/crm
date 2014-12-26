@@ -32,6 +32,7 @@ import Moment (now, requireMoment, day)
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany )
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
@@ -66,7 +67,19 @@ plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute $ "planned"
 
 startRouter :: Var D.AppState -> Fay CrmRouter
-startRouter appVar = fmap CrmRouter $ BR.startRouter [(
+startRouter appVar = let
+  modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
+  withCompany :: [Text]
+              -> (Int -> (C.Company, [(Int, M.Machine, MT.MachineType)]) -> D.NavigationState)
+              -> Fay ()
+  withCompany params newStateFun = case parseSafely $ head params of
+    Just(companyId) ->
+      fetchCompany companyId (\data' -> let
+        newState = newStateFun companyId data'
+        in modify' newState )
+    _ -> modify' D.NotFound 
+  
+  in fmap CrmRouter $ BR.startRouter [(
   "", const $ fetchFrontPageData (\data' ->
     modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
@@ -90,23 +103,18 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
         newAppState = case (parseSafely $ head params) of
           Just(companyId') | isJust $ lookup companyId' companies' -> let
             newMachine' = M.newMachine companyId'
-            in D.MachineNew newMachine' False
+            in D.MachineNew (newMachine',MT.newMachineType) False
           _ -> D.NotFound
       modify appVar (\appState' -> appState' { D.navigation = newAppState })
   ),(
     "companies/:id/new-maintenance", \params -> do
-      appState <- get appVar
-      let
-        companies' = D.companies appState
-        newAppState = case (parseSafely $ head params) of
-          Just(companyId') | isJust $ lookup companyId' companies' -> let
-            machines' = filter (\(_,machine') -> M.companyId machine' == companyId') (D.machines appState)
-            notCheckedUpkeepMachines = map (\(id',_) -> UM.newUpkeepMachine id') machines'
-            (nowYear, nowMonth, nowDay) = day $ now requireMoment
-            nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
-            in D.UpkeepNew (U.newUpkeep nowYMD) machines' notCheckedUpkeepMachines False companyId'
-          _ -> D.NotFound
-      modify appVar (\appState' -> appState' { D.navigation = newAppState })
+      withCompany
+        params
+        (\companyId (company, machines) -> let
+          notCheckedUpkeepMachines = map (\(machineId,_,_) -> UM.newUpkeepMachine machineId) machines
+          (nowYear, nowMonth, nowDay) = day $ now requireMoment
+          nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
+          in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
   ),(
     "companies/:id/maintenances", \params -> do
       appState <- get appVar
@@ -117,7 +125,7 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
             companyUpkeeps = filter (\(_,u) -> case u of
               U.Upkeep _ ((UM.UpkeepMachine _ machineId) : _) _ -> 
                 case lookup machineId (D.machines appState) of
-                  Just(M.Machine _ companyId'' _ _ _) -> companyId'' == companyId'
+                  Just(M.Machine companyId'' _ _ _) -> companyId'' == companyId'
                   _ -> False
               _ -> False
               ) (D.upkeeps appState)
@@ -126,11 +134,10 @@ startRouter appVar = fmap CrmRouter $ BR.startRouter [(
       modify appVar (\appState' -> appState' { D.navigation = newAppState })
   ),(
     "machines/:id", \params -> let
-      modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId' (\(machine, machineNextService) ->
-          modify' $ D.MachineDetail machine False False machineId' machineNextService)
+        Just(machineId') -> fetchMachine machineId' (\(machine, machineType, machineNextService) ->
+          modify' $ D.MachineDetail (machine, machineType) False False machineId' machineNextService)
         _ -> modify' D.NotFound
   ),(
     "planned", const $

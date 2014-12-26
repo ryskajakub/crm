@@ -512,7 +512,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
         row : xs | null xs -> return row
         _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
       ymd <- nextService machineId machine machineType fst
-      return (machine, ymd)
+      return (machine, machineType, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
 
 machineListing :: ListHandler Dependencies

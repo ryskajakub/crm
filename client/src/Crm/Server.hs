@@ -24,6 +24,7 @@ import qualified JQuery as JQ
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 
@@ -51,7 +52,7 @@ fetchUpkeeps :: ([(Int, U.Upkeep)] -> Fay ())
 fetchUpkeeps var = fetch var (pack A.upkeepsClient)
 
 fetchMachine :: Int -- ^ machine id
-             -> ((M.Machine, YMD.YearMonthDay) -> Fay()) -- ^ callback
+             -> ((M.Machine, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax
@@ -60,7 +61,7 @@ fetchMachine machineId callback =
     (const $ const $ const $ return ())
 
 fetchCompany :: Int -- ^ company id
-             -> ((C.Company, [(Int, M.Machine)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(Int, M.Machine, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
@@ -99,13 +100,13 @@ createCompany company callback = do
   crmApi <- crmApiFacade
   create' crmApi (pack A.companiesClient) company callback
 
-createMachine :: M.Machine
+createMachine :: (M.Machine, MT.MachineType)
               -> (Int -> Fay())
               -> Fay ()
 createMachine machine callback =
   ajax
     machine
-    (pack "/api/v1.0.0/companies/" <> (showInt $ M.companyId machine) <> pack "/machines/")
+    (pack "/api/v1.0.0/companies/" <> (showInt $ M.companyId $ fst machine) <> pack "/machines/")
     (pack "POST")
     callback
 
@@ -126,11 +127,11 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
 updateMachine :: (Int, M.Machine)
               -> Fay ()
               -> Fay ()
-updateMachine (machineId, machine) _ = ajax
+updateMachine (machineId, machine) callback = ajax
   machine
   (pack "/api/v1.0.0/" <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
   (pack "PUT")
-  (const $ return ())
+  (const callback)
 
 createUpkeep :: U.Upkeep
              -> Int -- ^ company id
