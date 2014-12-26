@@ -118,10 +118,11 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine',
   (machineTypeInput, afterRenderCallback) = 
     autocompleteInput 
       inputNormalAttrs
-      (\text -> fetchMachineType text (\maybeTuple ->
-        case maybeTuple of
+      (\text -> case text of 
+        text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId, machineType) -> putStrLn $ show machineType
-          Nothing -> putStrLn $ unpack "nothing" ))
+          Nothing -> putStrLn $ unpack "nothing" )
+        _ -> return () )
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
