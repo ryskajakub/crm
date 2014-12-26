@@ -24,7 +24,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Data as D
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine)
+import Crm.Server (createMachine, updateMachine, fetchMachineType)
 import Crm.Helpers (parseSafely, displayDate)
 import Crm.Router (CrmRouter, navigate, frontPage)
 import Crm.Component.Autocomplete (autocompleteInput)
@@ -119,7 +119,12 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' (machine',
     autocompleteInput 
       inputNormalAttrs
       "machine-type-autocomplete"
-      (II.mkInputAttrs { II.defaultValue = Defined (pack $ MT.machineTypeName machineType) })
+      (II.mkInputAttrs {
+        II.defaultValue = Defined (pack $ MT.machineTypeName machineType) ,
+        II.onChange = Defined $ eventValue >=> \text -> fetchMachineType text (\maybeTuple ->
+          case maybeTuple of
+            Just (machineTypeId, machineType) -> putStrLn $ show machineType
+            Nothing -> putStrLn $ unpack "nothing" )})
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [

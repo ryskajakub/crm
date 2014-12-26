@@ -11,6 +11,7 @@ module Crm.Server (
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
   fetchMachineTypesAutocomplete ,
+  fetchMachineType ,
   fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
@@ -36,6 +37,17 @@ fetchMachineTypesAutocomplete text callback = do
   JQ.ajax
     (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/autocomplete/" <> text)
     (callback . items)
+    (const $ const $ const $ return ())
+
+fetchMachineType :: Text -- ^ machine type exact match
+                 -> (Maybe (Int, MT.MachineType) -> Fay ()) -- ^ callback
+                 -> Fay ()
+fetchMachineType machineTypeName callback = 
+  JQ.ajax
+    (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/by-type/" <> machineTypeName <> pack "/")
+    (\maybeMachineType -> case maybeMachineType of
+      [] -> callback Nothing
+      x:_ -> callback $ Just x)
     (const $ const $ const $ return ())
 
 fetchUpkeeps :: Int -- ^ company id
