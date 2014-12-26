@@ -69,7 +69,7 @@ fetchMachine machineId callback =
     (const $ const $ const $ return ())
 
 fetchCompany :: Int -- ^ company id
-             -> ((C.Company, [(Int, M.Machine, MT.MachineType)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(Int, M.Machine, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax

@@ -70,7 +70,7 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (Int -> (C.Company, [(Int, M.Machine, MT.MachineType)]) -> D.NavigationState)
+              -> (Int -> (C.Company, [(Int, M.Machine, Int, MT.MachineType)]) -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
     Just(companyId) ->
@@ -99,7 +99,7 @@ startRouter appVar = let
     "companies/:id/new-machine", \params ->
       withCompany
         params
-        (\companyId (company, machines) -> let
+        (\companyId (company, _) -> let
           newMachine = M.newMachine companyId
           in D.MachineNew newMachine MT.newMachineType Nothing False)
   ),(
@@ -107,7 +107,7 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (company, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_) -> UM.newUpkeepMachine machineId) machines
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> UM.newUpkeepMachine machineId) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
           in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)

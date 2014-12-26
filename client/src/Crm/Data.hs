@@ -19,7 +19,7 @@ data NavigationState =
     companyId :: Int , 
     company :: C.Company , 
     editing :: Bool , 
-    companyMachines :: [(Int, M.Machine, MT.MachineType)] } | 
+    companyMachines :: [(Int, M.Machine, Int, MT.MachineType)] } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
@@ -38,7 +38,7 @@ data NavigationState =
     machineNextService :: YMD.YearMonthDay } | 
   UpkeepNew {
     upkeep :: U.Upkeep , 
-    upkeepMachines :: [(Int, M.Machine, MT.MachineType)] , 
+    upkeepMachines :: [(Int, M.Machine, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool , 
     companyId :: Int } | 

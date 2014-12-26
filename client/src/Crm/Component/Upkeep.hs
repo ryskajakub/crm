@@ -73,7 +73,7 @@ upkeepNew :: CrmRouter
           -> U.Upkeep
           -> Bool
           -> [UM.UpkeepMachine]
-          -> [(Int, M.Machine, MT.MachineType)] -- ^ machine ids -> machines
+          -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
 upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
@@ -85,7 +85,7 @@ upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines
         Just(x) -> newNavigation { D.notCheckedMachines = x }
         _ -> newNavigation
       in appState' { D.navigation = newNavigation' } )
-  machineRow (machineId, machine, machineType) = let
+  machineRow (machineId, machine, _, machineType) = let
     upkeepMachines = U.upkeepMachines upkeep'
     thisUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') upkeepMachines
     thatUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') notCheckedMachines''
