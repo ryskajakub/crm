@@ -84,7 +84,7 @@ type DBBool = Column PGBool
 type UpkeepTable = (DBInt, DBDate, DBBool)
 type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool)
 
-type UpkeepMachinesTable = (DBInt, DBText, DBInt)
+type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
@@ -115,10 +115,11 @@ upkeepTable = Table "upkeeps" $ p3 (
   required "closed" )
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
-upkeepMachinesTable = Table "upkeep_machines" $ p3 (
+upkeepMachinesTable = Table "upkeep_machines" $ p4 (
   required "upkeep_id" ,
   required "note" ,
-  required "machine_id" )
+  required "machine_id" ,
+  required "recorded_mileage" )
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
@@ -175,7 +176,7 @@ machinesInCompanyQuery companyId = proc () -> do
 companyUpkeepsQuery :: Int -> Query UpkeepTable
 companyUpkeepsQuery companyId = proc () -> do
   m @ (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
-  um @ (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  um @ (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
   u @ (upkeepPK,_,_) <- upkeepQuery -< ()
   restrict -< (companyFK .== pgInt4 companyId)
   restrict -< (machinePK .== machineFK)
@@ -197,7 +198,7 @@ lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
   (machinePK,_,_,_,_,_) <- machinesQuery -< ()
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  upkeepMachineRow @ (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  upkeepMachineRow @ (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
   restrict -< (pgInt4 machineId .== machinePK)
   restrict -< (upkeepPK .== upkeepFK)
   restrict -< (machineFK .== machinePK)
@@ -207,7 +208,7 @@ lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -
 nextMaintenanceQuery :: Int -> Query (UpkeepTable)
 nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
   (machinePK,_,_,_,_,_) <- machinesQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
   restrict -< (upkeepPK .== upkeepFK)
@@ -218,14 +219,14 @@ nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
-  upkeepMachineRow @ (upkeepId',_,_) <- upkeepMachinesQuery -< ()
+  upkeepMachineRow @ (upkeepId',_,_,_) <- upkeepMachinesQuery -< ()
   restrict -< (upkeepId' .== upkeepId)
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  (upkeepFK,_,machineFK) <- upkeepMachinesQuery -< ()
+  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
   (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
   companyRow @ (companyPK,_,_) <- companiesQuery -< ()
   restrict -< (upkeepPK .== upkeepFK)
@@ -288,14 +289,14 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int))]
+runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int, Int))]
 runLastClosedMaintenanceQuery machineId connection =
   runQuery connection (lastClosedMaintenanceQuery machineId)
 
 runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
 runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintenanceQuery machineId)
 
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int))]
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
@@ -567,7 +568,7 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
-  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId)) ->
+  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,_)) ->
     let
       addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) [UM.UpkeepMachine note machineId] upkeepClosed)
       in case acc of
@@ -595,7 +596,8 @@ addUpkeep connection upkeep = do
         upkeepMachinesTable (
           pgInt4 upkeepId ,
           pgString $ UM.upkeepMachineNote upkeepMachine ,
-          pgInt4 $ UM.upkeepMachineMachineId upkeepMachine )
+          pgInt4 $ UM.upkeepMachineMachineId upkeepMachine ,
+          pgInt4 0 )
       return ()
   forM_ (U.upkeepMachines upkeep) insertUpkeepMachine
   return $ head upkeepIds
@@ -671,8 +673,8 @@ upkeepResource = mkResourceId {
   create = Just createUpkeepHandler }
 
 router' :: Router Dependencies Dependencies
-router' = root `compose` (((route companyResource) `compose` route companyMachineResource)
-                                                   `compose` route upkeepResource)
+router' = root `compose` ((route companyResource `compose` route companyMachineResource)
+                                                 `compose` route upkeepResource)
                `compose` route machineResource
                `compose` route upkeepTopLevelResource
                `compose` route machineTypeResource
