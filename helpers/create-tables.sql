@@ -31,7 +31,8 @@ drop table upkeep_machines;
 create table upkeep_machines (
   upkeep_id integer ,
   note varchar (500) ,
-  machine_id integer );
+  machine_id integer ,
+  recorded_mileage integer );
 
 insert into companies(name, plant) values ('Continental', 'I');
 insert into companies(name, plant) values ('České dráhy', 'II');
@@ -60,8 +61,8 @@ insert into upkeeps(date_, closed) values ('1999-01-01', FALSE);
 insert into upkeeps(date_, closed) values ('2001-01-01', FALSE);
 insert into upkeeps(date_, closed) values ('2008-01-01', FALSE);
 
-insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'oprava', 1);
-insert into upkeep_machines(upkeep_id, note, machine_id) values (1, 'pravidelný', 2);
-insert into upkeep_machines(upkeep_id, note, machine_id) values (2, 'oprava 2', 2);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'oprava', 1, 0);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'pravidelný', 2, 0);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (2, 'oprava 2', 2, 0);
 
-insert into upkeep_machines(upkeep_id, note, machine_id) values (3, 'údržba', 4);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (3, 'údržba', 4, 0);
