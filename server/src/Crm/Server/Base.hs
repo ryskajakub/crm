@@ -20,7 +20,7 @@ import Opaleye.Order (orderBy, asc, limit, desc)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==), (.&&), restrict, lower)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString, pgBool)
-import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning)
+import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning, runDelete)
 import qualified Opaleye.Aggregate as AGG
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, runReaderT, mapReaderT)
@@ -592,6 +592,19 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
         _ -> addUpkeep' : acc
     ) [] rows )
 
+insertUpkeepMachines :: Connection -> Int -> [UM.UpkeepMachine] -> IO ()
+insertUpkeepMachines connection upkeepId upkeepMachines = let
+  insertUpkeepMachine upkeepMachine' = do
+    _ <- runInsert
+      connection
+      upkeepMachinesTable (
+        pgInt4 upkeepId ,
+        pgString $ UM.upkeepMachineNote upkeepMachine' ,
+        pgInt4 $ UM.upkeepMachineMachineId upkeepMachine' ,
+        pgInt4 0 )
+    return ()
+  in forM_ upkeepMachines insertUpkeepMachine
+
 updateUpkeep :: Connection
              -> Int
              -> U.Upkeep
@@ -602,6 +615,8 @@ updateUpkeep conn upkeepId upkeep = do
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
     in runUpdate conn upkeepTable readToWrite condition
+  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
+  insertUpkeepMachines conn upkeepId (U.upkeepMachines upkeep)
   return ()
 
 addUpkeep :: Connection
@@ -612,19 +627,9 @@ addUpkeep connection upkeep = do
     connection
     upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
     (\(id',_,_) -> id')
-  let
-    upkeepId = head upkeepIds -- TODO safe
-    insertUpkeepMachine upkeepMachine = do
-      _ <- runInsert
-        connection
-        upkeepMachinesTable (
-          pgInt4 upkeepId ,
-          pgString $ UM.upkeepMachineNote upkeepMachine ,
-          pgInt4 $ UM.upkeepMachineMachineId upkeepMachine ,
-          pgInt4 0 )
-      return ()
-  forM_ (U.upkeepMachines upkeep) insertUpkeepMachine
-  return $ head upkeepIds
+  let upkeepId = head upkeepIds
+  insertUpkeepMachines connection upkeepId (U.upkeepMachines upkeep)
+  return upkeepId
 
 addMachine :: Connection
            -> M.Machine
