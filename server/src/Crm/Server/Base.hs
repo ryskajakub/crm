@@ -449,6 +449,18 @@ createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
 
+prepareReader2 :: ReaderT (Connection, UrlId) IO a
+               -> ReaderT UrlId (ReaderT (Connection, UrlId) IO) a
+prepareReader2 reader = let
+  outer = ask
+  in mapReaderT (\maybeIntId -> let
+    maybeInt = runIdentity maybeIntId
+    inner = ask :: ReaderT (Connection, UrlId) IO (Connection, UrlId)
+    getA = inner >>= (\(conn, _) -> let
+      aa = runReaderT reader (conn, maybeInt) 
+      in lift aa)
+    in getA) outer
+
 prepareReader :: ReaderT (Connection, b) IO a
               -> ReaderT b (ReaderT Connection IO) a
 prepareReader reader = let
@@ -580,6 +592,18 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
         _ -> addUpkeep' : acc
     ) [] rows )
 
+updateUpkeep :: Connection
+             -> Int
+             -> U.Upkeep
+             -> IO ()
+updateUpkeep conn upkeepId upkeep = do
+  _ <- let
+    condition (upkeepId',_,_) = upkeepId' .== pgInt4 upkeepId
+    readToWrite _ =
+      (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
+    in runUpdate conn upkeepTable readToWrite condition
+  return ()
+
 addUpkeep :: Connection
           -> U.Upkeep
           -> IO Int -- ^ id of the upkeep
@@ -630,6 +654,13 @@ createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMach
     Just(int) -> liftIO $ addMachine connection newMachine machineType
     _ -> throwError $ InputError $ ParseError $ "provided id is not a number" )
 
+updateUpkeepHandler :: Handler IdDependencies
+updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\upkeep ->
+  ask >>= \(connection, maybeInt) -> case maybeInt of
+    Just(upkeepId) -> liftIO $ updateUpkeep connection upkeepId upkeep
+    _ -> throwError $ InputError $ ParseError "provided id is not a number" )
+    
+
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
   ask >>= \(connection, maybeInt) -> case maybeInt of
@@ -665,11 +696,12 @@ upkeepTopLevelResource = mkResourceId {
   name = A.upkeep ,
   schema = upkeepSchema }
 
-upkeepResource :: Resource IdDependencies IdDependencies Void () Void
-upkeepResource = mkResourceId {
+upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
+upkeepResource = (mkResourceReaderWith prepareReader2) {
   name = A.upkeep ,
-  schema = S.withListing () $ S.named [] ,
+  schema = S.withListing () $ S.unnamedSingle readMay ,
   list = const $ companyUpkeepsListing ,
+  update = Just updateUpkeepHandler ,
   create = Just createUpkeepHandler }
 
 router' :: Router Dependencies Dependencies
