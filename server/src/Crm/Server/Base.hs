@@ -580,14 +580,15 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
-  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,_)) ->
+  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
     let
-      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) [UM.UpkeepMachine note machineId] upkeepClosed)
+      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) 
+        [UM.UpkeepMachine note machineId recordedMileage] upkeepClosed)
       in case acc of
         [] -> [addUpkeep']
         (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
           modifiedUpkeep = upkeep {
-            U.upkeepMachines = UM.UpkeepMachine note machineId : U.upkeepMachines upkeep }
+            U.upkeepMachines = UM.UpkeepMachine note machineId recordedMileage : U.upkeepMachines upkeep }
           in (upkeepId', modifiedUpkeep) : rest
         _ -> addUpkeep' : acc
     ) [] rows )
@@ -601,7 +602,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
         pgInt4 upkeepId ,
         pgString $ UM.upkeepMachineNote upkeepMachine' ,
         pgInt4 $ UM.upkeepMachineMachineId upkeepMachine' ,
-        pgInt4 0 )
+        pgInt4 $ UM.recordedMileage upkeepMachine' )
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
