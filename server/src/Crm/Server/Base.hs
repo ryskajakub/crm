@@ -67,19 +67,19 @@ import Generics.Regular
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-type CompaniesTable = (Column PGInt4, Column PGText, Column PGText)
-type CompaniesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText)
-
-type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
-type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
-
-type MachineTypesTable = (Column PGInt4, Column PGText, Column PGText, DBInt)
-type MachineTypesWriteTable = (Maybe (Column PGInt4), Column PGText, Column PGText, DBInt)
-
 type DBInt = Column PGInt4
 type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
+
+type CompaniesTable = (DBInt, DBText, DBText)
+type CompaniesWriteTable = (Maybe DBInt, DBText, DBText)
+
+type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
+type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
+
+type MachineTypesTable = (DBInt, DBText, DBText, DBInt)
+type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText, DBInt)
 
 type UpkeepTable = (DBInt, DBDate, DBBool)
 type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool)
