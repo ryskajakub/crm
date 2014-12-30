@@ -13,7 +13,7 @@ module Crm.Server.Base where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 
-import Opaleye.QueryArr (Query)
+import Opaleye.QueryArr (Query, QueryArr)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column)
 import Opaleye.Order (orderBy, asc, limit, desc)
@@ -493,17 +493,13 @@ singleCompany = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, id') -> case id' of
     Just(companyId) -> do
       rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
-      company <- case rows of
-        (_,c2,c3) : xs | null xs -> return $ C.Company c2 c3
-        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+      (_,c2,c3) <- singleRowOrColumn rows
       machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-      return (company, machines)
+      return (C.Company c2 c3, machines)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
-companyResource = (mkResourceReaderWith (\readerConnId ->
-    prepareReader readerConnId
-  )) {
+companyResource = (mkResourceReaderWith prepareReader) {
   list = const listing ,
   create = Just createCompanyHandler ,
   name = A.companies ,
@@ -551,9 +547,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> case id' of
     maybeId @ (Just (_)) -> do
       rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine, machineTypeId, machineType) <- case rows of
-        row : xs | null xs -> return row
-        _ -> throwError $ IdentError $ ParseError "there is no such record with that id"
+      (machineId, machine, machineTypeId, machineType) <- singleRowOrColumn rows
       ymd <- nextService machineId machine machineType fst
       return (machine, machineTypeId, machineType, ymd)
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
@@ -591,15 +585,18 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
         (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
+singleRowOrColumn :: [a] -> ErrorT (Reason ()) (ReaderT (Connection, Maybe Int) IO) a
+singleRowOrColumn result = case result of
+  row : xs | null xs -> return row
+  _ -> throwError $ InputError $ ParseError "more than one record failure"
+
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
   rows <- ask >>= \(conn, upkeepId') -> case upkeepId' of
     Just(upkeepId) -> liftIO $ runSingleUpkeepQuery conn upkeepId 
     _ -> throwError $ InputError $ ParseError $ "not a number" 
-  let result = mapUpkeeps rows 
-  case result of
-    row : xs | null xs -> return $ snd row
-    _ -> throwError $ InputError $ ParseError $ "more records" )
+  let result = mapUpkeeps rows
+  singleRowOrColumn (map snd result))
 
 mapUpkeeps :: [((Int, Day, Bool), (Int, String, Int, Int))] -> [(Int, U.Upkeep)]
 mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
