@@ -216,6 +216,14 @@ nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ 
   restrict -< (pgInt4 machineId .== machinePK)
   returnA -< upkeepRow
 
+expandedUpkeepsQuery2 :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
+expandedUpkeepsQuery2 upkeepId'' = proc () -> do
+  upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
+  upkeepMachineRow @ (upkeepId',_,_,_) <- upkeepMachinesQuery -< ()
+  restrict -< (upkeepId' .== upkeepId)
+  restrict -< (pgInt4 upkeepId'' .== upkeepId)
+  returnA -< (upkeepRow, upkeepMachineRow)
+
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
@@ -301,6 +309,12 @@ runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
+
+runSingleUpkeepQuery :: Connection 
+                     -> Int -- ^ upkeep id
+                     -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
+runSingleUpkeepQuery connection upkeepId = do
+  runQuery connection (expandedUpkeepsQuery2 upkeepId)
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
@@ -577,6 +591,30 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
         (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
+getUpkeep :: Handler IdDependencies
+getUpkeep = mkConstHandler (jsonO . someO) ( do
+  rows <- ask >>= \(conn, upkeepId') -> case upkeepId' of
+    Just(upkeepId) -> liftIO $ runSingleUpkeepQuery conn upkeepId 
+    _ -> throwError $ InputError $ ParseError $ "not a number" 
+  let result = mapUpkeeps rows 
+  case result of
+    row : xs | null xs -> return $ snd row
+    _ -> throwError $ InputError $ ParseError $ "more records" )
+
+mapUpkeeps :: [((Int, Day, Bool), (Int, String, Int, Int))] -> [(Int, U.Upkeep)]
+mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
+  let
+    addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) 
+      [UM.UpkeepMachine note machineId recordedMileage] upkeepClosed)
+    in case acc of
+      [] -> [addUpkeep']
+      (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
+        modifiedUpkeep = upkeep {
+          U.upkeepMachines = UM.UpkeepMachine note machineId recordedMileage : U.upkeepMachines upkeep }
+        in (upkeepId', modifiedUpkeep) : rest
+      _ -> addUpkeep' : acc
+  ) [] rows
+
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
@@ -707,6 +745,7 @@ upkeepResource = (mkResourceReaderWith prepareReader2) {
   name = A.upkeep ,
   schema = S.withListing () $ S.unnamedSingle readMay ,
   list = const $ companyUpkeepsListing ,
+  get = Just getUpkeep ,
   update = Just updateUpkeepHandler ,
   create = Just createUpkeepHandler }
 
