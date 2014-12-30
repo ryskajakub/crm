@@ -14,6 +14,7 @@ module Crm.Router (
   companyDetail ,
   newMachine ,
   newMaintenance ,
+  closeUpkeep ,
   maintenances ,
   plannedUpkeeps ,
   machineDetail ) where
@@ -29,7 +30,7 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany, fetchUpkeeps)
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany, fetchUpkeeps, fetchUpkeep)
 import Crm.Helpers (parseSafely)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -65,6 +66,9 @@ machineDetail machineId = CrmRoute $ "machines/" <> showInt machineId
 
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute $ "planned"
+
+closeUpkeep :: Int -> CrmRoute
+closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> showInt upkeepId
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -131,7 +135,15 @@ startRouter appVar = let
       fetchPlannedUpkeeps (\plannedUpkeeps' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps'
         in modify appVar (\appState -> 
-          appState { D.navigation = newNavigation })) )]
+          appState { D.navigation = newNavigation })) 
+  ),(
+    "upkeeps/:id", \params -> let
+      maybeId = parseSafely $ head params
+      in case maybeId of
+        Just(upkeepId) -> fetchUpkeep upkeepId (\upkeep -> 
+          modify' $ D.UpkeepClose upkeep)
+        _ -> modify' D.NotFound
+  )]
 
 navigate :: CrmRoute
          -> CrmRouter

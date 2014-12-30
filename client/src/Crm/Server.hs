@@ -12,6 +12,7 @@ module Crm.Server (
   fetchFrontPageData , 
   fetchMachineTypesAutocomplete ,
   fetchMachineType ,
+  fetchUpkeep ,
   fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
@@ -29,6 +30,8 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 
 data CrmApi
+
+noopOnError = (const $ const $ const $ return ())
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -49,6 +52,15 @@ fetchMachineType machineTypeName callback =
       [] -> callback Nothing
       x:_ -> callback $ Just x)
     (const $ const $ const $ return ())
+
+fetchUpkeep :: Int -- ^ upkeep id
+            -> (U.Upkeep -> Fay ())
+            -> Fay ()
+fetchUpkeep upkeepId callback =
+  JQ.ajax
+    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> showInt 0 <> pack "/" <> pack A.upkeep <> pack "/" <> showInt upkeepId <> pack "/")
+    callback
+    noopOnError
 
 fetchUpkeeps :: Int -- ^ company id
              -> ([(Int, U.Upkeep)] -> Fay ()) -- ^ callback

@@ -5,6 +5,7 @@
 
 module Crm.Page.Upkeep (
   upkeepNew ,
+  upkeepDetail ,
   plannedUpkeeps ) where
 
 import "fay-base" Data.Text (fromString, unpack, pack)
@@ -28,8 +29,11 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
 import Crm.Server (createUpkeep)
-import Crm.Router (CrmRouter, link, companyDetail)
+import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep)
 import Crm.Helpers (displayDate)
+
+upkeepDetail :: DOMElement
+upkeepDetail = div "A b c"
 
 plannedUpkeeps :: CrmRouter
                -> [(Int, U.Upkeep, Int, C.Company)]
@@ -37,14 +41,19 @@ plannedUpkeeps :: CrmRouter
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
     th "Název firmy" ,
-    th "Datum" ]
-  body = tbody $ map (\(_, upkeep, companyId, company) ->
+    th "Datum" ,
+    th "Uzavřít" ]
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
       td $ link
         (pack $ C.companyName company)
         (companyDetail companyId)
         router ,
-      td $ displayDate $ U.upkeepDate upkeep ]) upkeepCompanies
+      td $ displayDate $ U.upkeepDate upkeep ,
+      td $ link
+        "Uzavřít"
+        (closeUpkeep upkeepId)
+        router ]) upkeepCompanies
   in main $ B.table [ head' , body ]
 
 swap :: (a, b) -> (b, a)
@@ -87,8 +96,8 @@ upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines
       in appState' { D.navigation = newNavigation' } )
   machineRow (machineId, machine, _, machineType) = let
     upkeepMachines = U.upkeepMachines upkeep'
-    thisUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') upkeepMachines
-    thatUpkeepMachine = find (\(UM.UpkeepMachine _ id') -> machineId == id') notCheckedMachines''
+    thisUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') upkeepMachines
+    thatUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') notCheckedMachines''
     checkedMachineIds = map (UM.upkeepMachineMachineId) upkeepMachines
     rowProps = if elem machineId checkedMachineIds
       then class' "bg-success"
@@ -100,7 +109,7 @@ upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines
           (newCheckedMachines, newNotCheckedMachines) = toggle (
             U.upkeepMachines upkeep' ,
             notCheckedMachines'' )
-            (\(UM.UpkeepMachine _ machineId') -> machineId' == machineId)
+            (\(UM.UpkeepMachine _ machineId' _) -> machineId' == machineId)
           newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
           in setUpkeep newUpkeep $ Just newNotCheckedMachines
         link' = A.a''
@@ -114,7 +123,7 @@ upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines
             I.onChange = Defined $ \event -> do
               value <- eventValue event
               let newUpkeepMachine = upkeepMachine { UM.upkeepMachineNote = unpack value }
-              let newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId') ->
+              let newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId' _) ->
                     if machineId' == machineId
                       then newUpkeepMachine
                       else um) upkeepMachines

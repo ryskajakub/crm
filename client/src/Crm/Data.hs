@@ -42,6 +42,8 @@ data NavigationState =
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool , 
     companyId :: Int } | 
+  UpkeepClose {
+    upkeep :: U.Upkeep } |
   UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)] } | 
   PlannedUpkeeps { 

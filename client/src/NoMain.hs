@@ -11,7 +11,7 @@ import Crm.Server (fetchUpkeeps)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
 import Crm.Page.Machine (machineNew, machineDetail)
-import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps)
+import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import qualified Crm.Data as D
 
@@ -38,7 +38,8 @@ main' = do
           (upkeepNew router appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
       D.UpkeepHistory upkeeps' -> Navigation.navigation router $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> Navigation.navigation router
-        (plannedUpkeeps router plannedUpkeeps'))
+        (plannedUpkeeps router plannedUpkeeps')
+      D.UpkeepClose upkeeps' -> Navigation.navigation router upkeepDetail)
   return ()
 
 appVar :: Fay (Var D.AppState)
