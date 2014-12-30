@@ -463,30 +463,27 @@ createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
 
-prepareReader2 :: ReaderT (Connection, UrlId) IO a
-               -> ReaderT UrlId (ReaderT (Connection, UrlId) IO) a
-prepareReader2 reader = let
-  outer = ask
-  in mapReaderT (\maybeIntId -> let
-    maybeInt = runIdentity maybeIntId
-    inner = ask :: ReaderT (Connection, UrlId) IO (Connection, UrlId)
-    getA = inner >>= (\(conn, _) -> let
-      aa = runReaderT reader (conn, maybeInt) 
-      in lift aa)
-    in getA) outer
+prepareReaderIdentity :: ReaderT (b, c) IO a
+                      -> ReaderT c (ReaderT (b, c) IO) a
+prepareReaderIdentity = prepareReaderX (\c (b, _) -> (b, c))
 
-prepareReader :: ReaderT (Connection, b) IO a
-              -> ReaderT b (ReaderT Connection IO) a
-prepareReader reader = let
-  outer = ask
-  in mapReaderT (\maybeIntIdentity ->
-    let
-      maybeInt = runIdentity maybeIntIdentity
-      inner = ask :: ReaderT Connection IO Connection
-      getA = inner >>= (\connection -> let
-        aa = runReaderT reader (connection, maybeInt)
-        in lift aa)
-    in getA) outer
+prepareReaderX :: (c -> d -> b)
+               -> ReaderT b IO a
+               -> ReaderT c (ReaderT d IO) a
+prepareReaderX constructB reader = 
+  mapReaderT (\cIdentity -> let
+    cc = runIdentity cIdentity
+    innerReader = ask >>= (\dd -> let
+      constructedB = constructB cc dd
+      aa = runReaderT reader constructedB
+      in lift aa)
+    in innerReader) outerReader
+  where
+    outerReader = ask
+
+prepareReaderTuple :: ReaderT (c, b) IO a
+                   -> ReaderT b (ReaderT c IO) a
+prepareReaderTuple = prepareReaderX (\b c -> (c, b))
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
@@ -499,7 +496,7 @@ singleCompany = mkConstHandler (jsonO . someO) (
     Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
-companyResource = (mkResourceReaderWith prepareReader) {
+companyResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const listing ,
   create = Just createCompanyHandler ,
   name = A.companies ,
@@ -715,7 +712,7 @@ companyMachineResource = mkResourceId {
   create = Just createMachineHandler }
 
 machineResource :: Resource Dependencies IdDependencies UrlId () Void
-machineResource = (mkResourceReaderWith prepareReader) {
+machineResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const machineListing ,
   get = Just machineSingle ,
   update = Just machineUpdate ,
@@ -723,7 +720,7 @@ machineResource = (mkResourceReaderWith prepareReader) {
   schema = schema'' }
 
 machineTypeResource :: Resource Dependencies StringIdDependencies String String Void
-machineTypeResource = (mkResourceReaderWith prepareReader) {
+machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
   list = machineTypesListing ,
   get = Just machineTypesSingle ,
@@ -738,7 +735,7 @@ upkeepTopLevelResource = mkResourceId {
   schema = upkeepSchema }
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
-upkeepResource = (mkResourceReaderWith prepareReader2) {
+upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   name = A.upkeep ,
   schema = S.withListing () $ S.unnamedSingle readMay ,
   list = const $ companyUpkeepsListing ,
