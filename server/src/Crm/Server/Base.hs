@@ -347,52 +347,36 @@ type instance PF U.Upkeep = PFUpkeep
 deriveAll ''UM.UpkeepMachine "PFUpkeepMachine"
 type instance PF UM.UpkeepMachine = PFUpkeepMachine
 
-instance FromJSON U.Upkeep where
-  parseJSON value = case readFromFay' value of
-    Left e -> fail e
-    Right ok -> return ok
-instance FromJSON UM.UpkeepMachine where
-  parseJSON value = case readFromFay' value of
-    Left e -> fail e
-    Right ok -> return ok
-
 fayInstance value = case readFromFay' value of
   Left e -> fail e
   Right ok -> return ok
-
 instance FromJSON MT.MyEither where
   parseJSON = fayInstance
 instance FromJSON MT.MachineType where 
   parseJSON = fayInstance
+instance FromJSON C.Company where
+  parseJSON = fayInstance
+instance FromJSON U.Upkeep where
+  parseJSON = fayInstance
+instance FromJSON UM.UpkeepMachine where
+  parseJSON = fayInstance
+instance FromJSON M.Machine where
+  parseJSON = fayInstance
 
-instance JS.JSONSchema U.Upkeep where
-  schema = gSchema
-instance JS.JSONSchema UM.UpkeepMachine where
-  schema = gSchema
-
+-- super unsafe
 instance ToJSON D.YearMonthDay where
   toJSON = fromJust . showToFay
 instance ToJSON C.Company where
-  -- super unsafe
-  toJSON c = ((fromJust . showToFay) c)
-instance FromJSON C.Company where
-  parseJSON value = case (readFromFay' value) of
-    Left e -> fail e
-    Right ok -> return ok
-instance JS.JSONSchema C.Company where
-  schema = gSchema
+  toJSON = fromJust . showToFay
 instance ToJSON U.Upkeep where
   toJSON = fromJust . showToFay
 instance ToJSON MT.MachineType where
   toJSON = fromJust . showToFay
-
-instance FromJSON M.Machine where
-  parseJSON value = case (readFromFay' value) of
-    Left e -> fail e
-    Right ok -> return ok
-
 instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
+
+instance JS.JSONSchema C.Company where
+  schema = gSchema
 instance JS.JSONSchema M.Machine where
   schema = gSchema
 instance JS.JSONSchema D.YearMonthDay where
@@ -404,6 +388,10 @@ instance JS.JSONSchema MT.MachineType where
 instance JS.JSONSchema Char where
   schema = gSchema
 instance JS.JSONSchema MT.MyEither where
+  schema = gSchema
+instance JS.JSONSchema U.Upkeep where
+  schema = gSchema
+instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
 
 instance Eq D.YearMonthDay where
@@ -465,12 +453,12 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompa
 
 prepareReaderIdentity :: ReaderT (b, c) IO a
                       -> ReaderT c (ReaderT (b, c) IO) a
-prepareReaderIdentity = prepareReaderX (\c (b, _) -> (b, c))
+prepareReaderIdentity = prepareReader (\c (b, _) -> (b, c))
 
-prepareReaderX :: (c -> d -> b)
-               -> ReaderT b IO a
-               -> ReaderT c (ReaderT d IO) a
-prepareReaderX constructB reader = 
+prepareReader :: (c -> d -> b)
+              -> ReaderT b IO a
+              -> ReaderT c (ReaderT d IO) a
+prepareReader constructB reader = 
   mapReaderT (\cIdentity -> let
     cc = runIdentity cIdentity
     innerReader = ask >>= (\dd -> let
@@ -483,7 +471,7 @@ prepareReaderX constructB reader =
 
 prepareReaderTuple :: ReaderT (c, b) IO a
                    -> ReaderT b (ReaderT c IO) a
-prepareReaderTuple = prepareReaderX (\b c -> (c, b))
+prepareReaderTuple = prepareReader (\b c -> (c, b))
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
