@@ -40,6 +40,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
+import Data.Tuple.Select (Sel1, sel1)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -136,6 +137,15 @@ upkeepQuery = queryTable upkeepTable
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
 
+-- | joins table according with the id in
+join :: (Sel1 a DBInt)
+     => Query a
+     -> QueryArr DBInt a
+join tableQuery = proc id' -> do
+  table <- tableQuery -< ()
+  restrict -< sel1 table .== id'
+  returnA -< table
+
 runMachineUpdate :: (Int, M.Machine) -> Connection -> IO Int64
 runMachineUpdate (machineId', machine') connection =
   runUpdate connection machinesTable readToWrite condition
@@ -168,20 +178,17 @@ runCompanyWithMachinesQuery companyId connection =
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesInCompanyQuery companyId = proc () -> do
   m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
-  mt @ (machineTypePK,_,_,_) <- machineTypesQuery -< ()
+  mt <- join machineTypesQuery -< machineTypeFK
   restrict -< (pgInt4 companyId .== companyFK)
-  restrict -< (machineTypeFK .== machineTypePK)
   returnA -< (m, mt)
 
 companyUpkeepsQuery :: Int -> Query UpkeepTable
 companyUpkeepsQuery companyId = proc () -> do
-  m @ (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
-  um @ (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-  u @ (upkeepPK,_,_) <- upkeepQuery -< ()
+  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
+  (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+  upkeep <- join upkeepQuery -< upkeepFK
   restrict -< (companyFK .== pgInt4 companyId)
-  restrict -< (machinePK .== machineFK)
-  restrict -< (upkeepFK .== upkeepPK)
-  returnA -< (u)
+  returnA -< upkeep
 
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
@@ -191,56 +198,43 @@ expandedMachinesQuery machineId = proc () -> do
   let join = machineTypeId' .== machineTypeId
   restrict -< (case machineId of
     Just(machineId'') -> (pgInt4 machineId'' .== machineId') .&& join
-    Nothing -> join )
+    Nothing -> join)
   returnA -< (machineRow, machineTypesRow)
 
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
-  (machinePK,_,_,_,_,_) <- machinesQuery -< ()
-  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  upkeepMachineRow @ (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-  restrict -< (pgInt4 machineId .== machinePK)
-  restrict -< (upkeepPK .== upkeepFK)
-  restrict -< (machineFK .== machinePK)
-  restrict -< (pgBool True .== upkeepClosed)
+  upkeepMachineRow @ (upkeepFK,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
+  upkeepRow @ (_,_,upkeepClosed) <- join upkeepQuery -< upkeepFK
+  restrict -< pgBool True .== upkeepClosed
   returnA -< (upkeepRow, upkeepMachineRow)
 
 nextMaintenanceQuery :: Int -> Query (UpkeepTable)
 nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-  (machinePK,_,_,_,_,_) <- machinesQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
-  restrict -< (upkeepPK .== upkeepFK)
-  restrict -< (machineFK .== machinePK)
-  restrict -< (pgInt4 machineId .== machinePK)
+  (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
+  restrict -< pgInt4 machineId .== machineFK
   returnA -< upkeepRow
 
 expandedUpkeepsQuery2 :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
-expandedUpkeepsQuery2 upkeepId'' = proc () -> do
-  upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
-  upkeepMachineRow @ (upkeepId',_,_,_) <- upkeepMachinesQuery -< ()
-  restrict -< (upkeepId' .== upkeepId)
-  restrict -< (pgInt4 upkeepId'' .== upkeepId)
+expandedUpkeepsQuery2 upkeepId = proc () -> do
+  upkeepRow <- join upkeepQuery -< pgInt4 upkeepId
+  upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< (upkeepRow, upkeepMachineRow)
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepId,_,_) <- upkeepQuery -< ()
-  upkeepMachineRow @ (upkeepId',_,_,_) <- upkeepMachinesQuery -< ()
-  restrict -< (upkeepId' .== upkeepId)
+  upkeepRow @ (upkeepPK,_,_) <- upkeepQuery -< ()
+  upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
-  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-  (machinePK,companyFK,_,_,_,_) <- machinesQuery -< ()
-  companyRow @ (companyPK,_,_) <- companiesQuery -< ()
-  restrict -< (upkeepPK .== upkeepFK)
-  restrict -< (machineFK .== machinePK)
-  restrict -< (companyPK .== companyFK)
-  restrict -< (upkeepClosed .== pgBool False)
+  restrict -< upkeepClosed .== pgBool False
+  (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
+  (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+  companyRow <- join companiesQuery -< companyFK
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)

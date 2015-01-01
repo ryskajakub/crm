@@ -53,6 +53,7 @@ Library
     , postgresql-simple
     , safe
     , time
+    , tuple
 
 Executable run-server
   default-language:  Haskell2010
