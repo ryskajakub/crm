@@ -28,7 +28,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
-import Crm.Server (createUpkeep)
+import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep)
 import Crm.Helpers (displayDate)
 
@@ -82,8 +82,18 @@ upkeepDetail :: CrmRouter
              -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
              -> Int -- ^ upkeep id
              -> DOMElement
-upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId = 
-  upkeepForm router appState upkeep datePickerOpen notCheckedMachines machines 3
+upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId =
+  upkeepForm appState upkeep datePickerOpen notCheckedMachines machines submitButton
+    where
+      submitButton = let
+        closeUpkeepHandler = updateUpkeep
+          upkeepId
+          upkeep
+          (return ())
+        buttonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "primary" ,
+          BTN.onClick = Defined $ const closeUpkeepHandler }
+        in BTN.button' buttonProps [ G.plus , text2DOM " Uzavřít" ]
 
 upkeepNew :: CrmRouter
           -> Var D.AppState
@@ -93,17 +103,28 @@ upkeepNew :: CrmRouter
           -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
-upkeepNew = upkeepForm
+upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyId = 
+  upkeepForm appState upkeep pickerOpen notCheckedMachines machines submitButton
+    where
+      submitButton = let
+        newUpkeepHandler = createUpkeep
+          upkeep
+          companyId
+          (const $ return ())
+        buttonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "primary" ,
+          BTN.onClick = Defined $ const newUpkeepHandler }
+        button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
+        in button
 
-upkeepForm :: CrmRouter
-           -> Var D.AppState
+upkeepForm :: Var D.AppState
            -> U.Upkeep
            -> Bool
            -> [UM.UpkeepMachine]
            -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
-           -> Int -- ^ company id
+           -> DOMElement -- submit button
            -> DOMElement
-upkeepForm _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
+upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines button = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> case D.navigation appState' of
     upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> let
@@ -154,16 +175,7 @@ upkeepForm _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machine
           _ -> I.mkInputProps { -- this shouldn't happen, really
             I.disabled = Defined True }
         in B.col (B.mkColProps 6) $ I.textarea inputProps ]
-  submitButton = let
-    newUpkeepHandler = createUpkeep
-      upkeep'
-      companyId'
-      (const $ return ())
-    buttonProps = BTN.buttonProps {
-      BTN.bsStyle = Defined "primary" ,
-      BTN.onClick = Defined $ const newUpkeepHandler }
-    button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
-    in B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
+  submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let

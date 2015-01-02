@@ -7,6 +7,7 @@ module Crm.Server (
   createCompany , 
   createMachine , 
   createUpkeep , 
+  updateUpkeep ,
   updateMachine , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
@@ -145,13 +146,26 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
 
+apiRoot :: Text
+apiRoot = pack "/api/v1.0.0/"
+
+updateUpkeep :: Int
+             -> U.Upkeep
+             -> Fay ()
+             -> Fay ()
+updateUpkeep upkeepId upkeep callback = ajax
+  upkeep
+  (apiRoot <> pack "companies/0/" <> pack A.upkeep <> pack "/" <> showInt upkeepId <> pack "/")
+  (pack "PUT")
+  (const callback)
+
 updateMachine :: Int -- machine id
               -> M.Machine
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine callback = ajax
   machine
-  (pack "/api/v1.0.0/" <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
+  (apiRoot <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
   (pack "PUT")
   (const callback)
 
