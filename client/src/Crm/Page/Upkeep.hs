@@ -8,7 +8,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt)
+import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -146,63 +146,51 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
     rowProps = if elem machineId checkedMachineIds
       then class' "bg-success"
       else mkAttrs
-    in B.row' rowProps [
-      let
-        content = span $ pack $ MT.machineTypeName machineType
-        clickHandler = let
-          (newCheckedMachines, newNotCheckedMachines) = toggle (
-            U.upkeepMachines upkeep' ,
-            notCheckedMachines'' )
-            (\(UM.UpkeepMachine _ machineId' _) -> machineId' == machineId)
-          newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
-          in setUpkeep newUpkeep $ Just newNotCheckedMachines
-        link' = A.a''
-          (mkAttrs{onClick = Defined $ const clickHandler})
-          (A.mkAAttrs)
-          content
-        in B.col (B.mkColProps 4) link' ,
-      let
-        inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
-          (Just(upkeepMachine), _) -> I.mkInputProps {
-            I.onChange = Defined $ \event -> do
-              value <- eventValue event
-              case parseSafely value of
-                Just(recordedMileage) -> let
-                  newUpkeepMachine = upkeepMachine { UM.recordedMileage = recordedMileage }
-                  newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId' _) ->
-                    if machineId' == machineId
-                      then newUpkeepMachine
-                      else um) upkeepMachines
-                  newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
-                  in setUpkeep newUpkeep Nothing 
-                _ -> return (),
-            I.defaultValue = Defined $ showInt $ UM.recordedMileage upkeepMachine }
-          (_, Just(upkeepMachine)) -> I.mkInputProps {
-            I.defaultValue = Defined $ showInt $ UM.recordedMileage upkeepMachine ,
-            I.disabled = Defined True }
-          _ -> I.mkInputProps { -- this shouldn't happen, really
-            I.disabled = Defined True }
-        in B.col (B.mkColProps 2) $ I.input inputProps ,
-      let
-        inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
-          (Just(upkeepMachine),_) -> I.mkInputProps {
-            I.onChange = Defined $ \event -> do
-              value <- eventValue event
-              let
-                newUpkeepMachine = upkeepMachine { UM.upkeepMachineNote = unpack value }
+    field :: (Text -> Maybe a) 
+          -> (a -> UM.UpkeepMachine -> UM.UpkeepMachine) 
+          -> (UM.UpkeepMachine -> Text) 
+          -> DOMElement
+    field parseText setValue showValue = let
+      inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
+        (Just(upkeepMachine), _) -> I.mkInputProps {
+          I.onChange = Defined $ \event -> do
+            rawValue <- eventValue event
+            case parseText rawValue of
+              Just(value) -> let
+                newUpkeepMachine = setValue value upkeepMachine
                 newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId' _) ->
                   if machineId' == machineId
                     then newUpkeepMachine
                     else um) upkeepMachines
                 newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
-              setUpkeep newUpkeep Nothing ,
-            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine }
-          (_,Just(upkeepMachine)) -> I.mkInputProps {
-            I.defaultValue = Defined $ pack $ UM.upkeepMachineNote upkeepMachine ,
-            I.disabled = Defined True }
-          _ -> I.mkInputProps { -- this shouldn't happen, really
-            I.disabled = Defined True }
-        in B.col (B.mkColProps 6) $ I.textarea inputProps ]
+                in setUpkeep newUpkeep Nothing 
+              _ -> return (),
+          I.defaultValue = Defined $ showValue upkeepMachine }
+        (_, Just(upkeepMachine)) -> I.mkInputProps {
+          I.defaultValue = Defined $ showValue upkeepMachine ,
+          I.disabled = Defined True }
+        _ -> I.mkInputProps { -- this shouldn't happen, really
+          I.disabled = Defined True }
+      in B.col (B.mkColProps 2) $ I.input inputProps
+    link = let
+      content = span $ pack $ MT.machineTypeName machineType
+      clickHandler = let
+        (newCheckedMachines, newNotCheckedMachines) = toggle (
+          U.upkeepMachines upkeep' ,
+          notCheckedMachines'' )
+          (\(UM.UpkeepMachine _ machineId' _) -> machineId' == machineId)
+        newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
+        in setUpkeep newUpkeep $ Just newNotCheckedMachines
+      link' = A.a''
+        (mkAttrs{onClick = Defined $ const clickHandler})
+        (A.mkAAttrs)
+        content
+      in B.col (B.mkColProps 4) link'
+    recordedMileageField = field parseSafely (\v um -> um { UM.recordedMileage = v }) 
+      (showInt . UM.recordedMileage)
+    noteField = field (\a -> Just a) (\note um -> um { UM.upkeepMachineNote = unpack note }) 
+      (pack . UM.upkeepMachineNote)
+    in B.row' rowProps [link, recordedMileageField, noteField]
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
