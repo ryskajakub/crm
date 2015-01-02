@@ -541,7 +541,8 @@ maybeId :: Monad b
         -> ErrorT (Reason ()) b a
 maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
-  _ -> throwError $ IdentError $ ParseError "provided id is not a number"
+  Left(string) -> throwError $ IdentError $ ParseError
+    ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
 
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
