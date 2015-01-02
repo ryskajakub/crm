@@ -80,10 +80,10 @@ upkeepDetail :: CrmRouter
              -> Bool
              -> [UM.UpkeepMachine]
              -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
-             -> Int -- ^ company id
+             -> Int -- ^ upkeep id
              -> DOMElement
-upkeepDetail _ appState upkeep datePickerOpen notCheckedMachines machines companyId = 
-  undefined
+upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId = 
+  upkeepForm router appState upkeep datePickerOpen notCheckedMachines machines 3
 
 upkeepNew :: CrmRouter
           -> Var D.AppState

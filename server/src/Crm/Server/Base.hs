@@ -499,7 +499,7 @@ singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, id') -> maybeId id' (\companyId -> do
     rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
-    (_,c2,c3) <- undefined -- singleRowOrColumn rows
+    (_,c2,c3) <- singleRowOrColumn rows
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
     return (C.Company c2 c3, machines)))
 
@@ -703,7 +703,7 @@ upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
     upkeeps <- liftIO $ fmap mapUpkeeps (runSingleUpkeepQuery conn upkeepId)
     upkeep <- singleRowOrColumn upkeeps
     machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
-    return (upkeep, machines)))
+    return (snd upkeep, machines)))
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->

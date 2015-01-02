@@ -54,11 +54,11 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: Int -- ^ upkeep id
-            -> (U.Upkeep -> Fay ())
+            -> ((U.Upkeep, [(Int, M.Machine, Int, MT.MachineType)]) -> Fay ())
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> showInt 0 <> pack "/" <> pack A.upkeep <> pack "/" <> showInt upkeepId <> pack "/")
+    (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/single/" <> showInt upkeepId <> pack "/")
     callback
     noopOnError
 

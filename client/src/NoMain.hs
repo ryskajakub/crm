@@ -39,7 +39,10 @@ main' = do
       D.UpkeepHistory upkeeps' -> Navigation.navigation router $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> Navigation.navigation router
         (plannedUpkeeps router plannedUpkeeps')
-      D.UpkeepClose upkeeps' -> Navigation.navigation router upkeepDetail)
+      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId 
+        -> Navigation.navigation router 
+          (upkeepDetail router appVar' upkeep upkeepDatePickerOpen notCheckedMachines
+            machines upkeepId))
   return ()
 
 appVar :: Fay (Var D.AppState)

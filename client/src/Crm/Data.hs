@@ -44,10 +44,10 @@ data NavigationState =
     companyId :: Int } | 
   UpkeepClose {
     upkeep :: U.Upkeep , 
-    upkeepMachines :: [(Int, M.Machine, Int, MT.MachineType)] , 
+    machines :: [(Int, M.Machine, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
-    upkeepDatePickerOpen :: Bool , 
-    companyId :: Int } | 
+    upkeepDatePickerOpen :: Bool ,
+    upkeepId :: Int } | 
   UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)] } | 
   PlannedUpkeeps { 
