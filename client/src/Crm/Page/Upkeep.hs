@@ -29,7 +29,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
 import Crm.Server (createUpkeep, updateUpkeep)
-import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep)
+import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import Crm.Helpers (displayDate, parseSafely)
 
 plannedUpkeeps :: CrmRouter
@@ -81,15 +81,16 @@ upkeepDetail :: CrmRouter
              -> [UM.UpkeepMachine]
              -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
              -> Int -- ^ upkeep id
+             -> Int -- ^ company id
              -> DOMElement
-upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId =
+upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId companyId =
   upkeepForm appState upkeep datePickerOpen notCheckedMachines machines submitButton True
     where
       submitButton = let
         closeUpkeepHandler = updateUpkeep
           upkeepId
           upkeep
-          (return ())
+          (navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
           BTN.onClick = Defined $ const closeUpkeepHandler }
@@ -110,7 +111,7 @@ upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyI
         newUpkeepHandler = createUpkeep
           upkeep
           companyId
-          (const $ return ())
+          (const $ navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
           BTN.onClick = Defined $ const newUpkeepHandler }
@@ -135,7 +136,7 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
         _ -> newNavigation
       in appState' { D.navigation = newNavigation' }
     in case D.navigation appState' of
-      upkeepClose' @ (D.UpkeepClose _ _ _ _ _) -> newAppState upkeepClose'
+      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> newAppState upkeepClose'
       upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
   machineRow (machineId, machine, _, machineType) = let
@@ -207,7 +208,7 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
           upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
-          upkeep'' @ (D.UpkeepClose _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
+          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
           _ -> D.navigation appState' })
       in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
   in div $

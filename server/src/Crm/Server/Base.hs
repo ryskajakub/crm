@@ -48,7 +48,8 @@ import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, 
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
-import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError, NotFound))
+import Rest.Types.Error (DataError(ParseError),
+  Reason(InputError, IdentError, NotFound, CustomReason, NotAllowed), DomainReason(DomainReason))
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -201,7 +202,7 @@ expandedMachinesQuery machineId = proc () -> do
     Nothing -> join)
   returnA -< (machineRow, machineTypesRow)
 
-machinesInCompanyByUpkeepQuery :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesInCompanyByUpkeepQuery :: Int -> Query (DBInt, MachinesTable, MachineTypesTable)
 machinesInCompanyByUpkeepQuery upkeepId = let
   companyPKQuery = limit 1 $ proc () -> do
     (_,_,machineFK,_) <- join upkeepMachinesQuery -< pgInt4 upkeepId
@@ -212,7 +213,7 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
     restrict -< (companyFK .== companyPK)
     mt <- join machineTypesQuery -< machineTypeFK
-    returnA -< (m, mt)
+    returnA -< (companyPK, m, mt)
 
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
@@ -316,10 +317,10 @@ runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintena
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
-runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
+runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
-  return $ map convertExpanded rows
+  return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
@@ -522,7 +523,7 @@ nextService :: Int
             -> M.Machine 
             -> MT.MachineType 
             -> (a -> Connection) 
-            -> ErrorT (Reason ()) (ReaderT a IO) (D.YearMonthDay)
+            -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
 nextService machineId (M.Machine _ operationStartDate _ mileagePerYear) 
   (MT.MachineType _ _ upkeepPerMileage) getConn = ask >>= (\a -> do
   let conn = getConn a
@@ -559,8 +560,8 @@ machineListing = mkListing (jsonO . someO) (const $ do
 
 maybeId :: Monad b
         => Either String Int 
-        -> (Int -> ErrorT (Reason ()) b a)
-        -> ErrorT (Reason ()) b a
+        -> (Int -> ErrorT (Reason r) b a)
+        -> ErrorT (Reason r) b a
 maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
   Left(string) -> throwError $ IdentError $ ParseError
@@ -595,7 +596,7 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
 
 singleRowOrColumn :: Monad m
                   => [a] 
-                  -> ErrorT (Reason ()) m a
+                  -> ErrorT (Reason r) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   _ -> throwError $ InputError $ ParseError "more than one record failure"
@@ -703,7 +704,10 @@ upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
     upkeeps <- liftIO $ fmap mapUpkeeps (runSingleUpkeepQuery conn upkeepId)
     upkeep <- singleRowOrColumn upkeeps
     machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
-    return (snd upkeep, machines)))
+    companyId <- case machines of
+      [] -> throwError $ NotAllowed
+      (companyId',_) : _ -> return companyId'
+    return (companyId, snd upkeep, map snd machines)))
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->

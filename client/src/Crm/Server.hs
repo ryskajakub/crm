@@ -55,7 +55,7 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: Int -- ^ upkeep id
-            -> ((U.Upkeep, [(Int, M.Machine, Int, MT.MachineType)]) -> Fay ())
+            -> ((Int, U.Upkeep, [(Int, M.Machine, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax

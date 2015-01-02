@@ -7,7 +7,6 @@ import "fay-base" Prelude hiding (span, div, elem)
 import Data.Var (Var, newVar, subscribeAndRead, modify, waitFor)
 
 import Crm.Router (startRouter)
-import Crm.Server (fetchUpkeeps)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
 import Crm.Page.Machine (machineNew, machineDetail)
@@ -39,10 +38,10 @@ main' = do
       D.UpkeepHistory upkeeps' -> Navigation.navigation router $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> Navigation.navigation router
         (plannedUpkeeps router plannedUpkeeps')
-      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId 
+      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId companyId
         -> Navigation.navigation router 
           (upkeepDetail router appVar' upkeep upkeepDatePickerOpen notCheckedMachines
-            machines upkeepId))
+            machines upkeepId companyId))
   return ()
 
 appVar :: Fay (Var D.AppState)

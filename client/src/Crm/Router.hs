@@ -140,7 +140,7 @@ startRouter appVar = let
     "upkeeps/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(upkeepId) -> fetchUpkeep upkeepId (\(upkeep,machines) -> let
+        Just(upkeepId) -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
           upkeepMachines = U.upkeepMachines upkeep
           addNotCheckedMachine acc elem = let 
             (machineId,_,_,_) = elem
@@ -150,9 +150,8 @@ startRouter appVar = let
               Nothing -> UM.newUpkeepMachine machineId : acc
               _ -> acc
           notCheckedMachines = foldl addNotCheckedMachine [] machines
-          in modify' $ D.UpkeepClose upkeep machines notCheckedMachines False upkeepId)
-        _ -> modify' D.NotFound
-  )]
+          in modify' $ D.UpkeepClose upkeep machines notCheckedMachines False upkeepId companyId)
+        _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute
          -> CrmRouter
