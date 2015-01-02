@@ -201,6 +201,19 @@ expandedMachinesQuery machineId = proc () -> do
     Nothing -> join)
   returnA -< (machineRow, machineTypesRow)
 
+machinesInCompanyByUpkeepQuery :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesInCompanyByUpkeepQuery upkeepId = let
+  companyPKQuery = limit 1 $ proc () -> do
+    (_,_,machineFK,_) <- join upkeepMachinesQuery -< pgInt4 upkeepId
+    (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+    returnA -< companyFK
+  in proc () -> do
+    companyPK <- companyPKQuery -< ()
+    m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
+    restrict -< (companyFK .== companyPK)
+    mt <- join machineTypesQuery -< machineTypeFK
+    returnA -< (m, mt)
+
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
   upkeepMachineRow @ (upkeepFK,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
@@ -271,6 +284,8 @@ runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
+convertExpanded :: ((Int, Int, Int, Day, Int, Int),(Int, String, String, Int)) 
+                -> (Int, M.Machine, Int, MT.MachineType)
 convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf,mtI)) ->
   (mId, M.Machine cId (dayToYmd mOs) m3 m4, mtId, (MT.MachineType mtN mtMf mtI)))
 
@@ -300,6 +315,11 @@ runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintena
 
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
+
+runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
+runMachinesInCompanyByUpkeepQuery upkeepId connection = do
+  rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
+  return $ map convertExpanded rows
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
@@ -417,8 +437,10 @@ schema' = S.withListing () (S.named [])
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
-upkeepSchema :: S.Schema Void UpkeepsListing Void
-upkeepSchema = S.withListing UpkeepsAll (S.named [("planned", S.listing UpkeepsPlanned)])
+upkeepSchema :: S.Schema UrlId UpkeepsListing Void
+upkeepSchema = S.withListing UpkeepsAll (S.named [
+  ("planned", S.listing UpkeepsPlanned) ,
+  ("single", S.singleBy readMay') ])
 
 readMay' :: (Read a) => String -> Either String a
 readMay' string = passStringOnNoRead $ readMay string
@@ -602,18 +624,7 @@ mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,re
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
-  return $ foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
-    let
-      addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) 
-        [UM.UpkeepMachine note machineId recordedMileage] upkeepClosed)
-      in case acc of
-        [] -> [addUpkeep']
-        (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
-          modifiedUpkeep = upkeep {
-            U.upkeepMachines = UM.UpkeepMachine note machineId recordedMileage : U.upkeepMachines upkeep }
-          in (upkeepId', modifiedUpkeep) : rest
-        _ -> addUpkeep' : acc
-    ) [] rows )
+  return $ mapUpkeeps rows) 
 
 insertUpkeepMachines :: Connection -> Int -> [UM.UpkeepMachine] -> IO ()
 insertUpkeepMachines connection upkeepId upkeepMachines = let
@@ -686,6 +697,13 @@ updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\upkeep ->
   ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
     liftIO $ updateUpkeep connection upkeepId upkeep))
     
+upkeepCompanyMachines :: Handler IdDependencies
+upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
+  ask >>= \(conn, maybeUpkeepId) -> maybeId maybeUpkeepId (\upkeepId -> do
+    upkeeps <- liftIO $ fmap mapUpkeeps (runSingleUpkeepQuery conn upkeepId)
+    upkeep <- singleRowOrColumn upkeeps
+    machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
+    return (upkeep, machines)))
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
@@ -714,13 +732,14 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just machineTypesSingle ,
   schema = autocompleteSchema }
 
-upkeepTopLevelResource :: Resource Dependencies Dependencies Void UpkeepsListing Void
-upkeepTopLevelResource = mkResourceId {
+upkeepTopLevelResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
+upkeepTopLevelResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \listingType -> case listingType of
     UpkeepsAll -> upkeepListing
     UpkeepsPlanned -> upkeepsPlannedListing ,
   name = A.upkeep ,
-  schema = upkeepSchema }
+  schema = upkeepSchema ,
+  get = Just upkeepCompanyMachines }
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {

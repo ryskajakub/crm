@@ -32,9 +32,6 @@ import Crm.Server (createUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep)
 import Crm.Helpers (displayDate)
 
-upkeepDetail :: DOMElement
-upkeepDetail = div "A b c"
-
 plannedUpkeeps :: CrmRouter
                -> [(Int, U.Upkeep, Int, C.Company)]
                -> DOMElement
@@ -77,6 +74,17 @@ toggle lists findElem = let
         else lists
   in toggleInternal lists True
 
+upkeepDetail :: CrmRouter
+             -> Var D.AppState
+             -> U.Upkeep
+             -> Bool
+             -> [UM.UpkeepMachine]
+             -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
+             -> Int -- ^ company id
+             -> DOMElement
+upkeepDetail _ appState upkeep datePickerOpen notCheckedMachines machines companyId = 
+  undefined
+
 upkeepNew :: CrmRouter
           -> Var D.AppState
           -> U.Upkeep
@@ -85,7 +93,17 @@ upkeepNew :: CrmRouter
           -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
-upkeepNew _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
+upkeepNew = upkeepForm
+
+upkeepForm :: CrmRouter
+           -> Var D.AppState
+           -> U.Upkeep
+           -> Bool
+           -> [UM.UpkeepMachine]
+           -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
+           -> Int -- ^ company id
+           -> DOMElement
+upkeepForm _ appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines companyId' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> case D.navigation appState' of
     upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> let

@@ -138,12 +138,22 @@ startRouter appVar = let
           appState { D.navigation = newNavigation })) 
   ),(
     "upkeeps/:id", \params -> let
+-- fetch upkeep, company, machines
       maybeId = parseSafely $ head params
       in case maybeId of
         Just(upkeepId) -> fetchUpkeep upkeepId (\upkeep -> 
           modify' $ D.UpkeepClose upkeep)
         _ -> modify' D.NotFound
   )]
+{-
+      withCompany
+        params
+        (\companyId (company, machines) -> let
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> UM.newUpkeepMachine machineId) machines
+          (nowYear, nowMonth, nowDay) = day $ now requireMoment
+          nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
+          in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
+-}
 
 navigate :: CrmRoute
          -> CrmRouter
