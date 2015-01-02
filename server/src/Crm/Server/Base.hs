@@ -323,7 +323,7 @@ withConnection runQ = do
   return result
 
 type Dependencies = (ReaderT Connection IO :: * -> *)
-type IdDependencies = (ReaderT (Connection, Maybe Int) IO :: * -> *)
+type IdDependencies = (ReaderT (Connection, Either String Int) IO :: * -> *)
 type StringIdDependencies = (ReaderT (Connection, String) IO :: * -> *)
 
 deriveAll ''C.Company "PFCompany"
@@ -410,7 +410,7 @@ listing = mkListing (jsonO . someO) (const $ do
       return nextServiceDay )
     return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
 
-type UrlId = Maybe Int
+type UrlId = Either String Int 
 
 schema' :: S.Schema Void () Void
 schema' = S.withListing () (S.named [])
@@ -420,8 +420,14 @@ data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 upkeepSchema :: S.Schema Void UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [("planned", S.listing UpkeepsPlanned)])
 
+readMay' :: (Read a) => String -> Either String a
+readMay' string = passStringOnNoRead $ readMay string
+  where
+    passStringOnNoRead (Just parsed) = Right parsed
+    passStringOnNoRead _ = Left string
+
 schema'' :: S.Schema UrlId () Void
-schema'' = S.withListing () (S.unnamedSingle readMay)
+schema'' = S.withListing () (S.unnamedSingle readMay')
 
 autocompleteSchema :: S.Schema String String Void
 autocompleteSchema = S.noListing $ S.named [(
@@ -429,7 +435,7 @@ autocompleteSchema = S.noListing $ S.named [(
   "by-type", S.singleBy id)]
 
 companySchema :: S.Schema UrlId () Void
-companySchema = S.withListing () $ S.unnamedSingle readMay
+companySchema = S.withListing () $ S.unnamedSingle readMay'
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
@@ -469,13 +475,11 @@ prepareReaderTuple = prepareReader (\b c -> (c, b))
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
-  ask >>= \(conn, id') -> case id' of
-    Just(companyId) -> do
-      rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
-      (_,c2,c3) <- singleRowOrColumn rows
-      machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-      return (C.Company c2 c3, machines)
-    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
+  ask >>= \(conn, id') -> maybeId id' (\companyId -> do
+    rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
+    (_,c2,c3) <- undefined -- singleRowOrColumn rows
+    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+    return (C.Company c2 c3, machines)))
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -487,12 +491,10 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . someI) (\machine ->
-  ask >>= \(conn, id') -> case id' of
-    Just (machineId) -> do
+  ask >>= \(conn, id') -> maybeId id' (\machineId -> do
       _ <- liftIO $ runMachineUpdate (machineId,machine) conn
       -- todo singal error if the update didn't hit a row
-      return ()
-    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" )
+      return ()))
 
 nextService :: Int 
             -> M.Machine 
@@ -523,25 +525,29 @@ nextService machineId (M.Machine _ operationStartDate _ mileagePerYear)
 
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
-  ask >>= (\(conn,id') -> case id' of
-    maybeId @ (Just (_)) -> do
-      rows <- liftIO $ runExpandedMachinesQuery maybeId conn
-      (machineId, machine, machineTypeId, machineType) <- singleRowOrColumn rows
-      ymd <- nextService machineId machine machineType fst
-      return (machine, machineTypeId, machineType, ymd)
-    Nothing -> throwError $ IdentError $ ParseError "provided id is not a number" ))
+  ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
+    rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
+    (machineId, machine, machineTypeId, machineType) <- singleRowOrColumn rows
+    ymd <- nextService machineId machine machineType fst
+    return (machine, machineTypeId, machineType, ymd))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)
 
+maybeId :: Monad b
+        => Either String Int 
+        -> (Int -> ErrorT (Reason ()) b a)
+        -> ErrorT (Reason ()) b a
+maybeId maybeInt onSuccess = case maybeInt of
+  Right(int) -> onSuccess int
+  _ -> throwError $ IdentError $ ParseError "provided id is not a number"
+
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
-  ask >>= \(conn,id') -> case id' of
-    Just(id'') -> do
-      rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-      return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) [] u2)) rows
-    _ -> throwError $ IdentError $ ParseError "there is no such record with that id" )
+  ask >>= \(conn,id') -> maybeId id' (\id'' -> do
+    rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
+    return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) [] u2)) rows))
 
 machineTypesListing :: String -> ListHandler Dependencies
 machineTypesListing mid = mkListing (jsonO . someO) (const $ 
@@ -564,16 +570,17 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
         (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
-singleRowOrColumn :: [a] -> ErrorT (Reason ()) (ReaderT (Connection, Maybe Int) IO) a
+singleRowOrColumn :: Monad m
+                  => [a] 
+                  -> ErrorT (Reason ()) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   _ -> throwError $ InputError $ ParseError "more than one record failure"
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
-  rows <- ask >>= \(conn, upkeepId') -> case upkeepId' of
-    Just(upkeepId) -> liftIO $ runSingleUpkeepQuery conn upkeepId 
-    _ -> throwError $ InputError $ ParseError $ "not a number" 
+  rows <- ask >>= \(conn, upkeepId') -> maybeId upkeepId' (\upkeepId ->
+    liftIO $ runSingleUpkeepQuery conn upkeepId)
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
 
@@ -670,22 +677,20 @@ addMachine connection machine machineType = do
 
 createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine,machineType) ->
-  ask >>= \(connection, maybeInt) -> case maybeInt of
-    Just(int) -> liftIO $ addMachine connection newMachine machineType
-    _ -> throwError $ InputError $ ParseError $ "provided id is not a number" )
+  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> 
+    liftIO $ addMachine connection newMachine machineType))
 
 updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\upkeep ->
-  ask >>= \(connection, maybeInt) -> case maybeInt of
-    Just(upkeepId) -> liftIO $ updateUpkeep connection upkeepId upkeep
-    _ -> throwError $ InputError $ ParseError "provided id is not a number" )
+  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
+    liftIO $ updateUpkeep connection upkeepId upkeep))
     
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
-  ask >>= \(connection, maybeInt) -> case maybeInt of
-    Just(_) -> liftIO $ addUpkeep connection newUpkeep -- todo check that the machines are belonging to this company
-    _ -> throwError $ InputError $ ParseError "provided id is not a number" )
+  ask >>= \(connection, maybeInt) -> maybeId maybeInt (
+    -- todo check that the machines are belonging to this company
+    const $ liftIO $ addUpkeep connection newUpkeep))
 
 companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
 companyMachineResource = mkResourceId {
@@ -719,7 +724,7 @@ upkeepTopLevelResource = mkResourceId {
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   name = A.upkeep ,
-  schema = S.withListing () $ S.unnamedSingle readMay ,
+  schema = S.withListing () $ S.unnamedSingle readMay' ,
   list = const $ companyUpkeepsListing ,
   get = Just getUpkeep ,
   update = Just updateUpkeepHandler ,
