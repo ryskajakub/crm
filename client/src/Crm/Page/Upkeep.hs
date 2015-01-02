@@ -125,14 +125,18 @@ upkeepForm :: Var D.AppState
            -> DOMElement -- submit button
            -> DOMElement
 upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines button = let
-  setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay()
-  setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> case D.navigation appState' of
-    upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> let
-      newNavigation = upkeepNew' { D.upkeep = upkeep }
+  setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay ()
+  setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
+    newAppState oldNavigation = let
+      newNavigation = oldNavigation { D.upkeep = upkeep }
       newNavigation' = case notCheckedMachines' of
         Just(x) -> newNavigation { D.notCheckedMachines = x }
         _ -> newNavigation
-      in appState' { D.navigation = newNavigation' } )
+      in appState' { D.navigation = newNavigation' }
+    in case D.navigation appState' of
+      upkeepClose' @ (D.UpkeepClose _ _ _ _ _) -> newAppState upkeepClose'
+      upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
+      _ -> appState' )
   machineRow (machineId, machine, _, machineType) = let
     upkeepMachines = U.upkeepMachines upkeep'
     thisUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') upkeepMachines
