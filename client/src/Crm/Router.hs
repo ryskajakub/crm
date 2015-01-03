@@ -22,9 +22,8 @@ module Crm.Router (
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
-import Data.Var (Var, modify, get)
+import Data.Var (Var, modify)
 import "fay-base" Data.Function (fmap)
-import "fay-base" Data.Maybe (isJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
@@ -103,14 +102,14 @@ startRouter appVar = let
     "companies/:id/new-machine", \params ->
       withCompany
         params
-        (\companyId (company, _) -> let
-          newMachine = M.newMachine companyId
-          in D.MachineNew newMachine MT.newMachineType Nothing False)
+        (\companyId (_,_) -> let
+          newMachine' = M.newMachine companyId
+          in D.MachineNew newMachine' MT.newMachineType Nothing False)
   ),(
     "companies/:id/new-maintenance", \params ->
       withCompany
         params
-        (\companyId (company, machines) -> let
+        (\companyId (_, machines) -> let
           notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> UM.newUpkeepMachine machineId) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
@@ -142,8 +141,8 @@ startRouter appVar = let
       in case maybeId of
         Just(upkeepId) -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
           upkeepMachines = U.upkeepMachines upkeep
-          addNotCheckedMachine acc elem = let 
-            (machineId,_,_,_) = elem
+          addNotCheckedMachine acc element = let 
+            (machineId,_,_,_) = element
             machineChecked = find (\(UM.UpkeepMachine _ machineId' _) -> 
               machineId == machineId') upkeepMachines
             in case machineChecked of

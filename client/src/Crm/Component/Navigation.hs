@@ -5,7 +5,7 @@
 
 module Crm.Component.Navigation where
 
-import "fay-base" Data.Text (fromString, unpack)
+import "fay-base" Data.Text (fromString)
 import "fay-base" Prelude hiding (span, div, elem)
 
 import HaskellReact
@@ -29,4 +29,3 @@ navigation :: CrmRouter
            -> Fay ()
 navigation router body =
   navigation' router (body, return ())
-

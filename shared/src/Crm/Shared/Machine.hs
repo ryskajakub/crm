@@ -6,7 +6,6 @@
 
 module Crm.Shared.Machine where
 
-import Crm.Shared.MachineType (MachineType, newMachineType)
 import Crm.Shared.YearMonthDay (YearMonthDay(YearMonthDay), Precision(YearPrecision))
 
 #ifndef FAY

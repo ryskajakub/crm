@@ -70,12 +70,11 @@ companyNew router var company' = let
   saveHandler =
     createCompany company' (const $
       R.navigate R.frontPage router )
-  machines' = []
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
-  in companyForm editing' router var setCompany company' saveHandler
+  in companyForm editing' var setCompany company' saveHandler
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
@@ -103,7 +102,7 @@ companyDetail editing' router var idCompany machines' = let
           dt "Další servis" , 
           dd $ displayDate $ M.machineOperationStartDate machine' ] ]
   machineBoxes = map machineBox machines'
-  form = companyForm editing' router var setCompany company' saveHandler
+  companyFormSection = companyForm editing' var setCompany company' saveHandler
   upkeepsHistoryRow = B.row $
     B.col (B.mkColProps 12) $
       B.panel $
@@ -125,20 +124,19 @@ companyDetail editing' router var idCompany machines' = let
           (R.newMaintenance companyId)
           router
   in main [
-    form ,
+    companyFormSection ,
     section $ B.grid [
       upkeepsHistoryRow ,
       machineBoxesRow ,
       planUpkeepRow ]]
 
 companyForm :: Bool -- ^ is the page editing mode
-            -> R.CrmRouter -- ^ common read data
             -> Var D.AppState -- ^ app state var, where the editing result can be set
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
             -> C.Company -- ^ company, which data are displayed on this screen
             -> Fay () -- ^ handler called when the user hits save
             -> DOMElement -- ^ company detail page fraction
-companyForm editing' router var setCompany company' saveHandler' = 
+companyForm editing' var setCompany company' saveHandler' = 
   section $ let
     editButton = let
       editButtonBody = [G.pencil, HR.text2DOM " Editovat"]

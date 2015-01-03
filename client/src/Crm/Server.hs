@@ -18,7 +18,7 @@ module Crm.Server (
 
 import FFI (ffi, Automatic, Defined(Defined))
 import "fay-base" Prelude hiding (putStrLn)
-import "fay-base" Data.Text (Text, pack, showInt, (<>), putStrLn)
+import "fay-base" Data.Text (Text, pack, showInt, (<>))
 import "fay-base" Data.Maybe (listToMaybe)
 
 import qualified JQuery as JQ
@@ -32,6 +32,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 
 data CrmApi
 
+noopOnError :: a -> b -> c -> Fay ()
 noopOnError = (const $ const $ const $ return ())
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
@@ -180,23 +181,6 @@ createUpkeep upkeep companyId callback =
       showInt companyId <> pack "/" <> pack A.upkeep <> pack "/")
     (pack "POST")
     callback
-
-fetch :: ([a] -> Fay ())
-      -> Text
-      -> Fay ()
-fetch setData restApiNode = do
-  crmApi <- crmApiFacade
-  fetch' crmApi restApiNode setData
-
-fetch' :: CrmApi -- ^ pointer to Crm api phantom
-       -> Text -- ^ type of model to fetch
-       -> ([Automatic a] -> Fay ()) -- ^ Callback ran on the fetched data
-       -> Fay ()
-fetch' = ffi "\
-\ %1[%2]['list'](function(d) {\
-  \ %3(d.items); \
-\ })\
-\ "
 
 create' :: CrmApi -- ^ pointer to crm api phantom
         -> Text -- ^ type of model to create
