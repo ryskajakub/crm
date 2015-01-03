@@ -14,6 +14,8 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
+newtype CompanyId = CompanyId { getCompanyId :: Int }
+
 data Company = Company {
   companyName :: String , 
   companyPlant :: String }

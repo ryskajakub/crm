@@ -17,6 +17,8 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
+newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
+
 data Upkeep = Upkeep {
   upkeepDate :: D.YearMonthDay ,
   upkeepMachines :: [UpkeepMachine] ,

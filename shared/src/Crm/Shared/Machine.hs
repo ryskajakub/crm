@@ -16,6 +16,8 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
+newtype MachineId = MachineId { getMachineId :: Int }
+
 data Machine = Machine {
   companyId :: Int ,
   machineOperationStartDate :: YearMonthDay ,
