@@ -53,7 +53,7 @@ companiesList router companies' = let
     section $
       let
         buttonProps = BTN.buttonProps {
-          BTN.onClick = Defined $ const $ R.navigate R.frontPage router }
+          BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
         in BTN.button' buttonProps [
           G.plus , 
           text2DOM "Přidat firmu" ] ,
