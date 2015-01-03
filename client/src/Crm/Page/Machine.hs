@@ -46,12 +46,12 @@ machineDetail :: Bool
               -> Var D.AppState
               -> Bool
               -> M.Machine
-              -> Int -- id of the machine type
+              -> Int
               -> MT.MachineType
-              -> Int -- id of the machine
+              -> Int
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
-machineDetail editing router appVar calendarOpen machine machineId machineType machineTypeId nextService = 
+machineDetail editing router appVar calendarOpen machine machineTypeId machineType machineId nextService = 
   machineDisplay editing button router appVar calendarOpen machine machineType (Just machineTypeId) extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
@@ -65,7 +65,7 @@ machineDetail editing router appVar calendarOpen machine machineId machineType m
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine (return ())
+      editMachineAction = updateMachine machineId machineTypeId machine (return ())
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 

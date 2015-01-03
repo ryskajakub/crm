@@ -160,12 +160,13 @@ updateUpkeep upkeepId upkeep callback = ajax
   (pack "PUT")
   (const callback)
 
-updateMachine :: Int -- machine id
+updateMachine :: Int -- ^ machine id
+              -> Int -- ^ machine type id
               -> M.Machine
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine callback = ajax
-  machine
+updateMachine machineId machineTypeId machine callback = ajax
+  (machineTypeId, machine)
   (apiRoot <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
   (pack "PUT")
   (const callback)
