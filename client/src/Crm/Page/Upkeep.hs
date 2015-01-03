@@ -79,7 +79,7 @@ upkeepDetail :: CrmRouter
              -> U.Upkeep
              -> Bool
              -> [UM.UpkeepMachine]
-             -> [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
+             -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> U.UpkeepId -- ^ upkeep id
              -> C.CompanyId -- ^ company id
              -> DOMElement
@@ -101,7 +101,7 @@ upkeepNew :: CrmRouter
           -> U.Upkeep
           -> Bool
           -> [UM.UpkeepMachine]
-          -> [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
+          -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> C.CompanyId -- ^ company id
           -> DOMElement
 upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyId = 
@@ -122,7 +122,7 @@ upkeepForm :: Var D.AppState
            -> U.Upkeep
            -> Bool -- ^ datepicker openness
            -> [UM.UpkeepMachine]
-           -> [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
+           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement

@@ -46,7 +46,7 @@ machineDetail :: Bool
               -> Var D.AppState
               -> Bool
               -> M.Machine
-              -> Int
+              -> MT.MachineTypeId
               -> MT.MachineType
               -> M.MachineId
               -> YMD.YearMonthDay
@@ -75,13 +75,13 @@ machineNew :: CrmRouter
            -> M.Machine
            -> C.CompanyId
            -> MT.MachineType
-           -> Maybe Int
+           -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
 machineNew router appState calendarOpen machine' companyId machineType machineTypeId = 
   machineDisplay True buttonRow appState calendarOpen machine' machineType machineTypeId []
     where
       machineTypeEither = case machineTypeId of
-        Just(id) -> MT.MyInt id
+        Just(id) -> MT.MyInt $ MT.getMachineTypeId id
         Nothing -> MT.MyMachineType machineType
       saveNewMachine = createMachine machine' companyId machineTypeEither (const $ navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
@@ -101,7 +101,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Bool
                -> M.Machine
                -> MT.MachineType
-               -> Maybe Int -- ^ machine type id
+               -> Maybe MT.MachineTypeId -- ^ machine type id
                -> [DOMElement]
                -> (DOMElement, Fay ())
 machineDisplay editing buttonRow appVar operationStartCalendarOpen' 
@@ -118,7 +118,7 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
       mn @ (D.MachineNew _ _ _ _ _) -> mn { D.machineType = modifiedMachineType }
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineType = modifiedMachineType }
       _ -> D.navigation appState })
-  setMachineTypeId :: Int -> Fay ()
+  setMachineTypeId :: MT.MachineTypeId -> Fay ()
   setMachineTypeId machineTypeId' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
       mn @ (D.MachineNew _ _ _ _ _) -> mn { D.maybeMachineTypeId = Just machineTypeId' }

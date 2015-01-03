@@ -73,7 +73,8 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) 
+              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine,
+                   C.CompanyId, MT.MachineTypeId, MT.MachineType)]) 
                  -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of

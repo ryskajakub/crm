@@ -45,7 +45,7 @@ fetchMachineTypesAutocomplete text callback = do
     (const $ const $ const $ return ())
 
 fetchMachineType :: Text -- ^ machine type exact match
-                 -> (Maybe (Int, MT.MachineType) -> Fay ()) -- ^ callback
+                 -> (Maybe (MT.MachineTypeId, MT.MachineType) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
@@ -56,7 +56,8 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, U.Upkeep, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
+            -> ((C.CompanyId, U.Upkeep, [(M.MachineId, M.Machine, 
+                 C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
@@ -74,7 +75,7 @@ fetchUpkeeps companyId callback =
     (const $ const $ const $ return ())
 
 fetchMachine :: M.MachineId -- ^ machine id
-             -> ((M.Machine, Int, M.MachineId, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
+             -> ((M.Machine, MT.MachineTypeId, M.MachineId, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax
@@ -83,7 +84,7 @@ fetchMachine machineId callback =
     (const $ const $ const $ return ())
 
 fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
@@ -163,7 +164,7 @@ updateUpkeep upkeepId upkeep callback = ajax
   (const callback)
 
 updateMachine :: M.MachineId -- ^ machine id
-              -> Int -- ^ machine type id
+              -> MT.MachineTypeId -- ^ machine type id
               -> M.Machine
               -> Fay ()
               -> Fay ()
