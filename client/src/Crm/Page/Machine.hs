@@ -52,7 +52,7 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
 machineDetail editing router appVar calendarOpen machine machineTypeId machineType machineId nextService = 
-  machineDisplay editing button router appVar calendarOpen machine machineType (Just machineTypeId) extraRow
+  machineDisplay editing button appVar calendarOpen machine machineType (Just machineTypeId) extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
@@ -74,9 +74,10 @@ machineNew :: CrmRouter
            -> Bool
            -> M.Machine
            -> MT.MachineType
+           -> Maybe Int
            -> (DOMElement, Fay ())
-machineNew router appState calendarOpen machine' machineType = 
-  machineDisplay True buttonRow router appState calendarOpen machine' machineType Nothing []
+machineNew router appState calendarOpen machine' machineType machineTypeId = 
+  machineDisplay True buttonRow appState calendarOpen machine' machineType machineTypeId []
     where
       saveNewMachine = createMachine machine' machineType (const $ navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
@@ -92,7 +93,6 @@ row labelText otherField =
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
-               -> CrmRouter
                -> Var D.AppState
                -> Bool
                -> M.Machine
@@ -100,7 +100,8 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Maybe Int -- ^ machine type id
                -> [DOMElement]
                -> (DOMElement, Fay ())
-machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' machineType machineTypeId extraRow = let
+machineDisplay editing buttonRow appVar operationStartCalendarOpen' 
+    machine' machineType machineTypeId extraRow = let
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
