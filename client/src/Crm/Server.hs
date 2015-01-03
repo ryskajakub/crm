@@ -124,7 +124,7 @@ createCompany company callback = do
 
 createMachine :: M.Machine 
               -> Int
-              -> MT.MachineType
+              -> MT.MyEither
               -> (Int -> Fay())
               -> Fay ()
 createMachine machine companyId machineType callback =

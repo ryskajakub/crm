@@ -79,7 +79,10 @@ machineNew :: CrmRouter
 machineNew router appState calendarOpen machine' companyId machineType machineTypeId = 
   machineDisplay True buttonRow appState calendarOpen machine' machineType machineTypeId []
     where
-      saveNewMachine = createMachine machine' companyId machineType (const $ navigate frontPage router)
+      machineTypeEither = case machineTypeId of
+        Just(id) -> MT.MyInt id
+        Nothing -> MT.MyMachineType machineType
+      saveNewMachine = createMachine machine' companyId machineTypeEither (const $ navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 row :: Renderable a

@@ -147,13 +147,15 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
-runMachineUpdate :: (Int, Int, M.Machine, Int) -> Connection -> IO Int64
-runMachineUpdate (machineId', machineTypeId, machine', companyId) connection =
+runMachineUpdate :: (Int, Int, M.Machine) 
+                 -> Connection 
+                 -> IO Int64
+runMachineUpdate (machineId', machineTypeId, machine') connection =
   runUpdate connection machinesTable readToWrite condition
     where
       condition (machineId,_,_,_,_,_) = machineId .== pgInt4 machineId'
-      readToWrite  = const
-        (Nothing, pgInt4 $ companyId, pgInt4 machineTypeId,
+      readToWrite (_,companyId,_,_,_,_) =
+        (Nothing, companyId, pgInt4 machineTypeId,
           pgDay $ ymdToDay $ M.machineOperationStartDate machine',
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
@@ -518,9 +520,9 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = companySchema }
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine, companyId) ->
+machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine) ->
   ask >>= \(conn, id') -> maybeId id' (\machineId -> do
-    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine, companyId) conn
+    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine) conn
     -- todo singal error if the update didn't hit a row
     return ()))
 
