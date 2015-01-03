@@ -49,7 +49,7 @@ companiesList router companies' = let
       td $ pack $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  in trace (show companies') $ main [
+  in main [
     section $
       let
         buttonProps = BTN.buttonProps {
