@@ -6,8 +6,8 @@
 
 module Crm.Shared.Upkeep where
 
-import Crm.Shared.UpkeepMachine
 import Crm.Shared.YearMonthDay as D
+import Crm.Shared.UpkeepMachine as UM
 
 #ifndef FAY
 import GHC.Generics
@@ -18,6 +18,9 @@ import "fay-base" Prelude
 #endif
 
 newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
+
+type Upkeep'' = (UpkeepId, Upkeep)
+type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
 data Upkeep = Upkeep {
   upkeepDate :: D.YearMonthDay ,

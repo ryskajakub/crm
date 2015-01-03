@@ -76,20 +76,20 @@ toggle lists findElem = let
 
 upkeepDetail :: CrmRouter
              -> Var D.AppState
-             -> U.Upkeep
+             -> U.Upkeep'
              -> Bool
-             -> [UM.UpkeepMachine]
+             -> [UM.UpkeepMachine']
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
-             -> U.UpkeepId -- ^ upkeep id
              -> C.CompanyId -- ^ company id
              -> DOMElement
-upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId companyId =
-  upkeepForm appState upkeep datePickerOpen notCheckedMachines machines submitButton True
+upkeepDetail router appState upkeep3 datePickerOpen notCheckedMachines machines companyId =
+  upkeepForm appState upkeep2 datePickerOpen notCheckedMachines machines submitButton True
     where
+      (upkeepId,upkeep,upkeepMachines) = upkeep3
+      upkeep2 = (upkeep,upkeepMachines)
       submitButton = let
         closeUpkeepHandler = updateUpkeep
-          upkeepId
-          upkeep
+          upkeep3
           (navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
@@ -98,18 +98,18 @@ upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines u
 
 upkeepNew :: CrmRouter
           -> Var D.AppState
-          -> U.Upkeep
+          -> (U.Upkeep, [UM.UpkeepMachine'])
           -> Bool
-          -> [UM.UpkeepMachine]
+          -> [UM.UpkeepMachine']
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> C.CompanyId -- ^ company id
           -> DOMElement
-upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyId = 
-  upkeepForm appState upkeep pickerOpen notCheckedMachines machines submitButton False
+upkeepNew router appState newUpkeep pickerOpen notCheckedMachines machines companyId = 
+  upkeepForm appState newUpkeep pickerOpen notCheckedMachines machines submitButton False
     where
       submitButton = let
         newUpkeepHandler = createUpkeep
-          upkeep
+          newUpkeep
           companyId
           (const $ navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
@@ -119,15 +119,16 @@ upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyI
         in button
 
 upkeepForm :: Var D.AppState
-           -> U.Upkeep
+           -> (U.Upkeep, [UM.UpkeepMachine'])
            -> Bool -- ^ datepicker openness
-           -> [UM.UpkeepMachine]
+           -> [UM.UpkeepMachine']
            -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement
-upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines button closeUpkeep' = let
-  setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay ()
+upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen' 
+    notCheckedMachines'' machines button closeUpkeep' = let
+  setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
     newAppState oldNavigation = let
       newNavigation = oldNavigation { D.upkeep = upkeep }
@@ -139,23 +140,22 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
       upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> newAppState upkeepClose'
       upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
-  machineRow (machineId',_,_,_,machineType) = let
-    machineId = M.getMachineId machineId'
-    upkeepMachines = U.upkeepMachines upkeep'
-    findMachineById (UM.UpkeepMachine _ id' _) = machineId == id'
+  machineRow (machineId,_,_,_,machineType) = let
+    findMachineById (_,id') = machineId == id'
     thisUpkeepMachine = find findMachineById upkeepMachines
     thatUpkeepMachine = find findMachineById notCheckedMachines''
-    checkedMachineIds = map (UM.upkeepMachineMachineId) upkeepMachines
+    checkedMachineIds = map snd upkeepMachines
     rowProps = if elem machineId checkedMachineIds
       then class' "bg-success"
       else mkAttrs
     field :: (Text -> Maybe a) 
-          -> (a -> UM.UpkeepMachine -> UM.UpkeepMachine) 
-          -> (UM.UpkeepMachine -> Text) 
+          -> (a -> UM.UpkeepMachine' -> UM.UpkeepMachine')
+          -> (UM.UpkeepMachine -> Text)
           -> (I.InputProps -> DOMElement)
           -> Int -- ^ row width
           -> DOMElement
     field parseText setValue showValue inputType rowWidth = let
+      defaultValue upkeepMachine = Defined $ showValue $ fst upkeepMachine
       inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
         (Just(upkeepMachine), _) -> I.mkInputProps {
           I.onChange = Defined $ \event -> do
@@ -163,16 +163,15 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
             case parseText rawValue of
               Just(value) -> let
                 newUpkeepMachine = setValue value upkeepMachine
-                newUpkeepMachines = map (\um @ (UM.UpkeepMachine _ machineId' _) ->
+                newUpkeepMachines = map (\ um @ (_,machineId') ->
                   if machineId' == machineId
                     then newUpkeepMachine
                     else um) upkeepMachines
-                newUpkeep = upkeep' { U.upkeepMachines = newUpkeepMachines }
-                in setUpkeep newUpkeep Nothing 
+                in setUpkeep (upkeep', newUpkeepMachines) Nothing 
               _ -> return (),
-          I.defaultValue = Defined $ showValue upkeepMachine }
+          I.defaultValue = defaultValue upkeepMachine }
         (_, Just(upkeepMachine)) -> I.mkInputProps {
-          I.defaultValue = Defined $ showValue upkeepMachine ,
+          I.defaultValue = defaultValue upkeepMachine ,
           I.disabled = Defined True }
         _ -> I.mkInputProps { -- this shouldn't happen, really
           I.disabled = Defined True }
@@ -181,19 +180,19 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
       content = span $ pack $ MT.machineTypeName machineType
       clickHandler = let
         (newCheckedMachines, newNotCheckedMachines) = toggle (
-          U.upkeepMachines upkeep' ,
+          upkeepMachines ,
           notCheckedMachines'' )
-          (\(UM.UpkeepMachine _ machineId' _) -> machineId' == machineId)
-        newUpkeep = upkeep' { U.upkeepMachines = newCheckedMachines }
+          (\(_,machineId') -> machineId' == machineId)
+        newUpkeep = (upkeep' , newCheckedMachines)
         in setUpkeep newUpkeep $ Just newNotCheckedMachines
       link' = A.a''
         (mkAttrs{onClick = Defined $ const clickHandler})
         (A.mkAAttrs)
         content
       in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) link'
-    recordedMileageField = field parseSafely (\v um -> um { UM.recordedMileage = v }) 
+    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') ) 
       (showInt . UM.recordedMileage) I.input 2
-    noteField = field (\a -> Just a) (\note um -> um { UM.upkeepMachineNote = unpack note }) 
+    noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note },id')) 
       (pack . UM.upkeepMachineNote) I.textarea 6
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, noteField]
@@ -210,8 +209,8 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
         day' | day' == "Day" -> setDate YMD.DayPrecision
         _ -> return ()
         where 
-          setDate precision' = setUpkeep (upkeep' {
-            U.upkeepDate = YMD.YearMonthDay year month day precision' }) Nothing
+          setDate precision' = setUpkeep (upkeep' { U.upkeepDate = 
+            YMD.YearMonthDay year month day precision' }, upkeepMachines) Nothing
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
           upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }

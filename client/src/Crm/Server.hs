@@ -27,6 +27,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 
@@ -56,7 +57,7 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, U.Upkeep, [(M.MachineId, M.Machine, 
+            -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
                  C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
 fetchUpkeep upkeepId callback =
@@ -66,7 +67,7 @@ fetchUpkeep upkeepId callback =
     noopOnError
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep)] -> Fay ()) -- ^ callback
+             -> ([(U.Upkeep,[UM.UpkeepMachine'])] -> Fay ()) -- ^ callback
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
@@ -152,12 +153,11 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
 
-updateUpkeep :: U.UpkeepId
-             -> U.Upkeep
+updateUpkeep :: U.Upkeep'
              -> Fay ()
              -> Fay ()
-updateUpkeep upkeepId upkeep callback = ajax
-  upkeep
+updateUpkeep (upkeepId, upkeep, upkeepMachines) callback = ajax
+  (upkeep, upkeepMachines)
   (apiRoot <> pack "companies/0/" <> pack A.upkeep <> pack "/" 
     <> (showInt $ U.getUpkeepId upkeepId) <> pack "/")
   (pack "PUT")
@@ -174,13 +174,13 @@ updateMachine machineId machineTypeId machine callback = ajax
   (pack "PUT")
   (const callback)
 
-createUpkeep :: U.Upkeep
+createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
              -> C.CompanyId -- ^ company id
              -> (U.UpkeepId -> Fay ())
              -> Fay ()
-createUpkeep upkeep companyId callback =
+createUpkeep newUpkeep companyId callback =
   ajax 
-    upkeep
+    newUpkeep
     (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <>
       (showInt $ C.getCompanyId companyId) <> pack "/" <> pack A.upkeep <> pack "/")
     (pack "POST")

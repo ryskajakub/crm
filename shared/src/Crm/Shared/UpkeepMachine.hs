@@ -6,6 +6,8 @@
 
 module Crm.Shared.UpkeepMachine where
 
+import qualified Crm.Shared.Machine as M
+
 #ifndef FAY
 import GHC.Generics
 import "base" Data.Data
@@ -13,6 +15,8 @@ import "base" Prelude
 #else
 import "fay-base" Prelude
 #endif
+
+type UpkeepMachine' = (UpkeepMachine, M.MachineId)
 
 data UpkeepMachine = UpkeepMachine {
   upkeepMachineNote :: String , 

@@ -38,20 +38,20 @@ data NavigationState =
     machineId :: M.MachineId , 
     machineNextService :: YMD.YearMonthDay } | 
   UpkeepNew {
-    upkeep :: U.Upkeep , 
+    upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
-    notCheckedMachines :: [UM.UpkeepMachine] , 
+    notCheckedMachines :: [UM.UpkeepMachine'] , 
     upkeepDatePickerOpen :: Bool , 
     companyId :: C.CompanyId } | 
   UpkeepClose {
-    upkeep :: U.Upkeep , 
+    upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     machines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
-    notCheckedMachines :: [UM.UpkeepMachine] , 
+    notCheckedMachines :: [UM.UpkeepMachine'] , 
     upkeepDatePickerOpen :: Bool ,
     upkeepId :: U.UpkeepId ,
     companyId :: C.CompanyId } | 
   UpkeepHistory {
-    companyUpkeeps :: [(U.UpkeepId,U.Upkeep)] } | 
+    companyUpkeeps :: [(U.Upkeep,[UM.UpkeepMachine'])] } | 
   PlannedUpkeeps { 
     plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] }
 

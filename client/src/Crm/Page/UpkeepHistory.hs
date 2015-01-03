@@ -16,15 +16,14 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Helpers (displayDate)
 
-upkeepHistory :: [(U.UpkeepId, U.Upkeep)]
+upkeepHistory :: [(U.Upkeep,[UM.UpkeepMachine'])]
               -> DOMElement
 upkeepHistory upkeeps = let
-  upkeepHtml (_, upkeep) = let
-    upkeepMachines = U.upkeepMachines upkeep
+  upkeepHtml (upkeep, upkeepMachines) = let
     upkeepDate = B.col (B.mkColProps 12) (displayDate $ U.upkeepDate upkeep)
     upkeepMachineHtml upkeepMachine = B.col
       (B.mkColProps 3)
-      (pack $ UM.upkeepMachineNote upkeepMachine)
+      (pack $ UM.upkeepMachineNote $ fst upkeepMachine)
     row = B.row (upkeepDate : map upkeepMachineHtml upkeepMachines)
     in row
   in div [

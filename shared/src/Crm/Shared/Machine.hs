@@ -17,6 +17,7 @@ import "fay-base" Prelude
 #endif
 
 newtype MachineId = MachineId { getMachineId :: Int }
+  deriving Eq
 
 data Machine = Machine {
   machineOperationStartDate :: YearMonthDay ,

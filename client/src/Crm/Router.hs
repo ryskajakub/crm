@@ -114,16 +114,16 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (_, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> UM.newUpkeepMachine $ M.getMachineId machineId) machines
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> (UM.newUpkeepMachine, machineId)) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
-          in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
+          in D.UpkeepNew (U.newUpkeep nowYMD, []) machines notCheckedUpkeepMachines False companyId)
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
         Just(companyId) -> 
-          fetchUpkeeps (C.CompanyId companyId) (\upkeeps -> let
-            ns = D.UpkeepHistory upkeeps 
+          fetchUpkeeps (C.CompanyId companyId) (\result -> let
+            ns = D.UpkeepHistory result
             in modify' ns)
         _ -> modify' D.NotFound
   ),(
@@ -147,19 +147,18 @@ startRouter appVar = let
     "upkeeps/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(upkeepId') -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
-          upkeepMachines = U.upkeepMachines upkeep
+        Just(upkeepId') -> fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> let
           addNotCheckedMachine acc element = let 
             (machineId,_,_,_,_) = element
-            machineId'' = M.getMachineId machineId
-            machineChecked = find (\(UM.UpkeepMachine _ machineId' _) -> 
-              machineId'' == machineId') upkeepMachines
+            machineChecked = find (\(_,machineId') -> 
+              machineId == machineId') upkeepMachines
             in case machineChecked of
-              Nothing -> UM.newUpkeepMachine machineId'' : acc
+              Nothing -> (UM.newUpkeepMachine,machineId) : acc
               _ -> acc
           notCheckedMachines = foldl addNotCheckedMachine [] machines
           upkeep' = upkeep { U.upkeepClosed = True }
-          in modify' $ D.UpkeepClose upkeep' machines notCheckedMachines False upkeepId companyId)
+          in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
+            notCheckedMachines False upkeepId companyId)
           where
             upkeepId = U.UpkeepId upkeepId'
         _ -> modify' D.NotFound )]
