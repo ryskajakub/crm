@@ -22,6 +22,7 @@ import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.Company as C
 import qualified Crm.Data as D
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType)
@@ -72,7 +73,7 @@ machineNew :: CrmRouter
            -> Var D.AppState
            -> Bool
            -> M.Machine
-           -> Int
+           -> C.CompanyId
            -> MT.MachineType
            -> Maybe Int
            -> (DOMElement, Fay ())

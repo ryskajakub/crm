@@ -29,7 +29,7 @@ import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
 
 companiesList :: R.CrmRouter
-              -> [(Int, C.Company, Maybe YMD.YearMonthDay)]
+              -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)]
               -> DOMElement
 companiesList router companies' = let
   head' =
@@ -79,11 +79,10 @@ companyNew router var company' = let
 companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
-              -> (Int, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machines of the company
+              -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
+              -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing' router var idCompany machines' = let
-  (companyId, company') = idCompany
+companyDetail editing' router var (companyId, company') machines' = let
   saveHandler =
     R.navigate R.frontPage router
   setCompany modifiedCompany = modify var (\appState -> appState {

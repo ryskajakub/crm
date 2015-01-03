@@ -56,7 +56,7 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: Int -- ^ upkeep id
-            -> ((Int, U.Upkeep, [(Int, M.Machine, Int, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
+            -> ((C.CompanyId, U.Upkeep, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
@@ -64,12 +64,12 @@ fetchUpkeep upkeepId callback =
     callback
     noopOnError
 
-fetchUpkeeps :: Int -- ^ company id
+fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(Int, U.Upkeep)] -> Fay ()) -- ^ callback
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
-    (pack "/api/v1.0.0/companies/" <> showInt companyId <> pack "/upkeeps/")
+    (pack "/api/v1.0.0/companies/" <> (showInt $ C.getCompanyId companyId) <> pack "/upkeeps/")
     (callback . items)
     (const $ const $ const $ return ())
 
@@ -82,12 +82,12 @@ fetchMachine machineId callback =
     callback
     (const $ const $ const $ return ())
 
-fetchCompany :: Int -- ^ company id
-             -> ((C.Company, [(Int, M.Machine, Int, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
+fetchCompany :: C.CompanyId -- ^ company id
+             -> ((C.Company, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> showInt companyId <> pack "/")
+    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> (showInt $ C.getCompanyId companyId) <> pack "/")
     callback
     (const $ const $ const $ return ())
 
@@ -97,7 +97,7 @@ data Items
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
-fetchFrontPageData :: ([(Int, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
+fetchFrontPageData :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
 fetchFrontPageData callback = let
   lMb [] = []
@@ -107,7 +107,7 @@ fetchFrontPageData callback = let
     (callback . lMb . items)
     (const $ const $ const $ return ())
 
-fetchPlannedUpkeeps :: ([(Int, U.Upkeep, Int, C.Company)] -> Fay ())
+fetchPlannedUpkeeps :: ([(Int, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
@@ -123,14 +123,14 @@ createCompany company callback = do
   create' crmApi (pack A.companiesClient) company callback
 
 createMachine :: M.Machine 
-              -> Int
+              -> C.CompanyId
               -> MT.MyEither
               -> (Int -> Fay())
               -> Fay ()
 createMachine machine companyId machineType callback =
   ajax
     (machine, machineType)
-    (pack "/api/v1.0.0/companies/" <> (showInt companyId) <> pack "/machines/")
+    (pack "/api/v1.0.0/companies/" <> (showInt $ C.getCompanyId companyId) <> pack "/machines/")
     (pack "POST")
     callback
 
@@ -173,14 +173,14 @@ updateMachine machineId machineTypeId machine callback = ajax
   (const callback)
 
 createUpkeep :: U.Upkeep
-             -> Int -- ^ company id
+             -> C.CompanyId -- ^ company id
              -> (Int -> Fay ())
              -> Fay ()
 createUpkeep upkeep companyId callback =
   ajax 
     upkeep
     (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <>
-      showInt companyId <> pack "/" <> pack A.upkeep <> pack "/")
+      (showInt $ C.getCompanyId companyId) <> pack "/" <> pack A.upkeep <> pack "/")
     (pack "POST")
     callback
 

@@ -30,7 +30,7 @@ import HaskellReact
 import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany, fetchUpkeeps, fetchUpkeep)
-import Crm.Helpers (parseSafely)
+import Crm.Helpers (parseSafely, showCompanyId)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -48,17 +48,17 @@ frontPage = CrmRoute ""
 newCompany :: CrmRoute
 newCompany = CrmRoute "companies/new"
 
-companyDetail :: Int -> CrmRoute
-companyDetail companyId = CrmRoute $ "companies/" <> showInt companyId
+companyDetail :: C.CompanyId -> CrmRoute
+companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
 
-newMachine :: Int -> CrmRoute
-newMachine companyId = CrmRoute $ "companies/" <> showInt companyId <> "/new-machine"
+newMachine :: C.CompanyId -> CrmRoute
+newMachine companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine"
 
-newMaintenance :: Int -> CrmRoute
-newMaintenance companyId = CrmRoute $ "companies/" <> showInt companyId <> "/new-maintenance"
+newMaintenance :: C.CompanyId -> CrmRoute
+newMaintenance companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-maintenance"
 
-maintenances :: Int -> CrmRoute
-maintenances companyId = CrmRoute $ "companies/" <> showInt companyId <> "/maintenances"
+maintenances :: C.CompanyId -> CrmRoute
+maintenances companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/maintenances"
 
 machineDetail :: Int -> CrmRoute
 machineDetail machineId = CrmRoute $ "machines/" <> showInt machineId
@@ -73,13 +73,16 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (Int -> (C.Company, [(Int, M.Machine, Int, Int, MT.MachineType)]) -> D.NavigationState)
+              -> (C.CompanyId -> (C.Company, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) 
+                 -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
-    Just(companyId) ->
+    Just(companyId') ->
       fetchCompany companyId (\data' -> let
         newState = newStateFun companyId data'
         in modify' newState )
+      where
+        companyId = C.CompanyId companyId'
     _ -> modify' D.NotFound 
   
   in fmap CrmRouter $ BR.startRouter [(
@@ -89,10 +92,11 @@ startRouter appVar = let
     "companies/:id", \params -> let
       cId = head params
       in case (parseSafely cId, cId) of
-        (Just(cId''), _) ->
-          fetchCompany cId'' (\(company,machines) -> 
+        (Just(cId''), _) -> let
+          companyId = C.CompanyId cId''
+          in fetchCompany companyId (\(company,machines) -> 
             modify appVar (\appState -> appState {
-              D.navigation = D.CompanyDetail cId'' company False machines }))
+              D.navigation = D.CompanyDetail companyId company False machines }))
         (_, new) | new == "new" -> modify appVar (\appState ->
           appState {
             D.navigation = D.CompanyNew C.newCompany }
@@ -117,7 +121,7 @@ startRouter appVar = let
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
         Just(companyId) -> 
-          fetchUpkeeps companyId (\upkeeps -> let
+          fetchUpkeeps (C.CompanyId companyId) (\upkeeps -> let
             ns = D.UpkeepHistory upkeeps 
             in modify' ns)
         _ -> modify' D.NotFound

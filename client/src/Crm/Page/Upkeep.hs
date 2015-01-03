@@ -33,7 +33,7 @@ import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, mainte
 import Crm.Helpers (displayDate, parseSafely)
 
 plannedUpkeeps :: CrmRouter
-               -> [(Int, U.Upkeep, Int, C.Company)]
+               -> [(Int, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
@@ -79,9 +79,9 @@ upkeepDetail :: CrmRouter
              -> U.Upkeep
              -> Bool
              -> [UM.UpkeepMachine]
-             -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
+             -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
              -> Int -- ^ upkeep id
-             -> Int -- ^ company id
+             -> C.CompanyId -- ^ company id
              -> DOMElement
 upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId companyId =
   upkeepForm appState upkeep datePickerOpen notCheckedMachines machines submitButton True
@@ -101,8 +101,8 @@ upkeepNew :: CrmRouter
           -> U.Upkeep
           -> Bool
           -> [UM.UpkeepMachine]
-          -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
-          -> Int -- ^ company id
+          -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
+          -> C.CompanyId -- ^ company id
           -> DOMElement
 upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyId = 
   upkeepForm appState upkeep pickerOpen notCheckedMachines machines submitButton False
@@ -122,7 +122,7 @@ upkeepForm :: Var D.AppState
            -> U.Upkeep
            -> Bool -- ^ datepicker openness
            -> [UM.UpkeepMachine]
-           -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
+           -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement

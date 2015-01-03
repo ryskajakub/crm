@@ -14,18 +14,18 @@ import qualified Crm.Shared.YearMonthDay as YMD
 
 data NavigationState =
   FrontPage {
-    companiesNextService :: [(Int, C.Company, Maybe YMD.YearMonthDay)] } | 
+    companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] } | 
   CompanyDetail {
-    companyId :: Int , 
+    companyId :: C.CompanyId , 
     company :: C.Company , 
     editing :: Bool , 
-    companyMachines :: [(Int, M.Machine, Int, Int, MT.MachineType)] } | 
+    companyMachines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
   MachineNew {
     machine :: M.Machine ,
-    companyId :: Int ,
+    companyId :: C.CompanyId ,
     machineType :: MT.MachineType , 
     maybeMachineTypeId :: Maybe Int ,
     operationStartCalendarOpen :: Bool } | 
@@ -39,21 +39,21 @@ data NavigationState =
     machineNextService :: YMD.YearMonthDay } | 
   UpkeepNew {
     upkeep :: U.Upkeep , 
-    upkeepMachines :: [(Int, M.Machine, Int, Int, MT.MachineType)] , 
+    upkeepMachines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool , 
-    companyId :: Int } | 
+    companyId :: C.CompanyId } | 
   UpkeepClose {
     upkeep :: U.Upkeep , 
-    machines :: [(Int, M.Machine, Int, Int, MT.MachineType)] , 
+    machines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool ,
     upkeepId :: Int ,
-    companyId :: Int } | 
+    companyId :: C.CompanyId } | 
   UpkeepHistory {
     companyUpkeeps :: [(Int,U.Upkeep)] } | 
   PlannedUpkeeps { 
-    plennedUpkeeps :: [(Int, U.Upkeep, Int, C.Company)] }
+    plennedUpkeeps :: [(Int, U.Upkeep, C.CompanyId, C.Company)] }
 
 data AppState = AppState {
   navigation :: NavigationState }
