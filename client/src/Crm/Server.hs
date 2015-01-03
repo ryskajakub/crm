@@ -56,7 +56,7 @@ fetchMachineType machineTypeName callback =
     (const $ const $ const $ return ())
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, U.Upkeep, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
+            -> ((C.CompanyId, U.Upkeep, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
@@ -73,17 +73,17 @@ fetchUpkeeps companyId callback =
     (callback . items)
     (const $ const $ const $ return ())
 
-fetchMachine :: Int -- ^ machine id
-             -> ((M.Machine, Int, Int, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
+fetchMachine :: M.MachineId -- ^ machine id
+             -> ((M.Machine, Int, M.MachineId, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax
-    (pack "/api/v1.0.0/machines/" <> showInt machineId <> pack "/")
+    (pack "/api/v1.0.0/machines/" <> (showInt $ M.getMachineId machineId) <> pack "/")
     callback
     (const $ const $ const $ return ())
 
 fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
@@ -162,14 +162,14 @@ updateUpkeep upkeepId upkeep callback = ajax
   (pack "PUT")
   (const callback)
 
-updateMachine :: Int -- ^ machine id
+updateMachine :: M.MachineId -- ^ machine id
               -> Int -- ^ machine type id
               -> M.Machine
               -> Fay ()
               -> Fay ()
 updateMachine machineId machineTypeId machine callback = ajax
   (machineTypeId, machine)
-  (apiRoot <> pack A.machines <> pack "/" <> showInt machineId <> pack "/")
+  (apiRoot <> pack A.machines <> pack "/" <> (showInt $ M.getMachineId machineId) <> pack "/")
   (pack "PUT")
   (const callback)
 

@@ -19,7 +19,7 @@ data NavigationState =
     companyId :: C.CompanyId , 
     company :: C.Company , 
     editing :: Bool , 
-    companyMachines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] } | 
+    companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
@@ -35,17 +35,17 @@ data NavigationState =
     machineTypeId :: Int ,
     operationStartCalendarOpen :: Bool , 
     formState :: Bool , 
-    machineId :: Int , 
+    machineId :: M.MachineId , 
     machineNextService :: YMD.YearMonthDay } | 
   UpkeepNew {
     upkeep :: U.Upkeep , 
-    upkeepMachines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
+    upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool , 
     companyId :: C.CompanyId } | 
   UpkeepClose {
     upkeep :: U.Upkeep , 
-    machines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
+    machines :: [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool ,
     upkeepId :: U.UpkeepId ,

@@ -80,7 +80,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
               -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machines of the company
+              -> [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
   saveHandler =

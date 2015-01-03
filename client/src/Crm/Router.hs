@@ -60,8 +60,8 @@ newMaintenance companyId = CrmRoute $ "companies/" <> showCompanyId companyId <>
 maintenances :: C.CompanyId -> CrmRoute
 maintenances companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/maintenances"
 
-machineDetail :: Int -> CrmRoute
-machineDetail machineId = CrmRoute $ "machines/" <> showInt machineId
+machineDetail :: M.MachineId -> CrmRoute
+machineDetail machineId = CrmRoute $ "machines/" <> (showInt $ M.getMachineId machineId)
 
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute $ "planned"
@@ -73,7 +73,7 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (C.CompanyId -> (C.Company, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) 
+              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine, C.CompanyId, Int, MT.MachineType)]) 
                  -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
@@ -113,7 +113,7 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (_, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> UM.newUpkeepMachine machineId) machines
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> UM.newUpkeepMachine $ M.getMachineId machineId) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
           in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
@@ -129,8 +129,12 @@ startRouter appVar = let
     "machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId' (\(machine, machineTypeId, _, machineType, machineNextService) ->
-          modify' $ D.MachineDetail machine machineType machineTypeId False False machineId' machineNextService)
+        Just(machineId') -> fetchMachine machineId
+          (\(machine, machineTypeId, _, machineType, machineNextService) ->
+            modify' $ D.MachineDetail machine machineType machineTypeId 
+              False False machineId machineNextService)
+          where 
+            machineId = M.MachineId machineId'
         _ -> modify' D.NotFound
   ),(
     "planned", const $
@@ -146,10 +150,11 @@ startRouter appVar = let
           upkeepMachines = U.upkeepMachines upkeep
           addNotCheckedMachine acc element = let 
             (machineId,_,_,_,_) = element
+            machineId'' = M.getMachineId machineId
             machineChecked = find (\(UM.UpkeepMachine _ machineId' _) -> 
-              machineId == machineId') upkeepMachines
+              machineId'' == machineId') upkeepMachines
             in case machineChecked of
-              Nothing -> UM.newUpkeepMachine machineId : acc
+              Nothing -> UM.newUpkeepMachine machineId'' : acc
               _ -> acc
           notCheckedMachines = foldl addNotCheckedMachine [] machines
           upkeep' = upkeep { U.upkeepClosed = True }

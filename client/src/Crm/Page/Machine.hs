@@ -48,7 +48,7 @@ machineDetail :: Bool
               -> M.Machine
               -> Int
               -> MT.MachineType
-              -> Int
+              -> M.MachineId
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineType machineId nextService = 
