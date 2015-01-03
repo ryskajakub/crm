@@ -21,11 +21,10 @@ newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 
 data Upkeep = Upkeep {
   upkeepDate :: D.YearMonthDay ,
-  upkeepMachines :: [UpkeepMachine] ,
   upkeepClosed :: Bool }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newUpkeep :: D.YearMonthDay -> Upkeep
-newUpkeep ymd = Upkeep ymd [] False
+newUpkeep ymd = Upkeep ymd False

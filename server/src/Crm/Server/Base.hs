@@ -396,6 +396,8 @@ instance ToJSON MT.MachineType where
   toJSON = fromJust . showToFay
 instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
+instance ToJSON UM.UpkeepMachine where
+  toJSON = fromJust . showToFay
 
 instance JS.JSONSchema C.Company where
   schema = gSchema
@@ -578,7 +580,7 @@ companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-    return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) [] u2)) rows))
+    return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
 
 machineTypesListing :: String -> ListHandler Dependencies
 machineTypesListing mid = mkListing (jsonO . someO) (const $ 
@@ -598,7 +600,7 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
   let mappedRows = map (\((uPK,u2,u3),(cPK,c2,c3)) ->
-        (uPK, U.Upkeep (dayToYmd u2) [] u3, cPK, C.Company c2 c3)) rows
+        (uPK, U.Upkeep (dayToYmd u2) u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
 singleRowOrColumn :: Monad m
@@ -615,17 +617,17 @@ getUpkeep = mkConstHandler (jsonO . someO) ( do
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
 
-mapUpkeeps :: [((Int, Day, Bool), (Int, String, Int, Int))] -> [(Int, U.Upkeep)]
+mapUpkeeps :: [((Int, Day, Bool), (Int, String, Int, Int))] -> [(Int, (U.Upkeep, [(UM.UpkeepMachine, Int)]))]
 mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
   let
-    addUpkeep' = (upkeepId, U.Upkeep (dayToYmd date) 
-      [UM.UpkeepMachine note machineId recordedMileage] upkeepClosed)
+    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed,
+      [(UM.UpkeepMachine note recordedMileage, machineId)]) )
     in case acc of
       [] -> [addUpkeep']
-      (upkeepId', upkeep) : rest | upkeepId' == upkeepId -> let
-        modifiedUpkeep = upkeep {
-          U.upkeepMachines = UM.UpkeepMachine note machineId recordedMileage : U.upkeepMachines upkeep }
-        in (upkeepId', modifiedUpkeep) : rest
+      (upkeepId', (upkeep, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
+        modifiedUpkeepMachines = 
+          (UM.UpkeepMachine note recordedMileage, machineId) : upkeepMachines
+        in (upkeepId', (upkeep, modifiedUpkeepMachines)) : rest
       _ -> addUpkeep' : acc
   ) [] rows
 
@@ -634,43 +636,43 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
   return $ mapUpkeeps rows) 
 
-insertUpkeepMachines :: Connection -> Int -> [UM.UpkeepMachine] -> IO ()
+insertUpkeepMachines :: Connection -> Int -> [(UM.UpkeepMachine, Int)] -> IO ()
 insertUpkeepMachines connection upkeepId upkeepMachines = let
-  insertUpkeepMachine upkeepMachine' = do
+  insertUpkeepMachine (upkeepMachine', upkeepMachineId) = do
     _ <- runInsert
       connection
       upkeepMachinesTable (
         pgInt4 upkeepId ,
         pgString $ UM.upkeepMachineNote upkeepMachine' ,
-        pgInt4 $ UM.upkeepMachineMachineId upkeepMachine' ,
+        pgInt4 upkeepMachineId ,
         pgInt4 $ UM.recordedMileage upkeepMachine' )
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
 updateUpkeep :: Connection
              -> Int
-             -> U.Upkeep
+             -> (U.Upkeep, [(UM.UpkeepMachine, Int)])
              -> IO ()
-updateUpkeep conn upkeepId upkeep = do
+updateUpkeep conn upkeepId (upkeep, upkeepMachines) = do
   _ <- let
     condition (upkeepId',_,_) = upkeepId' .== pgInt4 upkeepId
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
     in runUpdate conn upkeepTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
-  insertUpkeepMachines conn upkeepId (U.upkeepMachines upkeep)
+  insertUpkeepMachines conn upkeepId upkeepMachines
   return ()
 
 addUpkeep :: Connection
-          -> U.Upkeep
+          -> (U.Upkeep, [(UM.UpkeepMachine, Int)])
           -> IO Int -- ^ id of the upkeep
-addUpkeep connection upkeep = do
+addUpkeep connection (upkeep, upkeepMachines) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
     (\(id',_,_) -> id')
   let upkeepId = head upkeepIds
-  insertUpkeepMachines connection upkeepId (U.upkeepMachines upkeep)
+  insertUpkeepMachines connection upkeepId upkeepMachines
   return upkeepId
 
 addMachine :: Connection
