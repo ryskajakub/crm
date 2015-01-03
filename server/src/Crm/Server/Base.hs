@@ -177,7 +177,7 @@ runCompanyWithMachinesQuery companyId connection =
   runQuery connection (companyWithMachinesQuery companyId)
 
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
-machinesInCompanyQuery companyId = proc () -> do
+machinesInCompanyQuery companyId = orderBy (asc(\((machineId,_,_,_,_,_),_) -> machineId)) $ proc () -> do
   m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
   mt <- join machineTypesQuery -< machineTypeFK
   restrict -< (pgInt4 companyId .== companyFK)
