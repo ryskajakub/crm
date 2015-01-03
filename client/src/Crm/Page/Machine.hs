@@ -132,8 +132,8 @@ machineDisplay editing buttonRow _ appVar operationStartCalendarOpen' machine' m
       inputNormalAttrs
       (\text -> case text of 
         text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType) -> do
-            setMachineType machineType
+          Just (machineTypeId', machineType') -> do
+            setMachineType machineType'
             setMachineTypeId machineTypeId'
           Nothing -> return () )
         _ -> return () )

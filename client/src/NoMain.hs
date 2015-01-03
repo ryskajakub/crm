@@ -4,7 +4,7 @@
 module NoMain where
 
 import "fay-base" Prelude hiding (span, div, elem)
-import Data.Var (Var, newVar, subscribeAndRead, modify, waitFor)
+import Data.Var (Var, newVar, subscribeAndRead)
 
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation

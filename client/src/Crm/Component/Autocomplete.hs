@@ -5,9 +5,8 @@ module Crm.Component.Autocomplete (
   autocompleteInput ) where
 
 import HaskellReact
-import JQuery hiding (select)
 import FFI (ffi, Defined(Defined))
-import "fay-base" Data.Text (pack, Text, unpack, (<>))
+import "fay-base" Data.Text (pack, Text, (<>))
 import "fay-base" Prelude hiding (id)
 
 import qualified HaskellReact.Tag.Input as I

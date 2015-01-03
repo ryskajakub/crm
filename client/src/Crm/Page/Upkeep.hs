@@ -126,7 +126,7 @@ upkeepForm :: Var D.AppState
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement
-upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines button closeUpkeep = let
+upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines button closeUpkeep' = let
   setUpkeep :: U.Upkeep -> Maybe [UM.UpkeepMachine] -> Fay ()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
     newAppState oldNavigation = let
@@ -139,7 +139,7 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
       upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> newAppState upkeepClose'
       upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
-  machineRow (machineId, machine, _, machineType) = let
+  machineRow (machineId,_,_,machineType) = let
     upkeepMachines = U.upkeepMachines upkeep'
     thisUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') upkeepMachines
     thatUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') notCheckedMachines''
@@ -150,8 +150,10 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
     field :: (Text -> Maybe a) 
           -> (a -> UM.UpkeepMachine -> UM.UpkeepMachine) 
           -> (UM.UpkeepMachine -> Text) 
+          -> (I.InputProps -> DOMElement)
+          -> Int -- ^ row width
           -> DOMElement
-    field parseText setValue showValue = let
+    field parseText setValue showValue inputType rowWidth = let
       inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
         (Just(upkeepMachine), _) -> I.mkInputProps {
           I.onChange = Defined $ \event -> do
@@ -172,8 +174,8 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
           I.disabled = Defined True }
         _ -> I.mkInputProps { -- this shouldn't happen, really
           I.disabled = Defined True }
-      in B.col (B.mkColProps 2) $ I.input inputProps
-    link = let
+      in B.col (B.mkColProps rowWidth) $ inputType inputProps
+    machineToggleLink = let
       content = span $ pack $ MT.machineTypeName machineType
       clickHandler = let
         (newCheckedMachines, newNotCheckedMachines) = toggle (
@@ -188,10 +190,10 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
         content
       in B.col (B.mkColProps 4) link'
     recordedMileageField = field parseSafely (\v um -> um { UM.recordedMileage = v }) 
-      (showInt . UM.recordedMileage)
+      (showInt . UM.recordedMileage) I.input 2
     noteField = field (\a -> Just a) (\note um -> um { UM.upkeepMachineNote = unpack note }) 
-      (pack . UM.upkeepMachineNote)
-    in B.row' rowProps [link, recordedMileageField, noteField]
+      (pack . UM.upkeepMachineNote) I.textarea 6
+    in B.row' rowProps [machineToggleLink, recordedMileageField, noteField]
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,

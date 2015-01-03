@@ -12,7 +12,6 @@ import "fay-base" Data.Text (fromString, unpack, pack)
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
-import Debug.Trace
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
