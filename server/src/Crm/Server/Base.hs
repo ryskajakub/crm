@@ -147,13 +147,13 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
-runMachineUpdate :: (Int, Int, M.Machine) -> Connection -> IO Int64
-runMachineUpdate (machineId', machineTypeId, machine') connection =
+runMachineUpdate :: (Int, Int, M.Machine, Int) -> Connection -> IO Int64
+runMachineUpdate (machineId', machineTypeId, machine', companyId) connection =
   runUpdate connection machinesTable readToWrite condition
     where
       condition (machineId,_,_,_,_,_) = machineId .== pgInt4 machineId'
       readToWrite  = const
-        (Nothing, pgInt4 $ M.companyId machine', pgInt4 machineTypeId,
+        (Nothing, pgInt4 $ companyId, pgInt4 machineTypeId,
           pgDay $ ymdToDay $ M.machineOperationStartDate machine',
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
 
@@ -285,15 +285,15 @@ runMachinesInCompanyQuery' :: Int -> Connection ->
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
-runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
+runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
 convertExpanded :: ((Int, Int, Int, Day, Int, Int),(Int, String, String, Int)) 
-                -> (Int, M.Machine, Int, MT.MachineType)
+                -> (Int, M.Machine, Int, Int, MT.MachineType)
 convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf,mtI)) ->
-  (mId, M.Machine cId (dayToYmd mOs) m3 m4, mtId, (MT.MachineType mtN mtMf mtI)))
+  (mId, M.Machine (dayToYmd mOs) m3 m4, cId, mtId, (MT.MachineType mtN mtMf mtI)))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
   -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
@@ -304,7 +304,7 @@ runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
-runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, MT.MachineType)]
+runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ map convertExpanded rows
@@ -322,7 +322,7 @@ runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintena
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
-runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, MT.MachineType))]
+runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
@@ -431,7 +431,7 @@ listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
   ask >>= (\conn -> forM rows (\(companyId, cName, cPlant) -> do
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    nextDays <- forM machines (\(machineId, machine, _, machineType) -> do
+    nextDays <- forM machines (\(machineId, machine, _, _, machineType) -> do
       nextServiceDay <- nextService machineId machine machineType id
       return nextServiceDay )
     return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
@@ -518,9 +518,9 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = companySchema }
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine) ->
+machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine, companyId) ->
   ask >>= \(conn, id') -> maybeId id' (\machineId -> do
-    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine) conn
+    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine, companyId) conn
     -- todo singal error if the update didn't hit a row
     return ()))
 
@@ -529,7 +529,7 @@ nextService :: Int
             -> MT.MachineType 
             -> (a -> Connection) 
             -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
-nextService machineId (M.Machine _ operationStartDate _ mileagePerYear) 
+nextService machineId (M.Machine operationStartDate _ mileagePerYear) 
   (MT.MachineType _ _ upkeepPerMileage) getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
@@ -555,9 +555,9 @@ machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
-    (machineId, machine, machineTypeId, machineType) <- singleRowOrColumn rows
+    (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
     ymd <- nextService machineId machine machineType fst
-    return (machine, machineTypeId, machineType, ymd))))
+    return (machine, companyId, machineTypeId, machineType, ymd))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
@@ -673,9 +673,10 @@ addUpkeep connection upkeep = do
 
 addMachine :: Connection
            -> M.Machine
+           -> Int
            -> MT.MyEither
            -> IO Int -- ^ id of newly created machine
-addMachine connection machine machineType = do
+addMachine connection machine companyId' machineType = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType name' manufacturer upkeepPerMileage) -> do
@@ -685,7 +686,7 @@ addMachine connection machine machineType = do
         (\(id',_,_,_) -> id')
       return $ head newMachineTypeId -- todo safe
   let
-    M.Machine companyId' machineOperationStartDate' initialMileage mileagePerYear = machine
+    M.Machine machineOperationStartDate' initialMileage mileagePerYear = machine
   machineId <- runInsertReturning
     connection
     machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay $ ymdToDay machineOperationStartDate',
@@ -696,7 +697,7 @@ addMachine connection machine machineType = do
 createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine,machineType) ->
   ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> 
-    liftIO $ addMachine connection newMachine machineType))
+    liftIO $ addMachine connection newMachine companyId machineType))
 
 updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\upkeep ->

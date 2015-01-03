@@ -19,7 +19,6 @@ import "fay-base" Prelude
 newtype MachineId = MachineId { getMachineId :: Int }
 
 data Machine = Machine {
-  companyId :: Int ,
   machineOperationStartDate :: YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int }
@@ -27,9 +26,8 @@ data Machine = Machine {
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-newMachine :: Int -> Machine
-newMachine companyId' = Machine {
-  companyId = companyId' ,
+newMachine :: Machine
+newMachine = Machine {
   machineOperationStartDate = YearMonthDay 1970 1 1 YearPrecision ,
   initialMileage = 0 ,
   mileagePerYear = 365 * 24 }
