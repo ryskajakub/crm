@@ -184,12 +184,17 @@ machinesInCompanyQuery companyId = proc () -> do
   returnA -< (m, mt)
 
 companyUpkeepsQuery :: Int -> Query UpkeepTable
-companyUpkeepsQuery companyId = proc () -> do
-  (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-  (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
-  upkeep <- join upkeepQuery -< upkeepFK
-  restrict -< (companyFK .== pgInt4 companyId)
-  returnA -< upkeep
+companyUpkeepsQuery companyId = let 
+  upkeepsQuery' = proc () -> do
+    (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
+    (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+    upkeep @ (_,_,closed) <- join upkeepQuery -< upkeepFK
+    restrict -< (closed .== pgBool True)
+    restrict -< (companyFK .== pgInt4 companyId)
+    returnA -< upkeep
+  aggregatedUpkeepsQuery = AGG.aggregate (p3(AGG.groupBy, AGG.min, AGG.boolOr)) upkeepsQuery'
+  orderedUpkeepQuery = orderBy (asc(\(_,date,_) -> date)) $ aggregatedUpkeepsQuery
+  in orderedUpkeepQuery
 
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)

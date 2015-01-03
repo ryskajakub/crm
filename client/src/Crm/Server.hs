@@ -2,13 +2,13 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Server (
-  fetchMachine , 
-  fetchUpkeeps , 
   createCompany , 
   createMachine , 
   createUpkeep , 
   updateUpkeep ,
   updateMachine , 
+  fetchMachine , 
+  fetchUpkeeps , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
   fetchMachineTypesAutocomplete ,
