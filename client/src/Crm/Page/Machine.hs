@@ -120,6 +120,11 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
       mn @ (D.MachineNew _ _ _ _) -> mn { D.maybeMachineTypeId = Just machineTypeId' }
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineTypeId = machineTypeId' }
       _ -> D.navigation appState })
+  unsetMachineTypeId :: Fay ()
+  unsetMachineTypeId = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of
+      mn @ (D.MachineNew _ _ _ _) -> mn { D.maybeMachineTypeId = Nothing }
+      _ -> D.navigation appState })
   row'' labelText value' onChange' editing' = let
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
@@ -136,7 +141,7 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
           Just (machineTypeId', machineType') -> do
             setMachineType machineType'
             setMachineTypeId machineTypeId'
-          Nothing -> return () )
+          Nothing -> unsetMachineTypeId )
         _ -> return () )
       "machine-type-autocomplete"
       (II.mkInputAttrs {
