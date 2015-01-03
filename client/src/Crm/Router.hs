@@ -150,7 +150,8 @@ startRouter appVar = let
               Nothing -> UM.newUpkeepMachine machineId : acc
               _ -> acc
           notCheckedMachines = foldl addNotCheckedMachine [] machines
-          in modify' $ D.UpkeepClose upkeep machines notCheckedMachines False upkeepId companyId)
+          upkeep' = upkeep { U.upkeepClosed = True }
+          in modify' $ D.UpkeepClose upkeep' machines notCheckedMachines False upkeepId companyId)
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute
