@@ -79,7 +79,7 @@ upkeepDetail :: CrmRouter
              -> U.Upkeep
              -> Bool
              -> [UM.UpkeepMachine]
-             -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
+             -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
              -> Int -- ^ upkeep id
              -> Int -- ^ company id
              -> DOMElement
@@ -101,7 +101,7 @@ upkeepNew :: CrmRouter
           -> U.Upkeep
           -> Bool
           -> [UM.UpkeepMachine]
-          -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
+          -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
           -> Int -- ^ company id
           -> DOMElement
 upkeepNew router appState upkeep pickerOpen notCheckedMachines machines companyId = 
@@ -122,7 +122,7 @@ upkeepForm :: Var D.AppState
            -> U.Upkeep
            -> Bool -- ^ datepicker openness
            -> [UM.UpkeepMachine]
-           -> [(Int, M.Machine, Int, MT.MachineType)] -- ^ machine ids -> machines
+           -> [(Int, M.Machine, Int, Int, MT.MachineType)] -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement
@@ -139,7 +139,7 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
       upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> newAppState upkeepClose'
       upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
-  machineRow (machineId,_,_,machineType) = let
+  machineRow (machineId,_,_,_,machineType) = let
     upkeepMachines = U.upkeepMachines upkeep'
     thisUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') upkeepMachines
     thatUpkeepMachine = find (\(UM.UpkeepMachine _ id' _) -> machineId == id') notCheckedMachines''

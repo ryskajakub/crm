@@ -27,13 +27,13 @@ main' = do
         Navigation.navigation router
           (companyDetail editing' router appVar' (companyId', company') machines')
       D.CompanyNew company' -> Navigation.navigation router (companyNew router appVar' company')
-      D.MachineNew machine' machineType maybeMachineTypeId operationStartCalendarOpen' -> 
-        Navigation.navigation' router 
-          (machineNew router appVar' operationStartCalendarOpen' machine' machineType maybeMachineTypeId)
+      D.MachineNew machine' companyId machineType maybeMachineTypeId operationStartCalendarOpen' -> 
+        Navigation.navigation' router (machineNew router appVar' 
+          operationStartCalendarOpen' machine' companyId machineType maybeMachineTypeId)
       D.MachineDetail machine' machineType machineTypeId 
         operationStartCalendarOpen' editing machineId' nextService ->
-          Navigation.navigation' router (machineDetail editing router
-            appVar' operationStartCalendarOpen' machine' machineTypeId machineType machineId' nextService)
+          Navigation.navigation' router (machineDetail editing appVar' 
+            operationStartCalendarOpen' machine' machineTypeId machineType machineId' nextService)
       D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
         Navigation.navigation router 
           (upkeepNew router appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')

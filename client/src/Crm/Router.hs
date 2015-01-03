@@ -73,7 +73,7 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (Int -> (C.Company, [(Int, M.Machine, Int, MT.MachineType)]) -> D.NavigationState)
+              -> (Int -> (C.Company, [(Int, M.Machine, Int, Int, MT.MachineType)]) -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
     Just(companyId) ->
@@ -103,14 +103,13 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (_,_) -> let
-          newMachine' = M.newMachine companyId
-          in D.MachineNew newMachine' MT.newMachineType Nothing False)
+          in D.MachineNew M.newMachine companyId MT.newMachineType Nothing False)
   ),(
     "companies/:id/new-maintenance", \params ->
       withCompany
         params
         (\companyId (_, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> UM.newUpkeepMachine machineId) machines
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> UM.newUpkeepMachine machineId) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
           in D.UpkeepNew (U.newUpkeep nowYMD) machines notCheckedUpkeepMachines False companyId)
@@ -126,7 +125,7 @@ startRouter appVar = let
     "machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId' (\(machine, machineTypeId, machineType, machineNextService) ->
+        Just(machineId') -> fetchMachine machineId' (\(machine, machineTypeId, _, machineType, machineNextService) ->
           modify' $ D.MachineDetail machine machineType machineTypeId False False machineId' machineNextService)
         _ -> modify' D.NotFound
   ),(
@@ -142,7 +141,7 @@ startRouter appVar = let
         Just(upkeepId) -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
           upkeepMachines = U.upkeepMachines upkeep
           addNotCheckedMachine acc element = let 
-            (machineId,_,_,_) = element
+            (machineId,_,_,_,_) = element
             machineChecked = find (\(UM.UpkeepMachine _ machineId' _) -> 
               machineId == machineId') upkeepMachines
             in case machineChecked of
