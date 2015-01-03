@@ -243,7 +243,7 @@ expandedUpkeepsQuery = proc () -> do
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
+plannedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
   restrict -< upkeepClosed .== pgBool False
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
@@ -252,9 +252,9 @@ plannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ proc () -> do
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-groupedPlannedUpkeepsQuery =
-  AGG.aggregate (p2 (p3(AGG.min, AGG.min, AGG.boolOr),
-    p3(AGG.groupBy, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ 
+  AGG.aggregate (p2 (p3(AGG.groupBy, AGG.min, AGG.boolOr),
+    p3(AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
