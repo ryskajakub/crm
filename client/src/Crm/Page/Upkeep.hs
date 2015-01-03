@@ -188,12 +188,15 @@ upkeepForm appState upkeep' upkeepDatePickerOpen' notCheckedMachines'' machines 
         (mkAttrs{onClick = Defined $ const clickHandler})
         (A.mkAAttrs)
         content
-      in B.col (B.mkColProps 4) link'
+      in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) link'
     recordedMileageField = field parseSafely (\v um -> um { UM.recordedMileage = v }) 
       (showInt . UM.recordedMileage) I.input 2
     noteField = field (\a -> Just a) (\note um -> um { UM.upkeepMachineNote = unpack note }) 
       (pack . UM.upkeepMachineNote) I.textarea 6
-    in B.row' rowProps [machineToggleLink, recordedMileageField, noteField]
+    rowItems = if closeUpkeep'
+      then [machineToggleLink, recordedMileageField, noteField]
+      else [machineToggleLink, noteField]
+    in B.row' rowProps rowItems
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
