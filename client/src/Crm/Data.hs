@@ -48,12 +48,12 @@ data NavigationState =
     machines :: [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine] , 
     upkeepDatePickerOpen :: Bool ,
-    upkeepId :: Int ,
+    upkeepId :: U.UpkeepId ,
     companyId :: C.CompanyId } | 
   UpkeepHistory {
-    companyUpkeeps :: [(Int,U.Upkeep)] } | 
+    companyUpkeeps :: [(U.UpkeepId,U.Upkeep)] } | 
   PlannedUpkeeps { 
-    plennedUpkeeps :: [(Int, U.Upkeep, C.CompanyId, C.Company)] }
+    plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] }
 
 data AppState = AppState {
   navigation :: NavigationState }

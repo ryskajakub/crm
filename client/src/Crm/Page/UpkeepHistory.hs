@@ -16,7 +16,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Helpers (displayDate)
 
-upkeepHistory :: [(Int, U.Upkeep)]
+upkeepHistory :: [(U.UpkeepId, U.Upkeep)]
               -> DOMElement
 upkeepHistory upkeeps = let
   upkeepHtml (_, upkeep) = let

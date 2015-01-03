@@ -66,8 +66,8 @@ machineDetail machineId = CrmRoute $ "machines/" <> showInt machineId
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute $ "planned"
 
-closeUpkeep :: Int -> CrmRoute
-closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> showInt upkeepId
+closeUpkeep :: U.UpkeepId -> CrmRoute
+closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId)
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -142,7 +142,7 @@ startRouter appVar = let
     "upkeeps/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(upkeepId) -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
+        Just(upkeepId') -> fetchUpkeep upkeepId (\(companyId,upkeep,machines) -> let
           upkeepMachines = U.upkeepMachines upkeep
           addNotCheckedMachine acc element = let 
             (machineId,_,_,_,_) = element
@@ -154,6 +154,8 @@ startRouter appVar = let
           notCheckedMachines = foldl addNotCheckedMachine [] machines
           upkeep' = upkeep { U.upkeepClosed = True }
           in modify' $ D.UpkeepClose upkeep' machines notCheckedMachines False upkeepId companyId)
+          where
+            upkeepId = U.UpkeepId upkeepId'
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute

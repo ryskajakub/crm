@@ -55,17 +55,17 @@ fetchMachineType machineTypeName callback =
       x:_ -> callback $ Just x)
     (const $ const $ const $ return ())
 
-fetchUpkeep :: Int -- ^ upkeep id
+fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, U.Upkeep, [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)]) -> Fay ()) -- ^ callback with company id, upkeep, machines in arguments
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/single/" <> showInt upkeepId <> pack "/")
+    (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/single/" <> (showInt $ U.getUpkeepId upkeepId) <> pack "/")
     callback
     noopOnError
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(Int, U.Upkeep)] -> Fay ()) -- ^ callback
+             -> ([(U.UpkeepId, U.Upkeep)] -> Fay ()) -- ^ callback
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
@@ -107,7 +107,7 @@ fetchFrontPageData callback = let
     (callback . lMb . items)
     (const $ const $ const $ return ())
 
-fetchPlannedUpkeeps :: ([(Int, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
+fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
@@ -151,13 +151,14 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
 
-updateUpkeep :: Int
+updateUpkeep :: U.UpkeepId
              -> U.Upkeep
              -> Fay ()
              -> Fay ()
 updateUpkeep upkeepId upkeep callback = ajax
   upkeep
-  (apiRoot <> pack "companies/0/" <> pack A.upkeep <> pack "/" <> showInt upkeepId <> pack "/")
+  (apiRoot <> pack "companies/0/" <> pack A.upkeep <> pack "/" 
+    <> (showInt $ U.getUpkeepId upkeepId) <> pack "/")
   (pack "PUT")
   (const callback)
 
@@ -174,7 +175,7 @@ updateMachine machineId machineTypeId machine callback = ajax
 
 createUpkeep :: U.Upkeep
              -> C.CompanyId -- ^ company id
-             -> (Int -> Fay ())
+             -> (U.UpkeepId -> Fay ())
              -> Fay ()
 createUpkeep upkeep companyId callback =
   ajax 

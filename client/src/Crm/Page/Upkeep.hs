@@ -33,7 +33,7 @@ import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, mainte
 import Crm.Helpers (displayDate, parseSafely)
 
 plannedUpkeeps :: CrmRouter
-               -> [(Int, U.Upkeep, C.CompanyId, C.Company)]
+               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
@@ -80,7 +80,7 @@ upkeepDetail :: CrmRouter
              -> Bool
              -> [UM.UpkeepMachine]
              -> [(Int, M.Machine, C.CompanyId, Int, MT.MachineType)] -- ^ machine ids -> machines
-             -> Int -- ^ upkeep id
+             -> U.UpkeepId -- ^ upkeep id
              -> C.CompanyId -- ^ company id
              -> DOMElement
 upkeepDetail router appState upkeep datePickerOpen notCheckedMachines machines upkeepId companyId =
