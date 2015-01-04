@@ -108,7 +108,7 @@ fetchMachine :: M.MachineId -- ^ machine id
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax
-    (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
+    (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     callback
     noopOnError
 
