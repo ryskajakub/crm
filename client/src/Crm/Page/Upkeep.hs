@@ -122,7 +122,8 @@ upkeepForm :: Var D.AppState
            -> (U.Upkeep, [UM.UpkeepMachine'])
            -> Bool -- ^ datepicker openness
            -> [UM.UpkeepMachine']
-           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
+           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
+              -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement
