@@ -69,7 +69,7 @@ fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> Fay ()
 fetchMachineTypesAutocomplete text callback = do
   JQ.ajax
-    (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text)
+    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text))
     (callback . items)
     noopOnError
 
@@ -78,7 +78,7 @@ fetchMachineType :: Text -- ^ machine type exact match
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
-    (pack $ A.machineTypes ++ "/" ++ A.byType ++ "/" ++ unpack machineTypeName)
+    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byType ++ "/" ++ unpack machineTypeName))
     (\maybeMachineType -> case maybeMachineType of
       [] -> callback Nothing
       x:_ -> callback $ Just x)
@@ -90,7 +90,7 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
-    (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId) ++ "/")
+    (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId) ++ "/"))
     callback
     noopOnError
 
@@ -99,7 +99,7 @@ fetchUpkeeps :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
-    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+    (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep))
     (callback . items)
     noopOnError
 
@@ -117,7 +117,7 @@ fetchCompany :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
-    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
+    (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId)))
     callback
     noopOnError
 
@@ -127,7 +127,7 @@ fetchFrontPageData callback = let
   lMb [] = []
   lMb ((a,b,x) : xs) = (a,b,listToMaybe x) : lMb xs
   in JQ.ajax
-    (pack A.companies)
+    (apiRoot <> pack A.companies)
     (callback . lMb . items)
     noopOnError
 
@@ -135,7 +135,7 @@ fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay 
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
-    (pack $ A.upkeep ++ "/" ++ A.planned)
+    (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.planned))
     (callback . items)
     noopOnError
 
