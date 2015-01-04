@@ -61,8 +61,8 @@ gulp.task('webpack', ['compile', 'copy-resources'], function () {
     .pipe(gulp.dest('build/'));
 });
 gulp.task('watch', function() {
-  var watchedPaths = _.union(['files/*'], sourcesAsGlob);
-  gulp.watch(watchedPaths, ['webpack']);
+  gulp.watch(['files/*'], ['copy-resources']);
+  gulp.watch(sourcesAsGlob, ['webpack']);
 });
 
 gulp.task('default', ['watch']);
