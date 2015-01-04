@@ -78,12 +78,11 @@ startRouter appVar = let
                  -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
-    Just(companyId') ->
-      fetchCompany companyId (\data' -> let
+    Just(companyId') -> let
+      companyId = C.CompanyId companyId'
+      in fetchCompany companyId (\data' -> let
         newState = newStateFun companyId data'
         in modify' newState )
-      where
-        companyId = C.CompanyId companyId'
     _ -> modify' D.NotFound 
   
   in fmap CrmRouter $ BR.startRouter [(
@@ -130,12 +129,12 @@ startRouter appVar = let
     "machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineId') -> fetchMachine machineId
-          (\(machine, machineTypeId, _, machineType, machineNextService) ->
-            modify' $ D.MachineDetail machine machineType machineTypeId 
-              False False machineId machineNextService)
-          where 
-            machineId = M.MachineId machineId'
+        Just(machineId') -> let
+          machineId = M.MachineId machineId'
+          in fetchMachine machineId
+            (\(machine, machineTypeId, _, machineType, machineNextService) ->
+              modify' $ D.MachineDetail machine machineType machineTypeId 
+                False False machineId machineNextService)
         _ -> modify' D.NotFound
   ),(
     "planned", const $
@@ -147,20 +146,20 @@ startRouter appVar = let
     "upkeeps/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(upkeepId') -> fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> let
-          addNotCheckedMachine acc element = let 
-            (machineId,_,_,_,_) = element
-            machineChecked = find (\(_,machineId') -> 
-              machineId == machineId') upkeepMachines
-            in case machineChecked of
-              Nothing -> (UM.newUpkeepMachine,machineId) : acc
-              _ -> acc
-          notCheckedMachines = foldl addNotCheckedMachine [] machines
-          upkeep' = upkeep { U.upkeepClosed = True }
-          in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-            notCheckedMachines False upkeepId companyId)
-          where
-            upkeepId = U.UpkeepId upkeepId'
+        Just(upkeepId') -> let 
+          upkeepId = U.UpkeepId upkeepId'
+          in fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> let
+            addNotCheckedMachine acc element = let 
+              (machineId,_,_,_,_) = element
+              machineChecked = find (\(_,machineId') -> 
+                machineId == machineId') upkeepMachines
+              in case machineChecked of
+                Nothing -> (UM.newUpkeepMachine,machineId) : acc
+                _ -> acc
+            notCheckedMachines = foldl addNotCheckedMachine [] machines
+            upkeep' = upkeep { U.upkeepClosed = True }
+            in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
+              notCheckedMachines False upkeepId companyId)
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute
