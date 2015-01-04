@@ -7,7 +7,7 @@ module Moment (
   now ,
   dayPrecision ,
   day ,
-  Moment ) where
+  format ) where
 
 import FFI
 import "fay-base" Prelude
@@ -36,6 +36,9 @@ dayPrecision :: Int -- ^ year
              -> Moment
              -> MomentObject
 dayPrecision = ffi " %4().year(%1).month(%2).date(%3) "
+
+format :: MomentObject -> Text -> Text
+format = ffi " %1['format'](%2) "
 
 data GetDate 
   = Month
