@@ -28,9 +28,12 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
+import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Helpers (displayDate, parseSafely, displayPrecision)
+import Crm.Helpers (displayDate, parseSafely, displayPrecision, lmap)
+
+import Debug.Trace
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -77,13 +80,13 @@ toggle lists findElem = let
 upkeepDetail :: CrmRouter
              -> Var D.AppState
              -> U.Upkeep'
-             -> Bool
+             -> DP.DatePicker
              -> [UM.UpkeepMachine']
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
              -> DOMElement
-upkeepDetail router appState upkeep3 datePickerOpen notCheckedMachines machines companyId =
-  upkeepForm appState upkeep2 datePickerOpen notCheckedMachines machines submitButton True
+upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines companyId =
+  upkeepForm appState upkeep2 datePicker notCheckedMachines machines submitButton True
     where
       (_,upkeep,upkeepMachines) = upkeep3
       upkeep2 = (upkeep,upkeepMachines)
@@ -99,13 +102,13 @@ upkeepDetail router appState upkeep3 datePickerOpen notCheckedMachines machines 
 upkeepNew :: CrmRouter
           -> Var D.AppState
           -> (U.Upkeep, [UM.UpkeepMachine'])
-          -> Bool
+          -> DP.DatePicker
           -> [UM.UpkeepMachine']
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> C.CompanyId -- ^ company id
           -> DOMElement
-upkeepNew router appState newUpkeep pickerOpen notCheckedMachines machines companyId = 
-  upkeepForm appState newUpkeep pickerOpen notCheckedMachines machines submitButton False
+upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId = 
+  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False
     where
       submitButton = let
         newUpkeepHandler = createUpkeep
@@ -120,14 +123,14 @@ upkeepNew router appState newUpkeep pickerOpen notCheckedMachines machines compa
 
 upkeepForm :: Var D.AppState
            -> (U.Upkeep, [UM.UpkeepMachine'])
-           -> Bool -- ^ datepicker openness
+           -> DP.DatePicker -- ^ datepicker openness
            -> [UM.UpkeepMachine']
            -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
               -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> DOMElement
-upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen' 
+upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
     notCheckedMachines'' machines button closeUpkeep' = let
   setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
@@ -204,37 +207,44 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen'
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
       YMD.YearMonthDay y m d displayPrecision' = U.upkeepDate upkeep'
+      modifyDatepickerDate newDate = modify appState (\appState' -> appState' {
+        D.navigation = case D.navigation appState' of
+          upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> upkeepNew' { 
+            D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepNew') }
+          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeepClose' { 
+            D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
+          _ -> D.navigation appState' })
+      dayPickHandler :: Int -> Int -> Int -> Text -> Fay ()
       dayPickHandler year month day precision = case precision of
         month' | month' == "Month" -> setDate YMD.MonthPrecision
         year' | year' == "Year" -> setDate YMD.YearPrecision
         day' | day' == "Day" -> setDate YMD.DayPrecision
         _ -> return ()
         where 
-          setDate precision' = setUpkeep (upkeep' { U.upkeepDate = 
-            YMD.YearMonthDay year month day precision' }, upkeepMachines) Nothing
+          setDate precision' = do 
+            setUpkeep (upkeep' { U.upkeepDate = 
+              YMD.YearMonthDay year month day precision' }, upkeepMachines) Nothing
+            modifyDatepickerDate $ YMD.YearMonthDay year month day precision'
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
-          upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
-          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
-          _ -> D.navigation appState' })
+          upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { 
+            D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
+          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
+            D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
+      YMD.YearMonthDay pickerYear pickerMonth _ _ = fst upkeepDatePicker
       changeViewHandler changeViewCommand = let
         (newYear, newMonth) = case changeViewCommand of
-          CI.PreviousYear           -> (y - 1, m)
-          CI.PreviousMonth | m == 1 -> (y - 1, 12)
-          CI.PreviousMonth          -> (y, m - 1)
-          CI.NextMonth | m == 12    -> (y + 1, 1)
-          CI.NextMonth              -> (y, m + 1)
-          CI.NextYear               -> (y + 1, m)
-        newDate = YMD.YearMonthDay newYear newMonth d YMD.DayPrecision
-        in modify appState (\appState' -> appState' {
-          D.navigation = case D.navigation appState' of
-            upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { 
-              D.upkeep = (upkeep' { U.upkeepDate = newDate },upkeepMachines) }
-            upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
-              D.upkeep = (upkeep' { U.upkeepDate = newDate },upkeepMachines) }
-            _ -> D.navigation appState' })
-      in CI.dayInput True y m d (displayPrecision displayPrecision') 
-        dayPickHandler upkeepDatePickerOpen' setPickerOpenness changeViewHandler ]
+          CI.PreviousYear           -> (pickerYear - 1, pickerMonth)
+          CI.PreviousMonth | pickerMonth == 1 -> (pickerYear - 1, 12)
+          CI.PreviousMonth          -> (pickerYear, pickerMonth - 1)
+          CI.NextMonth | pickerMonth == 12    -> (pickerYear + 1, 1)
+          CI.NextMonth              -> (pickerYear, pickerMonth + 1)
+          CI.NextYear               -> (pickerYear + 1, pickerMonth)
+        anyDay = 1
+        newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
+        in modifyDatepickerDate newDate
+      in CI.dayInput True (y,m,d,(displayPrecision displayPrecision')) (pickerYear, pickerMonth)
+        (dayPickHandler) (snd upkeepDatePicker) setPickerOpenness changeViewHandler ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]

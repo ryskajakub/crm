@@ -11,6 +11,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Component.DatePicker as DP
 
 data NavigationState =
   FrontPage {
@@ -41,13 +42,13 @@ data NavigationState =
     upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine'] , 
-    upkeepDatePickerOpen :: Bool , 
+    upkeepDatePicker :: DP.DatePicker , 
     companyId :: C.CompanyId } | 
   UpkeepClose {
     upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     machines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine'] , 
-    upkeepDatePickerOpen :: Bool ,
+    upkeepDatePicker :: DP.DatePicker ,
     upkeepId :: U.UpkeepId ,
     companyId :: C.CompanyId } | 
   UpkeepHistory {

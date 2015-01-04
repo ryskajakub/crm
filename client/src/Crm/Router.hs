@@ -113,10 +113,12 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (_, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> (UM.newUpkeepMachine, machineId)) machines
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
+            (UM.newUpkeepMachine, machineId)) machines
           (nowYear, nowMonth, nowDay) = day $ now requireMoment
           nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
-          in D.UpkeepNew (U.newUpkeep nowYMD, []) machines notCheckedUpkeepMachines False companyId)
+          in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
+            notCheckedUpkeepMachines (nowYMD,False) companyId)
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -158,8 +160,9 @@ startRouter appVar = let
                 _ -> acc
             notCheckedMachines = foldl addNotCheckedMachine [] machines
             upkeep' = upkeep { U.upkeepClosed = True }
+            upkeepDate = U.upkeepDate upkeep
             in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-              notCheckedMachines False upkeepId companyId)
+              notCheckedMachines (upkeepDate, False) upkeepId companyId)
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute

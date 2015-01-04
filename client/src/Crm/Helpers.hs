@@ -29,3 +29,8 @@ displayPrecision displayPrecision' = case displayPrecision' of
   YMD.MonthPrecision -> CI.Month
   _ -> CI.Day
 
+lmap :: (a -> a') -> (a,b) -> (a',b)
+lmap f (a,b) = (f(a),b)
+
+rmap :: (b -> b') -> (a,b) -> (a,b')
+rmap f (a,b) = (a,f(b))
