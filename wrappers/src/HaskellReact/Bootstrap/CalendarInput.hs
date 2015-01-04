@@ -14,17 +14,19 @@ import "fay-base" Prelude hiding (span)
 
 import qualified Moment as M
 
-import HaskellReact
+import HaskellReact as HR
 import HaskellReact.Bootstrap.Popover as P
 import HaskellReact.ReactCalendar as RC
 import qualified HaskellReact.Tag.Input as I
 import qualified HaskellReact.Tag.Hyperlink as A
 
+import Debug.Trace
+
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
 monthCalendar :: M.MomentObject -> PickDate -> DOMElement
 monthCalendar moment pickDate = RC.month 
-  (RC.MonthProps {RC.date = moment}) 
+  moment
   (\y m d t -> pickDate y (m + 1) d t)
 
 data ChangeView = PreviousYear | PreviousMonth | NextMonth | NextYear
@@ -42,7 +44,7 @@ dayInput :: Bool -- ^ editing
 dayInput editing' y m d onDayPick pickerOpen setPickerOpen changeView = let
   attrs = mkAttrs {
     className = Defined "form-control" ,
-    onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
+    HR.onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
   dateAsText = showInt d `append` "." `append` showInt m `append` "." `append` showInt y
   inputAttrs = I.mkInputAttrs {
     I.value_ = Defined dateAsText }
@@ -54,7 +56,7 @@ dayInput editing' y m d onDayPick pickerOpen setPickerOpen changeView = let
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
       changeViewLink className changeViewCommand content = let
         normalAttrs = (class' className) {
-          onClick = Defined $ const $ changeView changeViewCommand }
+          HR.onClick = Defined $ const $ changeView changeViewCommand }
         in A.a'' normalAttrs A.mkAAttrs content
       in div' (class'' ["nowrap", "relative"]) [
         changeViewLink "previous-year" PreviousYear "<<" ,
@@ -62,7 +64,7 @@ dayInput editing' y m d onDayPick pickerOpen setPickerOpen changeView = let
         changeViewLink "next-month" NextMonth ">" ,
         changeViewLink "next-year" NextYear ">>" ,
         monthCalendar momentFromParams (\y m d t -> do 
-          onDayPick y m d t 
+          trace (show d) $ onDayPick y m d t 
           setPickerOpen False )]]
     else []
   display = 

@@ -12,6 +12,8 @@ import "fay-base" Data.Text (Text, pack)
 import "fay-base" Prelude
 import Moment(MomentObject, day)
 
+import Debug.Trace
+
 data ReactCalendar
 instance HR.CommonJSModule ReactCalendar
 
@@ -26,14 +28,24 @@ reactCalendar :: (HR.Renderable a)
 reactCalendar = HR.foreignReact requireReactCalendar
 
 data MonthProps = MonthProps {
+  onClick :: Defined (Text -> MomentObject -> HR.SyntheticMouseEvent -> Fay ()) ,
   date :: MomentObject }
 
-data CalendarClickProps = CalendarClickProps {
-  onClick :: Text -> MomentObject -> Fay () }
+data DayProps = DayProps {
+  onClick_ :: Defined (Text -> MomentObject -> HR.SyntheticMouseEvent -> Fay ()) }
 
-month :: MonthProps -> (Int -> Int -> Int -> Text -> Fay ()) -> HR.DOMElement
-month monthProps setDate = reactCalendar (pack "Month") monthProps $ let
-  calendarClickProps = (CalendarClickProps { onClick = \text moment -> let 
-    (year, month, day') = day moment 
-    in setDate year month day' text })
-  in reactCalendar (pack "Day") calendarClickProps ([]::[HR.DOMElement])
+month :: MomentObject
+      -> (Int -> Int -> Int -> Text -> Fay ())
+      -> HR.DOMElement
+month momentObject setDate = let
+  clickHandler text moment eventObject = do
+    let (year, month, day') = day moment 
+    HR.stopPropagation eventObject
+    setDate year month day' text
+  monthProps = MonthProps {
+    onClick = Defined clickHandler ,
+    date = momentObject }
+  dayProps = DayProps {
+    onClick_ = Defined clickHandler }
+  in reactCalendar (pack "Month") monthProps (
+    reactCalendar (pack "Day") dayProps ([]::[HR.DOMElement]) )
