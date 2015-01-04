@@ -151,6 +151,12 @@ machineDisplay editing buttonRow appVar operationStartCalendar
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
+  changeNavigationState :: (D.NavigationState -> D.NavigationState) -> Fay ()
+  changeNavigationState fun = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of 
+      mn @ (D.MachineNew _ _ _ _ _) -> fun mn 
+      md @ (D.MachineDetail _ _ _ _ _ _ _) -> fun md
+      _ -> D.navigation appState })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
@@ -172,16 +178,12 @@ machineDisplay editing buttonRow appVar operationStartCalendar
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let
-            setDatePickerDate date = modify appVar (\appState -> appState {
-              D.navigation = case D.navigation appState of 
-                nm @ (D.MachineNew _ _ _ _ _) -> nm { D.operationStartCalendar =
-                  lmap (const date) (D.operationStartCalendar nm) }
-                _ -> D.navigation appState })
-            setPickerOpenness openness = modify appVar (\appState -> appState {
-              D.navigation = case D.navigation appState of
-                nm @ (D.MachineNew _ _ _ _ _) -> nm { D.operationStartCalendar = 
-                  rmap (const openness) (D.operationStartCalendar nm) }
-                _ -> D.navigation appState })
+            setDatePickerDate date = changeNavigationState (\state ->
+              state { D.operationStartCalendar = 
+                lmap (const date) (D.operationStartCalendar state) })
+            setPickerOpenness openness = changeNavigationState (\state ->
+              state { D.operationStartCalendar = 
+                rmap (const openness) (D.operationStartCalendar state) })
             displayedDate = M.machineOperationStartDate machine'
             setDate date = let
               newMachine = machine' { M.machineOperationStartDate = date }
