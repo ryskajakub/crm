@@ -4,6 +4,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.DatePicker (
+  datePicker ,
   DatePicker ) where
 
 import "fay-base" Prelude

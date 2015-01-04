@@ -19,7 +19,6 @@ import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink as A
-import qualified HaskellReact.Bootstrap.CalendarInput as CI
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -206,7 +205,6 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
-      YMD.YearMonthDay y m d displayPrecision' = U.upkeepDate upkeep'
       modifyDatepickerDate newDate = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
           upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> upkeepNew' { 
@@ -214,37 +212,16 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
           upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeepClose' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
           _ -> D.navigation appState' })
-      dayPickHandler :: Int -> Int -> Int -> Text -> Fay ()
-      dayPickHandler year month day precision = case precision of
-        month' | month' == "Month" -> setDate YMD.MonthPrecision
-        year' | year' == "Year" -> setDate YMD.YearPrecision
-        day' | day' == "Day" -> setDate YMD.DayPrecision
-        _ -> return ()
-        where 
-          setDate precision' = do 
-            setUpkeep (upkeep' { U.upkeepDate = 
-              YMD.YearMonthDay year month day precision' }, upkeepMachines) Nothing
-            modifyDatepickerDate $ YMD.YearMonthDay year month day precision'
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
           upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
           upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
-      YMD.YearMonthDay pickerYear pickerMonth _ _ = fst upkeepDatePicker
-      changeViewHandler changeViewCommand = let
-        (newYear, newMonth) = case changeViewCommand of
-          CI.PreviousYear           -> (pickerYear - 1, pickerMonth)
-          CI.PreviousMonth | pickerMonth == 1 -> (pickerYear - 1, 12)
-          CI.PreviousMonth          -> (pickerYear, pickerMonth - 1)
-          CI.NextMonth | pickerMonth == 12    -> (pickerYear + 1, 1)
-          CI.NextMonth              -> (pickerYear, pickerMonth + 1)
-          CI.NextYear               -> (pickerYear + 1, pickerMonth)
-        anyDay = 1
-        newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
-        in modifyDatepickerDate newDate
-      in CI.dayInput True (y,m,d,(displayPrecision displayPrecision')) (pickerYear, pickerMonth)
-        (dayPickHandler) (snd upkeepDatePicker) setPickerOpenness changeViewHandler ]
+      displayedDate = U.upkeepDate upkeep'
+      setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
+      in DP.datePicker upkeepDatePicker modifyDatepickerDate 
+        setPickerOpenness displayedDate setDate ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]
