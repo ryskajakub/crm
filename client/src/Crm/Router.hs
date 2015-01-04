@@ -84,7 +84,8 @@ startRouter appVar = let
         newState = newStateFun companyId data'
         in modify' newState )
     _ -> modify' D.NotFound 
-  
+  (nowYear, nowMonth, nowDay) = day $ now requireMoment
+  nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
   "", const $ fetchFrontPageData (\data' ->
     modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
@@ -107,7 +108,7 @@ startRouter appVar = let
       withCompany
         params
         (\companyId (_,_) -> let
-          in D.MachineNew M.newMachine companyId MT.newMachineType Nothing False)
+          in D.MachineNew M.newMachine companyId MT.newMachineType Nothing (nowYMD, False) )
   ),(
     "companies/:id/new-maintenance", \params ->
       withCompany
@@ -115,8 +116,6 @@ startRouter appVar = let
         (\companyId (_, machines) -> let
           notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
             (UM.newUpkeepMachine, machineId)) machines
-          (nowYear, nowMonth, nowDay) = day $ now requireMoment
-          nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
           in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
             notCheckedUpkeepMachines (nowYMD,False) companyId)
   ),(
@@ -136,7 +135,7 @@ startRouter appVar = let
           in fetchMachine machineId
             (\(machine, machineTypeId, _, machineType, machineNextService) ->
               modify' $ D.MachineDetail machine machineType machineTypeId 
-                False False machineId machineNextService)
+                (nowYMD,False) False machineId machineNextService)
         _ -> modify' D.NotFound
   ),(
     "planned", const $

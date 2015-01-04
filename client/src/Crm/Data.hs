@@ -29,12 +29,12 @@ data NavigationState =
     companyId :: C.CompanyId ,
     machineType :: MT.MachineType , 
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
-    operationStartCalendarOpen :: Bool } | 
+    operationStartCalendar :: DP.DatePicker } | 
   MachineDetail {
     machine :: M.Machine ,
     machineType :: MT.MachineType , 
     machineTypeId :: MT.MachineTypeId ,
-    operationStartCalendarOpen :: Bool , 
+    operationStartCalendar :: DP.DatePicker , 
     formState :: Bool , 
     machineId :: M.MachineId , 
     machineNextService :: YMD.YearMonthDay } | 
