@@ -2,7 +2,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Other (
-  autocompleteInput ) where
+  developedElement ) where
 
 import HaskellReact
 import FFI (ffi)
@@ -11,3 +11,5 @@ import "fay-base" Prelude
 
 import qualified HaskellReact.Tag.Input as I
 
+developedElement :: (DOMElement, Fay () )
+developedElement = undefined
