@@ -18,7 +18,7 @@ module Crm.Server (
 
 import FFI (ffi, Automatic, Defined(Defined))
 import "fay-base" Prelude hiding (putStrLn)
-import "fay-base" Data.Text (Text, showInt, (<>), unpack, pack)
+import "fay-base" Data.Text (Text, (<>), unpack, pack)
 import "fay-base" Data.Maybe (listToMaybe)
 
 import qualified JQuery as JQ
@@ -151,14 +151,14 @@ createCompany company callback = ajax
 createMachine :: M.Machine 
               -> C.CompanyId
               -> MT.MyEither
-              -> (Int -> Fay())
+              -> Fay ()
               -> Fay ()
 createMachine machine companyId machineType callback =
   ajax
     (machine, machineType)
     (pack $ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
-    callback
+    (const callback)
 
 updateUpkeep :: U.Upkeep'
              -> Fay ()
@@ -182,11 +182,11 @@ updateMachine machineId machineTypeId machine callback = ajax
 
 createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
              -> C.CompanyId -- ^ company id
-             -> (U.UpkeepId -> Fay ())
+             -> Fay ()
              -> Fay ()
 createUpkeep newUpkeep companyId callback =
   ajax 
     newUpkeep
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
     post
-    callback
+    (const callback)

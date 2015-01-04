@@ -85,7 +85,7 @@ upkeepDetail :: CrmRouter
 upkeepDetail router appState upkeep3 datePickerOpen notCheckedMachines machines companyId =
   upkeepForm appState upkeep2 datePickerOpen notCheckedMachines machines submitButton True
     where
-      (upkeepId,upkeep,upkeepMachines) = upkeep3
+      (_,upkeep,upkeepMachines) = upkeep3
       upkeep2 = (upkeep,upkeepMachines)
       submitButton = let
         closeUpkeepHandler = updateUpkeep
@@ -111,7 +111,7 @@ upkeepNew router appState newUpkeep pickerOpen notCheckedMachines machines compa
         newUpkeepHandler = createUpkeep
           newUpkeep
           companyId
-          (const $ navigate (maintenances companyId) router)
+          (navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
           BTN.onClick = Defined $ const newUpkeepHandler }
