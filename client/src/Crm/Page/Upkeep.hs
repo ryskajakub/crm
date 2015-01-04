@@ -217,7 +217,23 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen'
           upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
           upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { D.upkeepDatePickerOpen = open }
           _ -> D.navigation appState' })
-      in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness ]
+      changeViewHandler changeViewCommand = let
+        (newYear, newMonth) = case changeViewCommand of
+          CI.PreviousYear           -> (y - 1, m)
+          CI.PreviousMonth | m == 1 -> (y - 1, 12)
+          CI.PreviousMonth          -> (y, m - 1)
+          CI.NextMonth | m == 12    -> (y + 1, 1)
+          CI.NextMonth              -> (y, m + 1)
+          CI.NextYear               -> (y + 1, m)
+        newDate = YMD.YearMonthDay newYear newMonth d YMD.DayPrecision
+        in modify appState (\appState' -> appState' {
+          D.navigation = case D.navigation appState' of
+            upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { 
+              D.upkeep = (upkeep' { U.upkeepDate = newDate },upkeepMachines) }
+            upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
+              D.upkeep = (upkeep' { U.upkeepDate = newDate },upkeepMachines) }
+            _ -> D.navigation appState' })
+      in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness changeViewHandler ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]

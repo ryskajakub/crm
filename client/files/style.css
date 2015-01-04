@@ -21,6 +21,24 @@ html {
   white-space: nowrap;
 }
 
+/* react calendar my additions */
+.previous-year, .previous-month, .next-month, .next-year { 
+  position: absolute;
+  top: 0px;
+}
+.previous-year {
+  left: 0px;
+}
+.previous-month {
+  left: 25px;
+}
+.next-month {
+  right: 25px;
+}
+.next-year {
+  right: 0px;
+}
+
 /* button dropdown bootstrap */
 .scrollable-menu ul.dropdown-menu{
   height: auto;

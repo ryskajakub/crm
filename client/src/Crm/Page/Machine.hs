@@ -184,7 +184,19 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
               D.navigation = case D.navigation appState of
                 nm @ (D.MachineNew _ _ _ _ _) -> nm { D.operationStartCalendarOpen = open }
                 _ -> D.navigation appState })
-            in CI.dayInput editing y m d dayPickHandler operationStartCalendarOpen' setPickerOpenness ] ,
+            changeViewHandler changeViewCommand = let
+              (newYear, newMonth) = case changeViewCommand of
+                CI.PreviousYear           -> (y - 1, m)
+                CI.PreviousMonth | m == 1 -> (y - 1, 12)
+                CI.PreviousMonth          -> (y, m - 1)
+                CI.NextMonth | m == 12    -> (y + 1, 1)
+                CI.NextMonth              -> (y, m + 1)
+                CI.NextYear               -> (y + 1, m)
+              newDate = YMD.YearMonthDay newYear newMonth d YMD.DayPrecision
+              in setMachine $ machine' {
+                M.machineOperationStartDate = newDate }
+            in CI.dayInput editing y m d dayPickHandler 
+              operationStartCalendarOpen' setPickerOpenness changeViewHandler ] ,
         row'
           "Úvodní stav motohodin"
           (unpack $ showInt $ M.initialMileage machine')
