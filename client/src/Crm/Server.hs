@@ -31,30 +31,52 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 
-data CrmApi
+data Items
+
+-- | Unpack the outermost layer of the fetched list in order to get to the data
+items :: Items -> Automatic a
+items = ffi " %1['items'] "
 
 noopOnError :: a -> b -> c -> Fay ()
 noopOnError = (const $ const $ const $ return ())
+
+apiRoot :: Text
+apiRoot = pack "/api/v1.0.0/"
+
+ajax :: a -- data to send
+     -> Text -- url
+     -> Text -- method
+     -> (b -> Fay ()) -- callback
+     -> Fay ()
+ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
+  JQ.success = Defined callback ,
+  JQ.data' = Defined data' ,
+  JQ.url = Defined $ apiRoot <> url ,
+  JQ.type' = Defined method ,
+  JQ.processData = Defined False ,
+  JQ.contentType = Defined $ pack "application/json" ,
+  JQ.dataType = Defined $ pack "json" }
+
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
 fetchMachineTypesAutocomplete text callback = do
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/autocomplete/" <> text)
+    (pack A.machineTypes <> pack "/autocomplete/" <> text)
     (callback . items)
-    (const $ const $ const $ return ())
+    noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
                  -> (Maybe (MT.MachineTypeId, MT.MachineType) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.machineTypes <> pack "/by-type/" <> machineTypeName <> pack "/")
+    (pack A.machineTypes <> pack "/by-type/" <> machineTypeName <> pack "/")
     (\maybeMachineType -> case maybeMachineType of
       [] -> callback Nothing
       x:_ -> callback $ Just x)
-    (const $ const $ const $ return ())
+    noopOnError
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
@@ -62,7 +84,7 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/single/" <> (showInt $ U.getUpkeepId upkeepId) <> pack "/")
+    (pack A.upkeep <> pack "/single/" <> (showInt $ U.getUpkeepId upkeepId) <> pack "/")
     callback
     noopOnError
 
@@ -71,33 +93,27 @@ fetchUpkeeps :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
-    (pack "/api/v1.0.0/companies/" <> (showInt $ C.getCompanyId companyId) <> pack "/upkeeps/")
+    (pack A.companies <> pack "/" <> (showInt $ C.getCompanyId companyId) <> pack "/upkeeps/")
     (callback . items)
-    (const $ const $ const $ return ())
+    noopOnError
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((M.Machine, MT.MachineTypeId, M.MachineId, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax
-    (pack "/api/v1.0.0/machines/" <> (showInt $ M.getMachineId machineId) <> pack "/")
+    (pack A.machines <> pack "/" <> (showInt $ M.getMachineId machineId) <> pack "/")
     callback
-    (const $ const $ const $ return ())
+    noopOnError
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <> (showInt $ C.getCompanyId companyId) <> pack "/")
+    (pack A.companies <> pack "/" <> (showInt $ C.getCompanyId companyId) <> pack "/")
     callback
-    (const $ const $ const $ return ())
-
-data Items
-
--- | Unpack the outermost layer of the fetched list in order to get to the data
-items :: Items -> Automatic a
-items = ffi " %1['items'] "
+    noopOnError
 
 fetchFrontPageData :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
@@ -105,17 +121,17 @@ fetchFrontPageData callback = let
   lMb [] = []
   lMb ((a,b,x) : xs) = (a,b,listToMaybe x) : lMb xs
   in JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/")
+    (pack A.companies <> pack "/")
     (callback . lMb . items)
-    (const $ const $ const $ return ())
+    noopOnError
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps callback =
   JQ.ajax
-    (pack "/api/v1.0.0/" <> pack A.upkeep <> pack "/" <> pack A.planned <> pack "/")
+    (pack A.upkeep <> pack "/" <> pack A.planned <> pack "/")
     (callback . items)
-    (const $ const $ const $ return ())
+    noopOnError
 
 createCompany :: C.Company
               -> Fay ()
@@ -134,26 +150,9 @@ createMachine :: M.Machine
 createMachine machine companyId machineType callback =
   ajax
     (machine, machineType)
-    (pack "/api/v1.0.0/companies/" <> (showInt $ C.getCompanyId companyId) <> pack "/machines/")
+    ((showInt $ C.getCompanyId companyId) <> pack "/machines/")
     (pack "POST")
     callback
-
-ajax :: a -- data to send
-     -> Text -- url
-     -> Text -- method
-     -> (b -> Fay ()) -- callback
-     -> Fay ()
-ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
-  JQ.success = Defined callback ,
-  JQ.data' = Defined data' ,
-  JQ.url = Defined url ,
-  JQ.type' = Defined method ,
-  JQ.processData = Defined False ,
-  JQ.contentType = Defined $ pack "application/json" ,
-  JQ.dataType = Defined $ pack "json" }
-
-apiRoot :: Text
-apiRoot = pack "/api/v1.0.0/"
 
 updateUpkeep :: U.Upkeep'
              -> Fay ()
@@ -183,8 +182,7 @@ createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
 createUpkeep newUpkeep companyId callback =
   ajax 
     newUpkeep
-    (pack "/api/v1.0.0/" <> pack A.companies <> pack "/" <>
+    (pack A.companies <> pack "/" <>
       (showInt $ C.getCompanyId companyId) <> pack "/" <> pack A.upkeep <> pack "/")
     (pack "POST")
     callback
-
