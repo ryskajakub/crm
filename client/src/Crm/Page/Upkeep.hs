@@ -24,15 +24,12 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Helpers (displayDate, parseSafely, displayPrecision, lmap)
-
-import Debug.Trace
+import Crm.Helpers (displayDate, parseSafely, lmap)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]

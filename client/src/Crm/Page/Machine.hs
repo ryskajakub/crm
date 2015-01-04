@@ -17,7 +17,6 @@ import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
-import qualified HaskellReact.Bootstrap.CalendarInput as CI
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -27,7 +26,7 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType)
-import Crm.Helpers (parseSafely, displayDate, displayPrecision, lmap, rmap)
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap)
 import Crm.Router (CrmRouter, navigate, frontPage)
 import Crm.Component.Autocomplete (autocompleteInput)
 
