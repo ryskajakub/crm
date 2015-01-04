@@ -8,6 +8,9 @@ module Crm.Shared.Api (
   , upkeep, upkeepsClient
   , planned
   , machineTypes
+  , single
+  , autocomplete
+  , byType
 ) where
 
 #ifndef FAY
@@ -32,6 +35,15 @@ upkeep = "upkeeps"
 
 planned :: String
 planned = "planned"
+
+autocomplete :: String
+autocomplete = "autocomplete"
+
+byType :: String
+byType = "by-type"
+
+single :: String
+single = "single"
 
 companiesClient :: String
 companiesClient = firstToUpper companies
