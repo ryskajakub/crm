@@ -35,16 +35,15 @@ data DisplayDatePrecision = Month | Day
 
 -- | display the input with calendar set to the date consisting of y m d from the parameters
 dayInput :: Bool -- ^ editing
-         -> Int -- ^ year
-         -> Int -- ^ month
-         -> Int -- ^ day
-         -> DisplayDatePrecision
+         -> (Int, Int, Int, DisplayDatePrecision) -- ^ date displayed in the field
+         -> (Int, Int) -- ^ year and month state of the calendar picker
          -> PickDate -- ^ action to execute on day pick
          -> Bool -- ^ is the day picker open
          -> (Bool -> Fay ()) -- ^ set the openness of the picker
          -> (ChangeView -> Fay ()) -- ^ callback used when the user click on next or previous year/month
          -> [DOMElement]
-dayInput editing' y m d displayDatePrecision onDayPick pickerOpen setPickerOpen changeView = let
+dayInput editing' (y,m,d,displayDatePrecision) (pickerYear, pickerMonth)
+    onDayPick pickerOpen setPickerOpen changeView = let
   attrs = mkAttrs {
     className = Defined "form-control" ,
     HR.onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
@@ -59,7 +58,8 @@ dayInput editing' y m d displayDatePrecision onDayPick pickerOpen setPickerOpen 
   picker =
     if pickerOpen
     then [ P.popover (P.mkPopoverProps P.placementBottom 20 35) $ let
-      momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
+      anyDay = 1
+      momentFromParams = M.dayPrecision pickerYear pickerMonth anyDay M.requireMoment 
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
       changeViewLink className changeViewCommand content = let
         normalAttrs = (class' className) {
