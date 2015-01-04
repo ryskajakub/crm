@@ -118,11 +118,13 @@ fetchPlannedUpkeeps callback =
     (const $ const $ const $ return ())
 
 createCompany :: C.Company
-              -> (Int -> Fay())
               -> Fay ()
-createCompany company callback = do
-  crmApi <- crmApiFacade
-  create' crmApi (pack A.companiesClient) company callback
+              -> Fay ()
+createCompany company callback = ajax
+  company
+  (apiRoot <> pack A.companies <> pack "/")
+  (pack "POST")
+  (const callback)
 
 createMachine :: M.Machine 
               -> C.CompanyId
@@ -138,14 +140,14 @@ createMachine machine companyId machineType callback =
 
 ajax :: a -- data to send
      -> Text -- url
-     -> Text -- method -- GET | POST
+     -> Text -- method
      -> (b -> Fay ()) -- callback
      -> Fay ()
 ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
-  JQ.success = Defined $ callback ,
+  JQ.success = Defined callback ,
   JQ.data' = Defined data' ,
-  JQ.url = Defined $ url ,
-  JQ.type' = Defined $ method ,
+  JQ.url = Defined url ,
+  JQ.type' = Defined method ,
   JQ.processData = Defined False ,
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
@@ -186,22 +188,3 @@ createUpkeep newUpkeep companyId callback =
     (pack "POST")
     callback
 
-create' :: CrmApi -- ^ pointer to crm api phantom
-        -> Text -- ^ type of model to create
-        -> Automatic a -- ^ model to create on the server
-        -> (Int -> Fay()) -- ^ callback taking id of the newly created data
-        -> Fay ()
-create' = ffi "\
-\ %1[%2]['create'](%3, function(id) {\
-  \ %4(id);\
-\ })\
-\ "
-
-crmApiFacade :: Fay CrmApi
-crmApiFacade = ffi "\
-\ (function() {\
-  \ var CrmApi = require('./CrmApi');\
-  \ var crmApi = new CrmApi('/api');\
-  \ return crmApi;\
-\ })() \
-\ "

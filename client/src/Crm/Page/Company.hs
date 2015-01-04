@@ -67,9 +67,7 @@ companyNew :: R.CrmRouter
            -> DOMElement
 companyNew router var company' = let
   editing' = True
-  saveHandler =
-    createCompany company' (const $
-      R.navigate R.frontPage router )
+  saveHandler = createCompany company' (R.navigate R.frontPage router)
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
