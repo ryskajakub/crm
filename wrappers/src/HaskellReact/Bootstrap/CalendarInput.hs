@@ -23,19 +23,21 @@ monthCalendar moment pickDate = RC.month (RC.MonthProps {RC.date = moment}) (\y 
   pickDate y (m + 1) d t)
 
 -- | display the input with calendar set to the date consisting of y m d from the parameters
-dayInput :: Int -- ^ year
+dayInput :: Bool -- ^ editing
+         -> Int -- ^ year
          -> Int -- ^ month
          -> Int -- ^ day
          -> PickDate -- ^ action to execute on day pick
          -> Bool -- ^ is the day picker open
          -> (Bool -> Fay ()) -- ^ set the openness of the picker
          -> [DOMElement]
-dayInput y m d onDayPick pickerOpen setPickerOpen = let
+dayInput editing' y m d onDayPick pickerOpen setPickerOpen = let
   attrs = mkAttrs {
     className = Defined "form-control" ,
     onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
+  dateAsText = showInt d `append` "." `append` showInt m `append` "." `append` showInt y
   inputAttrs = I.mkInputAttrs {
-    I.value_ = Defined $ showInt d `append` "." `append` showInt m `append` "." `append` showInt y }
+    I.value_ = Defined dateAsText }
   input = I.input attrs inputAttrs
   picker =
     if pickerOpen
@@ -45,4 +47,8 @@ dayInput y m d onDayPick pickerOpen setPickerOpen = let
           momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
           in monthCalendar momentFromParams onDayPick ]
     else []
-  in input : picker 
+  display = 
+    if editing'
+    then input : picker
+    else [text2DOM dateAsText]
+  in display

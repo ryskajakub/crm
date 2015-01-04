@@ -4,7 +4,7 @@
 module HaskellReact.React (
   CommonJSModule
   , foreignReact
-  , simpleReact, simpleReactBody
+  , simpleReact, simpleReactBody, simpleReactBody'
 ) where
 
 import FFI (ffi, Automatic)

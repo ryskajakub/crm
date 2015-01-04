@@ -115,6 +115,7 @@ week = InputType "week"
 data InputAttributes = InputAttributes {
   type' :: InputType
   , value_ :: Defined Text
+  , defaultValue :: Defined Text
   , checked :: Defined Text
   , onChange :: Defined (SyntheticEvent -> Fay ())
 }
@@ -128,6 +129,7 @@ defaultInputAttributes = InputAttributes {
   , value_ = Undefined
   , checked = Undefined
   , onChange = Undefined
+  , defaultValue = Undefined
 }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
