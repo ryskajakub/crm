@@ -43,14 +43,6 @@ gulp.task('copy-bootstrap', function () {
     .pipe(gulp.dest('build/bootstrap'));
 });
 
-gulp.task('generate-rest-client', function () {
-  // just read anything basically
-  return gulp.src('gulpfile.js', {read: false})
-    .pipe(shell([
-      '../server/.cabal-sandbox/bin/crm-gen-client -j > tmp/CrmApi.js'
-    ]))
-});
-
 
 gulp.task('compile', function() {
   var fayCommand = "fay --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
@@ -58,7 +50,7 @@ gulp.task('compile', function() {
     .pipe(shell([fayCommand]));
 });
 
-gulp.task('webpack', ['compile', 'copy-resources', 'generate-rest-client'], function () {
+gulp.task('webpack', ['compile', 'copy-resources'], function () {
   return gulp.src('tmp/HaskellReact.js', {read: false})
     .pipe(webpack({
       entry: "./tmp/HaskellReact.js"
