@@ -4,17 +4,21 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Bootstrap.CalendarInput (
-  dayInput
+  dayInput ,
+  ChangeView (..)
 ) where
+
+import "fay-base" FFI (Defined(Defined))
+import "fay-base" Data.Text (fromString, Text, showInt, append)
+import "fay-base" Prelude hiding (span)
+
+import qualified Moment as M
 
 import HaskellReact
 import HaskellReact.Bootstrap.Popover as P
-import "fay-base" Data.Text (fromString, Text, showInt, append)
-import "fay-base" Prelude
-import qualified Moment as M
 import HaskellReact.ReactCalendar as RC
 import qualified HaskellReact.Tag.Input as I
-import "fay-base" FFI (Defined(Defined))
+import qualified HaskellReact.Tag.Hyperlink as A
 
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
@@ -22,6 +26,8 @@ monthCalendar :: M.MomentObject -> PickDate -> DOMElement
 monthCalendar moment pickDate = RC.month 
   (RC.MonthProps {RC.date = moment}) 
   (\y m d t -> pickDate y (m + 1) d t)
+
+data ChangeView = PreviousYear | PreviousMonth | NextMonth | NextYear
 
 -- | display the input with calendar set to the date consisting of y m d from the parameters
 dayInput :: Bool -- ^ editing
@@ -31,8 +37,9 @@ dayInput :: Bool -- ^ editing
          -> PickDate -- ^ action to execute on day pick
          -> Bool -- ^ is the day picker open
          -> (Bool -> Fay ()) -- ^ set the openness of the picker
+         -> (ChangeView -> Fay ()) -- ^ callback used when the user click on next or previous year/month
          -> [DOMElement]
-dayInput editing' y m d onDayPick pickerOpen setPickerOpen = let
+dayInput editing' y m d onDayPick pickerOpen setPickerOpen changeView = let
   attrs = mkAttrs {
     className = Defined "form-control" ,
     onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
@@ -42,13 +49,21 @@ dayInput editing' y m d onDayPick pickerOpen setPickerOpen = let
   input = I.input attrs inputAttrs
   picker =
     if pickerOpen
-    then [ P.popover (P.mkPopoverProps P.placementBottom 0 0) $ 
-      div' (class'' ["nowrap", "relative"]) $
-        let 
-          momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
-          in monthCalendar momentFromParams (\y m d t -> do 
-            onDayPick y m d t 
-            setPickerOpen False )]
+    then [ P.popover (P.mkPopoverProps P.placementBottom 0 0) $ let
+      momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
+      changeViewLink :: Text -> ChangeView -> Text -> DOMElement
+      changeViewLink className changeViewCommand content = let
+        normalAttrs = (class' className) {
+          onClick = Defined $ const $ changeView changeViewCommand }
+        in A.a'' normalAttrs A.mkAAttrs content
+      in div' (class'' ["nowrap", "relative"]) [
+        changeViewLink "previous-year" PreviousYear "<<" ,
+        changeViewLink "previous-month" PreviousMonth "<" ,
+        changeViewLink "next-month" NextMonth ">" ,
+        changeViewLink "next-year" NextYear ">>" ,
+        monthCalendar momentFromParams (\y m d t -> do 
+          onDayPick y m d t 
+          setPickerOpen False )]]
     else []
   display = 
     if editing'

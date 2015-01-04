@@ -43,6 +43,10 @@ defaultAttributes = Attributes {
   , id = Undefined
 }
 
+click :: Fay () -> Attributes
+click callback = mkAttrs {
+  onClick = Defined $ const callback }
+
 mkAttrs :: Attributes
 mkAttrs = defaultAttributes
 
