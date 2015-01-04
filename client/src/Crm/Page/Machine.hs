@@ -26,7 +26,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Data as D
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType)
-import Crm.Helpers (parseSafely, displayDate)
+import Crm.Helpers (parseSafely, displayDate, displayPrecision)
 import Crm.Router (CrmRouter, navigate, frontPage)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -171,7 +171,7 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let
-            YMD.YearMonthDay y m d _ = M.machineOperationStartDate machine'
+            YMD.YearMonthDay y m d displayPrecision' = M.machineOperationStartDate machine'
             dayPickHandler year month day precision = case precision of
               month' | month' == "Month" -> setDate YMD.MonthPrecision
               year' | year' == "Year" -> setDate YMD.YearPrecision
@@ -195,7 +195,7 @@ machineDisplay editing buttonRow appVar operationStartCalendarOpen'
               newDate = YMD.YearMonthDay newYear newMonth d YMD.DayPrecision
               in setMachine $ machine' {
                 M.machineOperationStartDate = newDate }
-            in CI.dayInput editing y m d dayPickHandler 
+            in CI.dayInput editing y m d (displayPrecision displayPrecision') dayPickHandler 
               operationStartCalendarOpen' setPickerOpenness changeViewHandler ] ,
         row'
           "Úvodní stav motohodin"

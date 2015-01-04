@@ -30,7 +30,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Helpers (displayDate, parseSafely)
+import Crm.Helpers (displayDate, parseSafely, displayPrecision)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -203,7 +203,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen'
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
-      YMD.YearMonthDay y m d _ = U.upkeepDate upkeep'
+      YMD.YearMonthDay y m d displayPrecision' = U.upkeepDate upkeep'
       dayPickHandler year month day precision = case precision of
         month' | month' == "Month" -> setDate YMD.MonthPrecision
         year' | year' == "Year" -> setDate YMD.YearPrecision
@@ -233,7 +233,8 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePickerOpen'
             upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
               D.upkeep = (upkeep' { U.upkeepDate = newDate },upkeepMachines) }
             _ -> D.navigation appState' })
-      in CI.dayInput True y m d dayPickHandler upkeepDatePickerOpen' setPickerOpenness changeViewHandler ]
+      in CI.dayInput True y m d (displayPrecision displayPrecision') 
+        dayPickHandler upkeepDatePickerOpen' setPickerOpenness changeViewHandler ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, submitButton]

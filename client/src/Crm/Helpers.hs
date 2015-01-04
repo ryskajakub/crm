@@ -9,6 +9,8 @@ import Data.Nullable (fromNullable)
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Company as C
 
+import qualified HaskellReact.Bootstrap.CalendarInput as CI
+
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
 
@@ -21,3 +23,9 @@ displayDate (YMD.YearMonthDay y m d _) =
 
 showCompanyId :: C.CompanyId -> Text
 showCompanyId = showInt . C.getCompanyId
+
+displayPrecision :: YMD.Precision -> CI.DisplayDatePrecision
+displayPrecision displayPrecision' = case displayPrecision' of
+  YMD.MonthPrecision -> CI.Month
+  _ -> CI.Day
+
