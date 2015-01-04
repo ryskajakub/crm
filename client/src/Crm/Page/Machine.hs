@@ -188,7 +188,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             setDate date = let
               newMachine = machine' { M.machineOperationStartDate = date }
               in setMachine newMachine
-            in DP.datePicker operationStartCalendar setDatePickerDate setPickerOpenness
+            in DP.datePicker editing operationStartCalendar setDatePickerDate setPickerOpenness
               displayedDate setDate ]  ,
         row'
           "Úvodní stav motohodin"

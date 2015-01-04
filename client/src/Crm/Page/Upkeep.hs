@@ -220,7 +220,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
       displayedDate = U.upkeepDate upkeep'
       setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
-      in DP.datePicker upkeepDatePicker modifyDatepickerDate 
+      in DP.datePicker True upkeepDatePicker modifyDatepickerDate 
         setPickerOpenness displayedDate setDate ]
   in div $
     B.grid $

@@ -18,13 +18,14 @@ import Crm.Helpers (displayPrecision)
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 
-datePicker :: DatePicker
+datePicker :: Bool -- ^ editing
+           -> DatePicker
            -> (YMD.YearMonthDay -> Fay ()) -- ^ set date picker date
            -> (Bool -> Fay ()) -- ^ set date picker openness
            -> YMD.YearMonthDay -- ^ displayed date
            -> (YMD.YearMonthDay -> Fay ()) -- ^ set date
            -> [DOMElement]
-datePicker (pickerStateDate, pickerStateOpen) setDatePickerDate
+datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     setDatePickerOpenness displayedDate setDate = let
   YMD.YearMonthDay y m d displayPrecision' = displayedDate
   dayPickHandler :: Int -> Int -> Int -> Text -> Fay ()
@@ -48,5 +49,5 @@ datePicker (pickerStateDate, pickerStateOpen) setDatePickerDate
     anyDay = 1
     newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
     in setDatePickerDate newDate
-  in CI.dayInput True (y,m,d,(displayPrecision displayPrecision')) (pickerYear, pickerMonth)
+  in CI.dayInput editing (y,m,d,(displayPrecision displayPrecision')) (pickerYear, pickerMonth)
     (dayPickHandler) (pickerStateOpen) setDatePickerOpenness changeViewHandler
