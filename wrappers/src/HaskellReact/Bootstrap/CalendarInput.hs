@@ -19,8 +19,9 @@ import "fay-base" FFI (Defined(Defined))
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
 monthCalendar :: M.MomentObject -> PickDate -> DOMElement
-monthCalendar moment pickDate = RC.month (RC.MonthProps {RC.date = moment}) (\y m d t ->
-  pickDate y (m + 1) d t)
+monthCalendar moment pickDate = RC.month 
+  (RC.MonthProps {RC.date = moment}) 
+  (\y m d t -> pickDate y (m + 1) d t)
 
 -- | display the input with calendar set to the date consisting of y m d from the parameters
 dayInput :: Bool -- ^ editing
@@ -45,7 +46,9 @@ dayInput editing' y m d onDayPick pickerOpen setPickerOpen = let
       div' (class'' ["nowrap", "relative"]) $
         let 
           momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
-          in monthCalendar momentFromParams onDayPick ]
+          in monthCalendar momentFromParams (\y m d t -> do 
+            onDayPick y m d t 
+            setPickerOpen False )]
     else []
   display = 
     if editing'
