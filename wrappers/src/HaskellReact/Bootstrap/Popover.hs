@@ -9,12 +9,13 @@ module HaskellReact.Bootstrap.Popover (
   popover ,
   mkPopoverProps ) where
 
-import HaskellReact
-import HaskellReact.Bootstrap (reactBootstrap)
 import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
-import HaskellReact.Event (SyntheticMouseEvent)
 import "fay-base" Prelude
+
+import HaskellReact
+import HaskellReact.Bootstrap (reactBootstrap)
+import HaskellReact.Event (SyntheticMouseEvent)
 
 data PopoverProps = PopoverProps {
   placement :: Text ,

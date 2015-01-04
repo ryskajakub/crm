@@ -51,7 +51,7 @@ dayInput editing' y m d onDayPick pickerOpen setPickerOpen changeView = let
   input = I.input attrs inputAttrs
   picker =
     if pickerOpen
-    then [ P.popover (P.mkPopoverProps P.placementBottom 0 0) $ let
+    then [ P.popover (P.mkPopoverProps P.placementBottom 20 35) $ let
       momentFromParams = M.dayPrecision y (m - 1) d M.requireMoment 
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
       changeViewLink className changeViewCommand content = let
