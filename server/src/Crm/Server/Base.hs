@@ -48,8 +48,8 @@ import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, 
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
-import Rest.Types.Error (DataError(ParseError),
-  Reason(InputError, IdentError, NotFound, CustomReason, NotAllowed), DomainReason(DomainReason))
+import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError, 
+  NotFound, CustomReason, NotAllowed, UnsupportedRoute), DomainReason(DomainReason))
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -607,6 +607,16 @@ machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
     mappedRows = map mapRow rows
   return mappedRows )
 
+updateMachineType :: Handler MachineTypeDependencies
+updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\machineType ->
+  ask >>= \(conn, sid) -> case sid of
+    MachineTypeByName _ -> throwError UnsupportedRoute
+    MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ let
+      readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
+        pgString $ MT.machineTypeManufacturer machineType, pgInt4 $ MT.upkeepPerMileage machineType)
+      condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
+      in runUpdate conn machineTypesTable readToWrite condition ))
+
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,machineTypeSid) -> do
@@ -770,6 +780,7 @@ machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineType
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
   list = machineTypesListing ,
+  update = Just updateMachineType ,
   get = Just machineTypesSingle ,
   schema = autocompleteSchema }
 
