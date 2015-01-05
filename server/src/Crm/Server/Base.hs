@@ -58,6 +58,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
+import qualified Crm.Shared.Employee as E
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
 
 import Fay.Convert (showToFay, readFromFay')
@@ -127,8 +128,8 @@ upkeepMachinesTable = Table "upkeep_machines" $ p4 (
   required "machine_id" ,
   required "recorded_mileage" )
 
-employeeTable :: Table EmployeeWriteTable EmployeeTable
-employeeTable = Table "employees" $ p2 (
+employeesTable :: Table EmployeeWriteTable EmployeeTable
+employeesTable = Table "employees" $ p2 (
   optional "id" ,
   required "name" )
 
@@ -146,6 +147,9 @@ upkeepQuery = queryTable upkeepTable
 
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
+
+employeesQuery :: Query EmployeeTable
+employeesQuery = queryTable employeesTable
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
@@ -419,7 +423,11 @@ instance ToJSON M.Machine where
   toJSON = fromJust . showToFay
 instance ToJSON UM.UpkeepMachine where
   toJSON = fromJust . showToFay
+instance ToJSON E.Employee where
+  toJSON = fromJust . showToFay
 
+instance JS.JSONSchema E.Employee where
+  schema = gSchema
 instance JS.JSONSchema C.Company where
   schema = gSchema
 instance JS.JSONSchema M.Machine where
@@ -597,6 +605,13 @@ maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
+
+employeesListing :: ListHandler Dependencies 
+employeesListing = mkListing (jsonO . someO) (const $
+  ask >>= \conn -> do 
+    rawRows <- liftIO $ runQuery conn employeesQuery
+    let rowsMapped = map (\(eId,employeeName) -> (eId :: Int, E.Employee employeeName)) rawRows 
+    return rowsMapped )
 
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
@@ -810,12 +825,20 @@ upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   update = Just updateUpkeepHandler ,
   create = Just createUpkeepHandler }
 
+employeeResource :: Resource Dependencies Dependencies Void () Void
+employeeResource = mkResourceId {
+  name = A.employees ,
+  schema = S.withListing () $ S.named [] ,
+  list = const $ employeesListing }
+
+
 router' :: Router Dependencies Dependencies
 router' = root `compose` ((route companyResource `compose` route companyMachineResource)
                                                  `compose` route upkeepResource)
                `compose` route machineResource
                `compose` route upkeepTopLevelResource
                `compose` route machineTypeResource
+               `compose` route employeeResource
 
 api :: Api Dependencies
 api = [(mkVersion 1 0 0, Some1 $ router')]

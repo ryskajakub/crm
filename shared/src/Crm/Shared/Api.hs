@@ -11,7 +11,7 @@ module Crm.Shared.Api (
   , single
   , autocomplete
   , byType
-) where
+  , employees ) where
 
 #ifndef FAY
 import "base" Data.Char
@@ -32,6 +32,9 @@ machines = "machines"
 
 upkeep :: String
 upkeep = "upkeeps"
+
+employees :: String
+employees = "employees"
 
 planned :: String
 planned = "planned"
