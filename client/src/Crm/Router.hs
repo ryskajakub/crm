@@ -18,6 +18,7 @@ module Crm.Router (
   maintenances ,
   plannedUpkeeps ,
   machineTypesList ,
+  machineTypeEdit ,
   machineDetail ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
@@ -73,6 +74,9 @@ closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepI
 
 machineTypesList :: CrmRoute
 machineTypesList = CrmRoute "other/machine-types-list" 
+
+machineTypeEdit :: MT.MachineTypeId -> CrmRoute
+machineTypeEdit machineTypeId = CrmRoute $ "machine-types/"  <> (showInt $ MT.getMachineTypeId machineTypeId)
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let

@@ -29,9 +29,9 @@ machineTypesList router machineTypes = let
       th "Název typu" , 
       th "Výrobce" , 
       th "Počet zařízení v systému" ]
-  body = tbody $ map (\((_,(MT.MachineType name manufacturer _)), count) ->
+  body = tbody $ map (\((machineTypeId,(MT.MachineType name manufacturer _)), count) ->
     tr [
-      td $ pack name ,
+      td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
       td $ showInt count ]) machineTypes
   in main [
@@ -39,5 +39,3 @@ machineTypesList router machineTypes = let
       B.table [
         head' , 
         body ] ]
-
-
