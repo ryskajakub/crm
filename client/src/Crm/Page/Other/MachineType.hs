@@ -16,7 +16,9 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Router as R
 import qualified Crm.Shared.MachineType as MT
 
-machineTypeForm = span "Machine type form"
+machineTypeForm :: MT.MachineType'
+                -> DOMElement
+machineTypeForm (machineTypeId, machineType) = span "machine type form"
 
 machineTypesList :: R.CrmRouter
                  -> [(MT.MachineType', Int)]
@@ -37,3 +39,5 @@ machineTypesList router machineTypes = let
       B.table [
         head' , 
         body ] ]
+
+

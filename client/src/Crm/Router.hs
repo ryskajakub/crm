@@ -31,7 +31,7 @@ import HaskellReact
 import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, 
-  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes)
+  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById)
 import Crm.Helpers (parseSafely, showCompanyId)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -171,6 +171,15 @@ startRouter appVar = let
   ),(
     "other/machine-types-list", const $
       fetchMachineTypes (\result -> modify' $ D.MachineTypeList result )
+  ),(
+    "machine-types/:id", \params -> let
+      maybeId = parseSafely $ head params
+      in case maybeId of
+        Just(machineTypeIdInt) -> let
+          machineTypeId = (MT.MachineTypeId machineTypeIdInt)
+          in fetchMachineTypeById machineTypeId (\machineType ->
+            modify' $ D.MachineTypeEdit (machineTypeId, machineType) )
+        _ -> modify' D.NotFound
   )]
 
 navigate :: CrmRoute

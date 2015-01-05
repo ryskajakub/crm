@@ -56,7 +56,9 @@ data NavigationState =
   PlannedUpkeeps { 
     plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] } |
   MachineTypeList {
-    machineTypes :: [(MT.MachineType',Int)] }
+    machineTypes :: [(MT.MachineType',Int)] } |
+  MachineTypeEdit {
+    machineType' :: MT.MachineType' }
 
 data AppState = AppState {
   navigation :: NavigationState }

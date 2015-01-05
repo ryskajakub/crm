@@ -13,6 +13,7 @@ module Crm.Server (
   fetchFrontPageData , 
   fetchMachineTypesAutocomplete ,
   fetchMachineType ,
+  fetchMachineTypeById ,
   fetchMachineTypes ,
   fetchUpkeep ,
   fetchCompany ) where
@@ -79,6 +80,15 @@ fetchMachineTypes callback =
   JQ.ajax
     (apiRoot <> (pack $ A.machineTypes))
     (callback . items)
+    noopOnError
+
+fetchMachineTypeById :: MT.MachineTypeId
+                     -> (MT.MachineType -> Fay())
+                     -> Fay ()
+fetchMachineTypeById mtId callback = 
+  JQ.ajax
+    (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
+    callback
     noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
