@@ -8,7 +8,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
+import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -242,7 +242,8 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         selectEmployeeAction = modify' (\s -> s { D.selectedEmployee = Just eId })
         in A.a''' (click selectEmployeeAction) (pack $ E.name e)
       elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) employees
-      in BD.buttonDropdown selectedEmployeeName elements ]
+      buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
+      in BD.buttonDropdown buttonLabel elements ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, employeeSelectRow, submitButton]
