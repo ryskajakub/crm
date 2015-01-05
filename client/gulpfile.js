@@ -33,7 +33,7 @@ var playgroundSourcesCommaDelimited = mkSourcesCommaDelimited(playgroundSources)
 
 // main
 
-gulp.task('copy-resources', ['copy-bootstrap'], function() {
+gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery'], function() {
   return gulp.src(['files/*.html', 'files/*.css'])
     .pipe(gulp.dest('build/'));
 });
@@ -43,6 +43,10 @@ gulp.task('copy-bootstrap', function () {
     .pipe(gulp.dest('build/bootstrap'));
 });
 
+gulp.task('copy-jquery', function () {
+  return gulp.src(['bower_components/jquery/dist/jquery.js'])
+    .pipe(gulp.dest('build/'));
+});
 
 gulp.task('compile', function() {
   var fayCommand = "fay --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";

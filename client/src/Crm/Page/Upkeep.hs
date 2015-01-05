@@ -19,6 +19,7 @@ import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink as A
+import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -219,6 +220,13 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
       setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
       in DP.datePicker True upkeepDatePicker modifyDatepickerDate 
         setPickerOpenness displayedDate setDate ]
+  employeeSelectRow = B.row [
+    B.col (B.mkColProps 6) "Servisman" ,
+    B.col (B.mkColProps 6) $ let
+      elements = [
+        li "Ahoj" ,
+        li "Čau" ]
+      in BD.buttonDropdown "abc" elements ]
   in div $
     B.grid $
-      map machineRow machines ++ [dateRow, submitButton]
+      map machineRow machines ++ [dateRow, employeeSelectRow, submitButton]
