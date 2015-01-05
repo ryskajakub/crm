@@ -89,6 +89,9 @@ type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 
+type EmployeeTable = (DBInt, DBText)
+type EmployeeWriteTable = (Maybe DBInt, DBText)
+
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p3 (
   optional "id" ,
@@ -123,6 +126,11 @@ upkeepMachinesTable = Table "upkeep_machines" $ p4 (
   required "note" ,
   required "machine_id" ,
   required "recorded_mileage" )
+
+employeeTable :: Table EmployeeWriteTable EmployeeTable
+employeeTable = Table "employees" $ p2 (
+  optional "id" ,
+  required "name" )
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable

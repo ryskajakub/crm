@@ -34,6 +34,11 @@ create table upkeep_machines (
   machine_id integer ,
   recorded_mileage integer );
 
+drop table employees;
+create table employees (
+  id serial ,
+  name varchar (500) );
+
 insert into companies(name, plant) values ('Continental', 'I');
 insert into companies(name, plant) values ('České dráhy', 'II');
 insert into companies(name, plant) values ('FOMA Bohemia', 'I');
@@ -66,3 +71,6 @@ insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) value
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (2, 'oprava 2', 2, 0);
 
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (3, 'údržba', 4, 0);
+
+insert into employees(name) values ('Kutička');
+insert into employees(name) values ('Mandlík');
