@@ -9,7 +9,7 @@ module Crm.Page.Other.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var)
+import Data.Var (Var, modify)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -17,15 +17,42 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Router as R
 import qualified Crm.Data as D
 import qualified Crm.Shared.MachineType as MT
-import Crm.Helpers (formRow)
+import Crm.Helpers (formRow', formRow, parseSafely, saveButtonRow)
+import Crm.Server (updateMachineType)
 
 machineTypeForm :: Var D.AppState
                 -> MT.MachineType'
                 -> (DOMElement, Fay ())
 machineTypeForm appVar (machineTypeId, machineType) =
   let 
+    setMachineType :: MT.MachineType -> Fay ()
+    setMachineType machineType' = modify appVar (\appState -> appState {
+      D.navigation = case D.navigation appState of
+        D.MachineTypeEdit _ -> D.MachineTypeEdit (machineTypeId, machineType')
+        x -> x })
+    saveButtonHandler :: Fay ()
+    saveButtonHandler = updateMachineType (machineTypeId, machineType) (return ())
     html = main $ B.grid [
-      formRow "Text" "Text" ]
+      formRow' 
+        "Typ zařízení" 
+        (MT.machineTypeName machineType)
+        (eventString >=> (\string -> setMachineType ( machineType { MT.machineTypeName = string })))
+        True ,
+      formRow'
+        "Výrobce"
+        (MT.machineTypeManufacturer machineType)
+        (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
+        True ,
+      formRow'
+        "Interval servisu"
+        (unpack $ showInt $ MT.upkeepPerMileage machineType)
+        (eventValue >=> (\str -> case parseSafely str of
+          Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
+          Nothing -> return ()))
+        True, 
+      saveButtonRow
+        "Editovat"
+        saveButtonHandler ]
   in (html, return ())
 
 machineTypesList :: R.CrmRouter

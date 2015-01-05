@@ -7,6 +7,7 @@ module Crm.Server (
   createUpkeep , 
   updateUpkeep ,
   updateMachine , 
+  updateMachineType , 
   fetchMachine , 
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
@@ -88,7 +89,7 @@ fetchMachineTypeById :: MT.MachineTypeId
 fetchMachineTypeById mtId callback = 
   JQ.ajax
     (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
-    callback
+    (callback . snd . head)
     noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
@@ -184,6 +185,15 @@ updateUpkeep :: U.Upkeep'
 updateUpkeep (upkeepId, upkeep, upkeepMachines) callback = ajax
   (upkeep, upkeepMachines)
   (pack $ A.companies ++ "/0/" ++ A.upkeep ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+  put
+  (const callback)
+
+updateMachineType :: MT.MachineType'
+                  -> Fay ()
+                  -> Fay ()
+updateMachineType (machineTypeId, machineType) callback = ajax
+  (machineType)
+  (pack $ A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId machineTypeId))
   put
   (const callback)
 
