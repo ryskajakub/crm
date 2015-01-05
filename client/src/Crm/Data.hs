@@ -53,7 +53,8 @@ data NavigationState =
     upkeepDatePicker :: DP.DatePicker ,
     upkeepId :: U.UpkeepId ,
     companyId :: C.CompanyId ,
-    employees :: [E.Employee'] } | 
+    employees :: [E.Employee'] ,
+    selectedEmployee :: Maybe E.EmployeeId } | 
   UpkeepHistory {
     companyUpkeeps :: [(U.Upkeep,[UM.UpkeepMachine'])] } | 
   PlannedUpkeeps { 

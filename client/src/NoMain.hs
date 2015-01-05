@@ -42,12 +42,13 @@ main' = do
       D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
-      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId companyId employees -> let
+      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen 
+          upkeepId companyId employees selectedEmployee -> let
         (u2, u3) = upkeep
         upkeep3 = (upkeepId, u2, u3)
         in emptyCallback
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
-            notCheckedMachines machines companyId employees)
+            notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
     in Navigation.navigation' router newElementAndCallback )

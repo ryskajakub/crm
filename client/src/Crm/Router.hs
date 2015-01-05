@@ -171,7 +171,7 @@ startRouter appVar = let
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
               in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-                notCheckedMachines (upkeepDate, False) upkeepId companyId employees))
+                notCheckedMachines (upkeepDate, False) upkeepId companyId employees Nothing))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $

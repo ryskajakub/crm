@@ -83,9 +83,10 @@ upkeepDetail :: CrmRouter
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
              -> [E.Employee']
+             -> Maybe E.EmployeeId
              -> DOMElement
-upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines companyId employees =
-  upkeepForm appState upkeep2 datePicker notCheckedMachines machines submitButton True employees
+upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines companyId employees selectedEmployee =
+  upkeepForm appState upkeep2 datePicker notCheckedMachines machines submitButton True employees selectedEmployee
     where
       (_,upkeep,upkeepMachines) = upkeep3
       upkeep2 = (upkeep,upkeepMachines)
@@ -107,7 +108,7 @@ upkeepNew :: CrmRouter
           -> C.CompanyId -- ^ company id
           -> DOMElement
 upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId = 
-  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False []
+  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False [] Nothing
     where
       submitButton = let
         newUpkeepHandler = createUpkeep
@@ -129,9 +130,16 @@ upkeepForm :: Var D.AppState
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> [E.Employee']
+           -> Maybe E.EmployeeId
            -> DOMElement
 upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
-    notCheckedMachines'' machines button closeUpkeep' employees = let
+    notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee = let
+  modify' :: (D.NavigationState -> D.NavigationState) -> Fay ()
+  modify' fun = modify appState (\appState' -> let
+    newState = case D.navigation appState' of
+      uc @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> fun uc
+    in appState' { D.navigation = newState } )
+
   setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
     newAppState oldNavigation = let
@@ -141,7 +149,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         _ -> newNavigation
       in appState' { D.navigation = newNavigation' }
     in case D.navigation appState' of
-      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _) -> newAppState upkeepClose'
+      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> newAppState upkeepClose'
       upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
   machineRow (machineId,_,_,_,machineType) = let
@@ -210,14 +218,14 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         D.navigation = case D.navigation appState' of
           upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeepNew' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepNew') }
-          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _) -> upkeepClose' { 
+          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeepClose' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
           _ -> D.navigation appState' })
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
           upkeep'' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
-          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _ _) -> upkeep'' { 
+          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
       displayedDate = U.upkeepDate upkeep'
       setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
@@ -226,10 +234,15 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
   employeeSelectRow = B.row [
     B.col (B.mkColProps 6) "Servisman" ,
     B.col (B.mkColProps 6) $ let
-      elements = [
-        li "Ahoj" ,
-        li "Čau" ]
-      in BD.buttonDropdown "abc" elements ]
+      noEmployeeLabel = "---"
+      selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
+        employeeFoundInList = lookup employeeId employees
+        in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
+      selectEmployeeLink eId e = let
+        selectEmployeeAction = modify' (\s -> s { D.selectedEmployee = Just eId })
+        in A.a''' (click selectEmployeeAction) (pack $ E.name e)
+      elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) employees
+      in BD.buttonDropdown selectedEmployeeName elements ]
   in div $
     B.grid $
       map machineRow machines ++ [dateRow, employeeSelectRow, submitButton]
