@@ -239,9 +239,10 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         employeeFoundInList = lookup employeeId employees
         in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
       selectEmployeeLink eId e = let
-        selectEmployeeAction = modify' (\s -> s { D.selectedEmployee = Just eId })
+        selectEmployeeAction = modify' (\s -> s { D.selectedEmployee = eId })
         in A.a''' (click selectEmployeeAction) (pack $ E.name e)
-      elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) employees
+      withNoEmployee = (Nothing, E.Employee $ unpack noEmployeeLabel) : (map (lmap Just) employees)
+      elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
       buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
       in BD.buttonDropdown buttonLabel elements ]
   in div $
