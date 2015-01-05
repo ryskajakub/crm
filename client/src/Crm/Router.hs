@@ -31,7 +31,7 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, 
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById)
 import Crm.Helpers (parseSafely, showCompanyId)
 import qualified Crm.Shared.Machine as M
@@ -126,7 +126,7 @@ startRouter appVar = let
           notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
             (UM.newUpkeepMachine, machineId)) machines
           in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
-            notCheckedUpkeepMachines (nowYMD,False) companyId)
+            notCheckedUpkeepMachines (nowYMD,False) companyId [])
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -158,19 +158,20 @@ startRouter appVar = let
       in case maybeId of
         Just(upkeepId') -> let 
           upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> let
-            addNotCheckedMachine acc element = let 
-              (machineId,_,_,_,_) = element
-              machineChecked = find (\(_,machineId') -> 
-                machineId == machineId') upkeepMachines
-              in case machineChecked of
-                Nothing -> (UM.newUpkeepMachine,machineId) : acc
-                _ -> acc
-            notCheckedMachines = foldl addNotCheckedMachine [] machines
-            upkeep' = upkeep { U.upkeepClosed = True }
-            upkeepDate = U.upkeepDate upkeep
-            in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-              notCheckedMachines (upkeepDate, False) upkeepId companyId)
+          in fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> 
+            fetchEmployees (\employees -> let
+              addNotCheckedMachine acc element = let 
+                (machineId,_,_,_,_) = element
+                machineChecked = find (\(_,machineId') -> 
+                  machineId == machineId') upkeepMachines
+                in case machineChecked of
+                  Nothing -> (UM.newUpkeepMachine,machineId) : acc
+                  _ -> acc
+              notCheckedMachines = foldl addNotCheckedMachine [] machines
+              upkeep' = upkeep { U.upkeepClosed = True }
+              upkeepDate = U.upkeepDate upkeep
+              in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
+                notCheckedMachines (upkeepDate, False) upkeepId companyId employees))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $

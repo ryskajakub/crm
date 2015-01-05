@@ -17,6 +17,7 @@ module Crm.Server (
   fetchMachineTypeById ,
   fetchMachineTypes ,
   fetchUpkeep ,
+  fetchEmployees ,
   fetchCompany ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
@@ -33,6 +34,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.Employee as E
 
 data Items
 
@@ -101,6 +103,14 @@ fetchMachineType machineTypeName callback =
     (\maybeMachineType -> case maybeMachineType of
       [] -> callback Nothing
       x:_ -> callback $ Just x)
+    noopOnError
+
+fetchEmployees :: ([E.Employee'] -> Fay ())
+               -> Fay ()
+fetchEmployees callback =
+  JQ.ajax
+    (apiRoot <> pack A.employees)
+    (callback . items)
     noopOnError
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id

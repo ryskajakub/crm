@@ -9,6 +9,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Component.DatePicker as DP
@@ -43,14 +44,16 @@ data NavigationState =
     upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine'] , 
     upkeepDatePicker :: DP.DatePicker , 
-    companyId :: C.CompanyId } | 
+    companyId :: C.CompanyId ,
+    employees :: [E.Employee'] } | 
   UpkeepClose {
     upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     machines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine'] , 
     upkeepDatePicker :: DP.DatePicker ,
     upkeepId :: U.UpkeepId ,
-    companyId :: C.CompanyId } | 
+    companyId :: C.CompanyId ,
+    employees :: [E.Employee'] } | 
   UpkeepHistory {
     companyUpkeeps :: [(U.Upkeep,[UM.UpkeepMachine'])] } | 
   PlannedUpkeeps { 

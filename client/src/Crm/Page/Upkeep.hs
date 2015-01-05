@@ -25,6 +25,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
@@ -81,9 +82,10 @@ upkeepDetail :: CrmRouter
              -> [UM.UpkeepMachine']
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
+             -> [E.Employee']
              -> DOMElement
-upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines companyId =
-  upkeepForm appState upkeep2 datePicker notCheckedMachines machines submitButton True
+upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines companyId employees =
+  upkeepForm appState upkeep2 datePicker notCheckedMachines machines submitButton True employees
     where
       (_,upkeep,upkeepMachines) = upkeep3
       upkeep2 = (upkeep,upkeepMachines)
@@ -105,7 +107,7 @@ upkeepNew :: CrmRouter
           -> C.CompanyId -- ^ company id
           -> DOMElement
 upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId = 
-  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False
+  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False []
     where
       submitButton = let
         newUpkeepHandler = createUpkeep
@@ -126,9 +128,10 @@ upkeepForm :: Var D.AppState
               -- ^ machine ids -> machines
            -> DOMElement -- ^ submit button
            -> Bool -- ^ display the mth input field
+           -> [E.Employee']
            -> DOMElement
 upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
-    notCheckedMachines'' machines button closeUpkeep' = let
+    notCheckedMachines'' machines button closeUpkeep' employees = let
   setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
   setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
     newAppState oldNavigation = let
@@ -138,8 +141,8 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         _ -> newNavigation
       in appState' { D.navigation = newNavigation' }
     in case D.navigation appState' of
-      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> newAppState upkeepClose'
-      upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> newAppState upkeepNew'
+      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _) -> newAppState upkeepClose'
+      upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
   machineRow (machineId,_,_,_,machineType) = let
     findMachineById (_,id') = machineId == id'
@@ -205,16 +208,16 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
     B.col (B.mkColProps 6) $ let
       modifyDatepickerDate newDate = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
-          upkeepNew' @ (D.UpkeepNew _ _ _ _ _) -> upkeepNew' { 
+          upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeepNew' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepNew') }
-          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeepClose' { 
+          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _) -> upkeepClose' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
           _ -> D.navigation appState' })
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
-          upkeep'' @ (D.UpkeepNew _ _ _ _ _) -> upkeep'' { 
+          upkeep'' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
-          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _) -> upkeep'' { 
+          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
       displayedDate = U.upkeepDate upkeep'
       setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing

@@ -36,18 +36,18 @@ main' = do
         operationStartCalendarOpen' editing machineId' nextService ->
           (machineDetail editing appVar' operationStartCalendarOpen' machine' 
             machineTypeId machineType machineId' nextService)
-      D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
+      D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' _ ->
         emptyCallback (upkeepNew router appVar' upkeep' 
           pickerOpen notCheckedMachines' machines' companyId')
       D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
-      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId companyId -> let
+      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId companyId employees -> let
         (u2, u3) = upkeep
         upkeep3 = (upkeepId, u2, u3)
         in emptyCallback
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
-            notCheckedMachines machines companyId)
+            notCheckedMachines machines companyId employees)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
     in Navigation.navigation' router newElementAndCallback )

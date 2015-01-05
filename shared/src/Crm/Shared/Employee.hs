@@ -17,6 +17,8 @@ import "fay-base" Prelude
 newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
   deriving Eq
 
+type Employee' = (EmployeeId, Employee)
+
 data Employee = Employee {
   name :: String }
 #ifndef FAY
