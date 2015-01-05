@@ -75,7 +75,8 @@ constructDOMElement = ffi "\
     \ for (key in attrs) {\
       \ if (key !== 'instance') {\
         \ var newKey = (key.charAt(key.length - 1) == '_' ? key.substring(0, key.length - 1) : key);\
-        \ obj[newKey] = attrs[key];\
+        \ var newerKey = newKey.replace(/_/, '-');\
+        \ obj[newerKey] = attrs[key];\
       \ }\
     \ }\
   \ };\
