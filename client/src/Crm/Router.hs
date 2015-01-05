@@ -17,6 +17,7 @@ module Crm.Router (
   closeUpkeep ,
   maintenances ,
   plannedUpkeeps ,
+  machineTypesList ,
   machineDetail ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
@@ -29,7 +30,8 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchCompany, fetchUpkeeps, fetchUpkeep)
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, 
+  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes)
 import Crm.Helpers (parseSafely, showCompanyId)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -64,10 +66,13 @@ machineDetail :: M.MachineId -> CrmRoute
 machineDetail machineId = CrmRoute $ "machines/" <> (showInt $ M.getMachineId machineId)
 
 plannedUpkeeps :: CrmRoute
-plannedUpkeeps = CrmRoute $ "planned"
+plannedUpkeeps = CrmRoute "planned"
 
 closeUpkeep :: U.UpkeepId -> CrmRoute
 closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId)
+
+machineTypesList :: CrmRoute
+machineTypesList = CrmRoute "other/machine-types-list" 
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -162,7 +167,11 @@ startRouter appVar = let
             upkeepDate = U.upkeepDate upkeep
             in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
               notCheckedMachines (upkeepDate, False) upkeepId companyId)
-        _ -> modify' D.NotFound )]
+        _ -> modify' D.NotFound 
+  ),(
+    "other/machine-types-list", const $
+      fetchMachineTypes (\result -> modify' $ D.MachineTypeList result )
+  )]
 
 navigate :: CrmRoute
          -> CrmRouter

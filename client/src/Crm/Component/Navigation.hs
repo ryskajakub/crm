@@ -21,8 +21,9 @@ navigation' router (body, callbacks) =
   simpleReactBody' ( div [
     navBar $ nav [
       li $ link [G.list, text2DOM " Seznam firem"] frontPage router ,
-      li $ link [G.list, text2DOM " Naplánované servisy"] plannedUpkeeps router ] ,
-    body ] ) callbacks --(putStrLn $ unpack "AAAA")
+      li $ link [G.list, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
+      li $ link [G.list, text2DOM " Editace typů zařízení"] plannedUpkeeps router ] ,
+    body ] ) callbacks 
 
 navigation :: CrmRouter
            -> DOMElement

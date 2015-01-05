@@ -54,7 +54,9 @@ data NavigationState =
   UpkeepHistory {
     companyUpkeeps :: [(U.Upkeep,[UM.UpkeepMachine'])] } | 
   PlannedUpkeeps { 
-    plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] }
+    plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] } |
+  MachineTypeList {
+    machineTypes :: [(MT.MachineType',Int)] }
 
 data AppState = AppState {
   navigation :: NavigationState }

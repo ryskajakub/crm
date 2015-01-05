@@ -15,6 +15,7 @@ import "fay-base" Prelude
 #endif
 
 newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
+type MachineType' = (MachineTypeId, MachineType)
 
 -- | Machine type can be either an id or the machine type object
 data MachineType = MachineType {

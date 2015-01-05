@@ -12,6 +12,7 @@ import Crm.Page.Company (companiesList, companyDetail, companyNew)
 import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
+import Crm.Page.Other.MachineType (machineTypesList)
 import qualified Crm.Data as D
 
 main' :: Fay ()
@@ -45,7 +46,8 @@ main' = do
         upkeep3 = (upkeepId, u2, u3)
         in Navigation.navigation router 
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
-            notCheckedMachines machines companyId))
+            notCheckedMachines machines companyId)
+      D.MachineTypeList machineTypes -> Navigation.navigation router machineTypesList )
   return ()
 
 appVar :: Fay (Var D.AppState)

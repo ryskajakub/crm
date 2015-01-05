@@ -13,6 +13,7 @@ module Crm.Server (
   fetchFrontPageData , 
   fetchMachineTypesAutocomplete ,
   fetchMachineType ,
+  fetchMachineTypes ,
   fetchUpkeep ,
   fetchCompany ) where
 
@@ -70,6 +71,13 @@ fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
 fetchMachineTypesAutocomplete text callback = do
   JQ.ajax
     (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text))
+    (callback . items)
+    noopOnError
+
+fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
+fetchMachineTypes callback =
+  JQ.ajax
+    (apiRoot <> (pack $ A.machineTypes))
     (callback . items)
     noopOnError
 
