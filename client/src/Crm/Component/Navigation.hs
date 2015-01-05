@@ -12,7 +12,7 @@ import HaskellReact
 import HaskellReact.Bootstrap (navBar, nav)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import Crm.Router (link, frontPage, CrmRouter, plannedUpkeeps)
+import Crm.Router (link, frontPage, CrmRouter, plannedUpkeeps, machineTypesList )
 
 navigation' :: CrmRouter 
             -> (DOMElement, Fay ())
@@ -22,7 +22,7 @@ navigation' router (body, callbacks) =
     navBar $ nav [
       li $ link [G.list, text2DOM " Seznam firem"] frontPage router ,
       li $ link [G.list, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
-      li $ link [G.list, text2DOM " Editace typů zařízení"] plannedUpkeeps router ] ,
+      li $ link [G.list, text2DOM " Editace typů zařízení"] machineTypesList router ] ,
     body ] ) callbacks 
 
 navigation :: CrmRouter

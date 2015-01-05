@@ -47,7 +47,7 @@ main' = do
         in Navigation.navigation router 
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
             notCheckedMachines machines companyId)
-      D.MachineTypeList machineTypes -> Navigation.navigation router machineTypesList )
+      D.MachineTypeList machineTypes -> Navigation.navigation router (machineTypesList router machineTypes) )
   return ()
 
 appVar :: Fay (Var D.AppState)
