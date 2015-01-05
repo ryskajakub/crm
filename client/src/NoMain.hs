@@ -15,40 +15,42 @@ import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.Other.MachineType (machineTypesList, machineTypeForm)
 import qualified Crm.Data as D
 
+emptyCallback :: a -> (a, Fay ())
+emptyCallback element = (element, return ())
+
 main' :: Fay ()
 main' = do
   appVar' <- appVar
   router <- startRouter appVar'
   _ <- subscribeAndRead appVar' (\appState -> let
-    frontPage data' = Navigation.navigation router (companiesList router data')
-    in case D.navigation appState of
-      D.FrontPage data' -> frontPage data'
+    newElementAndCallback = case D.navigation appState of
+      D.FrontPage data' -> emptyCallback (companiesList router data')
       D.NotFound -> undefined
       D.CompanyDetail companyId' company' editing' machines' ->
-        Navigation.navigation router
-          (companyDetail editing' router appVar' (companyId', company') machines')
-      D.CompanyNew company' -> Navigation.navigation router (companyNew router appVar' company')
+        emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
+      D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
       D.MachineNew machine' companyId machineType maybeMachineTypeId operationStartCalendarOpen' -> 
-        Navigation.navigation' router (machineNew router appVar' 
-          operationStartCalendarOpen' machine' companyId machineType maybeMachineTypeId)
+        (machineNew router appVar' operationStartCalendarOpen' 
+          machine' companyId machineType maybeMachineTypeId)
       D.MachineDetail machine' machineType machineTypeId 
         operationStartCalendarOpen' editing machineId' nextService ->
-          Navigation.navigation' router (machineDetail editing appVar' 
-            operationStartCalendarOpen' machine' machineTypeId machineType machineId' nextService)
+          (machineDetail editing appVar' operationStartCalendarOpen' machine' 
+            machineTypeId machineType machineId' nextService)
       D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' ->
-        Navigation.navigation router 
-          (upkeepNew router appVar' upkeep' pickerOpen notCheckedMachines' machines' companyId')
-      D.UpkeepHistory upkeeps' -> Navigation.navigation router $ upkeepHistory upkeeps'
-      D.PlannedUpkeeps plannedUpkeeps' -> Navigation.navigation router
+        emptyCallback (upkeepNew router appVar' upkeep' 
+          pickerOpen notCheckedMachines' machines' companyId')
+      D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
+      D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
       D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen upkeepId companyId -> let
         (u2, u3) = upkeep
         upkeep3 = (upkeepId, u2, u3)
-        in Navigation.navigation router 
+        in emptyCallback
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
             notCheckedMachines machines companyId)
-      D.MachineTypeList machineTypes -> Navigation.navigation router (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineType -> Navigation.navigation router (machineTypeForm machineType) )
+      D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
+      D.MachineTypeEdit machineType -> emptyCallback (machineTypeForm machineType) 
+    in Navigation.navigation' router newElementAndCallback )
   return ()
 
 appVar :: Fay (Var D.AppState)
