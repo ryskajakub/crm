@@ -19,7 +19,7 @@ import Opaleye.Column (Column)
 import Opaleye.Order (orderBy, asc, limit, desc)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==), (.&&), restrict, lower)
-import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGText, pgString, pgBool)
+import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning, runDelete)
 import qualified Opaleye.Aggregate as AGG
 
@@ -31,7 +31,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
 import Control.Monad (forM_, forM)
 
-import Data.Profunctor.Product (p2, p3, p4, p6)
+import Data.Profunctor.Product (p1, p2, p3, p4, p6)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
@@ -70,6 +70,7 @@ import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 type DBInt = Column PGInt4
+type DBInt8 = Column PGInt8
 type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
@@ -177,6 +178,16 @@ companyWithMachinesQuery companyId = proc () -> do
 runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String)]
 runCompanyWithMachinesQuery companyId connection =
   runQuery connection (companyWithMachinesQuery companyId)
+
+machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
+machineTypesWithCountQuery = let 
+  query = proc () -> do
+    (machinePK,_,machineTypeFK,_,_,_) <- machinesQuery -< ()
+    mt <- join machineTypesQuery -< (machineTypeFK)
+    returnA -< (mt, machinePK)
+  aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query
+  orderedQuery = orderBy (asc(\((_,name',_,_),_) -> name')) aggregatedQuery
+  in orderedQuery
 
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesInCompanyQuery companyId = orderBy (asc(\((machineId,_,_,_,_,_),_) -> machineId)) $ proc () -> do
@@ -461,9 +472,11 @@ readMay' string = passStringOnNoRead $ readMay string
 schema'' :: S.Schema UrlId () Void
 schema'' = S.withListing () (S.unnamedSingle readMay')
 
-autocompleteSchema :: S.Schema String String Void
-autocompleteSchema = S.noListing $ S.named [(
-  "autocomplete", S.listingBy id ),(
+data MachineTypeMid = Autocomplete String | CountListing
+
+autocompleteSchema :: S.Schema String MachineTypeMid Void
+autocompleteSchema = S.withListing CountListing $ S.named [(
+  "autocomplete", S.listingBy (\str -> Autocomplete str) ),(
   "by-type", S.singleBy id)]
 
 companySchema :: S.Schema UrlId () Void
@@ -582,9 +595,16 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
     return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
 
-machineTypesListing :: String -> ListHandler Dependencies
-machineTypesListing mid = mkListing (jsonO . someO) (const $ 
+machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
+machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
   ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
+machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
+  rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
+  let 
+    mapRow :: ((Int,String,String,Int),Int64) -> ((Int, MT.MachineType), Int)
+    mapRow ((m1,m2,m3,m4),count) = ((m1, MT.MachineType m2 m3 m4), fromIntegral count)
+    mappedRows = map mapRow rows
+  return mappedRows )
 
 machineTypesSingle :: Handler StringIdDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) (
@@ -739,7 +759,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machines ,
   schema = schema'' }
 
-machineTypeResource :: Resource Dependencies StringIdDependencies String String Void
+machineTypeResource :: Resource Dependencies StringIdDependencies String MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
   list = machineTypesListing ,
