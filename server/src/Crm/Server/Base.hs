@@ -283,15 +283,13 @@ runMachinesQuery connection = runQuery connection machinesQuery
 runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
-singleMachineTypesQuery :: String -> Query MachineTypesTable
-singleMachineTypesQuery machineTypeName = proc () -> do
-  machineTypeNameRow @ (_,name',_,_) <- machineTypesQuery -< ()
-  restrict -< (name' .== pgString machineTypeName)
+singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
+singleMachineTypeQuery machineTypeSid = proc () -> do
+  machineTypeNameRow @ (mtId',name',_,_) <- machineTypesQuery -< ()
+  restrict -< case machineTypeSid of
+    Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
+    Left(machineTypeName) -> (name' .== pgString machineTypeName)
   returnA -< machineTypeNameRow
-
-runSingleMachineTypesQuery :: String -> Connection -> IO[(Int, String, String, Int)]
-runSingleMachineTypesQuery machineTypeName connection = 
-  runQuery connection (singleMachineTypesQuery machineTypeName)
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
   IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
@@ -361,9 +359,13 @@ withConnection runQ = do
   close conn
   return result
 
+data MachineTypeMid = Autocomplete String | CountListing
+data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
+
 type Dependencies = (ReaderT Connection IO :: * -> *)
 type IdDependencies = (ReaderT (Connection, Either String Int) IO :: * -> *)
 type StringIdDependencies = (ReaderT (Connection, String) IO :: * -> *)
+type MachineTypeDependencies = (ReaderT (Connection, MachineTypeSid) IO :: * -> *)
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
@@ -472,12 +474,11 @@ readMay' string = passStringOnNoRead $ readMay string
 schema'' :: S.Schema UrlId () Void
 schema'' = S.withListing () (S.unnamedSingle readMay')
 
-data MachineTypeMid = Autocomplete String | CountListing
-
-autocompleteSchema :: S.Schema String MachineTypeMid Void
+autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
-  "autocomplete", S.listingBy (\str -> Autocomplete str) ),(
-  "by-type", S.singleBy id)]
+  "autocomplete", S.listingBy (\str -> Autocomplete str)),(
+  "by-name", S.singleBy (\str -> MachineTypeByName str)),(
+  "by-id", S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
 
 companySchema :: S.Schema UrlId () Void
 companySchema = S.withListing () $ S.unnamedSingle readMay'
@@ -606,13 +607,19 @@ machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
     mappedRows = map mapRow rows
   return mappedRows )
 
-machineTypesSingle :: Handler StringIdDependencies
+machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) (
-  ask >>= (\(conn,machineType) -> do
-    rows <- liftIO $ runSingleMachineTypesQuery machineType conn
+  ask >>= (\(conn,machineTypeSid) -> do
+    let 
+      performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
+      (onEmptyResult, result) = case machineTypeSid of
+        MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
+        MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
+        MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
+    rows <- result
     idToMachineType <- case rows of
-      (mtId, mtName, m3, m4) : xs | null xs -> return $ [ (mtId, MT.MachineType mtName m3 m4) ]
-      [] -> return []
+      (mtId, mtName, m3, m4) : xs | null xs -> return $ [ (mtId :: Int, MT.MachineType mtName m3 m4) ]
+      [] -> onEmptyResult
       _ -> throwError NotFound
     return idToMachineType))
 
@@ -759,7 +766,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machines ,
   schema = schema'' }
 
-machineTypeResource :: Resource Dependencies StringIdDependencies String MachineTypeMid Void
+machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
   list = machineTypesListing ,
