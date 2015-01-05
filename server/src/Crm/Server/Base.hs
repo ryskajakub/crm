@@ -40,7 +40,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.Select (Sel1, sel1)
+import Data.Tuple.All (Sel1, sel1, sel3, upd3)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -711,9 +711,9 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
 
 updateUpkeep :: Connection
              -> Int
-             -> (U.Upkeep, [(UM.UpkeepMachine, Int)])
+             -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
              -> IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines) = do
+updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   _ <- let
     condition (upkeepId',_,_) = upkeepId' .== pgInt4 upkeepId
     readToWrite _ =
@@ -764,9 +764,13 @@ createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMach
     liftIO $ addMachine connection newMachine companyId machineType))
 
 updateUpkeepHandler :: Handler IdDependencies
-updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\upkeep ->
-  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
-    liftIO $ updateUpkeep connection upkeepId upkeep))
+updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,machines,employeeId) -> let 
+  employeeListToMaybe = case employeeId of
+    x : _ -> Just x
+    _ -> Nothing
+  upkeepTriple = (upkeep, machines, employeeListToMaybe)
+  in ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
+    liftIO $ updateUpkeep connection upkeepId upkeepTriple))
     
 upkeepCompanyMachines :: Handler IdDependencies
 upkeepCompanyMachines = mkConstHandler (jsonO . someO) (

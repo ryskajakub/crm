@@ -92,7 +92,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines comp
       upkeep2 = (upkeep,upkeepMachines)
       submitButton = let
         closeUpkeepHandler = updateUpkeep
-          upkeep3
+          (upkeep3, selectedEmployee)
           (navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
