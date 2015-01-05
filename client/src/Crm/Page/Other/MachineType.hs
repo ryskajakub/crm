@@ -9,16 +9,24 @@ module Crm.Page.Other.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt)
 import "fay-base" Prelude hiding (div, span, id)
+import Data.Var (Var)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
 import qualified Crm.Router as R
+import qualified Crm.Data as D
 import qualified Crm.Shared.MachineType as MT
+import Crm.Helpers (formRow)
 
-machineTypeForm :: MT.MachineType'
-                -> DOMElement
-machineTypeForm (machineTypeId, machineType) = span "machine type form"
+machineTypeForm :: Var D.AppState
+                -> MT.MachineType'
+                -> (DOMElement, Fay ())
+machineTypeForm appVar (machineTypeId, machineType) =
+  let 
+    html = main $ B.grid [
+      formRow "Text" "Text" ]
+  in (html, return ())
 
 machineTypesList :: R.CrmRouter
                  -> [(MT.MachineType', Int)]

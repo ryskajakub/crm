@@ -49,7 +49,7 @@ main' = do
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
             notCheckedMachines machines companyId)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineType -> emptyCallback (machineTypeForm machineType) 
+      D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
