@@ -8,7 +8,7 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack) 
+import "fay-base" Data.Text (fromString, unpack, pack, Text) 
 import "fay-base" Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -23,7 +23,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data as D
-import Crm.Component.Editable (editable, editablePlain)
+import Crm.Component.Editable (editable, editablePlain, editable')
 import Crm.Server (createCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
@@ -150,7 +150,10 @@ companyForm editing' var setCompany company' saveHandler' =
       company'' = company' {
         C.companyName = unpack $ newHeader }
       in setCompany company''
-    header = editable editing' headerDisplay (pack $ C.companyName company') headerSet
+    inputWrapper input = dl [
+      dt "Jméno firmy" ,
+      dd input ]
+    header = editable' Nothing inputWrapper editing' headerDisplay (pack $ C.companyName company') headerSet
     saveHandler _ = saveHandler'
     saveEditButton' = BTN.button' (BTN.buttonProps {
       BTN.onClick = Defined saveHandler , 
@@ -158,31 +161,29 @@ companyForm editing' var setCompany company' saveHandler' =
     saveEditButton = if editing'
       then [saveEditButton']
       else []
+    display :: String -> Text
+    display string = case string of
+      s | pack s == "" -> "-"
+      s -> pack s
+    hereEditablePlain = editablePlain editing'
     companyBasicInfo = [
       header , 
       dl $ [
-        dt "Označení" , 
-        dd $ let
-          plantDisplay = text2DOM $ pack $ C.companyPlant company'
-          setCompanyPlant companyPlant' = let
-            modifiedCompany = company' {
-              C.companyPlant = unpack companyPlant' }
-            in setCompany modifiedCompany
-          in editable editing' plantDisplay (pack $ C.companyPlant company') setCompanyPlant , 
+        dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
+        dd $ hereEditablePlain
+          (display $ C.companyPlant company') 
+          (\text -> setCompany (company' { C.companyPlant = unpack text })) , 
         dt "Adresa" , 
-        dd $ editablePlain 
-          editing'
-          (pack $ C.companyAddress company')
+        dd $ hereEditablePlain
+          (display $ C.companyAddress company')
           (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
-        dt "Kontakt" , 
-        dd $ editablePlain
-          editing'
-          (pack $ C.companyPerson company')
+        dt "Jméno kontaktní osoby" , 
+        dd $ hereEditablePlain
+          (display $ C.companyPerson company')
           (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
-        dt "Telefon" , 
-        dd $ editablePlain
-          editing'
-          (pack $ C.companyPhone company')
+        dt "Telefon na kontaktní osobu" , 
+        dd $ hereEditablePlain
+          (display $ C.companyPhone company')
           (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
         ++ saveEditButton ]
     companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo

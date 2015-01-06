@@ -28,20 +28,21 @@ editable :: Bool -- ^ edit state
          -> Text -- ^ initial value to display in the input
          -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
          -> DOMElement -- ^ either input field or displayed value depending on editing parameter
-editable = editable' Nothing
+editable = editable' Nothing P.id
 
 editable' :: Maybe I.InputProps -- ^ provide the base input props
+          -> (DOMElement -> DOMElement) -- ^ wrapper of the input field in the edit mode
           -> Bool -- ^ edit state
           -> DOMElement -- ^ display value
           -> Text -- ^ initial value to display in the input
           -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
           -> DOMElement -- ^ either input field or displayed value depending on editing parameter
-editable' inputProps edit display initial setValue = if edit
+editable' inputProps inputWrapper edit display initial setValue = if edit
   then let
     changeHandler event = do
       value <- eventValue event
       setValue value
-    in I.input ((maybe (I.mkInputProps) (P.id) (inputProps)) {
+    in inputWrapper $ I.input ((maybe (I.mkInputProps) (P.id) (inputProps)) {
       I.onChange = Defined changeHandler , 
       I.defaultValue = Defined initial })
   else display
