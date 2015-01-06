@@ -119,9 +119,11 @@ upkeepNew router appState newUpkeep datePicker notCheckedMachines machines compa
           (newUpkeepU, newUpkeepMachines, mE)
           companyId
           (navigate R.plannedUpkeeps router)
-        buttonProps = BTN.buttonProps {
-          BTN.bsStyle = Defined "primary" ,
-          BTN.onClick = Defined $ const newUpkeepHandler }
+        basicButtonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "primary" }
+        buttonProps = if null newUpkeepMachines
+          then basicButtonProps { BTN.disabled = Defined "disabled" }
+          else basicButtonProps { BTN.onClick = Defined $ const newUpkeepHandler }
         button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
         in button
 
