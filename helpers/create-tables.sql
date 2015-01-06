@@ -1,9 +1,11 @@
 drop table companies;
 create table companies (
-  id serial
-  , name varchar(500)
-  , plant varchar(500)
-);
+  id serial , 
+  name varchar(500) , 
+  plant varchar(500) ,
+  address varchar (500) ,
+  person varchar (500) ,
+  phone varchar (500) );
 
 drop table machine_types;
 create table machine_types (
@@ -40,13 +42,10 @@ create table employees (
   id serial ,
   name varchar (500) );
 
-insert into companies(name, plant) values ('Continental', 'I');
-insert into companies(name, plant) values ('České dráhy', 'II');
-insert into companies(name, plant) values ('FOMA Bohemia', 'I');
-insert into companies(name, plant) values ('Kand', 'I');
-insert into companies(name, plant) values ('Metrostav', 'I');
-insert into companies(name, plant) values ('Neumann', 'I');
-insert into companies(name, plant) values ('PREX', 'I');
+insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
+insert into companies(name, plant, address, person, phone) values ('České dráhy', 'I', 'Ostrava', 'Zbieczuk', '777 888 222');
+insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
+insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Provozovna', 'Vodňany', 'Mysliveček', '335 881 233');
 
 insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 150', 'Remeza', 365 * 12);
 insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 75', 'Remeza', 365 * 24);
