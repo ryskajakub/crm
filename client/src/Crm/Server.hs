@@ -68,6 +68,12 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
 
+maybeAsList :: Maybe a -> [a]
+maybeAsList maybeA = maybe [] (\a -> [a]) maybeA
+
+listAsMaybe :: [a] -> Maybe a
+listAsMaybe [] = Nothing
+listAsMaybe (x : _) = Just x
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -114,13 +120,13 @@ fetchEmployees callback =
     noopOnError
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
+            -> ((C.CompanyId, (U.Upkeep, Maybe E.EmployeeId, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
                  C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
 fetchUpkeep upkeepId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId) ++ "/"))
-    callback
+    (\(a,(u,u2,u3),b) -> callback(a,(u,listAsMaybe u2,u3),b))
     noopOnError
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
@@ -188,9 +194,6 @@ createMachine machine companyId machineType callback =
     (pack $ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
-
-maybeAsList :: Maybe a -> [a]
-maybeAsList maybeA = maybe [] (\a -> [a]) maybeA
 
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()

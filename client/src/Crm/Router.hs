@@ -159,7 +159,7 @@ startRouter appVar = let
       in case maybeId of
         Just(upkeepId') -> let 
           upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(companyId,(upkeep,upkeepMachines),machines) -> 
+          in fetchUpkeep upkeepId (\(companyId,(upkeep,_,upkeepMachines),machines) -> 
             fetchEmployees (\employees -> let
               addNotCheckedMachine acc element = let 
                 (machineId,_,_,_,_) = element

@@ -76,6 +76,19 @@ toggle lists findElem = let
         else lists
   in toggleInternal lists True
 
+mkSubmitButton :: Renderable a
+               => Bool
+               -> a
+               -> Fay ()
+               -> DOMElement
+mkSubmitButton enabled label handler = let
+  basicButtonProps = BTN.buttonProps {
+    BTN.bsStyle = Defined "primary" }
+  buttonProps = if enabled
+    then basicButtonProps { BTN.onClick = Defined $ const handler }
+    else basicButtonProps { BTN.disabled = Defined "disabled" }
+  in BTN.button' buttonProps label
+
 upkeepDetail :: CrmRouter
              -> Var D.AppState
              -> U.Upkeep'
@@ -95,10 +108,10 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines machines comp
         closeUpkeepHandler = updateUpkeep
           (upkeep3, selectedEmployee)
           (navigate (maintenances companyId) router)
-        buttonProps = BTN.buttonProps {
-          BTN.bsStyle = Defined "primary" ,
-          BTN.onClick = Defined $ const closeUpkeepHandler }
-        in BTN.button' buttonProps [ G.plus , text2DOM " Uzavřít" ]
+        in mkSubmitButton 
+          (not $ null upkeepMachines) 
+          [G.plus , text2DOM " Uzavřít"]
+          closeUpkeepHandler
 
 upkeepNew :: CrmRouter
           -> Var D.AppState
@@ -119,13 +132,10 @@ upkeepNew router appState newUpkeep datePicker notCheckedMachines machines compa
           (newUpkeepU, newUpkeepMachines, mE)
           companyId
           (navigate R.plannedUpkeeps router)
-        basicButtonProps = BTN.buttonProps {
-          BTN.bsStyle = Defined "primary" }
-        buttonProps = if null newUpkeepMachines
-          then basicButtonProps { BTN.disabled = Defined "disabled" }
-          else basicButtonProps { BTN.onClick = Defined $ const newUpkeepHandler }
-        button = BTN.button' buttonProps [ G.plus , text2DOM " Naplánovat" ]
-        in button
+        in mkSubmitButton
+          (not $ null newUpkeepMachines)
+          [G.plus , text2DOM " Naplánovat"]
+          newUpkeepHandler
 
 upkeepForm :: Var D.AppState
            -> (U.Upkeep, [UM.UpkeepMachine'])
