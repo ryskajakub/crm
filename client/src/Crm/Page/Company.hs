@@ -35,7 +35,7 @@ companiesList router companies' = let
   head' =
     thead $ tr [
       th "Název firmy" , 
-      th "Platnost servisu vyprší za" , 
+      th "Označení (Provozovna)" , 
       th "Další servis" ]
   body = tbody $ map (\idCompany ->
     let (id', company', nextServiceDate) = idCompany
