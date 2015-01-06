@@ -15,12 +15,14 @@ import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectIn
 
 import Opaleye.QueryArr (Query, QueryArr)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
-import Opaleye.Column (Column)
+import Opaleye.Column (Column, toNullable, Nullable)
+import qualified Opaleye.Column as COL
 import Opaleye.Order (orderBy, asc, limit, desc)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==), (.&&), restrict, lower)
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning, runDelete)
+import Opaleye.Internal.RunQuery
 import qualified Opaleye.Aggregate as AGG
 
 import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, runReaderT, mapReaderT)
@@ -40,7 +42,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel3, upd3)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, upd3)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -62,7 +64,6 @@ import qualified Crm.Shared.Employee as E
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
 
 import Fay.Convert (showToFay, readFromFay')
-import Fay.FFI (Nullable(Nullable, Null))
 
 import Safe (readMay, minimumMay)
 import Generics.Regular
@@ -85,8 +86,8 @@ type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
 type MachineTypesTable = (DBInt, DBText, DBText, DBInt)
 type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText, DBInt)
 
-type UpkeepTable = (DBInt, DBDate, DBBool)
-type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool)
+type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4))
+type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4)))
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 
@@ -116,10 +117,11 @@ machineTypesTable = Table "machine_types" (p4 (
   required "upkeep_per_mileage" ))
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
-upkeepTable = Table "upkeeps" $ p3 (
+upkeepTable = Table "upkeeps" $ p4 (
   optional "id" ,
   required "date_" ,
-  required "closed" )
+  required "closed" ,
+  required "employee_id" )
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ p4 (
@@ -213,12 +215,12 @@ companyUpkeepsQuery companyId = let
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
     (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
-    upkeep @ (_,_,closed) <- join upkeepQuery -< upkeepFK
+    upkeep @ (_,_,closed,_) <- join upkeepQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (companyFK .== pgInt4 companyId)
     returnA -< upkeep
-  aggregatedUpkeepsQuery = AGG.aggregate (p3(AGG.groupBy, AGG.min, AGG.boolOr)) upkeepsQuery'
-  orderedUpkeepQuery = orderBy (asc(\(_,date,_) -> date)) $ aggregatedUpkeepsQuery
+  aggregatedUpkeepsQuery = AGG.aggregate (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min)) upkeepsQuery'
+  orderedUpkeepQuery = orderBy (asc(\(_,date,_,_) -> date)) $ aggregatedUpkeepsQuery
   in orderedUpkeepQuery
 
 -- | query, that returns expanded machine type, not just the id
@@ -246,15 +248,15 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     returnA -< (companyPK, m, mt)
 
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
-lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_),_) -> date)) $ proc () -> do
+lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_),_) -> date)) $ proc () -> do
   upkeepMachineRow @ (upkeepFK,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
-  upkeepRow @ (_,_,upkeepClosed) <- join upkeepQuery -< upkeepFK
+  upkeepRow @ (_,_,upkeepClosed,_) <- join upkeepQuery -< upkeepFK
   restrict -< pgBool True .== upkeepClosed
   returnA -< (upkeepRow, upkeepMachineRow)
 
 nextMaintenanceQuery :: Int -> Query (UpkeepTable)
-nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_) -> date)) $ proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
+nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_) -> date)) $ proc () -> do
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   restrict -< pgInt4 machineId .== machineFK
@@ -268,13 +270,13 @@ expandedUpkeepsQuery2 upkeepId = proc () -> do
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,_,_) <- upkeepQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepQuery -< ()
   restrict -< upkeepClosed .== pgBool False
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
@@ -282,8 +284,8 @@ plannedUpkeepsQuery = proc () -> do
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_), _) -> date)) $ 
-  AGG.aggregate (p2 (p3(AGG.groupBy, AGG.min, AGG.boolOr),
+groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $ 
+  AGG.aggregate (p2 (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min),
     p3(AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 runCompaniesQuery :: Connection -> IO [(Int, String, String)]
@@ -323,7 +325,7 @@ runExpandedMachinesQuery' :: Maybe Int -> Connection
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
-runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
+runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool, Maybe Int)]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
@@ -335,14 +337,14 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool),(Int, String, Int, Int))]
+runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool, Maybe Int),(Int, String, Int, Int))]
 runLastClosedMaintenanceQuery machineId connection =
   runQuery connection (lastClosedMaintenanceQuery machineId)
 
-runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool)]
+runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool, Maybe Int)]
 runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintenanceQuery machineId)
 
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
@@ -350,12 +352,12 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
-runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool), (Int, String, String))]
+runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 runSingleUpkeepQuery :: Connection 
                      -> Int -- ^ upkeep id
-                     -> IO[((Int, Day, Bool), (Int, String, Int, Int))]
+                     -> IO[((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))]
 runSingleUpkeepQuery connection upkeepId = do
   runQuery connection (expandedUpkeepsQuery2 upkeepId)
 
@@ -578,9 +580,9 @@ nextService machineId (M.Machine operationStartDate _ mileagePerYear)
       in nextServiceDay
     in case (nextPlannedMaintenance, lastUpkeep) of
       -- next planned maintenance
-      ((_,date,_) : xs,_) | null xs -> return date
+      (x : xs,_) | null xs -> return $ sel2 x
       -- next maintenance computed from the last upkeep
-      (_,((_,date,_),_) : xs) | null xs -> return $ compute date
+      (_,(upkeep,_) : xs) | null xs -> return $ compute $ sel2 upkeep
       -- next maintenance computed from the operation start
       _ -> return $ compute (ymdToDay operationStartDate)
   return $ dayToYmd nextDay)
@@ -617,7 +619,7 @@ companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-    return $ map (\(id''',u1,u2) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
+    return $ map (\(id''',u1,u2,_) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
@@ -659,7 +661,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((uPK,u2,u3),(cPK,c2,c3)) ->
+  let mappedRows = map (\((uPK,u2,u3,_),(cPK,c2,c3)) ->
         (uPK, U.Upkeep (dayToYmd u2) u3, cPK, C.Company c2 c3)) rows
   return mappedRows )
 
@@ -677,17 +679,17 @@ getUpkeep = mkConstHandler (jsonO . someO) ( do
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
 
-mapUpkeeps :: [((Int, Day, Bool), (Int, String, Int, Int))] -> [(Int, (U.Upkeep, [(UM.UpkeepMachine, Int)]))]
-mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed),(_,note,machineId,recordedMileage)) ->
+mapUpkeeps :: [((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))] -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
+mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId),(_,note,machineId,recordedMileage)) ->
   let
-    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed,
+    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed, employeeId, 
       [(UM.UpkeepMachine note recordedMileage, machineId)]) )
     in case acc of
       [] -> [addUpkeep']
-      (upkeepId', (upkeep, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
+      (upkeepId', (upkeep, e, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
         modifiedUpkeepMachines = 
           (UM.UpkeepMachine note recordedMileage, machineId) : upkeepMachines
-        in (upkeepId', (upkeep, modifiedUpkeepMachines)) : rest
+        in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
       _ -> addUpkeep' : acc
   ) [] rows
 
@@ -709,28 +711,35 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
+-- type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, Maybe (Column (Nullable PGInt4)))
+
+maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
+maybeToNullable (Just a) = toNullable a
+maybeToNullable Nothing = COL.null
+
 updateUpkeep :: Connection
              -> Int
              -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
              -> IO ()
 updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   _ <- let
-    condition (upkeepId',_,_) = upkeepId' .== pgInt4 upkeepId
+    condition (upkeepId',_,_,_) = upkeepId' .== pgInt4 upkeepId
     readToWrite _ =
-      (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
+      (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId)
     in runUpdate conn upkeepTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   return ()
 
 addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, Int)])
+          -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
           -> IO Int -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines) = do
+addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep)
-    (\(id',_,_) -> id')
+    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, 
+      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId)
+    sel1
   let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
   return upkeepId

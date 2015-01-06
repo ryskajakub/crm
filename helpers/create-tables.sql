@@ -25,7 +25,8 @@ drop table upkeeps;
 create table upkeeps (
   id serial ,
   date_ date , 
-  closed boolean );
+  closed boolean ,
+  employee_id integer );
 
 drop table upkeep_machines;
 create table upkeep_machines (
@@ -62,9 +63,9 @@ insert into machines(company_id, machine_type_id, operation_start, initial_milea
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
   values (2, 3, '2008-01-01', 0, 365 * 24);
 
-insert into upkeeps(date_, closed) values ('1999-01-01', FALSE);
-insert into upkeeps(date_, closed) values ('2001-01-01', FALSE);
-insert into upkeeps(date_, closed) values ('2008-01-01', FALSE);
+insert into upkeeps(date_, closed, employee_id) values ('1999-01-01', FALSE, null);
+insert into upkeeps(date_, closed, employee_id) values ('2001-01-01', FALSE, null);
+insert into upkeeps(date_, closed, employee_id) values ('2008-01-01', FALSE, 1);
 
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'oprava', 1, 0);
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'pravidelný', 2, 0);
