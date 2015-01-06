@@ -42,7 +42,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, upd3)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, upd3, uncurryN)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -77,8 +77,8 @@ type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
 
-type CompaniesTable = (DBInt, DBText, DBText)
-type CompaniesWriteTable = (Maybe DBInt, DBText, DBText)
+type CompaniesTable = (DBInt, DBText, DBText, DBText, DBText, DBText)
+type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
 
 type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
 type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
@@ -95,10 +95,13 @@ type EmployeeTable = (DBInt, DBText)
 type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
-companiesTable = Table "companies" (p3 (
+companiesTable = Table "companies" (p6 (
   optional "id" ,
   required "name" ,
-  required "plant" ))
+  required "plant" ,
+  required "address" ,
+  required "person" ,
+  required "phone" ))
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" (p6 (
@@ -185,11 +188,11 @@ machineTypesQuery' mid = proc () -> do
 
 companyWithMachinesQuery :: Int -> Query (CompaniesTable)
 companyWithMachinesQuery companyId = proc () -> do
-  c @ (companyPK,_,_) <- companiesQuery -< ()
-  restrict -< (pgInt4 companyId .== companyPK)
-  returnA -< c
+  company <- companiesQuery -< ()
+  restrict -< (pgInt4 companyId .== sel1 company)
+  returnA -< company
 
-runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String)]
+runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String,String,String,String)]
 runCompanyWithMachinesQuery companyId connection =
   runQuery connection (companyWithMachinesQuery companyId)
 
@@ -286,9 +289,9 @@ plannedUpkeepsQuery = proc () -> do
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $ 
   AGG.aggregate (p2 (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min),
-    p3(AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+    p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
-runCompaniesQuery :: Connection -> IO [(Int, String, String)]
+runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
 runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int)]
@@ -352,7 +355,7 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
-runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, String))]
+runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, String, String, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 runSingleUpkeepQuery :: Connection 
@@ -464,12 +467,13 @@ instance Ord D.YearMonthDay where
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  ask >>= (\conn -> forM rows (\(companyId, cName, cPlant) -> do
+  ask >>= (\conn -> forM rows (\companyRow -> do
+    let companyId = sel1 companyRow
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
     nextDays <- forM machines (\(machineId, machine, _, _, machineType) -> do
       nextServiceDay <- nextService machineId machine machineType id
       return nextServiceDay )
-    return $ (companyId, C.Company cName cPlant, maybeToList $ minimumMay nextDays))))
+    return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))))
 
 type UrlId = Either String Int 
 
@@ -507,8 +511,9 @@ addCompany :: Connection -- ^ database connection
 addCompany connection newCompany = do
   newId <- runInsertReturning
     connection
-    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany)
-    (\(id' ,_ ,_) -> id')
+    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany , pgString $ 
+      C.companyAddress newCompany, pgString $ C.companyPerson newCompany, pgString $ C.companyPhone newCompany )
+    sel1
   return $ head newId -- todo safe
 
 createCompanyHandler :: Handler Dependencies
@@ -541,9 +546,9 @@ singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, id') -> maybeId id' (\companyId -> do
     rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
-    (_,c2,c3) <- singleRowOrColumn rows
+    company <- singleRowOrColumn rows
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    return (C.Company c2 c3, machines)))
+    return ((uncurryN (const C.Company)) company , machines)))
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -661,8 +666,8 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((uPK,u2,u3,_),(cPK,c2,c3)) ->
-        (uPK, U.Upkeep (dayToYmd u2) u3, cPK, C.Company c2 c3)) rows
+  let mappedRows = map (\((uPK,u2,u3,_),companyRow) ->
+        (uPK, U.Upkeep (dayToYmd u2) u3, sel1 companyRow, (uncurryN $ const C.Company) companyRow)) rows
   return mappedRows )
 
 singleRowOrColumn :: Monad m

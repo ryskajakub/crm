@@ -18,7 +18,10 @@ newtype CompanyId = CompanyId { getCompanyId :: Int }
 
 data Company = Company {
   companyName :: String , 
-  companyPlant :: String }
+  companyPlant :: String ,
+  companyAddress :: String ,
+  companyPerson :: String ,
+  companyPhone :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
@@ -26,4 +29,7 @@ data Company = Company {
 newCompany :: Company
 newCompany = Company {
   companyName = "" , 
-  companyPlant = "" }
+  companyPlant = "" ,
+  companyAddress = "" ,
+  companyPerson = "" ,
+  companyPhone = "" }
