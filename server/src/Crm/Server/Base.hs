@@ -41,7 +41,7 @@ import Data.Maybe (fromJust, maybeToList)
 import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
-import Data.List (intersperse)
+import Data.List (intersperse, sortBy)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, upd3, uncurryN)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
@@ -467,13 +467,22 @@ instance Ord D.YearMonthDay where
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  ask >>= (\conn -> forM rows (\companyRow -> do
-    let companyId = sel1 companyRow
-    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    nextDays <- forM machines (\(machineId, machine, _, _, machineType) -> do
-      nextServiceDay <- nextService machineId machine machineType id
-      return nextServiceDay )
-    return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))))
+  ask >>= (\conn -> do 
+    unsortedResult <- forM rows (\companyRow -> do
+      let companyId = sel1 companyRow
+      machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+      nextDays <- forM machines (\(machineId, machine, _, _, machineType) -> do
+        nextServiceDay <- nextService machineId machine machineType id
+        return nextServiceDay )
+      return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))
+    return $ sortBy (\r1 r2 -> let 
+      date1 = sel3 r1  
+      date2 = sel3 r2
+      in case (date1, date2) of
+        (date1' : _, date2' : _) -> date1' `compare` date2'
+        ([],[]) -> EQ
+        ([],_) -> GT
+        _ -> LT ) unsortedResult ))
 
 type UrlId = Either String Int 
 
