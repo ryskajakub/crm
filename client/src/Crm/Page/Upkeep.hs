@@ -31,6 +31,7 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
+import qualified Crm.Router as R
 import Crm.Helpers (displayDate, parseSafely, lmap)
 
 plannedUpkeeps :: CrmRouter
@@ -117,7 +118,7 @@ upkeepNew router appState newUpkeep datePicker notCheckedMachines machines compa
         newUpkeepHandler = createUpkeep
           (newUpkeepU, newUpkeepMachines, mE)
           companyId
-          (navigate (maintenances companyId) router)
+          (navigate R.plannedUpkeeps router)
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
           BTN.onClick = Defined $ const newUpkeepHandler }

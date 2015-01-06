@@ -17,7 +17,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Router as R
 import qualified Crm.Data as D
 import qualified Crm.Shared.MachineType as MT
-import Crm.Helpers (formRow', formRow, parseSafely, saveButtonRow)
+import Crm.Helpers (formRow', parseSafely, saveButtonRow)
 import Crm.Server (updateMachineType)
 
 machineTypeForm :: Var D.AppState
