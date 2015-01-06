@@ -5,6 +5,7 @@
 
 module Crm.Component.Editable (
   editable, editable',
+  editablePlain ,
   editableN ) where
 
 import "fay-base" Prelude as P
@@ -14,6 +15,13 @@ import FFI (Defined (Defined))
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Tag.Input as II
+
+editablePlain :: Bool
+              -> Text
+              -> (Text -> Fay())
+              -> DOMElement
+editablePlain editState displayValue =
+  editable editState (text2DOM displayValue) displayValue
 
 editable :: Bool -- ^ edit state
          -> DOMElement -- ^ display value

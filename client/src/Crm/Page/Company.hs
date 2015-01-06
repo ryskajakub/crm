@@ -23,7 +23,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data as D
-import Crm.Component.Editable (editable)
+import Crm.Component.Editable (editable, editablePlain)
 import Crm.Server (createCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
@@ -170,10 +170,20 @@ companyForm editing' var setCompany company' saveHandler' =
             in setCompany modifiedCompany
           in editable editing' plantDisplay (pack $ C.companyPlant company') setCompanyPlant , 
         dt "Adresa" , 
-        dd "" , 
+        dd $ editablePlain 
+          editing'
+          (pack $ C.companyAddress company')
+          (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
         dt "Kontakt" , 
-        dd "" , 
+        dd $ editablePlain
+          editing'
+          (pack $ C.companyPerson company')
+          (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
         dt "Telefon" , 
-        dd "" ] ++ saveEditButton ]
+        dd $ editablePlain
+          editing'
+          (pack $ C.companyPhone company')
+          (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
+        ++ saveEditButton ]
     companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
     in B.jumbotron companyBasicInfo'
