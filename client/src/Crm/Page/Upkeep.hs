@@ -106,13 +106,16 @@ upkeepNew :: CrmRouter
           -> [UM.UpkeepMachine']
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> C.CompanyId -- ^ company id
+          -> [E.Employee']
+          -> Maybe E.EmployeeId
           -> DOMElement
-upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId = 
-  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False [] Nothing
+upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId es mE = 
+  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False es mE
     where
       submitButton = let
+        (newUpkeepU, newUpkeepMachines) = newUpkeep
         newUpkeepHandler = createUpkeep
-          newUpkeep
+          (newUpkeepU, newUpkeepMachines, mE)
           companyId
           (navigate (maintenances companyId) router)
         buttonProps = BTN.buttonProps {
@@ -138,6 +141,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
   modify' fun = modify appState (\appState' -> let
     newState = case D.navigation appState' of
       uc @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> fun uc
+      uc @ (D.UpkeepNew _ _ _ _ _ _ _) -> fun uc
     in appState' { D.navigation = newState } )
 
   setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
@@ -150,7 +154,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
       in appState' { D.navigation = newNavigation' }
     in case D.navigation appState' of
       upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> newAppState upkeepClose'
-      upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> newAppState upkeepNew'
+      upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _ _) -> newAppState upkeepNew'
       _ -> appState')
   machineRow (machineId,_,_,_,machineType) = let
     findMachineById (_,id') = machineId == id'
@@ -216,14 +220,14 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
     B.col (B.mkColProps 6) $ let
       modifyDatepickerDate newDate = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
-          upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeepNew' { 
+          upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _ _) -> upkeepNew' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepNew') }
           upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeepClose' { 
             D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
           _ -> D.navigation appState' })
       setPickerOpenness open = modify appState (\appState' -> appState' {
         D.navigation = case D.navigation appState' of
-          upkeep'' @ (D.UpkeepNew _ _ _ _ _ _) -> upkeep'' { 
+          upkeep'' @ (D.UpkeepNew _ _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
           upkeep'' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeep'' { 
             D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )

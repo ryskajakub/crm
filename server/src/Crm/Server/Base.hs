@@ -794,9 +794,15 @@ upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
-  ask >>= \(connection, maybeInt) -> maybeId maybeInt (
-    -- todo check that the machines are belonging to this company
-    const $ liftIO $ addUpkeep connection newUpkeep))
+  let 
+    (_,_,selectedEmployeeId) = newUpkeep
+    employeeListToMaybe = case selectedEmployeeId of
+      x : _ -> Just x
+      _ -> Nothing
+    newUpkeep' = upd3 employeeListToMaybe newUpkeep
+    in ask >>= \(connection, maybeInt) -> maybeId maybeInt (
+      -- todo check that the machines are belonging to this company
+      const $ liftIO $ addUpkeep connection newUpkeep'))
 
 companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
 companyMachineResource = mkResourceId {

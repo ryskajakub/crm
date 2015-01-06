@@ -189,13 +189,15 @@ createMachine machine companyId machineType callback =
     post
     (const callback)
 
+maybeAsList :: Maybe a -> [a]
+maybeAsList maybeA = maybe [] (\a -> [a]) maybeA
+
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()
              -> Fay ()
 updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) callback = 
-  let employeeIdAsList = maybe [] (\employeeId -> [employeeId]) maybeEmployeeId
-  in ajax
-    (upkeep, upkeepMachines, employeeIdAsList)
+  ajax
+    (upkeep, upkeepMachines, maybeAsList maybeEmployeeId)
     (pack $ A.companies ++ "/0/" ++ A.upkeep ++ "/" ++ (show $ U.getUpkeepId upkeepId))
     put
     (const callback)
@@ -220,13 +222,13 @@ updateMachine machineId machineTypeId machine callback = ajax
   put
   (const callback)
 
-createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
+createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
              -> C.CompanyId -- ^ company id
              -> Fay ()
              -> Fay ()
-createUpkeep newUpkeep companyId callback =
+createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
   ajax 
-    newUpkeep
+    (newUpkeep, upkeepMachines, maybeAsList maybeEmployeeId)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
     post
     (const callback)

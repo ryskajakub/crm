@@ -36,9 +36,9 @@ main' = do
         operationStartCalendarOpen' editing machineId' nextService ->
           (machineDetail editing appVar' operationStartCalendarOpen' machine' 
             machineTypeId machineType machineId' nextService)
-      D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' _ ->
+      D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' es selectedE ->
         emptyCallback (upkeepNew router appVar' upkeep' 
-          pickerOpen notCheckedMachines' machines' companyId')
+          pickerOpen notCheckedMachines' machines' companyId' es selectedE)
       D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')

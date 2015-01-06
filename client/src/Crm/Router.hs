@@ -120,13 +120,14 @@ startRouter appVar = let
           in D.MachineNew M.newMachine companyId MT.newMachineType Nothing (nowYMD, False) )
   ),(
     "companies/:id/new-maintenance", \params ->
-      withCompany
-        params
-        (\companyId (_, machines) -> let
-          notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
-            (UM.newUpkeepMachine, machineId)) machines
-          in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
-            notCheckedUpkeepMachines (nowYMD,False) companyId [])
+      fetchEmployees (\employees -> 
+        withCompany
+          params
+          (\companyId (_, machines) -> let
+            notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
+              (UM.newUpkeepMachine, machineId)) machines
+            in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
+              notCheckedUpkeepMachines (nowYMD,False) companyId employees Nothing))
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
