@@ -57,7 +57,7 @@ data NavigationState =
     employees :: [E.Employee'] ,
     selectedEmployee :: Maybe E.EmployeeId } | 
   UpkeepHistory {
-    companyUpkeeps :: [(U.Upkeep,[UM.UpkeepMachine'])] } | 
+    companyUpkeeps :: [U.Upkeep''] } | 
   PlannedUpkeeps { 
     plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] } |
   MachineTypeList {
