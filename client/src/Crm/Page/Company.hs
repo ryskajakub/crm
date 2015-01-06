@@ -24,7 +24,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data as D
 import Crm.Component.Editable (editable, editablePlain, editable')
-import Crm.Server (createCompany)
+import Crm.Server (createCompany, updateCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
 
@@ -82,7 +82,8 @@ companyDetail :: Bool -- ^ is the page editing mode
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
-  saveHandler =
+  saveHandler = do
+    updateCompany companyId company'
     R.navigate R.frontPage router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of

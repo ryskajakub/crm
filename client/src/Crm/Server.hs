@@ -7,6 +7,7 @@ module Crm.Server (
   createUpkeep , 
   updateUpkeep ,
   updateMachine , 
+  updateCompany ,
   updateMachineType , 
   fetchMachine , 
   fetchUpkeeps , 
@@ -194,6 +195,15 @@ createMachine machine companyId machineType callback =
     (pack $ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
+
+updateCompany :: C.CompanyId
+              -> C.Company
+              -> Fay ()
+updateCompany companyId company = ajax
+  (company)
+  (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
+  put
+  (const $ return ())
 
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()
