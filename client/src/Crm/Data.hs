@@ -67,14 +67,19 @@ data NavigationState =
     machineType' :: MT.MachineType' } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
-    machineType :: MT.MachineType }
+    machineType :: MT.MachineType ,
+    companyId :: C.CompanyId }
 
 data AppState = AppState {
-  navigation :: NavigationState }
+  navigation :: NavigationState ,
+  machineTypeFromPhase1 :: MT.MachineType ,
+  maybeMachineIdFromPhase1 :: Maybe MT.MachineTypeId }
 
 modifyState :: Var AppState -> (NavigationState -> NavigationState) -> Fay ()
 modifyState var fun = modify var (\appState' -> appState' { navigation = fun $ navigation appState' } )
 
 defaultAppState :: AppState
 defaultAppState = AppState {
-  navigation = FrontPage [] }
+  navigation = FrontPage [] ,
+  machineTypeFromPhase1 = MT.newMachineType ,
+  maybeMachineIdFromPhase1 = Nothing }

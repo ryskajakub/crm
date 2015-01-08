@@ -28,18 +28,20 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow')
-import Crm.Router (CrmRouter, navigate, frontPage)
+import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
 machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> MT.MachineType
                       -> Var D.AppState
+                      -> CrmRouter
+                      -> C.CompanyId
                       -> (DOMElement, Fay ())
-machineTypePhase1Form machineTypeId machineType appVar = let
+machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
 
   setMachineType :: MT.MachineType -> Fay ()
   setMachineType modifiedMachineType = 
-    D.modifyState appVar (\navig -> navig { D.machineType = modifiedMachineType } )
+    D.modifyState appVar (\navig -> navig { D.machineType = modifiedMachineType })
 
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
   setMachineTypeId machineTypeId' = 
@@ -58,7 +60,12 @@ machineTypePhase1Form machineTypeId machineType appVar = let
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
-  submitButtonHandler = return ()
+  submitButtonHandler = do
+    modify appVar (\appState -> appState {
+      D.machineTypeFromPhase1 = machineType ,
+      D.maybeMachineIdFromPhase1 = machineTypeId })
+    navigate (newMachinePhase2 companyId) crmRouter
+    
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
@@ -165,23 +172,6 @@ machineDisplay editing buttonRow appVar operationStartCalendar
       mn @ (D.MachineNew _ _ _ _ _) -> mn { D.machine = modifiedMachine }
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machine = modifiedMachine }
       _ -> D.navigation appState })
-  setMachineType :: MT.MachineType -> Fay ()
-  setMachineType modifiedMachineType = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew _ _ _ _ _) -> mn { D.machineType = modifiedMachineType }
-      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineType = modifiedMachineType }
-      _ -> D.navigation appState })
-  setMachineTypeId :: MT.MachineTypeId -> Fay ()
-  setMachineTypeId machineTypeId' = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew _ _ _ _ _) -> mn { D.maybeMachineTypeId = Just machineTypeId' }
-      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machineTypeId = machineTypeId' }
-      _ -> D.navigation appState })
-  unsetMachineTypeId :: Fay ()
-  unsetMachineTypeId = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew _ _ _ _ _) -> mn { D.maybeMachineTypeId = Nothing }
-      _ -> D.navigation appState })
   row'' labelText value' onChange' editing' = let
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
@@ -198,21 +188,16 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
-        formRow
+        formRow'
           "Typ zařízení" 
-          (pack $ MT.machineTypeName machineType),
-        row''
+          (MT.machineTypeName machineType) 
+          undefined
+          False ,
+        formRow'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
-          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing machineTypeId) ,
-        row''
-          "Interval servisu"
-          (unpack $ showInt $ MT.upkeepPerMileage machineType)
-          (eventValue >=> (\str -> case parseSafely str of
-            Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
-            Nothing -> return ())) 
-          (isNothing machineTypeId) ,
+          undefined
+          False ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let

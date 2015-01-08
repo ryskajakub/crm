@@ -51,8 +51,8 @@ main' = do
             notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
-      D.MachineNewPhase1 maybeMachineTypeId machineType -> machineTypePhase1Form 
-        maybeMachineTypeId machineType appVar'
+      D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
+        maybeMachineTypeId machineType appVar' router companyId
     in Navigation.navigation' router newElementAndCallback )
   return ()
 

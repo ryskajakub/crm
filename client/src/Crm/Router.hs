@@ -12,7 +12,7 @@ module Crm.Router (
   frontPage ,
   newCompany ,
   companyDetail ,
-  newMachine ,
+  newMachinePhase2 ,
   newMachinePhase1 ,
   newMaintenance ,
   closeUpkeep ,
@@ -25,7 +25,7 @@ module Crm.Router (
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
-import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
 
 import qualified HaskellReact.BackboneRouter as BR
@@ -58,8 +58,8 @@ companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
 newMachinePhase1 :: C.CompanyId -> CrmRoute
 newMachinePhase1 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase1"
 
-newMachine :: C.CompanyId -> CrmRoute
-newMachine companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine"
+newMachinePhase2 :: C.CompanyId -> CrmRoute
+newMachinePhase2 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase2"
 
 newMaintenance :: C.CompanyId -> CrmRoute
 newMaintenance companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-maintenance"
@@ -121,13 +121,19 @@ startRouter appVar = let
     withCompany
       params
       (\companyId (_,_) ->
-        D.MachineNewPhase1 Nothing MT.newMachineType )
+        D.MachineNewPhase1 Nothing MT.newMachineType companyId)
   ),(
-    "companies/:id/new-machine", \params ->
-      withCompany
-        params
-        (\companyId (_,_) -> let
-          in D.MachineNew M.newMachine companyId MT.newMachineType Nothing (nowYMD, False) )
+    "companies/:id/new-machine-phase2", \params -> let
+      cId = head params
+      in case (parseSafely cId) of
+        Just companyIdInt -> do
+          appState <- get appVar
+          let
+            machineType = D.machineTypeFromPhase1 appState
+            maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
+            companyId = C.CompanyId companyIdInt
+          modify' $ D.MachineNew M.newMachine companyId machineType maybeMachineTypeId (nowYMD, False)
+        _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
       fetchEmployees (\employees -> 
