@@ -508,7 +508,7 @@ schema'' = S.withListing () (S.unnamedSingle readMay')
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
   "autocomplete", S.listingBy (\str -> Autocomplete str)),(
-  "by-name", S.singleBy (\str -> MachineTypeByName str)),(
+  A.byName, S.singleBy (\str -> MachineTypeByName str)),(
   "by-id", S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
 
 companySchema :: S.Schema UrlId () Void

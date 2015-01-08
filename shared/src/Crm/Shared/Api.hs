@@ -10,7 +10,7 @@ module Crm.Shared.Api (
   , machineTypes
   , single
   , autocomplete
-  , byType
+  , byType, byName
   , employees ) where
 
 #ifndef FAY
@@ -44,6 +44,9 @@ autocomplete = "autocomplete"
 
 byType :: String
 byType = "by-type"
+
+byName :: String
+byName = "by-name"
 
 single :: String
 single = "single"

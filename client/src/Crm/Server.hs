@@ -106,7 +106,7 @@ fetchMachineType :: Text -- ^ machine type exact match
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
-    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byType ++ "/" ++ unpack machineTypeName))
+    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName))
     (\maybeMachineType -> case maybeMachineType of
       [] -> callback Nothing
       x:_ -> callback $ Just x)
