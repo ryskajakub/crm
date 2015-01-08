@@ -13,6 +13,7 @@ module Crm.Router (
   newCompany ,
   companyDetail ,
   newMachine ,
+  newMachinePhase1 ,
   newMaintenance ,
   closeUpkeep ,
   maintenances ,
@@ -53,6 +54,9 @@ newCompany = CrmRoute "companies/new"
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
+
+newMachinePhase1 :: C.CompanyId -> CrmRoute
+newMachinePhase1 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase1"
 
 newMachine :: C.CompanyId -> CrmRoute
 newMachine companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine"
@@ -112,6 +116,12 @@ startRouter appVar = let
             D.navigation = D.CompanyNew C.newCompany }
           )
         _ -> return ()
+  ),(
+    "companies/:id/new-machine-phase1", \params ->
+    withCompany
+      params
+      (\companyId (_,_) ->
+        D.MachineNewPhase1 Nothing MT.newMachineType )
   ),(
     "companies/:id/new-machine", \params ->
       withCompany

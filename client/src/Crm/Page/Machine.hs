@@ -5,6 +5,7 @@
 
 module Crm.Page.Machine (
   machineNew ,
+  machineTypePhase1Form ,
   machineDetail ) where
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
@@ -29,6 +30,9 @@ import Crm.Server (createMachine, updateMachine, fetchMachineType)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap)
 import Crm.Router (CrmRouter, navigate, frontPage)
 import Crm.Component.Autocomplete (autocompleteInput)
+
+machineTypePhase1Form :: DOMElement
+machineTypePhase1Form = div "AAAA"
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button

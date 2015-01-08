@@ -112,7 +112,7 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBoxesRow = B.row (machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const $
-        R.navigate (R.newMachine companyId) router }
+        R.navigate (R.newMachinePhase1 companyId) router }
     button = BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
     in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ])
   planUpkeepRow = B.row $

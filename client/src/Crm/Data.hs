@@ -63,7 +63,10 @@ data NavigationState =
   MachineTypeList {
     machineTypes :: [(MT.MachineType',Int)] } |
   MachineTypeEdit {
-    machineType' :: MT.MachineType' }
+    machineType' :: MT.MachineType' } |
+  MachineNewPhase1 {
+    maybeMachineTypeId :: Maybe MT.MachineTypeId ,
+    machineType :: MT.MachineType }
 
 data AppState = AppState {
   navigation :: NavigationState }

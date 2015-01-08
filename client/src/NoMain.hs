@@ -9,7 +9,7 @@ import Data.Var (Var, newVar, subscribeAndRead)
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
-import Crm.Page.Machine (machineNew, machineDetail)
+import Crm.Page.Machine (machineNew, machineDetail, machineTypePhase1Form)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.Other.MachineType (machineTypesList, machineTypeForm)
@@ -51,6 +51,7 @@ main' = do
             notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
+      D.MachineNewPhase1 maybeMachineTypeId machineType -> emptyCallback (machineTypePhase1Form)
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
