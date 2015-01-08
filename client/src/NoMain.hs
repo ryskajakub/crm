@@ -4,7 +4,7 @@
 module NoMain where
 
 import "fay-base" Prelude hiding (span, div, elem)
-import Data.Var (Var, newVar, subscribeAndRead)
+import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
 
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
@@ -51,7 +51,8 @@ main' = do
             notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
-      D.MachineNewPhase1 maybeMachineTypeId machineType -> emptyCallback (machineTypePhase1Form)
+      D.MachineNewPhase1 maybeMachineTypeId machineType -> machineTypePhase1Form 
+        maybeMachineTypeId machineType appVar'
     in Navigation.navigation' router newElementAndCallback )
   return ()
 

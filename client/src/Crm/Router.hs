@@ -25,7 +25,7 @@ module Crm.Router (
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
-import Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify)
 import "fay-base" Data.Function (fmap)
 
 import qualified HaskellReact.BackboneRouter as BR

@@ -10,7 +10,7 @@ module Crm.Page.Company (
 
 import "fay-base" Data.Text (fromString, unpack, pack, Text) 
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify)
 import FFI (Defined(Defined))
 
 import HaskellReact as HR

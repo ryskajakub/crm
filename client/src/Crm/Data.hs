@@ -4,6 +4,7 @@
 module Crm.Data where
 
 import "fay-base" Prelude
+import "fay-base" Data.Var (Var, modify)
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -70,6 +71,9 @@ data NavigationState =
 
 data AppState = AppState {
   navigation :: NavigationState }
+
+modifyState :: Var AppState -> (NavigationState -> NavigationState) -> Fay ()
+modifyState var fun = modify var (\appState' -> appState' { navigation = fun $ navigation appState' } )
 
 defaultAppState :: AppState
 defaultAppState = AppState {

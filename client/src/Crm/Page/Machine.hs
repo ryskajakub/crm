@@ -11,7 +11,7 @@ module Crm.Page.Machine (
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust, isNothing)
-import Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact as HR
@@ -27,12 +27,58 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap)
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow')
 import Crm.Router (CrmRouter, navigate, frontPage)
 import Crm.Component.Autocomplete (autocompleteInput)
 
-machineTypePhase1Form :: DOMElement
-machineTypePhase1Form = div "AAAA"
+machineTypePhase1Form :: Maybe MT.MachineTypeId
+                      -> MT.MachineType
+                      -> Var D.AppState
+                      -> (DOMElement, Fay ())
+machineTypePhase1Form maybeMachineTypeId machineType appVar = let
+
+  setMachineType :: MT.MachineType -> Fay ()
+  setMachineType modifiedMachineType = 
+    D.modifyState appVar (\navig -> navig { D.machineType = modifiedMachineType } )
+
+  setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
+  setMachineTypeId machineTypeId' = 
+    D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
+
+  (machineTypeInput, afterRenderCallback) = 
+    autocompleteInput 
+      inputNormalAttrs
+      (\text -> case text of 
+        text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
+          Just (machineTypeId', machineType') -> do
+            setMachineType machineType'
+            setMachineTypeId $ Just machineTypeId'
+          Nothing -> setMachineTypeId Nothing )
+        _ -> return () )
+      "machine-type-autocomplete"
+      (II.mkInputAttrs {
+        II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
+  submitButtonHandler = return ()
+  result = form' (mkAttrs { className = Defined "form-horizontal" }) $
+    B.grid $
+      B.row $ [
+        formRow
+          "Typ zařízení"
+          machineTypeInput ,
+        formRow'
+          "Výrobce"
+          (MT.machineTypeManufacturer machineType)
+          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
+          False ,
+        formRow'
+          "Interval servisu"
+          (unpack $ showInt $ MT.upkeepPerMileage machineType)
+          (eventValue >=> (\str -> case parseSafely str of
+            Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
+            Nothing -> return ())) 
+          False ,
+        saveButtonRow "Dále" submitButtonHandler ]
+  in (result, afterRenderCallback)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -99,6 +145,9 @@ row labelText otherField =
     label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
     div' (class' "col-md-9") otherField ]
 
+inputNormalAttrs :: Attributes
+inputNormalAttrs = class' "form-control"
+
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> Var D.AppState
@@ -139,21 +188,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
       II.onChange = Defined onChange' }
     input = editableN inputAttrs inputNormalAttrs editing' (text2DOM $ pack value')
     in row labelText input
-  inputNormalAttrs = class' "form-control"
   row' labelText value' onChange' = row'' labelText value' onChange' editing
-  (machineTypeInput, afterRenderCallback) = 
-    autocompleteInput 
-      inputNormalAttrs
-      (\text -> case text of 
-        text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType') -> do
-            setMachineType machineType'
-            setMachineTypeId machineTypeId'
-          Nothing -> unsetMachineTypeId )
-        _ -> return () )
-      "machine-type-autocomplete"
-      (II.mkInputAttrs {
-        II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
   changeNavigationState :: (D.NavigationState -> D.NavigationState) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
@@ -163,9 +198,9 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
-        row
+        formRow
           "Typ zařízení" 
-          (if editing then machineTypeInput else (text2DOM $ pack $ MT.machineTypeName machineType)),
+          (pack $ MT.machineTypeName machineType),
         row''
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
@@ -209,4 +244,4 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
-  in (elements, afterRenderCallback)
+  in (elements, return ())

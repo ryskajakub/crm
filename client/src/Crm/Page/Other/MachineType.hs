@@ -9,7 +9,7 @@ module Crm.Page.Other.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
