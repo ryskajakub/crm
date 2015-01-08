@@ -55,10 +55,12 @@ formRow labelText otherField =
 formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' = let
   inputNormalAttrs = class' "form-control"
-  inputAttrs = I.mkInputAttrs {
-    I.defaultValue = Defined $ pack value' ,
-    I.onChange = Defined onChange' }
-  input = editableN inputAttrs inputNormalAttrs editing' (text2DOM $ pack value')
+  inputAttrs = let 
+    inputAttrs' = I.mkInputAttrs {
+      I.defaultValue = Defined $ pack value' ,
+      I.onChange = Defined onChange' }
+    in if editing' then ( inputAttrs' { I.disabled_ = Defined "disabled" } ) else inputAttrs'
+  input = I.input inputNormalAttrs inputAttrs
   in formRow labelText input
 
 saveButtonRow :: Renderable a
