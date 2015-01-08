@@ -26,7 +26,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine, fetchMachineType)
+import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow')
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
@@ -60,6 +60,7 @@ machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return () )
         else return () )
+      fetchMachineTypesAutocomplete
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
