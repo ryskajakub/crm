@@ -50,13 +50,16 @@ machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
   (machineTypeInput, afterRenderCallback) = 
     autocompleteInput 
       inputNormalAttrs
-      (\text -> case text of 
-        text' | text' /= "" -> fetchMachineType text (\maybeTuple -> case maybeTuple of
+      (\text -> do
+        setMachineType (machineType { MT.machineTypeName = unpack text })
+        setMachineTypeId Nothing)
+      (\text -> if text /= "" 
+        then fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId', machineType') -> do
             setMachineType machineType'
             setMachineTypeId $ Just machineTypeId'
-          Nothing -> setMachineTypeId Nothing )
-        _ -> return () )
+          Nothing -> return () )
+        else return () )
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })

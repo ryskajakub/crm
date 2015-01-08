@@ -42,11 +42,12 @@ jQueryUIAutocomplete = ffi " %1(%2).autocomplete(%3) "
 
 autocompleteInput :: Attributes -- ^ attributes to the input field
                   -> (Text -> Fay ()) -- ^ handler for the on change event
+                  -> (Text -> Fay ()) -- ^ handler for the on select event
                   -> Text -- ^ id of the element
                   -> I.InputAttributes
                   -> (DOMElement, Fay ())
-autocompleteInput attrs onChange elementId inputAttrs = let 
-  onSelect _ ui = onChange (getUIValue ui)
+autocompleteInput attrs onChange onSelect elementId inputAttrs = let 
+  onSelect' _ ui = onSelect (getUIValue ui)
   element = I.input
     (attrs { id = Defined elementId })
     (inputAttrs {
@@ -55,7 +56,7 @@ autocompleteInput attrs onChange elementId inputAttrs = let
     jQueryUI 
     (pack "#" <> elementId)
     (AutocompleteProps { 
-      select = onSelect , 
+      select = onSelect' , 
       source = \request response -> do
         let term = getTerm request
         fetchMachineTypesAutocomplete term response })
