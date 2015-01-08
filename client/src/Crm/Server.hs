@@ -194,7 +194,7 @@ createMachine :: M.Machine
 createMachine machine companyId machineType callback =
   ajax
     (machine, machineType)
-    (pack $ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
+    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
 

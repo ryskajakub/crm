@@ -166,12 +166,14 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> (DOMElement, Fay ())
 machineDisplay editing buttonRow appVar operationStartCalendar
     machine' machineType machineTypeId extraRow = let
+
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
       mn @ (D.MachineNew _ _ _ _ _) -> mn { D.machine = modifiedMachine }
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machine = modifiedMachine }
       _ -> D.navigation appState })
+
   row'' labelText value' onChange' editing' = let
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
