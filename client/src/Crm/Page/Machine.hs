@@ -35,7 +35,7 @@ machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> MT.MachineType
                       -> Var D.AppState
                       -> (DOMElement, Fay ())
-machineTypePhase1Form maybeMachineTypeId machineType appVar = let
+machineTypePhase1Form machineTypeId machineType appVar = let
 
   setMachineType :: MT.MachineType -> Fay ()
   setMachineType modifiedMachineType = 
@@ -69,14 +69,14 @@ machineTypePhase1Form maybeMachineTypeId machineType appVar = let
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing maybeMachineTypeId) ,
+          (isNothing machineTypeId) ,
         formRow'
           "Interval servisu"
           (unpack $ showInt $ MT.upkeepPerMileage machineType)
           (eventValue >=> (\str -> case parseSafely str of
             Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
             Nothing -> return ())) 
-          (isNothing maybeMachineTypeId) ,
+          (isNothing machineTypeId) ,
         saveButtonRow "Dále" submitButtonHandler ]
   in (result, afterRenderCallback)
 
