@@ -47,7 +47,7 @@ machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
   setMachineTypeId machineTypeId' = 
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
 
-  (machineTypeInput, afterRenderCallback) = 
+  (machineTypeInput, afterRenderCallback) =
     autocompleteInput 
       inputNormalAttrs
       (\text -> do
