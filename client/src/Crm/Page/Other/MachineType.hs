@@ -25,7 +25,7 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data as D
-import Crm.Helpers (formRow', parseSafely, saveButtonRow, lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap)
+import Crm.Helpers (formRow', parseSafely, saveButtonRow, saveButtonRow' , lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
     
@@ -129,7 +129,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
               BTN.onClick = Defined $ const addUpkeepSequenceRow }
             in BTN.button' buttonProps "Přidat servisní řadu")
           "" ,
-        saveButtonRow submitButtonLabel submitButtonHandler ]
+        saveButtonRow' (not $ null upkeepSequences) submitButtonLabel submitButtonHandler ]
   in result
 
 machineTypeForm :: Var D.AppState

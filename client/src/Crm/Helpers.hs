@@ -73,12 +73,21 @@ saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
               -> DOMElement
-saveButtonRow label clickHandler = 
+saveButtonRow = saveButtonRow' True
+
+saveButtonRow' :: Renderable a
+               => Bool
+               -> a -- ^ label of the button
+               -> Fay () -- ^ button on click handler
+               -> DOMElement
+saveButtonRow' enabled label clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
-    BTN.button'
-      (BTN.buttonProps {
+    BTN.button' (let
+      buttonProps = (BTN.buttonProps {
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
+      in if enabled then buttonProps else buttonProps {
+        BTN.disabled = Defined "disabled" })
       label
 
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
