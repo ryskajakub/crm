@@ -643,8 +643,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
     (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
-    ymd <- nextService machineId machine machineTypeId fst
-    return (machine, companyId, machineTypeId, machineType, ymd))))
+    nextServiceYmd <- nextService machineId machine machineTypeId fst
+    return (machine, companyId, machineTypeId, machineType, nextServiceYmd))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do

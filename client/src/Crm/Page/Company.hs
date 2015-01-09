@@ -98,7 +98,7 @@ companyDetail editing' router var (companyId, company') machines' = let
             (R.machineDetail machineId')
             router , 
         dl [
-          dt "Další servis" , 
+          dt "Uvedení do provozu" , 
           dd $ displayDate $ M.machineOperationStartDate machine' ] ]
   machineBoxes = map machineBox machines'
   companyFormSection = companyForm editing' var setCompany company' saveHandler
