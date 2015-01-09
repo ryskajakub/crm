@@ -177,6 +177,12 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
+upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt)
+upkeepSequencesByIdQuery machineTypeId = proc () -> do
+  us @ (a,b,c,machineTypeFK) <- upkeepSequencesQuery -< ()
+  restrict -< machineTypeFK .== pgInt4 machineTypeId
+  returnA -< (a,b,c)
+
 mostFrequentUpkeepQuery :: Int -> Query DBInt
 mostFrequentUpkeepQuery machineTypeId = let  
   upkeepsInOneMachineType = proc () -> do
@@ -451,6 +457,8 @@ instance ToJSON UM.UpkeepMachine where
   toJSON = fromJust . showToFay
 instance ToJSON E.Employee where
   toJSON = fromJust . showToFay
+instance ToJSON US.UpkeepSequence where
+  toJSON = fromJust . showToFay
 
 instance JS.JSONSchema E.Employee where
   schema = gSchema
@@ -694,20 +702,22 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\machineType
       in runUpdate conn machineTypesTable readToWrite condition ))
 
 machineTypesSingle :: Handler MachineTypeDependencies
-machineTypesSingle = mkConstHandler (jsonO . someO) (
-  ask >>= (\(conn,machineTypeSid) -> do
-    let 
-      performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
-      (onEmptyResult, result) = case machineTypeSid of
-        MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
-        MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
-        MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
-    rows <- result
-    idToMachineType <- case rows of
-      (mtId, mtName, m3) : xs | null xs -> return $ [ (mtId :: Int, MT.MachineType mtName m3) ]
-      [] -> onEmptyResult
-      _ -> throwError NotFound
-    return idToMachineType))
+machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
+  (conn, machineTypeSid) <- ask
+  let 
+    performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
+    (onEmptyResult, result) = case machineTypeSid of
+      MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
+      MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
+      MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
+  rows <- result
+  case rows of
+    (mtId, mtName, m3) : xs | null xs -> do 
+      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
+      let mappedUpkeepSequences = map (\(a1,a2,a3) -> US.UpkeepSequence a1 a2 a3) upkeepSequences
+      return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences) ]
+    [] -> onEmptyResult
+    _ -> throwError NotFound)
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
