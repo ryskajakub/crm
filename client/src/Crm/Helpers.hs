@@ -52,8 +52,8 @@ formRow col1 col2 =
     label' (class'' ["control-label", "col-md-3"]) col1 , 
     div' (class' "col-md-9") col2 ]
 
-formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-formRow' labelText value' onChange' editing' = let
+editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingInput value' onChange' editing' = let
   inputNormalAttrs = class' "form-control"
   inputAttrs = let
     commonInputAttrs = I.mkInputAttrs {
@@ -63,8 +63,11 @@ formRow' labelText value' onChange' editing' = let
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
-  input = I.input inputNormalAttrs inputAttrs
-  in formRow labelText input
+  in I.input inputNormalAttrs inputAttrs
+
+formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+formRow' labelText value' onChange' editing' = let
+  in formRow labelText $ editingInput value' onChange' editing'
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -77,3 +80,9 @@ saveButtonRow label clickHandler =
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
       label
+
+eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
+eventInt fun = eventValue >=> (\text -> case parseSafely text of
+  Just(int) -> fun int
+  Nothing -> return () )
+

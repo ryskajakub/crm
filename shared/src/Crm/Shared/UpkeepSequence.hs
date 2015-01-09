@@ -16,7 +16,7 @@ import "fay-base" Prelude
 
 data UpkeepSequence = UpkeepSequence {
   displayOrdering :: Int , 
-  label :: String ,
+  label_ :: String ,
   repetition :: Int }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)

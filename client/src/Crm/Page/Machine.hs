@@ -8,7 +8,7 @@ module Crm.Page.Machine (
   machineTypePhase1Form ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text)
+import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust, isNothing)
 import "fay-base" Data.Var (Var, modify)
@@ -29,7 +29,7 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow')
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', editingInput, eventInt)
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -72,6 +72,22 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       D.maybeMachineIdFromPhase1 = machineTypeId })
     navigate (newMachinePhase2 companyId) crmRouter
     
+  modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
+  modifyUpkeepSequence displayOrder modifier = let
+    modifiedUpkeepSequences = map (\(us @ (US.UpkeepSequence displayOrder' _ _)) -> 
+      if displayOrder == displayOrder' 
+      then modifier us
+      else us ) upkeepSequences
+    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+
+  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition) -> let
+    labelField = editingInput label (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
+      (\us -> us { US.label_ = modifiedLabel }))) True
+    mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
+      (\us -> us { US.repetition = modifiedRepetition }))) True
+    inputColumn = [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
+    in formRow ("Řada" <> showInt displayOrder) inputColumn) upkeepSequences
+
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
@@ -82,7 +98,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing machineTypeId) ,
+          (isNothing machineTypeId) ] ++ upkeepSequenceRows ++ [
         formRow
           (let 
             addUpkeepSequenceRow = let
