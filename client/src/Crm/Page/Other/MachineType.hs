@@ -25,7 +25,7 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data as D
-import Crm.Helpers (formRow', parseSafely, saveButtonRow, lmap, editingInput, eventInt, formRow, inputNormalAttrs)
+import Crm.Helpers (formRow', parseSafely, saveButtonRow, lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
     
@@ -95,7 +95,17 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
       (\us -> us { US.repetition = modifiedRepetition }))) True
     inputColumn = [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
-    in formRow ("Řada" <> showInt displayOrder) inputColumn) upkeepSequences
+    removeButtonHandler = let
+      modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _)) ->
+        if displayOrder' == displayOrder 
+        then upkeepSeqs
+        else upkeepSeqs ++ [us { US.displayOrdering = length upkeepSeqs + 1 }]) [] upkeepSequences
+      in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = 
+        rmap (const modifiedUpkeepSequences) (D.machineTypeTuple navig) })
+    removeButtonProps = BTN.buttonProps {
+      BTN.onClick = Defined $ const removeButtonHandler }
+    removeButton = BTN.button' removeButtonProps "Odeber"
+    in formRow [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumn) upkeepSequences
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
