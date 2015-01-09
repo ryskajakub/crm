@@ -42,6 +42,13 @@ create table employees (
   id serial ,
   name varchar (500) );
 
+drop table upkeep_sequences;
+create table upkeep_sequences (
+  display_ordering integer ,
+  label varchar (500) ,
+  repetition integer ,
+  machine_type_id integer );
+
 insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
 insert into companies(name, plant, address, person, phone) values ('České dráhy', 'I', 'Ostrava', 'Zbieczuk', '777 888 222');
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
@@ -74,3 +81,8 @@ insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) value
 
 insert into employees(name) values ('Kutička');
 insert into employees(name) values ('Mandlík');
+
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, '4000 mth', 5000, 1);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (2, 'Generální', 30000, 1);
+
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 3);

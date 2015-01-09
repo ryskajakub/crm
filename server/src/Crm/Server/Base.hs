@@ -94,6 +94,8 @@ type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 type EmployeeTable = (DBInt, DBText)
 type EmployeeWriteTable = (Maybe DBInt, DBText)
 
+type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt)
+
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p6 (
   optional "id" ,
@@ -138,6 +140,13 @@ employeesTable = Table "employees" $ p2 (
   optional "id" ,
   required "name" )
 
+upkeepSequencesTable :: Table UpkeepSequencesTable UpkeepSequencesTable
+upkeepSequencesTable = Table "upkeep_sequences" $ p4 (
+  required "display_ordering" ,
+  required "label" ,
+  required "repetition" ,
+  required "machine_type_id" )
+
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
 
@@ -155,6 +164,9 @@ upkeepMachinesQuery = queryTable upkeepMachinesTable
 
 employeesQuery :: Query EmployeeTable
 employeesQuery = queryTable employeesTable
+
+upkeepSequencesQuery :: Query UpkeepSequencesTable
+upkeepSequencesQuery = queryTable upkeepSequencesTable
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
