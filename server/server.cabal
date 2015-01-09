@@ -25,6 +25,7 @@ Library
     , Crm.Shared.UpkeepMachine
     , Crm.Shared.YearMonthDay
     , Crm.Shared.Employee
+    , Crm.Shared.UpkeepSequence
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3

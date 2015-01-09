@@ -61,6 +61,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.UpkeepSequence as US
 import Crm.Server.Helpers (ymdToDay, dayToYmd)
 
 import Fay.Convert (showToFay, readFromFay')
@@ -463,6 +464,8 @@ instance JS.JSONSchema U.Upkeep where
   schema = gSchema
 instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
+instance JS.JSONSchema US.UpkeepSequence where
+  schema = gSchema
 
 instance Eq D.YearMonthDay where
   D.YearMonthDay y m d _ == D.YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
@@ -790,12 +793,16 @@ addMachine :: Connection
 addMachine connection machine companyId' machineType = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
-    MT.MyMachineType (MT.MachineType name' manufacturer upkeepPerMileage) -> do
+    MT.MyMachineType (MT.MachineType name' manufacturer upkeepPerMileage, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
         connection
         machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
-        (\(id',_,_,_) -> id')
-      return $ head newMachineTypeId -- todo safe
+        sel1
+      let machineTypeId = head newMachineTypeId -- todo safe
+      forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition) -> runInsert
+        connection
+        upkeepSequencesTable (pgInt4 displayOrdering, pgString label, pgInt4 repetition, pgInt4 machineTypeId))
+      return machineTypeId
   let
     M.Machine machineOperationStartDate' initialMileage mileagePerYear = machine
   machineId <- runInsertReturning

@@ -14,6 +14,8 @@ import "base" Prelude
 import "fay-base" Prelude
 #endif
 
+import qualified Crm.Shared.UpkeepSequence as US
+
 newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
 type MachineType' = (MachineTypeId, MachineType)
 
@@ -30,7 +32,7 @@ newMachineType :: MachineType
 newMachineType = MachineType "" "" (365 * 24)
 
 data MyEither = 
-  MyMachineType MachineType
+  MyMachineType (MachineType, [US.UpkeepSequence])
   | MyInt Int
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
