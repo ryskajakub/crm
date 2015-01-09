@@ -12,7 +12,9 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay as YMD
+
 import qualified Crm.Component.DatePicker as DP
 
 data NavigationState =
@@ -29,7 +31,7 @@ data NavigationState =
   MachineNew {
     machine :: M.Machine ,
     companyId :: C.CompanyId ,
-    machineType :: MT.MachineType , 
+    machineTypeTuple :: (MT.MachineType,[US.UpkeepSequence]) , 
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
     operationStartCalendar :: DP.DatePicker } | 
   MachineDetail {
@@ -67,12 +69,12 @@ data NavigationState =
     machineType' :: MT.MachineType' } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
-    machineType :: MT.MachineType ,
+    machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) ,
     companyId :: C.CompanyId }
 
 data AppState = AppState {
   navigation :: NavigationState ,
-  machineTypeFromPhase1 :: MT.MachineType ,
+  machineTypeFromPhase1 :: (MT.MachineType, [US.UpkeepSequence]) ,
   maybeMachineIdFromPhase1 :: Maybe MT.MachineTypeId }
 
 modifyState :: Var AppState -> (NavigationState -> NavigationState) -> Fay ()
@@ -81,5 +83,5 @@ modifyState var fun = modify var (\appState' -> appState' { navigation = fun $ n
 defaultAppState :: AppState
 defaultAppState = AppState {
   navigation = FrontPage [] ,
-  machineTypeFromPhase1 = MT.newMachineType ,
+  machineTypeFromPhase1 = (MT.newMachineType,[]) ,
   maybeMachineIdFromPhase1 = Nothing }

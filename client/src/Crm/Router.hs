@@ -121,7 +121,7 @@ startRouter appVar = let
     withCompany
       params
       (\companyId (_,_) ->
-        D.MachineNewPhase1 Nothing MT.newMachineType companyId)
+        D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params
@@ -129,10 +129,10 @@ startRouter appVar = let
         Just companyIdInt -> do
           appState <- get appVar
           let
-            machineType = D.machineTypeFromPhase1 appState
+            machineTypeTuple = D.machineTypeFromPhase1 appState
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-          modify' $ D.MachineNew M.newMachine companyId machineType maybeMachineTypeId (nowYMD, False)
+          modify' $ D.MachineNew M.newMachine companyId machineTypeTuple maybeMachineTypeId (nowYMD, False)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->

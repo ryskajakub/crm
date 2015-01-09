@@ -23,6 +23,8 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.UpkeepSequence as US
+
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
@@ -32,16 +34,16 @@ import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
 machineTypePhase1Form :: Maybe MT.MachineTypeId
-                      -> MT.MachineType
+                      -> (MT.MachineType, [US.UpkeepSequence])
                       -> Var D.AppState
                       -> CrmRouter
                       -> C.CompanyId
                       -> (DOMElement, Fay ())
-machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
+machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
 
   setMachineType :: MT.MachineType -> Fay ()
   setMachineType modifiedMachineType = 
-    D.modifyState appVar (\navig -> navig { D.machineType = modifiedMachineType })
+    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (modifiedMachineType, upkeepSequences) })
 
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
   setMachineTypeId machineTypeId' = 
@@ -66,7 +68,7 @@ machineTypePhase1Form machineTypeId machineType appVar crmRouter companyId = let
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
   submitButtonHandler = do
     modify appVar (\appState -> appState {
-      D.machineTypeFromPhase1 = machineType ,
+      D.machineTypeFromPhase1 = (machineType, upkeepSequences) ,
       D.maybeMachineIdFromPhase1 = machineTypeId })
     navigate (newMachinePhase2 companyId) crmRouter
     
@@ -113,7 +115,7 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineType machineId nextService = 
-  machineDisplay editing button appVar calendarOpen machine machineType (Just machineTypeId) extraRow
+  machineDisplay editing button appVar calendarOpen machine (machineType,[]) (Just machineTypeId) extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
@@ -135,15 +137,15 @@ machineNew :: CrmRouter
            -> DP.DatePicker
            -> M.Machine
            -> C.CompanyId
-           -> MT.MachineType
+           -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
-machineNew router appState datePickerCalendar machine' companyId machineType machineTypeId = 
-  machineDisplay True buttonRow appState datePickerCalendar machine' machineType machineTypeId []
+machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
+  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple machineTypeId []
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
-        Nothing -> MT.MyMachineType machineType
+        Nothing -> MT.MyMachineType machineTypeTuple
       saveNewMachine = createMachine machine' companyId machineTypeEither (navigate frontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
@@ -164,12 +166,12 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Var D.AppState
                -> DP.DatePicker
                -> M.Machine
-               -> MT.MachineType
+               -> (MT.MachineType, [US.UpkeepSequence])
                -> Maybe MT.MachineTypeId -- ^ machine type id
                -> [DOMElement]
                -> (DOMElement, Fay ())
 machineDisplay editing buttonRow appVar operationStartCalendar
-    machine' machineType machineTypeId extraRow = let
+    machine' (machineTypeTuple @ (machineType, upkeepSequences)) machineTypeId extraRow = let
 
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
