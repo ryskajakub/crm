@@ -177,6 +177,15 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
+mostFrequentUpkeepQuery :: Int -> Query DBInt
+mostFrequentUpkeepQuery machineTypeId = let  
+  upkeepsInOneMachineType = proc () -> do
+    (_,_,repetition,machineTypeFK) <- upkeepSequencesQuery -< ()
+    restrict -< machineTypeFK .== pgInt4 machineTypeId
+    returnA -< repetition
+  mostFrequestUpkeepTypeQuery = AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
+  in mostFrequestUpkeepTypeQuery
+
 runMachineUpdate :: (Int, Int, M.Machine) 
                  -> Connection 
                  -> IO Int64
@@ -485,8 +494,8 @@ listing = mkListing (jsonO . someO) (const $ do
     unsortedResult <- forM rows (\companyRow -> do
       let companyId = sel1 companyRow
       machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-      nextDays <- forM machines (\(machineId, machine, _, _, machineType) -> do
-        nextServiceDay <- nextService machineId machine machineType id
+      nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
+        nextServiceDay <- nextService machineId machine machineTypeId id
         return nextServiceDay )
       return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))
     return $ sortBy (\r1 r2 -> let 
@@ -602,19 +611,21 @@ machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine) ->
 
 nextService :: Int 
             -> M.Machine 
-            -> MT.MachineType 
+            -> Int
             -> (a -> Connection) 
             -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
 nextService machineId (M.Machine operationStartDate _ mileagePerYear) 
-  (MT.MachineType _ _) getConn = ask >>= (\a -> do
+  machineTypeId getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
+  mostFrequentUpkeep' <- liftIO $ (runQuery conn (mostFrequentUpkeepQuery machineTypeId) :: IO [Int])
+  mostFrequentUpkeep <- singleRowOrColumn mostFrequentUpkeep'
   nextDay <- let
     {- compute the next day, when the maintenance needs to be made -}
     compute :: Day -> Day
     compute lastServiceDay = let
-      yearsToNextService = fromIntegral 10000 / fromIntegral mileagePerYear -- todo replace with upkeep sequence
+      yearsToNextService = fromIntegral mostFrequentUpkeep / fromIntegral mileagePerYear -- todo replace with upkeep sequence
       daysToNextService = truncate $ yearsToNextService * 365
       nextServiceDay = addDays daysToNextService lastServiceDay
       in nextServiceDay
@@ -632,7 +643,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
     (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
-    ymd <- nextService machineId machine machineType fst
+    ymd <- nextService machineId machine machineTypeId fst
     return (machine, companyId, machineTypeId, machineType, ymd))))
 
 machineListing :: ListHandler Dependencies

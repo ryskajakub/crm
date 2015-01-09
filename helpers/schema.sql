@@ -48,14 +48,23 @@ create table upkeep_sequences (
   repetition integer ,
   machine_type_id integer );
 
+
 insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
 insert into companies(name, plant, address, person, phone) values ('České dráhy', 'I', 'Ostrava', 'Zbieczuk', '777 888 222');
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Provozovna', 'Vodňany', 'Mysliveček', '335 881 233');
 
+
 insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, '4000 mth', 5000, 1);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (2, 'Generální', 30000, 1);
+
 insert into machine_types(name, manufacturer) values ('BK 75', 'Remeza');
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 2);
+
 insert into machine_types(name, manufacturer) values ('EK 4', 'Orlík');
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 3);
+
 
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
   values (1, 1, '1999-01-01', 0, 365 * 24);
@@ -68,20 +77,17 @@ insert into machines(company_id, machine_type_id, operation_start, initial_milea
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
   values (2, 3, '2008-01-01', 0, 365 * 24);
 
+
 insert into upkeeps(date_, closed, employee_id) values ('1999-01-01', FALSE, null);
 insert into upkeeps(date_, closed, employee_id) values ('2001-01-01', FALSE, null);
 insert into upkeeps(date_, closed, employee_id) values ('2008-01-01', FALSE, 1);
 
+
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'oprava', 1, 0);
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'pravidelný', 2, 0);
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (2, 'oprava 2', 2, 0);
-
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (3, 'údržba', 4, 0);
+
 
 insert into employees(name) values ('Kutička');
 insert into employees(name) values ('Mandlík');
-
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, '4000 mth', 5000, 1);
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (2, 'Generální', 30000, 1);
-
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 3);
