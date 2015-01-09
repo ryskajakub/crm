@@ -11,8 +11,7 @@ drop table machine_types;
 create table machine_types (
   id serial , 
   name varchar(500) , 
-  manufacturer varchar (500) ,
-  upkeep_per_mileage integer );
+  manufacturer varchar (500) );
 
 drop table machines;
 create table machines (
@@ -54,9 +53,9 @@ insert into companies(name, plant, address, person, phone) values ('České drá
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Provozovna', 'Vodňany', 'Mysliveček', '335 881 233');
 
-insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 150', 'Remeza', 365 * 12);
-insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('BK 75', 'Remeza', 365 * 24);
-insert into machine_types(name, manufacturer, upkeep_per_mileage) values ('EK 4', 'Orlík', 365 * 24 * 2);
+insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
+insert into machine_types(name, manufacturer) values ('BK 75', 'Remeza');
+insert into machine_types(name, manufacturer) values ('EK 4', 'Orlík');
 
 insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year)
   values (1, 1, '1999-01-01', 0, 365 * 24);

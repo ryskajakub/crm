@@ -84,8 +84,8 @@ type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
 type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
 type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
 
-type MachineTypesTable = (DBInt, DBText, DBText, DBInt)
-type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText, DBInt)
+type MachineTypesTable = (DBInt, DBText, DBText)
+type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText)
 
 type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4))
 type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4)))
@@ -116,11 +116,10 @@ machinesTable = Table "machines" (p6 (
   required "mileage_per_year" ))
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
-machineTypesTable = Table "machine_types" (p4 (
+machineTypesTable = Table "machine_types" $ p3 (
   optional "id" ,
   required "name" ,
-  required "manufacturer" ,
-  required "upkeep_per_mileage" ))
+  required "manufacturer" )
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
 upkeepTable = Table "upkeeps" $ p4 (
@@ -195,7 +194,7 @@ like = C.binOp HPQ.OpLike
 
 machineTypesQuery' :: String -> Query DBText
 machineTypesQuery' mid = proc () -> do
-  (_,name',_,_) <- machineTypesQuery -< ()
+  (_,name',_) <- machineTypesQuery -< ()
   restrict -< (lower name' `like` (lower $ pgString ("%" ++ (intersperse '%' mid) ++ "%")))
   returnA -< name'
 
@@ -215,8 +214,8 @@ machineTypesWithCountQuery = let
     (machinePK,_,machineTypeFK,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< (machineTypeFK)
     returnA -< (mt, machinePK)
-  aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query
-  orderedQuery = orderBy (asc(\((_,name',_,_),_) -> name')) aggregatedQuery
+  aggregatedQuery = AGG.aggregate (p2(p3(AGG.groupBy, AGG.min, AGG.min),p1(AGG.count))) query
+  orderedQuery = orderBy (asc(\((_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
@@ -243,7 +242,7 @@ companyUpkeepsQuery companyId = let
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
   machineRow @ (machineId',_,machineTypeId,_,_,_) <- machinesQuery -< ()
-  machineTypesRow @ (machineTypeId',_,_,_) <- machineTypesQuery -< ()
+  machineTypesRow @ (machineTypeId',_,_) <- machineTypesQuery -< ()
   let join = machineTypeId' .== machineTypeId
   restrict -< (case machineId of
     Just(machineId'') -> (pgInt4 machineId'' .== machineId') .&& join
@@ -310,19 +309,19 @@ runCompaniesQuery connection = runQuery connection companiesQuery
 runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int)]
 runMachinesQuery connection = runQuery connection machinesQuery
 
-runMachineTypesQuery :: Connection -> IO[(Int, String, String, Int)]
+runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
 runMachineTypesQuery connection = runQuery connection machineTypesQuery
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do
-  machineTypeNameRow @ (mtId',name',_,_) <- machineTypesQuery -< ()
+  machineTypeNameRow @ (mtId',name',_) <- machineTypesQuery -< ()
   restrict -< case machineTypeSid of
     Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
     Left(machineTypeName) -> (name' .== pgString machineTypeName)
   returnA -< machineTypeNameRow
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
-  IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+  IO[((Int, Int, Int, Day, Int, Int), (Int, String, String))]
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
@@ -331,13 +330,13 @@ runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
-convertExpanded :: ((Int, Int, Int, Day, Int, Int),(Int, String, String, Int)) 
+convertExpanded :: ((Int, Int, Int, Day, Int, Int),(Int, String, String)) 
                 -> (Int, M.Machine, Int, Int, MT.MachineType)
-convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf,mtI)) ->
-  (mId, M.Machine (dayToYmd mOs) m3 m4, cId, mtId, (MT.MachineType mtN mtMf mtI)))
+convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf)) ->
+  (mId, M.Machine (dayToYmd mOs) m3 m4, cId, mtId, (MT.MachineType mtN mtMf)))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String, Int))]
+  -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
@@ -607,7 +606,7 @@ nextService :: Int
             -> (a -> Connection) 
             -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
 nextService machineId (M.Machine operationStartDate _ mileagePerYear) 
-  (MT.MachineType _ _ upkeepPerMileage) getConn = ask >>= (\a -> do
+  (MT.MachineType _ _) getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
@@ -615,7 +614,7 @@ nextService machineId (M.Machine operationStartDate _ mileagePerYear)
     {- compute the next day, when the maintenance needs to be made -}
     compute :: Day -> Day
     compute lastServiceDay = let
-      yearsToNextService = fromIntegral upkeepPerMileage / fromIntegral mileagePerYear
+      yearsToNextService = fromIntegral 10000 / fromIntegral mileagePerYear -- todo replace with upkeep sequence
       daysToNextService = truncate $ yearsToNextService * 365
       nextServiceDay = addDays daysToNextService lastServiceDay
       in nextServiceDay
@@ -668,8 +667,8 @@ machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $
 machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
-    mapRow :: ((Int,String,String,Int),Int64) -> ((Int, MT.MachineType), Int)
-    mapRow ((m1,m2,m3,m4),count) = ((m1, MT.MachineType m2 m3 m4), fromIntegral count)
+    mapRow :: ((Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
+    mapRow ((m1,m2,m3),count) = ((m1, MT.MachineType m2 m3), fromIntegral count)
     mappedRows = map mapRow rows
   return mappedRows )
 
@@ -679,7 +678,7 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\machineType
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ let
       readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
-        pgString $ MT.machineTypeManufacturer machineType, pgInt4 $ MT.upkeepPerMileage machineType)
+        pgString $ MT.machineTypeManufacturer machineType)
       condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
       in runUpdate conn machineTypesTable readToWrite condition ))
 
@@ -694,7 +693,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (
         MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
     rows <- result
     idToMachineType <- case rows of
-      (mtId, mtName, m3, m4) : xs | null xs -> return $ [ (mtId :: Int, MT.MachineType mtName m3 m4) ]
+      (mtId, mtName, m3) : xs | null xs -> return $ [ (mtId :: Int, MT.MachineType mtName m3) ]
       [] -> onEmptyResult
       _ -> throwError NotFound
     return idToMachineType))
@@ -793,10 +792,10 @@ addMachine :: Connection
 addMachine connection machine companyId' machineType = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
-    MT.MyMachineType (MT.MachineType name' manufacturer upkeepPerMileage, upkeepSequences) -> do
+    MT.MyMachineType (MT.MachineType name' manufacturer, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
         connection
-        machineTypesTable (Nothing, pgString name', pgString manufacturer, pgInt4 upkeepPerMileage)
+        machineTypesTable (Nothing, pgString name', pgString manufacturer)
         sel1
       let machineTypeId = head newMachineTypeId -- todo safe
       forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition) -> runInsert
