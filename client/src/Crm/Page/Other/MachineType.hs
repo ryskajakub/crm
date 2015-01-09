@@ -43,13 +43,6 @@ machineTypeForm appVar (machineTypeId, machineType) =
         (MT.machineTypeManufacturer machineType)
         (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
         True ,
-      formRow'
-        "Interval servisu"
-        (unpack $ showInt $ MT.upkeepPerMileage machineType)
-        (eventValue >=> (\str -> case parseSafely str of
-          Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
-          Nothing -> return ()))
-        True, 
       saveButtonRow
         "Editovat"
         saveButtonHandler ]
@@ -64,7 +57,7 @@ machineTypesList router machineTypes = let
       th "Název typu" , 
       th "Výrobce" , 
       th "Počet zařízení v systému" ]
-  body = tbody $ map (\((machineTypeId,(MT.MachineType name manufacturer _)), count) ->
+  body = tbody $ map (\((machineTypeId,(MT.MachineType name manufacturer)), count) ->
     tr [
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 

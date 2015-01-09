@@ -83,13 +83,6 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
           (isNothing machineTypeId) ,
-        formRow'
-          "Interval servisu"
-          (unpack $ showInt $ MT.upkeepPerMileage machineType)
-          (eventValue >=> (\str -> case parseSafely str of
-            Just(int) -> setMachineType (machineType { MT.upkeepPerMileage = int })
-            Nothing -> return ())) 
-          (isNothing machineTypeId) ,
         saveButtonRow "Dále" submitButtonHandler ]
   in (result, afterRenderCallback)
 
