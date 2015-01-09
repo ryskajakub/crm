@@ -66,7 +66,8 @@ data NavigationState =
   MachineTypeList {
     machineTypes :: [(MT.MachineType',Int)] } |
   MachineTypeEdit {
-    machineType' :: MT.MachineType' } |
+    machineTypeId :: MT.MachineTypeId ,
+    machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) ,

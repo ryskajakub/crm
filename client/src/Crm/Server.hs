@@ -36,6 +36,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.UpkeepSequence as US
 
 import Debug.Trace
 
@@ -95,16 +96,16 @@ fetchMachineTypes callback =
     noopOnError
 
 fetchMachineTypeById :: MT.MachineTypeId
-                     -> (MT.MachineType -> Fay())
+                     -> ((MT.MachineType, [US.UpkeepSequence]) -> Fay())
                      -> Fay ()
 fetchMachineTypeById mtId callback = 
   JQ.ajax
     (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
-    (callback . snd . head)
+    (callback . (\(_,a,b) -> (a,b)) . head)
     noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
-                 -> (Maybe (MT.MachineTypeId, MT.MachineType) -> Fay ()) -- ^ callback
+                 -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax

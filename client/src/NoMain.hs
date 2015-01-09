@@ -9,10 +9,10 @@ import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
-import Crm.Page.Machine (machineNew, machineDetail, machineTypePhase1Form)
+import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
-import Crm.Page.Other.MachineType (machineTypesList, machineTypeForm)
+import Crm.Page.Other.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import qualified Crm.Data as D
 
 emptyCallback :: a -> (a, Fay ())
@@ -50,7 +50,7 @@ main' = do
           (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
             notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineType -> machineTypeForm appVar' machineType 
+      D.MachineTypeEdit machineTypeId machineType -> emptyCallback $ machineTypeForm appVar' machineTypeId machineType 
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
     in Navigation.navigation' router newElementAndCallback )

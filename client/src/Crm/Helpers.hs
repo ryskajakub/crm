@@ -86,3 +86,5 @@ eventInt fun = eventValue >=> (\text -> case parseSafely text of
   Just(int) -> fun int
   Nothing -> return () )
 
+inputNormalAttrs :: Attributes
+inputNormalAttrs = class' "form-control"

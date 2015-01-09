@@ -5,7 +5,6 @@
 
 module Crm.Page.Machine (
   machineNew ,
-  machineTypePhase1Form ,
   machineDetail ) where
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text, (<>))
@@ -29,89 +28,9 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', editingInput, eventInt)
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', editingInput, eventInt, inputNormalAttrs)
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
-
-machineTypePhase1Form :: Maybe MT.MachineTypeId
-                      -> (MT.MachineType, [US.UpkeepSequence])
-                      -> Var D.AppState
-                      -> CrmRouter
-                      -> C.CompanyId
-                      -> (DOMElement, Fay ())
-machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
-
-  setMachineType :: MT.MachineType -> Fay ()
-  setMachineType modifiedMachineType = 
-    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (modifiedMachineType, upkeepSequences) })
-
-  setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
-  setMachineTypeId machineTypeId' = 
-    D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
-
-  (machineTypeInput, afterRenderCallback) =
-    autocompleteInput 
-      inputNormalAttrs
-      (\text -> do
-        setMachineType (machineType { MT.machineTypeName = unpack text })
-        setMachineTypeId Nothing)
-      (\text -> if text /= "" 
-        then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType') -> do
-            setMachineType machineType'
-            setMachineTypeId $ Just machineTypeId'
-          Nothing -> return () )
-        else return () )
-      fetchMachineTypesAutocomplete
-      "machine-type-autocomplete"
-      (II.mkInputAttrs {
-        II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
-  submitButtonHandler = do
-    modify appVar (\appState -> appState {
-      D.machineTypeFromPhase1 = (machineType, upkeepSequences) ,
-      D.maybeMachineIdFromPhase1 = machineTypeId })
-    navigate (newMachinePhase2 companyId) crmRouter
-    
-  modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
-  modifyUpkeepSequence displayOrder modifier = let
-    modifiedUpkeepSequences = map (\(us @ (US.UpkeepSequence displayOrder' _ _)) -> 
-      if displayOrder == displayOrder' 
-      then modifier us
-      else us ) upkeepSequences
-    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
-
-  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition) -> let
-    labelField = editingInput label (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
-      (\us -> us { US.label_ = modifiedLabel }))) True
-    mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
-      (\us -> us { US.repetition = modifiedRepetition }))) True
-    inputColumn = [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
-    in formRow ("Řada" <> showInt displayOrder) inputColumn) upkeepSequences
-
-  result = form' (mkAttrs { className = Defined "form-horizontal" }) $
-    B.grid $
-      B.row $ [
-        formRow
-          "Typ zařízení"
-          machineTypeInput ,
-        formRow'
-          "Výrobce"
-          (MT.machineTypeManufacturer machineType)
-          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing machineTypeId) ] ++ upkeepSequenceRows ++ [
-        formRow
-          (let 
-            addUpkeepSequenceRow = let
-              newUpkeepSequence = US.newUpkeepSequence {
-                US.displayOrdering = length upkeepSequences + 1 }
-              newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
-              in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, newUpkeepSequences) })
-            buttonProps = BTN.buttonProps {
-              BTN.onClick = Defined $ const addUpkeepSequenceRow }
-            in BTN.button' buttonProps "Přidat servisní řadu")
-          "" ,
-        saveButtonRow "Dále" submitButtonHandler ]
-  in (result, afterRenderCallback)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -177,9 +96,6 @@ row labelText otherField =
   div' (class' "form-group") [ 
     label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
     div' (class' "col-md-9") otherField ]
-
-inputNormalAttrs :: Attributes
-inputNormalAttrs = class' "form-control"
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
