@@ -218,11 +218,11 @@ updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) callback =
     put
     (const callback)
 
-updateMachineType :: MT.MachineType'
+updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
                   -> Fay ()
                   -> Fay ()
-updateMachineType (machineTypeId, machineType) callback = ajax
-  (machineType)
+updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
+  (machineType, upkeepSequences)
   (pack $ A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId machineTypeId))
   put
   (const callback)

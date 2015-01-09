@@ -42,7 +42,7 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse, sortBy)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, upd3, uncurryN)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, upd3, uncurryN)
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
 import Rest.Resource (Resource, mkResourceId, Void, schema, list, name, create, mkResourceReaderWith, get ,
@@ -441,6 +441,8 @@ instance FromJSON UM.UpkeepMachine where
   parseJSON = fayInstance
 instance FromJSON M.Machine where
   parseJSON = fayInstance
+instance FromJSON US.UpkeepSequence where
+  parseJSON = fayInstance
 
 -- super unsafe
 instance ToJSON D.YearMonthDay where
@@ -692,14 +694,19 @@ machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   return mappedRows )
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\machineType ->
+updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineType, upkeepSequences) ->
   ask >>= \(conn, sid) -> case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ let
-      readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
-        pgString $ MT.machineTypeManufacturer machineType)
-      condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
-      in runUpdate conn machineTypesTable readToWrite condition ))
+    MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
+      let 
+        readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
+          pgString $ MT.machineTypeManufacturer machineType)
+        condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
+      _ <- runUpdate conn machineTypesTable readToWrite condition 
+      _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
+      forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition) -> 
+        runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
+          pgString label, pgInt4 repetition, pgInt4 machineTypeId) ) ))
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) ( do 

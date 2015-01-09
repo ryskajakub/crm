@@ -128,12 +128,12 @@ machineTypeForm :: Var D.AppState
                 -> DOMElement
 machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
-  machineTypeInput = editingInput 
+  machineTypeInput = editingInput
     (MT.machineTypeName machineType)
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
   submitButtonLabel = text2DOM "Uložit"
-  submitButtonHandler = updateMachineType (machineTypeId, machineType) (return ())
+  submitButtonHandler = updateMachineType (machineTypeId, machineType, upkeepSequences) (return ())
   in machineTypeForm' Nothing (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
 
