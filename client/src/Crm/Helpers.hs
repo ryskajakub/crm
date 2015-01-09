@@ -43,14 +43,14 @@ lmap f (a,b) = (f(a),b)
 rmap :: (b -> b') -> (a,b) -> (a,b')
 rmap f (a,b) = (a,f(b))
 
-formRow :: Renderable a
-        => Text -- ^ label of field
-        -> a -- ^ the other field
+formRow :: (Renderable a, Renderable b)
+        => a -- ^ label of field
+        -> b -- ^ the other field
         -> DOMElement
-formRow labelText otherField = 
+formRow col1 col2 = 
   div' (class' "form-group") [ 
-    label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
-    div' (class' "col-md-9") otherField ]
+    label' (class'' ["control-label", "col-md-3"]) col1 , 
+    div' (class' "col-md-9") col2 ]
 
 formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' = let
