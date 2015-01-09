@@ -83,6 +83,17 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
           (isNothing machineTypeId) ,
+        formRow
+          (let 
+            addUpkeepSequenceRow = let
+              newUpkeepSequence = US.newUpkeepSequence {
+                US.displayOrdering = length upkeepSequences + 1 }
+              newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
+              in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, newUpkeepSequences) })
+            buttonProps = BTN.buttonProps {
+              BTN.onClick = Defined $ const addUpkeepSequenceRow }
+            in BTN.button' buttonProps "Přidat servisní řadu")
+          "" ,
         saveButtonRow "Dále" submitButtonHandler ]
   in (result, afterRenderCallback)
 
