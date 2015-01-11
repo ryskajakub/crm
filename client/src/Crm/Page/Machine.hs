@@ -28,7 +28,8 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', editingInput, eventInt, inputNormalAttrs)
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', 
+  editingInput, eventInt, inputNormalAttrs, formRowCol)
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -164,13 +165,24 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             setInitialMileage :: Int -> Fay ()
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
-        row'
-          "Provoz motohodin/rok (Rok má 8760 motohodin)"
+        formRowCol 
+          "Provoz motohodin/rok (Rok má 8760 motohodin)" [
+          (div' (class' "col-md-3") [
+            "a"
+          ]) ,
+          (div' (class' "col-md-3") [
+            "b"
+          ]) ,
+          (div' (class' "col-md-3") [
+            "c"
+          ]) ]
+{-
           (unpack $ showInt $ M.mileagePerYear machine')
           (let
             setMileagePerYear :: Int -> Fay ()
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
             in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
+-}
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())

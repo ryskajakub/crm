@@ -45,18 +45,18 @@ rmap f (a,b) = (a,f(b))
 
 formRowCol :: (Renderable a)
            => a -- ^ label of the label field
-           -> DOMElement -- ^ other columns
+           -> [DOMElement] -- ^ other columns
            -> DOMElement
 formRowCol label otherColumns =
   div' (class' "form-group") [ 
-    label' (class'' ["control-label", "col-md-3"]) label , otherColumns]
+    (label' (class'' ["control-label", "col-md-3"]) label) : otherColumns]
 
 formRow :: (Renderable a)
         => a -- ^ label of field
         -> DOMElement -- ^ the other field
         -> DOMElement
 formRow label col2 = 
-  formRowCol label (div' (class' "col-md-9") col2)
+  formRowCol label [div' (class' "col-md-9") col2]
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingInput value' onChange' editing' = let
