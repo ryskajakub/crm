@@ -669,8 +669,10 @@ machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
     (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
+    upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery machineTypeId)
     nextServiceYmd <- nextService machineId machine machineTypeId fst
-    return (machine, companyId, machineTypeId, machineType, nextServiceYmd))))
+    return (machine, companyId, machineTypeId, 
+      (machineType, mappedUpkeepSequences upkeepSequences), nextServiceYmd))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do
@@ -724,6 +726,8 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
           pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
 
+mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
+
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
   (conn, machineTypeSid) <- ask
@@ -737,8 +741,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) ( do
   case rows of
     (mtId, mtName, m3) : xs | null xs -> do 
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
-      let mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) upkeepSequences
-      return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences) ]
+      return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences) ]
     [] -> onEmptyResult
     _ -> throwError NotFound)
 
