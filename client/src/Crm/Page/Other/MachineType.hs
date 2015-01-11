@@ -106,10 +106,10 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
       (div' (class' "col-md-2") labelField) ,
-      (label' (class'' ["control-label", "col-md-1"]) "Počet motodin") ,
-      (div' (class' "col-md-2") mthField) ,
-      (label' (class'' ["control-label", "col-md-1"]) "První servis") ,
-      (div' (class' "col-md-2") firstServiceField) ]
+      (label' (class'' ["control-label", "col-md-2"]) "Počet motodin") ,
+      (div' (class' "col-md-1") mthField) ,
+      (label' (class'' ["control-label", "col-md-2"]) "První servis") ,
+      (div' (class' "col-md-1") firstServiceField) ]
     removeButtonHandler = let
       modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _ _)) ->
         if displayOrder' == displayOrder 
