@@ -46,18 +46,23 @@ create table upkeep_sequences (
   display_ordering integer ,
   label varchar (500) ,
   repetition integer ,
-  machine_type_id integer );
+  machine_type_id integer ,
+  one_time boolean );
 
 
 insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, '4000 mth', 5000, 1);
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (2, 'Generální', 30000, 1);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
+  values (1, '4000 mth', 5000, 1, FALSE);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
+  values (2, 'Generální', 30000, 1, FALSE);
 
 insert into machine_types(name, manufacturer) values ('BK 75', 'Remeza');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 2);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
+  values (1, 'Běžný', 2000, 2, FALSE);
 
 insert into machine_types(name, manufacturer) values ('EK 4', 'Orlík');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id) values (1, 'Běžný', 2000, 3);
+insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
+  values (1, 'Běžný', 2000, 3, FALSE);
 
 
 insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
