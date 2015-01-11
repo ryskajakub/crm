@@ -122,6 +122,12 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     removeButton = BTN.button' removeButtonProps "Odeber"
     in formRowCol [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumns) upkeepSequences
 
+  validation = let 
+    countOfOneTimeSequences = (case upkeepSequences of
+      [] -> 0
+      xs -> foldl (\acc us -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
+    in (countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences)
+
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
@@ -144,8 +150,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
               BTN.onClick = Defined $ const addUpkeepSequenceRow }
             in BTN.button' buttonProps "Přidat servisní řadu")
            (text2DOM "") ,
-        let buttonEnabled = (not $ null upkeepSequences) || isJust machineTypeId
-        in saveButtonRow' buttonEnabled submitButtonLabel submitButtonHandler ]
+        saveButtonRow' validation submitButtonLabel submitButtonHandler ]
   in result
 
 machineTypeForm :: Var D.AppState
