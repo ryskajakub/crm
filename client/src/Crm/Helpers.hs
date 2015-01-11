@@ -19,6 +19,8 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import HaskellReact
 import qualified HaskellReact.Tag.Input as I
 
+import Debug.Trace
+
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
 
@@ -57,6 +59,17 @@ formRow :: (Renderable a)
         -> DOMElement
 formRow label col2 = 
   formRowCol label [div' (class' "col-md-9") col2]
+
+editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
+editingCheckbox value setter editing = let
+  checkboxAttrs = I.mkInputAttrs { 
+    I.type_ = I.checkbox ,
+    I.onChange = Defined $ (eventValue >=> (\s -> setter $ not value )) }
+  inputAttrs = if value
+    then checkboxAttrs { I.checked = Defined "checked" }
+    else checkboxAttrs
+  theCheckbox = I.input mkAttrs inputAttrs
+  in div' (class' "checkbox") $ label theCheckbox
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingInput value' onChange' editing' = let

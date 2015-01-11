@@ -25,7 +25,8 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data as D
-import Crm.Helpers (formRow', parseSafely, saveButtonRow, saveButtonRow' , lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap)
+import Crm.Helpers (formRow', parseSafely, saveButtonRow, saveButtonRow',
+  lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap, formRowCol, editingCheckbox)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -89,12 +90,26 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
       else us ) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
-  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition _) -> let
-    labelField = editingInput label (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
-      (\us -> us { US.label_ = modifiedLabel }))) True
-    mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
-      (\us -> us { US.repetition = modifiedRepetition }))) True
-    inputColumn = div [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
+  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition oneTime) -> let
+    labelField = editingInput 
+      label 
+      (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
+        (\us -> us { US.label_ = modifiedLabel }))) True
+    mthField = editingInput 
+      (show repetition) 
+      (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
+        (\us -> us { US.repetition = modifiedRepetition }))) True
+    firstServiceField = editingCheckbox
+      (oneTime)
+      (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> us { US.oneTime = oneTimeSequence } ))
+      True
+    inputColumns = [
+      (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
+      (div' (class' "col-md-2") labelField) ,
+      (label' (class'' ["control-label", "col-md-1"]) "Počet motodin") ,
+      (div' (class' "col-md-2") mthField) ,
+      (label' (class'' ["control-label", "col-md-1"]) "První servis") ,
+      (div' (class' "col-md-2") firstServiceField) ]
     removeButtonHandler = let
       modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _ _)) ->
         if displayOrder' == displayOrder 
@@ -105,7 +120,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     removeButtonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const removeButtonHandler }
     removeButton = BTN.button' removeButtonProps "Odeber"
-    in formRow [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumn) upkeepSequences
+    in formRowCol [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumns) upkeepSequences
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
