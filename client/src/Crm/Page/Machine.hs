@@ -157,7 +157,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               newMachine = machine' { M.machineOperationStartDate = date }
               in setMachine newMachine
             in DP.datePicker editing operationStartCalendar setDatePickerDate setPickerOpenness
-              displayedDate setDate ]  ,
+              displayedDate setDate ] ,
         row'
           "Úvodní stav motohodin"
           (show $ M.initialMileage machine')

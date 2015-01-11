@@ -83,20 +83,20 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     
   modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
   modifyUpkeepSequence displayOrder modifier = let
-    modifiedUpkeepSequences = map (\(us @ (US.UpkeepSequence displayOrder' _ _)) -> 
+    modifiedUpkeepSequences = map (\(us @ (US.UpkeepSequence displayOrder' _ _ _)) -> 
       if displayOrder == displayOrder' 
       then modifier us
       else us ) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
-  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition) -> let
+  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition _) -> let
     labelField = editingInput label (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
       (\us -> us { US.label_ = modifiedLabel }))) True
     mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
       (\us -> us { US.repetition = modifiedRepetition }))) True
     inputColumn = div [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
     removeButtonHandler = let
-      modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _)) ->
+      modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _ _)) ->
         if displayOrder' == displayOrder 
         then upkeepSeqs
         else upkeepSeqs ++ [us { US.displayOrdering = length upkeepSeqs + 1 }]) [] upkeepSequences

@@ -17,10 +17,11 @@ import "fay-base" Prelude
 data UpkeepSequence = UpkeepSequence {
   displayOrdering :: Int , 
   label_ :: String ,
-  repetition :: Int }
+  repetition :: Int ,
+  oneTime :: Bool }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newUpkeepSequence :: UpkeepSequence
-newUpkeepSequence = UpkeepSequence 0 "" 0
+newUpkeepSequence = UpkeepSequence 0 "" 0 False

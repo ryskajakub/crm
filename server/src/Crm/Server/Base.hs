@@ -33,7 +33,7 @@ import Control.Monad.Trans.Class (lift)
 import Control.Arrow (returnA)
 import Control.Monad (forM_, forM)
 
-import Data.Profunctor.Product (p1, p2, p3, p4, p6)
+import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6)
 import Data.JSON.Schema.Generic (gSchema)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
@@ -95,7 +95,7 @@ type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 type EmployeeTable = (DBInt, DBText)
 type EmployeeWriteTable = (Maybe DBInt, DBText)
 
-type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt)
+type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p6 (
@@ -141,11 +141,12 @@ employeesTable = Table "employees" $ p2 (
   required "name" )
 
 upkeepSequencesTable :: Table UpkeepSequencesTable UpkeepSequencesTable
-upkeepSequencesTable = Table "upkeep_sequences" $ p4 (
+upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "display_ordering" ,
   required "label" ,
   required "repetition" ,
-  required "machine_type_id" )
+  required "machine_type_id" ,
+  required "one_time" )
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable
@@ -177,16 +178,16 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
-upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt)
+upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
-  us @ (a,b,c,machineTypeFK) <- upkeepSequencesQuery -< ()
+  us @ (a,b,c,machineTypeFK, d) <- upkeepSequencesQuery -< ()
   restrict -< machineTypeFK .== pgInt4 machineTypeId
-  returnA -< (a,b,c)
+  returnA -< (a,b,c,d)
 
 mostFrequentUpkeepQuery :: Int -> Query DBInt
 mostFrequentUpkeepQuery machineTypeId = let  
   upkeepsInOneMachineType = proc () -> do
-    (_,_,repetition,machineTypeFK) <- upkeepSequencesQuery -< ()
+    (_,_,repetition,machineTypeFK,_) <- upkeepSequencesQuery -< ()
     restrict -< machineTypeFK .== pgInt4 machineTypeId
     returnA -< repetition
   mostFrequestUpkeepTypeQuery = AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
@@ -704,9 +705,9 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
         condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
       _ <- runUpdate conn machineTypesTable readToWrite condition 
       _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
-      forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition) -> 
+      forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
-          pgString label, pgInt4 repetition, pgInt4 machineTypeId) ) ))
+          pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
@@ -721,7 +722,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) ( do
   case rows of
     (mtId, mtName, m3) : xs | null xs -> do 
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
-      let mappedUpkeepSequences = map (\(a1,a2,a3) -> US.UpkeepSequence a1 a2 a3) upkeepSequences
+      let mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) upkeepSequences
       return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences) ]
     [] -> onEmptyResult
     _ -> throwError NotFound)
@@ -826,9 +827,10 @@ addMachine connection machine companyId' machineType = do
         machineTypesTable (Nothing, pgString name', pgString manufacturer)
         sel1
       let machineTypeId = head newMachineTypeId -- todo safe
-      forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition) -> runInsert
+      forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
         connection
-        upkeepSequencesTable (pgInt4 displayOrdering, pgString label, pgInt4 repetition, pgInt4 machineTypeId))
+        upkeepSequencesTable (pgInt4 displayOrdering, pgString label, 
+          pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
       return machineTypeId
   let
     M.Machine machineOperationStartDate' initialMileage mileagePerYear = machine

@@ -93,7 +93,7 @@ saveButtonRow' enabled label clickHandler =
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
       in if enabled then buttonProps else buttonProps {
-        BTN.disabled = Defined $ not enabled })
+        BTN.disabled = Defined True })
       label
 
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
