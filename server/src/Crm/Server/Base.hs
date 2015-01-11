@@ -19,7 +19,8 @@ import Opaleye.Column (Column, toNullable, Nullable)
 import qualified Opaleye.Column as COL
 import Opaleye.Order (orderBy, asc, limit, desc)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Operators ((.==), (.&&), restrict, lower)
+import Opaleye.Operators ((.==), (.&&), (.||), restrict, lower, (.<))
+import qualified Opaleye.Operators as OO
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning, runDelete)
 import Opaleye.Internal.RunQuery
@@ -184,14 +185,28 @@ upkeepSequencesByIdQuery machineTypeId = proc () -> do
   restrict -< machineTypeFK .== pgInt4 machineTypeId
   returnA -< (a,b,c,d)
 
-mostFrequentUpkeepQuery :: Int -> Query DBInt
-mostFrequentUpkeepQuery machineTypeId = let  
+actualUpkeepRepetitionQuery :: Int -> Query DBInt
+actualUpkeepRepetitionQuery machineTypeId' = let  
+  machineTypeId = pgInt4 machineTypeId'
+
+  -- find out maximum recorded mileages
+  -- to find out later, if the mileage are enough so the 
+  -- initial upkeep should already passed
+  mileages = proc () -> do
+    (_,_,machineTypeFK,_,initialMileage,_) <- machinesQuery -< ()
+    restrict -< machineTypeFK .== machineTypeId
+    (_,_,_,recordedMileage) <- upkeepMachinesQuery -< ()
+    returnA -< (recordedMileage, initialMileage)
+  maxMileages = AGG.aggregate (p2 (AGG.max, AGG.max)) mileages
+
   upkeepsInOneMachineType = proc () -> do
-    (_,_,repetition,machineTypeFK,_) <- upkeepSequencesQuery -< ()
-    restrict -< machineTypeFK .== pgInt4 machineTypeId
+    (recordedMileage, initialMileage) <- maxMileages -< ()
+    (_,_,repetition,machineTypeFK,oneTime) <- upkeepSequencesQuery -< ()
+    restrict -< machineTypeFK .== machineTypeId
+    restrict -< (OO.not oneTime) .|| (recordedMileage .< repetition .&& initialMileage .< repetition)
     returnA -< repetition
-  mostFrequestUpkeepTypeQuery = AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
-  in mostFrequestUpkeepTypeQuery
+  
+  in AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
 
 runMachineUpdate :: (Int, Int, M.Machine) 
                  -> Connection 
@@ -630,13 +645,13 @@ nextService machineId (M.Machine operationStartDate _ mileagePerYear)
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
   lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
-  mostFrequentUpkeep' <- liftIO $ (runQuery conn (mostFrequentUpkeepQuery machineTypeId) :: IO [Int])
-  mostFrequentUpkeep <- singleRowOrColumn mostFrequentUpkeep'
+  actualUpkeepRepetition' <- liftIO $ (runQuery conn (actualUpkeepRepetitionQuery machineTypeId) :: IO [Int])
+  actualUpkeepRepetition <- singleRowOrColumn actualUpkeepRepetition'
   nextDay <- let
     {- compute the next day, when the maintenance needs to be made -}
     compute :: Day -> Day
     compute lastServiceDay = let
-      yearsToNextService = fromIntegral mostFrequentUpkeep / fromIntegral mileagePerYear -- todo replace with upkeep sequence
+      yearsToNextService = fromIntegral actualUpkeepRepetition / fromIntegral mileagePerYear -- todo replace with upkeep sequence
       daysToNextService = truncate $ yearsToNextService * 365
       nextServiceDay = addDays daysToNextService lastServiceDay
       in nextServiceDay
