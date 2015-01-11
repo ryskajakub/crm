@@ -12,7 +12,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isNothing)
+import "fay-base" Data.Maybe (isNothing, isJust)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -28,7 +28,7 @@ import qualified Crm.Data as D
 import Crm.Helpers (formRow', parseSafely, saveButtonRow, saveButtonRow' , lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
-    
+
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
   D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
@@ -94,7 +94,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
       (\us -> us { US.label_ = modifiedLabel }))) True
     mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
       (\us -> us { US.repetition = modifiedRepetition }))) True
-    inputColumn = [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
+    inputColumn = div [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
     removeButtonHandler = let
       modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _)) ->
         if displayOrder' == displayOrder 
@@ -128,8 +128,9 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
             buttonProps = BTN.buttonProps {
               BTN.onClick = Defined $ const addUpkeepSequenceRow }
             in BTN.button' buttonProps "Přidat servisní řadu")
-          "" ,
-        saveButtonRow' (not $ null upkeepSequences) submitButtonLabel submitButtonHandler ]
+           (text2DOM "") ,
+        let buttonEnabled = (not $ null upkeepSequences) || isJust machineTypeId
+        in saveButtonRow' buttonEnabled submitButtonLabel submitButtonHandler ]
   in result
 
 machineTypeForm :: Var D.AppState

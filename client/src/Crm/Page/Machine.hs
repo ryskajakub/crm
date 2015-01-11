@@ -28,7 +28,8 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', editingInput, eventInt, inputNormalAttrs)
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', 
+  editingInput, eventInt, inputNormalAttrs, formRowCol)
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -116,13 +117,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
       md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machine = modifiedMachine }
       _ -> D.navigation appState })
 
-  row'' labelText value' onChange' editing' = let
+  row'' labelText value' onChange' = let
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
-    input = editableN inputAttrs inputNormalAttrs editing' (text2DOM $ pack value')
+    input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
     in row labelText input
-  row' labelText value' onChange' = row'' labelText value' onChange' editing
+  row' labelText value' onChange' = row'' labelText value' onChange'
   changeNavigationState :: (D.NavigationState -> D.NavigationState) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
@@ -159,18 +160,29 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               displayedDate setDate ]  ,
         row'
           "Úvodní stav motohodin"
-          (unpack $ showInt $ M.initialMileage machine')
+          (show $ M.initialMileage machine')
           (let
             setInitialMileage :: Int -> Fay ()
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
-        row'
-          "Provoz (motohodin/rok)"
+        formRowCol 
+          "Provoz motohodin/rok (Rok má 8760 motohodin)" [
+          (div' (class' "col-md-3") 
+            (editingInput 
+              (show $ M.mileagePerYear machine')
+              (eventInt (\int -> setMachine $ machine' { M.mileagePerYear = int } ))             
+              editing)) ,
+          (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
+          (div' (class' "col-md-3") [
+            ""
+          ]) ]
+{-
           (unpack $ showInt $ M.mileagePerYear machine')
           (let
             setMileagePerYear :: Int -> Fay ()
             setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
             in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
+-}
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())

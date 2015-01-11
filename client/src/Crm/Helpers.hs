@@ -43,14 +43,20 @@ lmap f (a,b) = (f(a),b)
 rmap :: (b -> b') -> (a,b) -> (a,b')
 rmap f (a,b) = (a,f(b))
 
-formRow :: (Renderable a, Renderable b)
-        => a -- ^ label of field
-        -> b -- ^ the other field
-        -> DOMElement
-formRow col1 col2 = 
+formRowCol :: (Renderable a)
+           => a -- ^ label of the label field
+           -> [DOMElement] -- ^ other columns
+           -> DOMElement
+formRowCol label otherColumns =
   div' (class' "form-group") [ 
-    label' (class'' ["control-label", "col-md-3"]) col1 , 
-    div' (class' "col-md-9") col2 ]
+    (label' (class'' ["control-label", "col-md-3"]) label) : otherColumns]
+
+formRow :: (Renderable a)
+        => a -- ^ label of field
+        -> DOMElement -- ^ the other field
+        -> DOMElement
+formRow label col2 = 
+  formRowCol label [div' (class' "col-md-9") col2]
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingInput value' onChange' editing' = let
@@ -87,7 +93,7 @@ saveButtonRow' enabled label clickHandler =
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
       in if enabled then buttonProps else buttonProps {
-        BTN.disabled = Defined "disabled" })
+        BTN.disabled = Defined $ not enabled })
       label
 
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
