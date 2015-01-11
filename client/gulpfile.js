@@ -34,7 +34,7 @@ var playgroundSourcesCommaDelimited = mkSourcesCommaDelimited(playgroundSources)
 // main
 
 gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery'], function() {
-  return gulp.src(['files/*.html', 'files/*.css'])
+  return gulp.src(['files/*'])
     .pipe(gulp.dest('build/'));
 });
 
