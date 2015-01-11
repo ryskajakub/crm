@@ -86,7 +86,7 @@ mkSubmitButton enabled label handler = let
     BTN.bsStyle = Defined "primary" }
   buttonProps = if enabled
     then basicButtonProps { BTN.onClick = Defined $ const handler }
-    else basicButtonProps { BTN.disabled = Defined "disabled" }
+    else basicButtonProps { BTN.disabled = Defined True }
   in BTN.button' buttonProps label
 
 upkeepDetail :: CrmRouter
