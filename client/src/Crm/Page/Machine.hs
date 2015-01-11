@@ -17,6 +17,7 @@ import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
+import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -173,16 +174,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               (eventInt (\int -> setMachine $ machine' { M.mileagePerYear = int } ))             
               editing)) ,
           (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
-          (div' (class' "col-md-3") [
-            ""
-          ]) ]
-{-
-          (unpack $ showInt $ M.mileagePerYear machine')
-          (let
-            setMileagePerYear :: Int -> Fay ()
-            setMileagePerYear int = setMachine $ machine' { M.mileagePerYear = int }
-            in flip whenJust setMileagePerYear . parseSafely <=< eventValue)
--}
+          (div' (class' "col-md-3") 
+            (let 
+              buttonLabel = if M.mileagePerYear machine' == 8760
+                then "24/7"
+                else "Jiný"
+              elements = []
+              in BD.buttonDropdown buttonLabel elements)) ]
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
