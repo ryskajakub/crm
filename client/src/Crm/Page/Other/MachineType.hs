@@ -94,7 +94,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
       (\us -> us { US.label_ = modifiedLabel }))) True
     mthField = editingInput (show repetition) (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
       (\us -> us { US.repetition = modifiedRepetition }))) True
-    inputColumn = [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
+    inputColumn = div [text2DOM "Označení: ", labelField, text2DOM " Počet motohodin: ", mthField]
     removeButtonHandler = let
       modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _)) ->
         if displayOrder' == displayOrder 
@@ -128,7 +128,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
             buttonProps = BTN.buttonProps {
               BTN.onClick = Defined $ const addUpkeepSequenceRow }
             in BTN.button' buttonProps "Přidat servisní řadu")
-          "" ,
+           (text2DOM "") ,
         let buttonEnabled = (not $ null upkeepSequences) || isJust machineTypeId
         in saveButtonRow' buttonEnabled submitButtonLabel submitButtonHandler ]
   in result

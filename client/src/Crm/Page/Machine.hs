@@ -165,7 +165,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
         row'
-          "Provoz (motohodin/rok)"
+          "Provoz motohodin/rok (Rok má 8760 motohodin)"
           (unpack $ showInt $ M.mileagePerYear machine')
           (let
             setMileagePerYear :: Int -> Fay ()
