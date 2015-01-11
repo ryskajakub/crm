@@ -36,7 +36,7 @@ data NavigationState =
     operationStartCalendar :: DP.DatePicker } | 
   MachineDetail {
     machine :: M.Machine ,
-    machineType :: MT.MachineType , 
+    machineTypeTuple :: (MT.MachineType,[US.UpkeepSequence]) , 
     machineTypeId :: MT.MachineTypeId ,
     operationStartCalendar :: DP.DatePicker , 
     formState :: Bool , 

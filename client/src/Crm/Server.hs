@@ -143,7 +143,8 @@ fetchUpkeeps companyId callback =
     noopOnError
 
 fetchMachine :: M.MachineId -- ^ machine id
-             -> ((M.Machine, MT.MachineTypeId, M.MachineId, MT.MachineType, YMD.YearMonthDay) -> Fay()) -- ^ callback
+             -> ((M.Machine, MT.MachineTypeId, M.MachineId, 
+                (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = 
   JQ.ajax

@@ -159,8 +159,8 @@ startRouter appVar = let
         Just(machineId') -> let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
-            (\(machine, machineTypeId, _, machineType, machineNextService) ->
-              modify' $ D.MachineDetail machine machineType machineTypeId 
+            (\(machine, machineTypeId, _, machineTypeTuple, machineNextService) ->
+              modify' $ D.MachineDetail machine machineTypeTuple machineTypeId 
                 (nowYMD,False) False machineId machineNextService)
         _ -> modify' D.NotFound
   ),(

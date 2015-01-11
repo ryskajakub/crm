@@ -34,6 +34,8 @@ import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow',
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
+import Debug.Trace
+
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
@@ -51,12 +53,12 @@ machineDetail :: Bool
               -> DP.DatePicker
               -> M.Machine
               -> MT.MachineTypeId
-              -> MT.MachineType
+              -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen machine machineTypeId machineType machineId nextService = 
-  machineDisplay editing button appVar calendarOpen machine (machineType,[]) (Just machineTypeId) extraRow
+machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService = 
+  machineDisplay editing button appVar calendarOpen machine machineTypeTuple (Just machineTypeId) extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
@@ -176,11 +178,18 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
           (div' (class' "col-md-3") 
             (let 
-              buttonLabel = if M.mileagePerYear machine' == 8760
+              upkeepPerMileage = minimum repetitions where
+                nonOneTimeSequences = trace (show upkeepSequences) $ filter (not . US.oneTime) upkeepSequences
+                repetitions = map US.repetition nonOneTimeSequences
+              buttonLabel = 
+                if M.mileagePerYear machine' == 8760
                 then "24/7"
-                else "Jiný"
+                else if M.mileagePerYear machine' == upkeepPerMileage 
+                  then "1 za rok"
+                  else "Jiný"
               elements = []
-              in BD.buttonDropdown buttonLabel elements)) ]
+              buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
+              in BD.buttonDropdown buttonLabel' elements)) ]
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
