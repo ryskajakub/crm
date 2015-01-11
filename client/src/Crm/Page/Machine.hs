@@ -24,6 +24,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified HaskellReact.Tag.Hyperlink as A
 
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
@@ -182,13 +183,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               upkeepPerMileage = minimum repetitions where
                 nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
                 repetitions = map US.repetition nonOneTimeSequences
-              buttonLabel = 
-                if M.mileagePerYear machine' == 8760
-                then "24/7"
-                else if M.mileagePerYear machine' == upkeepPerMileage 
-                  then "1 za rok"
-                  else "Jiný"
-              elements = []
+              operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+              buttonLabelMaybe = find (\(value, label) -> value == M.mileagePerYear machine') 
+                operationTypeTuples
+              buttonLabel = maybe "Jiný" snd buttonLabelMaybe
+              elements = map (\(value, label) -> let
+                selectAction = setMachine $ machine' { M.mileagePerYear = value } 
+                in li $ A.a''' (click selectAction) label) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
               in BD.buttonDropdown buttonLabel' elements)) ]
         ] ++ extraRow ++ [
