@@ -71,12 +71,14 @@ editingCheckbox value setter editing = let
   theCheckbox = I.input mkAttrs inputAttrs
   in div' (class' "checkbox") $ label theCheckbox
 
-editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-editingInput value' onChange' editing' = let
+editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
+editingInput value' onChange' editing' intMode = let
   inputNormalAttrs = class' "form-control"
   inputAttrs = let
     commonInputAttrs = I.mkInputAttrs {
-      I.value_ = Defined $ pack value' }
+      I.value_ = Defined $ if intMode && (pack value' == "0")
+        then ""
+        else pack value' }
     in if editing' 
       then commonInputAttrs {
         I.onChange = Defined onChange' }
@@ -84,9 +86,9 @@ editingInput value' onChange' editing' = let
         I.disabled_ = Defined "disabled" }
   in I.input inputNormalAttrs inputAttrs
 
-formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-formRow' labelText value' onChange' editing' = let
-  in formRow labelText $ editingInput value' onChange' editing'
+formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
+formRow' labelText value' onChange' editing' intMode = let
+  in formRow labelText $ editingInput value' onChange' editing' intMode
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -112,6 +114,7 @@ saveButtonRow' enabled label clickHandler =
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
 eventInt fun = eventValue >=> (\text -> case parseSafely text of
   Just(int) -> fun int
+  Nothing | text == "" -> fun 0
   Nothing -> return () )
 
 inputNormalAttrs :: Attributes

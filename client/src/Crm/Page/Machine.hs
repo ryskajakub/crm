@@ -34,8 +34,6 @@ import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow',
 import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
 import Crm.Component.Autocomplete (autocompleteInput)
 
-import Debug.Trace
-
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
@@ -140,11 +138,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           "Typ zařízení" 
           (MT.machineTypeName machineType) 
           undefined
+          False
           False ,
         formRow'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           undefined
+          False
           False ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
@@ -174,12 +174,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             (editingInput 
               (show $ M.mileagePerYear machine')
               (eventInt (\int -> setMachine $ machine' { M.mileagePerYear = int } ))             
-              editing)) ,
+              editing
+              True)) ,
           (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
           (div' (class' "col-md-3") 
             (let 
               upkeepPerMileage = minimum repetitions where
-                nonOneTimeSequences = trace (show upkeepSequences) $ filter (not . US.oneTime) upkeepSequences
+                nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
                 repetitions = map US.repetition nonOneTimeSequences
               buttonLabel = 
                 if M.mileagePerYear machine' == 8760

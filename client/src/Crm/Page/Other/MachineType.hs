@@ -94,11 +94,15 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     labelField = editingInput 
       label 
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
-        (\us -> us { US.label_ = modifiedLabel }))) True
+        (\us -> us { US.label_ = modifiedLabel }))) 
+      True
+      False
     mthField = editingInput 
       (show repetition) 
       (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
-        (\us -> us { US.repetition = modifiedRepetition }))) True
+        (\us -> us { US.repetition = modifiedRepetition }))) 
+      True
+      True
     firstServiceField = editingCheckbox
       (oneTime)
       (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> us { US.oneTime = oneTimeSequence } ))
@@ -138,7 +142,8 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing machineTypeId) ] ++ upkeepSequenceRows ++ [
+          (isNothing machineTypeId) 
+          False ] ++ upkeepSequenceRows ++ [
         formRow
           (let 
             addUpkeepSequenceRow = let
@@ -163,6 +168,7 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     (MT.machineTypeName machineType)
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
+    False
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = updateMachineType (machineTypeId, machineType, upkeepSequences) (return ())
   in machineTypeForm' Nothing (machineType, upkeepSequences) appVar 
