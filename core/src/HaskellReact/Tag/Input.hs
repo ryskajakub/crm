@@ -41,6 +41,7 @@ import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
 
 newtype InputType = InputType Text
+  deriving Eq
 
 button :: InputType
 button = InputType "button"
@@ -113,7 +114,7 @@ week = InputType "week"
 
 
 data InputAttributes = InputAttributes {
-  type' :: InputType , 
+  type_ :: InputType , 
   value_ :: Defined Text , 
   defaultValue :: Defined Text , 
   checked :: Defined Text , 
@@ -126,7 +127,7 @@ mkInputAttrs = defaultInputAttributes
 
 defaultInputAttributes :: InputAttributes
 defaultInputAttributes = InputAttributes {
-  type' = InputType "text" ,
+  type_ = text ,
   value_ = Undefined ,
   checked = Undefined ,
   onChange = Undefined ,
