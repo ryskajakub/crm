@@ -4,7 +4,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Hyperlink (
-  a , a', a''
+  a , a', a'', a'''
   , HyperlinkAttributes(HyperlinkAttributes)
   , href
   , rel
@@ -106,6 +106,9 @@ defaultHyperlinkAttributes = HyperlinkAttributes {
   , rel = Undefined
   , target = Undefined
 }
+
+a''' :: (Renderable a) => Attributes -> a -> DOMElement
+a''' attributes = a'' attributes mkAAttrs
 
 a'' :: (Renderable a) => Attributes -> HyperlinkAttributes -> a -> DOMElement
 a'' = constructDOMElement "a" 

@@ -113,11 +113,12 @@ week = InputType "week"
 
 
 data InputAttributes = InputAttributes {
-  type' :: InputType
-  , value_ :: Defined Text
-  , defaultValue :: Defined Text
-  , checked :: Defined Text
-  , onChange :: Defined (SyntheticEvent -> Fay ())
+  type' :: InputType , 
+  value_ :: Defined Text , 
+  defaultValue :: Defined Text , 
+  checked :: Defined Text , 
+  onChange :: Defined (SyntheticEvent -> Fay ()) ,
+  disabled_ :: Defined Text
 }
 
 mkInputAttrs :: InputAttributes
@@ -125,12 +126,12 @@ mkInputAttrs = defaultInputAttributes
 
 defaultInputAttributes :: InputAttributes
 defaultInputAttributes = InputAttributes {
-  type' = InputType "text"
-  , value_ = Undefined
-  , checked = Undefined
-  , onChange = Undefined
-  , defaultValue = Undefined
-}
+  type' = InputType "text" ,
+  value_ = Undefined ,
+  checked = Undefined ,
+  onChange = Undefined ,
+  defaultValue = Undefined ,
+  disabled_ = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
 input' = constructDOMElement "input"

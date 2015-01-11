@@ -13,17 +13,17 @@ import "fay-base" Prelude
 import HaskellReact.Bootstrap
 
 data ButtonProps = ButtonProps {
-  bsStyle :: Defined Text
-  , title :: Defined Text
-  , onClick :: Defined (SyntheticMouseEvent -> Fay ())
-}
+  bsStyle :: Defined Text , 
+  title :: Defined Text , 
+  onClick :: Defined (SyntheticMouseEvent -> Fay ()) ,
+  disabled :: Defined Bool }
 
 buttonProps :: ButtonProps
 buttonProps = ButtonProps {
-  bsStyle = Undefined
-  , title = Undefined
-  , onClick = Undefined
-}
+  bsStyle = Undefined ,
+  title = Undefined ,
+  disabled = Undefined ,
+  onClick = Undefined }
 
 button' :: Renderable a
         => ButtonProps
