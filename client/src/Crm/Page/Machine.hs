@@ -188,10 +188,10 @@ machineDisplay editing buttonRow appVar operationStartCalendar
                 operationTypeTuples
               buttonLabel = maybe "Jiný" snd buttonLabelMaybe
               elements = map (\(value, label) -> let
-                selectAction = setMachine $ machine' { M.mileagePerYear = value } 
+                selectAction = setMachine $ machine' { M.mileagePerYear = value }
                 in li $ A.a''' (click selectAction) label) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown buttonLabel' elements)) ]
+              in BD.buttonDropdown' editing buttonLabel' elements)) ]
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
