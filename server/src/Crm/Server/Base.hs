@@ -23,10 +23,9 @@ import Opaleye.Operators ((.==), (.&&), (.||), restrict, lower, (.<))
 import qualified Opaleye.Operators as OO
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runInsertReturning, runDelete)
-import Opaleye.Internal.RunQuery
 import qualified Opaleye.Aggregate as AGG
 
-import "mtl" Control.Monad.Reader (Reader, ReaderT, ask, runReaderT, mapReaderT)
+import "mtl" Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
