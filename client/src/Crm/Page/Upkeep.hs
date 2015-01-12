@@ -32,7 +32,7 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -231,19 +231,10 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
-      modifyDatepickerDate newDate = modify appState (\appState' -> appState' {
-        D.navigation = case D.navigation appState' of
-          upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _ _) -> upkeepNew' { 
-            D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepNew') }
-          upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeepClose' { 
-            D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker upkeepClose') }
-          _ -> D.navigation appState' })
-      setPickerOpenness open = modify appState (\appState' -> appState' {
-        D.navigation = case D.navigation appState' of
-          upkeep'' @ (D.UpkeepNew _ _ _ _ _ _ _) -> upkeep'' { 
-            D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) }
-          upkeep'' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> upkeep'' { 
-            D.upkeepDatePicker = (fst $ D.upkeepDatePicker upkeep'',open) } } )
+      modifyDatepickerDate newDate = D.modifyState appState (\navig -> navig {
+        D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker navig)} )
+      setPickerOpenness open = D.modifyState appState (\navig -> navig {
+        D.upkeepDatePicker = rmap (const open) (D.upkeepDatePicker navig)})
       displayedDate = U.upkeepDate upkeep'
       setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
       in DP.datePicker True upkeepDatePicker modifyDatepickerDate 
