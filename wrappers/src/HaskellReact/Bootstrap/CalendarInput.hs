@@ -9,7 +9,7 @@ module HaskellReact.Bootstrap.CalendarInput (
   DisplayDatePrecision (..) ) where
 
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Text (fromString, Text, showInt, append)
+import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude hiding (span)
 
 import HaskellReact as HR
@@ -60,8 +60,8 @@ dayInput editing' (y,m,d,displayDatePrecision) (pickerYear, pickerMonth)
       anyDay = 1
       momentFromParams = M.dayPrecision pickerYear (pickerMonth - 1) anyDay M.requireMoment 
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
-      changeViewLink className changeViewCommand content = let
-        normalAttrs = (class' className) {
+      changeViewLink className' changeViewCommand content = let
+        normalAttrs = (class' className') {
           HR.onClick = Defined $ const $ changeView changeViewCommand }
         in A.a'' normalAttrs A.mkAAttrs content
       in div' (class'' ["nowrap", "relative"]) [
@@ -69,8 +69,8 @@ dayInput editing' (y,m,d,displayDatePrecision) (pickerYear, pickerMonth)
         changeViewLink "previous-month" PreviousMonth "<" ,
         changeViewLink "next-month" NextMonth ">" ,
         changeViewLink "next-year" NextYear ">>" ,
-        monthCalendar momentFromParams (\y m d t -> do 
-          onDayPick y m d t 
+        monthCalendar momentFromParams (\y' m' d' t' -> do 
+          onDayPick y' m' d' t' 
           setPickerOpen False )]]
     else []
   display = 

@@ -7,10 +7,9 @@ module HaskellReact.Bootstrap.ButtonDropdown where
 
 import "fay-base" Prelude hiding (div)
 import "fay-base" Data.Text (fromString, Text)
-import "fay-base" FFI (ffi, Automatic, Defined(Defined, Undefined), Nullable(Null))
+import "fay-base" FFI (Defined(Defined, Undefined))
 
 import HaskellReact
-import HaskellReact.Event (SyntheticMouseEvent)
 
 data ButtonTechnicalProps = ButtonTechnicalProps {
   disabled_ :: Defined Text ,
@@ -34,11 +33,12 @@ buttonDropdown' :: Renderable a
                 -> DOMElement
 buttonDropdown' enabled buttonLabel liElements = let
   buttonProps = ButtonTechnicalProps {
+    disabled_ = Undefined ,
     data_toggle = "dropdown" ,
     aria_expanded = "false" ,
     type_ = "button" }
   buttonProps' = if enabled
-    then buttonProps { disabled_ = Undefined }
+    then buttonProps
     else buttonProps { disabled_ = Defined "disabled" }
   ulProps = UlTechnicalProps {
     role = "menu" }

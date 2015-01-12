@@ -7,9 +7,9 @@ module HaskellReact.Bootstrap.Button where
 
 import "fay-base" Prelude
 import "fay-base" Data.Text (fromString, Text)
-import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
+import "fay-base" FFI (Defined(Undefined))
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
+import HaskellReact (Renderable, DOMElement)
 import HaskellReact.Event (SyntheticMouseEvent)
 import HaskellReact.Bootstrap
 

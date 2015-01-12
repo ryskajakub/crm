@@ -5,7 +5,7 @@ module HaskellReact.BackboneRouter where
 
 import "fay-base" Data.Text (Text, pack)
 import "fay-base" Prelude
-import "fay-base" FFI (ffi, Defined(Defined, Undefined), Automatic)
+import "fay-base" FFI (ffi, Defined(Defined), Automatic)
 
 import HaskellReact
 import HaskellReact.Tag.Hyperlink (mkAAttrs, href, a'')

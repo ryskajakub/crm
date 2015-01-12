@@ -12,8 +12,7 @@ module HaskellReact.Bootstrap.Input (
 
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
-import "fay-base" Unsafe.Coerce (unsafeCoerce)
-import "fay-base" FFI (Defined(Undefined, Defined), Nullable(Null))
+import "fay-base" FFI (Defined(Undefined, Defined))
 
 import HaskellReact
 import HaskellReact.Bootstrap

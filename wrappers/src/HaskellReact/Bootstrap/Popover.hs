@@ -4,18 +4,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Bootstrap.Popover (
-  PopoverProps ,
+  PopoverProps(..) ,
   placementRight, placementLeft, placementBottom, placementTop, 
   popover ,
   mkPopoverProps ) where
 
-import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude
 
 import HaskellReact
 import HaskellReact.Bootstrap (reactBootstrap)
-import HaskellReact.Event (SyntheticMouseEvent)
 
 data PopoverProps = PopoverProps {
   placement :: Text ,
@@ -40,7 +38,7 @@ mkPopoverProps :: Placement
                -> Int -- ^ left
                -> Int -- ^ top
                -> PopoverProps
-mkPopoverProps placement = PopoverProps (getPlacement placement)
+mkPopoverProps placement' = PopoverProps (getPlacement placement')
 
 popover :: Renderable a
         => PopoverProps

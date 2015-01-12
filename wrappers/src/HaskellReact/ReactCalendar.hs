@@ -39,9 +39,9 @@ month :: MomentObject
       -> HR.DOMElement
 month momentObject setDate = let
   clickHandler text moment eventObject = do
-    let (year, month, day') = day moment 
+    let (year', month', day') = day moment 
     HR.stopPropagation eventObject
-    setDate year month day' text
+    setDate year' month' day' text
   monthProps = MonthProps {
     onClick = Defined clickHandler ,
     date = momentObject }

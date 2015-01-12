@@ -10,7 +10,6 @@ module HaskellReact.React (
 import "fay-base" FFI (ffi, Automatic)
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text)
-import "fay-base" Data.Function (fmap)
 
 import HaskellReact.Tag.Construct
 

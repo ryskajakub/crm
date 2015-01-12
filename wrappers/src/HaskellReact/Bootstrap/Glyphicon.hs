@@ -19,7 +19,7 @@ glyphicon' :: GlyphiconProps -> DOMElement
 glyphicon' props = reactBootstrap "Glyphicon" props ([]::[DOMElement])
 
 glyphicon :: Text -> DOMElement
-glyphicon glyph = glyphicon' (GlyphiconProps glyph)
+glyphicon glyphIdentificator = glyphicon' (GlyphiconProps glyphIdentificator)
 
 plus :: DOMElement
 plus = glyphicon "plus"
