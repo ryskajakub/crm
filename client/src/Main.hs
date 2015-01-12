@@ -1,6 +1,6 @@
 module Main where
 
-import NoMain (main')
+import Dispatch (main')
 
 main :: Fay ()
 main = main'

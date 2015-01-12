@@ -1,7 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module NoMain where
+module Dispatch where
 
 import "fay-base" Prelude hiding (span, div, elem)
 import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
