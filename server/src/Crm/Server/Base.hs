@@ -61,11 +61,12 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 
 import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeId, readMay',
-  prepareReaderIdentity, prepareReaderTuple)
+  prepareReaderIdentity, prepareReaderTuple, mappedUpkeepSequences)
 import Crm.Server.Boilerplate ()
 import Crm.Server.DB
 import Crm.Server.Types
 import Crm.Server.Api.CompanyResource (companyResource)
+import Crm.Server.Api.MachineResource (machineResource)
 
 import Safe (readMay, minimumMay)
 
@@ -82,35 +83,11 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [
   ("planned", S.listing UpkeepsPlanned) ,
   ("single", S.singleBy readMay') ])
 
-schema'' :: S.Schema UrlId () Void
-schema'' = S.withListing () (S.unnamedSingle readMay')
-
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
   "autocomplete", S.listingBy (\str -> Autocomplete str)),(
   A.byName, S.singleBy (\str -> MachineTypeByName str)),(
   "by-id", S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
-    
-machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine) ->
-  ask >>= \(conn, id') -> maybeId id' (\machineId -> do
-    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine) conn
-    -- todo singal error if the update didn't hit a row
-    return ()))
-
-machineSingle :: Handler IdDependencies
-machineSingle = mkConstHandler (jsonO . someO) (
-  ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
-    rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
-    (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
-    upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery machineTypeId)
-    nextServiceYmd <- nextService machineId machine machineTypeId fst
-    return (machine, companyId, machineTypeId, 
-      (machineType, mappedUpkeepSequences upkeepSequences), nextServiceYmd))))
-
-machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO . someO) (const $ do
-  ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)
 
 employeesListing :: ListHandler Dependencies 
 employeesListing = mkListing (jsonO . someO) (const $
@@ -150,8 +127,6 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
       forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
           pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
-
-mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
@@ -319,14 +294,6 @@ companyMachineResource = mkResourceId {
   name = A.machines ,
   schema = S.noListing $ S.named [] ,
   create = Just createMachineHandler }
-
-machineResource :: Resource Dependencies IdDependencies UrlId () Void
-machineResource = (mkResourceReaderWith prepareReaderTuple) {
-  list = const machineListing ,
-  get = Just machineSingle ,
-  update = Just machineUpdate ,
-  name = A.machines ,
-  schema = schema'' }
 
 machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {

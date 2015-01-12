@@ -3,6 +3,7 @@ module Crm.Server.Helpers (
   dayToYmd ,
   maybeId ,
   readMay' ,
+  mappedUpkeepSequences ,
   prepareReader , 
   prepareReaderIdentity ,
   prepareReaderTuple ) where
@@ -19,6 +20,7 @@ import Control.Monad.Error (ErrorT)
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 
 import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.UpkeepSequence as US
 
 import Safe (readMay)
 
@@ -80,3 +82,5 @@ instance Ord YMD.YearMonthDay where
       LT -> LT
       EQ -> nextComparison
     in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
+
+mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
