@@ -12,14 +12,13 @@ import "fay-base" FFI (Defined(Defined))
 import "fay-base" Data.Text (fromString, Text, showInt, append)
 import "fay-base" Prelude hiding (span)
 
-import qualified Moment as M
-
 import HaskellReact as HR
 import HaskellReact.Bootstrap.Popover as P
 import HaskellReact.ReactCalendar as RC
 import qualified HaskellReact.Tag.Input as I
 import qualified HaskellReact.Tag.Hyperlink as A
 
+import qualified Moment as M
 import Moment
 
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())

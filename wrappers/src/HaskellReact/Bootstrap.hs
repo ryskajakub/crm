@@ -5,10 +5,11 @@
 
 module HaskellReact.Bootstrap where
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
-import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
+import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude
+
+import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap

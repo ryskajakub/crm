@@ -24,10 +24,11 @@ module HaskellReact.Tag.Simple (
   , label', label
 ) where
 
-import HaskellReact.Tag.Construct
-import FFI (Automatic)
+import "fay-base" FFI (Automatic)
 import "fay-base" Prelude hiding (div, span)
 import "fay-base" Data.Text (Text, fromString)
+
+import HaskellReact.Tag.Construct
 
 constructSimple :: Renderable a
                 => Text

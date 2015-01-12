@@ -8,8 +8,9 @@ module HaskellReact (
   , module HaskellReact.React
 ) where 
 
+import "fay-base" Prelude
+
 import HaskellReact.Event
 import HaskellReact.Tag.Construct
 import HaskellReact.Tag.Simple
 import HaskellReact.React
-import "fay-base" Prelude

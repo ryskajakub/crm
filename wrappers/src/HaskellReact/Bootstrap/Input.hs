@@ -12,10 +12,11 @@ module HaskellReact.Bootstrap.Input (
 
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
-import FFI (Defined(Undefined, Defined), Nullable(Null))
+import "fay-base" Unsafe.Coerce (unsafeCoerce)
+import "fay-base" FFI (Defined(Undefined, Defined), Nullable(Null))
+
 import HaskellReact
 import HaskellReact.Bootstrap
-import "fay-base" Unsafe.Coerce (unsafeCoerce)
 
 data InputProps = InputProps {
   type_ :: Text

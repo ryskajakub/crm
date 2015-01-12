@@ -31,10 +31,11 @@ module HaskellReact.Tag.Hyperlink (
   , framename
 ) where
 
-import FFI (Defined(Undefined, Defined))
-import HaskellReact.Tag.Construct
+import "fay-base" FFI (Defined(Undefined, Defined))
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
+
+import HaskellReact.Tag.Construct
 
 type URL = Text
 newtype Rel = Rel Text

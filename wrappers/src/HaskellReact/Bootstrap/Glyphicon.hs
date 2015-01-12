@@ -6,9 +6,10 @@
 module HaskellReact.Bootstrap.Glyphicon where
 
 import "fay-base" Data.Text (Text, fromString)
+import "fay-base" Prelude
+
 import HaskellReact
 import HaskellReact.Bootstrap
-import "fay-base" Prelude
 
 data GlyphiconProps = GlyphiconProps {
   glyph :: Text

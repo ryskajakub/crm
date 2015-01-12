@@ -7,10 +7,10 @@ module HaskellReact.Bootstrap.ButtonDropdown where
 
 import "fay-base" Prelude hiding (div)
 import "fay-base" Data.Text (fromString, Text)
-import FFI (ffi, Automatic, Defined(Defined, Undefined), Nullable(Null))
+import "fay-base" FFI (ffi, Automatic, Defined(Defined, Undefined), Nullable(Null))
 
-import HaskellReact.Event (SyntheticMouseEvent)
 import HaskellReact
+import HaskellReact.Event (SyntheticMouseEvent)
 
 data ButtonTechnicalProps = ButtonTechnicalProps {
   disabled_ :: Defined Text ,

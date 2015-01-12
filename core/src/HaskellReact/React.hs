@@ -7,12 +7,14 @@ module HaskellReact.React (
   , simpleReact, simpleReactBody, simpleReactBody'
 ) where
 
-import FFI (ffi, Automatic)
-import HaskellReact.Tag.Construct
+import "fay-base" FFI (ffi, Automatic)
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text)
-import DOM (Element, getBody)
 import "fay-base" Data.Function (fmap)
+
+import HaskellReact.Tag.Construct
+
+import DOM (Element, getBody)
 
 class CommonJSModule a
 

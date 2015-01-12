@@ -5,7 +5,7 @@
 module HaskellReact.Event where
 
 import "fay-base" Data.Text (Text, unpack)
-import FFI (ffi)
+import "fay-base" FFI (ffi)
 import "fay-base" Prelude
 
 data SyntheticEvent

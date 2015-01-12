@@ -9,7 +9,7 @@ module HaskellReact.Bootstrap.Popover (
   popover ,
   mkPopoverProps ) where
 
-import FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
+import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude
 

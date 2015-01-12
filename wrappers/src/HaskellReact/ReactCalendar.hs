@@ -6,13 +6,13 @@ module HaskellReact.ReactCalendar (
   , MonthProps(..)
 ) where
 
-import FFI
-import qualified HaskellReact as HR
+import "fay-base" FFI
 import "fay-base" Data.Text (Text, pack)
 import "fay-base" Prelude
-import Moment(MomentObject, day)
 
-import Debug.Trace
+import qualified HaskellReact as HR
+
+import Moment(MomentObject, day)
 
 data ReactCalendar
 instance HR.CommonJSModule ReactCalendar

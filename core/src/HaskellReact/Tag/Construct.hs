@@ -5,13 +5,12 @@
 
 module HaskellReact.Tag.Construct where
 
-import HaskellReact.Event
-import FFI (Defined(Defined, Undefined), ffi, Automatic)
+import "fay-base" FFI (Defined(Defined, Undefined), ffi, Automatic)
 import "fay-base" Data.Text 
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
 import "fay-base" Prelude hiding (id, intercalate)
 
-import "fay-base" Debug.Trace
+import HaskellReact.Event
 
 -- | Opaque data type that represents a element in the react virtual dom
 data DOMElement

@@ -34,11 +34,12 @@ module HaskellReact.Tag.Input (
   , week
 ) where
 
-import HaskellReact.Tag.Construct
-import HaskellReact.Event
-import FFI
+import "fay-base" FFI
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
+
+import HaskellReact.Tag.Construct
+import HaskellReact.Event
 
 newtype InputType = InputType Text
   deriving Eq
