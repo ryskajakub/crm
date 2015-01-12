@@ -30,22 +30,21 @@ import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow, formRow', 
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol)
-import Crm.Router (CrmRouter, navigate, frontPage, newMachinePhase2)
-import Crm.Component.Autocomplete (autocompleteInput)
+import Crm.Router (CrmRouter, navigate, frontPage)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
               -> DOMElement
-saveButtonRow label clickHandler = 
+saveButtonRow buttonLabel clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
     BTN.button'
       (BTN.buttonProps {
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
-      label
+      buttonLabel
 
 machineDetail :: Bool
               -> Var D.AppState
@@ -57,7 +56,7 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService = 
-  machineDisplay editing button appVar calendarOpen machine machineTypeTuple (Just machineTypeId) extraRow
+  machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRow
     where
       extraRow = [row "Další servis" (displayDate nextService)]
       setEditing :: Fay ()
@@ -83,7 +82,7 @@ machineNew :: CrmRouter
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
 machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
-  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple machineTypeId []
+  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple [] -- fix
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -106,11 +105,10 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DP.DatePicker
                -> M.Machine
                -> (MT.MachineType, [US.UpkeepSequence])
-               -> Maybe MT.MachineTypeId -- ^ machine type id
                -> [DOMElement]
                -> (DOMElement, Fay ())
 machineDisplay editing buttonRow appVar operationStartCalendar
-    machine' (machineTypeTuple @ (machineType, upkeepSequences)) machineTypeId extraRow = let
+    machine' (machineType, upkeepSequences) extraRow = let
 
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
@@ -184,14 +182,14 @@ machineDisplay editing buttonRow appVar operationStartCalendar
                 nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
                 repetitions = map US.repetition nonOneTimeSequences
               operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
-              buttonLabelMaybe = find (\(value, label) -> value == M.mileagePerYear machine') 
+              buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
                 operationTypeTuples
               buttonLabel = maybe "Jiný" snd buttonLabelMaybe
-              elements = map (\(value, label) -> let
+              selectElements = map (\(value, selectLabel) -> let
                 selectAction = setMachine $ machine' { M.mileagePerYear = value }
-                in li $ A.a''' (click selectAction) label) operationTypeTuples
+                in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown' editing buttonLabel' elements)) ]
+              in BD.buttonDropdown' editing buttonLabel' selectElements)) ]
         ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())

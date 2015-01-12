@@ -12,7 +12,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isNothing, isJust)
+import "fay-base" Data.Maybe (isNothing)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -25,8 +25,8 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data as D
-import Crm.Helpers (formRow', parseSafely, saveButtonRow, saveButtonRow',
-  lmap, editingInput, eventInt, formRow, inputNormalAttrs, rmap, formRowCol, editingCheckbox)
+import Crm.Helpers (formRow', saveButtonRow', lmap, editingInput, eventInt, 
+  formRow, inputNormalAttrs, rmap, formRowCol, editingCheckbox)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
 
@@ -53,7 +53,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', upkeepSequences) -> do
+          Just (machineTypeId', machineType', _) -> do
             setMachineType machineType'
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return () )
@@ -90,9 +90,9 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
       else us ) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
-  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder label repetition oneTime) -> let
+  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder sequenceLabel repetition oneTime) -> let
     labelField = editingInput 
-      label 
+      sequenceLabel
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> us { US.label_ = modifiedLabel }))) 
       True
