@@ -52,7 +52,7 @@ import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
 import Rest.Types.Error (DataError(ParseError), Reason(InputError, IdentError, 
-  NotFound, CustomReason, NotAllowed, UnsupportedRoute), DomainReason(DomainReason))
+  NotFound, NotAllowed, UnsupportedRoute))
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -181,7 +181,7 @@ join tableQuery = proc id' -> do
 
 upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
-  us @ (a,b,c,machineTypeFK, d) <- upkeepSequencesQuery -< ()
+  (a,b,c,machineTypeFK, d) <- upkeepSequencesQuery -< ()
   restrict -< machineTypeFK .== pgInt4 machineTypeId
   returnA -< (a,b,c,d)
 
@@ -273,11 +273,10 @@ companyUpkeepsQuery companyId = let
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
   machineRow @ (machineId',_,machineTypeId,_,_,_) <- machinesQuery -< ()
-  machineTypesRow @ (machineTypeId',_,_) <- machineTypesQuery -< ()
-  let join = machineTypeId' .== machineTypeId
+  machineTypesRow <- join machineTypesQuery -< (machineTypeId)
   restrict -< (case machineId of
-    Just(machineId'') -> (pgInt4 machineId'' .== machineId') .&& join
-    Nothing -> join)
+    Just(machineId'') -> (pgInt4 machineId'' .== machineId')
+    Nothing -> pgBool True )
   returnA -< (machineRow, machineTypesRow)
 
 machinesInCompanyByUpkeepQuery :: Int -> Query (DBInt, MachinesTable, MachineTypesTable)
