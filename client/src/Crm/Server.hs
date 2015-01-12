@@ -38,8 +38,6 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 
-import Debug.Trace
-
 data Items
 
 -- | Unthe outermost layer of the fetched list in order to get to the data

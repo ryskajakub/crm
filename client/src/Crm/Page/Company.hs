@@ -23,7 +23,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data as D
-import Crm.Component.Editable (editable, editablePlain, editable')
+import Crm.Component.Editable (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate)

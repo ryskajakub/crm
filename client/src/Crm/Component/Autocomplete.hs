@@ -11,8 +11,6 @@ import "fay-base" Prelude hiding (id)
 
 import qualified HaskellReact.Tag.Input as I
 
-import Crm.Server (fetchMachineTypesAutocomplete)
-
 data JQueryUI
 
 data Request

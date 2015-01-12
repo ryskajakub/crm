@@ -81,13 +81,13 @@ mkSubmitButton :: Renderable a
                -> a
                -> Fay ()
                -> DOMElement
-mkSubmitButton enabled label handler = let
+mkSubmitButton enabled buttonLabel handler = let
   basicButtonProps = BTN.buttonProps {
     BTN.bsStyle = Defined "primary" }
   buttonProps = if enabled
     then basicButtonProps { BTN.onClick = Defined $ const handler }
     else basicButtonProps { BTN.disabled = Defined True }
-  in BTN.button' buttonProps label
+  in BTN.button' buttonProps buttonLabel
 
 upkeepDetail :: CrmRouter
              -> Var D.AppState

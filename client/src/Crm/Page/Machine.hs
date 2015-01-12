@@ -7,9 +7,9 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text, (<>))
+import "fay-base" Data.Text (fromString, pack, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Maybe (whenJust, isNothing)
+import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 
@@ -29,7 +29,7 @@ import qualified HaskellReact.Tag.Hyperlink as A
 import qualified Crm.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine, fetchMachineType, fetchMachineTypesAutocomplete)
+import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol)
 import Crm.Router (CrmRouter, navigate, frontPage)
@@ -82,7 +82,7 @@ machineNew :: CrmRouter
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
 machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
-  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple [] -- fix
+  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple []
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'

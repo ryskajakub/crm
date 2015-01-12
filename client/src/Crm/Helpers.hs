@@ -12,14 +12,11 @@ import Data.Nullable (fromNullable)
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Company as C
-import Crm.Component.Editable (editableN)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import qualified HaskellReact.Bootstrap.Button as BTN
 import HaskellReact
 import qualified HaskellReact.Tag.Input as I
-
-import Debug.Trace
 
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
@@ -49,22 +46,25 @@ formRowCol :: (Renderable a)
            => a -- ^ label of the label field
            -> [DOMElement] -- ^ other columns
            -> DOMElement
-formRowCol label otherColumns =
+formRowCol formFieldLabel otherColumns =
   div' (class' "form-group") [ 
-    (label' (class'' ["control-label", "col-md-3"]) label) : otherColumns]
+    (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
 
 formRow :: (Renderable a)
         => a -- ^ label of field
         -> DOMElement -- ^ the other field
         -> DOMElement
-formRow label col2 = 
-  formRowCol label [div' (class' "col-md-9") col2]
+formRow formFieldLabel col2 = 
+  formRowCol formFieldLabel [div' (class' "col-md-9") col2]
 
 editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
 editingCheckbox value setter editing = let
-  checkboxAttrs = I.mkInputAttrs { 
+  disabledAttrs = if editing
+    then I.mkInputAttrs
+    else I.mkInputAttrs { I.disabled_ = Defined "disabled" }
+  checkboxAttrs = disabledAttrs { 
     I.type_ = I.checkbox ,
-    I.onChange = Defined $ (eventValue >=> (\s -> setter $ not value )) }
+    I.onChange = Defined $ (eventValue >=> (const $ setter $ not value )) }
   inputAttrs = if value
     then checkboxAttrs { I.checked = Defined "checked" }
     else checkboxAttrs
@@ -73,7 +73,6 @@ editingCheckbox value setter editing = let
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
 editingInput value' onChange' editing' intMode = let
-  inputNormalAttrs = class' "form-control"
   inputAttrs = let
     commonInputAttrs = I.mkInputAttrs {
       I.value_ = Defined $ if intMode && (pack value' == "0")
@@ -101,7 +100,7 @@ saveButtonRow' :: Renderable a
                -> a -- ^ label of the button
                -> Fay () -- ^ button on click handler
                -> DOMElement
-saveButtonRow' enabled label clickHandler = 
+saveButtonRow' enabled buttonLabel clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
     BTN.button' (let
       buttonProps = (BTN.buttonProps {
@@ -109,7 +108,7 @@ saveButtonRow' enabled label clickHandler =
         BTN.onClick = Defined $ const clickHandler })
       in if enabled then buttonProps else buttonProps {
         BTN.disabled = Defined True })
-      label
+      buttonLabel
 
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
 eventInt fun = eventValue >=> (\text -> case parseSafely text of
