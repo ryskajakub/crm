@@ -3,6 +3,7 @@ module Crm.Server.Helpers (
   dayToYmd ,
   maybeId ,
   readMay' ,
+  mapUpkeeps ,
   mappedUpkeepSequences ,
   prepareReader , 
   prepareReaderIdentity ,
@@ -21,6 +22,8 @@ import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Upkeep as U
 
 import Safe (readMay)
 
@@ -84,3 +87,18 @@ instance Ord YMD.YearMonthDay where
     in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
 
 mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
+
+mapUpkeeps :: [((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))] 
+           -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
+mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId),(_,note,machineId,recordedMileage)) ->
+  let
+    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed, employeeId, 
+      [(UM.UpkeepMachine note recordedMileage, machineId)]) )
+    in case acc of
+      [] -> [addUpkeep']
+      (upkeepId', (upkeep, e, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
+        modifiedUpkeepMachines = 
+          (UM.UpkeepMachine note recordedMileage, machineId) : upkeepMachines
+        in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
+      _ -> addUpkeep' : acc
+  ) [] rows

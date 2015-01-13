@@ -60,13 +60,14 @@ import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 
-import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeId, readMay',
+import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeId, readMay', mapUpkeeps, 
   prepareReaderIdentity, prepareReaderTuple, mappedUpkeepSequences)
 import Crm.Server.Boilerplate ()
 import Crm.Server.DB
 import Crm.Server.Types
 import Crm.Server.Api.CompanyResource (companyResource)
 import Crm.Server.Api.MachineResource (machineResource)
+import qualified Crm.Server.Api.UpkeepResource as UR
 
 import Safe (readMay, minimumMay)
 
@@ -75,13 +76,6 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 schema' :: S.Schema Void () Void
 schema' = S.withListing () (S.named [])
-
-data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
-
-upkeepSchema :: S.Schema UrlId UpkeepsListing Void
-upkeepSchema = S.withListing UpkeepsAll (S.named [
-  ("planned", S.listing UpkeepsPlanned) ,
-  ("single", S.singleBy readMay') ])
 
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
@@ -145,38 +139,12 @@ machineTypesSingle = mkConstHandler (jsonO . someO) ( do
     [] -> onEmptyResult
     _ -> throwError NotFound)
 
-upkeepsPlannedListing :: ListHandler Dependencies
-upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((uPK,u2,u3,_),companyRow) ->
-        (uPK, U.Upkeep (dayToYmd u2) u3, sel1 companyRow, (uncurryN $ const C.Company) companyRow)) rows
-  return mappedRows )
-
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
   rows <- ask >>= \(conn, upkeepId') -> maybeId upkeepId' (\upkeepId ->
     liftIO $ runSingleUpkeepQuery conn upkeepId)
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
-
-mapUpkeeps :: [((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))] -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
-mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId),(_,note,machineId,recordedMileage)) ->
-  let
-    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed, employeeId, 
-      [(UM.UpkeepMachine note recordedMileage, machineId)]) )
-    in case acc of
-      [] -> [addUpkeep']
-      (upkeepId', (upkeep, e, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
-        modifiedUpkeepMachines = 
-          (UM.UpkeepMachine note recordedMileage, machineId) : upkeepMachines
-        in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
-      _ -> addUpkeep' : acc
-  ) [] rows
-
-upkeepListing :: ListHandler Dependencies
-upkeepListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
-  return $ mapUpkeeps rows) 
 
 insertUpkeepMachines :: Connection -> Int -> [(UM.UpkeepMachine, Int)] -> IO ()
 insertUpkeepMachines connection upkeepId upkeepMachines = let
@@ -265,17 +233,6 @@ updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,m
   upkeepTriple = (upkeep, machines, employeeListToMaybe)
   in ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
     liftIO $ updateUpkeep connection upkeepId upkeepTriple))
-    
-upkeepCompanyMachines :: Handler IdDependencies
-upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
-  ask >>= \(conn, maybeUpkeepId) -> maybeId maybeUpkeepId (\upkeepId -> do
-    upkeeps <- liftIO $ fmap mapUpkeeps (runSingleUpkeepQuery conn upkeepId)
-    upkeep <- singleRowOrColumn upkeeps
-    machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
-    companyId <- case machines of
-      [] -> throwError $ NotAllowed
-      (companyId',_) : _ -> return companyId'
-    return (companyId, snd upkeep, map snd machines)))
 
 createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
@@ -303,15 +260,6 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just machineTypesSingle ,
   schema = autocompleteSchema }
 
-upkeepTopLevelResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
-upkeepTopLevelResource = (mkResourceReaderWith prepareReaderTuple) {
-  list = \listingType -> case listingType of
-    UpkeepsAll -> upkeepListing
-    UpkeepsPlanned -> upkeepsPlannedListing ,
-  name = A.upkeep ,
-  schema = upkeepSchema ,
-  get = Just upkeepCompanyMachines }
-
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   name = A.upkeep ,
@@ -331,7 +279,7 @@ router' :: Router Dependencies Dependencies
 router' = root `compose` ((route companyResource `compose` route companyMachineResource)
                                                  `compose` route upkeepResource)
                `compose` route machineResource
-               `compose` route upkeepTopLevelResource
+               `compose` route UR.upkeepResource
                `compose` route machineTypeResource
                `compose` route employeeResource
 
