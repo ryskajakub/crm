@@ -43,23 +43,23 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompa
 
 listing :: ListHandler Dependencies
 listing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runCompaniesQuery conn
-  ask >>= (\conn -> do 
-    unsortedResult <- forM rows (\companyRow -> do
-      let companyId = sel1 companyRow
-      machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-      nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
-        nextServiceDay <- nextService machineId machine machineTypeId id
-        return nextServiceDay )
-      return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))
-    return $ sortBy (\r1 r2 -> let 
-      date1 = sel3 r1  
-      date2 = sel3 r2
-      in case (date1, date2) of
-        (date1' : _, date2' : _) -> date1' `compare` date2'
-        ([],[]) -> EQ
-        ([],_) -> GT
-        _ -> LT ) unsortedResult ))
+  conn <- ask 
+  rows <- liftIO $ runCompaniesQuery conn
+  unsortedResult <- forM rows (\companyRow -> do
+    let companyId = sel1 companyRow
+    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+    nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
+      nextServiceDay <- nextService machineId machine machineTypeId id
+      return nextServiceDay )
+    return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))
+  return $ sortBy (\r1 r2 -> let 
+    date1 = sel3 r1  
+    date2 = sel3 r2
+    in case (date1, date2) of
+      (date1' : _, date2' : _) -> date1' `compare` date2'
+      ([],[]) -> EQ
+      ([],_) -> GT
+      _ -> LT ) unsortedResult)
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
@@ -86,7 +86,4 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.companies ,
   get = Just singleCompany ,
   update = Just updateCompany ,
-  schema = companySchema }
-
-companySchema :: S.Schema UrlId () Void
-companySchema = S.withListing () $ S.unnamedSingle readMay'
+  schema = S.withListing () $ S.unnamedSingle readMay' }
