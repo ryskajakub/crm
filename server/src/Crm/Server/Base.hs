@@ -21,4 +21,4 @@ router' = root `compose` ((route companyResource `compose` route CMR.machineReso
                `compose` route employeeResource
 
 api :: Api Dependencies
-api = [(mkVersion 1 0 0, Some1 $ router')]
+api = [(mkVersion 1 0 0, Some1 router')]
