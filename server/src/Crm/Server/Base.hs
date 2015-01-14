@@ -70,6 +70,7 @@ import Crm.Server.Api.MachineResource (machineResource)
 import qualified Crm.Server.Api.UpkeepResource as UR
 import Crm.Server.Api.MachineTypeResource (machineTypeResource)
 import Crm.Server.Api.EmployeeResource (employeeResource)
+import qualified Crm.Server.Api.Company.MachineResource as CMR
 
 import Safe (readMay, minimumMay)
 
@@ -138,39 +139,6 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   insertUpkeepMachines connection upkeepId upkeepMachines
   return upkeepId
 
-addMachine :: Connection
-           -> M.Machine
-           -> Int
-           -> MT.MyEither
-           -> IO Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType = do
-  machineTypeId <- case machineType of
-    MT.MyInt id' -> return $ id'
-    MT.MyMachineType (MT.MachineType name' manufacturer, upkeepSequences) -> do
-      newMachineTypeId <- runInsertReturning
-        connection
-        machineTypesTable (Nothing, pgString name', pgString manufacturer)
-        sel1
-      let machineTypeId = head newMachineTypeId -- todo safe
-      forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
-        connection
-        upkeepSequencesTable (pgInt4 displayOrdering, pgString label, 
-          pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
-      return machineTypeId
-  let
-    M.Machine machineOperationStartDate' initialMileage mileagePerYear = machine
-  machineId <- runInsertReturning
-    connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay $ ymdToDay machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear)
-    (\(id',_, _, _,_,_) -> id')
-  return $ head machineId -- todo safe
-
-createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine,machineType) ->
-  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> 
-    liftIO $ addMachine connection newMachine companyId machineType))
-
 updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,machines,employeeId) -> let 
   employeeListToMaybe = case employeeId of
@@ -192,12 +160,6 @@ createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep
       -- todo check that the machines are belonging to this company
       const $ liftIO $ addUpkeep connection newUpkeep'))
 
-companyMachineResource :: Resource IdDependencies IdDependencies Void Void Void
-companyMachineResource = mkResourceId {
-  name = A.machines ,
-  schema = S.noListing $ S.named [] ,
-  create = Just createMachineHandler }
-
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   name = A.upkeep ,
@@ -208,7 +170,7 @@ upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   create = Just createUpkeepHandler }
 
 router' :: Router Dependencies Dependencies
-router' = root `compose` ((route companyResource `compose` route companyMachineResource)
+router' = root `compose` ((route companyResource `compose` route CMR.machineResource)
                                                  `compose` route upkeepResource)
                `compose` route machineResource
                `compose` route UR.upkeepResource
