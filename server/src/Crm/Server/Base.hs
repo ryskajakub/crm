@@ -68,6 +68,7 @@ import Crm.Server.Types
 import Crm.Server.Api.CompanyResource (companyResource)
 import Crm.Server.Api.MachineResource (machineResource)
 import qualified Crm.Server.Api.UpkeepResource as UR
+import Crm.Server.Api.MachineTypeResource (machineTypeResource)
 
 import Safe (readMay, minimumMay)
 
@@ -76,12 +77,6 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 schema' :: S.Schema Void () Void
 schema' = S.withListing () (S.named [])
-
-autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
-autocompleteSchema = S.withListing CountListing $ S.named [(
-  "autocomplete", S.listingBy (\str -> Autocomplete str)),(
-  A.byName, S.singleBy (\str -> MachineTypeByName str)),(
-  "by-id", S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
 
 employeesListing :: ListHandler Dependencies 
 employeesListing = mkListing (jsonO . someO) (const $
@@ -95,49 +90,6 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
     return $ map (\(id''',u1,u2,_) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
-
-machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
-machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
-  ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
-machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
-  let 
-    mapRow :: ((Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
-    mapRow ((m1,m2,m3),count) = ((m1, MT.MachineType m2 m3), fromIntegral count)
-    mappedRows = map mapRow rows
-  return mappedRows )
-
-updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineType, upkeepSequences) ->
-  ask >>= \(conn, sid) -> case sid of
-    MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
-      let 
-        readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
-          pgString $ MT.machineTypeManufacturer machineType)
-        condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
-      _ <- runUpdate conn machineTypesTable readToWrite condition 
-      _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
-      forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
-        runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
-          pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
-
-machineTypesSingle :: Handler MachineTypeDependencies
-machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
-  (conn, machineTypeSid) <- ask
-  let 
-    performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
-    (onEmptyResult, result) = case machineTypeSid of
-      MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
-      MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
-      MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
-  rows <- result
-  case rows of
-    (mtId, mtName, m3) : xs | null xs -> do 
-      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
-      return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences) ]
-    [] -> onEmptyResult
-    _ -> throwError NotFound)
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
@@ -251,14 +203,6 @@ companyMachineResource = mkResourceId {
   name = A.machines ,
   schema = S.noListing $ S.named [] ,
   create = Just createMachineHandler }
-
-machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
-machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
-  name = A.machineTypes ,
-  list = machineTypesListing ,
-  update = Just updateMachineType ,
-  get = Just machineTypesSingle ,
-  schema = autocompleteSchema }
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
