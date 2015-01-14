@@ -20,6 +20,10 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
+import Crm.Shared.MyMaybe
+
+import GHC.Generics
+import Data.Data
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
@@ -71,6 +75,8 @@ instance ToJSON E.Employee where
   toJSON = fromJust . showToFay
 instance ToJSON US.UpkeepSequence where
   toJSON = fromJust . showToFay
+instance (ToJSON a, Typeable a, Data a) => ToJSON (MyMaybe a) where
+  toJSON = fromJust . showToFay
 
 instance JS.JSONSchema E.Employee where
   schema = gSchema
@@ -93,4 +99,6 @@ instance JS.JSONSchema U.Upkeep where
 instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
 instance JS.JSONSchema US.UpkeepSequence where
+  schema = gSchema
+instance (JS.JSONSchema a) => JS.JSONSchema (MyMaybe a) where
   schema = gSchema

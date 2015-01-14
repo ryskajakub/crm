@@ -27,6 +27,7 @@ Library
     , Crm.Server.DB
     , Crm.Server.Helpers
     , Crm.Server.Types
+    , Crm.Shared.MyMaybe
     , Crm.Shared.Company
     , Crm.Shared.Machine
     , Crm.Shared.MachineType
