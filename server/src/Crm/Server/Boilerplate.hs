@@ -2,12 +2,6 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PackageImports #-}
-
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Server.Boilerplate where
 
@@ -100,4 +94,3 @@ instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
 instance JS.JSONSchema US.UpkeepSequence where
   schema = gSchema
-

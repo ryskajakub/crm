@@ -1,19 +1,10 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PackageImports #-}
-
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Crm.Server.Api.CompanyResource where
 
 import Opaleye.Operators ((.==))
 import Opaleye.PGTypes (pgInt4, pgString)
 import Opaleye.Manipulation (runUpdate)
 
-import "mtl" Control.Monad.Reader (ask)
+import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
 

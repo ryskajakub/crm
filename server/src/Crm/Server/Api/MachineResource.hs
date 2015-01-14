@@ -1,17 +1,8 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PackageImports #-}
-
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
 
-import "mtl" Control.Monad.Reader (ask)
+import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)

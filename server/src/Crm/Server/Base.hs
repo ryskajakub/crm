@@ -1,14 +1,3 @@
-{-# OPTIONS -fno-warn-orphans #-}
-
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE PackageImports #-}
-
-{-# LANGUAGE Arrows #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 module Crm.Server.Base where
 
 import Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
