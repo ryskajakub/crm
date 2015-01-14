@@ -69,6 +69,7 @@ import Crm.Server.Api.CompanyResource (companyResource)
 import Crm.Server.Api.MachineResource (machineResource)
 import qualified Crm.Server.Api.UpkeepResource as UR
 import Crm.Server.Api.MachineTypeResource (machineTypeResource)
+import Crm.Server.Api.EmployeeResource (employeeResource)
 
 import Safe (readMay, minimumMay)
 
@@ -77,13 +78,6 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
 schema' :: S.Schema Void () Void
 schema' = S.withListing () (S.named [])
-
-employeesListing :: ListHandler Dependencies 
-employeesListing = mkListing (jsonO . someO) (const $
-  ask >>= \conn -> do 
-    rawRows <- liftIO $ runQuery conn employeesQuery
-    let rowsMapped = map (\(eId,employeeName) -> (eId :: Int, E.Employee employeeName)) rawRows 
-    return rowsMapped )
 
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
@@ -212,12 +206,6 @@ upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   get = Just getUpkeep ,
   update = Just updateUpkeepHandler ,
   create = Just createUpkeepHandler }
-
-employeeResource :: Resource Dependencies Dependencies Void () Void
-employeeResource = mkResourceId {
-  name = A.employees ,
-  schema = S.withListing () $ S.named [] ,
-  list = const $ employeesListing }
 
 router' :: Router Dependencies Dependencies
 router' = root `compose` ((route companyResource `compose` route companyMachineResource)

@@ -19,6 +19,7 @@ Library
     , Crm.Server.Api.MachineResource
     , Crm.Server.Api.MachineTypeResource
     , Crm.Server.Api.UpkeepResource
+    , Crm.Server.Api.EmployeeResource
     , Crm.Server.Base
     , Crm.Server.Boilerplate
     , Crm.Server.DB
