@@ -71,107 +71,16 @@ import qualified Crm.Server.Api.UpkeepResource as UR
 import Crm.Server.Api.MachineTypeResource (machineTypeResource)
 import Crm.Server.Api.EmployeeResource (employeeResource)
 import qualified Crm.Server.Api.Company.MachineResource as CMR
+import qualified Crm.Server.Api.Company.UpkeepResource as UMR
 
 import Safe (readMay, minimumMay)
 
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 
-schema' :: S.Schema Void () Void
-schema' = S.withListing () (S.named [])
-
-companyUpkeepsListing :: ListHandler IdDependencies
-companyUpkeepsListing = mkListing (jsonO . someO) (const $
-  ask >>= \(conn,id') -> maybeId id' (\id'' -> do
-    rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-    return $ map (\(id''',u1,u2,_) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
-
-getUpkeep :: Handler IdDependencies
-getUpkeep = mkConstHandler (jsonO . someO) ( do
-  rows <- ask >>= \(conn, upkeepId') -> maybeId upkeepId' (\upkeepId ->
-    liftIO $ runSingleUpkeepQuery conn upkeepId)
-  let result = mapUpkeeps rows
-  singleRowOrColumn (map snd result))
-
-insertUpkeepMachines :: Connection -> Int -> [(UM.UpkeepMachine, Int)] -> IO ()
-insertUpkeepMachines connection upkeepId upkeepMachines = let
-  insertUpkeepMachine (upkeepMachine', upkeepMachineId) = do
-    _ <- runInsert
-      connection
-      upkeepMachinesTable (
-        pgInt4 upkeepId ,
-        pgString $ UM.upkeepMachineNote upkeepMachine' ,
-        pgInt4 upkeepMachineId ,
-        pgInt4 $ UM.recordedMileage upkeepMachine' )
-    return ()
-  in forM_ upkeepMachines insertUpkeepMachine
-
--- type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, Maybe (Column (Nullable PGInt4)))
-
-maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
-maybeToNullable (Just a) = toNullable a
-maybeToNullable Nothing = COL.null
-
-updateUpkeep :: Connection
-             -> Int
-             -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
-             -> IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
-  _ <- let
-    condition (upkeepId',_,_,_) = upkeepId' .== pgInt4 upkeepId
-    readToWrite _ =
-      (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId)
-    in runUpdate conn upkeepTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
-  insertUpkeepMachines conn upkeepId upkeepMachines
-  return ()
-
-addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
-          -> IO Int -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
-  upkeepIds <- runInsertReturning
-    connection
-    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, 
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId)
-    sel1
-  let upkeepId = head upkeepIds
-  insertUpkeepMachines connection upkeepId upkeepMachines
-  return upkeepId
-
-updateUpkeepHandler :: Handler IdDependencies
-updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,machines,employeeId) -> let 
-  employeeListToMaybe = case employeeId of
-    x : _ -> Just x
-    _ -> Nothing
-  upkeepTriple = (upkeep, machines, employeeListToMaybe)
-  in ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
-    liftIO $ updateUpkeep connection upkeepId upkeepTriple))
-
-createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
-  let 
-    (_,_,selectedEmployeeId) = newUpkeep
-    employeeListToMaybe = case selectedEmployeeId of
-      x : _ -> Just x
-      _ -> Nothing
-    newUpkeep' = upd3 employeeListToMaybe newUpkeep
-    in ask >>= \(connection, maybeInt) -> maybeId maybeInt (
-      -- todo check that the machines are belonging to this company
-      const $ liftIO $ addUpkeep connection newUpkeep'))
-
-upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
-upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
-  name = A.upkeep ,
-  schema = S.withListing () $ S.unnamedSingle readMay' ,
-  list = const $ companyUpkeepsListing ,
-  get = Just getUpkeep ,
-  update = Just updateUpkeepHandler ,
-  create = Just createUpkeepHandler }
-
 router' :: Router Dependencies Dependencies
 router' = root `compose` ((route companyResource `compose` route CMR.machineResource)
-                                                 `compose` route upkeepResource)
+                                                 `compose` route UMR.upkeepResource)
                `compose` route machineResource
                `compose` route UR.upkeepResource
                `compose` route machineTypeResource
