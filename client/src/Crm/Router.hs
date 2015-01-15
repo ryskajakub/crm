@@ -27,6 +27,7 @@ import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Automatic)
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
+import "fay-base" Data.Maybe (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact
@@ -42,6 +43,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data as D
+import Crm.Shared.MyMaybe
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -199,8 +201,8 @@ startRouter appVar = let
       in case maybeId of
         Just(machineTypeIdInt) -> let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
-          in fetchMachineTypeById machineTypeId (\(machineType, upkeepSequences) ->
-            modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) )
+          in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
+            modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) ) . fromJust . toMaybe)
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute

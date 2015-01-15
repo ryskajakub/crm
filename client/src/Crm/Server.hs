@@ -37,6 +37,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
+import Crm.Shared.MyMaybe
 
 data Items
 
@@ -94,23 +95,21 @@ fetchMachineTypes callback =
     noopOnError
 
 fetchMachineTypeById :: MT.MachineTypeId
-                     -> ((MT.MachineType, [US.UpkeepSequence]) -> Fay())
+                     -> (MyMaybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay())
                      -> Fay ()
 fetchMachineTypeById mtId callback = 
   JQ.ajax
     (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
-    (callback . (\(_,a,b) -> (a,b)) . head)
+    (callback)
     noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
-                 -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
+                 -> (MyMaybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
     (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName))
-    (\maybeMachineType -> case maybeMachineType of
-      [] -> callback Nothing
-      x:_ -> callback $ Just x)
+    callback
     noopOnError
 
 fetchEmployees :: ([E.Employee'] -> Fay ())

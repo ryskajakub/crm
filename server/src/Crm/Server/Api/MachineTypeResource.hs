@@ -28,6 +28,7 @@ import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSe
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Shared.MyMaybe
 
 machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -64,19 +65,19 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
           pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
 
 machineTypesSingle :: Handler MachineTypeDependencies
-machineTypesSingle = mkConstHandler (jsonO . someO) ( do 
+machineTypesSingle = mkConstHandler (jsonO . someO) (do
   (conn, machineTypeSid) <- ask
   let 
     performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
       MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
       MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
-      MachineTypeByName(mtName) -> (return [], performQuery $ Left mtName)
+      MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left mtName)
   rows <- result
   case rows of
     (mtId, mtName, m3) : xs | null xs -> do 
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
-      return [ (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences) ]
+      return $ MyJust (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences)
     [] -> onEmptyResult
     _ -> throwError NotFound)
 
