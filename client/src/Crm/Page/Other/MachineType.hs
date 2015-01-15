@@ -53,11 +53,11 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineType (machineType { MT.machineTypeName = unpack text })
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
-        then fetchMachineType (trace (show "ok") text) (\maybeTuple -> trace (show maybeTuple) $ case maybeTuple of
+        then fetchMachineType text (\maybeTuple -> case maybeTuple of
           MyJust (machineTypeId', machineType', _) -> do
             setMachineType machineType'
             setMachineTypeId $ Just machineTypeId'
-          MyNothing -> return () )
+          MyNothing -> return ())
         else return () )
       fetchMachineTypesAutocomplete
       "machine-type-autocomplete"

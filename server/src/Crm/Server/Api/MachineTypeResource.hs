@@ -62,7 +62,7 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
       _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
       forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
-          pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime) ) ))
+          pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler (jsonO . someO) (do
