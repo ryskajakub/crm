@@ -20,6 +20,7 @@ import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHan
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Api as A
+import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
 import Crm.Server.Boilerplate ()
@@ -42,14 +43,14 @@ listing = mkListing (jsonO . someO) (const $ do
     nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
       nextServiceDay <- nextService machineId machine machineTypeId id
       return nextServiceDay )
-    return $ (companyId, (uncurryN $ const C.Company) companyRow , maybeToList $ minimumMay nextDays))
+    return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> let 
     date1 = sel3 r1  
     date2 = sel3 r2
     in case (date1, date2) of
-      (date1' : _, date2' : _) -> date1' `compare` date2'
-      ([],[]) -> EQ
-      ([],_) -> GT
+      (MyJust (date1'), MyJust(date2')) -> date1' `compare` date2'
+      (MyNothing,MyNothing) -> EQ
+      (MyNothing,_) -> GT
       _ -> LT ) unsortedResult)
 
 singleCompany :: Handler IdDependencies

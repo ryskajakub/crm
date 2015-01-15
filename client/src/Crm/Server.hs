@@ -71,13 +71,6 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
 
-maybeAsList :: Maybe a -> [a]
-maybeAsList maybeA = maybe [] (\a -> [a]) maybeA
-
-listAsMaybe :: [a] -> Maybe a
-listAsMaybe [] = Nothing
-listAsMaybe (x : _) = Just x
-
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
@@ -95,21 +88,21 @@ fetchMachineTypes callback =
     noopOnError
 
 fetchMachineTypeById :: MT.MachineTypeId
-                     -> (MyMaybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay())
+                     -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ())
                      -> Fay ()
 fetchMachineTypeById mtId callback = 
   JQ.ajax
     (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
-    (callback)
+    (callback . toMaybe)
     noopOnError
 
 fetchMachineType :: Text -- ^ machine type exact match
-                 -> (MyMaybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
+                 -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   JQ.ajax
     (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName))
-    callback
+    (callback . toMaybe)
     noopOnError
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
@@ -127,7 +120,7 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
 fetchUpkeep upkeepId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId) ++ "/"))
-    (\(a,(u,u2,u3),b) -> callback(a,(u,listAsMaybe u2,u3),b))
+    (\(a,(u,u2,u3),b) -> callback(a,(u,toMaybe u2,u3),b))
     noopOnError
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
@@ -162,7 +155,7 @@ fetchFrontPageData :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay
                    -> Fay ()
 fetchFrontPageData callback = let
   lMb [] = []
-  lMb ((a,b,x) : xs) = (a,b,listToMaybe x) : lMb xs
+  lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in JQ.ajax
     (apiRoot <> pack A.companies)
     (callback . lMb . items)
@@ -211,7 +204,7 @@ updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()
 updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) callback = 
   ajax
-    (upkeep, upkeepMachines, maybeAsList maybeEmployeeId)
+    (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
     (pack $ A.companies ++ "/0/" ++ A.upkeep ++ "/" ++ (show $ U.getUpkeepId upkeepId))
     put
     (const callback)
@@ -242,7 +235,7 @@ createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
              -> Fay ()
 createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
   ajax 
-    (newUpkeep, upkeepMachines, maybeAsList maybeEmployeeId)
+    (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
     post
     (const callback)

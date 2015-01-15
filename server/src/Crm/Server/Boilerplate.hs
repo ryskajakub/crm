@@ -57,6 +57,8 @@ instance FromJSON M.Machine where
   parseJSON = fayInstance
 instance FromJSON US.UpkeepSequence where
   parseJSON = fayInstance
+instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
+  parseJSON = fayInstance
 
 -- super unsafe
 instance ToJSON D.YearMonthDay where
@@ -75,7 +77,7 @@ instance ToJSON E.Employee where
   toJSON = fromJust . showToFay
 instance ToJSON US.UpkeepSequence where
   toJSON = fromJust . showToFay
-instance (ToJSON a, Typeable a, Data a) => ToJSON (MyMaybe a) where
+instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
 instance JS.JSONSchema E.Employee where

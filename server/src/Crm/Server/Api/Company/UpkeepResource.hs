@@ -24,6 +24,7 @@ import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHan
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
+import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (maybeId, ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay')
 import Crm.Server.Boilerplate ()
@@ -89,10 +90,7 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
 
 updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,machines,employeeId) -> let 
-  employeeListToMaybe = case employeeId of
-    x : _ -> Just x
-    _ -> Nothing
-  upkeepTriple = (upkeep, machines, employeeListToMaybe)
+  upkeepTriple = (upkeep, machines, toMaybe employeeId)
   in ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
     liftIO $ updateUpkeep connection upkeepId upkeepTriple))
 

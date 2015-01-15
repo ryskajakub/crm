@@ -17,6 +17,7 @@ import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler)
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
+import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, mapUpkeeps)
 import Crm.Server.Boilerplate ()
@@ -60,4 +61,4 @@ upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
     companyId <- case machines of
       [] -> throwError NotAllowed
       (companyId',_) : _ -> return companyId'
-    return (companyId, snd upkeep, map snd machines)))
+    return (companyId, (\(a,b,c) -> (a,toMyMaybe b,c)) (snd upkeep), map snd machines)))

@@ -202,7 +202,7 @@ startRouter appVar = let
         Just(machineTypeIdInt) -> let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
-            modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) ) . fromJust . toMaybe)
+            modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) ) . fromJust) 
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute
