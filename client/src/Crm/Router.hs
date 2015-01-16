@@ -16,6 +16,7 @@ module Crm.Router (
   newMachinePhase1 ,
   newMaintenance ,
   closeUpkeep ,
+  replanUpkeep ,
   maintenances ,
   plannedUpkeeps ,
   machineTypesList ,
@@ -76,6 +77,9 @@ plannedUpkeeps = CrmRoute "planned"
 
 closeUpkeep :: U.UpkeepId -> CrmRoute
 closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId)
+
+replanUpkeep :: U.UpkeepId -> CrmRoute
+replanUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId) <> "/replan"
 
 machineTypesList :: CrmRoute
 machineTypesList = CrmRoute "other/machine-types-list" 
@@ -199,10 +203,15 @@ startRouter appVar = let
     "machine-types/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
-        Just(machineTypeIdInt) -> let
+        Just (machineTypeIdInt) -> let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
             modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) ) . fromJust) 
+        _ -> modify' D.NotFound ),(
+    "upkeeps/:id/replan", \params -> let
+      upkeepId' = parseSafely $ head params
+      in case upkeepId' of
+        Just (_) -> modify' D.NotFound
         _ -> modify' D.NotFound )]
 
 navigate :: CrmRoute

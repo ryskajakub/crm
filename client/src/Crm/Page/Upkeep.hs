@@ -41,6 +41,7 @@ plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
     th "Název firmy" ,
     th "Datum" ,
+    th "Přeplánovat" ,
     th "Uzavřít" ]
   body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
@@ -49,6 +50,10 @@ plannedUpkeeps router upkeepCompanies = let
         (companyDetail companyId)
         router ,
       td $ displayDate $ U.upkeepDate upkeep ,
+      td $ link
+        "Přeplánovat"
+        (R.replanUpkeep upkeepId)
+        router,
       td $ link
         "Uzavřít"
         (closeUpkeep upkeepId)
