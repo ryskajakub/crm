@@ -3,20 +3,16 @@ module Crm.Server.Api.Company.UpkeepResource (
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.Operators ((.==))
-import Opaleye.PGTypes (pgInt4, pgString)
-import Opaleye.Manipulation (runInsert, runInsertReturning, runUpdate, runDelete)
+import Opaleye.PGTypes (pgInt4)
+import Opaleye.Manipulation (runInsertReturning)
 import Opaleye.PGTypes (pgDay, pgBool)
-import Opaleye.Column (Column, toNullable, Nullable)
-import qualified Opaleye.Column as COL
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad (forM_)
 
 import Data.Tuple.All (sel1, upd3)
 
-import Rest.Resource (Resource, Void, schema, name, create, list, get, update, mkResourceReaderWith)
+import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHandler)
@@ -24,7 +20,6 @@ import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHan
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
-import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
 import Crm.Server.Helpers (maybeId, ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay',

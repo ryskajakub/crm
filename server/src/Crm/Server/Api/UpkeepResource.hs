@@ -4,7 +4,7 @@ module Crm.Server.Api.UpkeepResource (
 
 import Opaleye.PGTypes (pgInt4, pgString)
 import Opaleye.Operators ((.==))
-import Opaleye.Manipulation (runInsert, runInsertReturning, runUpdate, runDelete)
+import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
 import Opaleye.PGTypes (pgDay, pgBool)
 
 import Database.PostgreSQL.Simple (Connection)
