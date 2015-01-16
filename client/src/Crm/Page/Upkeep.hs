@@ -124,23 +124,31 @@ upkeepNew :: CrmRouter
           -> DP.DatePicker
           -> [UM.UpkeepMachine']
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
-          -> C.CompanyId -- ^ company id
+          -> Either C.CompanyId U.UpkeepId
           -> [E.Employee']
           -> Maybe E.EmployeeId
           -> DOMElement
-upkeepNew router appState newUpkeep datePicker notCheckedMachines machines companyId es mE = 
-  upkeepForm appState newUpkeep datePicker notCheckedMachines machines submitButton False es mE
+upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es mE = 
+  upkeepForm appState upkeep datePicker notCheckedMachines machines submitButton False es mE
     where
-      submitButton = let
-        (newUpkeepU, newUpkeepMachines) = newUpkeep
-        newUpkeepHandler = createUpkeep
-          (newUpkeepU, newUpkeepMachines, mE)
-          companyId
-          (navigate R.plannedUpkeeps router)
-        in mkSubmitButton
-          (not $ null newUpkeepMachines)
-          [G.plus , text2DOM " Naplánovat"]
-          newUpkeepHandler
+      (upkeepU, upkeepMachines) = upkeep
+      mkSubmitButton' = mkSubmitButton (not $ null upkeepMachines)
+      submitButton = case upkeepIdentification of 
+        Left (companyId) -> let
+          newUpkeepHandler = createUpkeep
+            (upkeepU, upkeepMachines, mE)
+            companyId
+            (navigate R.plannedUpkeeps router)
+          in mkSubmitButton'
+            [G.plus , text2DOM " Naplánovat"]
+            newUpkeepHandler
+        Right (upkeepId) -> let
+          replanUpkeepHandler = updateUpkeep
+            ((upkeepId, upkeepU, upkeepMachines), mE)
+            (navigate R.plannedUpkeeps router)
+          in mkSubmitButton'
+            [text2DOM "Přeplánovat"]
+            replanUpkeepHandler
 
 upkeepForm :: Var D.AppState
            -> (U.Upkeep, [UM.UpkeepMachine'])

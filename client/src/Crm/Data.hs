@@ -47,7 +47,7 @@ data NavigationState =
     upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
     notCheckedMachines :: [UM.UpkeepMachine'] , 
     upkeepDatePicker :: DP.DatePicker , 
-    companyId :: C.CompanyId ,
+    upkeepIdentification :: Either C.CompanyId U.UpkeepId,
     employees :: [E.Employee'] ,
     selectedEmployee :: Maybe E.EmployeeId } | 
   UpkeepClose {

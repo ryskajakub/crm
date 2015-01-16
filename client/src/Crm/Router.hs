@@ -105,8 +105,8 @@ startRouter appVar = let
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
-  "", const $ fetchFrontPageData (\data' ->
-    modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
+    "", const $ fetchFrontPageData (\data' ->
+      modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
     "companies/:id", \params -> let
       cId = head params
@@ -149,7 +149,7 @@ startRouter appVar = let
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
-              notCheckedUpkeepMachines (nowYMD,False) companyId employees Nothing))
+              notCheckedUpkeepMachines (nowYMD,False) (Left companyId) employees Nothing))
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -207,12 +207,18 @@ startRouter appVar = let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
             modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences) ) . fromJust) 
-        _ -> modify' D.NotFound ),(
+        _ -> modify' D.NotFound 
+  ),(
     "upkeeps/:id/replan", \params -> let
-      upkeepId' = parseSafely $ head params
-      in case upkeepId' of
-        Just (_) -> modify' D.NotFound
-        _ -> modify' D.NotFound )]
+      upkeepId'' = parseSafely $ head params
+      in case upkeepId'' of
+        Just (upkeepId') -> let
+          upkeepId = U.UpkeepId upkeepId'
+          in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
+            fetchEmployees (\employees ->
+              modify' (D.UpkeepNew (upkeep, upkeepMachines) machines [] 
+                (U.upkeepDate upkeep, False) (Right upkeepId) employees employeeId)))
+        _ -> modify' D.NotFound)]
 
 navigate :: CrmRoute
          -> CrmRouter
