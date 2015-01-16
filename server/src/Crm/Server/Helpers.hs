@@ -5,9 +5,13 @@ module Crm.Server.Helpers (
   readMay' ,
   mapUpkeeps ,
   mappedUpkeepSequences ,
+  maybeToNullable ,
   prepareReader , 
   prepareReaderIdentity ,
   prepareReaderTuple ) where
+
+import Opaleye.Column (Column, toNullable, Nullable)
+import qualified Opaleye.Column as COL
 
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT)
 import Data.Functor.Identity (runIdentity)
@@ -102,3 +106,7 @@ mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId),(_,note,m
         in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
       _ -> addUpkeep' : acc
   ) [] rows
+
+maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
+maybeToNullable (Just a) = toNullable a
+maybeToNullable Nothing = COL.null

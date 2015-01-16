@@ -205,7 +205,7 @@ updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
 updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) callback = 
   ajax
     (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-    (pack $ A.companies ++ "/0/" ++ A.upkeep ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+    (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
     put
     (const callback)
 
