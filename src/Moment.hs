@@ -21,7 +21,7 @@ data Moment
 
 -- | use CommonJS module
 requireMoment :: Moment
-requireMoment = ffi " require('moment') "
+requireMoment = ffi " (function(){var m = require('moment');m.locale('cs'); return m;})() "
 
 -- | conjure up the moment from the thin air
 browserMoment :: Moment
