@@ -34,12 +34,12 @@ import Safe (readMay)
 ymdToDay :: YMD.YearMonthDay -> Day
 ymdToDay ymd = day where 
   YMD.YearMonthDay year month day' _  = ymd
-  day = fromGregorian (toInteger year) month day'
+  day = fromGregorian (toInteger year) (month + 1) day'
 
 dayToYmd :: Day -> YMD.YearMonthDay
 dayToYmd day = ymd where
   (year, month, day') = toGregorian day
-  ymd = YMD.YearMonthDay (fromIntegral year) month day' YMD.DayPrecision
+  ymd = YMD.YearMonthDay (fromIntegral year) (month - 1) day' YMD.DayPrecision
 
 prepareReaderIdentity :: ReaderT (b, c) IO a
                       -> ReaderT c (ReaderT (b, c) IO) a
