@@ -53,12 +53,14 @@ addMachine connection machine companyId' machineType = do
           pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
       return machineTypeId
   let
-    M.Machine machineOperationStartDate' initialMileage mileagePerYear = machine
+    M.Machine machineOperationStartDate' initialMileage mileagePerYear note = machine
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId, pgDay $ ymdToDay machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear)
-    (\(id',_, _, _,_,_) -> id')
+    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId , 
+      pgDay $ ymdToDay machineOperationStartDate' ,
+      pgInt4 initialMileage, pgInt4 mileagePerYear ,
+      pgString note)
+    sel1
   return $ head machineId -- todo safe
 
 machineResource :: Resource IdDependencies IdDependencies Void Void Void

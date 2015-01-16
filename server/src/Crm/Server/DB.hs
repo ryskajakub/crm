@@ -22,7 +22,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 import Control.Arrow (returnA)
 
-import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6)
+import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
@@ -49,8 +49,8 @@ type DBBool = Column PGBool
 type CompaniesTable = (DBInt, DBText, DBText, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
 
-type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
-type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt)
+type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt, DBText)
+type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt, DBText)
 
 type MachineTypesTable = (DBInt, DBText, DBText)
 type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText)
@@ -75,13 +75,14 @@ companiesTable = Table "companies" (p6 (
   required "phone" ))
 
 machinesTable :: Table MachinesWriteTable MachinesTable
-machinesTable = Table "machines" (p6 (
+machinesTable = Table "machines" (p7 (
   optional "id" ,
   required "company_id" ,
   required "machine_type_id" ,
   required "operation_start" ,
   required "initial_mileage" ,
-  required "mileage_per_year" ))
+  required "mileage_per_year" ,
+  required "note" ))
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" $ p3 (
@@ -160,7 +161,7 @@ actualUpkeepRepetitionQuery machineTypeId' = let
   -- to find out later, if the mileage are enough so the 
   -- initial upkeep should already passed
   mileages = proc () -> do
-    (_,_,machineTypeFK,_,initialMileage,_) <- machinesQuery -< ()
+    (_,_,machineTypeFK,_,initialMileage,_,_) <- machinesQuery -< ()
     restrict -< machineTypeFK .== machineTypeId
     (_,_,_,recordedMileage) <- upkeepMachinesQuery -< ()
     returnA -< (recordedMileage, initialMileage)
@@ -181,11 +182,12 @@ runMachineUpdate :: (Int, Int, M.Machine)
 runMachineUpdate (machineId', machineTypeId, machine') connection =
   runUpdate connection machinesTable readToWrite condition
     where
-      condition (machineId,_,_,_,_,_) = machineId .== pgInt4 machineId'
-      readToWrite (_,companyId,_,_,_,_) =
+      condition (machineId,_,_,_,_,_,_) = machineId .== pgInt4 machineId'
+      readToWrite (_,companyId,_,_,_,_,_) =
         (Nothing, companyId, pgInt4 machineTypeId,
           pgDay $ ymdToDay $ M.machineOperationStartDate machine',
-          pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine')
+          pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
+          pgString $ M.note machine' )
 
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike
@@ -209,7 +211,7 @@ runCompanyWithMachinesQuery companyId connection =
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
   query = proc () -> do
-    (machinePK,_,machineTypeFK,_,_,_) <- machinesQuery -< ()
+    (machinePK,_,machineTypeFK,_,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< (machineTypeFK)
     returnA -< (mt, machinePK)
   aggregatedQuery = AGG.aggregate (p2(p3(AGG.groupBy, AGG.min, AGG.min),p1(AGG.count))) query
@@ -217,8 +219,8 @@ machineTypesWithCountQuery = let
   in orderedQuery
 
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable)
-machinesInCompanyQuery companyId = orderBy (asc(\((machineId,_,_,_,_,_),_) -> machineId)) $ proc () -> do
-  m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
+machinesInCompanyQuery companyId = orderBy (asc(\((machineId,_,_,_,_,_,_),_) -> machineId)) $ proc () -> do
+  m @ (_,companyFK,machineTypeFK,_,_,_,_) <- machinesQuery -< ()
   mt <- join machineTypesQuery -< machineTypeFK
   restrict -< (pgInt4 companyId .== companyFK)
   returnA -< (m, mt)
@@ -227,7 +229,7 @@ companyUpkeepsQuery :: Int -> Query UpkeepTable
 companyUpkeepsQuery companyId = let 
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
-    (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+    (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
     upkeep @ (_,_,closed,_) <- join upkeepQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (companyFK .== pgInt4 companyId)
@@ -239,7 +241,7 @@ companyUpkeepsQuery companyId = let
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
-  machineRow @ (machineId',_,machineTypeId,_,_,_) <- machinesQuery -< ()
+  machineRow @ (machineId',_,machineTypeId,_,_,_,_) <- machinesQuery -< ()
   machineTypesRow <- join machineTypesQuery -< (machineTypeId)
   restrict -< (case machineId of
     Just(machineId'') -> (pgInt4 machineId'' .== machineId')
@@ -250,11 +252,11 @@ machinesInCompanyByUpkeepQuery :: Int -> Query (DBInt, MachinesTable, MachineTyp
 machinesInCompanyByUpkeepQuery upkeepId = let
   companyPKQuery = limit 1 $ proc () -> do
     (_,_,machineFK,_) <- join upkeepMachinesQuery -< pgInt4 upkeepId
-    (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+    (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
     returnA -< companyFK
   in proc () -> do
     companyPK <- companyPKQuery -< ()
-    m @ (_,companyFK,machineTypeFK,_,_,_) <- machinesQuery -< ()
+    m @ (_,companyFK,machineTypeFK,_,_,_,_) <- machinesQuery -< ()
     restrict -< (companyFK .== companyPK)
     mt <- join machineTypesQuery -< machineTypeFK
     returnA -< (companyPK, m, mt)
@@ -291,7 +293,7 @@ plannedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepQuery -< ()
   restrict -< upkeepClosed .== pgBool False
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
-  (_,companyFK,_,_,_,_) <- join machinesQuery -< machineFK
+  (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
   companyRow <- join companiesQuery -< companyFK
   returnA -< (upkeepRow, companyRow)
 
@@ -303,7 +305,7 @@ groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $
 runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int)]
+runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int, String)]
 runMachinesQuery connection = runQuery connection machinesQuery
 
 runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
@@ -318,7 +320,7 @@ singleMachineTypeQuery machineTypeSid = proc () -> do
   returnA -< machineTypeNameRow
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
-  IO[((Int, Int, Int, Day, Int, Int), (Int, String, String))]
+  IO[((Int, Int, Int, Day, Int, Int, String), (Int, String, String))]
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
@@ -327,13 +329,13 @@ runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
-convertExpanded :: ((Int, Int, Int, Day, Int, Int),(Int, String, String)) 
+convertExpanded :: ((Int, Int, Int, Day, Int, Int, String),(Int, String, String)) 
                 -> (Int, M.Machine, Int, Int, MT.MachineType)
-convertExpanded = (\((mId,cId,_,mOs,m3,m4),(mtId,mtN,mtMf)) ->
-  (mId, M.Machine (dayToYmd mOs) m3 m4, cId, mtId, (MT.MachineType mtN mtMf)))
+convertExpanded = (\((mId,cId,_,mOs,m3,m4,m5),(mtId,mtN,mtMf)) ->
+  (mId, M.Machine (dayToYmd mOs) m3 m4 m5, cId, mtId, (MT.MachineType mtN mtMf)))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO[((Int, Int, Int, Day, Int, Int), (Int, String, String))]
+  -> IO[((Int, Int, Int, Day, Int, Int, String), (Int, String, String))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
@@ -409,7 +411,7 @@ nextService :: Int
             -> Int
             -> (a -> Connection) 
             -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
-nextService machineId (M.Machine operationStartDate _ mileagePerYear) 
+nextService machineId (M.Machine operationStartDate _ mileagePerYear _)
   machineTypeId getConn = ask >>= (\a -> do
   let conn = getConn a
   nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn

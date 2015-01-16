@@ -22,7 +22,8 @@ newtype MachineId = MachineId { getMachineId :: Int }
 data Machine = Machine {
   machineOperationStartDate :: YearMonthDay ,
   initialMileage :: Int ,
-  mileagePerYear :: Int }
+  mileagePerYear :: Int ,
+  note :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
@@ -31,4 +32,5 @@ newMachine :: YearMonthDay -> Machine
 newMachine ymd = Machine {
   machineOperationStartDate = ymd ,
   initialMileage = 0 ,
+  note = "" ,
   mileagePerYear = 365 * 24 }
