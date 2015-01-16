@@ -192,7 +192,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               in BD.buttonDropdown' editing buttonLabel' selectElements)) ] ,
         formRow
           "Poznámka" 
-          (editingTextarea (unpack "note") ((\str -> setMachine $ machine' { 
+          (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
