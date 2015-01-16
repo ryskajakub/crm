@@ -85,17 +85,20 @@ editingTextarea = editingInput' True
 editingInput' :: Bool -> String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
 editingInput' textarea value' onChange' editing' intMode = let
   inputAttrs = let
-    commonInputAttrs = I.mkInputAttrs {
-      I.value_ = Defined $ if intMode && (pack value' == "0")
-        then ""
-        else pack value' }
+    commonInputAttrs = if textarea
+      then I.mkInputAttrs
+      else I.mkInputAttrs {
+        I.value_ = Defined $ if intMode && (pack value' == "0")
+          then ""
+          else pack value' }
     in if editing' 
       then commonInputAttrs {
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
-  element = if textarea then I.textarea else I.input
-  in element inputNormalAttrs inputAttrs
+  in if textarea 
+    then I.textarea inputNormalAttrs inputAttrs (pack value')
+    else I.input inputNormalAttrs inputAttrs
 
 formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' intMode = 
