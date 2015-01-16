@@ -19,14 +19,14 @@ import "fay-base" Prelude
 -- | year, month, day
 data YearMonthDay = YearMonthDay { 
   year :: Int , 
-  month :: Int , -- ^ 1..12
+  month :: Int , -- ^ 0..11
   day :: Int , -- ^ 1..31
   precision :: Precision }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-data Precision = DayPrecision | MonthPrecision | YearPrecision
+data Precision = DayPrecision | MonthPrecision
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif

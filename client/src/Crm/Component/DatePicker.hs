@@ -31,7 +31,6 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
   dayPickHandler :: Int -> Int -> Int -> Text -> Fay ()
   dayPickHandler year month day precision = case precision of
     month' | month' == "Month" -> setDate' YMD.MonthPrecision
-    year' | year' == "Year" -> setDate' YMD.YearPrecision
     day' | day' == "Day" -> setDate' YMD.DayPrecision
     _ -> return ()
     where 
