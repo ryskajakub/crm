@@ -92,7 +92,7 @@ fetchMachineTypeById :: MT.MachineTypeId
                      -> Fay ()
 fetchMachineTypeById mtId callback = 
   JQ.ajax
-    (apiRoot <> (pack (A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId mtId))))
+    (apiRoot <> (pack (A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId mtId))))
     (callback . toMaybe)
     noopOnError
 
@@ -214,7 +214,7 @@ updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
                   -> Fay ()
 updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
   (machineType, upkeepSequences)
-  (pack $ A.machineTypes ++ "/by-id/" ++ (show $ MT.getMachineTypeId machineTypeId))
+  (pack $ A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId machineTypeId))
   put
   (const callback)
 

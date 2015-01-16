@@ -49,8 +49,8 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
 
 upkeepSchema :: S.Schema UrlId UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [
-  ("planned", S.listing UpkeepsPlanned) ,
-  ("single", S.singleBy readMay') ])
+  (A.planned, S.listing UpkeepsPlanned) ,
+  (A.single, S.singleBy readMay') ])
     
 upkeepCompanyMachines :: Handler IdDependencies
 upkeepCompanyMachines = mkConstHandler (jsonO . someO) (

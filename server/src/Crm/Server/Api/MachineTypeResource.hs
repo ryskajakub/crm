@@ -83,6 +83,6 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (do
 
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
-  "autocomplete", S.listingBy (\str -> Autocomplete str)),(
+  A.autocomplete, S.listingBy (\str -> Autocomplete str)),(
   A.byName, S.singleBy (\str -> MachineTypeByName str)),(
-  "by-id", S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
+  A.byId, S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
