@@ -3,7 +3,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Page.Other.MachineType (
+module Crm.Page.MachineType (
   machineTypesList ,
   machineTypePhase1Form ,
   machineTypeForm ) where

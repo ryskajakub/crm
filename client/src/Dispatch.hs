@@ -12,7 +12,7 @@ import Crm.Page.Company (companiesList, companyDetail, companyNew)
 import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
-import Crm.Page.Other.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
+import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import qualified Crm.Data as D
 
 emptyCallback :: a -> (a, Fay ())
