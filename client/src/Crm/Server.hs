@@ -24,7 +24,6 @@ module Crm.Server (
 import FFI (ffi, Automatic, Defined(Defined))
 import "fay-base" Prelude hiding (putStrLn)
 import "fay-base" Data.Text (Text, (<>), unpack, pack)
-import "fay-base" Data.Maybe (listToMaybe)
 
 import qualified JQuery as JQ
 

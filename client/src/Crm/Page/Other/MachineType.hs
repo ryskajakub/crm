@@ -22,7 +22,6 @@ import qualified HaskellReact.Tag.Input as II
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
-import Crm.Shared.MyMaybe
 
 import qualified Crm.Router as R
 import qualified Crm.Data as D
