@@ -77,7 +77,13 @@ editingCheckbox value setter editing = let
   in div' (class' "checkbox") $ label theCheckbox
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
-editingInput value' onChange' editing' intMode = let
+editingInput = editingInput' False
+
+editingTextarea :: String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
+editingTextarea = editingInput' True
+
+editingInput' :: Bool -> String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
+editingInput' textarea value' onChange' editing' intMode = let
   inputAttrs = let
     commonInputAttrs = I.mkInputAttrs {
       I.value_ = Defined $ if intMode && (pack value' == "0")
@@ -88,11 +94,12 @@ editingInput value' onChange' editing' intMode = let
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
-  in I.input inputNormalAttrs inputAttrs
+  element = if textarea then I.textarea else I.input
+  in element inputNormalAttrs inputAttrs
 
 formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
-formRow' labelText value' onChange' editing' intMode = let
-  in formRow labelText $ editingInput value' onChange' editing' intMode
+formRow' labelText value' onChange' editing' intMode = 
+  formRow labelText $ editingInput value' onChange' editing' intMode
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button

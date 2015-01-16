@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, Text, (<>))
+import "fay-base" Data.Text (fromString, pack, Text, (<>), unpack)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
@@ -31,7 +31,7 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
-  editingInput, eventInt, inputNormalAttrs, formRowCol)
+  editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea)
 import Crm.Router (CrmRouter, navigate, frontPage)
 
 saveButtonRow :: Renderable a
@@ -136,13 +136,13 @@ machineDisplay editing buttonRow appVar operationStartCalendar
         formRow'
           "Typ zařízení" 
           (MT.machineTypeName machineType) 
-          undefined
+          (const $ return ())
           False
           False ,
         formRow'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
-          undefined
+          (const $ return ())
           False
           False ,
         div' (class' "form-group") [
@@ -189,7 +189,9 @@ machineDisplay editing buttonRow appVar operationStartCalendar
                 selectAction = setMachine $ machine' { M.mileagePerYear = value }
                 in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown' editing buttonLabel' selectElements)) ]
-        ] ++ extraRow ++ [
+              in BD.buttonDropdown' editing buttonLabel' selectElements)) ] ,
+        formRow
+          "Poznámka" 
+          (editingTextarea (unpack "note") (const (return ())) editing False) ] ++ extraRow ++ [
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
