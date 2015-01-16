@@ -133,7 +133,8 @@ startRouter appVar = let
             machineTypeTuple = D.machineTypeFromPhase1 appState
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-          modify' $ D.MachineNew M.newMachine companyId machineTypeTuple maybeMachineTypeId (nowYMD, False)
+          modify' $ D.MachineNew (M.newMachine nowYMD) companyId 
+            machineTypeTuple maybeMachineTypeId (nowYMD, False)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->

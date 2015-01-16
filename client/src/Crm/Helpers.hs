@@ -13,9 +13,9 @@ import Data.Nullable (fromNullable)
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Company as C
 
+import HaskellReact
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import qualified HaskellReact.Bootstrap.Button as BTN
-import HaskellReact
 import qualified HaskellReact.Tag.Input as I
 
 import Moment

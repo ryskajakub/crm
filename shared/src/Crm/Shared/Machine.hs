@@ -6,7 +6,7 @@
 
 module Crm.Shared.Machine where
 
-import Crm.Shared.YearMonthDay (YearMonthDay(YearMonthDay), Precision(YearPrecision))
+import Crm.Shared.YearMonthDay (YearMonthDay)
 
 #ifndef FAY
 import GHC.Generics
@@ -27,8 +27,8 @@ data Machine = Machine {
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-newMachine :: Machine
-newMachine = Machine {
-  machineOperationStartDate = YearMonthDay 1970 1 1 YearPrecision ,
+newMachine :: YearMonthDay -> Machine
+newMachine ymd = Machine {
+  machineOperationStartDate = ymd ,
   initialMileage = 0 ,
   mileagePerYear = 365 * 24 }
