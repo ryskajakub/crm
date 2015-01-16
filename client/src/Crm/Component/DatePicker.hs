@@ -41,9 +41,9 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
   changeViewHandler changeViewCommand = let
     (newYear, newMonth) = case changeViewCommand of
       CI.PreviousYear           -> (pickerYear - 1, pickerMonth)
-      CI.PreviousMonth | pickerMonth == 1 -> (pickerYear - 1, 12)
+      CI.PreviousMonth | pickerMonth == 0 -> (pickerYear - 1, 11)
       CI.PreviousMonth          -> (pickerYear, pickerMonth - 1)
-      CI.NextMonth | pickerMonth == 12    -> (pickerYear + 1, 1)
+      CI.NextMonth | pickerMonth == 11    -> (pickerYear + 1, 0)
       CI.NextMonth              -> (pickerYear, pickerMonth + 1)
       CI.NextYear               -> (pickerYear + 1, pickerMonth)
     anyDay = 1

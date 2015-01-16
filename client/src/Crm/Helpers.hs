@@ -5,7 +5,7 @@
 
 module Crm.Helpers where
 
-import "fay-base" Data.Text (Text, (<>), showInt, pack, fromString)
+import "fay-base" Data.Text (Text, showInt, pack, fromString)
 import "fay-base" Prelude hiding (div, span, id)
 import FFI (Nullable, ffi, Defined (Defined))
 import Data.Nullable (fromNullable)
@@ -18,6 +18,8 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import HaskellReact
 import qualified HaskellReact.Tag.Input as I
 
+import Moment
+
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
 
@@ -25,8 +27,11 @@ parseSafely :: Text -> Maybe Int
 parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
 displayDate :: YMD.YearMonthDay -> Text
-displayDate (YMD.YearMonthDay y m d _) =
-  showInt d <> "." <> showInt m <> "." <> showInt y
+displayDate (YMD.YearMonthDay y m d precision) = let
+  dateAsMoment = dayPrecision y m d requireMoment
+  in format dateAsMoment (case precision of
+    YMD.MonthPrecision -> "MMMM YYYY"
+    _ -> "LL")
 
 showCompanyId :: C.CompanyId -> Text
 showCompanyId = showInt . C.getCompanyId
