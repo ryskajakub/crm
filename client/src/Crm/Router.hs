@@ -183,18 +183,10 @@ startRouter appVar = let
           upkeepId = U.UpkeepId upkeepId'
           in fetchUpkeep upkeepId (\(companyId,(upkeep,_,upkeepMachines),machines) -> 
             fetchEmployees (\employees -> let
-              addNotCheckedMachine acc element = let 
-                (machineId,_,_,_,_) = element
-                machineChecked = find (\(_,machineId') -> 
-                  machineId == machineId') upkeepMachines
-                in case machineChecked of
-                  Nothing -> (UM.newUpkeepMachine,machineId) : acc
-                  _ -> acc
-              notCheckedMachines = foldl addNotCheckedMachine [] machines
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
               in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-                notCheckedMachines (upkeepDate, False) upkeepId companyId employees Nothing))
+                (notCheckedMachines machines upkeepMachines) (upkeepDate, False) upkeepId companyId employees Nothing))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $
@@ -216,9 +208,20 @@ startRouter appVar = let
           upkeepId = U.UpkeepId upkeepId'
           in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
             fetchEmployees (\employees ->
-              modify' (D.UpkeepNew (upkeep, upkeepMachines) machines [] 
-                (U.upkeepDate upkeep, False) (Right upkeepId) employees employeeId)))
+              modify' (D.UpkeepNew (upkeep, upkeepMachines) machines (notCheckedMachines
+                machines upkeepMachines) (U.upkeepDate upkeep, False) (Right upkeepId) employees employeeId)))
         _ -> modify' D.NotFound)]
+
+notCheckedMachines :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
+notCheckedMachines machines upkeepMachines = let 
+  addNotCheckedMachine acc element = let 
+    (machineId,_,_,_,_) = element
+    machineChecked = find (\(_,machineId') -> 
+      machineId == machineId') upkeepMachines
+    in case machineChecked of
+      Nothing -> (UM.newUpkeepMachine,machineId) : acc
+      _ -> acc
+  in foldl addNotCheckedMachine [] machines
 
 navigate :: CrmRoute
          -> CrmRouter
