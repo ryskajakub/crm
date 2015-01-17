@@ -12,7 +12,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isNothing)
+import "fay-base" Data.Maybe (isNothing, isJust)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -57,7 +57,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
             setMachineType machineType'
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
-        else return () )
+        else return ())
       fetchMachineTypesAutocomplete
       "machine-type-autocomplete"
       (II.mkInputAttrs {
@@ -130,7 +130,8 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     countOfOneTimeSequences = (case upkeepSequences of
       [] -> 0
       xs -> foldl (\acc us -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
-    in (countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences)
+    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences)) 
+      || isJust machineTypeId
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
