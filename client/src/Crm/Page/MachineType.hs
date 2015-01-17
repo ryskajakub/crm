@@ -130,7 +130,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     countOfOneTimeSequences = (case upkeepSequences of
       [] -> 0
       xs -> foldl (\acc us -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
-    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences)) 
+    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
       || isJust machineTypeId
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
@@ -151,8 +151,12 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
               newUpkeepSequence = US.newUpkeepSequence {
                 US.displayOrdering = length upkeepSequences + 1 }
               newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
-              in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, newUpkeepSequences) })
-            buttonProps = BTN.buttonProps {
+              in D.modifyState appVar (\navig -> 
+                navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
+            disabledProps = if (isJust machineTypeId) 
+              then BTN.buttonProps { BTN.disabled = Defined True }
+              else BTN.buttonProps 
+            buttonProps = disabledProps {
               BTN.onClick = Defined $ const addUpkeepSequenceRow }
             in BTN.button' buttonProps "Přidat servisní řadu")
            (text2DOM "") ,

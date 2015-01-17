@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, Text, (<>), unpack)
+import "fay-base" Data.Text (fromString, pack, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
