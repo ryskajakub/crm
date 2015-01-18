@@ -1,7 +1,46 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 
-module Crm.Server.DB where
+module Crm.Server.DB (
+  -- tables
+  companiesTable ,
+  machinesTable ,
+  machineTypesTable ,
+  upkeepTable ,
+  upkeepMachinesTable ,
+  employeesTable ,
+  upkeepSequencesTable ,
+  -- basic queries
+  companiesQuery ,
+  machinesQuery ,
+  machineTypesQuery ,
+  upkeepsQuery ,
+  upkeepMachinesQuery ,
+  employeesQuery ,
+  upkeepSequencesQuery ,
+  -- manipulations
+  addCompany ,
+  runMachineUpdate ,
+  -- runs
+  runExpandedMachinesQuery ,
+  runCompaniesQuery ,
+  runMachinesInCompanyQuery ,
+  runCompanyWithMachinesQuery ,
+  runMachineTypesQuery' ,
+  runExpandedUpkeepsQuery ,
+  runPlannedUpkeepsQuery ,
+  runSingleUpkeepQuery ,
+  runMachinesInCompanyByUpkeepQuery ,
+  runCompanyUpkeepsQuery ,
+  -- more complex query
+  machineTypesWithCountQuery ,
+  upkeepSequencesByIdQuery ,
+  singleMachineTypeQuery ,
+  -- core computation
+  nextService ,
+  -- helpers
+  withConnection ,
+  singleRowOrColumn ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
 
@@ -126,8 +165,8 @@ machinesQuery = queryTable machinesTable
 machineTypesQuery :: Query MachineTypesTable
 machineTypesQuery = queryTable machineTypesTable
 
-upkeepQuery :: Query UpkeepTable
-upkeepQuery = queryTable upkeepTable
+upkeepsQuery :: Query UpkeepTable
+upkeepsQuery = queryTable upkeepTable
 
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
@@ -230,7 +269,7 @@ companyUpkeepsQuery companyId = let
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
     (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
-    upkeep @ (_,_,closed,_) <- join upkeepQuery -< upkeepFK
+    upkeep @ (_,_,closed,_) <- join upkeepsQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (companyFK .== pgInt4 companyId)
     returnA -< upkeep
@@ -264,13 +303,13 @@ machinesInCompanyByUpkeepQuery upkeepId = let
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_),_) -> date)) $ proc () -> do
   upkeepMachineRow @ (upkeepFK,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
-  upkeepRow @ (_,_,upkeepClosed,_) <- join upkeepQuery -< upkeepFK
+  upkeepRow @ (_,_,upkeepClosed,_) <- join upkeepsQuery -< upkeepFK
   restrict -< pgBool True .== upkeepClosed
   returnA -< (upkeepRow, upkeepMachineRow)
 
 nextMaintenanceQuery :: Int -> Query (UpkeepTable)
 nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_) -> date)) $ proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepsQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   restrict -< pgInt4 machineId .== machineFK
@@ -278,19 +317,19 @@ nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_) -> date)) 
 
 expandedUpkeepsQuery2 :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery2 upkeepId = proc () -> do
-  upkeepRow <- join upkeepQuery -< pgInt4 upkeepId
+  upkeepRow <- join upkeepsQuery -< pgInt4 upkeepId
   upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< (upkeepRow, upkeepMachineRow)
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,_,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepsQuery -< ()
   restrict -< upkeepClosed .== pgBool False
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
