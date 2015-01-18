@@ -24,7 +24,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
-import qualified Crm.Data as D
+import qualified Crm.Data.Data as D
 import Crm.Helpers (formRow', saveButtonRow', lmap, editingInput, eventInt, 
   formRow, inputNormalAttrs, rmap, formRowCol, editingCheckbox)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)

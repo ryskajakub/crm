@@ -1,7 +1,7 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Crm.Data where
+module Crm.Data.Data where
 
 import "fay-base" Prelude
 import "fay-base" Data.Var (Var, modify)

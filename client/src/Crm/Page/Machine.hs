@@ -26,7 +26,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified HaskellReact.Tag.Hyperlink as A
 
-import qualified Crm.Data as D
+import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
