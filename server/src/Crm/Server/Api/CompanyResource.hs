@@ -8,7 +8,6 @@ import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
 
-import Data.Maybe (maybeToList)
 import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel3, uncurryN)
 

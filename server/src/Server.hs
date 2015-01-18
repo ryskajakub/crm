@@ -1,5 +1,3 @@
-{-# LANGUAGE PackageImports #-}
-
 module Server (
   main, api
 ) where
@@ -9,10 +7,10 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad.Reader (ReaderT, ask, mapReaderT, runReaderT)
+import Control.Monad.Reader (ReaderT, runReaderT)
 
 import Snap.Http.Server (quickHttpServe)
-import "snap-core" Snap.Core (Snap(..))
+import Snap.Core (Snap)
 
 import Rest.Driver.Snap (apiToHandler')
 

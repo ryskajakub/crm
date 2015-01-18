@@ -344,12 +344,6 @@ groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $
 runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesQuery :: Connection -> IO[(Int, Int, Int, Day, Int, Int, String)]
-runMachinesQuery connection = runQuery connection machinesQuery
-
-runMachineTypesQuery :: Connection -> IO[(Int, String, String)]
-runMachineTypesQuery connection = runQuery connection machineTypesQuery
-
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do
   machineTypeNameRow @ (mtId',name',_) <- machineTypesQuery -< ()
@@ -461,7 +455,7 @@ nextService machineId (M.Machine operationStartDate _ mileagePerYear _)
     {- compute the next day, when the maintenance needs to be made -}
     compute :: Day -> Day
     compute lastServiceDay = let
-      yearsToNextService = fromIntegral actualUpkeepRepetition / fromIntegral mileagePerYear -- todo replace with upkeep sequence
+      yearsToNextService = fromIntegral actualUpkeepRepetition / fromIntegral mileagePerYear :: Double
       daysToNextService = truncate $ yearsToNextService * 365
       nextServiceDay = addDays daysToNextService lastServiceDay
       in nextServiceDay
