@@ -15,6 +15,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay as YMD
 
+import Crm.Data.MachineData
 import qualified Crm.Component.DatePicker as DP
 
 data NavigationState =
@@ -28,20 +29,7 @@ data NavigationState =
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
-  MachineNew {
-    machine :: M.Machine ,
-    companyId :: C.CompanyId ,
-    machineTypeTuple :: (MT.MachineType,[US.UpkeepSequence]) , 
-    maybeMachineTypeId :: Maybe MT.MachineTypeId ,
-    operationStartCalendar :: DP.DatePicker } | 
-  MachineDetail {
-    machine :: M.Machine ,
-    machineTypeTuple :: (MT.MachineType,[US.UpkeepSequence]) , 
-    machineTypeId :: MT.MachineTypeId ,
-    operationStartCalendar :: DP.DatePicker , 
-    formState :: Bool , 
-    machineId :: M.MachineId , 
-    machineNextService :: YMD.YearMonthDay } | 
+  MachineScreen MachineData |
   UpkeepNew {
     upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
     upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 

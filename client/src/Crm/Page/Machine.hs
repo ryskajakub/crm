@@ -26,6 +26,7 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified HaskellReact.Tag.Hyperlink as A
 
+import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
@@ -62,7 +63,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineDetail m mt mtid c _ id' ns -> D.MachineDetail m mt mtid c True id' ns
+          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f))) ->
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -113,8 +115,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   setMachine :: M.Machine -> Fay ()
   setMachine modifiedMachine = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      mn @ (D.MachineNew _ _ _ _ _) -> mn { D.machine = modifiedMachine }
-      md @ (D.MachineDetail _ _ _ _ _ _ _) -> md { D.machine = modifiedMachine }
+      (D.MachineScreen (MD.MachineData _ a b c)) -> 
+        (D.MachineScreen (MD.MachineData modifiedMachine a b c))
       _ -> D.navigation appState })
 
   row'' labelText value' onChange' = let
@@ -124,11 +126,10 @@ machineDisplay editing buttonRow appVar operationStartCalendar
     input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
     in row labelText input
   row' labelText value' onChange' = row'' labelText value' onChange'
-  changeNavigationState :: (D.NavigationState -> D.NavigationState) -> Fay ()
+  changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      mn @ (D.MachineNew _ _ _ _ _) -> fun mn 
-      md @ (D.MachineDetail _ _ _ _ _ _ _) -> fun md
+      (D.MachineScreen (md @ (MD.MachineData _ _ _ _))) -> D.MachineScreen $ fun md
       _ -> D.navigation appState })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
@@ -149,11 +150,11 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let
             setDatePickerDate date = changeNavigationState (\state ->
-              state { D.operationStartCalendar = 
-                lmap (const date) (D.operationStartCalendar state) })
+              state { MD.operationStartCalendar = 
+                lmap (const date) (MD.operationStartCalendar state) })
             setPickerOpenness openness = changeNavigationState (\state ->
-              state { D.operationStartCalendar = 
-                rmap (const openness) (D.operationStartCalendar state) })
+              state { MD.operationStartCalendar = 
+                rmap (const openness) (MD.operationStartCalendar state) })
             displayedDate = M.machineOperationStartDate machine'
             setDate date = let
               newMachine = machine' { M.machineOperationStartDate = date }

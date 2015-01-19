@@ -44,6 +44,8 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data.Data as D
+import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
+  , MachineDetail(MachineDetail))
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -137,8 +139,9 @@ startRouter appVar = let
             machineTypeTuple = D.machineTypeFromPhase1 appState
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-          modify' $ D.MachineNew (M.newMachine nowYMD) companyId 
-            machineTypeTuple maybeMachineTypeId (nowYMD, False)
+          modify' $ 
+            D.MachineScreen $ MachineData (M.newMachine nowYMD) machineTypeTuple (nowYMD, False)
+              (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -166,8 +169,8 @@ startRouter appVar = let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
             (\(machine, machineTypeId, _, machineTypeTuple, machineNextService) ->
-              modify' $ D.MachineDetail machine machineTypeTuple machineTypeId 
-                (nowYMD,False) False machineId machineNextService)
+              modify' $ D.MachineScreen $ MachineData machine machineTypeTuple (nowYMD,False) $
+                (Left $ MachineDetail machineId machineNextService False machineTypeId))
         _ -> modify' D.NotFound
   ),(
     "planned", const $

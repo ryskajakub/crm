@@ -14,6 +14,7 @@ import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import qualified Crm.Data.Data as D
+import qualified Crm.Data.MachineData as MD
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -29,13 +30,14 @@ main' = do
       D.CompanyDetail companyId' company' editing' machines' ->
         emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
       D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
-      D.MachineNew machine' companyId machineType maybeMachineTypeId operationStartCalendarOpen' -> 
-        (machineNew router appVar' operationStartCalendarOpen' 
-          machine' companyId machineType maybeMachineTypeId)
-      D.MachineDetail machine' machineType machineTypeId 
-        operationStartCalendarOpen' editing machineId' nextService ->
-          (machineDetail editing appVar' operationStartCalendarOpen' machine' 
-            machineTypeId machineType machineId' nextService)
+      D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar machinePageMode) -> 
+        case machinePageMode of
+          Left (MD.MachineDetail machineId nextService editing machineTypeId) ->
+            (machineDetail editing appVar' operationStartCalendar machine machineTypeId
+              machineTypeTuple machineId nextService)
+          Right (MD.MachineNew companyId maybeMachineTypeId) ->
+            machineNew router appVar' operationStartCalendar machine 
+              companyId machineTypeTuple maybeMachineTypeId
       D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' es selectedE ->
         emptyCallback (upkeepNew router appVar' upkeep' 
           pickerOpen notCheckedMachines' machines' companyId' es selectedE)
