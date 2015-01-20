@@ -46,6 +46,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data.Data as D
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
+import Crm.Data.UpkeepData
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -151,8 +152,8 @@ startRouter appVar = let
           (\companyId (_, machines) -> let
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
-            in D.UpkeepNew (U.newUpkeep nowYMD, []) machines 
-              notCheckedUpkeepMachines (nowYMD,False) (Left companyId) employees Nothing))
+            in D.UpkeepScreen $ UpkeepData (U.newUpkeep nowYMD, []) machines notCheckedUpkeepMachines
+              (nowYMD, False) employees Nothing (Right $ UpkeepNew $ Left companyId)))
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -184,12 +185,13 @@ startRouter appVar = let
       in case maybeId of
         Just(upkeepId') -> let 
           upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(companyId,(upkeep,_,upkeepMachines),machines) -> 
+          in fetchUpkeep upkeepId (\(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
             fetchEmployees (\employees -> let
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
-              in modify' $ D.UpkeepClose (upkeep',upkeepMachines) machines 
-                (notCheckedMachines machines upkeepMachines) (upkeepDate, False) upkeepId companyId employees Nothing))
+              in modify' $ D.UpkeepScreen $ UpkeepData (upkeep', upkeepMachines) machines
+                (notCheckedMachines' machines upkeepMachines) (upkeepDate, False) employees 
+                selectedEmployee (Left $ UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $
@@ -211,12 +213,13 @@ startRouter appVar = let
           upkeepId = U.UpkeepId upkeepId'
           in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
             fetchEmployees (\employees ->
-              modify' (D.UpkeepNew (upkeep, upkeepMachines) machines (notCheckedMachines
-                machines upkeepMachines) (U.upkeepDate upkeep, False) (Right upkeepId) employees employeeId)))
+              modify' $ D.UpkeepScreen $ UpkeepData (upkeep, upkeepMachines) machines
+                (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
+                employees employeeId (Right $ UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound)]
 
-notCheckedMachines :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
-notCheckedMachines machines upkeepMachines = let 
+notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
+notCheckedMachines' machines upkeepMachines = let 
   addNotCheckedMachine acc element = let 
     (machineId,_,_,_,_) = element
     machineChecked = find (\(_,machineId') -> 

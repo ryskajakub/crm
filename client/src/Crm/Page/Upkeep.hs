@@ -27,7 +27,9 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepMachine as UM
+
 import qualified Crm.Data.Data as D
+import Crm.Data.UpkeepData
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
@@ -161,27 +163,21 @@ upkeepForm :: Var D.AppState
            -> [E.Employee']
            -> Maybe E.EmployeeId
            -> DOMElement
-upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
+upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker'
     notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee = let
-  modify' :: (D.NavigationState -> D.NavigationState) -> Fay ()
+  modify' :: (UpkeepData -> UpkeepData) -> Fay ()
   modify' fun = modify appState (\appState' -> let
     newState = case D.navigation appState' of
-      uc @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> fun uc
-      uc @ (D.UpkeepNew _ _ _ _ _ _ _) -> fun uc
+      D.UpkeepScreen ud -> D.UpkeepScreen $ fun ud
     in appState' { D.navigation = newState } )
 
-  setUpkeep :: (U.Upkeep,[UM.UpkeepMachine']) -> Maybe [UM.UpkeepMachine'] -> Fay ()
-  setUpkeep upkeep notCheckedMachines' = modify appState (\appState' -> let
-    newAppState oldNavigation = let
-      newNavigation = oldNavigation { D.upkeep = upkeep }
-      newNavigation' = case notCheckedMachines' of
-        Just(x) -> newNavigation { D.notCheckedMachines = x }
-        _ -> newNavigation
-      in appState' { D.navigation = newNavigation' }
-    in case D.navigation appState' of
-      upkeepClose' @ (D.UpkeepClose _ _ _ _ _ _ _ _) -> newAppState upkeepClose'
-      upkeepNew' @ (D.UpkeepNew _ _ _ _ _ _ _) -> newAppState upkeepNew'
-      _ -> appState')
+  setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Fay ()
+  setUpkeep upkeep' = modify' (\upkeepData -> upkeepData { upkeep = upkeep' })
+
+  setNotCheckedMachines :: [UM.UpkeepMachine'] -> Fay ()
+  setNotCheckedMachines notCheckedMachines' = modify' 
+    (\upkeepData -> upkeepData { notCheckedMachines = notCheckedMachines' })
+    
   machineRow (machineId,_,_,_,machineType) = let
     findMachineById (_,id') = machineId == id'
     thisUpkeepMachine = find findMachineById upkeepMachines
@@ -209,7 +205,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
                   if machineId' == machineId
                     then newUpkeepMachine
                     else um) upkeepMachines
-                in setUpkeep (upkeep', newUpkeepMachines) Nothing 
+                in setUpkeep (upkeep', newUpkeepMachines)
               _ -> return (),
           I.defaultValue = defaultValue upkeepMachine }
         (_, Just(upkeepMachine)) -> I.mkInputProps {
@@ -225,8 +221,10 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
           upkeepMachines ,
           notCheckedMachines'' )
           (\(_,machineId') -> machineId' == machineId)
-        newUpkeep = (upkeep' , newCheckedMachines)
-        in setUpkeep newUpkeep $ Just newNotCheckedMachines
+        newUpkeep = (upkeep', newCheckedMachines)
+        in do 
+          setUpkeep newUpkeep 
+          setNotCheckedMachines newNotCheckedMachines
       link' = A.a''
         (mkAttrs{onClick = Defined $ const clickHandler})
         (A.mkAAttrs)
@@ -244,13 +242,13 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
-      modifyDatepickerDate newDate = D.modifyState appState (\navig -> navig {
-        D.upkeepDatePicker = lmap (const newDate) (D.upkeepDatePicker navig)} )
-      setPickerOpenness open = D.modifyState appState (\navig -> navig {
-        D.upkeepDatePicker = rmap (const open) (D.upkeepDatePicker navig)})
+      modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
+        upkeepDatePicker = lmap (const newDate) (upkeepDatePicker upkeepData)} )
+      setPickerOpenness open = modify' (\navig -> navig {
+        upkeepDatePicker = rmap (const open) (upkeepDatePicker navig)})
       displayedDate = U.upkeepDate upkeep'
-      setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines) Nothing
-      in DP.datePicker True upkeepDatePicker modifyDatepickerDate 
+      setDate date = setUpkeep (upkeep' { U.upkeepDate = date }, upkeepMachines)
+      in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
         setPickerOpenness displayedDate setDate ]
   employeeSelectRow = B.row [
     B.col (B.mkColProps 6) "Servisman" ,
@@ -260,7 +258,7 @@ upkeepForm appState (upkeep', upkeepMachines) upkeepDatePicker
         employeeFoundInList = lookup employeeId employees
         in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
       selectEmployeeLink eId e = let
-        selectEmployeeAction = modify' (\s -> s { D.selectedEmployee = eId })
+        selectEmployeeAction = modify' (\s -> s { selectedEmployee = eId })
         in A.a''' (click selectEmployeeAction) (pack $ E.name e)
       withNoEmployee = (Nothing, E.Employee $ unpack noEmployeeLabel) : (map (lmap Just) employees)
       elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee

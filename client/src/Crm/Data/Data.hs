@@ -16,6 +16,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay as YMD
 
 import Crm.Data.MachineData
+import Crm.Data.UpkeepData
 import qualified Crm.Component.DatePicker as DP
 
 data NavigationState =
@@ -30,23 +31,7 @@ data NavigationState =
     company :: C.Company } | 
   NotFound | 
   MachineScreen MachineData |
-  UpkeepNew {
-    upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
-    upkeepMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
-    notCheckedMachines :: [UM.UpkeepMachine'] , 
-    upkeepDatePicker :: DP.DatePicker , 
-    upkeepIdentification :: Either C.CompanyId U.UpkeepId,
-    employees :: [E.Employee'] ,
-    selectedEmployee :: Maybe E.EmployeeId } | 
-  UpkeepClose {
-    upkeep :: (U.Upkeep, [UM.UpkeepMachine']) , 
-    machines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] , 
-    notCheckedMachines :: [UM.UpkeepMachine'] , 
-    upkeepDatePicker :: DP.DatePicker ,
-    upkeepId :: U.UpkeepId ,
-    companyId :: C.CompanyId ,
-    employees :: [E.Employee'] ,
-    selectedEmployee :: Maybe E.EmployeeId } | 
+  UpkeepScreen UpkeepData |
   UpkeepHistory {
     companyUpkeeps :: [U.Upkeep''] } | 
   PlannedUpkeeps { 

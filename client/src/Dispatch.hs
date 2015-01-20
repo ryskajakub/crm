@@ -15,6 +15,7 @@ import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
+import qualified Crm.Data.UpkeepData as UD
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -38,19 +39,18 @@ main' = do
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
             machineNew router appVar' operationStartCalendar machine 
               companyId machineTypeTuple maybeMachineTypeId
-      D.UpkeepNew upkeep' machines' notCheckedMachines' pickerOpen companyId' es selectedE ->
-        emptyCallback (upkeepNew router appVar' upkeep' 
-          pickerOpen notCheckedMachines' machines' companyId' es selectedE)
+      D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
+        upkeepDatePicker employees selectedEmployee upkeepPageMode) ->
+          emptyCallback $ case upkeepPageMode of
+            Left (UD.UpkeepClose upkeepId companyId) ->
+              upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
+                machines companyId employees selectedEmployee
+            Right (UD.UpkeepNew upkeepIdentification) ->
+              upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
+                upkeepIdentification employees selectedEmployee
       D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
-      D.UpkeepClose upkeep machines notCheckedMachines upkeepDatePickerOpen 
-          upkeepId companyId employees selectedEmployee -> let
-        (u2, u3) = upkeep
-        upkeep3 = (upkeepId, u2, u3)
-        in emptyCallback
-          (upkeepDetail router appVar' upkeep3 upkeepDatePickerOpen 
-            notCheckedMachines machines companyId employees selectedEmployee)
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineTypeId machineType -> emptyCallback $ machineTypeForm appVar' machineTypeId machineType 
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
