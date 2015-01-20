@@ -112,12 +112,14 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
 machineDisplay editing buttonRow appVar operationStartCalendar
     machine' (machineType, upkeepSequences) extraRow = let
 
-  setMachine :: M.Machine -> Fay ()
-  setMachine modifiedMachine = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of
-      (D.MachineScreen (MD.MachineData _ a b c)) -> 
-        (D.MachineScreen (MD.MachineData modifiedMachine a b c))
+  changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
+  changeNavigationState fun = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of 
+      (D.MachineScreen (md @ (MD.MachineData _ _ _ _))) -> D.MachineScreen $ fun md
       _ -> D.navigation appState })
+
+  setMachine :: M.Machine -> Fay ()
+  setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
 
   row'' labelText value' onChange' = let
     inputAttrs = II.mkInputAttrs {
@@ -126,11 +128,6 @@ machineDisplay editing buttonRow appVar operationStartCalendar
     input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
     in row labelText input
   row' labelText value' onChange' = row'' labelText value' onChange'
-  changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
-  changeNavigationState fun = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of 
-      (D.MachineScreen (md @ (MD.MachineData _ _ _ _))) -> D.MachineScreen $ fun md
-      _ -> D.navigation appState })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
