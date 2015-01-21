@@ -22,6 +22,7 @@ module HaskellReact.Tag.Simple (
   , h2
   , form, form'
   , label', label
+  , nav'
 ) where
 
 import "fay-base" FFI (Automatic)
@@ -108,3 +109,6 @@ label' = constructSimple "label"
 
 label :: (Renderable a) => a -> DOMElement
 label = label' defaultAttributes
+
+nav' :: (Renderable a) => Attributes -> a -> DOMElement
+nav' = constructSimple "nav"
