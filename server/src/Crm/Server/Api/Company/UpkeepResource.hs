@@ -9,6 +9,7 @@ import Opaleye.PGTypes (pgDay, pgBool)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
+import Control.Applicative (pure, (<*>))
 
 import Data.Tuple.All (sel1, upd3)
 
@@ -20,6 +21,7 @@ import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHan
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Employee as E
 import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
@@ -33,7 +35,9 @@ companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-    return $ map (\(id''',u1,u2,_) -> (id''', U.Upkeep (dayToYmd u1) u2)) rows))
+    return $ map (\((id''',u1,u2,_),(employeeId,employeeName)) -> 
+      (id''', (U.Upkeep (dayToYmd u1) u2, 
+        toMyMaybe $ pure (\e eId -> (E.Employee e, eId)) <*> employeeName <*> employeeId ))) rows))
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do

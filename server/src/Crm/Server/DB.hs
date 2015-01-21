@@ -54,6 +54,7 @@ import qualified Opaleye.Operators as OO
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
 import Opaleye.Manipulation (runUpdate, runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
+import Opaleye.Join (leftJoin)
 
 import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
@@ -74,7 +75,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as D
 
-import Crm.Server.Helpers (ymdToDay, dayToYmd)
+import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
@@ -100,6 +101,7 @@ type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4))
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 
 type EmployeeTable = (DBInt, DBText)
+type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText))
 type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
@@ -264,7 +266,7 @@ machinesInCompanyQuery companyId = orderBy (asc(\((machineId,_,_,_,_,_,_),_) -> 
   restrict -< (pgInt4 companyId .== companyFK)
   returnA -< (m, mt)
 
-companyUpkeepsQuery :: Int -> Query UpkeepTable
+companyUpkeepsQuery :: Int -> Query (UpkeepTable, EmployeeLeftJoinTable)
 companyUpkeepsQuery companyId = let 
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
@@ -274,7 +276,9 @@ companyUpkeepsQuery companyId = let
     restrict -< (companyFK .== pgInt4 companyId)
     returnA -< upkeep
   aggregatedUpkeepsQuery = AGG.aggregate (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min)) upkeepsQuery'
-  orderedUpkeepQuery = orderBy (asc(\(_,date,_,_) -> date)) $ aggregatedUpkeepsQuery
+  joinedEmployeesQuery = leftJoin aggregatedUpkeepsQuery employeesQuery (
+    ( \((_,_,_,maybeEmployeeFK),(employeePK,_)) -> maybeEmployeeFK .== (maybeToNullable $ Just employeePK) ))
+  orderedUpkeepQuery = orderBy (asc(\((_,date,_,_),(_,_)) -> date)) $ joinedEmployeesQuery
   in orderedUpkeepQuery
 
 -- | query, that returns expanded machine type, not just the id
@@ -372,7 +376,7 @@ runExpandedMachinesQuery' :: Maybe Int -> Connection
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
-runCompanyUpkeepsQuery :: Int -> Connection -> IO[(Int, Day, Bool, Maybe Int)]
+runCompanyUpkeepsQuery :: Int -> Connection -> IO[((Int, Day, Bool, Maybe Int), (Maybe Int, Maybe String))]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
