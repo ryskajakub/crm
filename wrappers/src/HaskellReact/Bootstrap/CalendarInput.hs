@@ -26,7 +26,7 @@ type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 monthCalendar :: M.MomentObject -> PickDate -> DOMElement
 monthCalendar moment pickDate = RC.month 
   moment
-  (\y m d t -> pickDate y (m + 1) d t)
+  (\y m d t -> pickDate y m d t)
 
 data ChangeView = PreviousYear | PreviousMonth | NextMonth | NextYear
 
@@ -47,7 +47,7 @@ dayInput editing' (y,m,d,displayDatePrecision) (pickerYear, pickerMonth)
     className = Defined "form-control" ,
     HR.onClick = Defined $ const $ setPickerOpen $ not pickerOpen }
   momentLibrary = requireMoment
-  dateAsMoment = dayPrecision y (m-1) d momentLibrary
+  dateAsMoment = dayPrecision y m d momentLibrary
   dateAsText = format dateAsMoment (case displayDatePrecision of 
     Day   -> "LL"
     Month -> "MMMM YYYY" )
@@ -58,7 +58,7 @@ dayInput editing' (y,m,d,displayDatePrecision) (pickerYear, pickerMonth)
     if pickerOpen
     then [ P.popover (P.mkPopoverProps P.placementBottom 20 35) $ let
       anyDay = 1
-      momentFromParams = M.dayPrecision pickerYear (pickerMonth - 1) anyDay M.requireMoment 
+      momentFromParams = M.dayPrecision pickerYear pickerMonth anyDay M.requireMoment 
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
       changeViewLink className' changeViewCommand content = let
         normalAttrs = (class' className') {
