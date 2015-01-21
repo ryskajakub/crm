@@ -46,7 +46,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data.Data as D
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
-import Crm.Data.UpkeepData
+import qualified Crm.Data.UpkeepData as UD
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -152,8 +152,8 @@ startRouter appVar = let
           (\companyId (_, machines) -> let
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
-            in D.UpkeepScreen $ UpkeepData (U.newUpkeep nowYMD, []) machines notCheckedUpkeepMachines
-              (nowYMD, False) employees Nothing (Right $ UpkeepNew $ Left companyId)))
+            in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) machines notCheckedUpkeepMachines
+              (nowYMD, False) employees Nothing (Right $ UD.UpkeepNew $ Left companyId)))
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -189,9 +189,9 @@ startRouter appVar = let
             fetchEmployees (\employees -> let
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
-              in modify' $ D.UpkeepScreen $ UpkeepData (upkeep', upkeepMachines) machines
+              in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) (upkeepDate, False) employees 
-                selectedEmployee (Left $ UpkeepClose upkeepId companyId)))
+                selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $
@@ -213,9 +213,9 @@ startRouter appVar = let
           upkeepId = U.UpkeepId upkeepId'
           in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
             fetchEmployees (\employees ->
-              modify' $ D.UpkeepScreen $ UpkeepData (upkeep, upkeepMachines) machines
+              modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
-                employees employeeId (Right $ UpkeepNew $ Right upkeepId)))
+                employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound)]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
