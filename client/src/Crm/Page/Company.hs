@@ -17,6 +17,7 @@ import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Nav as BN
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -125,9 +126,13 @@ companyDetail editing' router var (companyId, company') machines' = let
   in main [
     companyFormSection ,
     section $ B.grid [
-      upkeepsHistoryRow ,
-      machineBoxesRow ,
-      planUpkeepRow ]]
+      BN.nav [
+        R.link "Historie servisů" (R.maintenances companyId) router ,
+        form' (class' "navbar-form") $
+          BTN.button' (BTN.buttonProps { 
+            BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
+            [G.plus, text2DOM "Naplánovat servis"]] ,
+      machineBoxesRow ]]
 
 companyForm :: Bool -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
