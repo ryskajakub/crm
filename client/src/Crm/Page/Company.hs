@@ -103,26 +103,12 @@ companyDetail editing' router var (companyId, company') machines' = let
           dd $ displayDate $ M.machineOperationStartDate machine' ] ]
   machineBoxes = map machineBox machines'
   companyFormSection = companyForm editing' var setCompany company' saveHandler
-  upkeepsHistoryRow = B.row $
-    B.col (B.mkColProps 12) $
-      B.panel $
-        span $ R.link 
-          "Historie servisů"
-          (R.maintenances companyId)
-          router
   machineBoxesRow = B.row (machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const $
         R.navigate (R.newMachinePhase1 companyId) router }
     button = BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
     in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ])
-  planUpkeepRow = B.row $
-    B.col (B.mkColProps 12) $
-      B.panel $
-        span $ R.link
-          "Naplánovat servis"
-          (R.newMaintenance companyId)
-          router
   in main [
     companyFormSection ,
     section $ B.grid [
