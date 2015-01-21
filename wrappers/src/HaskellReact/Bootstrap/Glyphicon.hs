@@ -5,21 +5,15 @@
 
 module HaskellReact.Bootstrap.Glyphicon where
 
-import "fay-base" Data.Text (Text, fromString)
+import "fay-base" Data.Text (Text, fromString, (<>))
 import "fay-base" Prelude
 
 import HaskellReact
-import HaskellReact.Bootstrap
-
-data GlyphiconProps = GlyphiconProps {
-  glyph :: Text
-}
-
-glyphicon' :: GlyphiconProps -> DOMElement
-glyphicon' props = reactBootstrap "Glyphicon" props ([]::[DOMElement])
 
 glyphicon :: Text -> DOMElement
-glyphicon glyphIdentificator = glyphicon' (GlyphiconProps glyphIdentificator)
+glyphicon glyphIdentificator = span'
+  (class'' ["glyphicon", "glyphicon-" <> glyphIdentificator]) 
+  ([]::[DOMElement])
 
 plus :: DOMElement
 plus = glyphicon "plus"
@@ -29,3 +23,15 @@ list = glyphicon "list"
 
 pencil :: DOMElement
 pencil = glyphicon "pencil"
+
+wrench :: DOMElement
+wrench = glyphicon "wrench"
+
+tasks :: DOMElement
+tasks = glyphicon "tasks"
+
+thList :: DOMElement
+thList = glyphicon "th-list"
+
+home :: DOMElement
+home = glyphicon "home"
