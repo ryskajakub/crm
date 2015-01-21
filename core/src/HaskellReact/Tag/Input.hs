@@ -8,6 +8,7 @@ module HaskellReact.Tag.Input (
   , defaultInputAttributes
   , mkInputAttrs
   , input
+  , textarea
   , InputType
   , button
   , checkbox
@@ -140,3 +141,6 @@ input' = constructDOMElement "input"
 
 input :: Attributes -> InputAttributes -> DOMElement
 input a i = input' a i ([]::[DOMElement])
+
+textarea :: Attributes -> InputAttributes -> Text -> DOMElement
+textarea aAttrs iAttrs text' = constructDOMElement "textarea" aAttrs iAttrs text'
