@@ -6,6 +6,7 @@ module Crm.Data.Data where
 import "fay-base" Prelude
 import "fay-base" Data.Var (Var, modify)
 
+import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
@@ -30,7 +31,7 @@ data NavigationState =
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {
-    companyUpkeeps :: [U.Upkeep''] } | 
+    companyUpkeeps :: [(U.Upkeep'', Maybe E.Employee')] } |
   PlannedUpkeeps { 
     plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] } |
   MachineTypeList {

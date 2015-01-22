@@ -36,8 +36,8 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
     rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
     return $ map (\((id''',u1,u2,_),(employeeId,employeeName)) -> 
-      (id''', (U.Upkeep (dayToYmd u1) u2, 
-        toMyMaybe $ pure (\e eId -> (E.Employee e, eId)) <*> employeeName <*> employeeId ))) rows))
+      ((id''', U.Upkeep (dayToYmd u1) u2), 
+        toMyMaybe $ pure (\eId e -> (eId, E.Employee e)) <*> employeeId <*> employeeName )) rows))
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
@@ -72,6 +72,6 @@ upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
   name = A.upkeep ,
   schema = S.withListing () $ S.unnamedSingle readMay' ,
-  list = const $ companyUpkeepsListing ,
+  list = const companyUpkeepsListing ,
   get = Just getUpkeep ,
   create = Just createUpkeepHandler }

@@ -158,8 +158,8 @@ startRouter appVar = let
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
         Just(companyId) -> 
-          fetchUpkeeps (C.CompanyId companyId) (\result -> let
-            ns = D.UpkeepHistory result
+          fetchUpkeeps (C.CompanyId companyId) (\data' -> let
+            ns = D.UpkeepHistory data'
             in modify' ns)
         _ -> modify' D.NotFound
   ),(
