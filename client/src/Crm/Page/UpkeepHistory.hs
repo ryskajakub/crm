@@ -23,10 +23,12 @@ upkeepHistory :: [(U.Upkeep'', Maybe E.Employee')]
 upkeepHistory upkeeps = let
   upkeepHtml ((_, upkeep), maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
-    in trace (show employeeText) [
+    in [
       B.row $ B.col (B.mkColProps 12) (h3 $ displayDate $ U.upkeepDate upkeep) ,
-      B.row $ B.col (B.mkColProps 12) (p [ strong "Servisman", text2DOM " " , 
-      text2DOM employeeText ])]
+      B.row $ B.col (B.mkColProps 12) [
+        p [ strong "Servisman", text2DOM " " , text2DOM employeeText ] ,
+        p [ strong "Uzavřeno" , text2DOM " " , 
+          text2DOM $ if U.upkeepClosed upkeep then "Ano" else "Ne" ]]]
   in div [
     h2 "Historie servisů" ,
     B.grid $ map upkeepHtml upkeeps ]
