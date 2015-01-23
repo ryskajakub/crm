@@ -33,9 +33,11 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  expandedUpkeepsByCompanyQuery ,
   machineTypesWithCountQuery ,
   upkeepSequencesByIdQuery ,
   singleMachineTypeQuery ,
+  machinesInUpkeepQuery ,
   -- core computation
   nextService ,
   -- helpers
@@ -60,13 +62,14 @@ import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
+import Control.Monad (liftM)
 import Control.Arrow (returnA)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2)
+import Data.Tuple.All (Sel1, sel1, sel2, sel4)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -277,7 +280,7 @@ companyUpkeepsQuery companyId = let
     returnA -< upkeep
   aggregatedUpkeepsQuery = AGG.aggregate (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min)) upkeepsQuery'
   joinedEmployeesQuery = leftJoin aggregatedUpkeepsQuery employeesQuery (
-    ( \((_,_,_,maybeEmployeeFK),(employeePK,_)) -> maybeEmployeeFK .== (maybeToNullable $ Just employeePK) ))
+    ( \((_,_,_,maybeEmployeeFK),(employeePK,_)) -> maybeEmployeeFK .== (maybeToNullable $ Just employeePK)))
   orderedUpkeepQuery = orderBy (asc(\((_,date,_,_),(_,_)) -> date)) $ joinedEmployeesQuery
   in orderedUpkeepQuery
 
@@ -331,6 +334,23 @@ expandedUpkeepsQuery = proc () -> do
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
+expandedUpkeepsByCompanyQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable, EmployeeLeftJoinTable)
+expandedUpkeepsByCompanyQuery companyId = let 
+  upkeepsWithMachines = proc () -> do
+    upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
+    upkeepMachineRow @ (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
+    machine <- join machinesQuery -< machineFK
+    restrict -< sel2 machine .== pgInt4 companyId
+    returnA -< (upkeepRow, upkeepMachineRow)
+  joinedEmployeesQuery = leftJoin upkeepsWithMachines employeesQuery (
+    (\(upkeepTuple,(employeePK,_)) -> 
+      (sel4 $ sel1 upkeepTuple) .== (maybeToNullable $ Just employeePK)))
+  nestedQuery = orderBy (asc(sel2 . sel1 . sel1)) joinedEmployeesQuery
+  flattenedQuery = proc () -> do
+    ((a,b),c) <- nestedQuery -< ()
+    returnA -< (a,b,c)
+  in flattenedQuery
+
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepsQuery -< ()
@@ -345,9 +365,6 @@ groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $
   AGG.aggregate (p2 (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min),
     p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
-runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
-runCompaniesQuery connection = runQuery connection companiesQuery
-
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do
   machineTypeNameRow @ (mtId',name',_) <- machineTypesQuery -< ()
@@ -355,6 +372,14 @@ singleMachineTypeQuery machineTypeSid = proc () -> do
     Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
     Left(machineTypeName) -> (name' .== pgString machineTypeName)
   returnA -< machineTypeNameRow
+
+machinesInUpkeepQuery :: Int -> Query UpkeepMachinesTable
+machinesInUpkeepQuery upkeepId = proc () -> do
+  upkeepMachine <- join upkeepMachinesQuery -< pgInt4 upkeepId
+  returnA -< (upkeepMachine)
+
+runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
+runCompaniesQuery connection = runQuery connection companiesQuery
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
   IO[((Int, Int, Int, Day, Int, Int, String), (Int, String, String))]
@@ -423,7 +448,6 @@ withConnection runQ = do
   result <- runQ conn
   close conn
   return result
-
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db

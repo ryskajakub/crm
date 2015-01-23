@@ -6,6 +6,7 @@ module Crm.Server.Helpers (
   mapUpkeeps ,
   mappedUpkeepSequences ,
   maybeToNullable ,
+  mapResultsToList ,
   prepareReader , 
   prepareReaderIdentity ,
   prepareReaderTuple ) where
@@ -16,6 +17,7 @@ import qualified Opaleye.Column as COL
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT)
 import Data.Functor.Identity (runIdentity)
 import Control.Monad.Trans.Class (lift)
+import Control.Monad (liftM)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
 
@@ -110,3 +112,24 @@ mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId),(_,note,m
 maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable (Just a) = toNullable a
 maybeToNullable Nothing = COL.null
+
+mapResultsToList :: Eq bId
+                 => (b -> bId)
+                 -> (a -> b)
+                 -> (a -> c)
+                 -> [a]
+                 -> [(b, [c])]
+mapResultsToList rowIdentification mapSingle mapMultiple rows = 
+  foldl (\bcElements aElement -> 
+    case bcElements of
+      -- first element
+      [] -> [(mapSingle aElement, [mapMultiple aElement])]
+      -- single is the same, so add the multiple element to the list
+      (bElement, cElements) : rest | rowIdentification bElement == rowIdentification newBElement ->
+        (bElement, newCElement : cElements) : rest
+          where 
+            newBElement = mapSingle aElement
+            newCElement = mapMultiple aElement
+      -- single is different, so add new single and multiple
+      _ -> (mapSingle aElement, [mapMultiple aElement]) : bcElements
+    ) [] rows

@@ -1,17 +1,19 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.PGTypes (pgInt4)
+import Opaleye.PGTypes (pgInt4, pgDay, pgBool)
 import Opaleye.Manipulation (runInsertReturning)
-import Opaleye.PGTypes (pgDay, pgBool)
+import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (pure, (<*>))
 
-import Data.Tuple.All (sel1, upd3)
+import Data.Tuple.All (sel1, sel2, sel3, sel4, upd3)
 
 import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
@@ -26,7 +28,7 @@ import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
 import Crm.Server.Helpers (maybeId, ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay',
-  maybeToNullable )
+  maybeToNullable, mapResultsToList)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -34,10 +36,18 @@ import Crm.Server.DB
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing (jsonO . someO) (const $
   ask >>= \(conn,id') -> maybeId id' (\id'' -> do
-    rows <- liftIO $ runCompanyUpkeepsQuery id'' conn
-    return $ map (\((id''',u1,u2,_),(employeeId,employeeName)) -> 
-      ((id''', U.Upkeep (dayToYmd u1) u2), 
-        toMyMaybe $ pure (\eId e -> (eId, E.Employee e)) <*> employeeId <*> employeeName )) rows))
+    rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
+    let 
+      mappedResults = mapResultsToList 
+        (sel1)
+        (\((upkeepId,date,closed,_ :: Maybe Int),_,(employeeId, employeeName)) -> let
+          in (upkeepId :: Int, U.Upkeep (dayToYmd date) closed,
+            toMyMaybe $ pure (\eId' e -> (eId' :: Int, E.Employee e)) <*> employeeId <*> employeeName))
+        (\(_,(_:: Int,note,machineId,recordedMileage),_) -> let
+          in (UM.UpkeepMachine (note) (recordedMileage), machineId :: Int))
+        rows
+    return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
+      ((upkeepId, upkeep, upkeepMachines), maybeEmployee)) mappedResults ))
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
