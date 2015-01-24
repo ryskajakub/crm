@@ -15,20 +15,24 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
 import Crm.Helpers (displayDate)
+import Crm.Router
 
-import Debug.Trace
-
-upkeepHistory :: [(U.Upkeep'', Maybe E.Employee')]
+upkeepHistory :: [(U.Upkeep', Maybe E.Employee')]
+              -> CrmRouter
               -> DOMElement
-upkeepHistory upkeeps = let
-  upkeepHtml ((_, upkeep), maybeEmployee) = let
+upkeepHistory upkeeps _ = let
+  upkeepHtml ((_, upkeep, _), maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
     in [
       B.row $ B.col (B.mkColProps 12) (h3 $ displayDate $ U.upkeepDate upkeep) ,
       B.row $ B.col (B.mkColProps 12) [
         p [ strong "Servisman", text2DOM " " , text2DOM employeeText ] ,
-        p [ strong "Uzavřeno" , text2DOM " " , 
-          text2DOM $ if U.upkeepClosed upkeep then "Ano" else "Ne" ]]]
+        p [ strong "Uzavřeno", text2DOM " " , 
+          text2DOM $ if U.upkeepClosed upkeep then "Ano" else "Ne" ]] , 
+      B.row $ B.col (B.mkColProps 4) $ B.panel [ h2 $ "Stroj" ,
+        dl [ 
+          dt "Poznámka" ,
+          dd "" ]]]
   in div [
     h2 "Historie servisů" ,
     B.grid $ map upkeepHtml upkeeps ]

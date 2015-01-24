@@ -48,7 +48,7 @@ main' = do
             Right (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
                 upkeepIdentification employees selectedEmployee
-      D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps'
+      D.UpkeepHistory upkeeps' -> emptyCallback $ upkeepHistory upkeeps' router
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
