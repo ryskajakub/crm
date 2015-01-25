@@ -20,6 +20,11 @@ html {
 .nowrap {
   white-space: nowrap;
 }
+.same-line {
+  position: absolute;
+  width: 100%;
+  top: 0px;
+}
 
 /* react calendar my additions */
 .previous-year, .previous-month, .next-month, .next-year { 

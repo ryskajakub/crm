@@ -25,14 +25,16 @@ upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.M
               -> CrmRouter
               -> DOMElement
 upkeepHistory upkeepsInfo router = let
-  upkeepHtml (_, upkeep, upkeepMachines, maybeEmployee) = let
+  upkeepHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
+    formLink = if U.upkeepClosed upkeep
+      then text2DOM ""
+      else link "Uzavřít" (closeUpkeep upkeepId) router
     in [
-      B.row $ B.col (B.mkColProps 12) (h3 $ displayDate $ U.upkeepDate upkeep) ,
-      B.row $ B.col (B.mkColProps 12) [
-        p [ strong "Servisman", text2DOM " " , text2DOM employeeText ] ,
-        p [ strong "Uzavřeno", text2DOM " " ,
-          text2DOM $ if U.upkeepClosed upkeep then "Ano" else "Ne" ]] ,
+      B.row $ B.col (B.mkColProps 12) (div' (class' "relative") [
+        p (displayDate $ U.upkeepDate upkeep) ,
+        div' (class' "same-line") $ p' (class' "text-center") [strong "Servisman: ", text2DOM employeeText] ,
+        div' (class' "same-line") $ div' (class' "text-right") formLink ]) ,
       B.row $ map (\(upkeepMachine, machineType, machineId) ->
         B.col (B.mkColProps 4) $ B.panel [ h2 $ link 
           (pack $ MT.machineTypeName machineType)

@@ -235,7 +235,7 @@ navigate :: CrmRoute
 navigate (CrmRoute route) (CrmRouter router) = BR.navigate route router
 
 link :: Renderable a
-     => Automatic a
+     => a
      -> CrmRoute
      -> CrmRouter
      -> DOMElement
