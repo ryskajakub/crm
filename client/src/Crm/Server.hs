@@ -36,6 +36,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.Direction as DIR
 import Crm.Shared.MyMaybe
 
 data Items
@@ -152,15 +153,18 @@ fetchCompany companyId callback =
     noopOnError
 
 fetchFrontPageData :: C.OrderType
+                   -> DIR.Direction
                    -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
-fetchFrontPageData order callback = let
+fetchFrontPageData order direction callback = let
   lMb [] = []
   lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "?order=" ++ (case order of
       C.CompanyName -> "CompanyName"
-      C.NextService -> "NextService" )))
+      C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
+      DIR.Asc -> "Asc"
+      DIR.Desc -> "Desc")))
     (callback . lMb . items)
     noopOnError
 

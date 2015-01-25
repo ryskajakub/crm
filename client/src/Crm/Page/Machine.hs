@@ -33,7 +33,7 @@ import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea)
-import Crm.Router (CrmRouter, navigate, frontPage)
+import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -90,7 +90,7 @@ machineNew router appState datePickerCalendar machine' companyId machineTypeTupl
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
       saveNewMachine = createMachine machine' companyId machineTypeEither 
-        (navigate (frontPage C.NextService) router)
+        (navigate defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 row :: Renderable a

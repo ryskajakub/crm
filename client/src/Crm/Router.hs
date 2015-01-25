@@ -10,6 +10,7 @@ module Crm.Router (
   CrmRouter ,
   CrmRoute ,
   frontPage ,
+  defaultFrontPage ,
   newCompany ,
   companyDetail ,
   newMachinePhase2 ,
@@ -43,19 +44,23 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Data.Data as D
+import qualified Crm.Shared.Direction as DIR
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
 import qualified Crm.Data.UpkeepData as UD
 
-import Debug.Trace
-
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
 
-frontPage :: C.OrderType -> CrmRoute
-frontPage order = CrmRoute $ "home/" <> (case order of
+defaultFrontPage :: CrmRoute
+defaultFrontPage = frontPage C.NextService DIR.Asc
+
+frontPage :: C.OrderType -> DIR.Direction -> CrmRoute
+frontPage order direction = CrmRoute $ "home/" <> (case order of
   C.CompanyName -> "CompanyName"
-  _ -> "NextService")
+  _ -> "NextService") <> "/" <> (case direction of
+  DIR.Asc -> "Asc"
+  DIR.Desc -> "Desc")
 
 newCompany :: CrmRoute
 newCompany = CrmRoute "companies/new"
@@ -112,15 +117,19 @@ startRouter appVar = let
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
     "", const $
-      fetchFrontPageData C.NextService (\data' -> modify appVar 
+      fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
         (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
-    "home/:order", \params -> let
+    "home/:order/:direction", \params -> let
       firstParam = head params
-      order = trace (show firstParam) $ if firstParam == "CompanyName"
+      secondParam = head $ tail params
+      order = if firstParam == "CompanyName"
         then C.CompanyName
         else C.NextService
-      in fetchFrontPageData order (\data' ->
+      direction = if secondParam == "Asc"
+        then DIR.Asc
+        else DIR.Desc
+      in fetchFrontPageData order direction (\data' ->
         modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
     "companies/:id", \params -> let
