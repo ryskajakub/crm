@@ -122,7 +122,7 @@ startRouter appVar = let
           appState {
             D.navigation = D.CompanyNew C.newCompany }
           )
-        _ -> return ()
+        _ -> modify' D.NotFound
   ),(
     "companies/:id/new-machine-phase1", \params ->
     withCompany
