@@ -8,11 +8,9 @@ module HaskellReact.Bootstrap.Nav (
 ) where
 
 import "fay-base" Prelude
-import "fay-base" Data.Text (Text, fromString)
-import "fay-base" FFI (Defined(Undefined, Defined))
+import "fay-base" Data.Text (fromString)
 
 import HaskellReact
-import HaskellReact.Tag.Hyperlink (a)
 
 nav :: [DOMElement] -- ^ list of links
     -> DOMElement

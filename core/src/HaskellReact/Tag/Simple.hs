@@ -6,6 +6,7 @@
 module HaskellReact.Tag.Simple (
   span, span'
   , div, div'
+  , p, p'
   , li, li'
   , ul, ul'
   , section
@@ -18,11 +19,11 @@ module HaskellReact.Tag.Simple (
   , dl
   , dt
   , dd
-  , h1
-  , h2
+  , h1 , h2, h3
   , form, form'
   , label', label
   , nav'
+  , strong
 ) where
 
 import "fay-base" FFI (Automatic)
@@ -38,6 +39,9 @@ constructSimple :: Renderable a
                 -> DOMElement
 constructSimple name attributes children = constructDOMElement name attributes (NoAttributes {}) children
 
+strong :: Renderable a => a -> DOMElement
+strong = constructSimple "strong" defaultAttributes
+
 span' :: Renderable a => Attributes -> Automatic a -> DOMElement
 span' = constructSimple "span"
 
@@ -49,6 +53,12 @@ div' = constructSimple "div"
 
 div :: Renderable a => Automatic a -> DOMElement
 div = div' defaultAttributes
+
+p' :: Renderable a => Attributes -> a -> DOMElement
+p' = constructSimple "p"
+
+p :: Renderable a => a -> DOMElement
+p = p' defaultAttributes
 
 li' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
 li' = constructSimple "li"
@@ -97,6 +107,9 @@ h1 = constructSimple "h1" defaultAttributes
 
 h2 :: (Renderable a) => Automatic a -> DOMElement
 h2 = constructSimple "h2" defaultAttributes
+
+h3 :: (Renderable a) => a -> DOMElement
+h3 = constructSimple "h3" defaultAttributes
 
 form :: (Renderable a) => Automatic a -> DOMElement
 form = constructSimple "form" defaultAttributes
