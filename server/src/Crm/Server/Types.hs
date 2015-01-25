@@ -14,3 +14,5 @@ type StringIdDependencies = (ReaderT (Connection, String) IO :: * -> *)
 type MachineTypeDependencies = (ReaderT (Connection, MachineTypeSid) IO :: * -> *)
 
 type UrlId = Either String Int 
+
+data Direction = Asc | Desc
