@@ -69,7 +69,7 @@ import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel4)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -334,21 +334,23 @@ expandedUpkeepsQuery = proc () -> do
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
-expandedUpkeepsByCompanyQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable, EmployeeLeftJoinTable)
-expandedUpkeepsByCompanyQuery companyId = let 
+expandedUpkeepsByCompanyQuery :: Int -> Query 
+  (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, EmployeeLeftJoinTable)
+expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
     upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
     upkeepMachineRow @ (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
     machine <- join machinesQuery -< machineFK
+    machineType <- join machineTypesQuery -< (sel3 machine)
     restrict -< sel2 machine .== pgInt4 companyId
-    returnA -< (upkeepRow, upkeepMachineRow)
+    returnA -< (upkeepRow, upkeepMachineRow, machineType)
   joinedEmployeesQuery = leftJoin upkeepsWithMachines employeesQuery (
-    (\(upkeepTuple,(employeePK,_)) -> 
+    (\(upkeepTuple,(employeePK,_)) ->
       (sel4 $ sel1 upkeepTuple) .== (maybeToNullable $ Just employeePK)))
   nestedQuery = orderBy (asc(sel2 . sel1 . sel1)) joinedEmployeesQuery
   flattenedQuery = proc () -> do
-    ((a,b),c) <- nestedQuery -< ()
-    returnA -< (a,b,c)
+    ((a,b,c),d) <- nestedQuery -< ()
+    returnA -< (a,b,c,d)
   in flattenedQuery
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)

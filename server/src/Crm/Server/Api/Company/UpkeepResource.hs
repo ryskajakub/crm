@@ -24,6 +24,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.MachineType as MT
 import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
@@ -40,14 +41,16 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
     let 
       mappedResults = mapResultsToList 
         (sel1)
-        (\((upkeepId,date,closed,_ :: Maybe Int),_,(employeeId, employeeName)) -> let
-          in (upkeepId :: Int, U.Upkeep (dayToYmd date) closed,
+        (\((upkeepId,date,closed,_ :: Maybe Int),_,_,(employeeId, employeeName)) -> 
+          (upkeepId :: Int, U.Upkeep (dayToYmd date) closed,
             toMyMaybe $ pure (\eId' e -> (eId' :: Int, E.Employee e)) <*> employeeId <*> employeeName))
-        (\(_,(_:: Int,note,machineId,recordedMileage),_) -> let
-          in (UM.UpkeepMachine (note) (recordedMileage), machineId :: Int))
+        (\(_,(_:: Int,note,_ :: Int,recordedMileage),
+          (_ :: Int,name',manufacturer),_) -> let
+          machineType' = MT.MachineType name' manufacturer
+          in (UM.UpkeepMachine (note) (recordedMileage), machineType'))
         rows
     return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
-      ((upkeepId, upkeep, upkeepMachines), maybeEmployee)) mappedResults ))
+      (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
 
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
