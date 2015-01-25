@@ -118,7 +118,7 @@ startRouter appVar = let
   in fmap CrmRouter $ BR.startRouter [(
     "", const $
       fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
-        (\appState -> appState { D.navigation = D.FrontPage data' }))
+        (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }))
   ),(
     "home/:order/:direction", \params -> let
       firstParam = head params
@@ -130,7 +130,8 @@ startRouter appVar = let
         then DIR.Asc
         else DIR.Desc
       in fetchFrontPageData order direction (\data' ->
-        modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
+        modify appVar (\appState -> appState { D.navigation = 
+          D.FrontPage (order, direction) data' }))
   ),(
     "companies/:id", \params -> let
       cId = head params

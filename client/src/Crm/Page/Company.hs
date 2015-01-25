@@ -23,6 +23,8 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.Direction as DIR
+
 import qualified Crm.Data.Data as D
 import Crm.Component.Editable (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany)
@@ -30,14 +32,35 @@ import qualified Crm.Router as R
 import Crm.Helpers (displayDate)
 
 companiesList :: R.CrmRouter
+              -> C.OrderType
+              -> DIR.Direction
               -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)]
               -> DOMElement
-companiesList router companies' = let
+companiesList router orderType direction companies' = let
+
+  mkOrderingLink :: C.OrderType -> DIR.Direction -> DOMElement -> DOMElement
+  mkOrderingLink orderType' direction' icon = 
+    span' (click $ R.navigate (R.frontPage orderType' direction') router) icon
+
+  (companyNameOrdering, nextServiceOrdering) = case (orderType, direction) of
+    (C.CompanyName, DIR.Asc) -> 
+      (mkOrderingLink C.CompanyName DIR.Desc G.sortByAlphabet ,
+        mkOrderingLink C.NextService DIR.Asc G.sort)
+    (C.CompanyName, DIR.Desc) -> 
+      (mkOrderingLink C.CompanyName DIR.Asc G.sortByAlphabetAlt ,
+        mkOrderingLink C.NextService DIR.Asc G.sort)
+    (C.NextService, DIR.Asc) -> 
+      (mkOrderingLink C.CompanyName DIR.Asc G.sort,
+        mkOrderingLink C.NextService DIR.Desc G.sortByAlphabet)
+    (C.NextService, DIR.Desc) -> 
+      (mkOrderingLink C.CompanyName DIR.Asc G.sort,
+        mkOrderingLink C.NextService DIR.Asc G.sortByAlphabetAlt)
+
   head' =
     thead $ tr [
-      th "Název firmy" , 
+      th [text2DOM "Název firmy ", companyNameOrdering ], 
       th "Označení (Provozovna)" , 
-      th "Další servis" ]
+      th [text2DOM "Další servis ", nextServiceOrdering ]]
   body = tbody $ map (\idCompany ->
     let (id', company', nextServiceDate) = idCompany
     in tr [

@@ -14,12 +14,14 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay as YMD
+import qualified Crm.Shared.Direction as DIR
 
 import Crm.Data.MachineData
 import Crm.Data.UpkeepData
 
 data NavigationState =
   FrontPage {
+    ordering :: (C.OrderType, DIR.Direction) ,
     companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] } | 
   CompanyDetail {
     companyId :: C.CompanyId , 

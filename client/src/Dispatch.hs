@@ -27,7 +27,8 @@ main' = do
   router <- startRouter appVar'
   _ <- subscribeAndRead appVar' (\appState -> let
     newElementAndCallback = case D.navigation appState of
-      D.FrontPage data' -> emptyCallback (companiesList router data')
+      D.FrontPage ordering data' -> emptyCallback 
+        (companiesList router (fst ordering) (snd ordering) data')
       D.NotFound -> emptyCallback $ notFound
       D.CompanyDetail companyId' company' editing' machines' ->
         emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
