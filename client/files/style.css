@@ -25,6 +25,9 @@ html {
   width: 100%;
   top: 0px;
 }
+.upkeep-row {
+  margin-top: 24px;
+}
 
 /* react calendar my additions */
 .previous-year, .previous-month, .next-month, .next-year { 

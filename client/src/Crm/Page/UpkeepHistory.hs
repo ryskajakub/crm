@@ -30,8 +30,9 @@ upkeepHistory upkeepsInfo router = let
     (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
       then ("label-success", "Uzavřený", text2DOM "")
       else ("label-warning", "Naplánovaný", link "Uzavřít" (closeUpkeep upkeepId) router)
+    marginTop = class' ("upkeep-row")
     in [
-      B.row $ B.col (B.mkColProps 12) (div' (class' "relative") [
+      B.row' marginTop $ B.col (B.mkColProps 12) (div' (class' "relative") [
         p [text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep, 
           span' (class'' ["label", labelClass]) labelText ] ,
         div' (class' "same-line") $ p' (class' "text-center") [strong "Servisman: ", text2DOM employeeText] ,
