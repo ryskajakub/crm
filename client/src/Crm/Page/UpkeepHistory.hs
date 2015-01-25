@@ -14,15 +14,17 @@ import qualified HaskellReact.Bootstrap as B
 
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Employee as E
 import Crm.Helpers (displayDate)
 import Crm.Router
 
-upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType)], Maybe E.Employee')]
+upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
+                 Maybe E.Employee')]
               -> CrmRouter
               -> DOMElement
-upkeepHistory upkeepsInfo _ = let
+upkeepHistory upkeepsInfo router = let
   upkeepHtml (_, upkeep, upkeepMachines, maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
     in [
@@ -31,8 +33,11 @@ upkeepHistory upkeepsInfo _ = let
         p [ strong "Servisman", text2DOM " " , text2DOM employeeText ] ,
         p [ strong "Uzavřeno", text2DOM " " ,
           text2DOM $ if U.upkeepClosed upkeep then "Ano" else "Ne" ]] ,
-      B.row $ map (\(upkeepMachine, machineType) ->
-        B.col (B.mkColProps 4) $ B.panel [ h2 $ pack $ MT.machineTypeName machineType ,
+      B.row $ map (\(upkeepMachine, machineType, machineId) ->
+        B.col (B.mkColProps 4) $ B.panel [ h2 $ link 
+          (pack $ MT.machineTypeName machineType)
+          (machineDetail machineId)
+          router ,
           dl [
             dt "Poznámka" ,
             dd $ pack $ UM.upkeepMachineNote upkeepMachine ,

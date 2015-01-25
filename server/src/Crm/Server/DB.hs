@@ -335,7 +335,7 @@ expandedUpkeepsQuery = proc () -> do
   returnA -< (upkeepRow, upkeepMachineRow)
 
 expandedUpkeepsByCompanyQuery :: Int -> Query 
-  (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, EmployeeLeftJoinTable)
+  (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, DBInt, EmployeeLeftJoinTable)
 expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
     upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
@@ -343,14 +343,14 @@ expandedUpkeepsByCompanyQuery companyId = let
     machine <- join machinesQuery -< machineFK
     machineType <- join machineTypesQuery -< (sel3 machine)
     restrict -< sel2 machine .== pgInt4 companyId
-    returnA -< (upkeepRow, upkeepMachineRow, machineType)
+    returnA -< (upkeepRow, upkeepMachineRow, machineType, sel1 machine)
   joinedEmployeesQuery = leftJoin upkeepsWithMachines employeesQuery (
     (\(upkeepTuple,(employeePK,_)) ->
       (sel4 $ sel1 upkeepTuple) .== (maybeToNullable $ Just employeePK)))
   nestedQuery = orderBy (asc(sel2 . sel1 . sel1)) joinedEmployeesQuery
   flattenedQuery = proc () -> do
-    ((a,b,c),d) <- nestedQuery -< ()
-    returnA -< (a,b,c,d)
+    ((a,b,c,d),e) <- nestedQuery -< ()
+    returnA -< (a,b,c,d,e)
   in flattenedQuery
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)

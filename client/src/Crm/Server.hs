@@ -123,8 +123,8 @@ fetchUpkeep upkeepId callback =
     noopOnError
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType)], Maybe E.Employee')] 
-                -> Fay ()) -- ^ callback
+             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
+                Maybe E.Employee')] -> Fay ()) -- ^ callback
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
