@@ -27,6 +27,8 @@ Library
     , Crm.Server.DB
     , Crm.Server.Helpers
     , Crm.Server.Types
+
+    , Crm.Shared.Direction
     , Crm.Shared.MyMaybe
     , Crm.Shared.Company
     , Crm.Shared.Machine
@@ -37,6 +39,7 @@ Library
     , Crm.Shared.YearMonthDay
     , Crm.Shared.Employee
     , Crm.Shared.UpkeepSequence
+
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3
