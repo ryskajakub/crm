@@ -6,7 +6,7 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import "fay-base" Data.Text (fromString, pack, showInt)
+import "fay-base" Data.Text (fromString, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 
 import HaskellReact
@@ -27,12 +27,13 @@ upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.M
 upkeepHistory upkeepsInfo router = let
   upkeepHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
-    formLink = if U.upkeepClosed upkeep
-      then text2DOM ""
-      else link "Uzavřít" (closeUpkeep upkeepId) router
+    (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
+      then ("label-success", "Uzavřený", text2DOM "")
+      else ("label-warning", "Naplánovaný", link "Uzavřít" (closeUpkeep upkeepId) router)
     in [
       B.row $ B.col (B.mkColProps 12) (div' (class' "relative") [
-        p (displayDate $ U.upkeepDate upkeep) ,
+        p [text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep, 
+          span' (class'' ["label", labelClass]) labelText ] ,
         div' (class' "same-line") $ p' (class' "text-center") [strong "Servisman: ", text2DOM employeeText] ,
         div' (class' "same-line") $ div' (class' "text-right") formLink ]) ,
       B.row $ map (\(upkeepMachine, machineType, machineId) ->

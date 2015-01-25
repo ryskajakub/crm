@@ -25,7 +25,6 @@ module Crm.Router (
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" FFI (Automatic)
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
 import "fay-base" Data.Maybe (fromJust)
