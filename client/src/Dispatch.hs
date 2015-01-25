@@ -13,6 +13,7 @@ import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
+import Crm.Page.NotFound (notFound)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
@@ -27,7 +28,7 @@ main' = do
   _ <- subscribeAndRead appVar' (\appState -> let
     newElementAndCallback = case D.navigation appState of
       D.FrontPage data' -> emptyCallback (companiesList router data')
-      D.NotFound -> undefined
+      D.NotFound -> emptyCallback $ notFound
       D.CompanyDetail companyId' company' editing' machines' ->
         emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
       D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
