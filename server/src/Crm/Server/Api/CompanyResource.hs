@@ -28,13 +28,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 
-import Safe (minimumMay)
-
-data OrderType = CompanyName | NextService
-  deriving Show
-
-orderReprs :: [(String, OrderType)]
-orderReprs = [("company-name", CompanyName), ("next-service", NextService)]
+import Safe (minimumMay, readMay)
 
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
@@ -42,7 +36,7 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompa
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing (jsonO . someO) (\(_,rawOrder,_) -> do
-  let order = (rawOrder >>= (\orderString -> fmap snd $ find ((orderString ==) . fst) orderReprs))
+  let order = (rawOrder >>= readMay)
   conn <- ask 
   rows <- liftIO $ runCompaniesQuery conn
   unsortedResult <- forM rows (\companyRow -> do
@@ -54,9 +48,9 @@ listing = mkOrderedListing (jsonO . someO) (\(_,rawOrder,_) -> do
     return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
-    Just CompanyName ->
+    Just C.CompanyName ->
       (C.companyName $ sel2 r1) `compare` (C.companyName $ sel2 r2)
-    Just NextService ->
+    Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (MyJust (date1'), MyJust(date2')) -> date1' `compare` date2'
         (MyNothing,MyNothing) -> EQ

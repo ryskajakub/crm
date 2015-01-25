@@ -16,6 +16,9 @@ import "fay-base" Prelude
 
 newtype CompanyId = CompanyId { getCompanyId :: Int }
 
+data OrderType = CompanyName | NextService
+  deriving (Show, Read)
+
 data Company = Company {
   companyName :: String , 
   companyPlant :: String ,

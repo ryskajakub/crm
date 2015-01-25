@@ -89,7 +89,8 @@ machineNew router appState datePickerCalendar machine' companyId machineTypeTupl
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither (navigate frontPage router)
+      saveNewMachine = createMachine machine' companyId machineTypeEither 
+        (navigate (frontPage C.NextService) router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 row :: Renderable a

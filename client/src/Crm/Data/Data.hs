@@ -56,6 +56,6 @@ modifyState var fun = modify var (\appState' -> appState' { navigation = fun $ n
 
 defaultAppState :: AppState
 defaultAppState = AppState {
-  navigation = FrontPage [] ,
+  navigation = NotFound ,
   machineTypeFromPhase1 = (MT.newMachineType,[]) ,
   maybeMachineIdFromPhase1 = Nothing }

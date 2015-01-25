@@ -68,7 +68,7 @@ companyNew :: R.CrmRouter
            -> DOMElement
 companyNew router var company' = let
   editing' = True
-  saveHandler = createCompany company' (R.navigate R.frontPage router)
+  saveHandler = createCompany company' (R.navigate (R.frontPage C.NextService) router)
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
@@ -85,7 +85,7 @@ companyDetail :: Bool -- ^ is the page editing mode
 companyDetail editing' router var (companyId, company') machines' = let
   saveHandler = do
     updateCompany companyId company'
-    R.navigate R.frontPage router
+    R.navigate (R.frontPage C.NextService) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }

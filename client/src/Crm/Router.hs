@@ -47,11 +47,15 @@ import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
 import qualified Crm.Data.UpkeepData as UD
 
+import Debug.Trace
+
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
 
-frontPage :: CrmRoute
-frontPage = CrmRoute ""
+frontPage :: C.OrderType -> CrmRoute
+frontPage order = CrmRoute $ "home/" <> (case order of
+  C.CompanyName -> "CompanyName"
+  _ -> "NextService")
 
 newCompany :: CrmRoute
 newCompany = CrmRoute "companies/new"
@@ -107,8 +111,17 @@ startRouter appVar = let
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
-    "", const $ fetchFrontPageData (\data' ->
-      modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
+    "", const $
+      fetchFrontPageData C.NextService (\data' -> modify appVar 
+        (\appState -> appState { D.navigation = D.FrontPage data' }))
+  ),(
+    "home/:order", \params -> let
+      firstParam = head params
+      order = trace (show firstParam) $ if firstParam == "CompanyName"
+        then C.CompanyName
+        else C.NextService
+      in fetchFrontPageData order (\data' ->
+        modify appVar (\appState -> appState { D.navigation = D.FrontPage data' }))
   ),(
     "companies/:id", \params -> let
       cId = head params

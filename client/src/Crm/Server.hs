@@ -151,13 +151,16 @@ fetchCompany companyId callback =
     callback
     noopOnError
 
-fetchFrontPageData :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
+fetchFrontPageData :: C.OrderType
+                   -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
-fetchFrontPageData callback = let
+fetchFrontPageData order callback = let
   lMb [] = []
   lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in JQ.ajax
-    (apiRoot <> pack A.companies)
+    (apiRoot <> (pack $ A.companies ++ "?order=" ++ (case order of
+      C.CompanyName -> "CompanyName"
+      C.NextService -> "NextService" )))
     (callback . lMb . items)
     noopOnError
 
