@@ -12,6 +12,8 @@ import Control.Monad (forM)
 
 import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3, uncurryN)
+import qualified Data.Text.ICU as I
+import Data.Text (pack)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update )
@@ -61,7 +63,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
-      orderingByDirection $ (C.companyName $ sel2 r1) `compare` (C.companyName $ sel2 r2)
+      orderingByDirection $ I.compare [] (pack $ C.companyName $ sel2 r1) (pack $ C.companyName $ sel2 r2)
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (MyJust (date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
