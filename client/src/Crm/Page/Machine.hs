@@ -193,5 +193,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRow ++ [
+        row
+          "Fotka" 
+          "fotka"  ,
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
