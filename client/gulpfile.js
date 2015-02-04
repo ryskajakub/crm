@@ -43,6 +43,11 @@ gulp.task('copy-bootstrap', function () {
     .pipe(gulp.dest('build/bootstrap'));
 });
 
+gulp.task('copy-jasny', function () {
+  return gulp.src(['bower_components/jasny-bootstrap/dist/**'])
+    .pipe(gulp.dest('build/jasny'));
+});
+
 gulp.task('copy-jquery', function () {
   return gulp.src(['bower_components/jquery/dist/jquery.js'])
     .pipe(gulp.dest('build/'));
