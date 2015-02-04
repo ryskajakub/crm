@@ -4,36 +4,35 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Input (
-  InputAttributes(..)
-  , defaultInputAttributes
-  , mkInputAttrs
-  , input
-  , textarea
-  , InputType
-  , button
-  , checkbox
-  , color
-  , date
-  , datetime
-  , datetimeLocal
-  , email
-  , file
-  , hidden
-  , image
-  , month
-  , number
-  , password
-  , radio
-  , range
-  , reset
-  , search
-  , submit
-  , tel
-  , text
-  , time
-  , url
-  , week
-) where
+  InputAttributes(..) ,
+  defaultInputAttributes ,
+  mkInputAttrs ,
+  input ,
+  textarea ,
+  InputType ,
+  button ,
+  checkbox ,
+  color ,
+  date ,
+  datetime ,
+  datetimeLocal ,
+  email ,
+  file ,
+  hidden ,
+  image ,
+  month ,
+  number ,
+  password ,
+  radio ,
+  range ,
+  reset ,
+  search ,
+  submit ,
+  tel ,
+  text ,
+  time ,
+  url ,
+  week ) where
 
 import "fay-base" FFI
 import "fay-base" Prelude
@@ -121,8 +120,8 @@ data InputAttributes = InputAttributes {
   defaultValue :: Defined Text , 
   checked :: Defined Text , 
   onChange :: Defined (SyntheticEvent -> Fay ()) ,
-  disabled_ :: Defined Text
-}
+  disabled_ :: Defined Text ,
+  name :: Defined Text }
 
 mkInputAttrs :: InputAttributes
 mkInputAttrs = defaultInputAttributes
@@ -134,7 +133,8 @@ defaultInputAttributes = InputAttributes {
   checked = Undefined ,
   onChange = Undefined ,
   defaultValue = Undefined ,
-  disabled_ = Undefined }
+  disabled_ = Undefined ,
+  name = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
 input' = constructDOMElement "input"
