@@ -10,12 +10,13 @@ import Crm.Server.Api.MachineTypeResource (machineTypeResource)
 import Crm.Server.Api.EmployeeResource (employeeResource)
 import qualified Crm.Server.Api.Company.MachineResource as CMR
 import qualified Crm.Server.Api.Company.UpkeepResource as UMR
+import qualified Crm.Server.Api.Machine.PhotoResource as MPR
 
 
 router' :: Router Dependencies Dependencies
 router' = root `compose` ((route companyResource `compose` route CMR.machineResource)
                                                  `compose` route UMR.upkeepResource)
-               `compose` route machineResource
+               `compose` (route machineResource `compose` route MPR.photoResource)
                `compose` route UR.upkeepResource
                `compose` route machineTypeResource
                `compose` route employeeResource

@@ -20,6 +20,7 @@ module Crm.Server.DB (
   upkeepSequencesQuery ,
   -- manipulations
   addCompany ,
+  addMachinePhoto ,
   runMachineUpdate ,
   -- runs
   runExpandedMachinesQuery ,
@@ -54,7 +55,7 @@ import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==), (.&&), (.||), restrict, lower, (.<))
 import qualified Opaleye.Operators as OO
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
-import Opaleye.Manipulation (runUpdate, runInsertReturning)
+import Opaleye.Manipulation (runUpdate, runInsertReturning, runInsert)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 
@@ -70,6 +71,8 @@ import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4)
+import Data.ByteString.Lazy (ByteString)
+import Data.ByteString.Lazy.Char8 (unpack)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -80,14 +83,17 @@ import qualified Crm.Shared.YearMonthDay as D
 
 import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeToNullable)
 
-import qualified Opaleye.Internal.Column as C
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
+import Opaleye.PGTypes (literalColumn)
+import Opaleye.Column (Column)
+import qualified Opaleye.Internal.Column as C
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8
 type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
+type DBByteA = Column PGByteA
 
 type CompaniesTable = (DBInt, DBText, DBText, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
@@ -108,6 +114,13 @@ type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText)
 type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
+
+type MachinePhotoTable = (DBInt, DBByteA)
+
+machinePhotosTable :: Table MachinePhotoTable MachinePhotoTable
+machinePhotosTable = Table "machine_photos" $ p2 (
+  required "id" ,
+  required "data" )
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" (p6 (
@@ -450,6 +463,19 @@ withConnection runQ = do
   result <- runQ conn
   close conn
   return result
+
+addMachinePhoto :: Connection
+                -> Int
+                -> ByteString
+                -> IO ()
+addMachinePhoto connection machineId byteString = do
+  runInsert connection machinePhotosTable (pgInt4 machineId, pgByteA byteString)
+  return ()
+  
+data PGByteA
+
+pgByteA :: ByteString -> Column PGByteA
+pgByteA = literalColumn . HPQ.OtherLit . unpack
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
