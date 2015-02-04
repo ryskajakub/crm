@@ -29,6 +29,12 @@ html {
   margin-top: 24px;
 }
 
+/* jasny */
+.fileinput-preview {
+  width: 200px;
+  height: 150px;
+}
+
 /* react calendar my additions */
 .previous-year, .previous-month, .next-month, .next-year { 
   position: absolute;

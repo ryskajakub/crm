@@ -18,6 +18,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
+import qualified HaskellReact.Jasny as J
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -195,6 +196,6 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             M.note = str } ) <=< eventString) editing False) ] ++ extraRow ++ [
         row
           "Fotka" 
-          "fotka"  ,
+           J.fileUpload ,
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
