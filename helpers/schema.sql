@@ -1,3 +1,8 @@
+drop table machine_photos;
+create table machine_photos (
+  id serial ,
+  data varchar (1000000) );
+
 drop table companies;
 create table companies (
   id serial , 

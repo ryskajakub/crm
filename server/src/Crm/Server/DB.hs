@@ -115,7 +115,7 @@ type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type MachinePhotoTable = (DBInt, DBByteA)
+type MachinePhotoTable = (DBInt, DBText)
 
 machinePhotosTable :: Table MachinePhotoTable MachinePhotoTable
 machinePhotosTable = Table "machine_photos" $ p2 (
@@ -469,7 +469,7 @@ addMachinePhoto :: Connection
                 -> ByteString
                 -> IO ()
 addMachinePhoto connection machineId byteString = do
-  runInsert connection machinePhotosTable (pgInt4 machineId, pgByteA byteString)
+  runInsert connection machinePhotosTable (pgInt4 machineId, pgString $ unpack byteString)
   return ()
   
 data PGByteA
