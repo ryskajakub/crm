@@ -10,6 +10,7 @@ module Crm.Server.DB (
   upkeepMachinesTable ,
   employeesTable ,
   upkeepSequencesTable ,
+  machinePhotosTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,
@@ -18,6 +19,7 @@ module Crm.Server.DB (
   upkeepMachinesQuery ,
   employeesQuery ,
   upkeepSequencesQuery ,
+  machinePhotosQuery ,
   -- manipulations
   addCompany ,
   addMachinePhoto ,
@@ -115,9 +117,9 @@ type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type MachinePhotoTable = (DBInt, DBText)
+type MachinePhotosTable = (DBInt, DBText)
 
-machinePhotosTable :: Table MachinePhotoTable MachinePhotoTable
+machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
   required "id" ,
   required "data" )
@@ -173,6 +175,9 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "repetition" ,
   required "machine_type_id" ,
   required "one_time" )
+
+machinePhotosQuery :: Query MachinePhotosTable
+machinePhotosQuery = queryTable machinePhotosTable
 
 companiesQuery :: Query CompaniesTable
 companiesQuery = queryTable companiesTable

@@ -1,6 +1,6 @@
 drop table machine_photos;
 create table machine_photos (
-  id serial ,
+  id integer ,
   data varchar (1000000) );
 
 drop table companies;
