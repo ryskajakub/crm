@@ -3,15 +3,16 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Api (
-  companies, companiesClient
-  , machines, machinesClient
-  , upkeep, upkeepsClient
-  , planned
-  , machineTypes
-  , single
-  , autocomplete
-  , byName, byId
-  , employees ) where
+  companies, companiesClient ,
+  machines, machinesClient ,
+  upkeep, upkeepsClient ,
+  photos ,
+  planned ,
+  machineTypes ,
+  single ,
+  autocomplete ,
+  byName, byId ,
+  employees ) where
 
 #ifndef FAY
 import "base" Data.Char
@@ -35,6 +36,9 @@ upkeep = "upkeeps"
 
 employees :: String
 employees = "employees"
+
+photos :: String
+photos = "photos"
 
 planned :: String
 planned = "planned"

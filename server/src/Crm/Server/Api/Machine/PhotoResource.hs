@@ -16,7 +16,7 @@ import Crm.Server.Helpers (maybeId)
 
 photoResource :: Resource IdDependencies IdDependencies Void Void Void
 photoResource = mkResourceId {
-  name = A.machines ,
+  name = A.photos ,
   schema = S.noListing $ S.named [] ,
   create = Just addPhotoHandler }
 
