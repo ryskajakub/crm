@@ -20,6 +20,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Shared.MyMaybe
 
 import GHC.Generics
@@ -57,6 +58,8 @@ instance FromJSON M.Machine where
   parseJSON = fayInstance
 instance FromJSON US.UpkeepSequence where
   parseJSON = fayInstance
+instance FromJSON PM.PhotoMeta where
+  parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
@@ -80,6 +83,8 @@ instance ToJSON US.UpkeepSequence where
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
+instance JS.JSONSchema PM.PhotoMeta where
+  schema = gSchema
 instance JS.JSONSchema E.Employee where
   schema = gSchema
 instance JS.JSONSchema C.Company where

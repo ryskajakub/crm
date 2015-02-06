@@ -23,6 +23,7 @@ Library
     , Crm.Server.Api.Company.MachineResource
     , Crm.Server.Api.Company.UpkeepResource
     , Crm.Server.Api.Machine.PhotoResource
+    , Crm.Server.Api.PhotoMetaResource
     , Crm.Server.Base
     , Crm.Server.Boilerplate
     , Crm.Server.DB
@@ -40,6 +41,7 @@ Library
     , Crm.Shared.YearMonthDay
     , Crm.Shared.Employee
     , Crm.Shared.UpkeepSequence
+    , Crm.Shared.PhotoMeta
 
   Build-depends:
       base >= 4.6 && < 4.8

@@ -12,7 +12,7 @@ module Crm.Server.DB (
   employeesTable ,
   upkeepSequencesTable ,
   machinePhotosTable ,
-  photoDataTable ,
+  photosMetaTable ,
   photosTable ,
   -- basic queries
   companiesQuery ,

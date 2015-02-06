@@ -7,6 +7,7 @@ module Crm.Shared.Api (
   machines, machinesClient ,
   upkeep, upkeepsClient ,
   photos ,
+  photoMeta ,
   planned ,
   machineTypes ,
   single ,
@@ -39,6 +40,9 @@ employees = "employees"
 
 photos :: String
 photos = "photos"
+
+photoMeta :: String
+photoMeta = "photo-meta"
 
 planned :: String
 planned = "planned"
