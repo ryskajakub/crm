@@ -43,6 +43,7 @@ module Crm.Server.DB (
   upkeepSequencesByIdQuery ,
   singleMachineTypeQuery ,
   machinesInUpkeepQuery ,
+  machinePhotosByMachineId ,
   -- core computation
   nextService ,
   -- helpers
@@ -120,7 +121,7 @@ type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type MachinePhotosTable = (DBInt, DBText)
+type MachinePhotosTable = (DBInt, DBByteA)
 
 machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
@@ -211,6 +212,11 @@ join tableQuery = proc id' -> do
   table <- tableQuery -< ()
   restrict -< sel1 table .== id'
   returnA -< table
+
+machinePhotosByMachineId :: Int -> Query (DBInt)
+machinePhotosByMachineId machineId = proc () -> do
+  (machinePhotoId,_) <- join machinePhotosQuery -< (pgInt4 machineId)
+  returnA -< (machinePhotoId)
 
 upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
