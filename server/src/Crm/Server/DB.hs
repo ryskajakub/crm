@@ -12,6 +12,8 @@ module Crm.Server.DB (
   employeesTable ,
   upkeepSequencesTable ,
   machinePhotosTable ,
+  photoDataTable ,
+  photosTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,
@@ -121,10 +123,24 @@ type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type MachinePhotosTable = (DBInt, DBByteA)
+type PhotosMetaTable = (DBInt, DBText)
+
+type PhotosTable = (DBInt, DBByteA)
+
+type MachinePhotosTable = (DBInt, DBInt)
+
+photosMetaTable :: Table PhotosMetaTable PhotosMetaTable
+photosMetaTable = Table "photos_meta" $ p2 (
+  required "photo_id" ,
+  required "mime_type" )
 
 machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
+  required "photo_id" ,
+  required "machine_id" )
+
+photosTable :: Table PhotosTable PhotosTable
+photosTable = Table "photos" $ p2 (
   required "id" ,
   required "data" )
 
@@ -481,7 +497,7 @@ withConnection runQ = do
 getMachinePhoto :: Connection
                 -> IO ByteString
 getMachinePhoto connection = do
-  let q = " select data from machine_photos "
+  let q = " select data from photos "
   result <- query_ connection q
   return $ fromOnly $ head $ result
 
@@ -490,7 +506,7 @@ addMachinePhoto :: Connection
                 -> ByteString
                 -> IO [Int]
 addMachinePhoto connection machineId photo = do
-  let q = " insert into machine_photos(data) values (?) returning id "
+  let q = " insert into photos(data) values (?) returning id "
   newIds <- query connection q (Only $ Binary photo)
   let ints = map (\(Only id) -> id) newIds
   return ints

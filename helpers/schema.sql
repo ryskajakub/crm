@@ -3,8 +3,8 @@ create table photos (
   id serial ,
   data bytea );
 
-drop table photo_data;
-create table photo_data (
+drop table photos_meta;
+create table photos_meta (
   photo_id integer ,
   mime_type varchar (500) );
 
