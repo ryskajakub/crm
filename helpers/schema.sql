@@ -1,7 +1,17 @@
-drop table machine_photos;
-create table machine_photos (
+drop table photos;
+create table photos (
   id serial ,
   data bytea );
+
+drop table photo_data;
+create table photo_data (
+  photo_id integer ,
+  mime_type varchar (500) );
+
+drop table machine_photos;
+create table machine_photos (
+  photo_id integer ,
+  machine_id integer );
 
 drop table companies;
 create table companies (

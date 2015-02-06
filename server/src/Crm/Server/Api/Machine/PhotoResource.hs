@@ -32,7 +32,7 @@ addPhotoHandler = mkInputHandler (fileI . someI . jsonO . someO) (\photo -> do
   (connection, maybeMachineIdInt) <- ask
   newIds <- maybeId maybeMachineIdInt (\machineId ->
     liftIO $ addMachinePhoto connection machineId photo)
-  singleRowOrColumn newIds )
+  singleRowOrColumn newIds)
 
 listPhotoHandler :: ListHandler IdDependencies
 listPhotoHandler = mkListing (jsonO . someO) (const $
