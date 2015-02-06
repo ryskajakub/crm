@@ -1,7 +1,7 @@
 drop table machine_photos;
 create table machine_photos (
-  id integer ,
-  data varchar (1000000) );
+  id serial ,
+  data bytea );
 
 drop table companies;
 create table companies (

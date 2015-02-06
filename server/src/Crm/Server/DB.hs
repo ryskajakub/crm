@@ -1,5 +1,6 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Crm.Server.DB (
   -- tables
@@ -20,6 +21,7 @@ module Crm.Server.DB (
   employeesQuery ,
   upkeepSequencesQuery ,
   machinePhotosQuery ,
+  getMachinePhoto ,
   -- manipulations
   addCompany ,
   addMachinePhoto ,
@@ -47,7 +49,8 @@ module Crm.Server.DB (
   withConnection ,
   singleRowOrColumn ) where
 
-import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close)
+import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
+  Only(..), Binary(..), returning, query_ )
 
 import Opaleye.QueryArr (Query, QueryArr)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
@@ -65,7 +68,7 @@ import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
-import Control.Monad (liftM)
+import Control.Monad (liftM, forM)
 import Control.Arrow (returnA)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7)
@@ -469,13 +472,22 @@ withConnection runQ = do
   close conn
   return result
 
+getMachinePhoto :: Connection
+                -> IO ByteString
+getMachinePhoto connection = do
+  let q = " select data from machine_photos "
+  result <- query_ connection q
+  return $ fromOnly $ head $ result
+
 addMachinePhoto :: Connection
                 -> Int
                 -> ByteString
-                -> IO ()
-addMachinePhoto connection machineId byteString = do
-  runInsert connection machinePhotosTable (pgInt4 machineId, pgString $ unpack byteString)
-  return ()
+                -> IO [Int]
+addMachinePhoto connection machineId photo = do
+  let q = " insert into machine_photos(data) values (?) returning id "
+  newIds <- query connection q (Only $ Binary photo)
+  let ints = map (\(Only id) -> id) newIds
+  return ints
   
 data PGByteA
 
