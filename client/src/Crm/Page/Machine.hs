@@ -33,10 +33,10 @@ import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
-  getFileList, fileListLength, fileListElem, fileType, fileName )
+  getFileList, fileListElem, fileType, fileName, fileContents)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
 saveButtonRow :: Renderable a
@@ -206,8 +206,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               file <- fileListElem 0 files
               name <- fileName file
               type' <- fileType file
-              putStrLn $ unpack name
-              putStrLn $ unpack type'
+              uploadPhotoData file (M.MachineId 1) (const $ return ())
             imageUploadLabel = "Přidej fotku"
             in div [
               J.fileUpload ,

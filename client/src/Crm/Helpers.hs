@@ -24,6 +24,7 @@ import qualified JQuery as JQ
 
 data FileList
 data File
+data FileContents
 
 getFileList :: JQ.JQuery -> Fay FileList
 getFileList = ffi " %1['prop']('files') "
@@ -39,6 +40,17 @@ fileType = ffi " %1['type'] "
 
 fileName :: File -> Fay Text
 fileName = ffi " %1['name'] "
+
+fileContents :: File 
+             -> (FileContents -> Fay ())
+             -> Fay ()
+fileContents = ffi "\
+\ (function () {\
+  \ var reader = new FileReader(); \
+  \ reader.onload = function (theFile) { %2(reader.result) }; \
+  \ reader.readAsBinaryString(%1); \
+\ })() \ 
+\ "
 
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "

@@ -9,6 +9,7 @@ module Crm.Server (
   updateMachine , 
   updateCompany ,
   updateMachineType , 
+  uploadPhotoData ,
   fetchMachine , 
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
@@ -33,11 +34,14 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.Photo as P
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
 import Crm.Shared.MyMaybe
+
+import Crm.Helpers (FileContents, File)
 
 data Items
 
@@ -246,3 +250,17 @@ createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
     post
     (const callback)
+
+uploadPhotoData :: File
+                -> M.MachineId
+                -> (P.PhotoId -> Fay ())
+                -> Fay ()
+uploadPhotoData fileContents machineId callback =
+  JQ.ajax' $ JQ.defaultAjaxSettings {
+    JQ.success = Defined callback ,
+    JQ.data' = Defined fileContents ,
+    JQ.url = Defined $ apiRoot <> pack (A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++
+      "/" ++ A.photos) ,
+    JQ.type' = Defined post ,
+    JQ.processData = Defined False ,
+    JQ.contentType = Defined $ pack "application/x-www-form-urlencoded" }
