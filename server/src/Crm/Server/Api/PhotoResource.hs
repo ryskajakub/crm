@@ -16,7 +16,8 @@ import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
 import Crm.Server.Types
-import Crm.Server.DB (addMachinePhoto, machinePhotosQuery, singleRowOrColumn, getMachinePhoto)
+import Crm.Server.DB (addMachinePhoto, machinePhotosQuery, singleRowOrColumn, getMachinePhoto, 
+  photoMetaQuery)
 import Crm.Server.Helpers (maybeId, readMay', prepareReaderTuple)
 
 photoResource :: Resource Dependencies IdDependencies UrlId Void Void
@@ -27,6 +28,10 @@ photoResource = (mkResourceReaderWith prepareReaderTuple) {
 
 getPhotoHandler :: Handler IdDependencies
 getPhotoHandler = mkConstHandler (fileO . someO) (do
-  photo <- ask >>= (\(conn, photoId') -> maybeId photoId' (\photoId ->
-    liftIO $ getMachinePhoto conn ))
-  return (photo, "image/jpeg"))
+  (conn, photoId') <- ask
+  photoId <- maybeId photoId' (\photoId -> return photoId)
+  photo <- liftIO $ getMachinePhoto conn
+  photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoId)
+  photoMeta <- singleRowOrColumn photoMetas
+  let (_, mimeType) = photoMeta :: (Int, String)
+  return (photo, mimeType))

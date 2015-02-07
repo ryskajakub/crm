@@ -46,6 +46,7 @@ module Crm.Server.DB (
   singleMachineTypeQuery ,
   machinesInUpkeepQuery ,
   machinePhotosByMachineId ,
+  photoMetaQuery ,
   -- core computation
   nextService ,
   -- helpers
@@ -196,6 +197,12 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "machine_type_id" ,
   required "one_time" )
 
+photosQuery :: Query PhotosTable
+photosQuery = queryTable photosTable
+
+photosMetaQuery :: Query PhotosMetaTable
+photosMetaQuery = queryTable photosMetaTable
+
 machinePhotosQuery :: Query MachinePhotosTable
 machinePhotosQuery = queryTable machinePhotosTable
 
@@ -233,6 +240,11 @@ machinePhotosByMachineId :: Int -> Query (DBInt)
 machinePhotosByMachineId machineId = proc () -> do
   (machinePhotoId,_) <- join machinePhotosQuery -< (pgInt4 machineId)
   returnA -< (machinePhotoId)
+
+photoMetaQuery :: Int -> Query PhotosMetaTable
+photoMetaQuery photoId = proc () -> do
+  result <- join photosMetaQuery -< pgInt4 photoId
+  returnA -< result
 
 upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
