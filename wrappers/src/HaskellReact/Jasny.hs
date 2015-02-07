@@ -7,7 +7,7 @@ module HaskellReact.Jasny where
 
 import "fay-base" FFI (Defined(Defined))
 import "fay-base" Data.Text (fromString, Text)
-import "fay-base" Prelude hiding (div)
+import "fay-base" Prelude hiding (div, id)
 
 import HaskellReact
 import HaskellReact.Tag.Input (file, input, mkInputAttrs, name, type_)
@@ -31,6 +31,8 @@ fileUpload = constructDOMElement "div" (class'' ["fileinput", "fileinput-new"]) 
     span' (class'' ["btn", "btn-default", "btn-file"]) [
       span' (class' "fileinput-new") "Select image" ,
       span' (class' "fileinput-exists") "Change" ,
-      input mkAttrs (mkInputAttrs { 
+      input (mkAttrs {
+          id = Defined "file-upload"
+        }) (mkInputAttrs { 
         type_ = file ,
-        name = Defined $ "..." })]]]
+        name = Defined $ "file-upload" })]]]

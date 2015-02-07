@@ -8,6 +8,8 @@ import "fay-base" Data.Text (Text, unpack)
 import "fay-base" FFI (ffi)
 import "fay-base" Prelude
 
+data DOMEventTarget
+
 data SyntheticEvent
 data SyntheticMouseEvent
 
@@ -23,6 +25,9 @@ preventDefault = ffi " %1['preventDefault']() "
 
 stopPropagation :: (AnyEvent a) => a -> Fay ()
 stopPropagation = ffi " %1['stopPropagation']() "
+
+target :: (AnyEvent a) => a -> Fay DOMEventTarget
+target = ffi " %1['target'] "
 
 getType :: SyntheticMouseEvent -> Fay Text
 getType = ffi " %1['type'] "
