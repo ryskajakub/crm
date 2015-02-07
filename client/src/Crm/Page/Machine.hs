@@ -196,6 +196,15 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             M.note = str } ) <=< eventString) editing False) ] ++ extraRow ++ [
         row
           "Fotka" 
-           J.fileUpload ,
+          (let 
+            imageUploadHandler = return ()
+            imageUploadLabel = "Přidej fotku"
+            in div [
+              J.fileUpload ,
+              BTN.button'
+                (BTN.buttonProps {
+                  BTN.bsStyle = Defined "primary" ,
+                  BTN.onClick = Defined $ const imageUploadHandler })
+                imageUploadLabel ]) ,
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
