@@ -10,6 +10,7 @@ module Crm.Server (
   updateCompany ,
   updateMachineType , 
   uploadPhotoData ,
+  uploadPhotoMeta ,
   fetchMachine , 
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
@@ -35,6 +36,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Photo as P
+import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
@@ -264,3 +266,13 @@ uploadPhotoData fileContents machineId callback =
     JQ.type' = Defined post ,
     JQ.processData = Defined False ,
     JQ.contentType = Defined $ pack "application/x-www-form-urlencoded" }
+
+uploadPhotoMeta :: PM.PhotoMeta
+                -> P.PhotoId
+                -> Fay ()
+                -> Fay ()
+uploadPhotoMeta photoMeta photoId callback = ajax
+  photoMeta
+  (pack $ A.photoMeta ++ "/" ++ (show $ P.getPhotoId photoId))
+  put
+  (const callback)

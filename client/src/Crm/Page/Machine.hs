@@ -28,12 +28,13 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.PhotoMeta as PM
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine, uploadPhotoData)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
   getFileList, fileListElem, fileType, fileName, fileContents)
@@ -206,7 +207,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               file <- fileListElem 0 files
               name <- fileName file
               type' <- fileType file
-              uploadPhotoData file (M.MachineId 1) (const $ return ())
+              uploadPhotoData file (M.MachineId 1) (\photoId ->
+                uploadPhotoMeta (PM.PhotoMeta $ unpack type') photoId (return ()))
             imageUploadLabel = "Přidej fotku"
             in div [
               J.fileUpload ,
