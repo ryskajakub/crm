@@ -20,6 +20,26 @@ import qualified HaskellReact.Tag.Input as I
 
 import Moment
 
+import qualified JQuery as JQ
+
+data FileList
+data File
+
+getFileList :: JQ.JQuery -> Fay FileList
+getFileList = ffi " %1['prop']('files') "
+
+fileListLength :: FileList -> Fay Int
+fileListLength = ffi " %1['length'] "
+
+fileListElem :: Int -> FileList -> Fay File
+fileListElem = ffi " %2[%1] "
+
+fileType :: File -> Fay Text
+fileType = ffi " %1['type'] "
+
+fileName :: File -> Fay Text
+fileName = ffi " %1['name'] "
+
 parseInt :: Text -> Nullable Int
 parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === 'number' && !isNaN(int)) ? int : null; return ret; })() "
 

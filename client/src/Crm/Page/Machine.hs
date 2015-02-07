@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, Text, (<>))
+import "fay-base" Data.Text (fromString, pack, Text, (<>), unpack)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
@@ -19,13 +19,15 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny as J
+import qualified HaskellReact.Tag.Hyperlink as A
+
+import qualified JQuery as JQ
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
-import qualified HaskellReact.Tag.Hyperlink as A
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
@@ -33,7 +35,8 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
-  editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea)
+  editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
+  getFileList, fileListLength, fileListElem, fileType, fileName )
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
 saveButtonRow :: Renderable a
@@ -197,14 +200,21 @@ machineDisplay editing buttonRow appVar operationStartCalendar
         row
           "Fotka" 
           (let 
-            imageUploadHandler = return ()
+            imageUploadHandler = const $ do
+              fileUpload <- JQ.select "#file-upload"
+              files <- getFileList fileUpload
+              file <- fileListElem 0 files
+              name <- fileName file
+              type' <- fileType file
+              putStrLn $ unpack name
+              putStrLn $ unpack type'
             imageUploadLabel = "Přidej fotku"
             in div [
               J.fileUpload ,
               BTN.button'
                 (BTN.buttonProps {
                   BTN.bsStyle = Defined "primary" ,
-                  BTN.onClick = Defined $ const imageUploadHandler })
+                  BTN.onClick = Defined imageUploadHandler })
                 imageUploadLabel ]) ,
         div' (class' "form-group") buttonRow ]
   in (elements, return ())
