@@ -20,6 +20,7 @@ import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny as J
 import qualified HaskellReact.Tag.Hyperlink as A
+import HaskellReact.Bootstrap.Carousel (carousel)
 
 import qualified JQuery as JQ
 
@@ -217,5 +218,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
                   BTN.bsStyle = Defined "primary" ,
                   BTN.onClick = Defined imageUploadHandler })
                 imageUploadLabel ]) ,
-        div' (class' "form-group") buttonRow ]
+        div' (class' "form-group") buttonRow ,
+        row
+          "Fotky"
+          (carousel "my-carousel" []) ]
   in (elements, return ())

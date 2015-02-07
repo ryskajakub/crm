@@ -3,6 +3,12 @@ html {
   overflow-y: scroll;
 }
 
+/* my carousel */
+#my-carousel {
+  width: 500px;
+  height: 500px;
+  background-color: blue; }
+
 .inline {
   display: inline-block;
   width: 400px;
