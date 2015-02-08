@@ -30,7 +30,7 @@ getPhotoHandler :: Handler IdDependencies
 getPhotoHandler = mkConstHandler (fileO . someO) (do
   (conn, photoId') <- ask
   photoId <- maybeId photoId' (\photoId -> return photoId)
-  photo <- liftIO $ getMachinePhoto conn
+  photo <- liftIO $ getMachinePhoto conn photoId
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoId)
   photoMeta <- singleRowOrColumn photoMetas
   let (_, mimeType) = photoMeta :: (Int, String)

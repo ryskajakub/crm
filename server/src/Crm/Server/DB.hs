@@ -238,8 +238,9 @@ join tableQuery = proc id' -> do
 
 machinePhotosByMachineId :: Int -> Query (DBInt)
 machinePhotosByMachineId machineId = proc () -> do
-  (machinePhotoId,_) <- join machinePhotosQuery -< (pgInt4 machineId)
-  returnA -< (machinePhotoId)
+  (photoId, machineId') <- machinePhotosQuery -< ()
+  restrict -< (machineId' .== pgInt4 machineId)
+  returnA -< (photoId)
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do
@@ -507,10 +508,11 @@ withConnection runQ = do
   return result
 
 getMachinePhoto :: Connection
+                -> Int
                 -> IO ByteString
-getMachinePhoto connection = do
-  let q = " select data from photos "
-  result <- query_ connection q
+getMachinePhoto connection photoId = do
+  let q = " select data from photos where id = ? "
+  result <- query connection q (Only photoId)
   return $ fromOnly $ head $ result
 
 addMachinePhoto :: Connection

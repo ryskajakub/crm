@@ -12,6 +12,7 @@ module Crm.Server (
   uploadPhotoData ,
   uploadPhotoMeta ,
   fetchMachine , 
+  fetchMachinePhotos ,
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
@@ -21,7 +22,8 @@ module Crm.Server (
   fetchMachineTypes ,
   fetchUpkeep ,
   fetchEmployees ,
-  fetchCompany ) where
+  fetchCompany ,
+  getPhoto ) where
 
 import FFI (ffi, Automatic, Defined(Defined))
 import "fay-base" Prelude hiding (putStrLn)
@@ -76,6 +78,10 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
   JQ.processData = Defined False ,
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
+
+getPhoto :: P.PhotoId
+         -> Text
+getPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId))
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -137,6 +143,15 @@ fetchUpkeeps companyId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep))
     (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))) . items)
+    noopOnError
+
+fetchMachinePhotos :: M.MachineId
+                   -> ([P.PhotoId] -> Fay ())
+                   -> Fay ()
+fetchMachinePhotos machineId callback =
+  JQ.ajax
+    (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos))
+    (callback . items)
     noopOnError
 
 fetchMachine :: M.MachineId -- ^ machine id

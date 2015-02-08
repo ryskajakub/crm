@@ -35,7 +35,8 @@ import HaskellReact
 import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
-  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById)
+  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
+  fetchMachinePhotos )
 import Crm.Helpers (parseSafely, showCompanyId)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -192,8 +193,9 @@ startRouter appVar = let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
             (\(machine, machineTypeId, _, machineTypeTuple, machineNextService) ->
-              modify' $ D.MachineScreen $ MachineData machine machineTypeTuple (nowYMD,False) $
-                (Left $ MachineDetail machineId machineNextService False machineTypeId))
+              fetchMachinePhotos machineId (\photos ->
+                modify' $ D.MachineScreen $ MachineData machine machineTypeTuple (nowYMD,False) $
+                  (Left $ MachineDetail machineId machineNextService False machineTypeId photos)))
         _ -> modify' D.NotFound
   ),(
     "planned", const $

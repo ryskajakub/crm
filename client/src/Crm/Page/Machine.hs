@@ -20,6 +20,7 @@ import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny as J
 import qualified HaskellReact.Tag.Hyperlink as A
+import qualified HaskellReact.Tag.Image as IMG
 import HaskellReact.Bootstrap.Carousel (carousel)
 
 import qualified JQuery as JQ
@@ -30,16 +31,19 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
+import qualified Crm.Shared.Photo as P
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
-import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
   getFileList, fileListElem, fileType, fileName, fileContents)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
+
+import Debug.Trace
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -61,8 +65,10 @@ machineDetail :: Bool
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
+              -> [P.PhotoId]
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService = 
+machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService 
+    photos = 
   machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
       extraRow = [row "Další servis" (displayDate nextService)]
@@ -73,9 +79,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             fileUpload <- JQ.select "#file-upload"
             files <- getFileList fileUpload
             file <- fileListElem 0 files
-            name <- fileName file
             type' <- fileType file
-            uploadPhotoData file (M.MachineId 1) (\photoId ->
+            uploadPhotoData file machineId (\photoId ->
               uploadPhotoMeta (PM.PhotoMeta $ unpack type') photoId (return ()))
           imageUploadLabel = "Přidej fotku"
           in div [
@@ -85,15 +90,16 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
                 BTN.bsStyle = Defined "primary" ,
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]) 
+      mkPhoto photoId = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
       photoCarouselRow = row
         "Fotky"
-        (carousel "my-carousel" [h1 "My big thing", h1 "The other", h1 "Again!"])
+        (trace (show photos) $ carousel "my-carousel" (map mkPhoto photos))
       extraRows = (if editing then [photoUploadRow] else [photoCarouselRow]) ++ extraRow
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f)))
+          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g))) ->
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f g)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $

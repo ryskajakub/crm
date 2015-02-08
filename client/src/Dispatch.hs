@@ -35,9 +35,9 @@ main' = do
       D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
       D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar machinePageMode) ->
         case machinePageMode of
-          Left (MD.MachineDetail machineId nextService editing machineTypeId) ->
-            (machineDetail editing appVar' operationStartCalendar machine machineTypeId
-              machineTypeTuple machineId nextService)
+          Left (MD.MachineDetail machineId nextService editing machineTypeId photos) ->
+            machineDetail editing appVar' operationStartCalendar machine machineTypeId
+              machineTypeTuple machineId nextService photos
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
             machineNew router appVar' operationStartCalendar machine 
               companyId machineTypeTuple maybeMachineTypeId
