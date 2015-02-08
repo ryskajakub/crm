@@ -13,7 +13,7 @@ import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (pure, (<*>))
 
-import Data.Tuple.All (sel1, sel2, sel3, sel4, upd3)
+import Data.Tuple.All (sel1, upd3)
 
 import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S

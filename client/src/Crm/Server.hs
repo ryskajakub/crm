@@ -45,7 +45,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
 import Crm.Shared.MyMaybe
 
-import Crm.Helpers (FileContents, File)
+import Crm.Helpers (File)
 
 data Items
 

@@ -40,7 +40,7 @@ import Crm.Component.Editable (editableN)
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
   editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
-  getFileList, fileListElem, fileType, fileName, fileContents)
+  getFileList, fileListElem, fileType, fileName)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
 saveButtonRow :: Renderable a
@@ -82,7 +82,7 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             uploadPhotoData file machineId (\photoId ->
               uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId (return ()))
           imageUploadLabel = "Přidej fotku"
-          photoList = map (\(photoId, photoMeta) -> 
+          photoList = map (\(_, photoMeta) -> 
             li' (class' "list-unstyled") [pack $ PM.fileName photoMeta] ) photos
           in div [(ul $ photoList) : [div [
             J.fileUpload ,

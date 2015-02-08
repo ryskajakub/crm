@@ -1,23 +1,19 @@
 module Crm.Server.Api.PhotoResource ( 
   photoResource ) where
 
-import Data.ByteString.Lazy.Char8 (pack)
-import Data.ByteString.Lazy (ByteString)
-
 import Opaleye.RunQuery (runQuery)
 
-import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, get, mkResourceReaderWith)
+import Rest.Resource (Resource, Void, schema, name, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (fileI, someI, fileO, someO, jsonO)
-import Rest.Handler (mkInputHandler, Handler, mkConstHandler)
+import Rest.Dictionary.Combinators (fileO, someO)
+import Rest.Handler (Handler, mkConstHandler)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
 import Crm.Server.Types
-import Crm.Server.DB (addMachinePhoto, machinePhotosQuery, singleRowOrColumn, getMachinePhoto, 
-  photoMetaQuery)
+import Crm.Server.DB (singleRowOrColumn, getMachinePhoto, photoMetaQuery)
 import Crm.Server.Helpers (maybeId, readMay', prepareReaderTuple)
 
 photoResource :: Resource Dependencies IdDependencies UrlId Void Void
