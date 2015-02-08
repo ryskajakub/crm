@@ -63,9 +63,32 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService = 
-  machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRow
+  machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
       extraRow = [row "Další servis" (displayDate nextService)]
+      photoUploadRow = row
+        "Fotka" 
+        (let 
+          imageUploadHandler = const $ do
+            fileUpload <- JQ.select "#file-upload"
+            files <- getFileList fileUpload
+            file <- fileListElem 0 files
+            name <- fileName file
+            type' <- fileType file
+            uploadPhotoData file (M.MachineId 1) (\photoId ->
+              uploadPhotoMeta (PM.PhotoMeta $ unpack type') photoId (return ()))
+          imageUploadLabel = "Přidej fotku"
+          in div [
+            J.fileUpload ,
+            BTN.button'
+              (BTN.buttonProps {
+                BTN.bsStyle = Defined "primary" ,
+                BTN.onClick = Defined imageUploadHandler })
+              imageUploadLabel ]) 
+      photoCarouselRow = row
+        "Fotky"
+        (carousel "my-carousel" [h1 "My big thing", h1 "The other", h1 "Again!"])
+      extraRows = (if editing then [photoUploadRow] else [photoCarouselRow]) ++ extraRow
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
@@ -117,7 +140,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> [DOMElement]
                -> (DOMElement, Fay ())
 machineDisplay editing buttonRow appVar operationStartCalendar
-    machine' (machineType, upkeepSequences) extraRow = let
+    machine' (machineType, upkeepSequences) extraRows = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -198,28 +221,6 @@ machineDisplay editing buttonRow appVar operationStartCalendar
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
-            M.note = str } ) <=< eventString) editing False) ] ++ extraRow ++ [
-        row
-          "Fotka" 
-          (let 
-            imageUploadHandler = const $ do
-              fileUpload <- JQ.select "#file-upload"
-              files <- getFileList fileUpload
-              file <- fileListElem 0 files
-              name <- fileName file
-              type' <- fileType file
-              uploadPhotoData file (M.MachineId 1) (\photoId ->
-                uploadPhotoMeta (PM.PhotoMeta $ unpack type') photoId (return ()))
-            imageUploadLabel = "Přidej fotku"
-            in div [
-              J.fileUpload ,
-              BTN.button'
-                (BTN.buttonProps {
-                  BTN.bsStyle = Defined "primary" ,
-                  BTN.onClick = Defined imageUploadHandler })
-                imageUploadLabel ]) ,
-        div' (class' "form-group") buttonRow ,
-        row
-          "Fotky"
-          (carousel "my-carousel" []) ]
+            M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
+        div' (class' "form-group") buttonRow ]
   in (elements, return ())
