@@ -11,10 +11,6 @@ import "fay-base" Data.Text (fromString, Text, showInt, (<>))
 import "fay-base" Prelude hiding (span, id)
 
 import HaskellReact as HR
-import HaskellReact.Bootstrap.Popover as P
-import HaskellReact.ReactCalendar as RC
-import qualified HaskellReact.Tag.Input as I
-import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 data Technical1 = Technical1 {
