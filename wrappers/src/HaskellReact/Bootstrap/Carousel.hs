@@ -51,15 +51,27 @@ technical4 id' dataSlide = Technical4 {
   role = "button" ,
   data_slide = dataSlide }
 
+indexes :: [Int]
+indexes = [1..]
+
 carousel :: Text -> [DOMElement] -> DOMElement
 carousel id' slides =
   constructDOMElement "div" ((class'' ["carousel", "slide"]) { id = Defined id' } ) technical1 [
-    ol' (class' "carousel-indicators") [
-      constructDOMElement "li" mkAttrs (technical2 0 id') ([]::[DOMElement]) , 
-      constructDOMElement "li" mkAttrs (technical2 1 id') ([]::[DOMElement]) ] ,
-    constructDOMElement "div" (class' "carousel-inner") technical3 [
-      div' (class'' ["item", "active"]) $ h1 "Text big" ,
-      div' (class' "item") $ h1 "Text huge" ] ,
+    ol' (class' "carousel-indicators") (let
+      mkIndicator slideNumber active = constructDOMElement "li" (if active
+        then (class' "active")
+        else mkAttrs) (technical2 slideNumber id') ([]::[DOMElement])
+      in case slides of
+        [] -> []
+        _:xs -> mkIndicator 0 True : map (\(i,_) -> mkIndicator i False) (zip indexes xs)) ,
+    constructDOMElement "div" (class' "carousel-inner") technical3 ( let
+      mkContentPane content active = let
+        itemClass = "item"
+        wholeClass = if active then class'' [itemClass, "active"] else class' itemClass
+        in div' wholeClass content
+      in case slides of
+        [] -> []
+        x:xs -> mkContentPane x True : map (\content -> mkContentPane content False) xs) ,
     constructDOMElement "a" (class'' ["left", "carousel-control"]) (technical4 id' "prev") [
       G.chevronLeft ] ,
     constructDOMElement "a" (class'' ["right", "carousel-control"]) (technical4 id' "next") [
