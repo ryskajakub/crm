@@ -54,7 +54,8 @@ main' = do
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineTypeId machineType -> emptyCallback $ machineTypeForm appVar' machineTypeId machineType 
+      D.MachineTypeEdit machineTypeId machineType -> emptyCallback $ machineTypeForm appVar' 
+        machineTypeId machineType 
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
     in Navigation.navigation' router newElementAndCallback )

@@ -43,8 +43,6 @@ import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow',
   getFileList, fileListElem, fileType, fileName, fileContents)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
-import Debug.Trace
-
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
@@ -65,10 +63,10 @@ machineDetail :: Bool
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
-              -> [P.PhotoId]
+              -> [(P.PhotoId, PM.PhotoMeta)]
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple machineId nextService 
-    photos = 
+machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
+    machineId nextService photos = 
   machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
       extraRow = [row "Další servis" (displayDate nextService)]
@@ -84,17 +82,19 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             uploadPhotoData file machineId (\photoId ->
               uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId (return ()))
           imageUploadLabel = "Přidej fotku"
-          in div [
+          photoList = map (\(photoId, photoMeta) -> 
+            li' (class' "list-unstyled") [pack $ PM.fileName photoMeta] ) photos
+          in div [(ul $ photoList) : [div [
             J.fileUpload ,
             BTN.button'
               (BTN.buttonProps {
                 BTN.bsStyle = Defined "primary" ,
                 BTN.onClick = Defined imageUploadHandler })
-              imageUploadLabel ]) 
-      mkPhoto photoId = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
+              imageUploadLabel ]]]) 
+      mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
       photoCarouselRow = row
         "Fotky"
-        (trace (show photos) $ carousel "my-carousel" (map mkPhoto photos))
+        (carousel "my-carousel" (map mkPhoto photos))
       extraRows = (if editing then [photoUploadRow] else [photoCarouselRow]) ++ extraRow
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
