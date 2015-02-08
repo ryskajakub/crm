@@ -5,9 +5,7 @@ html {
 
 /* my carousel */
 #my-carousel {
-  width: 500px;
-  height: 500px;
-  background-color: blue; }
+  min-height: 600px; }
 
 .inline {
   display: inline-block;
