@@ -33,5 +33,5 @@ getPhotoHandler = mkConstHandler (fileO . someO) (do
   photo <- liftIO $ getMachinePhoto conn photoId
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoId)
   photoMeta <- singleRowOrColumn photoMetas
-  let (_, mimeType) = photoMeta :: (Int, String)
+  let (_, mimeType, _) = photoMeta :: (Int, String, String)
   return (photo, mimeType))

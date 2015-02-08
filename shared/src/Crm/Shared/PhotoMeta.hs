@@ -15,7 +15,8 @@ import "fay-base" Prelude
 #endif
 
 data PhotoMeta = PhotoMeta {
-  mimeType :: String }
+  mimeType :: String ,
+  fileName :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif

@@ -146,7 +146,7 @@ fetchUpkeeps companyId callback =
     noopOnError
 
 fetchMachinePhotos :: M.MachineId
-                   -> ([P.PhotoId] -> Fay ())
+                   -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
                    -> Fay ()
 fetchMachinePhotos machineId callback =
   JQ.ajax
@@ -165,7 +165,8 @@ fetchMachine machineId callback =
     noopOnError
 
 fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, 
+               MT.MachineTypeId, MT.MachineType)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax

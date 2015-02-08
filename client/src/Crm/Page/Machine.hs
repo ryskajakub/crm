@@ -80,8 +80,9 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             files <- getFileList fileUpload
             file <- fileListElem 0 files
             type' <- fileType file
+            name <- fileName file
             uploadPhotoData file machineId (\photoId ->
-              uploadPhotoMeta (PM.PhotoMeta $ unpack type') photoId (return ()))
+              uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId (return ()))
           imageUploadLabel = "Přidej fotku"
           in div [
             J.fileUpload ,

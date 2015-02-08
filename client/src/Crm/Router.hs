@@ -195,7 +195,8 @@ startRouter appVar = let
             (\(machine, machineTypeId, _, machineTypeTuple, machineNextService) ->
               fetchMachinePhotos machineId (\photos ->
                 modify' $ D.MachineScreen $ MachineData machine machineTypeTuple (nowYMD,False) $
-                  (Left $ MachineDetail machineId machineNextService False machineTypeId photos)))
+                  (Left $ MachineDetail machineId machineNextService False machineTypeId 
+                    (map (\(id',_) -> id') photos))))
         _ -> modify' D.NotFound
   ),(
     "planned", const $

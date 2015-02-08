@@ -6,7 +6,8 @@ create table photos (
 drop table photos_meta;
 create table photos_meta (
   photo_id integer ,
-  mime_type varchar (500) );
+  mime_type varchar (500) ,
+  file_name varchar (500) );
 
 drop table machine_photos;
 create table machine_photos (

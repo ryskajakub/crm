@@ -34,5 +34,6 @@ photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {
 setPhotoMetaDataHandler :: Handler IdDependencies
 setPhotoMetaDataHandler = mkInputHandler (jsonI . someI) (\photoMeta -> do
   _ <- ask >>= (\(conn, photoId') -> maybeId photoId' (\photoId ->
-    liftIO $ runInsert conn photosMetaTable (pgInt4 photoId, pgString $ PM.mimeType photoMeta)))
+    liftIO $ runInsert conn photosMetaTable 
+      (pgInt4 photoId, pgString $ PM.mimeType photoMeta, pgString $ PM.fileName photoMeta)))
   return ())

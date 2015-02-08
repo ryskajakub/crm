@@ -17,10 +17,12 @@ import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Server.Types
 import Crm.Server.DB (addMachinePhoto, machinePhotosQuery, singleRowOrColumn, getMachinePhoto, 
   machinePhotosByMachineId, machinePhotosTable)
 import Crm.Server.Helpers (maybeId, readMay')
+import Crm.Server.Boilerplate ()
 
 photoResource :: Resource IdDependencies IdDependencies UrlId () Void
 photoResource = mkResourceId {
@@ -39,6 +41,7 @@ addPhotoHandler = mkInputHandler (fileI . someI . jsonO . someO) (\photo -> do
     return newPhotoId))
 
 listPhotoHandler :: ListHandler IdDependencies
-listPhotoHandler = mkListing (jsonO . someO) (const $
-  ask >>= (\(conn, machineId') -> maybeId machineId' (\machineId ->
-    liftIO $ (runQuery conn (machinePhotosByMachineId machineId) :: IO [Int] ))))
+listPhotoHandler = mkListing (jsonO . someO) (const $ do 
+  rows <- ask >>= (\(conn, machineId') -> maybeId machineId' (\machineId ->
+    liftIO $ (runQuery conn (machinePhotosByMachineId machineId))))
+  return $ map (\(r1,r2,r3) -> (r1 :: Int, PM.PhotoMeta r2 r3) ) rows )

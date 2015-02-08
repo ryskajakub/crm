@@ -124,16 +124,17 @@ type EmployeeWriteTable = (Maybe DBInt, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type PhotosMetaTable = (DBInt, DBText)
+type PhotosMetaTable = (DBInt, DBText, DBText)
 
 type PhotosTable = (DBInt, DBByteA)
 
 type MachinePhotosTable = (DBInt, DBInt)
 
 photosMetaTable :: Table PhotosMetaTable PhotosMetaTable
-photosMetaTable = Table "photos_meta" $ p2 (
+photosMetaTable = Table "photos_meta" $ p3 (
   required "photo_id" ,
-  required "mime_type" )
+  required "mime_type" ,
+  required "file_name" )
 
 machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
@@ -236,11 +237,12 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
-machinePhotosByMachineId :: Int -> Query (DBInt)
+machinePhotosByMachineId :: Int -> Query PhotosMetaTable
 machinePhotosByMachineId machineId = proc () -> do
   (photoId, machineId') <- machinePhotosQuery -< ()
   restrict -< (machineId' .== pgInt4 machineId)
-  returnA -< (photoId)
+  (_, mimeType, fileName) <- join photosMetaQuery -< photoId
+  returnA -< (photoId, mimeType, fileName)
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do
@@ -256,7 +258,6 @@ upkeepSequencesByIdQuery machineTypeId = proc () -> do
 actualUpkeepRepetitionQuery :: Int -> Query DBInt
 actualUpkeepRepetitionQuery machineTypeId' = let  
   machineTypeId = pgInt4 machineTypeId'
-
   -- find out maximum recorded mileages
   -- to find out later, if the mileage are enough so the 
   -- initial upkeep should already passed
