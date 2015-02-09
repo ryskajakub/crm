@@ -44,7 +44,10 @@ create table upkeeps (
   id serial ,
   date_ date , 
   closed boolean ,
-  employee_id integer );
+  employee_id integer ,
+  work_hours varchar (500) ,
+  work_description varchar (5000) ,
+  recommendation varchar (5000));
 
 drop table upkeep_machines;
 create table upkeep_machines (
@@ -101,10 +104,12 @@ insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Provozovna', 'Vodňany', 'Mysliveček', '335 881 233');
 
 
-insert into upkeeps(date_, closed, employee_id) values ('1999-01-01', FALSE, null);
-insert into upkeeps(date_, closed, employee_id) values ('2001-01-01', FALSE, null);
-insert into upkeeps(date_, closed, employee_id) values ('2008-01-01', FALSE, 1);
-
+insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
+  values ('1999-01-01', FALSE, null, '0', '', '');
+insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
+  values ('2001-01-01', FALSE, null, '0', '', '');
+insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
+  values ('2008-01-01', FALSE, 1, '0', '', '');
 
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'oprava', 1, 0);
 insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'pravidelný', 2, 0);
