@@ -20,10 +20,12 @@ type UpkeepMachine' = (UpkeepMachine, M.MachineId)
 
 data UpkeepMachine = UpkeepMachine {
   upkeepMachineNote :: String , 
-  recordedMileage :: Int }
+  recordedMileage :: Int {-,
+  material :: String ,
+  warrantyUpkeep :: Bool -}}
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newUpkeepMachine :: UpkeepMachine
-newUpkeepMachine = UpkeepMachine "" 0
+newUpkeepMachine = UpkeepMachine "" 0 -- "" False

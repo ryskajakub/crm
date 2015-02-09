@@ -5,7 +5,7 @@ module Crm.Server.Api.Company.UpkeepResource (
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.PGTypes (pgInt4, pgDay, pgBool)
+import Opaleye.PGTypes (pgInt4, pgDay, pgBool, pgString)
 import Opaleye.Manipulation (runInsertReturning)
 import Opaleye.RunQuery (runQuery)
 
@@ -40,9 +40,9 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
     rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
     let 
       mappedResults = mapResultsToList 
-        (sel1)
-        (\((upkeepId,date,closed,_ :: Maybe Int),_,_,_,(employeeId, employeeName)) -> 
-          (upkeepId :: Int, U.Upkeep (dayToYmd date) closed,
+        sel1
+        (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName)) -> 
+          (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
             toMyMaybe $ pure (\eId' e -> (eId' :: Int, E.Employee e)) <*> employeeId <*> employeeName))
         (\(_,(_:: Int,note,_ :: Int,recordedMileage),
           (_ :: Int,name',manufacturer),machineId,_) -> let
@@ -65,8 +65,10 @@ addUpkeep :: Connection
 addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, 
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId)
+    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
+      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId, 
+      pgString $ U.workHours upkeep, pgString $ U.workDescription upkeep, 
+      pgString $ U.recommendation upkeep)
     sel1
   let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines

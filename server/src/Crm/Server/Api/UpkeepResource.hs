@@ -71,10 +71,11 @@ updateUpkeep :: Connection
              -> IO ()
 updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   _ <- let
-    condition (upkeepId',_,_,_) = upkeepId' .== pgInt4 upkeepId
+    condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 upkeepId
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        maybeToNullable $ fmap pgInt4 employeeId)
+        maybeToNullable $ fmap pgInt4 employeeId, pgString $ U.workHours upkeep, 
+        pgString $ U.workDescription upkeep, pgString $ U.recommendation upkeep)
     in runUpdate conn upkeepTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
@@ -88,8 +89,10 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let mappedRows = map (\((uPK,u2,u3,_),companyRow) ->
-        (uPK, U.Upkeep (dayToYmd u2) u3, sel1 companyRow, (uncurryN $ const C.Company) companyRow)) rows
+  let 
+    mappedRows = map (\((uPK,u2,u3,_,u4,u5,u6),companyRow) ->
+      (uPK, U.Upkeep (dayToYmd u2) u3 u4 u5 u6, sel1 companyRow, 
+        (uncurryN $ const C.Company) companyRow)) rows
   return mappedRows )
 
 upkeepSchema :: S.Schema UrlId UpkeepsListing Void

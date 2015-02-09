@@ -113,8 +113,8 @@ type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt, DBTe
 type MachineTypesTable = (DBInt, DBText, DBText)
 type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText)
 
-type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4))
-type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4)))
+type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
+type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4)), DBText, DBText, DBText)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt)
 
@@ -172,18 +172,23 @@ machineTypesTable = Table "machine_types" $ p3 (
   required "manufacturer" )
 
 upkeepTable :: Table UpkeepWriteTable UpkeepTable
-upkeepTable = Table "upkeeps" $ p4 (
+upkeepTable = Table "upkeeps" $ p7 (
   optional "id" ,
   required "date_" ,
   required "closed" ,
-  required "employee_id" )
+  required "employee_id" ,
+  required "work_hours" ,
+  required "work_description" ,
+  required "recommendation" )
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ p4 (
   required "upkeep_id" ,
   required "note" ,
   required "machine_id" ,
-  required "recorded_mileage" )
+  required "recorded_mileage" {-,
+  required "material" ,
+  required "warranty_upkeep" -})
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
 employeesTable = Table "employees" $ p2 (
@@ -331,14 +336,16 @@ companyUpkeepsQuery companyId = let
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_) <- upkeepMachinesQuery -< ()
     (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
-    upkeep @ (_,_,closed,_) <- join upkeepsQuery -< upkeepFK
+    upkeep @ (_,_,closed,_,_,_,_) <- join upkeepsQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (companyFK .== pgInt4 companyId)
     returnA -< upkeep
-  aggregatedUpkeepsQuery = AGG.aggregate (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min)) upkeepsQuery'
+  aggregatedUpkeepsQuery = AGG.aggregate (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, 
+    AGG.min, AGG.min, AGG.min)) upkeepsQuery'
   joinedEmployeesQuery = leftJoin aggregatedUpkeepsQuery employeesQuery (
-    ( \((_,_,_,maybeEmployeeFK),(employeePK,_)) -> maybeEmployeeFK .== (maybeToNullable $ Just employeePK)))
-  orderedUpkeepQuery = orderBy (asc(\((_,date,_,_),(_,_)) -> date)) $ joinedEmployeesQuery
+    (\((_,_,_,maybeEmployeeFK,_,_,_),(employeePK,_)) -> 
+      maybeEmployeeFK .== (maybeToNullable $ Just employeePK)))
+  orderedUpkeepQuery = orderBy (asc(\((_,date,_,_,_,_,_),(_,_)) -> date)) $ joinedEmployeesQuery
   in orderedUpkeepQuery
 
 -- | query, that returns expanded machine type, not just the id
@@ -365,15 +372,16 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     returnA -< (companyPK, m, mt)
 
 lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
-lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_),_) -> date)) $ proc () -> do
+lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_,_,_,_),_) -> date)) $ 
+    proc () -> do
   upkeepMachineRow @ (upkeepFK,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
-  upkeepRow @ (_,_,upkeepClosed,_) <- join upkeepsQuery -< upkeepFK
+  upkeepRow @ (_,_,upkeepClosed,_,_,_,_) <- join upkeepsQuery -< upkeepFK
   restrict -< pgBool True .== upkeepClosed
   returnA -< (upkeepRow, upkeepMachineRow)
 
 nextMaintenanceQuery :: Int -> Query (UpkeepTable)
-nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_) -> date)) $ proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepsQuery -< ()
+nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_,_,_,_) -> date)) $ proc () -> do
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   restrict -< pgInt4 machineId .== machineFK
@@ -387,7 +395,7 @@ expandedUpkeepsQuery2 upkeepId = proc () -> do
 
 expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
+  upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
 
@@ -395,7 +403,7 @@ expandedUpkeepsByCompanyQuery :: Int -> Query
   (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, DBInt, EmployeeLeftJoinTable)
 expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
-    upkeepRow @ (upkeepPK,_,_,_) <- upkeepsQuery -< ()
+    upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
     upkeepMachineRow @ (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
     machine <- join machinesQuery -< machineFK
     machineType <- join machineTypesQuery -< (sel3 machine)
@@ -412,7 +420,7 @@ expandedUpkeepsByCompanyQuery companyId = let
 
 plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_) <- upkeepsQuery -< ()
+  upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
   restrict -< upkeepClosed .== pgBool False
   (_,_,machineFK,_) <- join upkeepMachinesQuery -< upkeepPK
   (_,companyFK,_,_,_,_,_) <- join machinesQuery -< machineFK
@@ -420,8 +428,8 @@ plannedUpkeepsQuery = proc () -> do
   returnA -< (upkeepRow, companyRow)
 
 groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
-groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_), _) -> date)) $ 
-  AGG.aggregate (p2 (p4(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min),
+groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
+  AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
     p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
@@ -460,7 +468,8 @@ runExpandedMachinesQuery' :: Maybe Int -> Connection
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
-runCompanyUpkeepsQuery :: Int -> Connection -> IO[((Int, Day, Bool, Maybe Int), (Maybe Int, Maybe String))]
+runCompanyUpkeepsQuery :: Int -> Connection -> 
+  IO[((Int, Day, Bool, Maybe Int, String, String, String), (Maybe Int, Maybe String))]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
@@ -472,14 +481,17 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runLastClosedMaintenanceQuery :: Int -> Connection -> IO[((Int, Day, Bool, Maybe Int),(Int, String, Int, Int))]
+runLastClosedMaintenanceQuery :: Int -> Connection -> IO[
+  ((Int, Day, Bool, Maybe Int, String, String, String),(Int, String, Int, Int))]
 runLastClosedMaintenanceQuery machineId connection =
   runQuery connection (lastClosedMaintenanceQuery machineId)
 
-runNextMaintenanceQuery :: Int -> Connection -> IO[(Int, Day, Bool, Maybe Int)]
+runNextMaintenanceQuery :: Int -> Connection -> 
+  IO[(Int, Day, Bool, Maybe Int, String, String, String)]
 runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintenanceQuery machineId)
 
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))]
+runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
+  (Int, String, Int, Int))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
@@ -487,12 +499,13 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
-runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int), (Int, String, String, String, String, String))]
+runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
+  (Int, String, String, String, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 runSingleUpkeepQuery :: Connection 
                      -> Int -- ^ upkeep id
-                     -> IO[((Int, Day, Bool, Maybe Int), (Int, String, Int, Int))]
+                     -> IO[((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int))]
 runSingleUpkeepQuery connection upkeepId = do
   runQuery connection (expandedUpkeepsQuery2 upkeepId)
 
