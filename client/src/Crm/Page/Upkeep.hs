@@ -276,7 +276,8 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
     B.col (B.mkColProps 6) "Doporučení" ,
     B.col (B.mkColProps 6) $ editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False ]
+  closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
+  additionalRows = if closeUpkeep' then closeUpkeepRows else []
   in div $
     B.grid $
-      map machineRow machines ++ [dateRow, employeeSelectRow, workHoursRow, workDescriptionRow,
-        recommendationRow, submitButton]
+      map machineRow machines ++ [dateRow, employeeSelectRow] ++ additionalRows ++ [submitButton]
