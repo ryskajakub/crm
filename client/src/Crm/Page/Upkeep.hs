@@ -34,7 +34,7 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap, editingInput)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -264,6 +264,10 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
       buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
       in BD.buttonDropdown buttonLabel elements ]
+  workHoursRow = B.row [
+    B.col (B.mkColProps 6) "Hodiny" ,
+    B.col (B.mkColProps 6) $ editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False ]
   in div $
     B.grid $
-      map machineRow machines ++ [dateRow, employeeSelectRow, submitButton]
+      map machineRow machines ++ [dateRow, employeeSelectRow, workHoursRow, submitButton]
