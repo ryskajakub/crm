@@ -268,11 +268,15 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
     B.col (B.mkColProps 6) "Hodiny" ,
     B.col (B.mkColProps 6) $ editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False ]
-  workDescription = B.row [
+  workDescriptionRow = B.row [
     B.col (B.mkColProps 6) "Popis práce" ,
     B.col (B.mkColProps 6) $ editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True False ]
+  recommendationRow = B.row [
+    B.col (B.mkColProps 6) "Doporučení" ,
+    B.col (B.mkColProps 6) $ editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False ]
   in div $
     B.grid $
-      map machineRow machines ++ [dateRow, employeeSelectRow, workHoursRow, workDescription,
-        submitButton]
+      map machineRow machines ++ [dateRow, employeeSelectRow, workHoursRow, workDescriptionRow,
+        recommendationRow, submitButton]
