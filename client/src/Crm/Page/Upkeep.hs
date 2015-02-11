@@ -34,7 +34,8 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap, editingInput, editingTextarea)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap, editingInput, editingTextarea, 
+  editingCheckbox)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -230,12 +231,24 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
         (A.mkAAttrs)
         content
       in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) link'
-    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') ) 
+    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') )
       (showInt . UM.recordedMileage) I.input 2
-    noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note },id')) 
-      (pack . UM.upkeepMachineNote) I.textarea 6
+    warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
+      (Just(thisMachine), Nothing) -> 
+        editingCheckbox (UM.warrantyUpkeep $ fst thisMachine) (\boolean -> let
+          updatedUpkeep = (fst thisMachine) { UM.warrantyUpkeep = boolean }
+          ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
+            then (updatedUpkeep, machineId')
+            else um ) upkeepMachines 
+          in setUpkeep (upkeep, ums) ) True
+      (Nothing, Just(thatMachine)) ->
+        editingCheckbox (UM.warrantyUpkeep $ fst thatMachine) (const $ return ()) False
+      _ -> undefined
+    warrantyUpkeepRow = B.col (B.mkColProps 1) [ text2DOM "Záruka", warrantyUpkeep ]
+    noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note }, id')) 
+      (pack . UM.upkeepMachineNote) I.textarea 5
     rowItems = if closeUpkeep'
-      then [machineToggleLink, recordedMileageField, noteField]
+      then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
     in B.row' rowProps rowItems
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button

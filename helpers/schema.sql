@@ -47,14 +47,15 @@ create table upkeeps (
   employee_id integer ,
   work_hours varchar (500) ,
   work_description varchar (5000) ,
-  recommendation varchar (5000));
+  recommendation varchar (5000) );
 
 drop table upkeep_machines;
 create table upkeep_machines (
   upkeep_id integer ,
-  note varchar (500) ,
+  note varchar (5000) ,
   machine_id integer ,
-  recorded_mileage integer );
+  recorded_mileage integer ,
+  warranty boolean );
 
 drop table employees;
 create table employees (
@@ -111,10 +112,14 @@ insert into upkeeps(date_, closed, employee_id, work_hours, work_description, re
 insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
   values ('2008-01-01', FALSE, 1, '0', '', '');
 
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'oprava', 1, 0);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (1, 'pravidelný', 2, 0);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (2, 'oprava 2', 2, 0);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage) values (3, 'údržba', 4, 0);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
+  values (1, 'oprava', 1, 0, FALSE);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
+  values (1, 'pravidelný', 2, 0, FALSE);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
+  values (2, 'oprava 2', 2, 0, FALSE);
+insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
+  values (3, 'údržba', 4, 0, FALSE);
 
 
 insert into employees(name) values ('Kutička');

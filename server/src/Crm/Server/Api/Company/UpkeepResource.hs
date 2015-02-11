@@ -44,10 +44,10 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
         (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName)) -> 
           (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
             toMyMaybe $ pure (\eId' e -> (eId' :: Int, E.Employee e)) <*> employeeId <*> employeeName))
-        (\(_,(_:: Int,note,_ :: Int,recordedMileage),
+        (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
           (_ :: Int,name',manufacturer),machineId,_) -> let
           machineType' = MT.MachineType name' manufacturer
-          in (UM.UpkeepMachine (note) (recordedMileage), machineType', machineId :: Int))
+          in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
         rows
     return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
       (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))

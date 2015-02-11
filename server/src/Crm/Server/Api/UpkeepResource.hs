@@ -45,7 +45,8 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
         pgInt4 upkeepId ,
         pgString $ UM.upkeepMachineNote upkeepMachine' ,
         pgInt4 upkeepMachineId ,
-        pgInt4 $ UM.recordedMileage upkeepMachine' )
+        pgInt4 $ UM.recordedMileage upkeepMachine' , 
+        pgBool $ UM.warrantyUpkeep upkeepMachine' )
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
@@ -77,7 +78,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
         maybeToNullable $ fmap pgInt4 employeeId, pgString $ U.workHours upkeep, 
         pgString $ U.workDescription upkeep, pgString $ U.recommendation upkeep)
     in runUpdate conn upkeepTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_) -> upkeepId' .== pgInt4 upkeepId)
+  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== pgInt4 upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   return ()
 
@@ -98,7 +99,7 @@ upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
 upkeepSchema :: S.Schema UrlId UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [
   (A.planned, S.listing UpkeepsPlanned) ,
-  (A.single, S.singleBy readMay') ])
+  (A.single, S.singleBy readMay')])
     
 upkeepCompanyMachines :: Handler IdDependencies
 upkeepCompanyMachines = mkConstHandler (jsonO . someO) (

@@ -94,18 +94,18 @@ instance Ord YMD.YearMonthDay where
 
 mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
 
-mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int))] 
+mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
            -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
 mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId,workHours,
-    workDescription, recommendation), (_,note,machineId,recordedMileage)) ->
+    workDescription, recommendation), (_,note,machineId,recordedMileage, warranty)) ->
   let
     addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed workHours workDescription 
-      recommendation ,employeeId, [(UM.UpkeepMachine note recordedMileage, machineId)]))
+      recommendation ,employeeId, [(UM.UpkeepMachine note recordedMileage warranty, machineId)]))
     in case acc of
       [] -> [addUpkeep']
       (upkeepId', (upkeep, e, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
         modifiedUpkeepMachines = 
-          (UM.UpkeepMachine note recordedMileage, machineId) : upkeepMachines
+          (UM.UpkeepMachine note recordedMileage warranty, machineId) : upkeepMachines
         in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
       _ -> addUpkeep' : acc
   ) [] rows
