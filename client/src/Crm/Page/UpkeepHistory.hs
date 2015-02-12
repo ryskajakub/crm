@@ -46,6 +46,8 @@ upkeepHistory upkeepsInfo router = let
             dt "Poznámka" ,
             dd $ pack $ UM.upkeepMachineNote upkeepMachine ,
             dt "Naměřené motohodiny" ,
-            dd $ showInt $ UM.recordedMileage upkeepMachine ]]) upkeepMachines ]
+            dd $ showInt $ UM.recordedMileage upkeepMachine ,
+            dt "Záruka" ,
+            dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ]]) upkeepMachines ]
   in div $ B.grid ([B.row $ B.col (B.mkColProps 12) (h1 "Historie servisů")] :
     map upkeepHtml upkeepsInfo)
