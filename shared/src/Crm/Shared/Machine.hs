@@ -23,7 +23,9 @@ data Machine = Machine {
   machineOperationStartDate :: YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int ,
-  note :: String }
+  note :: String ,
+  serialNumber :: String ,
+  yearOfManufacture :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
@@ -33,4 +35,6 @@ newMachine ymd = Machine {
   machineOperationStartDate = ymd ,
   initialMileage = 0 ,
   note = "" ,
-  mileagePerYear = 365 * 24 }
+  mileagePerYear = 365 * 24 ,
+  serialNumber = "" ,
+  yearOfManufacture = "" }

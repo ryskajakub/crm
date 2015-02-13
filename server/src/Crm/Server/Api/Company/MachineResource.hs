@@ -53,13 +53,14 @@ addMachine connection machine companyId' machineType = do
           pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
       return machineTypeId
   let
-    M.Machine machineOperationStartDate' initialMileage mileagePerYear note = machine
+    M.Machine machineOperationStartDate' initialMileage mileagePerYear note 
+      serialNumber yearOfManufacture = machine
   machineId <- runInsertReturning
     connection
     machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId , 
       pgDay $ ymdToDay machineOperationStartDate' ,
       pgInt4 initialMileage, pgInt4 mileagePerYear ,
-      pgString note)
+      pgString note, pgString serialNumber, pgString yearOfManufacture)
     sel1
   return $ head machineId -- todo safe
 

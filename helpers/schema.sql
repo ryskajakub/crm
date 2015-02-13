@@ -37,7 +37,9 @@ create table machines (
   operation_start date ,
   initial_mileage integer ,
   mileage_per_year integer ,
-  note varchar (500) );
+  note varchar (500) ,
+  serial_number varchar (500) ,
+  year_of_manufacture varchar (500) );
 
 drop table upkeeps;
 create table upkeeps (
@@ -87,18 +89,23 @@ insert into upkeep_sequences(display_ordering, label, repetition, machine_type_i
 
 
 insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year, note)
-  values (1, 1, '1999-01-01', 0, 365 * 24, '');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year, note)
-  values (1, 2, '1999-01-01', 10000, 365 * 24, '');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year, note)
-  values (1, 3, '2007-01-01', 0, 365 * 8, '');
+insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
+  mileage_per_year, note, serial_number, year_of_manufacture)
+    values (1, 1, '1999-01-01', 0, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
+insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
+  mileage_per_year, note, serial_number, year_of_manufacture)
+    values (1, 2, '1999-01-01', 10000, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
+insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
+  mileage_per_year, note, serial_number, year_of_manufacture)
+    values (1, 3, '2007-01-01', 0, 365 * 8, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
 
 insert into companies(name, plant, address, person, phone) values ('České dráhy', 'I', 'Ostrava', 'Zbieczuk', '777 888 222');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year, note)
-  values (2, 1, '2001-01-01', 30000, 365 * 12, '');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, mileage_per_year, note)
-  values (2, 3, '2008-01-01', 0, 365 * 24, '');
+insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
+  mileage_per_year, note, serial_number, year_of_manufacture)
+    values (2, 1, '2001-01-01', 30000, 365 * 12, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
+insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
+  mileage_per_year, note, serial_number, year_of_manufacture)
+    values (2, 3, '2008-01-01', 0, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
 
 
 insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
