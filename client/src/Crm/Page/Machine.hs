@@ -180,6 +180,14 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           (const $ return ())
           False
           False ,
+        row'
+          "Výrobní číslo"
+          (M.serialNumber machine')
+          (eventString >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
+        row'
+          "Rok výroby"
+          (M.yearOfManufacture machine')
+          (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
           B.col (B.mkColProps 9) $ let
