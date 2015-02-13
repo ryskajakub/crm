@@ -123,7 +123,11 @@ companyDetail editing' router var (companyId, company') machines' = let
             router , 
         dl [
           dt "Uvedení do provozu" , 
-          dd $ displayDate $ M.machineOperationStartDate machine' ] ]
+          dd $ displayDate $ M.machineOperationStartDate machine' ,
+          dt "Výrobní číslo" ,
+          dd $ pack $ M.serialNumber machine' ,
+          dt "Rok výroby" ,
+          dd $ pack $ M.yearOfManufacture machine' ]]
   machineBoxes = map machineBox machines'
   companyFormSection = companyForm editing' var setCompany company' saveHandler
   machineBoxesRow = B.row (machineBoxes ++ [ let
