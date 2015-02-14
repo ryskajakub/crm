@@ -253,6 +253,11 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       else [machineToggleLink, noteField]
     in B.row rowItems
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
+  upkeepRow :: DOMElement -> DOMElement -> DOMElement
+  upkeepRow labelText content =
+    B.row $ div' (class' "form-group") [
+      label' (class'' ["control-label", "col-md-6"]) labelText ,
+      B.col (B.mkColProps 6) content ]
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
     B.col (B.mkColProps 6) $ let
@@ -278,10 +283,9 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
       buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
       in BD.buttonDropdown buttonLabel elements ]
-  workHoursRow = B.row [
-    B.col (B.mkColProps 6) "Hodiny" ,
-    B.col (B.mkColProps 6) $ editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False ]
+  workHoursRow = upkeepRow (text2DOM "Hodiny") $ 
+    editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False
   workDescriptionRow = B.row [
     B.col (B.mkColProps 6) "Popis práce" ,
     B.col (B.mkColProps 6) $ editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
@@ -292,6 +296,5 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False ]
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
-  in div $
-    B.grid $
-      map machineRow machines ++ [dateRow, employeeSelectRow] ++ additionalRows ++ [submitButton]
+  in form' (class' "form-horizontal") $ B.grid $
+    map machineRow machines ++ [dateRow, employeeSelectRow] ++ additionalRows ++ [submitButton]
