@@ -105,8 +105,7 @@ editingCheckbox value setter editing = let
   inputAttrs = if value
     then checkboxAttrs { I.checked = Defined "checked" }
     else checkboxAttrs
-  theCheckbox = I.input mkAttrs inputAttrs
-  in div' (class' "checkbox") $ label theCheckbox
+  in I.input mkAttrs inputAttrs
 
 editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> Bool -> DOMElement
 editingInput = editingInput' False

@@ -245,14 +245,14 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       (Nothing, Just(thatMachine)) ->
         editingCheckbox (UM.warrantyUpkeep $ fst thatMachine) (const $ return ()) False
       _ -> undefined
-    warrantyUpkeepRow = B.col (B.mkColProps 1) [ text2DOM "Záruka", warrantyUpkeep ]
+    warrantyUpkeepRow = B.col (B.mkColProps 1) warrantyUpkeep
     noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note }, id')) 
       (pack . UM.upkeepMachineNote) I.textarea (if closeUpkeep' then 5 else 6)
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
     in B.row rowItems
-  submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
+  submitButton = B.col ((B.mkColProps 3) { B.mdOffset = Defined 9 }) button
   upkeepRow :: (Renderable a, Renderable b) => a -> b -> DOMElement
   upkeepRow labelText content =
     B.row $ div' (class' "form-group") [
@@ -290,5 +290,14 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
+  header = B.row [ 
+    B.col (B.mkColProps 4) $ h4 "Stroj" ,
+    B.col (B.mkColProps 2) $ h4 "Motohodiny" ,
+    B.col (B.mkColProps 1) $ h4 "Záruka" , 
+    B.col (B.mkColProps 5) $ h4 "Poznámka" ]
   in form' (class' "form-horizontal") $ B.grid $
-    map machineRow machines ++ [dateRow, employeeSelectRow] ++ additionalRows ++ [submitButton]
+    [header] ++
+    map machineRow machines ++ 
+    [dateRow, employeeSelectRow] ++ 
+    additionalRows ++ 
+    [submitButton]
