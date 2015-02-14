@@ -253,47 +253,41 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       else [machineToggleLink, noteField]
     in B.row rowItems
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
-  upkeepRow :: DOMElement -> DOMElement -> DOMElement
+  upkeepRow :: (Renderable a, Renderable b) => a -> b -> DOMElement
   upkeepRow labelText content =
     B.row $ div' (class' "form-group") [
-      label' (class'' ["control-label", "col-md-6"]) labelText ,
-      B.col (B.mkColProps 6) content ]
-  dateRow = B.row [
-    B.col (B.mkColProps 6) "Datum" ,
-    B.col (B.mkColProps 6) $ let
-      modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
-        UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
-      setPickerOpenness open = modify' (\upkeepData -> upkeepData {
-        UD.upkeepDatePicker = rmap (const open) (UD.upkeepDatePicker upkeepData)})
-      displayedDate = U.upkeepDate upkeep
-      setDate date = setUpkeep (upkeep { U.upkeepDate = date }, upkeepMachines)
-      in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
-        setPickerOpenness displayedDate setDate ]
-  employeeSelectRow = B.row [
-    B.col (B.mkColProps 6) "Servisman" ,
-    B.col (B.mkColProps 6) $ let
-      noEmployeeLabel = "---"
-      selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
-        employeeFoundInList = lookup employeeId employees
-        in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
-      selectEmployeeLink eId e = let
-        selectEmployeeAction = modify' (\s -> s { UD.selectedEmployee = eId })
-        in A.a''' (click selectEmployeeAction) (pack $ E.name e)
-      withNoEmployee = (Nothing, E.Employee $ unpack noEmployeeLabel) : (map (lmap Just) employees)
-      elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
-      buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
-      in BD.buttonDropdown buttonLabel elements ]
-  workHoursRow = upkeepRow (text2DOM "Hodiny") $ 
+      label' (class'' ["control-label", "col-md-3"]) labelText ,
+      B.col (B.mkColProps 9) content ]
+  dateRow = upkeepRow "Datum" $ let
+    modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
+      UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
+    setPickerOpenness open = modify' (\upkeepData -> upkeepData {
+      UD.upkeepDatePicker = rmap (const open) (UD.upkeepDatePicker upkeepData)})
+    displayedDate = U.upkeepDate upkeep
+    setDate date = setUpkeep (upkeep { U.upkeepDate = date }, upkeepMachines)
+    in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
+      setPickerOpenness displayedDate setDate
+  employeeSelectRow = upkeepRow "Servisman" (let
+    noEmployeeLabel = "---"
+    selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
+      employeeFoundInList = lookup employeeId employees
+      in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
+    selectEmployeeLink eId e = let
+      selectEmployeeAction = modify' (\s -> s { UD.selectedEmployee = eId })
+      in A.a''' (click selectEmployeeAction) (pack $ E.name e)
+    withNoEmployee = (Nothing, E.Employee $ unpack noEmployeeLabel) : (map (lmap Just) employees)
+    elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
+    buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
+    in BD.buttonDropdown buttonLabel elements )
+  workHoursRow = upkeepRow "Hodiny" $ 
     editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False
-  workDescriptionRow = B.row [
-    B.col (B.mkColProps 6) "Popis práce" ,
-    B.col (B.mkColProps 6) $ editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True False ]
-  recommendationRow = B.row [
-    B.col (B.mkColProps 6) "Doporučení" ,
-    B.col (B.mkColProps 6) $ editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False ]
+  workDescriptionRow = upkeepRow "Popis práce" $
+    editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True False 
+  recommendationRow = upkeepRow "Doporučení" $
+    editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
   in form' (class' "form-horizontal") $ B.grid $
