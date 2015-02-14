@@ -247,7 +247,7 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       _ -> undefined
     warrantyUpkeepRow = B.col (B.mkColProps 1) [ text2DOM "Záruka", warrantyUpkeep ]
     noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note }, id')) 
-      (pack . UM.upkeepMachineNote) I.textarea 5
+      (pack . UM.upkeepMachineNote) I.textarea (if closeUpkeep' then 5 else 6)
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
