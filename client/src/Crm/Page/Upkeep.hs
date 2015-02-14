@@ -230,7 +230,7 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       icon = if elem machineId checkedMachineIds
         then G.okCircle
         else span ([]::[DOMElement])
-      innerRow = B.row [B.col (B.mkColProps 1) icon, B.col (B.mkColProps 11) link']
+      innerRow = B.row [B.col (B.mkColProps 2) icon, B.col (B.mkColProps 10) link']
       in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) innerRow
     recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') )
       (showInt . UM.recordedMileage) I.input 2
@@ -252,12 +252,12 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
     in B.row rowItems
-  submitButton = B.col ((B.mkColProps 3) { B.mdOffset = Defined 9 }) button
   upkeepRow :: (Renderable a, Renderable b) => a -> b -> DOMElement
   upkeepRow labelText content =
     B.row $ div' (class' "form-group") [
       label' (class'' ["control-label", "col-md-3"]) labelText ,
       B.col (B.mkColProps 9) content ]
+  submitButton = upkeepRow "" button
   dateRow = upkeepRow "Datum" $ let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
@@ -291,10 +291,11 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
   header = B.row [ 
-    B.col (B.mkColProps 4) $ h4 "Stroj" ,
-    B.col (B.mkColProps 2) $ h4 "Motohodiny" ,
-    B.col (B.mkColProps 1) $ h4 "Záruka" , 
-    B.col (B.mkColProps 5) $ h4 "Poznámka" ]
+    B.col (B.mkColProps 4) $ div $ B.row [B.col (B.mkColProps 2) "", 
+      B.col (B.mkColProps 10) $ strong "Stroj" ] ,
+    B.col (B.mkColProps 2) $ div' (class' "form-group") $ label "Motohodiny" ,
+    B.col (B.mkColProps 1) $ strong "Záruka" , 
+    B.col (B.mkColProps 5) $ div' (class' "form-group") $ label "Poznámka" ]
   in form' (class' "form-horizontal") $ B.grid $
     [header] ++
     map machineRow machines ++ 
