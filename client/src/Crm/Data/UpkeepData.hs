@@ -10,6 +10,7 @@ import Crm.Shared.Employee
 import Crm.Component.DatePicker
 
 data UpkeepData = UpkeepData {
+  company :: Company ,
   upkeep :: (Upkeep, [UpkeepMachine']) ,
   machines :: [(MachineId, Machine, CompanyId, MachineTypeId, MachineType)] ,
   notCheckedMachines :: [UpkeepMachine'] ,
