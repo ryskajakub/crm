@@ -184,9 +184,6 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
     thisUpkeepMachine = find findMachineById upkeepMachines
     thatUpkeepMachine = find findMachineById notCheckedMachines''
     checkedMachineIds = map snd upkeepMachines
-    rowProps = if elem machineId checkedMachineIds
-      then class' "bg-success"
-      else mkAttrs
     field :: (Text -> Maybe a) 
           -> (a -> UM.UpkeepMachine' -> UM.UpkeepMachine')
           -> (UM.UpkeepMachine -> Text)
@@ -216,7 +213,7 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
           I.disabled = Defined True }
       in B.col (B.mkColProps rowWidth) $ inputType inputProps
     machineToggleLink = let
-      content = span $ pack $ MT.machineTypeName machineType
+      content = pack $ MT.machineTypeName machineType
       clickHandler = let
         (newCheckedMachines, newNotCheckedMachines) = toggle (
           upkeepMachines ,
@@ -227,10 +224,14 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
           setUpkeep newUpkeep 
           setNotCheckedMachines newNotCheckedMachines
       link' = A.a''
-        (mkAttrs{onClick = Defined $ const clickHandler})
+        (mkAttrs {onClick = Defined $ const clickHandler} )
         (A.mkAAttrs)
         content
-      in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) link'
+      icon = if elem machineId checkedMachineIds
+        then G.okCircle
+        else span ([]::[DOMElement])
+      innerRow = B.row [B.col (B.mkColProps 1) icon, B.col (B.mkColProps 11) link']
+      in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) innerRow
     recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') )
       (showInt . UM.recordedMileage) I.input 2
     warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
@@ -250,7 +251,7 @@ upkeepForm appState (upkeep, upkeepMachines) upkeepDatePicker'
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
-    in B.row' rowProps rowItems
+    in B.row rowItems
   submitButton = B.col ((B.mkColProps 6){ B.mdOffset = Defined 6 }) button
   dateRow = B.row [
     B.col (B.mkColProps 6) "Datum" ,
