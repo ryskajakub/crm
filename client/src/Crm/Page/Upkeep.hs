@@ -295,12 +295,12 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
-  header = B.row [ 
-    B.col (B.mkColProps 4) $ div $ B.row [B.col (B.mkColProps 2) "", 
-      B.col (B.mkColProps 10) $ strong "Stroj" ] ,
+  header = B.row $ [
+    B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) $ div $ B.row [B.col (B.mkColProps 2) "", 
+      B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
     B.col (B.mkColProps 2) $ div' (class' "form-group") $ label "Motohodiny" ,
-    B.col (B.mkColProps 1) $ strong "Záruka" , 
-    B.col (B.mkColProps 5) $ div' (class' "form-group") $ label "Poznámka" ]
+    B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
+    B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
   companyNameHeader = B.row $ B.col ((B.mkColProps 9) { B.mdOffset = Defined 3 }) ( h2 $ pack $
     C.companyName company )
   in form' (class' "form-horizontal") $ B.grid $
