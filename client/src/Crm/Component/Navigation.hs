@@ -20,9 +20,9 @@ navigation' :: CrmRouter
 navigation' router (body, callbacks) = 
   simpleReactBody' ( div [
     navBar $ nav [
-      li $ link [G.home, text2DOM " Seznam firem"] defaultFrontPage router ,
-      li $ link [G.tasks, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
-      li $ link [G.thList, text2DOM " Editace typů zařízení"] machineTypesList router ] ,
+      li' (row "1") $ link [G.home, text2DOM " Seznam firem"] defaultFrontPage router ,
+      li' (row "2") $ link [G.tasks, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
+      li' (row "3") $ link [G.thList, text2DOM " Editace typů zařízení"] machineTypesList router ] ,
     body ] ) callbacks 
 
 navigation :: CrmRouter

@@ -69,8 +69,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
     machineId nextService photos = 
   machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
-      extraRow = [row "Další servis" (displayDate nextService)]
-      photoUploadRow = row
+      extraRow = [myRow "Další servis" (displayDate nextService)]
+      photoUploadRow = myRow
         "Fotka" 
         (let 
           imageUploadHandler = const $ do
@@ -92,7 +92,7 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
       mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
-      photoCarouselRow = row
+      photoCarouselRow = myRow
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
       extraRows = (if editing then [photoUploadRow] else [photoCarouselRow]) ++ extraRow
@@ -129,11 +129,11 @@ machineNew router appState datePickerCalendar machine' companyId machineTypeTupl
         (navigate defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
-row :: Renderable a
-    => Text -- ^ label of field
-    -> a -- ^ the other field
-    -> DOMElement
-row labelText otherField = 
+myRow :: Renderable a
+      => Text -- ^ label of field
+      -> a -- ^ the other field
+      -> DOMElement
+myRow labelText otherField = 
   div' (class' "form-group") [ 
     label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
     div' (class' "col-md-9") otherField ]
@@ -163,7 +163,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
     input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
-    in row labelText input
+    in myRow labelText input
   row' labelText value' onChange' = row'' labelText value' onChange'
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
