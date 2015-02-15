@@ -12,11 +12,11 @@ module HaskellReact.Tag.Simple (
   ol , ol' ,
   section ,
   main ,
-  tr ,
-  thead ,
-  tbody ,
-  th ,
-  td ,
+  tr , tr' ,
+  thead , thead' ,
+  tbody , tbody' ,
+  th , th' ,
+  td , td' ,
   dt , dd , dl ,
   h1 , h2 , h3 ,
   h4 , h5 , h6 ,
@@ -85,19 +85,34 @@ section :: (Renderable a) => Automatic a -> DOMElement
 section = constructSimple "section" defaultAttributes
 
 th :: (Renderable a) => Automatic a -> DOMElement
-th = constructSimple "th" defaultAttributes
+th = th' defaultAttributes
+
+th' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+th' = constructSimple "th"
 
 tr :: (Renderable a) => Automatic a -> DOMElement
-tr = constructSimple "tr" defaultAttributes
+tr = tr' defaultAttributes
+
+tr' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+tr' = constructSimple "tr"
+
+td' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+td' = constructSimple "td"
 
 td :: (Renderable a) => Automatic a -> DOMElement
-td = constructSimple "td" defaultAttributes
+td = td' defaultAttributes
 
 thead :: (Renderable a) => Automatic a -> DOMElement
-thead = constructSimple "thead" defaultAttributes
+thead = thead' defaultAttributes
+
+thead' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+thead' = constructSimple "thead"
 
 tbody :: (Renderable a) => Automatic a -> DOMElement
-tbody = constructSimple "tbody" defaultAttributes
+tbody = tbody' defaultAttributes
+
+tbody' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+tbody' = constructSimple "tbody"
 
 dl :: (Renderable a) => Automatic a -> DOMElement
 dl = constructSimple "dl" defaultAttributes
