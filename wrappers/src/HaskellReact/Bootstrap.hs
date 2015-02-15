@@ -9,7 +9,7 @@ import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
 import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude
 
-import HaskellReact (foreignReact, Renderable, CommonJSModule, DOMElement)
+import HaskellReact
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap
@@ -25,15 +25,23 @@ reactBootstrap :: (Renderable b)
                -> DOMElement
 reactBootstrap = foreignReact requireReactBootstrap
 
+data Technical1 = Technical1 {
+  role :: Text }
+
+technical1 :: Technical1
+technical1 = Technical1 "navigation"
+
 navBar :: Renderable a
-       => Automatic a 
+       => a
        -> DOMElement
-navBar children = reactBootstrap "Navbar" Null children
+navBar children = 
+  constructDOMElement "nav" (class'' ["navbar", "navbar-default"]) technical1 $
+    div' (class' "container") children
 
 nav :: Renderable a
-    => Automatic a
+    => a 
     -> DOMElement
-nav children = reactBootstrap "Nav" Null children
+nav children = ul' (class'' ["nav", "navbar-nav"]) children
 
 table :: Renderable a
       => Automatic a
