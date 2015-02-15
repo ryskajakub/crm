@@ -41,23 +41,23 @@ plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
-  head' = thead $ tr [
-    th "Název firmy" ,
-    th "Datum" ,
-    th "Přeplánovat" ,
-    th "Uzavřít" ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
+  head' = thead' (row "1") $ tr [
+    th' (row "1") "Název firmy" ,
+    th' (row "2") "Datum" ,
+    th' (row "3") "Přeplánovat" ,
+    th' (row "4") "Uzavřít" ]
+  body = tbody' (row "1") $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
-      td $ link
+      td' (row "1") $ link
         (pack $ C.companyName company)
         (companyDetail companyId)
         router ,
-      td $ displayDate $ U.upkeepDate upkeep ,
-      td $ link
+      td' (row "2") $ displayDate $ U.upkeepDate upkeep ,
+      td' (row "3") $ link
         "Přeplánovat"
         (R.replanUpkeep upkeepId)
         router,
-      td $ link
+      td' (row "4") $ link
         "Uzavřít"
         (closeUpkeep upkeepId)
         router ]) upkeepCompanies
@@ -194,8 +194,9 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
           -> (UM.UpkeepMachine -> Text)
           -> (I.InputProps -> DOMElement)
           -> Int -- ^ row width
+          -> Defined Text
           -> DOMElement
-    field parseText setValue showValue inputType rowWidth = let
+    field parseText setValue showValue inputType rowWidth key' = let
       defaultValue upkeepMachine = Defined $ showValue $ fst upkeepMachine
       inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
         (Just(upkeepMachine), _) -> I.mkInputProps {
@@ -216,7 +217,7 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
           I.disabled = Defined True }
         _ -> I.mkInputProps { -- this shouldn't happen, really
           I.disabled = Defined True }
-      in B.col (B.mkColProps rowWidth) $ inputType inputProps
+      in B.col' (B.mkColProps rowWidth) key' $ inputType inputProps
     machineToggleLink = let
       content = pack $ MT.machineTypeName machineType
       clickHandler = let
@@ -235,8 +236,9 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
       icon = if elem machineId checkedMachineIds
         then G.okCircle
         else span ([]::[DOMElement])
-      innerRow = B.row [B.col (B.mkColProps 2) icon, B.col (B.mkColProps 10) link']
-      in B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) innerRow
+      innerRow = B.row [B.col' (B.mkColProps 2) (Defined "1") icon, 
+        B.col' (B.mkColProps 10) (Defined "2") link']
+      in B.col' (B.mkColProps (if closeUpkeep' then 4 else 6)) (Defined "1") innerRow
     recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') )
       (showInt . UM.recordedMileage) I.input 2
     warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
@@ -250,12 +252,13 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
       (Nothing, Just(thatMachine)) ->
         editingCheckbox (UM.warrantyUpkeep $ fst thatMachine) (const $ return ()) False
       _ -> undefined
-    warrantyUpkeepRow = B.col (B.mkColProps 1) warrantyUpkeep
+    warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
     noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note }, id')) 
       (pack . UM.upkeepMachineNote) I.textarea (if closeUpkeep' then 5 else 6)
     rowItems = if closeUpkeep'
-      then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
-      else [machineToggleLink, noteField]
+      then [machineToggleLink, recordedMileageField (Defined "2"), 
+        warrantyUpkeepRow , noteField (Defined "4")]
+      else [machineToggleLink, noteField (Defined "2")]
     in B.row rowItems
   upkeepRow :: (Renderable a, Renderable b) => a -> b -> DOMElement
   upkeepRow labelText content =

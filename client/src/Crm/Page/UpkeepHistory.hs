@@ -8,6 +8,7 @@ module Crm.Page.UpkeepHistory (
 
 import "fay-base" Data.Text (fromString, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
+import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -30,7 +31,12 @@ upkeepHistory upkeepsInfo router = let
     (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
       then ("label-success", "Uzavřený", text2DOM "")
       else ("label-warning", "Naplánovaný", link "Uzavřít" (closeUpkeep upkeepId) router)
-    marginTop = class' ("upkeep-row")
+    marginTop attributes = let
+      previousClassname = className attributes
+      newClassname = case previousClassname of
+        Defined text -> Defined $ text <> " upkeep-row"
+        _ -> Defined "upkeep-row"
+      in attributes { className = newClassname }
     in [
       B.row' marginTop $ B.col (B.mkColProps 12) (div' (class' "relative") [
         p [text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep, 
