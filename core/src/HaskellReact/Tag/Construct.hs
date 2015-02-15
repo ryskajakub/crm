@@ -32,13 +32,15 @@ data NoAttributes = NoAttributes {}
 data Attributes = Attributes {
   className :: Defined Text , -- ^ html class names, must be separated by spaces
   onClick :: Defined ( SyntheticMouseEvent -> Fay() ) , -- ^ click handler
-  id :: Defined Text } -- ^ html unique id of the element
+  id :: Defined Text ,
+  key :: Defined Text } -- ^ html unique id of the element
 
 defaultAttributes :: Attributes
 defaultAttributes = Attributes {
   className = Undefined ,
   onClick = Undefined ,
-  id = Undefined }
+  id = Undefined ,
+  key = Undefined }
 
 click :: Fay () -> Attributes
 click callback = mkAttrs {
@@ -46,6 +48,11 @@ click callback = mkAttrs {
 
 mkAttrs :: Attributes
 mkAttrs = defaultAttributes
+
+-- | create row attributes containing only row key
+row :: Text -> Attributes
+row text = mkAttrs {
+  key = Defined text }
 
 -- | create attributes containing only class with single value
 class' :: Text -> Attributes
