@@ -4,27 +4,26 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module HaskellReact.Tag.Simple (
-  span, span'
-  , div, div'
-  , p, p'
-  , li, li'
-  , ul, ul'
-  , ol, ol'
-  , section
-  , main
-  , tr 
-  , thead
-  , tbody
-  , th
-  , td
-  , dl
-  , dt
-  , dd
-  , h1 , h2, h3
-  , form, form'
-  , label', label
-  , nav'
-  , strong
+  span , span' ,
+  div , div' ,
+  p , p' ,
+  li , li' ,
+  ul , ul' ,
+  ol , ol' ,
+  section ,
+  main ,
+  tr ,
+  thead ,
+  tbody ,
+  th ,
+  td ,
+  dt , dd , dl ,
+  h1 , h2 , h3 ,
+  h4 , h5 , h6 ,
+  form , form' ,
+  label' , label ,
+  nav' ,
+  strong
 ) where
 
 import "fay-base" FFI (Automatic)
@@ -117,6 +116,15 @@ h2 = constructSimple "h2" defaultAttributes
 
 h3 :: (Renderable a) => a -> DOMElement
 h3 = constructSimple "h3" defaultAttributes
+
+h4 :: (Renderable a) => a -> DOMElement
+h4 = constructSimple "h4" defaultAttributes
+
+h5 :: (Renderable a) => a -> DOMElement
+h5 = constructSimple "h5" defaultAttributes
+
+h6 :: (Renderable a) => a -> DOMElement
+h6 = constructSimple "h6" defaultAttributes
 
 form :: (Renderable a) => Automatic a -> DOMElement
 form = constructSimple "form" defaultAttributes
