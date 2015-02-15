@@ -30,17 +30,15 @@ data NoAttributes = NoAttributes {}
 
 -- | attributes, that can be given to any tag
 data Attributes = Attributes {
-  className :: Defined Text -- ^ html class names, must be separated by spaces
-  , onClick :: Defined ( SyntheticMouseEvent -> Fay() ) -- ^ click handler
-  , id :: Defined Text -- ^ html unique id of the element
-}
+  className :: Defined Text , -- ^ html class names, must be separated by spaces
+  onClick :: Defined ( SyntheticMouseEvent -> Fay() ) , -- ^ click handler
+  id :: Defined Text } -- ^ html unique id of the element
 
 defaultAttributes :: Attributes
 defaultAttributes = Attributes {
-  className = Undefined
-  , onClick = Undefined
-  , id = Undefined
-}
+  className = Undefined ,
+  onClick = Undefined ,
+  id = Undefined }
 
 click :: Fay () -> Attributes
 click callback = mkAttrs {
@@ -52,8 +50,7 @@ mkAttrs = defaultAttributes
 -- | create attributes containing only class with single value
 class' :: Text -> Attributes
 class' className' = mkAttrs {
-  className = Defined $ className'
-  }
+  className = Defined $ className' }
 
 -- | create attributes containing only class with multiple values
 class'' :: [Text] -> Attributes
