@@ -5,8 +5,8 @@
 
 module HaskellReact.Bootstrap where
 
-import "fay-base" FFI (ffi, Automatic, Defined(Undefined), Nullable(Null))
-import "fay-base" Data.Text (fromString, Text)
+import "fay-base" FFI (ffi, Automatic, Defined(Defined, Undefined), Nullable(Null))
+import "fay-base" Data.Text (fromString, Text, showInt, (<>))
 import "fay-base" Prelude
 
 import HaskellReact
@@ -31,12 +31,18 @@ data Technical1 = Technical1 {
 technical1 :: Technical1
 technical1 = Technical1 "navigation"
 
+navBar' :: Renderable a
+        => (Attributes -> Attributes)
+        -> a
+        -> DOMElement
+navBar' modifyAttrs children = 
+  constructDOMElement "nav" (modifyAttrs $ class'' ["navbar", "navbar-default"]) technical1 $
+    div' (class' "container") children
+
 navBar :: Renderable a
        => a
        -> DOMElement
-navBar children = 
-  constructDOMElement "nav" (class'' ["navbar", "navbar-default"]) technical1 $
-    div' (class' "container") children
+navBar children = navBar' Prelude.id children
 
 nav :: Renderable a
     => a 
@@ -48,16 +54,16 @@ table :: Renderable a
       -> DOMElement
 table = reactBootstrap "Table" Null
 
-row' :: Renderable b
-     => a -- ^ props
-     -> b -- ^ children
+row' :: Renderable a
+     => (Attributes -> Attributes)
+     -> a -- ^ children
      -> DOMElement
-row' = reactBootstrap "Row" 
+row' modifyAttributes children = div' (modifyAttributes $ class' "row") children
 
 row :: Renderable a
     => a
     -> DOMElement
-row = row' Null
+row = row' Prelude.id
 
 jumbotron :: Renderable a
           => Automatic a
@@ -76,11 +82,24 @@ data ColProps = ColProps {
 mkColProps :: Int -> ColProps
 mkColProps int = ColProps int Undefined
 
+col' :: Renderable a
+     => ColProps
+     -> Defined Text
+     -> a
+     -> DOMElement
+col' colProps key' = let
+  md' = ["col-md-" <> (showInt $ md colProps)]
+  mdOffset' = case mdOffset colProps of
+    Defined int -> ["col-md-offset-" <> showInt int]
+    _ -> []
+  bothClasses = mdOffset' ++ md'
+  in div' ((class'' bothClasses) {key = key' })
+
 col :: Renderable a
     => ColProps
-    -> Automatic a
+    -> a
     -> DOMElement
-col colProps = reactBootstrap "Col" colProps
+col props children = col' props Undefined children
 
 panel :: Renderable a
       => Automatic a
