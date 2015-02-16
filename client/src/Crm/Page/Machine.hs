@@ -96,7 +96,10 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       photoCarouselRow = myRow
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
-      extraRows = (if editing then [photoUploadRow] else [photoCarouselRow]) ++ extraRow
+      extraRows = (case (editing, photos) of
+        (True, _) -> [photoUploadRow]
+        (_, []) -> []
+        _ -> [photoCarouselRow]) ++ extraRow
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
