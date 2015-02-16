@@ -13,6 +13,8 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as I
 
+import Crm.Component.Editable (editableN)
+
 formRowCol :: (Renderable a)
            => a -- ^ label of the label field
            -> [DOMElement] -- ^ other columns
@@ -90,5 +92,26 @@ saveButtonRow' enabled buttonLabel clickHandler =
         BTN.disabled = Defined True })
       buttonLabel
 
+editDisplayRow :: Renderable a
+               => Text -- ^ label of field
+               -> a -- ^ the other field
+               -> DOMElement
+editDisplayRow labelText otherField = 
+  div' (class' "form-group") [ 
+    label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
+    div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField ]
+
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
+
+row'' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement
+row'' editing' labelText value' onChange' = let
+  inputAttrs = I.mkInputAttrs {
+    I.defaultValue = Defined $ pack value' ,
+    I.onChange = Defined onChange' }
+  input = editableN inputAttrs inputNormalAttrs editing' (
+    span $ pack value')
+  in editDisplayRow labelText input
+
+row' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement 
+row' editing' labelText value' onChange' = row'' editing' labelText value' onChange'

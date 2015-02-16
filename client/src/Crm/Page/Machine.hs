@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, Text, (<>), unpack)
+import "fay-base" Data.Text (fromString, pack, (<>), unpack)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
@@ -16,7 +16,6 @@ import "fay-base" FFI (Defined(Defined))
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
-import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny as J
 import qualified HaskellReact.Tag.Hyperlink as A
@@ -36,25 +35,12 @@ import qualified Crm.Shared.Photo as P
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
-import Crm.Component.Editable (editableN)
-import Crm.Component.Form (formRow, inputNormalAttrs, editingTextarea, editingInput, formRow', 
-  formRowCol)
+import Crm.Component.Form (formRow, editingTextarea, editingInput, formRow', 
+  formRowCol, saveButtonRow, editDisplayRow, row')
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, eventInt, 
   getFileList, fileListElem, fileType, fileName)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
-
-saveButtonRow :: Renderable a
-              => a -- ^ label of the button
-              -> Fay () -- ^ button on click handler
-              -> DOMElement
-saveButtonRow buttonLabel clickHandler = 
-  div' (class'' ["col-md-9", "col-md-offset-3"]) $
-    BTN.button'
-      (BTN.buttonProps {
-        BTN.bsStyle = Defined "primary" ,
-        BTN.onClick = Defined $ const clickHandler })
-      buttonLabel
 
 machineDetail :: Bool
               -> Var D.AppState
@@ -70,8 +56,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
     machineId nextService photos = 
   machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
-      extraRow = [myRow "Další servis" (displayDate nextService)]
-      photoUploadRow = myRow
+      extraRow = [editDisplayRow "Další servis" (displayDate nextService)]
+      photoUploadRow = editDisplayRow
         "Fotka" 
         (let 
           imageUploadHandler = const $ do
@@ -93,7 +79,7 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
       mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
-      photoCarouselRow = myRow
+      photoCarouselRow = editDisplayRow
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
       extraRows = (case (editing, photos) of
@@ -133,15 +119,6 @@ machineNew router appState datePickerCalendar machine' companyId machineTypeTupl
         (navigate defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
-myRow :: Renderable a
-      => Text -- ^ label of field
-      -> a -- ^ the other field
-      -> DOMElement
-myRow labelText otherField = 
-  div' (class' "form-group") [ 
-    label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
-    div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField ]
-
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> Var D.AppState
@@ -161,15 +138,6 @@ machineDisplay editing buttonRow appVar operationStartCalendar
 
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
-
-  row'' labelText value' onChange' = let
-    inputAttrs = II.mkInputAttrs {
-      II.defaultValue = Defined $ pack value' ,
-      II.onChange = Defined onChange' }
-    input = editableN inputAttrs inputNormalAttrs editing (
-      span $ pack value')
-    in myRow labelText input
-  row' labelText value' onChange' = row'' labelText value' onChange'
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
@@ -186,10 +154,12 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           False
           False ,
         row'
+          editing
           "Výrobní číslo"
           (M.serialNumber machine')
           (eventString >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
         row'
+          editing
           "Rok výroby"
           (M.yearOfManufacture machine')
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
@@ -209,6 +179,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             in DP.datePicker editing operationStartCalendar setDatePickerDate setPickerOpenness
               displayedDate setDate ] ,
         row'
+          editing
           "Úvodní stav motohodin"
           (show $ M.initialMileage machine')
           (let
