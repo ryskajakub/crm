@@ -46,7 +46,7 @@ plannedUpkeeps router upkeepCompanies = let
     th' (row "2") "Datum" ,
     th' (row "3") "Přeplánovat" ,
     th' (row "4") "Uzavřít" ]
-  body = tbody' (row "1") $ map (\(upkeepId, upkeep, companyId, company) ->
+  body = tbody' (row "2") $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
       td' (row "1") $ link
         (pack $ C.companyName company)
