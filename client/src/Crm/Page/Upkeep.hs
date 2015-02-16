@@ -33,9 +33,9 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
+import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap, editingInput, editingTextarea, 
-  editingCheckbox)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]

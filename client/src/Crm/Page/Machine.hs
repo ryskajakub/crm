@@ -37,9 +37,10 @@ import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Editable (editableN)
+import Crm.Component.Form (formRow, inputNormalAttrs, editingTextarea, editingInput, formRow', 
+  formRowCol)
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, formRow', 
-  editingInput, eventInt, inputNormalAttrs, formRowCol, formRow, editingTextarea,
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, eventInt, 
   getFileList, fileListElem, fileType, fileName)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
