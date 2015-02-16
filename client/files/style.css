@@ -3,6 +3,9 @@ html {
   overflow-y: scroll;
 }
 
+.my-text-left {
+  text-align: left !important; }
+
 /* my carousel */
 #my-carousel {
   min-height: 600px; }

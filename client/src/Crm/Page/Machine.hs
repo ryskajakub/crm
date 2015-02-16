@@ -137,7 +137,7 @@ myRow :: Renderable a
 myRow labelText otherField = 
   div' (class' "form-group") [ 
     label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
-    div' (class' "col-md-9") otherField ]
+    div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField ]
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
@@ -163,7 +163,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
     inputAttrs = II.mkInputAttrs {
       II.defaultValue = Defined $ pack value' ,
       II.onChange = Defined onChange' }
-    input = editableN inputAttrs inputNormalAttrs editing (text2DOM $ pack value')
+    input = editableN inputAttrs inputNormalAttrs editing (
+      span $ pack value')
     in myRow labelText input
   row' labelText value' onChange' = row'' labelText value' onChange'
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
@@ -191,7 +192,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         div' (class' "form-group") [
           label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
-          B.col (B.mkColProps 9) $ let
+          div' (class'' ["col-md-9", "control-label", "my-text-left"]) $ let
             setDatePickerDate date = changeNavigationState (\state ->
               state { MD.operationStartCalendar = 
                 lmap (const date) (MD.operationStartCalendar state) })
