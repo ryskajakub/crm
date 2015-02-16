@@ -121,7 +121,7 @@ upkeepDetail router appState company upkeep3 datePicker notCheckedMachines
             (navigate (maintenances companyId) router)
           in mkSubmitButton 
             (not $ null upkeepMachines) 
-            [G.plus , text2DOM " Uzavřít"]
+            [span' (row "1") G.plus , span' (row "2") " Uzavřít"]
             closeUpkeepHandler
 
 upkeepNew :: CrmRouter
