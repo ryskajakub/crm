@@ -102,14 +102,11 @@ editDisplayRow labelText otherField =
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
 
-row'' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement
-row'' editing' labelText value' onChange' = let
+row' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement
+row' editing' labelText value' onChange' = let
   inputAttrs = I.mkInputAttrs {
     I.defaultValue = Defined $ pack value' ,
     I.onChange = Defined onChange' }
   input = editableN inputAttrs inputNormalAttrs editing' (
     span $ pack value')
   in editDisplayRow labelText input
-
-row' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement 
-row' editing' labelText value' onChange' = row'' editing' labelText value' onChange'
