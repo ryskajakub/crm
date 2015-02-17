@@ -141,18 +141,16 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $
       B.row $ [
-        formRow'
+        row'
+          False
           "Typ zařízení" 
           (MT.machineTypeName machineType) 
-          (const $ return ())
+          (const $ return ()) ,
+        row'
           False
-          False ,
-        formRow'
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
-          (const $ return ())
-          False
-          False ,
+          (const $ return ()) ,
         row'
           editing
           "Výrobní číslo"
