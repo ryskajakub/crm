@@ -97,9 +97,7 @@ editDisplayRow :: Renderable a
                -> a -- ^ the other field
                -> DOMElement
 editDisplayRow labelText otherField = 
-  div' (class' "form-group") [ 
-    label' (class'' ["control-label", "col-md-3"]) (span labelText) , 
-    div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField ]
+  formRowCol labelText [div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField]
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
