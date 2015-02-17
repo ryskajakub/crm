@@ -46,7 +46,9 @@ data NavigationState =
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) ,
-    companyId :: C.CompanyId }
+    companyId :: C.CompanyId } |
+  EmployeeList {
+    employees :: [(E.EmployeeId, E.Employee)] }
 
 data AppState = AppState {
   navigation :: NavigationState ,

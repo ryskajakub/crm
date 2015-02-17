@@ -35,7 +35,7 @@ import qualified Crm.Shared.Photo as P
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
-import Crm.Component.Form (formRow, editingTextarea, editingInput, formRow', 
+import Crm.Component.Form (formRow, editingTextarea, editingInput,
   formRowCol, saveButtonRow, editDisplayRow, row')
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, eventInt, 

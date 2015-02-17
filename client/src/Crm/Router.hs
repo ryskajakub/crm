@@ -22,7 +22,8 @@ module Crm.Router (
   plannedUpkeeps ,
   machineTypesList ,
   machineTypeEdit ,
-  machineDetail ) where
+  machineDetail ,
+  employeePage ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
@@ -98,6 +99,9 @@ machineTypesList = CrmRoute "other/machine-types-list"
 
 machineTypeEdit :: MT.MachineTypeId -> CrmRoute
 machineTypeEdit machineTypeId = CrmRoute $ "machine-types/"  <> (showInt $ MT.getMachineTypeId machineTypeId)
+
+employeePage :: CrmRoute
+employeePage = CrmRoute "employees"
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -243,7 +247,10 @@ startRouter appVar = let
                 modify' $ D.UpkeepScreen $ UD.UpkeepData company (upkeep, upkeepMachines) machines
                   (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
                   employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId))))
-        _ -> modify' D.NotFound)]
+        _ -> modify' D.NotFound
+  ),(
+    "employees", const $
+      fetchEmployees (\employees -> modify' $ D.EmployeeList employees))]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
