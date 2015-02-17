@@ -163,9 +163,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           "Rok výroby"
           (M.yearOfManufacture machine')
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
-        div' (class' "form-group") [
-          label' (class'' ["control-label", "col-md-3"]) (span "Datum uvedení do provozu") ,
-          div' (class'' ["col-md-9", "control-label", "my-text-left"]) $ let
+        editDisplayRow
+          ("Datum uvedení do provozu") (let
             setDatePickerDate date = changeNavigationState (\state ->
               state { MD.operationStartCalendar = 
                 lmap (const date) (MD.operationStartCalendar state) })
@@ -177,7 +176,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
               newMachine = machine' { M.machineOperationStartDate = date }
               in setMachine newMachine
             in DP.datePicker editing operationStartCalendar setDatePickerDate setPickerOpenness
-              displayedDate setDate ] ,
+              displayedDate setDate) ,
         row'
           editing
           "Úvodní stav motohodin"
