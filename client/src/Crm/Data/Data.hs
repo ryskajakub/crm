@@ -48,7 +48,9 @@ data NavigationState =
     machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) ,
     companyId :: C.CompanyId } |
   EmployeeList {
-    employees :: [(E.EmployeeId, E.Employee)] }
+    employees :: [(E.EmployeeId, E.Employee)] } |
+  EmployeeNew {
+    employee :: E.Employee }
 
 data AppState = AppState {
   navigation :: NavigationState ,

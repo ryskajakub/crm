@@ -24,3 +24,6 @@ data Employee = Employee {
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+newEmployee :: Employee
+newEmployee = Employee ""
