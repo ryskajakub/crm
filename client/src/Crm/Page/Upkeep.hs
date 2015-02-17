@@ -33,7 +33,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox)
+import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox, formRow)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, parseSafely, lmap, rmap)
 
@@ -260,13 +260,8 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
         warrantyUpkeepRow , noteField (Defined "4")]
       else [machineToggleLink, noteField (Defined "2")]
     in B.row rowItems
-  upkeepRow :: (Renderable a, Renderable b) => a -> b -> DOMElement
-  upkeepRow labelText content =
-    B.row $ div' (class' "form-group") [
-      label' (class'' ["control-label", "col-md-3"]) labelText ,
-      B.col (B.mkColProps 9) content ]
-  submitButton = upkeepRow "" button
-  dateRow = upkeepRow "Datum" $ let
+  submitButton = formRow "" button
+  dateRow = formRow "Datum" $ let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {
@@ -275,7 +270,7 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
     setDate date = setUpkeep (upkeep { U.upkeepDate = date }, upkeepMachines)
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
       setPickerOpenness displayedDate setDate
-  employeeSelectRow = upkeepRow "Servisman" (let
+  employeeSelectRow = formRow "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
       employeeFoundInList = lookup employeeId employees
@@ -287,13 +282,13 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
     elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
-  workHoursRow = upkeepRow "Hodiny" $ 
+  workHoursRow = formRow "Hodiny" $ 
     editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False
-  workDescriptionRow = upkeepRow "Popis práce" $
+  workDescriptionRow = formRow "Popis práce" $
     editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True False 
-  recommendationRow = upkeepRow "Doporučení" $
+  recommendationRow = formRow "Doporučení" $
     editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]

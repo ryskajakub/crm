@@ -23,9 +23,9 @@ formRowCol formFieldLabel otherColumns =
   div' (class' "form-group") [ 
     (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
 
-formRow :: (Renderable a)
+formRow :: (Renderable a, Renderable b)
         => a -- ^ label of field
-        -> DOMElement -- ^ the other field
+        -> b -- ^ the other field
         -> DOMElement
 formRow formFieldLabel col2 = 
   formRowCol formFieldLabel [div' (class' "col-md-9") col2]
