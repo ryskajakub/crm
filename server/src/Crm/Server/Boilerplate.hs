@@ -60,6 +60,8 @@ instance FromJSON US.UpkeepSequence where
   parseJSON = fayInstance
 instance FromJSON PM.PhotoMeta where
   parseJSON = fayInstance
+instance FromJSON E.Employee where
+  parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
