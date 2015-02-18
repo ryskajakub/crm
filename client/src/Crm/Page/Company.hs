@@ -98,7 +98,10 @@ companyNew router var company' = let
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
-  in companyForm editing' var setCompany company' saveHandler
+  in B.grid $ B.row [
+    B.col (B.mkColProps 12) $ h2 "Nová firma" ,
+    B.col (B.mkColProps 12) $
+      companyForm editing' var setCompany company' saveHandler ]
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
