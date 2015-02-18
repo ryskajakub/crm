@@ -54,6 +54,6 @@ employeeForm router employee appVar =
           D.navigation = case D.navigation appState of 
             D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
             _ -> D.navigation appState }))) ,
-      saveButtonRow
+      div' (class' "form-group") $ saveButtonRow
         "Přidat servismena"
         (createEmployee employee $ navigate R.employeePage router) ]
