@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, (<>), unpack)
+import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
@@ -54,8 +54,9 @@ machineDetail :: Bool
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
     machineId nextService photos = 
-  machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
+  machineDisplay editing pageHeader button appVar calendarOpen machine machineTypeTuple extraRows
     where
+      pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       photoUploadRow = editDisplayRow
         True
@@ -112,7 +113,8 @@ machineNew :: CrmRouter
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
 machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
-  machineDisplay True buttonRow appState datePickerCalendar machine' machineTypeTuple []
+  machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
+      buttonRow appState datePickerCalendar machine' machineTypeTuple []
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -122,6 +124,7 @@ machineNew router appState datePickerCalendar machine' companyId machineTypeTupl
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
+               -> Text -- ^ header of the page
                -> DOMElement
                -> Var D.AppState
                -> DP.DatePicker
@@ -129,7 +132,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> (DOMElement, Fay ())
-machineDisplay editing buttonRow appVar operationStartCalendar
+machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
     machine' (machineType, upkeepSequences) extraRows = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -142,7 +145,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid [
-      B.row $ B.col (B.mkColProps 12) $ h2 (if editing then "Editace kompresoru" else "Kompresor") ,
+      B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
       B.row $ [
         row'
           False
