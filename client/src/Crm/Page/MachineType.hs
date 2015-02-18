@@ -194,8 +194,10 @@ machineTypesList router machineTypes = let
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
       td $ showInt count ]) machineTypes
-  in main [
-    section $
-      B.table [
-        head' , 
-        body ] ]
+  in B.grid [
+    h2 "Editace typů zařízení" ,
+    main $
+      section $
+        B.table [
+          head' ,
+          body ]]
