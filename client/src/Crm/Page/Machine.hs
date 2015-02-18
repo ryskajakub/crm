@@ -164,7 +164,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           (M.yearOfManufacture machine')
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         editDisplayRow
-          False
+          editing
           ("Datum uvedení do provozu") (let
             setDatePickerDate date = changeNavigationState (\state ->
               state { MD.operationStartCalendar = 
@@ -187,7 +187,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
             setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
             in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
         formRowCol 
-          "Provoz motohodin/rok (Rok má 8760 motohodin)" [
+          "Provoz mth/rok (Rok má 8760 mth)" [
           (div' (class' "col-md-3") 
             (editingInput 
               (show $ M.mileagePerYear machine')
