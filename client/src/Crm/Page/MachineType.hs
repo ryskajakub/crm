@@ -31,6 +31,8 @@ import Crm.Helpers (lmap, eventInt, rmap)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
 
+import Debug.Trace
+
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
   D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
@@ -135,33 +137,35 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
       || isJust machineTypeId
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
-    B.grid $
-      B.row $ [
-        formRow
-          "Typ zařízení"
-          typeInputField ,
-        formRow'
-          "Výrobce"
-          (MT.machineTypeManufacturer machineType)
-          (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-          (isNothing machineTypeId) 
-          False ] ++ upkeepSequenceRows ++ [
-        formRow
-          (let 
-            addUpkeepSequenceRow = let
-              newUpkeepSequence = US.newUpkeepSequence {
-                US.displayOrdering = length upkeepSequences + 1 }
-              newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
-              in D.modifyState appVar (\navig -> 
-                navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-            disabledProps = if (isJust machineTypeId) 
-              then BTN.buttonProps { BTN.disabled = Defined True }
-              else BTN.buttonProps 
-            buttonProps = disabledProps {
-              BTN.onClick = Defined $ const addUpkeepSequenceRow }
-            in BTN.button' buttonProps "Přidat servisní řadu")
-           (text2DOM "") ,
-        saveButtonRow' validation submitButtonLabel submitButtonHandler ]
+    B.grid $ B.row $  
+      (B.col (B.mkColProps 12) $ h2 (trace (show machineTypeId) $ if isJust machineTypeId
+        then "Editace kompresoru" 
+        else "Nový kompresor - fáze 1 - výběr typu kompresoru")) : [
+          formRow
+            "Typ zařízení"
+            typeInputField ,
+          formRow'
+            "Výrobce"
+            (MT.machineTypeManufacturer machineType)
+            (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
+            (isNothing machineTypeId) 
+            False ] ++ upkeepSequenceRows ++ [
+          formRow
+            (let 
+              addUpkeepSequenceRow = let
+                newUpkeepSequence = US.newUpkeepSequence {
+                  US.displayOrdering = length upkeepSequences + 1 }
+                newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
+                in D.modifyState appVar (\navig -> 
+                  navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
+              disabledProps = if (isJust machineTypeId) 
+                then BTN.buttonProps { BTN.disabled = Defined True }
+                else BTN.buttonProps 
+              buttonProps = disabledProps {
+                BTN.onClick = Defined $ const addUpkeepSequenceRow }
+              in BTN.button' buttonProps "Přidat servisní řadu")
+             (text2DOM "") ,
+          saveButtonRow' validation submitButtonLabel submitButtonHandler ]
   in result
 
 machineTypeForm :: Var D.AppState
@@ -177,7 +181,7 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     False
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = updateMachineType (machineTypeId, machineType, upkeepSequences) (return ())
-  in machineTypeForm' Nothing (machineType, upkeepSequences) appVar 
+  in machineTypeForm' (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
 
 machineTypesList :: R.CrmRouter
