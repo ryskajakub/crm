@@ -11,7 +11,7 @@ module HaskellReact.Tag.Simple (
   ul , ul' ,
   ol , ol' ,
   section ,
-  main ,
+  main , main' ,
   tr , tr' ,
   thead , thead' ,
   tbody , tbody' ,
@@ -26,7 +26,6 @@ module HaskellReact.Tag.Simple (
   strong
 ) where
 
-import "fay-base" FFI (Automatic)
 import "fay-base" Prelude hiding (div, span)
 import "fay-base" Data.Text (Text, fromString)
 
@@ -35,23 +34,23 @@ import HaskellReact.Tag.Construct
 constructSimple :: Renderable a
                 => Text
                 -> Attributes
-                -> Automatic a
+                -> a
                 -> DOMElement
 constructSimple name attributes children = constructDOMElement name attributes (NoAttributes {}) children
 
 strong :: Renderable a => a -> DOMElement
 strong = constructSimple "strong" defaultAttributes
 
-span' :: Renderable a => Attributes -> Automatic a -> DOMElement
+span' :: Renderable a => Attributes -> a -> DOMElement
 span' = constructSimple "span"
 
-span :: Renderable a => Automatic a -> DOMElement
+span :: Renderable a => a -> DOMElement
 span = span' defaultAttributes
 
-div' :: Renderable a => Attributes -> Automatic a -> DOMElement
+div' :: Renderable a => Attributes -> a -> DOMElement
 div' = constructSimple "div"
 
-div :: Renderable a => Automatic a -> DOMElement
+div :: Renderable a => a -> DOMElement
 div = div' defaultAttributes
 
 p' :: Renderable a => Attributes -> a -> DOMElement
@@ -60,73 +59,76 @@ p' = constructSimple "p"
 p :: Renderable a => a -> DOMElement
 p = p' defaultAttributes
 
-li' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+li' :: (Renderable a) => Attributes -> a -> DOMElement
 li' = constructSimple "li"
 
-li :: Renderable a => Automatic a -> DOMElement
+li :: Renderable a => a -> DOMElement
 li = li' defaultAttributes
 
-ol :: Renderable a => Automatic a -> DOMElement
+ol :: Renderable a => a -> DOMElement
 ol = ol' defaultAttributes
 
-ol' :: Renderable a => Attributes -> Automatic a -> DOMElement
+ol' :: Renderable a => Attributes -> a -> DOMElement
 ol' = constructSimple "ol"
 
-ul' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+ul' :: (Renderable a) => Attributes -> a -> DOMElement
 ul' = constructSimple "ul"
 
-ul :: Renderable a => Automatic a -> DOMElement
+ul :: Renderable a => a -> DOMElement
 ul = ul' defaultAttributes
 
-main :: (Renderable a) => Automatic a -> DOMElement
-main = constructSimple "main" defaultAttributes
+main' :: (Renderable a) => Attributes -> a -> DOMElement
+main' = constructSimple "main"
 
-section :: (Renderable a) => Automatic a -> DOMElement
+main :: Renderable a => a -> DOMElement
+main = main' defaultAttributes
+
+section :: (Renderable a) => a -> DOMElement
 section = constructSimple "section" defaultAttributes
 
-th :: (Renderable a) => Automatic a -> DOMElement
+th :: (Renderable a) => a -> DOMElement
 th = th' defaultAttributes
 
-th' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+th' :: (Renderable a) => Attributes -> a -> DOMElement
 th' = constructSimple "th"
 
-tr :: (Renderable a) => Automatic a -> DOMElement
+tr :: (Renderable a) => a -> DOMElement
 tr = tr' defaultAttributes
 
-tr' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+tr' :: (Renderable a) => Attributes -> a -> DOMElement
 tr' = constructSimple "tr"
 
-td' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+td' :: (Renderable a) => Attributes -> a -> DOMElement
 td' = constructSimple "td"
 
-td :: (Renderable a) => Automatic a -> DOMElement
+td :: (Renderable a) => a -> DOMElement
 td = td' defaultAttributes
 
-thead :: (Renderable a) => Automatic a -> DOMElement
+thead :: (Renderable a) => a -> DOMElement
 thead = thead' defaultAttributes
 
-thead' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+thead' :: (Renderable a) => Attributes -> a -> DOMElement
 thead' = constructSimple "thead"
 
-tbody :: (Renderable a) => Automatic a -> DOMElement
+tbody :: (Renderable a) => a -> DOMElement
 tbody = tbody' defaultAttributes
 
-tbody' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+tbody' :: (Renderable a) => Attributes -> a -> DOMElement
 tbody' = constructSimple "tbody"
 
-dl :: (Renderable a) => Automatic a -> DOMElement
+dl :: (Renderable a) => a -> DOMElement
 dl = constructSimple "dl" defaultAttributes
 
-dt :: (Renderable a) => Automatic a -> DOMElement
+dt :: (Renderable a) => a -> DOMElement
 dt = constructSimple "dt" defaultAttributes
 
-dd :: (Renderable a) => Automatic a -> DOMElement
+dd :: (Renderable a) => a -> DOMElement
 dd = constructSimple "dd" defaultAttributes
 
-h1 :: (Renderable a) => Automatic a -> DOMElement
+h1 :: (Renderable a) => a -> DOMElement
 h1 = constructSimple "h1" defaultAttributes
 
-h2 :: (Renderable a) => Automatic a -> DOMElement
+h2 :: (Renderable a) => a -> DOMElement
 h2 = constructSimple "h2" defaultAttributes
 
 h3 :: (Renderable a) => a -> DOMElement
@@ -141,13 +143,13 @@ h5 = constructSimple "h5" defaultAttributes
 h6 :: (Renderable a) => a -> DOMElement
 h6 = constructSimple "h6" defaultAttributes
 
-form :: (Renderable a) => Automatic a -> DOMElement
+form :: (Renderable a) => a -> DOMElement
 form = constructSimple "form" defaultAttributes
 
-form' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+form' :: (Renderable a) => Attributes -> a -> DOMElement
 form' = constructSimple "form"
 
-label' :: (Renderable a) => Attributes -> Automatic a -> DOMElement
+label' :: (Renderable a) => Attributes -> a -> DOMElement
 label' = constructSimple "label"
 
 label :: (Renderable a) => a -> DOMElement
