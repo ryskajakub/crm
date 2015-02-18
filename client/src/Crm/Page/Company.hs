@@ -138,16 +138,18 @@ companyDetail editing' router var (companyId, company') machines' = let
         R.navigate (R.newMachinePhase1 companyId) router }
     button = BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
     in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ])
-  in main [
-    companyFormSection ,
-    section $ B.grid [
-      BN.nav [
-        R.link "Historie servisů" (R.maintenances companyId) router ,
-        form' (class' "navbar-form") $
-          BTN.button' (BTN.buttonProps { 
-            BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
-            [G.plus, text2DOM "Naplánovat servis"]] ,
-      machineBoxesRow ]]
+  in B.grid $ B.row [ 
+    B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma") ,
+    B.col (B.mkColProps 12) $ main [
+      companyFormSection ,
+      section $ B.grid [
+        BN.nav [
+          R.link "Historie servisů" (R.maintenances companyId) router ,
+          form' (class' "navbar-form") $
+            BTN.button' (BTN.buttonProps { 
+              BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
+              [G.plus, text2DOM "Naplánovat servis"]] ,
+        machineBoxesRow ]]] 
 
 companyForm :: Bool -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
