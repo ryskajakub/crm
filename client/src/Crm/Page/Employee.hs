@@ -21,8 +21,8 @@ import Crm.Server (createEmployee)
 import Crm.Component.Form (row', saveButtonRow)
 import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Employee as E
-import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances, 
-  newEmployee)
+import Crm.Router (CrmRouter, navigate, newEmployee)
+import qualified Crm.Router as R
 
 employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)] 
@@ -43,16 +43,17 @@ employeeForm :: CrmRouter
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeForm _ employee appVar = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-  B.grid [ 
-    row'
-      True 
-      "Jméno" 
-      (E.name employee) 
-      (eventString >=> (\employeeName -> modify appVar (\appState -> appState {
-        D.navigation = case D.navigation appState of 
-          D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
-          _ -> D.navigation appState }))) ,
-    saveButtonRow
-      "Přidat servismena"
-      (createEmployee employee (return ())) ]
+employeeForm router employee appVar = 
+  form' (mkAttrs { className = Defined "form-horizontal" }) $ 
+    B.grid [ 
+      row'
+        True 
+        "Jméno" 
+        (E.name employee) 
+        (eventString >=> (\employeeName -> modify appVar (\appState -> appState {
+          D.navigation = case D.navigation appState of 
+            D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
+            _ -> D.navigation appState }))) ,
+      saveButtonRow
+        "Přidat servismena"
+        (createEmployee employee $ navigate R.employeePage router) ]
