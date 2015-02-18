@@ -45,7 +45,7 @@ employeeForm :: CrmRouter
              -> DOMElement
 employeeForm router employee appVar = 
   form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid [ 
+    B.grid $ (B.col (B.mkColProps 12) $ h2 "Nový servisman") : [
       row'
         True 
         "Jméno" 
