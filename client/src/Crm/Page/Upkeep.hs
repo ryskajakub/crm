@@ -301,8 +301,8 @@ upkeepForm appState company (upkeep, upkeepMachines) upkeepDatePicker'
     B.col (B.mkColProps 2) $ div' (class' "form-group") $ label "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
     B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
-  companyNameHeader = B.row $ B.col ((B.mkColProps 9) { B.mdOffset = Defined 3 }) ( h2 $ pack $
-    C.companyName company )
+  pageTypeHeader = (if closeUpkeep' then "Uzavření servisu" else "Přeplánování servisu")
+  companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageTypeHeader
   in form' (class' "form-horizontal") $ B.grid $
     [companyNameHeader] ++
     [header] ++
