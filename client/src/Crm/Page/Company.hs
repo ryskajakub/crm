@@ -72,15 +72,16 @@ companiesList router orderType direction companies' = let
       td $ pack $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  in main [
-    section $
+  in main' (class' "container") $ B.row [
+    section' (class' "col-md-12") $ h2 "Seznam firem, další servis" ,
+    section' (class' "col-md-12") $
       let
         buttonProps = BTN.buttonProps {
           BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
         in BTN.button' buttonProps [
           G.plus , 
           text2DOM "Přidat firmu" ] ,
-    section $
+    section' (class' "col-md-12") $
       B.table [
         head' , 
         body ] ]
