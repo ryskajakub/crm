@@ -93,11 +93,15 @@ saveButtonRow' enabled buttonLabel clickHandler =
       buttonLabel
 
 editDisplayRow :: Renderable a
-               => Text -- ^ label of field
+               => Bool -- ^ editing
+               -> Text -- ^ label of field
                -> a -- ^ the other field
                -> DOMElement
-editDisplayRow labelText otherField = 
-  formRowCol labelText [div' (class'' ["control-label", "col-md-9", "my-text-left"]) otherField]
+editDisplayRow editing labelText otherField = let
+  classes = ["col-md-9", "my-text-left"] ++ (if editing
+    then []
+    else ["control-label"])
+  in formRowCol labelText [div' (class'' classes) otherField]
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
@@ -109,4 +113,4 @@ row' editing' labelText value' onChange' = let
     I.onChange = Defined onChange' }
   input = editableN inputAttrs inputNormalAttrs editing' (
     span $ pack value')
-  in editDisplayRow labelText input
+  in editDisplayRow editing' labelText input

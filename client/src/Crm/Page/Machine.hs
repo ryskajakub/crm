@@ -56,8 +56,9 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
     machineId nextService photos = 
   machineDisplay editing button appVar calendarOpen machine machineTypeTuple extraRows
     where
-      extraRow = [editDisplayRow "Další servis" (displayDate nextService)]
+      extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       photoUploadRow = editDisplayRow
+        True
         "Fotka" 
         (let 
           imageUploadHandler = const $ do
@@ -80,6 +81,7 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
               imageUploadLabel ]]]) 
       mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
       photoCarouselRow = editDisplayRow
+        True
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
       extraRows = (case (editing, photos) of
@@ -162,6 +164,7 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           (M.yearOfManufacture machine')
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         editDisplayRow
+          False
           ("Datum uvedení do provozu") (let
             setDatePickerDate date = changeNavigationState (\state ->
               state { MD.operationStartCalendar = 
