@@ -82,7 +82,7 @@ companiesList router orderType direction companies' = let
         text2DOM "Přidat firmu" ] ,
     B.table [
       head' , 
-      body ] ]
+      body ]]
 
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements

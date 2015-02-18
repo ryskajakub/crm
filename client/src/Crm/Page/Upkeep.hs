@@ -61,7 +61,9 @@ plannedUpkeeps router upkeepCompanies = let
         "Uzavřít"
         (closeUpkeep upkeepId)
         router ]) upkeepCompanies
-  in main $ B.table [ head' , body ]
+  in B.grid $ B.row [
+    B.col (B.mkColProps 12) $ h2 "Naplánované servisy" ,
+    B.col (B.mkColProps 12) $ main $ B.table [ head' , body ] ]
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
