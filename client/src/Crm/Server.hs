@@ -5,6 +5,7 @@ module Crm.Server (
   createCompany , 
   createMachine , 
   createUpkeep , 
+  createEmployee ,
   updateUpkeep ,
   updateMachine , 
   updateCompany ,
@@ -266,6 +267,16 @@ createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
   ajax 
     (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+    post
+    (const callback)
+
+createEmployee :: E.Employee
+               -> Fay ()
+               -> Fay ()
+createEmployee employee callback =
+  ajax
+    employee
+    (pack $ A.employees)
     post
     (const callback)
 

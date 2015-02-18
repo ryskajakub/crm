@@ -17,6 +17,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
+import Crm.Server (createEmployee)
 import Crm.Component.Form (row', saveButtonRow)
 import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Employee as E
@@ -52,7 +53,6 @@ employeeForm _ employee appVar = form' (mkAttrs { className = Defined "form-hori
         D.navigation = case D.navigation appState of 
           D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
           _ -> D.navigation appState }))) ,
-    saveButtonRow    
+    saveButtonRow
       "Přidat servismena"
-      (return ()) ]
-
+      (createEmployee employee (return ())) ]
