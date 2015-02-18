@@ -121,7 +121,7 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBox (machineId', machine', _, _, machineType) =
     B.col (B.mkColProps 4) $
       B.panel [
-        h2 $ 
+        h3 $ 
           R.link
             (pack $ MT.machineTypeName machineType)
             (R.machineDetail machineId')

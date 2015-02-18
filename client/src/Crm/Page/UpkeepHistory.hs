@@ -44,7 +44,7 @@ upkeepHistory upkeepsInfo router = let
         div' (class' "same-line") $ p' (class' "text-center") [strong "Servisman: ", text2DOM employeeText] ,
         div' (class' "same-line") $ div' (class' "text-right") formLink ]) ,
       B.row $ map (\(upkeepMachine, machineType, machineId) ->
-        B.col (B.mkColProps 4) $ B.panel [ h2 $ link 
+        B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
           (pack $ MT.machineTypeName machineType)
           (machineDetail machineId)
           router ,
@@ -56,5 +56,5 @@ upkeepHistory upkeepsInfo router = let
             dd $ showInt $ UM.recordedMileage upkeepMachine ,
             dd "Záruka" ,
             dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]) upkeepMachines ]
-  in div $ B.grid ([B.row $ B.col (B.mkColProps 12) (h1 "Historie servisů")] :
+  in div $ B.grid ([B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")] :
     map upkeepHtml upkeepsInfo)
