@@ -72,19 +72,20 @@ companiesList router orderType direction companies' = let
       td $ pack $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  in main' (class' "container") $ B.row [
-    section' (class' "col-md-12") $ h2 "Seznam firem, další servis" ,
-    section' (class' "col-md-12") $
-      let
-        buttonProps = BTN.buttonProps {
-          BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
-        in BTN.button' buttonProps [
-          G.plus , 
-          text2DOM "Přidat firmu" ] ,
-    section' (class' "col-md-12") $
-      B.table [
-        head' , 
-        body ] ]
+  in main' (class' "container") $ B.row $ withSection [
+    h2 "Seznam firem, další servis" ,
+    let
+      buttonProps = BTN.buttonProps {
+        BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
+      in BTN.button' buttonProps [
+        G.plus , 
+        text2DOM "Přidat firmu" ] ,
+    B.table [
+      head' , 
+      body ] ]
+
+withSection :: [DOMElement] -> [DOMElement]
+withSection elements = map (\element -> section' (class' "col-md-12") element) elements
 
 companyNew :: R.CrmRouter
            -> Var D.AppState
