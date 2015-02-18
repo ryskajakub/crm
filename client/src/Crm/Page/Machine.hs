@@ -141,7 +141,8 @@ machineDisplay editing buttonRow appVar operationStartCalendar
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
-    B.grid $
+    B.grid [
+      B.row $ B.col (B.mkColProps 12) $ h2 (if editing then "Editace kompresoru" else "Kompresor") ,
       B.row $ [
         row'
           False
@@ -213,5 +214,5 @@ machineDisplay editing buttonRow appVar operationStartCalendar
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]
+        div' (class' "form-group") buttonRow ]]
   in (elements, return ())
