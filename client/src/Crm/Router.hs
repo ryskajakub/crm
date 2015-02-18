@@ -181,10 +181,10 @@ startRouter appVar = let
       fetchEmployees (\employees -> 
         withCompany
           params
-          (\companyId (company, machines) -> let
+          (\companyId (_, machines) -> let
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
-            in D.UpkeepScreen $ UD.UpkeepData company (U.newUpkeep nowYMD, []) 
+            in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
                 (nowYMD, False) employees Nothing (Right $ UD.UpkeepNew $ Left companyId)))
   ),(
@@ -220,13 +220,12 @@ startRouter appVar = let
         Just(upkeepId') -> let 
           upkeepId = U.UpkeepId upkeepId'
           in fetchUpkeep upkeepId (\(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
-            fetchCompany companyId (\(company, _) -> 
-              fetchEmployees (\employees -> let
-                upkeep' = upkeep { U.upkeepClosed = True }
-                upkeepDate = U.upkeepDate upkeep
-                in modify' $ D.UpkeepScreen $ UD.UpkeepData company (upkeep', upkeepMachines) machines
-                  (notCheckedMachines' machines upkeepMachines) (upkeepDate, False) employees 
-                  selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId))))
+            fetchEmployees (\employees -> let
+              upkeep' = upkeep { U.upkeepClosed = True }
+              upkeepDate = U.upkeepDate upkeep
+              in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
+                (notCheckedMachines' machines upkeepMachines) (upkeepDate, False) employees 
+                selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $
@@ -246,12 +245,11 @@ startRouter appVar = let
       in case upkeepId'' of
         Just (upkeepId') -> let
           upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(companyId, (upkeep, employeeId, upkeepMachines), machines) ->
-            fetchCompany companyId (\(company, _) ->
-              fetchEmployees (\employees ->
-                modify' $ D.UpkeepScreen $ UD.UpkeepData company (upkeep, upkeepMachines) machines
-                  (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
-                  employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId))))
+          in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
+            fetchEmployees (\employees ->
+              modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
+                (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
+                employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound
   ),(
     "employees", const $
