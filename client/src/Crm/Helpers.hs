@@ -15,6 +15,8 @@ import qualified Crm.Shared.Company as C
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
+import qualified HaskellReact.Bootstrap as B
+import qualified HaskellReact.Bootstrap.Alert as A
 
 import Moment
 
@@ -23,6 +25,16 @@ import qualified JQuery as JQ
 data FileList
 data File
 data FileContents
+
+pageInfo :: Renderable a
+         => Text
+         -> Maybe a
+         -> [DOMElement]
+pageInfo header alertContent' = [
+  B.col (B.mkColProps 12) (h2 header) ] ++ 
+  case alertContent' of 
+    Just alertContent -> [B.col (B.mkColProps 12) (A.alert A.Info alertContent)]
+    Nothing -> []
 
 getFileList :: JQ.JQuery -> Fay FileList
 getFileList = ffi " %1['prop']('files') "

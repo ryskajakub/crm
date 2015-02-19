@@ -29,7 +29,7 @@ import qualified Crm.Data.Data as D
 import Crm.Component.Editable (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate)
+import Crm.Helpers (displayDate, pageInfo)
 
 companiesList :: R.CrmRouter
               -> C.OrderType
@@ -72,8 +72,10 @@ companiesList router orderType direction companies' = let
       td $ pack $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  in main' (class' "container") $ B.row $ withSection [
-    h2 "Seznam firem, další servis" ,
+  pageInfo' = pageInfo
+    "Seznam firem, další servis" $
+    Just "Bacha"
+  in main' (class' "container") $ B.row $ (pageInfo' ++ withSection [
     let
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
@@ -82,7 +84,7 @@ companiesList router orderType direction companies' = let
         text2DOM "Přidat firmu" ] ,
     B.table [
       head' , 
-      body ]]
+      body ]])
 
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements
