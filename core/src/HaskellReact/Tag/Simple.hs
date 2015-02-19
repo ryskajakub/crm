@@ -10,7 +10,7 @@ module HaskellReact.Tag.Simple (
   li , li' ,
   ul , ul' ,
   ol , ol' ,
-  section ,
+  section , section' ,
   main , main' ,
   tr , tr' ,
   thead , thead' ,
@@ -84,7 +84,10 @@ main :: Renderable a => a -> DOMElement
 main = main' defaultAttributes
 
 section :: (Renderable a) => a -> DOMElement
-section = constructSimple "section" defaultAttributes
+section = section' defaultAttributes
+
+section' :: (Renderable a) => Attributes -> a -> DOMElement
+section' = constructSimple "section"
 
 th :: (Renderable a) => a -> DOMElement
 th = th' defaultAttributes
