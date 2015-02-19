@@ -23,6 +23,7 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Employee as E
 import Crm.Router (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router as R
+import Crm.Helpers (pageInfo)
 
 employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)] 
@@ -45,7 +46,7 @@ employeeForm :: CrmRouter
              -> DOMElement
 employeeForm router employee appVar = 
   form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid $ (B.col (B.mkColProps 12) $ h2 "Nový servisman") : [
+    B.grid $ (B.col (B.mkColProps 12) $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
       row'
         True 
         "Jméno" 

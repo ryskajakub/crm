@@ -27,11 +27,9 @@ import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol, 
   editingInput, formRow, inputNormalAttrs)
-import Crm.Helpers (lmap, eventInt, rmap)
+import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
 import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
 import Crm.Component.Autocomplete (autocompleteInput)
-
-import Debug.Trace
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
@@ -136,11 +134,15 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
       || isJust machineTypeId
 
+  phase1PageInfo = pageInfo 
+    "Nový kompresor - fáze 1 - výběr typu kompresoru" $
+    Just $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
+
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ B.row $  
-      (B.col (B.mkColProps 12) $ h2 (trace (show machineTypeId) $ if isJust machineTypeId
-        then "Editace kompresoru" 
-        else "Nový kompresor - fáze 1 - výběr typu kompresoru")) : [
+      (B.col (B.mkColProps 12) $ (if isJust machineTypeId
+        then [h2 "Editace kompresoru"]
+        else phase1PageInfo)) : [
           formRow
             "Typ zařízení"
             typeInputField ,
@@ -198,10 +200,11 @@ machineTypesList router machineTypes = let
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
       td $ showInt count ]) machineTypes
-  in B.grid [
-    h2 "Editace typů zařízení" ,
-    main $
-      section $
-        B.table [
-          head' ,
-          body ]]
+  alertInfo = text2DOM "Tady edituješ typ kompresoru - který je společný pro více kompresorů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech kompresorů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u kompresorů a zařízení, tak se ty díly budou přidávat tady." : []
+  in B.grid $
+    (pageInfo "Editace typů kompresoru" $ Just alertInfo) ++ [
+      main $
+        section $
+          B.table [
+            head' ,
+            body ]]

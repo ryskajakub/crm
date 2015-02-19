@@ -36,6 +36,7 @@ pageInfo header alertContent' = [
     Just alertContent -> [B.col (B.mkColProps 12) (A.alert A.Info alertContent)]
     Nothing -> []
 
+
 getFileList :: JQ.JQuery -> Fay FileList
 getFileList = ffi " %1['prop']('files') "
 
