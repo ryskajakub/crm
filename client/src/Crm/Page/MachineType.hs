@@ -134,14 +134,24 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
       || isJust machineTypeId
 
-  phase1PageInfo = pageInfo 
-    "Nový kompresor - fáze 1 - výběr typu kompresoru" $
-    Just $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
+  advices = div [ 
+    p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : [] ,
+    h4 "Servisní řada" ,
+    text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se kompresor opravuje. U každého typu kompresoru musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
+    ul [
+      li "Generální oprava po 50000 mth" ,
+      li "Střední oprava po 25000 mth" ,
+      li "Běžná oprava po 5000 mth" ,
+      li "Úvodní servis po 500 mth" ]]
+
+  editInfo = pageInfo "Editace kompresoru" $ Just advices
+    
+  phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just advices
 
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ B.row $  
       (B.col (B.mkColProps 12) $ (if isJust machineTypeId
-        then [h2 "Editace kompresoru"]
+        then editInfo
         else phase1PageInfo)) : [
           formRow
             "Typ zařízení"
