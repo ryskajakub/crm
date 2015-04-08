@@ -5,7 +5,7 @@ module Crm.Server.Types where
 import Control.Monad.Reader (ReaderT)
 import Database.PostgreSQL.Simple (Connection)
 
-data MachineTypeMid = Autocomplete String | CountListing
+data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing
 data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
 
 type Dependencies = (ReaderT Connection IO :: * -> *)

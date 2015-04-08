@@ -47,6 +47,7 @@ module Crm.Server.DB (
   machinesInUpkeepQuery ,
   machinePhotosByMachineId ,
   photoMetaQuery ,
+  machineManufacturersQuery ,
   -- core computation
   nextService ,
   -- helpers
@@ -67,6 +68,7 @@ import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, p
 import Opaleye.Manipulation (runUpdate, runInsertReturning, runInsert)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
+import Opaleye.Distinct (distinct)
 
 import Control.Monad.Reader (ReaderT, ask)
 import Control.Monad.IO.Class (liftIO)
@@ -249,6 +251,12 @@ machinePhotosByMachineId machineId = proc () -> do
   restrict -< (machineId' .== pgInt4 machineId)
   (_, mimeType, fileName) <- join photosMetaQuery -< photoId
   returnA -< (photoId, mimeType, fileName)
+
+machineManufacturersQuery :: String -> Query DBText
+machineManufacturersQuery str = distinct $ proc () -> do
+  (_, _, manufacturer') <- machineTypesQuery -< ()
+  restrict -< (lower manufacturer' `like` (lower $ pgString ("%" ++ (intersperse '%' str) ++ "%")))
+  returnA -< manufacturer'
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do

@@ -40,7 +40,9 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
-  ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn )
+  ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn)
+machineTypesListing (AutocompleteManufacturer mid) = mkListing (jsonO . someO) (const $
+  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [String]) )
 machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
@@ -83,6 +85,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (do
 
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [(
+  A.autocompleteManufacturer, S.listingBy (\str -> AutocompleteManufacturer str)),(
   A.autocomplete, S.listingBy (\str -> Autocomplete str)),(
   A.byName, S.singleBy (\str -> MachineTypeByName str)),(
   A.byId, S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
