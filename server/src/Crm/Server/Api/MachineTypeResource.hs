@@ -1,5 +1,5 @@
 module Crm.Server.Api.MachineTypeResource (
-  machineTypeResource ) where
+  machineTypeResource) where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==))
@@ -42,7 +42,7 @@ machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
   ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn)
 machineTypesListing (AutocompleteManufacturer mid) = mkListing (jsonO . someO) (const $
-  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [String]) )
+  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [String]))
 machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 

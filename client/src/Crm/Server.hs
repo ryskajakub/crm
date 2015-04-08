@@ -17,10 +17,11 @@ module Crm.Server (
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
-  fetchMachineTypesAutocomplete ,
   fetchMachineType ,
   fetchMachineTypeById ,
   fetchMachineTypes ,
+  fetchMachineTypesAutocomplete ,
+  fetchMachineTypesManufacturer ,
   fetchUpkeep ,
   fetchEmployees ,
   fetchCompany ,
@@ -83,6 +84,15 @@ ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
 getPhoto :: P.PhotoId
          -> Text
 getPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId))
+
+fetchMachineTypesManufacturer :: Text -- ^ the string user typed
+                              -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
+                              -> Fay ()
+fetchMachineTypesManufacturer text callback = do
+  JQ.ajax
+    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack text))
+    (callback . items)
+    noopOnError
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick

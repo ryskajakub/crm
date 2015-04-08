@@ -28,7 +28,8 @@ import qualified Crm.Data.Data as D
 import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol, 
   editingInput, formRow, inputNormalAttrs)
 import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
-import Crm.Server (updateMachineType, fetchMachineType, fetchMachineTypesAutocomplete)
+import Crm.Server (updateMachineType, fetchMachineType, 
+  fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer )
 import Crm.Component.Autocomplete (autocompleteInput)
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
@@ -69,8 +70,9 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       D.maybeMachineIdFromPhase1 = machineTypeId })
     R.navigate (R.newMachinePhase2 companyId) crmRouter
   submitButtonLabel = text2DOM "Dále"
-  in (machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar setMachineType machineTypeInput
-    submitButtonLabel submitButtonHandler, afterRenderCallback)
+  (result, callback) = machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar 
+    setMachineType machineTypeInput submitButtonLabel submitButtonHandler
+  in (result, callback >> afterRenderCallback)
 
 machineTypeForm' :: Maybe MT.MachineTypeId
                  -> (MT.MachineType, [US.UpkeepSequence])
@@ -79,7 +81,7 @@ machineTypeForm' :: Maybe MT.MachineTypeId
                  -> DOMElement -- ^ first row input field
                  -> DOMElement -- ^ submit button label
                  -> Fay () -- ^ submit button handler
-                 -> DOMElement
+                 -> (DOMElement, Fay ())
 machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     setMachineType typeInputField submitButtonLabel submitButtonHandler = let
     
@@ -148,6 +150,16 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     
   phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just advices
 
+  (autocompleteManufacturerField, autocompleteManufacturerCb) = (autocompleteInput
+    inputNormalAttrs
+    (\text ->
+      setMachineType (machineType { MT.machineTypeManufacturer = unpack text }))
+    (\text -> return ())
+    fetchMachineTypesManufacturer 
+    "machine-type-manufacturer-autocomplete"
+    (II.mkInputAttrs {
+      II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
+
   result = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ B.row $  
       (B.col (B.mkColProps 12) $ (if isJust machineTypeId
@@ -156,12 +168,9 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
           formRow
             "Typ zařízení"
             typeInputField ,
-          formRow'
+          formRow
             "Výrobce"
-            (MT.machineTypeManufacturer machineType)
-            (eventString >=> (\string -> setMachineType (machineType { MT.machineTypeManufacturer = string })))
-            (isNothing machineTypeId) 
-            False ] ++ upkeepSequenceRows ++ [
+             autocompleteManufacturerField ] ++ upkeepSequenceRows ++ [
           formRow
             (let 
               addUpkeepSequenceRow = let
@@ -178,12 +187,12 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
               in BTN.button' buttonProps "Přidat servisní řadu")
              (text2DOM "") ,
           saveButtonRow' validation submitButtonLabel submitButtonHandler ]
-  in result
+  in (result, autocompleteManufacturerCb)
 
 machineTypeForm :: Var D.AppState
                 -> MT.MachineTypeId
                 -> (MT.MachineType, [US.UpkeepSequence])
-                -> DOMElement
+                -> (DOMElement, Fay ())
 machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = editingInput
