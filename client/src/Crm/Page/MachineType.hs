@@ -127,8 +127,9 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     removeButtonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const removeButtonHandler }
     removeButton = BTN.button' removeButtonProps "Odeber"
-    in formRowCol' (Defined $ "key-" <> showInt displayOrder)
-      [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumns) upkeepSequences
+    in div' ((class' "form-group") {key = Defined $ "key-" <> showInt displayOrder}) ([
+      div' (class'' ["col-md-1", "col-md-offset-1"]) removeButton ,
+      label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
   validation = let 
     countOfOneTimeSequences = (case upkeepSequences of
@@ -161,7 +162,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     (II.mkInputAttrs {
       II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
-  result = form' (mkAttrs { className = Defined "form-horizontal" }) $
+  result = form' (class'' ["form-horizontal", "upkeep-sequence-form"]) $
     B.grid $ B.row $  
       (B.col (B.mkColProps 12) $ (if isJust machineTypeId
         then editInfo

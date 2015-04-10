@@ -6,6 +6,10 @@ html {
 .my-text-left {
   text-align: left !important; }
 
+form.upkeep-sequence-form input[type=checkbox] {
+  position: relative;
+  top: 6px; }
+
 /* my carousel */
 #my-carousel {
   min-height: 600px; }
