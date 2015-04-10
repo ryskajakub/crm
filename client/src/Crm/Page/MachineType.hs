@@ -175,6 +175,7 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
             (let 
               addUpkeepSequenceRow = let
                 newUpkeepSequence = US.newUpkeepSequence {
+                  US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
                   US.displayOrdering = length upkeepSequences + 1 }
                 newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
                 in D.modifyState appVar (\navig -> 
