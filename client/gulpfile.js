@@ -54,7 +54,7 @@ gulp.task('copy-jquery', function () {
 });
 
 gulp.task('compile', function() {
-  var fayCommand = "fay --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
+  var fayCommand = "../server/.cabal-sandbox/bin/fay --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

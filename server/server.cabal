@@ -57,7 +57,7 @@ Library
     , transformers
     , json-schema
     , aeson
-    , fay
+    , fay == 0.21.2.1
     , opaleye == 0.3
     , product-profunctors
     , postgresql-simple
