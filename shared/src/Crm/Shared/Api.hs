@@ -12,6 +12,7 @@ module Crm.Shared.Api (
   machineTypes ,
   single ,
   autocomplete ,
+  autocompleteManufacturer ,
   byName, byId ,
   employees ) where
 
@@ -49,6 +50,9 @@ planned = "planned"
 
 autocomplete :: String
 autocomplete = "autocomplete"
+
+autocompleteManufacturer :: String
+autocompleteManufacturer = "autocomplete-manufacturer"
 
 byId :: String
 byId = "by-id"
