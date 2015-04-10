@@ -7,7 +7,7 @@ module Crm.Component.Form where
 
 import "fay-base" Data.Text (fromString, pack, Text)
 import "fay-base" Prelude hiding (span, div, elem)
-import "fay-base" FFI (Defined(Defined))
+import "fay-base" FFI (Defined(Defined, Undefined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap.Button as BTN
@@ -15,13 +15,20 @@ import qualified HaskellReact.Tag.Input as I
 
 import Crm.Component.Editable (editableN)
 
-formRowCol :: (Renderable a)
+formRowCol' :: Renderable a
+            => Defined Text -- ^ key of the element
+            -> a -- ^ label of the label field
+            -> [DOMElement] -- ^ other columns
+            -> DOMElement
+formRowCol' key' formFieldLabel otherColumns =
+  div' ((class' "form-group") { key = key' }) [
+    (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
+
+formRowCol :: Renderable a
            => a -- ^ label of the label field
            -> [DOMElement] -- ^ other columns
            -> DOMElement
-formRowCol formFieldLabel otherColumns =
-  div' (class' "form-group") [ 
-    (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
+formRowCol formFieldLabel otherColumns = formRowCol' Undefined formFieldLabel otherColumns
 
 formRow :: (Renderable a, Renderable b)
         => a -- ^ label of field

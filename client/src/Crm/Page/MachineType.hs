@@ -25,7 +25,7 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
-import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol, 
+import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol',
   editingInput, formRow, inputNormalAttrs)
 import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
 import Crm.Server (updateMachineType, fetchMachineType, 
@@ -127,7 +127,8 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     removeButtonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const removeButtonHandler }
     removeButton = BTN.button' removeButtonProps "Odeber"
-    in formRowCol [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumns) upkeepSequences
+    in formRowCol' (Defined $ "key-" <> showInt displayOrder)
+      [removeButton, text2DOM $ "Řada " <> showInt displayOrder] inputColumns) upkeepSequences
 
   validation = let 
     countOfOneTimeSequences = (case upkeepSequences of
