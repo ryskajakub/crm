@@ -1,14 +1,28 @@
 module Main where
 
+import Crm.Server.Core (nextServiceDate)
+import Crm.Server.Helpers
+
+import Crm.Shared.Upkeep as U
+
 import Test.HUnit
+
+import Data.Time.Calendar (Day, fromGregorian)
 
 main :: IO ()
 main = do
-  runTestTT $ TestList [ TestCase test1, TestCase test2 ]
+  runTestTT $ TestList [ 
+    TestCase planned ]
   return ()
 
-test1 :: Assertion
-test1 = (assertBool "test" True)
-
-test2 :: Assertion
-test2 = (assertBool "fail" False)
+planned :: Assertion
+planned = let
+  date = fromGregorian 2000 1 1
+  ymdDate = dayToYmd date
+  upkeep = U.Upkeep {
+    U.upkeepClosed = False ,
+    U.upkeepDate = ymdDate }
+  result = nextServiceDate undefined undefined [upkeep]
+  expectedResult = date
+  in assertEqual "When the next planned day is specified, then it is taken without any further computations" 
+    expectedResult result
