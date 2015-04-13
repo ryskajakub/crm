@@ -30,7 +30,15 @@ nextServiceDate machine
       daysToNextService = truncate $ yearsToNextService * 365
       nextServiceDay = addDays daysToNextService operationStartDate
       in nextServiceDay
-    xs -> undefined
+    xs -> let
+      (sequence, _) = sequences
+      lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) xs
+      upkeepRepetition = US.repetition sequence
+      mileagePerYear = M.mileagePerYear machine
+      yearsToNextService = (fromIntegral upkeepRepetition / fromIntegral mileagePerYear) :: Double
+      daysToNextService = truncate $ yearsToNextService * 365
+      nextServiceDay = addDays daysToNextService lastServiceDate
+      in nextServiceDay
   earliestPlannedUpkeep = case filter (not . U.upkeepClosed) upkeeps of
     [] -> Nothing
     openUpkeeps -> fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps

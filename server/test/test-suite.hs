@@ -64,6 +64,6 @@ closedUpkeeps = let
   upkeep2 = upkeep1 {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
   result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2]
-  expectedResult = fromGregorian 2006 12 31
-  in assertEqual "Date must be +2 year from the last service: 2006 12 31"
+  expectedResult = fromGregorian 2007 1 1
+  in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
