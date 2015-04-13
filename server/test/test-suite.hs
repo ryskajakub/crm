@@ -18,7 +18,8 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "Next service day : Unit tests" [
   testCase "When there are planned upkeeps, the earliest is taken" planned ,
-  testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ]
+  testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
+  testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -52,5 +53,17 @@ noUpkeeps :: Assertion
 noUpkeeps = let
   result = nextServiceDate machine (upkeepSequence, []) []
   expectedResult = fromGregorian 2001 12 31
-  in assertEqual "Date must be +2 years from into service, 2001 12 31"
+  in assertEqual "Date must be +2 years from into service: 2001 12 31"
+    expectedResult result
+
+closedUpkeeps :: Assertion
+closedUpkeeps = let
+  upkeep1 = U.Upkeep {
+    U.upkeepClosed = True ,
+    U.upkeepDate = dayToYmd $ fromGregorian 2000 1 1 }
+  upkeep2 = upkeep1 {
+    U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
+  result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2]
+  expectedResult = fromGregorian 2006 12 31
+  in assertEqual "Date must be +2 year from the last service: 2006 12 31"
     expectedResult result
