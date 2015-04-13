@@ -5,15 +5,16 @@ import Crm.Server.Helpers
 
 import Crm.Shared.Upkeep as U
 
-import Test.HUnit
+import Test.Tasty.HUnit
+import Test.Tasty
 
 import Data.Time.Calendar (Day, fromGregorian)
 
 main :: IO ()
-main = do
-  runTestTT $ TestList [ 
-    TestCase planned ]
-  return ()
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "Next service day : Unit tests" [testCase "Planned next service" planned]
 
 planned :: Assertion
 planned = let
