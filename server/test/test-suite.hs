@@ -44,7 +44,7 @@ planned = let
   upkeep4 = U.Upkeep {
     U.upkeepClosed = True ,
     U.upkeepDate = dayToYmd $ fromGregorian 1999 1 1 }
-  result = nextServiceDate undefined undefined [upkeep4 , upkeep2 , upkeep1 , upkeep3]
+  result = nextServiceDate undefined undefined [upkeep4, upkeep2, upkeep1, upkeep3]
   expectedResult = date
   in assertEqual "Date must be minimum from planned: 2000 1 1" 
     expectedResult result
