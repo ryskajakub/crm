@@ -23,9 +23,7 @@ nextServiceDate machine
 
   computeBasedOnPrevious :: Day -> Day
   computeBasedOnPrevious referenceDay = let
-    (sequence, _) = sequences
-    -- operationStartDate = ymdToDay $ M.machineOperationStartDate machine
-    upkeepRepetition = US.repetition sequence
+    upkeepRepetition = minimum $ fmap US.repetition (fst sequences : snd sequences)
     mileagePerYear = M.mileagePerYear machine
     yearsToNextService = (fromIntegral upkeepRepetition / fromIntegral mileagePerYear) :: Double
     daysToNextService = truncate $ yearsToNextService * 365
