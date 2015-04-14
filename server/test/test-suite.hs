@@ -20,7 +20,8 @@ tests = testGroup "Next service day : Unit tests" [
   testCase "When there are planned upkeeps, the earliest is taken" planned ,
   testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
-  testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ]
+  testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
+  testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -40,15 +41,28 @@ upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
   U.upkeepClosed = True }
 
+firstUpkeep :: Assertion
+firstUpkeep = let
+  firstUpkeepSequence = US.UpkeepSequence {
+    US.oneTime = True ,
+    US.repetition = 5000 }
+  upkeepSequence2 = US.UpkeepSequence {
+    US.repetition = 1000 }
+  result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) []
+  expectedResult = fromGregorian 2001 1 1
+  in assertEqual "Date must be +1 years, that is:"
+    expectedResult result
+
 pickSmallestRepeatedSequence :: Assertion
 pickSmallestRepeatedSequence = let
+  -- todo add one non-repeated sequence
   upkeepSequence2 = upkeepSequence {
     US.repetition = 2500 }
   upkeepSequence3 = upkeepSequence {
     US.repetition = 20000 }
   result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3]) [upkeep]
   expectedResult = fromGregorian 2000 7 1
-  in assertEqual "Date must be +1/2 year, that is:"
+  in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
 
 planned :: Assertion
