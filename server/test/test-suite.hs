@@ -3,9 +3,9 @@ module Main where
 import Crm.Server.Core (nextServiceDate)
 import Crm.Server.Helpers
 
-import Crm.Shared.Upkeep as U
-import Crm.Shared.Machine as M
-import Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.UpkeepSequence as US
 
 import Test.Tasty.HUnit
 import Test.Tasty
@@ -19,7 +19,8 @@ tests :: TestTree
 tests = testGroup "Next service day : Unit tests" [
   testCase "When there are planned upkeeps, the earliest is taken" planned ,
   testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
-  testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ]
+  testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
+  testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -28,7 +29,27 @@ machine = M.Machine {
 
 upkeepSequence :: US.UpkeepSequence
 upkeepSequence = US.UpkeepSequence {
+  US.oneTime = False ,
   US.repetition = 10000 }
+
+upkeepDate :: Day
+upkeepDate = fromGregorian 2000 1 1
+
+upkeep :: U.Upkeep
+upkeep = U.Upkeep {
+  U.upkeepDate = dayToYmd upkeepDate ,
+  U.upkeepClosed = True }
+
+pickSmallestRepeatedSequence :: Assertion
+pickSmallestRepeatedSequence = let
+  upkeepSequence2 = upkeepSequence {
+    US.repetition = 2500 }
+  upkeepSequence3 = upkeepSequence {
+    US.repetition = 20000 }
+  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3]) [upkeep]
+  expectedResult = fromGregorian 2000 7 1
+  in assertEqual "Date must be +1/2 year, that is:"
+    expectedResult result
 
 planned :: Assertion
 planned = let

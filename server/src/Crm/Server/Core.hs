@@ -39,6 +39,7 @@ nextServiceDate machine
     xs -> let
       lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) xs
       in computeBasedOnPrevious lastServiceDate
+
   earliestPlannedUpkeep = case filter (not . U.upkeepClosed) upkeeps of
     [] -> Nothing
     openUpkeeps -> fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps
