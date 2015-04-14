@@ -17,9 +17,7 @@ nextServiceDate :: M.Machine -- ^ machine for which the next service date is com
                 -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
                 -> [U.Upkeep] -- ^ upkeeps belonging to this machine
                 -> Day -- ^ computed next service date for this machine
-nextServiceDate machine
-                sequences
-                upkeeps = let
+nextServiceDate machine sequences upkeeps = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = let
@@ -41,7 +39,8 @@ nextServiceDate machine
       in computeBasedOnPrevious operationStartDate filteredSequences
     xs -> let
       lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) xs
-      in computeBasedOnPrevious lastServiceDate nonEmptySequences
+      repeatedSequences = filter (not . US.oneTime) nonEmptySequences
+      in computeBasedOnPrevious lastServiceDate repeatedSequences
 
   earliestPlannedUpkeep = case filter (not . U.upkeepClosed) upkeeps of
     [] -> Nothing

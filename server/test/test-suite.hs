@@ -55,12 +55,14 @@ firstUpkeep = let
 
 pickSmallestRepeatedSequence :: Assertion
 pickSmallestRepeatedSequence = let
-  -- todo add one non-repeated sequence
   upkeepSequence2 = upkeepSequence {
     US.repetition = 2500 }
   upkeepSequence3 = upkeepSequence {
     US.repetition = 20000 }
-  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3]) [upkeep]
+  oneTimeUpkeepSequence = US.UpkeepSequence {
+    US.repetition = 1000 ,
+    US.oneTime = True }
+  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [upkeep]
   expectedResult = fromGregorian 2000 7 1
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
