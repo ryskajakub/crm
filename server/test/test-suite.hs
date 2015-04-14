@@ -49,8 +49,8 @@ firstUpkeep = let
   upkeepSequence2 = US.UpkeepSequence {
     US.repetition = 1000 }
   result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) []
-  expectedResult = fromGregorian 2001 1 1
-  in assertEqual "Date must be +1 years, that is:"
+  expectedResult = fromGregorian 2000 12 31
+  in assertEqual "Date must be +1 years, that is: 2000 12 31"
     expectedResult result
 
 pickSmallestRepeatedSequence :: Assertion
