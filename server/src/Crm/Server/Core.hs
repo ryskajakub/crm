@@ -11,8 +11,6 @@ import Data.List (find)
 
 import Safe.Foldable (minimumMay)
 
-import Debug.Trace
-
 nextServiceDate :: M.Machine -- ^ machine for which the next service date is computed
                 -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
                 -> [U.Upkeep] -- ^ upkeeps belonging to this machine

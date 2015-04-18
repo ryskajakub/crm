@@ -30,6 +30,7 @@ Library
     , Crm.Server.DB
     , Crm.Server.Helpers
     , Crm.Server.Types
+    , Crm.Server.Core
 
     , Crm.Shared.Direction
     , Crm.Shared.MyMaybe
@@ -52,7 +53,7 @@ Library
     , rest-types == 1.11.1
     , snap-core == 0.9.*
     , snap-server == 0.9.*
-    , text >= 0.8
+    , text
     , regular
     , transformers
     , json-schema

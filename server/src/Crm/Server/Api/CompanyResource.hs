@@ -1,10 +1,12 @@
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.Api.CompanyResource where
 
 import Opaleye.Operators ((.==))
 import Opaleye.PGTypes (pgInt4, pgString)
 import Opaleye.Manipulation (runUpdate)
+import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -22,14 +24,17 @@ import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Core (nextServiceDate)
 
 import Safe (minimumMay, readMay)
 
@@ -53,12 +58,20 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
         EQ -> EQ
   conn <- ask 
   rows <- liftIO $ runCompaniesQuery conn
-  unsortedResult <- forM rows (\companyRow -> do
+  unsortedResult <- liftIO $ forM rows (\companyRow -> do
     let companyId = sel1 companyRow
-    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+    machines <- runMachinesInCompanyQuery companyId conn
     nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
-      nextServiceDay <- nextService machineId machine machineTypeId id
-      return nextServiceDay )
+      upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
+      upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
+      let
+        upkeeps = fmap (\(_::Int,a,b,_::(Maybe Int),c,d,e) -> U.Upkeep (dayToYmd a) b c d e) upkeepRows
+        upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
+        upkeepSequenceTuple = case upkeepSequences of
+          [] -> undefined
+          x : xs -> (x, xs)
+        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps
+      return $ dayToYmd nextServiceDay)
     return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ

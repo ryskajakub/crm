@@ -40,6 +40,9 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  nextServiceMachinesQuery ,
+  nextServiceUpkeepsQuery ,
+  nextServiceUpkeepSequencesQuery ,
   expandedUpkeepsByCompanyQuery ,
   machineTypesWithCountQuery ,
   upkeepSequencesByIdQuery ,
@@ -48,8 +51,6 @@ module Crm.Server.DB (
   machinePhotosByMachineId ,
   photoMetaQuery ,
   machineManufacturersQuery ,
-  -- core computation
-  nextService ,
   -- helpers
   withConnection ,
   singleRowOrColumn ) where
@@ -263,11 +264,16 @@ photoMetaQuery photoId = proc () -> do
   result <- join photosMetaQuery -< pgInt4 photoId
   returnA -< result
 
-upkeepSequencesByIdQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
-upkeepSequencesByIdQuery machineTypeId = proc () -> do
-  (a,b,c,machineTypeFK, d) <- upkeepSequencesQuery -< ()
-  restrict -< machineTypeFK .== pgInt4 machineTypeId
+upkeepSequencesByIdQuery' :: QueryArr DBInt (DBInt, DBText, DBInt, DBBool)
+upkeepSequencesByIdQuery' = proc (machineTypeId) -> do
+  (a,b,c,machineTypeFK,d) <- upkeepSequencesQuery -< ()
+  restrict -< machineTypeFK .== machineTypeId
   returnA -< (a,b,c,d)
+
+upkeepSequencesByIdQuery :: DBInt -> Query (DBInt, DBText, DBInt, DBBool)
+upkeepSequencesByIdQuery machineTypeId = proc () -> do
+  upkeepSequenceRow' <- upkeepSequencesByIdQuery' -< machineTypeId
+  returnA -< upkeepSequenceRow'
 
 actualUpkeepRepetitionQuery :: Int -> Query DBInt
 actualUpkeepRepetitionQuery machineTypeId' = let  
@@ -409,6 +415,28 @@ expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
+
+nextServiceMachinesQuery :: Int -> Query MachinesTable
+nextServiceMachinesQuery companyId = proc () -> do
+  machineRow <- machinesQuery -< ()
+  restrict -< sel2 machineRow .== pgInt4 companyId
+  returnA -< machineRow
+
+nextServiceUpkeepsQuery :: Int -> Query UpkeepTable
+nextServiceUpkeepsQuery machineId = proc () -> do
+  machineRow <- join machinesQuery -< pgInt4 machineId
+  upkeepMachineRow <- upkeepMachinesQuery -< ()
+  restrict -< sel3 upkeepMachineRow .== sel1 machineRow
+  upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
+  returnA -< upkeepRow
+
+nextServiceUpkeepSequencesQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
+nextServiceUpkeepSequencesQuery machineId = proc () -> do
+  machineRow <- join machinesQuery -< pgInt4 machineId
+  machineTypeRow <- machineTypesQuery -< ()
+  restrict -< sel1 machineTypeRow .== sel3 machineRow
+  upkeepSequenceRow <- upkeepSequencesByIdQuery' -< sel1 machineTypeRow
+  returnA -< upkeepSequenceRow
 
 expandedUpkeepsByCompanyQuery :: Int -> Query 
   (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, DBInt, EmployeeLeftJoinTable)
@@ -574,6 +602,7 @@ singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   _ -> throwError $ InputError $ ParseError "more than one record failure"
 
+{-
 nextService :: Int 
             -> M.Machine 
             -> Int
@@ -602,3 +631,4 @@ nextService machineId (M.Machine operationStartDate _ mileagePerYear _ _ _)
       -- next maintenance computed from the operation start
       _ -> return $ compute (ymdToDay operationStartDate)
   return $ dayToYmd nextDay)
+-}

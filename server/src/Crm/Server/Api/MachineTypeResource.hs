@@ -78,7 +78,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (do
   rows <- result
   case rows of
     (mtId, mtName, m3) : xs | null xs -> do 
-      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery mtId)
+      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 mtId)
       return $ MyJust (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences)
     [] -> onEmptyResult
     _ -> throwError NotFound)
