@@ -601,34 +601,3 @@ singleRowOrColumn :: Monad m
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   _ -> throwError $ InputError $ ParseError "more than one record failure"
-
-{-
-nextService :: Int 
-            -> M.Machine 
-            -> Int
-            -> (a -> Connection) 
-            -> ErrorT (Reason r) (ReaderT a IO) (D.YearMonthDay)
-nextService machineId (M.Machine operationStartDate _ mileagePerYear _ _ _)
-  machineTypeId getConn = ask >>= (\a -> do
-  let conn = getConn a
-  nextPlannedMaintenance <- liftIO $ runNextMaintenanceQuery machineId conn
-  lastUpkeep <- liftIO $ runLastClosedMaintenanceQuery machineId conn
-  actualUpkeepRepetition' <- liftIO $ (runQuery conn (actualUpkeepRepetitionQuery machineTypeId) :: IO [Int])
-  actualUpkeepRepetition <- singleRowOrColumn actualUpkeepRepetition'
-  nextDay <- let
-    {- compute the next day, when the maintenance needs to be made -}
-    compute :: Day -> Day
-    compute lastServiceDay = let
-      yearsToNextService = fromIntegral actualUpkeepRepetition / fromIntegral mileagePerYear :: Double
-      daysToNextService = truncate $ yearsToNextService * 365
-      nextServiceDay = addDays daysToNextService lastServiceDay
-      in nextServiceDay
-    in case (nextPlannedMaintenance, lastUpkeep) of
-      -- next planned maintenance
-      (x : xs,_) | null xs -> return $ sel2 x
-      -- next maintenance computed from the last upkeep
-      (_,(upkeep,_) : xs) | null xs -> return $ compute $ sel2 upkeep
-      -- next maintenance computed from the operation start
-      _ -> return $ compute (ymdToDay operationStartDate)
-  return $ dayToYmd nextDay)
--}
