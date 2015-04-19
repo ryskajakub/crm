@@ -7,6 +7,9 @@ import Crm.Shared.YearMonthDay
 import Crm.Shared.UpkeepSequence
 import Crm.Shared.Photo
 import Crm.Shared.PhotoMeta
+import Crm.Shared.Upkeep
+import Crm.Shared.UpkeepMachine
+import Crm.Shared.Employee
 
 import Crm.Component.DatePicker
 
@@ -21,7 +24,8 @@ data MachineDetail = MachineDetail {
   machineNextService :: YearMonthDay ,
   formState :: Bool ,
   machineTypeId :: MachineTypeId ,
-  photos :: [(PhotoId, PhotoMeta)] }
+  photos :: [(PhotoId, PhotoMeta)] ,
+  upkeeps :: [(Upkeep, UpkeepMachine, Maybe Employee)] }
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,

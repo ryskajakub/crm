@@ -31,6 +31,9 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
+import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Employee as E
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
@@ -51,9 +54,10 @@ machineDetail :: Bool
               -> M.MachineId
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
+              -> [(U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
-    machineId nextService photos = 
+    machineId nextService photos _ = 
   machineDisplay editing pageHeader button appVar calendarOpen machine machineTypeTuple extraRows
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
@@ -92,8 +96,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f g)))
+          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i))) ->
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f g i)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $

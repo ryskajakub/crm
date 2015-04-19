@@ -167,9 +167,10 @@ fetchMachinePhotos machineId callback =
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((M.Machine, MT.MachineTypeId, M.MachineId, 
-                (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay) -> Fay()) -- ^ callback
+                (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, 
+                [(U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]) -> Fay()) -- ^ callback
              -> Fay ()
-fetchMachine machineId callback = 
+fetchMachine machineId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     callback
