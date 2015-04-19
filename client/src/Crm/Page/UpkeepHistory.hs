@@ -12,20 +12,23 @@ import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
+import qualified HaskellReact.Bootstrap.Nav as BN
 
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.Company as C
 import Crm.Helpers (displayDate)
 import Crm.Router
 
 upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
                  Maybe E.Employee')]
+              -> C.CompanyId
               -> CrmRouter
               -> DOMElement
-upkeepHistory upkeepsInfo router = let
+upkeepHistory upkeepsInfo companyId router = let
   upkeepHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
     (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
@@ -56,5 +59,14 @@ upkeepHistory upkeepsInfo router = let
             dd $ showInt $ UM.recordedMileage upkeepMachine ,
             dd "Záruka" ,
             dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]) upkeepMachines ]
-  in div $ B.grid ([B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")] :
-    map upkeepHtml upkeepsInfo)
+  upkeepsHtml = map upkeepHtml upkeepsInfo
+
+  flattenUpkeepsHtml acc [] = acc
+  flattenUpkeepsHtml acc (element:elements) = flattenUpkeepsHtml (acc ++ [element]) elements
+
+  flattenedUpkeepsHtml = foldl flattenUpkeepsHtml [] upkeepsHtml
+  header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
+  linkToCompany = B.row $ B.col (B.mkColProps 12) $
+    BN.nav [ link "Zpátky na firmu" (companyDetail companyId) router ]
+
+  in div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml)
