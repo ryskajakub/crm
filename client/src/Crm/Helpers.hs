@@ -33,7 +33,7 @@ pageInfo :: Renderable a
 pageInfo header alertContent' = [
   B.col (B.mkColProps 12) (h2 header) ] ++ 
   case alertContent' of 
-    Just alertContent -> [B.col (B.mkColProps 12) (A.alert A.Info alertContent)]
+    Just alertContent -> [ B.col (B.mkColProps 12) (A.alert A.Info alertContent) ]
     Nothing -> []
 
 

@@ -72,7 +72,10 @@ companiesList router orderType direction companies' = let
       td $ pack $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
-  pageInfo' = pageInfo "Seznam firem, další servis" (Nothing :: Maybe Text)
+  advice = [ 
+    p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,
+    p "Klikem na šipky v záhlaví tabulky můžeš řadit tabulku" ]
+  pageInfo' = pageInfo "Seznam firem, další servis" $ Just advice
   in main' (class' "container") $ B.row $ (pageInfo' ++ withSection [
     let
       buttonProps = BTN.buttonProps {

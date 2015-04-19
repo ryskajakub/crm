@@ -35,7 +35,7 @@ import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox, formRow)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap, pageInfo)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -61,9 +61,13 @@ plannedUpkeeps router upkeepCompanies = let
         "Uzavřít"
         (closeUpkeep upkeepId)
         router ]) upkeepCompanies
-  in B.grid $ B.row [
-    B.col (B.mkColProps 12) $ h2 "Naplánované servisy" ,
-    B.col (B.mkColProps 12) $ main $ B.table [ head' , body ] ]
+
+  advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
+  pageInfo' = pageInfo "Naplánované servisy" $ Just advice
+
+  in B.grid $ B.row $
+    pageInfo' ++
+    [ B.col (B.mkColProps 12) $ main $ B.table [ head', body ]]
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
