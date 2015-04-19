@@ -152,8 +152,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
       || isJust machineTypeId
 
-  advices = div [ 
-    p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : [] ,
+  phase1Advice = p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
+  advices phase1 = div $ (if phase1 then phase1Advice else text2DOM "") : [
     h4 "Servisní řada" ,
     text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se kompresor opravuje. U každého typu kompresoru musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
     ul [
@@ -162,9 +162,9 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       li "Běžná oprava po 5000 mth" ,
       li "Úvodní servis po 500 mth" ]]
 
-  editInfo = pageInfo "Editace kompresoru" $ Just advices
+  editInfo = pageInfo "Editace kompresoru" $ Just $ advices False
     
-  phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just advices
+  phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just $ advices True
 
   (autocompleteManufacturerField, autocompleteManufacturerCb) = case manufacturerAutocompleteSubstitution of
     Just substitution -> (substitution, return ())
