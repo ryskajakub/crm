@@ -12,7 +12,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isNothing, isJust)
+import "fay-base" Data.Maybe (isJust)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -25,14 +25,12 @@ import qualified Crm.Shared.Company as C
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
-import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol',
+import Crm.Component.Form (saveButtonRow', editingCheckbox,
   editingInput, editingInput', formRow, inputNormalAttrs)
 import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer )
 import Crm.Component.Autocomplete (autocompleteInput)
-
-import Debug.Trace
 
 data MachineTypeForm = Phase1 | Edit
 
@@ -174,7 +172,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       inputNormalAttrs
       (\text ->
         setMachineType (machineType { MT.machineTypeManufacturer = unpack text }))
-      (\text -> return ())
+      (const $ return ())
       fetchMachineTypesManufacturer 
       "machine-type-manufacturer-autocomplete"
       (II.mkInputAttrs {
