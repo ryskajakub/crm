@@ -239,10 +239,7 @@ machineTypesList router machineTypes = let
       td $ pack manufacturer , 
       td $ showInt count ]) machineTypes
   alertInfo = text2DOM "Tady edituješ typ kompresoru - který je společný pro více kompresorů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech kompresorů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u kompresorů a zařízení, tak se ty díly budou přidávat tady." : []
-  in B.grid $
+  in B.grid $ B.row $ 
     (pageInfo "Editace typů kompresoru" $ Just alertInfo) ++ [
-      main $
-        section $
-          B.table [
-            head' ,
-            body ]]
+      B.col (B.mkColProps 12) $ main $ section $
+        B.table [ head', body ]]
