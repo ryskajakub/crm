@@ -6,6 +6,8 @@ import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4)
 
 import Data.Tuple.All (uncurryN)
+import Data.Traversable (forM)
+import Data.Tuple.All (sel1)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -18,6 +20,8 @@ import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHan
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Employee as E
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd)
 import Crm.Server.Boilerplate ()
@@ -46,17 +50,21 @@ machineSingle = mkConstHandler (jsonO . someO) (
     rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
     (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
     upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
-    upkeepRows <- liftIO $ runQuery conn (nextServiceUpkeepsQuery machineId)
+    upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
     let 
       upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
-      upkeeps = fmap (\(_::Int,a,b,_::(Maybe Int),c,d,e) -> U.Upkeep (dayToYmd a) b c d e) upkeepRows
-    let 
+      upkeepsData = fmap (\(((_::Int,a,b,_::(Maybe Int),c,d,e),(_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
+        maybeEmployee = fmap E.Employee eName
+        upkeep = U.Upkeep (dayToYmd a) b c d e
+        upkeepMachine = UM.UpkeepMachine f g h
+        in (upkeep, upkeepMachine, maybeEmployee)) upkeepRows
+      upkeeps = fmap sel1 upkeepsData
       upkeepSequenceTuple = case upkeepSequences of
         [] -> undefined
         x : xs -> (x,xs)
       nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps
-    return (machine, companyId, machineTypeId, 
-      (machineType, upkeepSequences), dayToYmd $ nextServiceYmd))))
+    return (machine, companyId, machineTypeId, (machineType, 
+      upkeepSequences), dayToYmd $ nextServiceYmd, upkeepsData))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do

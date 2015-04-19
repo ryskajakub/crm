@@ -43,6 +43,7 @@ module Crm.Server.DB (
   nextServiceMachinesQuery ,
   nextServiceUpkeepsQuery ,
   nextServiceUpkeepSequencesQuery ,
+  upkeepsDataForMachine ,
   expandedUpkeepsByCompanyQuery ,
   machineTypesWithCountQuery ,
   upkeepSequencesByIdQuery ,
@@ -429,6 +430,18 @@ nextServiceUpkeepsQuery machineId = proc () -> do
   restrict -< sel3 upkeepMachineRow .== sel1 machineRow
   upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
   returnA -< upkeepRow
+
+upkeepsDataForMachine :: Int -> Query ((UpkeepTable, UpkeepMachinesTable), EmployeeLeftJoinTable)
+upkeepsDataForMachine machineId = let 
+  upkeepUpkeepMachine = proc () -> do
+    machineRow <- join machinesQuery -< pgInt4 machineId
+    upkeepMachineRow <- upkeepMachinesQuery -< ()
+    restrict -< sel3 upkeepMachineRow .== sel1 machineRow
+    upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
+    returnA -< (upkeepRow, upkeepMachineRow)
+  employeeJoinedRow = leftJoin upkeepUpkeepMachine employeesQuery (\(upkeepPart,(employeePK,_)) ->
+    ((sel4 $ sel1 upkeepPart) .== (maybeToNullable $ Just employeePK)))
+  in employeeJoinedRow
 
 nextServiceUpkeepSequencesQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
 nextServiceUpkeepSequencesQuery machineId = proc () -> do
