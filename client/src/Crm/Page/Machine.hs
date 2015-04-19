@@ -143,8 +143,11 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
 
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
+
+  upkeepHistory = B.row $ B.col (B.mkColProps 12) $ "history"
+
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
-    B.grid [
+    B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
       B.row $ [
         row'
@@ -217,5 +220,5 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]]
+        div' (class' "form-group") buttonRow ]] ++ if editing then [] else [upkeepHistory]
   in (elements, return ())
