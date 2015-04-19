@@ -26,11 +26,15 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (formRow', saveButtonRow', editingCheckbox, formRowCol',
-  editingInput, formRow, inputNormalAttrs)
+  editingInput, editingInput', formRow, inputNormalAttrs)
 import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer )
 import Crm.Component.Autocomplete (autocompleteInput)
+
+import Debug.Trace
+
+data MachineTypeForm = Phase1 | Edit
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
@@ -47,6 +51,14 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   setMachineTypeId machineTypeId' = 
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
   setMachineType = mkSetMachineType appVar
+
+  displayManufacturer = let
+    manufacturerField = editingInput' False (MT.machineTypeManufacturer machineType)
+      (const $ return ()) False False
+    in case machineTypeId of
+      Nothing -> Nothing  
+      _ -> Just manufacturerField
+  
   (machineTypeInput, afterRenderCallback) =
     autocompleteInput 
       inputNormalAttrs
@@ -64,17 +76,20 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
+  
   submitButtonHandler = do
     modify appVar (\appState -> appState {
       D.machineTypeFromPhase1 = (machineType, upkeepSequences) ,
       D.maybeMachineIdFromPhase1 = machineTypeId })
     R.navigate (R.newMachinePhase2 companyId) crmRouter
   submitButtonLabel = text2DOM "Dále"
-  (result, callback) = machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar 
-    setMachineType machineTypeInput submitButtonLabel submitButtonHandler
+  (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, 
+    upkeepSequences) appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler
   in (result, callback >> afterRenderCallback)
 
-machineTypeForm' :: Maybe MT.MachineTypeId
+machineTypeForm' :: MachineTypeForm
+                 -> Maybe DOMElement -- ^ substitute the manufacturer autocomplete with another field
+                 -> Maybe MT.MachineTypeId
                  -> (MT.MachineType, [US.UpkeepSequence])
                  -> Var D.AppState
                  -> (MT.MachineType -> Fay ()) -- ^ set machine type
@@ -82,8 +97,9 @@ machineTypeForm' :: Maybe MT.MachineTypeId
                  -> DOMElement -- ^ submit button label
                  -> Fay () -- ^ submit button handler
                  -> (DOMElement, Fay ())
-machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
-    setMachineType typeInputField submitButtonLabel submitButtonHandler = let
+machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId 
+    (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel 
+    submitButtonHandler = let
     
   modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
   modifyUpkeepSequence displayOrder modifier = let
@@ -152,21 +168,23 @@ machineTypeForm' machineTypeId (machineType, upkeepSequences) appVar
     
   phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just advices
 
-  (autocompleteManufacturerField, autocompleteManufacturerCb) = (autocompleteInput
-    inputNormalAttrs
-    (\text ->
-      setMachineType (machineType { MT.machineTypeManufacturer = unpack text }))
-    (\text -> return ())
-    fetchMachineTypesManufacturer 
-    "machine-type-manufacturer-autocomplete"
-    (II.mkInputAttrs {
-      II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
+  (autocompleteManufacturerField, autocompleteManufacturerCb) = case manufacturerAutocompleteSubstitution of
+    Just substitution -> (substitution, return ())
+    Nothing -> (autocompleteInput
+      inputNormalAttrs
+      (\text ->
+        setMachineType (machineType { MT.machineTypeManufacturer = unpack text }))
+      (\text -> return ())
+      fetchMachineTypesManufacturer 
+      "machine-type-manufacturer-autocomplete"
+      (II.mkInputAttrs {
+        II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
   result = form' (class'' ["form-horizontal", "upkeep-sequence-form"]) $
     B.grid $ B.row $  
-      (B.col (B.mkColProps 12) $ (if isJust machineTypeId
-        then editInfo
-        else phase1PageInfo)) : [
+      (B.col (B.mkColProps 12) $ (case machineTypeFormType of
+        Edit -> editInfo
+        Phase1 -> phase1PageInfo)) : [
           formRow
             "Typ zařízení"
             typeInputField ,
@@ -205,7 +223,7 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     False
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = updateMachineType (machineTypeId, machineType, upkeepSequences) (return ())
-  in machineTypeForm' (Just machineTypeId) (machineType, upkeepSequences) appVar 
+  in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
 
 machineTypesList :: R.CrmRouter
