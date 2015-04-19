@@ -46,8 +46,8 @@ employeeForm :: CrmRouter
              -> DOMElement
 employeeForm router employee appVar = 
   form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid $ (B.col (B.mkColProps 12) $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
-      row'
+    B.grid $ (B.row $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
+      B.row $ B.col (B.mkColProps 12) $ row'
         True 
         "Jméno" 
         (E.name employee) 
@@ -55,6 +55,6 @@ employeeForm router employee appVar =
           D.navigation = case D.navigation appState of 
             D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
             _ -> D.navigation appState }))) ,
-      div' (class' "form-group") $ saveButtonRow
+      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow
         "Přidat servismena"
         (createEmployee employee $ navigate R.employeePage router) ]
