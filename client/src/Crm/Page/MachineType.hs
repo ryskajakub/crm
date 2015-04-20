@@ -115,7 +115,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
       False
-    mthField = editingInput 
+    mthField = editingInput
       (unpack rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
@@ -124,7 +124,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
           Nothing -> modifyUpkeepSequence displayOrder
             (\(us,_) -> (us, modifiedRepetition))))
       True
-      True
+      False
     firstServiceField = editingCheckbox
       (oneTime)
       (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> ((fst us) { US.oneTime = oneTimeSequence }, snd us)))
