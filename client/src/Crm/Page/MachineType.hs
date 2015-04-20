@@ -95,8 +95,8 @@ machineTypeForm' :: MachineTypeForm
                  -> DOMElement -- ^ submit button label
                  -> Fay () -- ^ submit button handler
                  -> (DOMElement, Fay ())
-machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId 
-    (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel 
+machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
+    (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
     submitButtonHandler = let
     
   modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
@@ -107,7 +107,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       else (us, repetitionText)) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
-  upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel repetition oneTime,_)) -> let
+  upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
       sequenceLabel
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
@@ -115,7 +115,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       True
       False
     mthField = editingInput 
-      (show repetition)
+      (unpack rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
           Just (int) -> modifyUpkeepSequence displayOrder
@@ -150,10 +150,16 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
   validation = let 
-    countOfOneTimeSequences = (case upkeepSequences of
-      [] -> 0
-      xs -> foldl (\acc (us,_) -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
-    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
+    (countOfOneTimeSequences,parseOk) = foldl 
+      (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
+        countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
+        parseOkAccNew = case parseSafely repetitionText of
+          Just _ -> parseOkAcc && True
+          Nothing -> False
+        in (countOfOneTimeSequencesAccNew, parseOkAccNew))
+      (0 :: Int, True) 
+      upkeepSequences
+    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences) && (parseOk))
       || isJust machineTypeId
 
   phase1Advice = p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
