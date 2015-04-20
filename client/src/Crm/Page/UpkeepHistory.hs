@@ -60,11 +60,7 @@ upkeepHistory upkeepsInfo companyId router = let
             dd "Záruka" ,
             dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]) upkeepMachines ]
   upkeepsHtml = map upkeepHtml upkeepsInfo
-
-  flattenUpkeepsHtml acc [] = acc
-  flattenUpkeepsHtml acc (element:elements) = flattenUpkeepsHtml (acc ++ [element]) elements
-
-  flattenedUpkeepsHtml = foldl flattenUpkeepsHtml [] upkeepsHtml
+  flattenedUpkeepsHtml = foldl (++) [] upkeepsHtml
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $
     BN.nav [ link "Zpátky na firmu" (companyDetail companyId) router ]
