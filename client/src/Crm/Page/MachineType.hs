@@ -71,7 +71,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId', machineType', upkeepSequences') -> do
-            setMachineWhole (machineType', map (\us -> (us, "")) upkeepSequences')
+            setMachineWhole (machineType', map (\us -> (us, "0")) upkeepSequences')
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
@@ -154,7 +154,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       div' (class'' ["col-md-1", "col-md-offset-1"]) removeButton ,
       label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
-  (countOfOneTimeSequences,parseOk) = foldl 
+  (countOfOneTimeSequences,parseOk) = foldl
     (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
       countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
       parseOkAccNew = case parseSafely repetitionText of
@@ -171,7 +171,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
   validationMessages2 = if countOfOneTimeSequences > 1
     then ["Může být pouze jeden úvodní servis."]
     else []
-  validationMessages3 = if parseOk 
+  validationMessages3 = if parseOk
     then []
     else ["Do políčka \"Počet motohodin\" se smí vyplňovat pouze čísla."]
   validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3
@@ -221,7 +221,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             newUpkeepSequence = US.newUpkeepSequence {
               US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
               US.displayOrdering = length upkeepSequences + 1 }
-            newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "")]
+            newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
             in D.modifyState appVar (\navig -> 
               navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
           disabledProps = if (isJust machineTypeId) 
