@@ -18,6 +18,7 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
+import qualified HaskellReact.Bootstrap.Alert as A
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
@@ -226,10 +227,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 BTN.onClick = Defined $ const addUpkeepSequenceRow }
               in BTN.button' buttonProps "Přidat servisní řadu")
              (text2DOM "") ,
-          saveButtonRow' validation submitButtonLabel submitButtonHandler]) :
-    (if null validationMessages
-      then []
-      else [B.grid $ B.row $ (B.col (B.mkColProps 12)) validationMessages])
+          saveButtonRow' validation submitButtonLabel submitButtonHandler]) : (if null validationMessages
+    then []
+    else let
+      validationMessagesHtml = map (\message -> p message) validationMessages
+      in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)])
   in (result, autocompleteManufacturerCb)
 
 machineTypeForm :: Var D.AppState
