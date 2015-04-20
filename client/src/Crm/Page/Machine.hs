@@ -63,24 +63,32 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
-        mkUpkeepColumn :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
-        mkUpkeepColumn (upkeepId, upkeep, upkeepMachine, maybeEmployee) = let
+        mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
+        mkUpkeepRows (_, upkeep, upkeepMachine, maybeEmployee) = let
           (labelClass, labelText) = if U.upkeepClosed upkeep
             then ("label-success", "Uzavřený")
             else ("label-warning", "Naplánovaný")
-          in [B.col (B.mkColProps 12) $ ([
-            span' (class'' ["label", labelClass]) labelText ,
-            text2DOM $ displayDate $ U.upkeepDate upkeep ,
-            text2DOM $ pack $ U.workDescription upkeep ,
-            text2DOM $ pack $ UM.upkeepMachineNote upkeepMachine ,
-            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ,
-            text2DOM $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] ++ 
-            (case maybeEmployee of
-              Just employee -> [text2DOM $ pack $ E.name employee]
-              Nothing -> []))]
-        columns = (map mkUpkeepColumn upkeeps)
-        flattenedColumns = foldl (++) [] columns
-        in B.row ([ B.col (B.mkColProps 12) $ h3 "Předchozí servisy" ] ++ flattenedColumns)
+          stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
+          date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
+          mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
+          mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
+          warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
+          warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
+          employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
+          employee = B.col (B.mkColProps 2) $ case maybeEmployee of
+            Just employee' -> [text2DOM $ pack $ E.name employee']
+            Nothing -> []
+          descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
+          description = B.col (B.mkColProps 4) $ pack $ U.workDescription upkeep
+          noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
+          note = B.col (B.mkColProps 4) $ pack $ UM.upkeepMachineNote upkeepMachine
+          in [
+            B.row [stateLabel, date, mthHeader, mth, 
+              warrantyHeader, warranty, employeeHeader, employee] ,
+            div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
+        rows = (map mkUpkeepRows upkeeps)
+        flattenedRows = foldl (++) [] rows
+        in B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy") : flattenedRows
       photoUploadRow = editDisplayRow
         True
         "Fotka" 
@@ -112,7 +120,7 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
         (True, _) -> [photoUploadRow]
         (_, []) -> []
         _ -> [photoCarouselRow]) ++ extraRow ++
-          (if editing && (not $ null upkeeps) then [] else [upkeepHistoryHtml])
+          (if editing && (not $ null upkeeps) then [] else upkeepHistoryHtml)
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of

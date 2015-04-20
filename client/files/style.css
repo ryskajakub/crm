@@ -10,6 +10,9 @@ form.upkeep-sequence-form input[type=checkbox] {
   position: relative;
   top: 6px; }
 
+.last {
+  margin-bottom: 15px; }
+
 /* my carousel */
 #my-carousel {
   min-height: 600px; }
