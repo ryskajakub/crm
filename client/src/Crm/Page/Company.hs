@@ -26,7 +26,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Direction as DIR
 
 import qualified Crm.Data.Data as D
-import Crm.Component.Editable (editablePlain, editable')
+import Crm.Component.Form (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, pageInfo)

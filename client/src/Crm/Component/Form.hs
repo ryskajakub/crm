@@ -6,14 +6,54 @@
 module Crm.Component.Form where
 
 import "fay-base" Data.Text (fromString, pack, Text)
-import "fay-base" Prelude hiding (span, div, elem)
+import "fay-base" Prelude as P hiding (span, div, elem) 
 import "fay-base" FFI (Defined(Defined, Undefined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as I
+import qualified HaskellReact.Bootstrap.Input as II
 
-import Crm.Component.Editable (editableN)
+editablePlain :: Bool
+              -> Text
+              -> (Text -> Fay())
+              -> DOMElement
+editablePlain editState displayValue =
+  editable editState (text2DOM displayValue) displayValue
+
+editable :: Bool -- ^ edit state
+         -> DOMElement -- ^ display value
+         -> Text -- ^ initial value to display in the input
+         -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
+         -> DOMElement -- ^ either input field or displayed value depending on editing parameter
+editable = editable' Nothing P.id
+
+editable' :: Maybe II.InputProps -- ^ provide the base input props
+          -> (DOMElement -> DOMElement) -- ^ wrapper of the input field in the edit mode
+          -> Bool -- ^ edit state
+          -> DOMElement -- ^ display value
+          -> Text -- ^ initial value to display in the input
+          -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
+          -> DOMElement -- ^ either input field or displayed value depending on editing parameter
+editable' inputProps inputWrapper edit display initial setValue = if edit
+  then let
+    changeHandler event = do
+      value <- eventValue event
+      setValue value
+    in inputWrapper $ II.input ((maybe (II.mkInputProps) (P.id) (inputProps)) {
+      II.onChange = Defined changeHandler , 
+      II.defaultValue = Defined initial })
+  else display
+
+editableN :: I.InputAttributes -- ^ element to display in edit mode
+          -> Attributes
+          -> Bool -- ^ editing mode
+          -> DOMElement -- ^ element to display in non-edit mode
+          -> DOMElement
+editableN inputProps attributes editing display = 
+  if editing
+  then I.input attributes inputProps
+  else display
 
 formRowCol' :: Renderable a
             => Defined Text -- ^ key of the element
