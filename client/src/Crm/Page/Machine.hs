@@ -58,7 +58,8 @@ machineDetail :: Bool
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
     machineId nextService photos upkeeps = 
-  machineDisplay editing pageHeader button appVar calendarOpen machine machineTypeTuple extraRows
+  machineDisplay editing pageHeader button appVar calendarOpen machine 
+      machineTypeTuple extraRows extraGrid
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -88,7 +89,10 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
         rows = (map mkUpkeepRows upkeeps)
         flattenedRows = foldl (++) [] rows
-        in B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy") : flattenedRows
+        in (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
+      extraGrid = (if editing && (not $ null upkeeps) 
+        then Nothing 
+        else (Just $ B.grid upkeepHistoryHtml))
       photoUploadRow = editDisplayRow
         True
         "Fotka" 
@@ -116,11 +120,11 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
         True
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
+
       extraRows = (case (editing, photos) of
         (True, _) -> [photoUploadRow]
         (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow ++
-          (if editing && (not $ null upkeeps) then [] else upkeepHistoryHtml)
+        _ -> [photoCarouselRow]) ++ extraRow
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
@@ -146,7 +150,7 @@ machineNew :: CrmRouter
            -> (DOMElement, Fay ())
 machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
   machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
-      buttonRow appState datePickerCalendar machine' machineTypeTuple []
+      buttonRow appState datePickerCalendar machine' machineTypeTuple [] Nothing
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -163,9 +167,10 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> M.Machine
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
+               -> Maybe DOMElement
                -> (DOMElement, Fay ())
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
-    machine' (machineType, upkeepSequences) extraRows = let
+    machine' (machineType, upkeepSequences) extraRows extraGrid = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -176,7 +181,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
 
-  elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
+  elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
       B.row $ [
@@ -250,5 +255,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]]
+        div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
+          Just extraGrid' -> [extraGrid']
+          Nothing -> [])
   in (elements, return ())
