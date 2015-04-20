@@ -7,7 +7,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text)
+import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
@@ -69,7 +69,11 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
             then ("label-success", "Uzavřený")
             else ("label-warning", "Naplánovaný")
           in B.col (B.mkColProps 12) $ [
-            span' (class'' ["label", labelClass]) labelText ]
+            span' (class'' ["label", labelClass]) labelText ,
+            text2DOM $ displayDate $ U.upkeepDate upkeep ,
+            text2DOM $ pack $ U.workDescription upkeep ,
+            text2DOM $ pack $ UM.upkeepMachineNote upkeepMachine ,
+            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ]
         in B.row $ B.col (B.mkColProps 12) $ ([ h3 "Předchozí servisy" ] ++ (map mkUpkeepRow upkeeps))
       photoUploadRow = editDisplayRow
         True
