@@ -198,39 +198,41 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
-  result = div $ (form' (class'' ["form-horizontal", "upkeep-sequence-form"]) $ 
-    B.grid $ B.row $
-      (B.col (B.mkColProps 12) $ (case machineTypeFormType of
+  result =
+    (B.grid $ B.row $
+      case machineTypeFormType of
         Edit -> editInfo
-        Phase1 -> phase1PageInfo)) : [
-          formRow
-            "Typ zařízení"
-            typeInputField ,
-          formRow
-            "Výrobce"
-             autocompleteManufacturerField ] ++ upkeepSequenceRows ++ [
-          formRow
-            (let 
-              addUpkeepSequenceRow = let
-                newUpkeepSequence = US.newUpkeepSequence {
-                  US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
-                  US.displayOrdering = length upkeepSequences + 1 }
-                newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "")]
-                in D.modifyState appVar (\navig -> 
-                  navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-              disabledProps = if (isJust machineTypeId) 
-                then BTN.buttonProps { BTN.disabled = Defined True }
-                else BTN.buttonProps 
-              buttonProps = disabledProps {
-                BTN.onClick = Defined $ const addUpkeepSequenceRow }
-              in BTN.button' buttonProps "Přidat servisní řadu")
-             (text2DOM "") ,
-          saveButtonRow' (null validationMessages) submitButtonLabel submitButtonHandler]) : (if null validationMessages
+        Phase1 -> phase1PageInfo) :
+    (form' (class'' ["form-horizontal", "upkeep-sequence-form"]) ([
+      formRow
+        "Typ zařízení"
+        typeInputField ,
+      formRow
+        "Výrobce"
+         autocompleteManufacturerField] ++ upkeepSequenceRows ++ [
+      formRow
+        (let 
+          addUpkeepSequenceRow = let
+            newUpkeepSequence = US.newUpkeepSequence {
+              US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
+              US.displayOrdering = length upkeepSequences + 1 }
+            newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "")]
+            in D.modifyState appVar (\navig -> 
+              navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
+          disabledProps = if (isJust machineTypeId) 
+            then BTN.buttonProps { BTN.disabled = Defined True }
+            else BTN.buttonProps 
+          buttonProps = disabledProps {
+            BTN.onClick = Defined $ const addUpkeepSequenceRow }
+          in BTN.button' buttonProps "Přidat servisní řadu")
+         (text2DOM "") ,
+      saveButtonRow' (null validationMessages) submitButtonLabel submitButtonHandler])) : (
+    if null validationMessages
     then []
     else let
       validationMessagesHtml = map (\message -> p message) validationMessages
       in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)])
-  in (result, autocompleteManufacturerCb)
+  in (div result, autocompleteManufacturerCb)
 
 machineTypeForm :: Var D.AppState
                 -> MT.MachineTypeId
