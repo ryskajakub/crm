@@ -8,7 +8,7 @@ module Crm.Page.MachineType (
   machineTypePhase1Form ,
   machineTypeForm ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>))
+import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
@@ -39,7 +39,7 @@ mkSetMachineType appVar modifiedMachineType =
   D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
 
 machineTypePhase1Form :: Maybe MT.MachineTypeId
-                      -> (MT.MachineType, [US.UpkeepSequence])
+                      -> (MT.MachineType, [(US.UpkeepSequence, Text)])
                       -> Var D.AppState
                       -> R.CrmRouter
                       -> C.CompanyId
@@ -77,7 +77,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   
   submitButtonHandler = do
     modify appVar (\appState -> appState {
-      D.machineTypeFromPhase1 = (machineType, upkeepSequences) ,
+      D.machineTypeFromPhase1 = (machineType, map fst upkeepSequences) ,
       D.maybeMachineIdFromPhase1 = machineTypeId })
     R.navigate (R.newMachinePhase2 companyId) crmRouter
   submitButtonLabel = text2DOM "Dále"
@@ -88,7 +88,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
 machineTypeForm' :: MachineTypeForm
                  -> Maybe DOMElement -- ^ substitute the manufacturer autocomplete with another field
                  -> Maybe MT.MachineTypeId
-                 -> (MT.MachineType, [US.UpkeepSequence])
+                 -> (MT.MachineType, [(US.UpkeepSequence, Text)])
                  -> Var D.AppState
                  -> (MT.MachineType -> Fay ()) -- ^ set machine type
                  -> DOMElement -- ^ first row input field
@@ -101,13 +101,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     
   modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
   modifyUpkeepSequence displayOrder modifier = let
-    modifiedUpkeepSequences = map (\(us @ (US.UpkeepSequence displayOrder' _ _ _)) -> 
+    modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
       if displayOrder == displayOrder' 
-      then modifier us
-      else us ) upkeepSequences
+      then (modifier us, repetitionText)
+      else (us, repetitionText) ) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
-  upkeepSequenceRows = map (\(US.UpkeepSequence displayOrder sequenceLabel repetition oneTime) -> let
+  upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel repetition oneTime,_)) -> let
     labelField = editingInput 
       sequenceLabel
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
@@ -115,7 +115,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       True
       False
     mthField = editingInput 
-      (show repetition) 
+      (show repetition)
       (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
         (\us -> us { US.repetition = modifiedRepetition }))) 
       True
@@ -132,10 +132,10 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (label' (class'' ["control-label", "col-md-2"]) "První servis") ,
       (div' (class' "col-md-1") firstServiceField) ]
     removeButtonHandler = let
-      modifiedUpkeepSequences = foldl (\upkeepSeqs (us @ (US.UpkeepSequence displayOrder' _ _ _)) ->
+      modifiedUpkeepSequences = foldl (\upkeepSeqs ((us @ (US.UpkeepSequence displayOrder' _ _ _)),repetitionText) ->
         if displayOrder' == displayOrder 
         then upkeepSeqs
-        else upkeepSeqs ++ [us { US.displayOrdering = length upkeepSeqs + 1 }]) [] upkeepSequences
+        else upkeepSeqs ++ [(us { US.displayOrdering = length upkeepSeqs + 1 }, repetitionText)]) [] upkeepSequences
       in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = 
         rmap (const modifiedUpkeepSequences) (D.machineTypeTuple navig) })
     removeButtonProps = BTN.buttonProps {
@@ -148,7 +148,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
   validation = let 
     countOfOneTimeSequences = (case upkeepSequences of
       [] -> 0
-      xs -> foldl (\acc us -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
+      xs -> foldl (\acc (us,_) -> if US.oneTime us then acc + 1 else acc) (0 :: Int) xs)
     in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences))
       || isJust machineTypeId
 
@@ -195,7 +195,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 newUpkeepSequence = US.newUpkeepSequence {
                   US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
                   US.displayOrdering = length upkeepSequences + 1 }
-                newUpkeepSequences = upkeepSequences ++ [newUpkeepSequence]
+                newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "")]
                 in D.modifyState appVar (\navig -> 
                   navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
               disabledProps = if (isJust machineTypeId) 
@@ -210,7 +210,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
 machineTypeForm :: Var D.AppState
                 -> MT.MachineTypeId
-                -> (MT.MachineType, [US.UpkeepSequence])
+                -> (MT.MachineType, [(US.UpkeepSequence, Text)])
                 -> (DOMElement, Fay ())
 machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
@@ -220,7 +220,7 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     True
     False
   submitButtonLabel = text2DOM "Uložit"
-  submitButtonHandler = updateMachineType (machineTypeId, machineType, upkeepSequences) (return ())
+  submitButtonHandler = updateMachineType (machineTypeId, machineType, map fst upkeepSequences) (return ())
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
 

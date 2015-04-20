@@ -5,6 +5,7 @@ module Crm.Data.Data where
 
 import "fay-base" Prelude
 import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Text (Text)
 
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
@@ -43,10 +44,10 @@ data NavigationState =
     machineTypes :: [(MT.MachineType',Int)] } |
   MachineTypeEdit {
     machineTypeId :: MT.MachineTypeId ,
-    machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) } |
+    machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
-    machineTypeTuple :: (MT.MachineType, [US.UpkeepSequence]) ,
+    machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) ,
     companyId :: C.CompanyId } |
   EmployeeList {
     employees :: [(E.EmployeeId, E.Employee)] } |
