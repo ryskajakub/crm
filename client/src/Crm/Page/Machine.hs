@@ -63,18 +63,20 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
-        mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> DOMElement
-        mkUpkeepRow (upkeepId, upkeep, upkeepMachine, maybeEmployee) = let
+        mkUpkeepColumn :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
+        mkUpkeepColumn (upkeepId, upkeep, upkeepMachine, maybeEmployee) = let
           (labelClass, labelText) = if U.upkeepClosed upkeep
             then ("label-success", "Uzavřený")
             else ("label-warning", "Naplánovaný")
-          in B.col (B.mkColProps 12) $ [
+          in [B.col (B.mkColProps 12) $ [
             span' (class'' ["label", labelClass]) labelText ,
             text2DOM $ displayDate $ U.upkeepDate upkeep ,
             text2DOM $ pack $ U.workDescription upkeep ,
             text2DOM $ pack $ UM.upkeepMachineNote upkeepMachine ,
-            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ]
-        in B.row $ B.col (B.mkColProps 12) $ ([ h3 "Předchozí servisy" ] ++ (map mkUpkeepRow upkeeps))
+            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ]]
+        columns = (map mkUpkeepColumn upkeeps)
+        flattenedColumns = foldl (++) [] columns
+        in B.row ([ B.col (B.mkColProps 12) $ h3 "Předchozí servisy" ] ++ flattenedColumns)
       photoUploadRow = editDisplayRow
         True
         "Fotka" 
