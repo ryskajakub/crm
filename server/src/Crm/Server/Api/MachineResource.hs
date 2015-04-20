@@ -53,7 +53,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
     upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
     let 
       upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
-      upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),(_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
+      upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),
+          (_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
         maybeEmployee = fmap E.Employee eName
         upkeep = U.Upkeep (dayToYmd a) b c d e
         upkeepMachine = UM.UpkeepMachine f g h

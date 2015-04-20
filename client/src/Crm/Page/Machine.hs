@@ -54,14 +54,23 @@ machineDetail :: Bool
               -> M.MachineId
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
-              -> [(U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
+              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
 machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
-    machineId nextService photos _ = 
+    machineId nextService photos upkeeps = 
   machineDisplay editing pageHeader button appVar calendarOpen machine machineTypeTuple extraRows
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
+      upkeepHistoryHtml = let
+        mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> DOMElement
+        mkUpkeepRow (upkeepId, upkeep, upkeepMachine, maybeEmployee) = let
+          (labelClass, labelText) = if U.upkeepClosed upkeep
+            then ("label-success", "Uzavřený")
+            else ("label-warning", "Naplánovaný")
+          in B.col (B.mkColProps 12) $ [
+            span' (class'' ["label", labelClass]) labelText ]
+        in B.row $ B.col (B.mkColProps 12) $ ([ h3 "Předchozí servisy" ] ++ (map mkUpkeepRow upkeeps))
       photoUploadRow = editDisplayRow
         True
         "Fotka" 
@@ -92,7 +101,8 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
       extraRows = (case (editing, photos) of
         (True, _) -> [photoUploadRow]
         (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow
+        _ -> [photoCarouselRow]) ++ extraRow ++
+          (if editing && (not $ null upkeeps) then [] else [upkeepHistoryHtml])
       setEditing :: Fay ()
       setEditing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
@@ -147,8 +157,6 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
 
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
-
-  upkeepHistory = B.row $ B.col (B.mkColProps 12) $ "history"
 
   elements = form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -224,5 +232,5 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]] ++ if editing then [] else [upkeepHistory]
+        div' (class' "form-group") buttonRow ]]
   in (elements, return ())
