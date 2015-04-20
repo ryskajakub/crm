@@ -149,18 +149,29 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       div' (class'' ["col-md-1", "col-md-offset-1"]) removeButton ,
       label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
-  validation = let 
-    (countOfOneTimeSequences,parseOk) = foldl 
-      (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
-        countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
-        parseOkAccNew = case parseSafely repetitionText of
-          Just _ -> parseOkAcc && True
-          Nothing -> False
-        in (countOfOneTimeSequencesAccNew, parseOkAccNew))
-      (0 :: Int, True) 
-      upkeepSequences
-    in ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences) && (parseOk))
-      || isJust machineTypeId
+  (countOfOneTimeSequences,parseOk) = foldl 
+    (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
+      countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
+      parseOkAccNew = case parseSafely repetitionText of
+        Just _ -> parseOkAcc && True
+        Nothing -> False
+      in (countOfOneTimeSequencesAccNew, parseOkAccNew))
+    (0 :: Int, True) 
+    upkeepSequences
+  validation = ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences) 
+    && (parseOk)) || isJust machineTypeId
+  validationMessages1 = if length upkeepSequences == 0 
+    then ["Je třeba vytvořit alespoň jednu servisní řadu."]
+    else if length upkeepSequences == countOfOneTimeSequences
+      then ["Musí existovat alespoň jedna pravidelná servisní řada."]
+      else []
+  validationMessages2 = if countOfOneTimeSequences > 1
+    then ["Může být pouze jeden úvodní servis."]
+    else []
+  validationMessages3 = if parseOk 
+    then []
+    else ["Do políčka \"Počet motohodin\" se smí vyplňovat pouze čísla."]
+  validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3
 
   phase1Advice = p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
   advices phase1 = div $ (if phase1 then phase1Advice else text2DOM "") : [
@@ -188,8 +199,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
-  result = form' (class'' ["form-horizontal", "upkeep-sequence-form"]) $
-    B.grid $ B.row $  
+  result = div $ (form' (class'' ["form-horizontal", "upkeep-sequence-form"]) $ 
+    B.grid $ B.row $
       (B.col (B.mkColProps 12) $ (case machineTypeFormType of
         Edit -> editInfo
         Phase1 -> phase1PageInfo)) : [
@@ -215,7 +226,10 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 BTN.onClick = Defined $ const addUpkeepSequenceRow }
               in BTN.button' buttonProps "Přidat servisní řadu")
              (text2DOM "") ,
-          saveButtonRow' validation submitButtonLabel submitButtonHandler ]
+          saveButtonRow' validation submitButtonLabel submitButtonHandler]) :
+    (if null validationMessages
+      then []
+      else [B.grid $ B.row $ (B.col (B.mkColProps 12)) validationMessages])
   in (result, autocompleteManufacturerCb)
 
 machineTypeForm :: Var D.AppState
