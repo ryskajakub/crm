@@ -7,7 +7,7 @@ import Opaleye.PGTypes (pgInt4)
 
 import Data.Tuple.All (uncurryN)
 import Data.Traversable (forM)
-import Data.Tuple.All (sel1)
+import Data.Tuple.All (sel2)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -53,12 +53,12 @@ machineSingle = mkConstHandler (jsonO . someO) (
     upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
     let 
       upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
-      upkeepsData = fmap (\(((_::Int,a,b,_::(Maybe Int),c,d,e),(_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
+      upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),(_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
         maybeEmployee = fmap E.Employee eName
         upkeep = U.Upkeep (dayToYmd a) b c d e
         upkeepMachine = UM.UpkeepMachine f g h
-        in (upkeep, upkeepMachine, maybeEmployee)) upkeepRows
-      upkeeps = fmap sel1 upkeepsData
+        in (uId, upkeep, upkeepMachine, maybeEmployee)) upkeepRows
+      upkeeps = fmap sel2 upkeepsData
       upkeepSequenceTuple = case upkeepSequences of
         [] -> undefined
         x : xs -> (x,xs)
