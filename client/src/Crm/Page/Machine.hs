@@ -68,12 +68,16 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
           (labelClass, labelText) = if U.upkeepClosed upkeep
             then ("label-success", "Uzavřený")
             else ("label-warning", "Naplánovaný")
-          in [B.col (B.mkColProps 12) $ [
+          in [B.col (B.mkColProps 12) $ ([
             span' (class'' ["label", labelClass]) labelText ,
             text2DOM $ displayDate $ U.upkeepDate upkeep ,
             text2DOM $ pack $ U.workDescription upkeep ,
             text2DOM $ pack $ UM.upkeepMachineNote upkeepMachine ,
-            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ]]
+            text2DOM $ showInt $ UM.recordedMileage upkeepMachine ,
+            text2DOM $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] ++ 
+            (case maybeEmployee of
+              Just employee -> [text2DOM $ pack $ E.name employee]
+              Nothing -> []))]
         columns = (map mkUpkeepColumn upkeeps)
         flattenedColumns = foldl (++) [] columns
         in B.row ([ B.col (B.mkColProps 12) $ h3 "Předchozí servisy" ] ++ flattenedColumns)
