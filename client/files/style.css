@@ -6,6 +6,9 @@ html {
 .my-text-left {
   text-align: left !important; }
 
+form.upkeep-sequence-form {
+  margin-bottom: 20px; }
+
 form.upkeep-sequence-form input[type=checkbox] {
   position: relative;
   top: 6px; }
