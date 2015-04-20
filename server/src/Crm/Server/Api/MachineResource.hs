@@ -22,6 +22,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
+import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd)
 import Crm.Server.Boilerplate ()
@@ -58,7 +59,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
         maybeEmployee = fmap E.Employee eName
         upkeep = U.Upkeep (dayToYmd a) b c d e
         upkeepMachine = UM.UpkeepMachine f g h
-        in (uId, upkeep, upkeepMachine, maybeEmployee)) upkeepRows
+        in (uId, upkeep, upkeepMachine, toMyMaybe maybeEmployee)) upkeepRows
       upkeeps = fmap sel2 upkeepsData
       upkeepSequenceTuple = case upkeepSequences of
         [] -> undefined
