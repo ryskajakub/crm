@@ -213,7 +213,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         typeInputField ,
       formRow
         "Výrobce"
-         autocompleteManufacturerField] ++ upkeepSequenceRows ++ [
+         autocompleteManufacturerField] ++ 
+         (if isJust machineTypeId then [] else upkeepSequenceRows) ++ [
       formRow
         (let 
           addUpkeepSequenceRow = let
