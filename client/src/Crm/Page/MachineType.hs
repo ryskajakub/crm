@@ -51,6 +51,10 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
   setMachineType = mkSetMachineType appVar
 
+  setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
+  setMachineWhole machineTypeTuple =
+    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
+
   displayManufacturer = let
     manufacturerField = editingInput' False (MT.machineTypeManufacturer machineType)
       (const $ return ()) False False
@@ -66,8 +70,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', _) -> do
-            setMachineType machineType'
+          Just (machineTypeId', machineType', upkeepSequences') -> do
+            setMachineWhole (machineType', map (\us -> (us, "")) upkeepSequences')
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
