@@ -226,7 +226,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             BTN.onClick = Defined $ const addUpkeepSequenceRow }
           in BTN.button' buttonProps "Přidat servisní řadu")
          (text2DOM "") ,
-      div' (class' "form-group") (saveButtonRow' (null validationMessages) 
+      div' (class' "form-group") (saveButtonRow' (null validationMessages || isJust machineTypeId)
         submitButtonLabel submitButtonHandler)])) : (
     if null validationMessages
     then []
