@@ -203,7 +203,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       case machineTypeFormType of
         Edit -> editInfo
         Phase1 -> phase1PageInfo) :
-    (form' (class'' ["form-horizontal", "upkeep-sequence-form"]) ([
+    (form' (class'' ["form-horizontal", "upkeep-sequence-form", "container"]) ([
       formRow
         "Typ zařízení"
         typeInputField ,
