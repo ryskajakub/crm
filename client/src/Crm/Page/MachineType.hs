@@ -27,7 +27,7 @@ import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (saveButtonRow', editingCheckbox,
   editingInput, editingInput', formRow, inputNormalAttrs)
-import Crm.Helpers (lmap, eventInt, rmap, pageInfo)
+import Crm.Helpers (lmap, rmap, pageInfo, parseSafely)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer )
 import Crm.Component.Autocomplete (autocompleteInput)
@@ -99,30 +99,34 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel 
     submitButtonHandler = let
     
-  modifyUpkeepSequence :: Int -> (US.UpkeepSequence -> US.UpkeepSequence) -> Fay ()
+  modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
   modifyUpkeepSequence displayOrder modifier = let
     modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
       if displayOrder == displayOrder' 
-      then (modifier us, repetitionText)
-      else (us, repetitionText) ) upkeepSequences
+      then modifier (us, repetitionText)
+      else (us, repetitionText)) upkeepSequences
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel repetition oneTime,_)) -> let
     labelField = editingInput 
       sequenceLabel
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
-        (\us -> us { US.label_ = modifiedLabel }))) 
+        (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
       False
     mthField = editingInput 
       (show repetition)
-      (eventInt (\modifiedRepetition -> modifyUpkeepSequence displayOrder
-        (\us -> us { US.repetition = modifiedRepetition }))) 
+      (eventValue >=> (\modifiedRepetition ->
+        case parseSafely modifiedRepetition of
+          Just (int) -> modifyUpkeepSequence displayOrder
+            (\(us,_) -> (us {US.repetition = int },modifiedRepetition))
+          Nothing -> modifyUpkeepSequence displayOrder
+            (\(us,_) -> (us, modifiedRepetition))))
       True
       True
     firstServiceField = editingCheckbox
       (oneTime)
-      (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> us { US.oneTime = oneTimeSequence } ))
+      (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> ((fst us) { US.oneTime = oneTimeSequence }, snd us)))
       True
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
