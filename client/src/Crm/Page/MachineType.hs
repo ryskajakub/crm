@@ -159,8 +159,6 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       in (countOfOneTimeSequencesAccNew, parseOkAccNew))
     (0 :: Int, True) 
     upkeepSequences
-  validation = ((countOfOneTimeSequences <= 1) && (length upkeepSequences > countOfOneTimeSequences) 
-    && (parseOk)) || isJust machineTypeId
   validationMessages1 = if length upkeepSequences == 0 
     then ["Je třeba vytvořit alespoň jednu servisní řadu."]
     else if length upkeepSequences == countOfOneTimeSequences
@@ -227,7 +225,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 BTN.onClick = Defined $ const addUpkeepSequenceRow }
               in BTN.button' buttonProps "Přidat servisní řadu")
              (text2DOM "") ,
-          saveButtonRow' validation submitButtonLabel submitButtonHandler]) : (if null validationMessages
+          saveButtonRow' (null validationMessages) submitButtonLabel submitButtonHandler]) : (if null validationMessages
     then []
     else let
       validationMessagesHtml = map (\message -> p message) validationMessages
