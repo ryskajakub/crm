@@ -82,6 +82,7 @@ Test-Suite tests
     , tasty >= 0.7
     , tasty-hunit
     , tasty-smallcheck
+    , smallcheck
     , time
     , safe
 

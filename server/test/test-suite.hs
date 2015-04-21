@@ -9,6 +9,8 @@ import qualified Crm.Shared.UpkeepSequence as US
 
 import Test.Tasty.HUnit
 import Test.Tasty
+import Test.Tasty.SmallCheck
+import Test.SmallCheck
 
 import Data.Time.Calendar (Day, fromGregorian)
 
@@ -16,7 +18,10 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Next service day : Unit tests" [
+tests = testGroup "Next service day : All tests" [unitTests, propertyTests]
+
+unitTests :: TestTree
+unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are planned upkeeps, the earliest is taken" planned ,
   testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
@@ -104,3 +109,12 @@ closedUpkeeps = let
   expectedResult = fromGregorian 2007 1 1
   in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
+
+propertyTests :: TestTree
+propertyTests = testGroup "Next service day: Property tests" [smallCheckTree]
+
+smallCheckTree :: TestTree
+smallCheckTree = testProperty "Simple small check test" plannedSmallCheck
+
+plannedSmallCheck :: (Monad m) => Property m
+plannedSmallCheck = forAll $ \x y -> (x + y) == (x - (-y))
