@@ -82,8 +82,12 @@ Test-Suite tests
     , tasty >= 0.7
     , tasty-hunit
     , tasty-smallcheck
+    , tasty-quickcheck
     , smallcheck
+    , QuickCheck
+    , old-locale
     , time
+    , random
     , safe
 
 Executable run-server

@@ -11,14 +11,27 @@ import qualified Crm.Shared.UpkeepSequence as US
 
 import Test.Tasty.HUnit
 import Test.Tasty
-import Test.Tasty.SmallCheck
-import Test.SmallCheck
-import Test.SmallCheck.Series
+import Test.QuickCheck
+import Test.QuickCheck.Random
 
 import Data.Time.Calendar (Day, fromGregorian)
+import Data.Time.Format (readTime)
+import Data.Time.Clock (utctDay, UTCTime)
+import Data.Bits (shiftL)
+import Data.Word (Word32)
 
+import System.Locale (defaultTimeLocale)
+import System.Random (next, mkStdGen, StdGen)
+
+import Control.Monad.Error.Class (Error)
+import Control.Monad (forM_)
+
+import Debug.Trace
+
+{-
 main :: IO ()
 main = defaultMain tests
+-}
 
 tests :: TestTree
 tests = testGroup "Next service day : All tests" [unitTests, propertyTests]
@@ -114,12 +127,14 @@ closedUpkeeps = let
     expectedResult result
 
 propertyTests :: TestTree
-propertyTests = testGroup "Next service day: Property tests" [smallCheckTree]
+propertyTests = testGroup "Next service day: Property tests" []
 
-smallCheckTree :: TestTree
-smallCheckTree = testProperty "When there are planned upkeeps, the earliest is taken." plannedSmallCheck
+prop_commutativeAdd :: Integer -> Integer -> Bool
+prop_commutativeAdd n m = n + m == m + n
 
-plannedSmallCheck :: (Monad m) => Property m
-plannedSmallCheck = undefined
-
-instance (Monad m) => Serial m US.UpkeepSequence
+main :: IO ()
+main = let 
+  q = mkQCGen 0
+  args = stdArgs { 
+    replay = Just (q, 0) }
+  in verboseCheckWith args prop_commutativeAdd
