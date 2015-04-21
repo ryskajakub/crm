@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+
 module Main where
 
 import Crm.Server.Core (nextServiceDate)
@@ -11,6 +13,7 @@ import Test.Tasty.HUnit
 import Test.Tasty
 import Test.Tasty.SmallCheck
 import Test.SmallCheck
+import Test.SmallCheck.Series
 
 import Data.Time.Calendar (Day, fromGregorian)
 
@@ -114,7 +117,9 @@ propertyTests :: TestTree
 propertyTests = testGroup "Next service day: Property tests" [smallCheckTree]
 
 smallCheckTree :: TestTree
-smallCheckTree = testProperty "Simple small check test" plannedSmallCheck
+smallCheckTree = testProperty "When there are planned upkeeps, the earliest is taken." plannedSmallCheck
 
 plannedSmallCheck :: (Monad m) => Property m
-plannedSmallCheck = forAll $ \x y -> (x + y) == (x - (-y))
+plannedSmallCheck = undefined
+
+instance (Monad m) => Serial m US.UpkeepSequence
