@@ -1,4 +1,8 @@
+{-# LANGUAGE PackageImports #-}
+
 module Crm.Data.MachineData where
+
+import "fay-base" Data.Text (Text)
 
 import Crm.Shared.Company
 import Crm.Shared.Machine
@@ -14,7 +18,7 @@ import Crm.Shared.Employee
 import Crm.Component.DatePicker
 
 data MachineData = MachineData {
-  machine :: Machine ,
+  machine :: (Machine, Text, Text) ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
   machinePageMode :: Either MachineDetail MachineNew }

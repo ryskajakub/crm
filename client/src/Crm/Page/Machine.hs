@@ -9,7 +9,6 @@ module Crm.Page.Machine (
 
 import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text, showInt)
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Maybe (whenJust)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 
@@ -41,14 +40,14 @@ import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Form (formRow, editingTextarea, editingInput,
   formRowCol, saveButtonRow, editDisplayRow, row')
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, eventInt, 
+import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
 import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 
 machineDetail :: Bool
               -> Var D.AppState
               -> DP.DatePicker
-              -> M.Machine
+              -> (M.Machine, Text, Text)
               -> MT.MachineTypeId
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
@@ -56,10 +55,10 @@ machineDetail :: Bool
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple 
-    machineId nextService photos upkeeps = 
-  machineDisplay editing pageHeader button appVar calendarOpen machine 
-      machineTypeTuple extraRows extraGrid
+machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw) 
+    machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
+  machineDisplay editing pageHeader button appVar calendarOpen (machine, 
+      initialMileageRaw, mileagePerYearRaw) machineTypeTuple extraRows extraGrid
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -143,14 +142,16 @@ machineDetail editing appVar calendarOpen machine machineTypeId machineTypeTuple
 machineNew :: CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
-           -> M.Machine
+           -> (M.Machine, Text, Text)
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
-machineNew router appState datePickerCalendar machine' companyId machineTypeTuple machineTypeId = 
+machineNew router appState datePickerCalendar (machine', initialMileageRaw, 
+    mileagePerYearRaw) companyId machineTypeTuple machineTypeId = 
   machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
-      buttonRow appState datePickerCalendar machine' machineTypeTuple [] Nothing
+    buttonRow appState datePickerCalendar (machine', 
+    initialMileageRaw, mileagePerYearRaw) machineTypeTuple [] Nothing
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -164,13 +165,13 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> Var D.AppState
                -> DP.DatePicker
-               -> M.Machine
+               -> (M.Machine, Text, Text)
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
                -> (DOMElement, Fay ())
-machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
-    machine' (machineType, upkeepSequences) extraRows extraGrid = let
+machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',  
+    initialMileageRaw, mileagePerYearRaw) (machineType, upkeepSequences) extraRows extraGrid = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -179,7 +180,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
       _ -> D.navigation appState })
 
   setMachine :: M.Machine -> Fay ()
-  setMachine machine = changeNavigationState (\md -> md { MD.machine = machine })
+  setMachine machine = changeNavigationState 
+    (\md -> md { MD.machine = (machine, initialMileageRaw, mileagePerYearRaw) })
+  
+  setMachineFull :: (M.Machine, Text, Text) -> Fay ()
+  setMachineFull triple = changeNavigationState
+    (\md -> md { MD.machine = triple })
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -224,16 +230,17 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar
           editing
           "Úvodní stav motohodin"
           (show $ M.initialMileage machine')
-          (let
-            setInitialMileage :: Int -> Fay ()
-            setInitialMileage int = setMachine $ machine' { M.initialMileage = int }
-            in flip whenJust setInitialMileage . parseSafely <=< eventValue ) ,
+          (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
+            Just int -> setMachineFull (machine' { M.initialMileage = int }, rawInitialMileage', mileagePerYearRaw)
+            Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw))) ,
         formRowCol 
           "Provoz mth/rok (Rok má 8760 mth)" [
           (div' (class' "col-md-3") 
             (editingInput 
               (show $ M.mileagePerYear machine')
-              (eventInt (\int -> setMachine $ machine' { M.mileagePerYear = int } ))             
+              (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
+                Just int -> setMachineFull (machine' { M.mileagePerYear = int }, initialMileageRaw, rawMileagePerYear')
+                Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear')))
               editing
               True)) ,
           (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
