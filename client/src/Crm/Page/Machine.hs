@@ -229,7 +229,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         row'
           editing
           "Úvodní stav motohodin"
-          (show $ M.initialMileage machine')
+          (unpack initialMileageRaw)
           (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
             Just int -> setMachineFull (machine' { M.initialMileage = int }, rawInitialMileage', mileagePerYearRaw)
             Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw))) ,
@@ -237,7 +237,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Provoz mth/rok (Rok má 8760 mth)" [
           (div' (class' "col-md-3") 
             (editingInput 
-              (show $ M.mileagePerYear machine')
+              (unpack mileagePerYearRaw)
               (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
                 Just int -> setMachineFull (machine' { M.mileagePerYear = int }, initialMileageRaw, rawMileagePerYear')
                 Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear')))
