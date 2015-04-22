@@ -11,6 +11,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 
 import Test.Tasty.HUnit
 import Test.Tasty
+import Test.Tasty.QuickCheck
 import Test.QuickCheck
 import Test.QuickCheck.Random
 
@@ -29,10 +30,8 @@ import Control.Monad (forM_)
 
 import Debug.Trace
 
-{-
 main :: IO ()
 main = defaultMain tests
--}
 
 tests :: TestTree
 tests = testGroup "Next service day : All tests" [unitTests, propertyTests]
@@ -128,7 +127,10 @@ closedUpkeeps = let
     expectedResult result
 
 propertyTests :: TestTree
-propertyTests = testGroup "Next service day: Property tests" []
+propertyTests = let
+  option = QuickCheckReplay $ Just (mkQCGen 0, 0)
+  in localOption option $ testGroup "Next service day: Property tests" [
+    testProperty "When there are planned upkeeps, the earliest is taken" plannedUpkeepsProperty ]
 
 dayGen :: Gen Day
 dayGen = do 
@@ -150,13 +152,8 @@ instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
 
-main :: IO ()
-main = let
-  q = mkQCGen 0
-  args = stdArgs {
-    replay = Just (q, 0) }
-  in verboseCheckWith args (\daysNonEmpty -> let
-    days = getNonEmpty daysNonEmpty
-    plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) days
-    earliestDay = minimum days
-    in nextServiceDate undefined undefined plannedUpkeeps == earliestDay )
+plannedUpkeepsProperty daysNonEmpty = let
+  days = getNonEmpty daysNonEmpty
+  plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) days
+  earliestDay = minimum days
+  in nextServiceDate undefined undefined plannedUpkeeps == earliestDay 
