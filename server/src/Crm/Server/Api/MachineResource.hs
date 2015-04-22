@@ -24,7 +24,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd, today)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -52,6 +52,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
     (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
     upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
     upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
+    today' <- liftIO today
     let 
       upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
       upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),
@@ -64,7 +65,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
       upkeepSequenceTuple = case upkeepSequences of
         [] -> undefined
         x : xs -> (x,xs)
-      nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps undefined
+      nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
     return (machine, companyId, machineTypeId, (machineType, 
       upkeepSequences), dayToYmd $ nextServiceYmd, upkeepsData))))
 

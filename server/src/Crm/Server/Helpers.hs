@@ -1,4 +1,5 @@
 module Crm.Server.Helpers (
+  today ,
   ymdToDay ,
   dayToYmd ,
   maybeId ,
@@ -25,6 +26,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
+import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
@@ -32,6 +34,9 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 
 import Safe (readMay)
+
+today :: IO Day
+today = fmap utctDay getCurrentTime
 
 ymdToDay :: YMD.YearMonthDay -> Day
 ymdToDay ymd = day where 

@@ -30,7 +30,7 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -64,13 +64,14 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
     nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
+      today' <- today
       let
         upkeeps = fmap (\(_::Int,a,b,_::(Maybe Int),c,d,e) -> U.Upkeep (dayToYmd a) b c d e) upkeepRows
         upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)
-        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps undefined
+        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps today'
       return $ dayToYmd nextServiceDay)
     return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
