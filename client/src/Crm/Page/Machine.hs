@@ -170,7 +170,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> [DOMElement]
                -> Maybe DOMElement
                -> (DOMElement, Fay ())
-machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',  
+machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     initialMileageRaw, mileagePerYearRaw, datePickerText) (machineType, 
     upkeepSequences) extraRows extraGrid = let
 
@@ -223,13 +223,14 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 rmap (const openness) (MD.operationStartCalendar state) })
             displayedDate = case M.machineOperationStartDate machine' of
               Just date' -> Right date'
-              Nothing -> Left ""
+              Nothing -> Left datePickerText
             setDate date = case date of
               Right ymd -> let
                 newMachine = machine' { M.machineOperationStartDate = Just ymd }
                 in setMachine newMachine
-              Left text ->
-                return ()
+              Left text' -> let 
+                newMachine = machine' { M.machineOperationStartDate = Nothing }
+                in setMachineFull (newMachine, initialMileageRaw, mileagePerYearRaw, text')
             in DP.datePicker editing operationStartCalendar setDatePickerDate 
               setPickerOpenness displayedDate setDate) ,
         row'

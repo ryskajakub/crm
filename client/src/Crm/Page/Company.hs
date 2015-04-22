@@ -8,7 +8,7 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, Text) 
+import "fay-base" Data.Text (fromString, unpack, pack) 
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import FFI (Defined(Defined))
