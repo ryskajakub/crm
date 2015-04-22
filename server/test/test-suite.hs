@@ -1,4 +1,5 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# OPTIONS_GHC -fno-warn-missing-fields #-}
 
 module Main where
 
@@ -156,4 +157,4 @@ plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let
   plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
   closedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
-  in nextServiceDate undefined undefined plannedUpkeeps undefined == earliestDay 
+  in nextServiceDate undefined undefined (plannedUpkeeps ++ closedUpkeeps) undefined == earliestDay 
