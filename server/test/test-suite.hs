@@ -45,7 +45,7 @@ unitTests = testGroup "Next service day : Unit tests" [
 
 machine :: M.Machine
 machine = M.Machine {
-  M.machineOperationStartDate = dayToYmd $ fromGregorian 2000 1 1 ,
+  M.machineOperationStartDate = Just $ dayToYmd $ fromGregorian 2000 1 1 ,
   M.mileagePerYear = 5000 }
 
 upkeepSequence :: US.UpkeepSequence
@@ -156,4 +156,4 @@ plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let
   plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
   closedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
-  in nextServiceDate undefined undefined plannedUpkeeps == earliestDay 
+  in nextServiceDate undefined undefined plannedUpkeeps undefined == earliestDay 
