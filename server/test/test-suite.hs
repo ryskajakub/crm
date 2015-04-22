@@ -42,7 +42,8 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
-  testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ]
+  testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
+  testCase "When the operation start date is not specified in upkeep, today is taken" missingOperationStartDate ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -61,6 +62,16 @@ upkeep :: U.Upkeep
 upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
   U.upkeepClosed = True }
+
+missingOperationStartDate :: Assertion
+missingOperationStartDate = let
+  machine' = machine {
+    M.machineOperationStartDate = Nothing }
+  today = fromGregorian 2015 1 1
+  result = nextServiceDate machine' (upkeepSequence, []) [] today
+  expectedResult = fromGregorian 2016 12 31
+  in assertEqual "Date must be +2 years from today, that is: 2016 12 31"
+    expectedResult result
 
 firstUpkeep :: Assertion
 firstUpkeep = let
