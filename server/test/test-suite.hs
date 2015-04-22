@@ -38,7 +38,6 @@ tests = testGroup "Next service day : All tests" [unitTests, propertyTests]
 
 unitTests :: TestTree
 unitTests = testGroup "Next service day : Unit tests" [
-  testCase "When there are planned upkeeps, the earliest is taken" planned ,
   testCase "When there are no upkeeps, then the day is computed from day into operation" noUpkeeps ,
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
@@ -151,6 +150,13 @@ instance Arbitrary U.Upkeep where
 instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
+
+noUpkeeps :: Assertion
+noUpkeeps = let
+  result = nextServiceDate machine (upkeepSequence, []) []
+  expectedResult = fromGregorian 2001 12 31
+  in assertEqual "Date must be +2 years from into service: 2001 12 31"
+    expectedResult result
 
 plannedUpkeepsProperty :: NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let
