@@ -40,7 +40,7 @@ main' = do
             machineDetail editing appVar' operationStartCalendar machine machineTypeId
               machineTypeTuple machineId nextService photos upkeeps
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
-            machineNew router appVar' operationStartCalendar machine 
+            machineNew router appVar' operationStartCalendar machine
               companyId machineTypeTuple maybeMachineTypeId
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
         upkeepDatePicker employees selectedEmployee upkeepPageMode) ->

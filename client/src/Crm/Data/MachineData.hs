@@ -18,7 +18,7 @@ import Crm.Shared.Employee
 import Crm.Component.DatePicker
 
 data MachineData = MachineData {
-  machine :: (Machine, Text, Text) ,
+  machine :: (Machine, Text, Text, Text) ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
   machinePageMode :: Either MachineDetail MachineNew }

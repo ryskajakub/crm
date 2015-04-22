@@ -47,7 +47,7 @@ import Crm.Router (CrmRouter, navigate, defaultFrontPage)
 machineDetail :: Bool
               -> Var D.AppState
               -> DP.DatePicker
-              -> (M.Machine, Text, Text)
+              -> (M.Machine, Text, Text, Text)
               -> MT.MachineTypeId
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
@@ -55,10 +55,10 @@ machineDetail :: Bool
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw) 
-    machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
-  machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      initialMileageRaw, mileagePerYearRaw) machineTypeTuple extraRows extraGrid
+machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
+    datePickerText) machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
+  machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
+      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -142,16 +142,16 @@ machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePe
 machineNew :: CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
-           -> (M.Machine, Text, Text)
+           -> (M.Machine, Text, Text, Text)
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
            -> (DOMElement, Fay ())
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, 
-    mileagePerYearRaw) companyId machineTypeTuple machineTypeId = 
+    mileagePerYearRaw, datePickerText) companyId machineTypeTuple machineTypeId = 
   machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
-    buttonRow appState datePickerCalendar (machine', 
-    initialMileageRaw, mileagePerYearRaw) machineTypeTuple [] Nothing
+    buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
+      mileagePerYearRaw, datePickerText) machineTypeTuple [] Nothing
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -165,13 +165,14 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> Var D.AppState
                -> DP.DatePicker
-               -> (M.Machine, Text, Text{-, Text-}) -- ^ machine, _, _, text of the datepicker
+               -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
                -> (DOMElement, Fay ())
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',  
-    initialMileageRaw, mileagePerYearRaw) (machineType, upkeepSequences) extraRows extraGrid = let
+    initialMileageRaw, mileagePerYearRaw, datePickerText) (machineType, 
+    upkeepSequences) extraRows extraGrid = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -181,11 +182,11 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
 
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState 
-    (\md -> md { MD.machine = (machine, initialMileageRaw, mileagePerYearRaw) })
+    (\md -> md { MD.machine = (machine, initialMileageRaw, mileagePerYearRaw, datePickerText) })
   
-  setMachineFull :: (M.Machine, Text, Text) -> Fay ()
-  setMachineFull triple = changeNavigationState
-    (\md -> md { MD.machine = triple })
+  setMachineFull :: (M.Machine, Text, Text, Text) -> Fay ()
+  setMachineFull quadruple = changeNavigationState
+    (\md -> md { MD.machine = quadruple })
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -236,16 +237,18 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Úvodní stav motohodin"
           (unpack initialMileageRaw)
           (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
-            Just int -> setMachineFull (machine' { M.initialMileage = int }, rawInitialMileage', mileagePerYearRaw)
-            Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw))) ,
+            Just int -> setMachineFull (machine' { M.initialMileage = int }, 
+              rawInitialMileage', mileagePerYearRaw, datePickerText)
+            Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
         formRowCol 
           "Provoz mth/rok (Rok má 8760 mth)" [
           (div' (class' "col-md-3") 
             (editingInput 
               (unpack mileagePerYearRaw)
               (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
-                Just int -> setMachineFull (machine' { M.mileagePerYear = int }, initialMileageRaw, rawMileagePerYear')
-                Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear')))
+                Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
+                  initialMileageRaw, rawMileagePerYear', datePickerText)
+                Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
               editing
               True)) ,
           (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
@@ -259,7 +262,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 operationTypeTuples
               buttonLabel = maybe "Jiný" snd buttonLabelMaybe
               selectElements = map (\(value, selectLabel) -> let
-                selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value)
+                selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
                 in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
               in BD.buttonDropdown' editing buttonLabel' selectElements)) ] ,

@@ -172,9 +172,9 @@ startRouter appVar = let
             machineTypeTuple = D.machineTypeFromPhase1 appState
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-            machineTriple = (M.newMachine nowYMD, "", "")
+            machineQuadruple = (M.newMachine nowYMD, "", "", "")
           modify' $ 
-            D.MachineScreen $ MachineData machineTriple machineTypeTuple (nowYMD, False)
+            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False)
               (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
@@ -206,8 +206,8 @@ startRouter appVar = let
           in fetchMachine machineId
             (\(machine, machineTypeId, _, machineTypeTuple, machineNextService, upkeeps) ->
               fetchMachinePhotos machineId (\photos ->
-                let machineTriple = (machine, "", "")
-                in modify' $ D.MachineScreen $ MachineData machineTriple machineTypeTuple (nowYMD, False) $
+                let machineQuadruple = (machine, "", "", "")
+                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) $
                   (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps)))
         _ -> modify' D.NotFound
   ),(
