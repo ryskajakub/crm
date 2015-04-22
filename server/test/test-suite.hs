@@ -19,6 +19,7 @@ import Data.Time.Format (readTime)
 import Data.Time.Clock (utctDay, UTCTime)
 import Data.Bits (shiftL)
 import Data.Word (Word32)
+import Data.List.Unique (repeated)
 
 import System.Locale (defaultTimeLocale)
 import System.Random (next, mkStdGen, StdGen)
@@ -129,12 +130,22 @@ closedUpkeeps = let
 propertyTests :: TestTree
 propertyTests = testGroup "Next service day: Property tests" []
 
-prop_commutativeAdd :: Integer -> Integer -> Bool
-prop_commutativeAdd n m = n + m == m + n
+dayGen :: Gen Day
+dayGen = do 
+  word32 <- choose (minBound, maxBound) :: Gen Word32
+  let string = show word32
+  let utctime = readTime defaultTimeLocale "%s" string
+  return $ utctDay utctime
+
+instance Arbitrary Day where
+  shrink = shrinkNothing
+  arbitrary = dayGen
 
 main :: IO ()
-main = let 
+main = let
   q = mkQCGen 0
-  args = stdArgs { 
+  args = stdArgs {
     replay = Just (q, 0) }
-  in verboseCheckWith args prop_commutativeAdd
+  in verboseCheckWith args (\days -> let
+    repeat' = repeated (days :: [Day])
+    in repeat' == repeat')
