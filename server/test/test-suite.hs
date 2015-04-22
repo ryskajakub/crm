@@ -152,8 +152,9 @@ instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
 
-plannedUpkeepsProperty daysNonEmpty = let
-  days = getNonEmpty daysNonEmpty
-  plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) days
-  earliestDay = minimum days
+plannedUpkeepsProperty :: NonEmptyList Day -> [Day] -> Bool
+plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let
+  plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
+  closedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
+  earliestDay = minimum (getNonEmpty plannedUpkeepDays)
   in nextServiceDate undefined undefined plannedUpkeeps == earliestDay 
