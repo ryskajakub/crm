@@ -22,12 +22,16 @@ datePicker :: Bool -- ^ editing
            -> DatePicker
            -> (YMD.YearMonthDay -> Fay ()) -- ^ set date picker date
            -> (Bool -> Fay ()) -- ^ set date picker openness
-           -> YMD.YearMonthDay -- ^ displayed date
-           -> (YMD.YearMonthDay -> Fay ()) -- ^ set date
+           -> Either Text YMD.YearMonthDay -- ^ displayed date or some text, that the user entered
+           -> (Either Text YMD.YearMonthDay -> Fay ()) -- ^ set date
            -> [DOMElement]
 datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
-    setDatePickerOpenness displayedDate setDate = let
-  YMD.YearMonthDay y m d displayPrecision' = displayedDate
+    setDatePickerOpenness displayedDateOrText setDate = let
+  displayedDateOrText' = case displayedDateOrText of
+    Right displayedDate -> let
+      YMD.YearMonthDay y m d displayPrecision' = displayedDate
+      in Right (y,m,d,(displayPrecision displayPrecision'))
+    Left text -> Left text
   dayPickHandler :: Int -> Int -> Int -> Text -> Fay ()
   dayPickHandler year month day precision = case precision of
     month' | month' == "Month" -> setDate' YMD.MonthPrecision
@@ -35,7 +39,9 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     _ -> return ()
     where 
       setDate' precision' =
-        setDate $ YMD.YearMonthDay year month day precision'
+        setDate $ Right $ YMD.YearMonthDay year month day precision'
+  userTypingHandler :: Text -> Fay ()
+  userTypingHandler text = setDate $ Left text
   YMD.YearMonthDay pickerYear pickerMonth _ _ = pickerStateDate
   changeViewHandler changeViewCommand = let
     (newYear, newMonth) = case changeViewCommand of
@@ -48,5 +54,5 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     anyDay = 1
     newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
     in setDatePickerDate newDate
-  in CI.dayInput editing (y,m,d,(displayPrecision displayPrecision')) (pickerYear, pickerMonth)
-    (dayPickHandler) (pickerStateOpen) setDatePickerOpenness changeViewHandler
+  in CI.dayInput editing displayedDateOrText' (pickerYear, pickerMonth)
+    (dayPickHandler) userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler

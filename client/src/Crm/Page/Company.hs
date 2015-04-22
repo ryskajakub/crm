@@ -131,7 +131,7 @@ companyDetail editing' router var (companyId, company') machines' = let
             router , 
         dl [
           dt "Uvedení do provozu" , 
-          dd $ displayDate $ M.machineOperationStartDate machine' ,
+          dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
           dt "Výrobní číslo" ,
           dd $ pack $ M.serialNumber machine' ,
           dt "Rok výroby" ,

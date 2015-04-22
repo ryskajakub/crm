@@ -273,9 +273,11 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = rmap (const open) (UD.upkeepDatePicker upkeepData)})
     displayedDate = U.upkeepDate upkeep
-    setDate date = setUpkeep (upkeep { U.upkeepDate = date }, upkeepMachines)
+    setDate date = case date of
+      Right date' -> setUpkeep (upkeep { U.upkeepDate = date' }, upkeepMachines)
+      Left _ -> return ()
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
-      setPickerOpenness displayedDate setDate
+      setPickerOpenness (Right displayedDate) setDate
   employeeSelectRow = formRow "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let

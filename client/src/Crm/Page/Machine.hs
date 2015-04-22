@@ -165,7 +165,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
                -> Var D.AppState
                -> DP.DatePicker
-               -> (M.Machine, Text, Text)
+               -> (M.Machine, Text, Text{-, Text-}) -- ^ machine, _, _, text of the datepicker
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
@@ -220,12 +220,17 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
             setPickerOpenness openness = changeNavigationState (\state ->
               state { MD.operationStartCalendar = 
                 rmap (const openness) (MD.operationStartCalendar state) })
-            displayedDate = M.machineOperationStartDate machine'
-            setDate date = let
-              newMachine = machine' { M.machineOperationStartDate = date }
-              in setMachine newMachine
-            in DP.datePicker editing operationStartCalendar setDatePickerDate setPickerOpenness
-              displayedDate setDate) ,
+            displayedDate = case M.machineOperationStartDate machine' of
+              Just date' -> Right date'
+              Nothing -> Left ""
+            setDate date = case date of
+              Right ymd -> let
+                newMachine = machine' { M.machineOperationStartDate = Just ymd }
+                in setMachine newMachine
+              Left text ->
+                return ()
+            in DP.datePicker editing operationStartCalendar setDatePickerDate 
+              setPickerOpenness displayedDate setDate) ,
         row'
           editing
           "Úvodní stav motohodin"

@@ -20,7 +20,7 @@ newtype MachineId = MachineId { getMachineId :: Int }
   deriving Eq
 
 data Machine = Machine {
-  machineOperationStartDate :: YearMonthDay ,
+  machineOperationStartDate :: Maybe YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int ,
   note :: String ,
@@ -32,7 +32,7 @@ data Machine = Machine {
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = Machine {
-  machineOperationStartDate = ymd ,
+  machineOperationStartDate = Just ymd ,
   initialMileage = 0 ,
   note = "" ,
   mileagePerYear = 365 * 24 ,
