@@ -191,29 +191,25 @@ companyForm editing' var setCompany company' saveHandler' =
     saveEditButton = if editing'
       then [saveEditButton']
       else []
-    display :: String -> Text
-    display string = case string of
-      s | pack s == "" -> "-"
-      s -> pack s
     hereEditablePlain = editablePlain editing'
     companyBasicInfo = [
       header , 
       dl $ [
         dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
         dd $ hereEditablePlain
-          (display $ C.companyPlant company') 
+          (pack $ C.companyPlant company') 
           (\text -> setCompany (company' { C.companyPlant = unpack text })) , 
         dt "Adresa" , 
         dd $ hereEditablePlain
-          (display $ C.companyAddress company')
+          (pack $ C.companyAddress company')
           (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
         dt "Jméno kontaktní osoby" , 
         dd $ hereEditablePlain
-          (display $ C.companyPerson company')
+          (pack $ C.companyPerson company')
           (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
         dt "Telefon na kontaktní osobu" , 
         dd $ hereEditablePlain
-          (display $ C.companyPhone company')
+          (pack $ C.companyPhone company')
           (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
         ++ saveEditButton ]
     companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
