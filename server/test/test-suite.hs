@@ -137,6 +137,15 @@ dayGen = do
   let utctime = readTime defaultTimeLocale "%s" string
   return $ utctDay utctime
 
+instance Arbitrary U.Upkeep where
+  shrink = shrinkNothing
+  arbitrary = do
+    day <- dayGen
+    uc <- arbitrary
+    return $ U.Upkeep {
+      U.upkeepClosed = uc ,
+      U.upkeepDate = dayToYmd day }
+    
 instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
@@ -146,6 +155,8 @@ main = let
   q = mkQCGen 0
   args = stdArgs {
     replay = Just (q, 0) }
-  in verboseCheckWith args (\days -> let
-    repeat' = repeated (days :: [Day])
-    in repeat' == repeat')
+  in verboseCheckWith args (\daysNonEmpty -> let
+    days = getNonEmpty daysNonEmpty
+    plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) days
+    earliestDay = minimum days
+    in nextServiceDate undefined undefined plannedUpkeeps == earliestDay )
