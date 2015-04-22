@@ -23,7 +23,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
 
-import Crm.Server.Helpers (maybeId, ymdToDay)
+import Crm.Server.Helpers (maybeId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -58,7 +58,7 @@ addMachine connection machine companyId' machineType = do
   machineId <- runInsertReturning
     connection
     machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId , 
-      pgDay $ ymdToDay machineOperationStartDate' ,
+      maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate' ,
       pgInt4 initialMileage, pgInt4 mileagePerYear ,
       pgString note, pgString serialNumber, pgString yearOfManufacture)
     sel1

@@ -111,14 +111,14 @@ type DBByteA = Column PGByteA
 type CompaniesTable = (DBInt, DBText, DBText, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
 
-type MachinesTable = (DBInt, DBInt, DBInt, DBDate, DBInt, DBInt, DBText, DBText, DBText)
-type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, DBDate, DBInt, DBInt, DBText, DBText, DBText)
+type MachinesTable = (DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
+type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 
 type MachineTypesTable = (DBInt, DBText, DBText)
 type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText)
 
 type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
-type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, (Column (Nullable PGInt4)), DBText, DBText, DBText)
+type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
@@ -307,7 +307,7 @@ runMachineUpdate (machineId', machineTypeId, machine') connection =
       condition (machineId,_,_,_,_,_,_,_,_) = machineId .== pgInt4 machineId'
       readToWrite (_,companyId,_,_,_,_,_,_,_) =
         (Nothing, companyId, pgInt4 machineTypeId,
-          pgDay $ ymdToDay $ M.machineOperationStartDate machine',
+          maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
           pgString $ M.note machine', pgString $ M.serialNumber machine',
           pgString $ M.yearOfManufacture machine' )
@@ -501,7 +501,7 @@ runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, Str
 runCompaniesQuery connection = runQuery connection companiesQuery
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
-  IO[((Int, Int, Int, Day, Int, Int, String, String, String), (Int, String, String))]
+  IO[((Int, Int, Int, Maybe Day, Int, Int, String, String, String), (Int, String, String))]
 runMachinesInCompanyQuery' companyId connection =
   runQuery connection (machinesInCompanyQuery companyId)
 
@@ -510,13 +510,13 @@ runMachinesInCompanyQuery companyId connection = do
   rows <- (runMachinesInCompanyQuery' companyId connection)
   return $ map convertExpanded rows
 
-convertExpanded :: ((Int, Int, Int, Day, Int, Int, String, String, String),(Int, String, String)) 
+convertExpanded :: ((Int, Int, Int, Maybe Day, Int, Int, String, String, String),(Int, String, String)) 
                 -> (Int, M.Machine, Int, Int, MT.MachineType)
 convertExpanded = (\((mId,cId,_,mOs,m3,m4,m5,m6,m7),(mtId,mtN,mtMf)) ->
-  (mId, M.Machine (dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, (MT.MachineType mtN mtMf)))
+  (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, (MT.MachineType mtN mtMf)))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO[((Int, Int, Int, Day, Int, Int, String, String, String), (Int, String, String))]
+  -> IO[((Int, Int, Int, Maybe Day, Int, Int, String, String, String), (Int, String, String))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
@@ -528,7 +528,7 @@ runCompanyUpkeepsQuery companyId connection =
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
-  return $ map convertExpanded rows
+  return $ fmap convertExpanded rows
 
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)

@@ -68,7 +68,7 @@ firstUpkeep = let
     US.repetition = 5000 }
   upkeepSequence2 = US.UpkeepSequence {
     US.repetition = 1000 }
-  result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) []
+  result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) [] undefined
   expectedResult = fromGregorian 2000 12 31
   in assertEqual "Date must be +1 years, that is: 2000 12 31"
     expectedResult result
@@ -82,7 +82,7 @@ pickSmallestRepeatedSequence = let
   oneTimeUpkeepSequence = US.UpkeepSequence {
     US.repetition = 1000 ,
     US.oneTime = True }
-  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [upkeep]
+  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [upkeep] undefined
   expectedResult = fromGregorian 2000 7 1
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
@@ -101,14 +101,14 @@ planned = let
   upkeep4 = U.Upkeep {
     U.upkeepClosed = True ,
     U.upkeepDate = dayToYmd $ fromGregorian 1999 1 1 }
-  result = nextServiceDate undefined undefined [upkeep4, upkeep2, upkeep1, upkeep3]
+  result = nextServiceDate undefined undefined [upkeep4, upkeep2, upkeep1, upkeep3] undefined
   expectedResult = date
   in assertEqual "Date must be minimum from planned: 2000 1 1" 
     expectedResult result
 
 noUpkeeps :: Assertion
 noUpkeeps = let
-  result = nextServiceDate machine (upkeepSequence, []) []
+  result = nextServiceDate machine (upkeepSequence, []) [] undefined
   expectedResult = fromGregorian 2001 12 31
   in assertEqual "Date must be +2 years from into service: 2001 12 31"
     expectedResult result
@@ -120,7 +120,7 @@ closedUpkeeps = let
     U.upkeepDate = dayToYmd $ fromGregorian 2000 1 1 }
   upkeep2 = upkeep1 {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
-  result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2]
+  result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2] undefined
   expectedResult = fromGregorian 2007 1 1
   in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
@@ -150,13 +150,6 @@ instance Arbitrary U.Upkeep where
 instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
-
-noUpkeeps :: Assertion
-noUpkeeps = let
-  result = nextServiceDate machine (upkeepSequence, []) []
-  expectedResult = fromGregorian 2001 12 31
-  in assertEqual "Date must be +2 years from into service: 2001 12 31"
-    expectedResult result
 
 plannedUpkeepsProperty :: NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let

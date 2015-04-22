@@ -64,7 +64,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
       upkeepSequenceTuple = case upkeepSequences of
         [] -> undefined
         x : xs -> (x,xs)
-      nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps
+      nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps undefined
     return (machine, companyId, machineTypeId, (machineType, 
       upkeepSequences), dayToYmd $ nextServiceYmd, upkeepsData))))
 

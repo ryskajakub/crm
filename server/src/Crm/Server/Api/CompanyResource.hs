@@ -70,7 +70,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)
-        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps
+        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps undefined
       return $ dayToYmd nextServiceDay)
     return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of

@@ -14,8 +14,9 @@ import Safe.Foldable (minimumMay)
 nextServiceDate :: M.Machine -- ^ machine for which the next service date is computed
                 -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
                 -> [U.Upkeep] -- ^ upkeeps belonging to this machine
+                -> Day -- ^ today
                 -> Day -- ^ computed next service date for this machine
-nextServiceDate machine sequences upkeeps = let
+nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = let
@@ -30,7 +31,9 @@ nextServiceDate machine sequences upkeeps = let
 
   computeFromSequence = case upkeeps of
     [] -> let 
-      operationStartDate = ymdToDay $ M.machineOperationStartDate machine
+      operationStartDate = case M.machineOperationStartDate machine of 
+        Just operationStartDate' -> ymdToDay operationStartDate'
+        Nothing -> today
       filteredSequences = case filter US.oneTime nonEmptySequences of
         x : xs -> [x]
         [] -> nonEmptySequences
