@@ -121,7 +121,8 @@ data InputAttributes = InputAttributes {
   checked :: Defined Text , 
   onChange :: Defined (SyntheticEvent -> Fay ()) ,
   disabled_ :: Defined Text ,
-  name :: Defined Text }
+  name :: Defined Text ,
+  onBlur :: Defined (SyntheticEvent -> Fay ()) }
 
 mkInputAttrs :: InputAttributes
 mkInputAttrs = defaultInputAttributes
@@ -134,7 +135,8 @@ defaultInputAttributes = InputAttributes {
   onChange = Undefined ,
   defaultValue = Undefined ,
   disabled_ = Undefined ,
-  name = Undefined }
+  name = Undefined ,
+  onBlur = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
 input' = constructDOMElement "input"
