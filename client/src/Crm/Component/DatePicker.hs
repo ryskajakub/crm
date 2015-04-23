@@ -38,8 +38,10 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     day' | day' == "Day" -> setDate' YMD.DayPrecision
     _ -> return ()
     where 
-      setDate' precision' =
-        setDate $ Right $ YMD.YearMonthDay year month day precision'
+      setDate' precision' = do
+        let dateToSet = YMD.YearMonthDay year month day precision'
+        setDate $ Right dateToSet
+        setDatePickerDate dateToSet
   userTypingHandler :: Text -> Fay ()
   userTypingHandler text = setDate $ Left text
   YMD.YearMonthDay pickerYear pickerMonth _ _ = pickerStateDate
