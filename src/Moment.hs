@@ -7,6 +7,7 @@ module Moment (
   now ,
   dayPrecision ,
   day ,
+  parse ,
   format ) where
 
 import FFI
@@ -39,6 +40,19 @@ dayPrecision = ffi " %4().year(%1).month(%2).date(%3) "
 
 format :: MomentObject -> Text -> Text
 format = ffi " %1['format'](%2) "
+
+parse' :: Moment -> Text -> MomentObject
+parse' = ffi "%1(%2, \"D.M.YYYY\", true)"
+
+isValid :: MomentObject -> Bool
+isValid = ffi "%1['isValid']()"
+
+parse :: Moment -> Text -> Maybe MomentObject
+parse moment text = let 
+  maybeDate = parse' moment text
+  in if isValid maybeDate 
+    then Just maybeDate
+    else Nothing
 
 data GetDate 
   = Month
