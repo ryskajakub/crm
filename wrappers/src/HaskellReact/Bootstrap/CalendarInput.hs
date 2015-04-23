@@ -9,7 +9,7 @@ module HaskellReact.Bootstrap.CalendarInput (
   DisplayDatePrecision (..) ) where
 
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Text (fromString, Text)
+import "fay-base" Data.Text (fromString, Text, pack, unpack)
 import "fay-base" Prelude hiding (span)
 
 import HaskellReact as HR
@@ -20,6 +20,8 @@ import qualified HaskellReact.Tag.Hyperlink as A
 
 import qualified Moment as M
 import Moment
+
+import Debug.Trace
 
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
@@ -61,7 +63,8 @@ dayInput editing' displayedDate (pickerYear, pickerMonth)
     I.onBlur = Defined $ const $ case displayedDate of
       Right _ -> return () 
       Left text' -> let
-        maybeDate = parse momentLibrary text'
+        textWithoutSpaces = pack $ filter (\c -> c /= ' ') (unpack text')
+        maybeDate = parse momentLibrary textWithoutSpaces
         in case maybeDate of
           Just theDate' -> let
             (y, m, d) = day theDate'
