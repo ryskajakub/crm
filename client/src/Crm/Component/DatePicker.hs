@@ -8,7 +8,7 @@ module Crm.Component.DatePicker (
   DatePicker ) where
 
 import "fay-base" Prelude hiding (putStrLn)
-import "fay-base" Data.Text (fromString, Text, putStrLn)
+import "fay-base" Data.Text (fromString, Text, putStrLn, pack)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import HaskellReact
@@ -17,6 +17,8 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (displayPrecision)
 
 import qualified JQuery as JQ
+
+import Debug.Trace
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 

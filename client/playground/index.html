@@ -1,0 +1,19 @@
+<html>
+  <head>
+    <style>
+      #a { background-color: blue; height: 200px; width: 200px; position: absolute; top: 100px; left: 100px; z-index: 5; }
+      #b { background-color: red; height: 200px; width: 200px; position: absolute; z-index: 100; }
+    </style>
+  </head>
+  <script src="https://code.jquery.com/jquery-2.1.3.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $("div").click(function () {
+        console.log($(this)); });
+    });
+  </script>
+  <body>
+    <div id="a"></div>
+    <div id="b"></div>
+  </body>
+</html>
