@@ -39,9 +39,9 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\(machineTypeId, machine) ->
+machineUpdate = mkInputHandler (jsonI . someI) (\(machine) ->
   ask >>= \(conn, id') -> maybeId id' (\machineId -> do
-    _ <- liftIO $ runMachineUpdate (machineId, machineTypeId, machine) conn
+    _ <- liftIO $ runMachineUpdate (machineId, machine) conn
     -- todo singal error if the update didn't hit a row
     return ()))
 

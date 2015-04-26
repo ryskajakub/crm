@@ -42,9 +42,10 @@ import Crm.Component.Form (formRow, editingTextarea, editingInput,
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
-import Crm.Router (CrmRouter, navigate, defaultFrontPage)
+import qualified Crm.Router as R
 
 machineDetail :: Bool
+              -> R.CrmRouter
               -> Var D.AppState
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
@@ -55,7 +56,7 @@ machineDetail :: Bool
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
-machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
+machineDetail editing router appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
     datePickerText) machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
@@ -135,11 +136,12 @@ machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePe
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machineTypeId machine (return ())
+      editMachineAction = updateMachine machineId machine (
+        R.navigate (R.machineDetail machineId) router)
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 
-machineNew :: CrmRouter
+machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
            -> (M.Machine, Text, Text, Text)
@@ -157,7 +159,7 @@ machineNew router appState datePickerCalendar (machine', initialMileageRaw,
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
       saveNewMachine = createMachine machine' companyId machineTypeEither 
-        (navigate defaultFrontPage router)
+        (R.navigate R.defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
 machineDisplay :: Bool -- ^ true editing mode false display mode

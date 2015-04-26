@@ -298,15 +298,15 @@ actualUpkeepRepetitionQuery machineTypeId' = let
   
   in AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
 
-runMachineUpdate :: (Int, Int, M.Machine) 
+runMachineUpdate :: (Int, M.Machine) 
                  -> Connection 
                  -> IO Int64
-runMachineUpdate (machineId', machineTypeId, machine') connection =
+runMachineUpdate (machineId', machine') connection =
   runUpdate connection machinesTable readToWrite condition
     where
       condition (machineId,_,_,_,_,_,_,_,_) = machineId .== pgInt4 machineId'
-      readToWrite (_,companyId,_,_,_,_,_,_,_) =
-        (Nothing, companyId, pgInt4 machineTypeId,
+      readToWrite (_,companyId, machineTypeId,_,_,_,_,_,_) =
+        (Nothing, companyId, machineTypeId,
           maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
           pgString $ M.note machine', pgString $ M.serialNumber machine',
