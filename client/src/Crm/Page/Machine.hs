@@ -89,7 +89,9 @@ machineDetail editing router appVar calendarOpen (machine, initialMileageRaw, mi
             div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
         rows = (map mkUpkeepRows upkeeps)
         flattenedRows = foldl (++) [] rows
-        in (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
+        in if null flattenedRows
+          then []
+          else (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
       extraGrid = (if editing && (not $ null upkeeps) 
         then Nothing 
         else (Just $ B.grid upkeepHistoryHtml))
