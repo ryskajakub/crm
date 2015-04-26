@@ -10,7 +10,7 @@ module HaskellReact.Bootstrap.CalendarInput (
 
 import "fay-base" FFI (Defined(Defined))
 import "fay-base" Data.Text (fromString, Text, pack, unpack)
-import "fay-base" Prelude hiding (span)
+import "fay-base" Prelude hiding (span, id)
 
 import HaskellReact as HR
 import HaskellReact.Bootstrap.Popover as P
@@ -71,9 +71,14 @@ dayInput editing' displayedDate (pickerYear, pickerMonth)
             in onDayPick y m d "Day"
           Nothing -> return () }
   input = I.input attrs inputAttrs
+  overcast = div' 
+    (mkAttrs { 
+      HR.onClick = Defined $ const $ setPickerOpen False ,
+      id = Defined "overcast" })
+    ""
   picker =
     if pickerOpen
-    then [ P.popover (P.mkPopoverProps P.placementBottom 20 35) $ let
+    then [overcast, P.popover (P.mkPopoverProps P.placementBottom 20 35) $ let
       anyDay = 1
       momentFromParams = M.dayPrecision pickerYear pickerMonth anyDay M.requireMoment 
       changeViewLink :: Text -> ChangeView -> Text -> DOMElement
