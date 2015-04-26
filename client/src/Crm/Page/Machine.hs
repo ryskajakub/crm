@@ -45,7 +45,6 @@ import Crm.Helpers (parseSafely, displayDate, lmap, rmap,
 import qualified Crm.Router as R
 
 machineDetail :: Bool
-              -> R.CrmRouter
               -> Var D.AppState
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
@@ -56,7 +55,7 @@ machineDetail :: Bool
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> (DOMElement, Fay ())
-machineDetail editing router appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
+machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
     datePickerText) machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
@@ -127,19 +126,19 @@ machineDetail editing router appVar calendarOpen (machine, initialMileageRaw, mi
         (True, _) -> [photoUploadRow]
         (_, []) -> []
         _ -> [photoCarouselRow]) ++ extraRow
-      setEditing :: Fay ()
-      setEditing = modify appVar (\appState -> appState {
+      setEditing :: Bool -> Fay ()
+      setEditing editing = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
           D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e True f g i)))
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing f g i)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
           BTN.button'
-            (BTN.buttonProps { BTN.onClick = Defined $ const setEditing })
+            (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
       editMachineAction = updateMachine machineId machine (
-        R.navigate (R.machineDetail machineId) router)
+        setEditing False)
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
 

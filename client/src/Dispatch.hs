@@ -37,7 +37,7 @@ main' = do
       D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar machinePageMode) ->
         case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing machineTypeId photos upkeeps) ->
-            machineDetail editing router appVar' operationStartCalendar machine machineTypeId
+            machineDetail editing appVar' operationStartCalendar machine machineTypeId
               machineTypeTuple machineId nextService photos upkeeps
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
             machineNew router appVar' operationStartCalendar machine
