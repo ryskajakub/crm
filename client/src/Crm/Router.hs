@@ -27,13 +27,13 @@ module Crm.Router (
   newEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
-import "fay-base" Prelude hiding (div, span, id)
+import "fay-base" Prelude hiding (div, span) 
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
 import "fay-base" Data.Maybe (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
-import HaskellReact
+import HaskellReact hiding (id)
 import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
@@ -206,8 +206,10 @@ startRouter appVar = let
           in fetchMachine machineId
             (\(machine, machineTypeId, _, machineTypeTuple, machineNextService, upkeeps) ->
               fetchMachinePhotos machineId (\photos ->
-                let machineQuadruple = (machine, "", "", "")
-                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) $
+                let 
+                  machineQuadruple = (machine, "", "", "")
+                  startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
+                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (startDateInCalendar, False) $
                   (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps)))
         _ -> modify' D.NotFound
   ),(

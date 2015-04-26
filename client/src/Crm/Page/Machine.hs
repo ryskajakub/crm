@@ -188,6 +188,26 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
   setMachineFull quadruple = changeNavigationState
     (\md -> md { MD.machine = quadruple })
 
+  (datePicker, datePickerCallback) = (let
+    setDatePickerDate date = changeNavigationState (\state ->
+      state { MD.operationStartCalendar = 
+        lmap (const date) (MD.operationStartCalendar state) })
+    setPickerOpenness openness = changeNavigationState (\state ->
+      state { MD.operationStartCalendar = 
+        rmap (const openness) (MD.operationStartCalendar state) })
+    displayedDate = case M.machineOperationStartDate machine' of
+      Just date' -> Right date'
+      Nothing -> Left datePickerText
+    setDate date = case date of
+      Right ymd -> let
+        newMachine = machine' { M.machineOperationStartDate = Just ymd }
+        in setMachine newMachine
+      Left text' -> let 
+        newMachine = machine' { M.machineOperationStartDate = Nothing }
+        in setMachineFull (newMachine, initialMileageRaw, mileagePerYearRaw, text')
+    in DP.datePicker editing operationStartCalendar setDatePickerDate 
+      setPickerOpenness displayedDate setDate)
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -214,25 +234,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         editDisplayRow
           editing
-          ("Datum uvedení do provozu") (let
-            setDatePickerDate date = changeNavigationState (\state ->
-              state { MD.operationStartCalendar = 
-                lmap (const date) (MD.operationStartCalendar state) })
-            setPickerOpenness openness = changeNavigationState (\state ->
-              state { MD.operationStartCalendar = 
-                rmap (const openness) (MD.operationStartCalendar state) })
-            displayedDate = case M.machineOperationStartDate machine' of
-              Just date' -> Right date'
-              Nothing -> Left datePickerText
-            setDate date = case date of
-              Right ymd -> let
-                newMachine = machine' { M.machineOperationStartDate = Just ymd }
-                in setMachine newMachine
-              Left text' -> let 
-                newMachine = machine' { M.machineOperationStartDate = Nothing }
-                in setMachineFull (newMachine, initialMileageRaw, mileagePerYearRaw, text')
-            in DP.datePicker editing operationStartCalendar setDatePickerDate 
-              setPickerOpenness displayedDate setDate) ,
+          ("Datum uvedení do provozu") 
+          datePicker ,
         row'
           editing
           "Úvodní stav motohodin"
@@ -274,4 +277,4 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
-  in (elements, return ())
+  in (elements, datePickerCallback)

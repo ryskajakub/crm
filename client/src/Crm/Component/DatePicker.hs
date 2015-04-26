@@ -7,14 +7,16 @@ module Crm.Component.DatePicker (
   datePicker ,
   DatePicker ) where
 
-import "fay-base" Prelude
-import "fay-base" Data.Text (fromString, Text)
+import "fay-base" Prelude hiding (putStrLn)
+import "fay-base" Data.Text (fromString, Text, putStrLn)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import HaskellReact
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (displayPrecision)
+
+import qualified JQuery as JQ
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 
@@ -24,7 +26,7 @@ datePicker :: Bool -- ^ editing
            -> (Bool -> Fay ()) -- ^ set date picker openness
            -> Either Text YMD.YearMonthDay -- ^ displayed date or some text, that the user entered
            -> (Either Text YMD.YearMonthDay -> Fay ()) -- ^ set date
-           -> [DOMElement]
+           -> ([DOMElement], Fay ())
 datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     setDatePickerOpenness displayedDateOrText setDate = let
   displayedDateOrText' = case displayedDateOrText of
@@ -56,5 +58,6 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     anyDay = 1
     newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
     in setDatePickerDate newDate
-  in CI.dayInput editing displayedDateOrText' (pickerYear, pickerMonth)
-    (dayPickHandler) userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler
+  hideOnBlur = return ()
+  in (CI.dayInput editing displayedDateOrText' (pickerYear, pickerMonth) dayPickHandler 
+    userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler, hideOnBlur)

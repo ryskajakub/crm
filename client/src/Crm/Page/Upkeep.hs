@@ -267,7 +267,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       else [machineToggleLink, noteField (Defined "2")]
     in B.row rowItems
   submitButton = formRow "" button
-  dateRow = formRow "Datum" $ let
+  (datePicker, datePickerCallback) = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {
@@ -278,6 +278,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       Left _ -> return ()
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
       setPickerOpenness (Right displayedDate) setDate
+  dateRow = formRow "Datum" datePicker
   employeeSelectRow = formRow "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
