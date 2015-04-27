@@ -1,4 +1,8 @@
+{-# LANGUAGE PackageImports #-}
+
 module Crm.Data.UpkeepData where
+
+import "fay-base" Data.Text (Text)
 
 import Crm.Shared.Company
 import Crm.Shared.Machine
@@ -13,7 +17,7 @@ data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,
   machines :: [(MachineId, Machine, CompanyId, MachineTypeId, MachineType)] ,
   notCheckedMachines :: [UpkeepMachine'] ,
-  upkeepDatePicker :: DatePicker ,
+  upkeepDatePicker :: (DatePicker, Text) ,
   employees :: [Employee'] ,
   selectedEmployee :: Maybe EmployeeId ,
   upkeepPageMode :: Either UpkeepClose UpkeepNew }

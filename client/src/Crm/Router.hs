@@ -39,7 +39,7 @@ import Moment (now, requireMoment, day)
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
   fetchMachinePhotos )
-import Crm.Helpers (parseSafely, showCompanyId)
+import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -187,7 +187,8 @@ startRouter appVar = let
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
-                (nowYMD, False) employees Nothing (Right $ UD.UpkeepNew $ Left companyId)))
+              ((nowYMD, False), displayDate nowYMD) employees 
+              Nothing (Right $ UD.UpkeepNew $ Left companyId)))
   ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
@@ -229,7 +230,7 @@ startRouter appVar = let
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
               in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) (upkeepDate, False) employees 
+                (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), "") employees 
                 selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
@@ -254,7 +255,7 @@ startRouter appVar = let
           in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
             fetchEmployees (\employees ->
               modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) (U.upkeepDate upkeep, False)
+                (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), "")
                 employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound
   ),(
