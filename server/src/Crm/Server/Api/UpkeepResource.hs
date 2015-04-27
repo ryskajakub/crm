@@ -17,7 +17,7 @@ import Control.Monad (forM_)
 import Data.Tuple.All (sel1, uncurryN)
 
 import Rest.Types.Error (Reason(NotAllowed))
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
+import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
@@ -50,6 +50,15 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
+removeUpkeep :: Handler IdDependencies
+removeUpkeep = mkConstHandler (jsonO . someO) (do
+  (connection, maybeInt) <- ask
+  let 
+    handle upkeepId = let 
+      deleteRow row = sel1 row .== pgInt4 upkeepId
+      in liftIO $ runDelete connection upkeepTable deleteRow
+  maybeId maybeInt handle)
+
 upkeepResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \listingType -> case listingType of
@@ -58,6 +67,7 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.upkeep ,
   update = Just updateUpkeepHandler ,
   schema = upkeepSchema ,
+  remove = Just removeUpkeep ,
   get = Just upkeepCompanyMachines }
 
 updateUpkeepHandler :: Handler IdDependencies

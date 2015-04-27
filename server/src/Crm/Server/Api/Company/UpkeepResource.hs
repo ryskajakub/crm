@@ -75,13 +75,12 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   return upkeepId
 
 createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep ->
-  let 
-    (_,_,selectedEmployeeId) = newUpkeep
-    newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
-    in ask >>= \(connection, maybeInt) -> maybeId maybeInt (
-      -- todo check that the machines are belonging to this company
-      const $ liftIO $ addUpkeep connection newUpkeep'))
+createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep -> let 
+  (_,_,selectedEmployeeId) = newUpkeep
+  newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
+  in ask >>= \(connection, maybeInt) -> maybeId maybeInt (
+    -- todo check that the machines are belonging to this company
+    const $ liftIO $ addUpkeep connection newUpkeep'))
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
