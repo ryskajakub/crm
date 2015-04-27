@@ -26,7 +26,8 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd, today)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd, today,
+  deleteRows)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -42,11 +43,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineDelete :: Handler IdDependencies
-machineDelete = mkConstHandler (jsonO . someO) (do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\machineId -> let
-    deleteMachineRow machine = sel1 machine .== pgInt4 machineId
-    in liftIO $ runDelete connection machinesTable deleteMachineRow))
+machineDelete = deleteRows machinesTable
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . someI) (\(machine) ->
