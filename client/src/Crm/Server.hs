@@ -26,6 +26,7 @@ module Crm.Server (
   fetchEmployees ,
   fetchCompany ,
   deleteUpkeep ,
+  deleteMachine ,
   getPhoto ) where
 
 import FFI (ffi, Automatic, Defined(Defined, Undefined))
@@ -98,6 +99,15 @@ deleteUpkeep :: U.UpkeepId
 deleteUpkeep upkeepId callback = ajax'
   Undefined
   (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+  delete
+  (const callback)
+
+deleteMachine :: M.MachineId
+              -> Fay ()
+              -> Fay ()
+deleteMachine machineId callback = ajax'
+  Undefined
+  (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   delete
   (const callback)
 
@@ -186,13 +196,13 @@ fetchMachinePhotos machineId callback =
     noopOnError
 
 fetchMachine :: M.MachineId -- ^ machine id
-             -> ((M.Machine, MT.MachineTypeId, M.MachineId, 
+             -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, 
                 [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-  fun (a,b,c,d,e,f) = (a,b,c,d,e,map fun2 f)
+  fun (a,b,c,d,e,g) = (a,b,c,d,e,map fun2 g)
   in JQ.ajax
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     (callback . fun)

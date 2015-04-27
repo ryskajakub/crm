@@ -39,24 +39,26 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Form (formRow, editingTextarea, editingInput,
   formRowCol, saveButtonRow, editDisplayRow, row')
-import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
 import qualified Crm.Router as R
 
 machineDetail :: Bool
               -> Var D.AppState
+              -> R.CrmRouter
+              -> C.CompanyId
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
-              -> MT.MachineTypeId
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> DOMElement
-machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
-    datePickerText) _ machineTypeTuple machineId nextService photos upkeeps = 
+machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
+    mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps = 
+
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
     where
@@ -122,15 +124,23 @@ machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePe
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
 
+      deleteMachineRow = formRow "Smazat" $ BTN.button'
+        (BTN.buttonProps { 
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
+        "Smazat"
+
       extraRows = (case (editing, photos) of
         (True, _) -> [photoUploadRow]
         (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow
+        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing && null upkeeps
+          then [deleteMachineRow]
+          else [])
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing' f g i)))
+          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $

@@ -29,7 +29,8 @@ data MachineDetail = MachineDetail {
   formState :: Bool ,
   machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,
-  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, Maybe Employee)] }
+  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, Maybe Employee)] ,
+  companyId' :: CompanyId }
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,

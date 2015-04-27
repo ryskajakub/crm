@@ -151,10 +151,8 @@ startRouter appVar = let
           in fetchCompany companyId (\(company,machines) -> 
             modify appVar (\appState -> appState {
               D.navigation = D.CompanyDetail companyId company False machines }))
-        (_, new) | new == "new" -> modify appVar (\appState ->
-          appState {
-            D.navigation = D.CompanyNew C.newCompany }
-          )
+        (_, new) | new == "new" -> modify appVar (\appState -> appState {
+          D.navigation = D.CompanyNew C.newCompany })
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-machine-phase1", \params ->
@@ -205,13 +203,13 @@ startRouter appVar = let
         Just(machineId') -> let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
-            (\(machine, machineTypeId, _, machineTypeTuple, machineNextService, upkeeps) ->
+            (\(companyId, machine, machineTypeId, machineTypeTuple, machineNextService, upkeeps) ->
               fetchMachinePhotos machineId (\photos ->
                 let 
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (startDateInCalendar, False) $
-                  (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps)))
+                  (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId)))
         _ -> modify' D.NotFound
   ),(
     "planned", const $
