@@ -267,7 +267,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       else [machineToggleLink, noteField (Defined "2")]
     in B.row rowItems
   submitButton = formRow "" button
-  (datePicker, datePickerCallback) = let
+  datePicker = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (const newDate) (UD.upkeepDatePicker upkeepData)} )
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {

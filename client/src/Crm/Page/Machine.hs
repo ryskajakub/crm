@@ -54,7 +54,7 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
-              -> (DOMElement, Fay ())
+              -> DOMElement
 machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
     datePickerText) machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
@@ -149,7 +149,7 @@ machineNew :: R.CrmRouter
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
-           -> (DOMElement, Fay ())
+           -> DOMElement
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, 
     mileagePerYearRaw, datePickerText) companyId machineTypeTuple machineTypeId = 
   machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
@@ -172,7 +172,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
-               -> (DOMElement, Fay ())
+               -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     initialMileageRaw, mileagePerYearRaw, datePickerText) (machineType, 
     upkeepSequences) extraRows extraGrid = let
@@ -191,7 +191,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
   setMachineFull quadruple = changeNavigationState
     (\md -> md { MD.machine = quadruple })
 
-  (datePicker, datePickerCallback) = (let
+  datePicker = let
     setDatePickerDate date = changeNavigationState (\state ->
       state { MD.operationStartCalendar = 
         lmap (const date) (MD.operationStartCalendar state) })
@@ -209,7 +209,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         newMachine = machine' { M.machineOperationStartDate = Nothing }
         in setMachineFull (newMachine, initialMileageRaw, mileagePerYearRaw, text')
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
-      setPickerOpenness displayedDate setDate)
+      setPickerOpenness displayedDate setDate
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -280,4 +280,4 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
-  in (elements, datePickerCallback)
+  in elements

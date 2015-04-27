@@ -28,7 +28,7 @@ datePicker :: Bool -- ^ editing
            -> (Bool -> Fay ()) -- ^ set date picker openness
            -> Either Text YMD.YearMonthDay -- ^ displayed date or some text, that the user entered
            -> (Either Text YMD.YearMonthDay -> Fay ()) -- ^ set date
-           -> ([DOMElement], Fay ())
+           -> [DOMElement]
 datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     setDatePickerOpenness displayedDateOrText setDate = let
   displayedDateOrText' = case displayedDateOrText of
@@ -60,6 +60,5 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     anyDay = 1
     newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
     in setDatePickerDate newDate
-  hideOnBlur = return ()
   in (CI.dayInput editing displayedDateOrText' (pickerYear, pickerMonth) dayPickHandler 
-    userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler, hideOnBlur)
+    userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler)
