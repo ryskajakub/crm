@@ -20,6 +20,7 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
+import qualified HaskellReact.Bootstrap.Alert as AA
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -315,10 +316,17 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
     B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
   companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
-  in form' (class' "form-horizontal") $ B.grid $
+
+  validationMessages = []::[DOMElement]
+  validationMessagesHtml = map (\message -> p message) validationMessages
+  messagesPart = if null validationMessages
+    then B.grid $ B.row $ B.col (B.mkColProps 12) (AA.alert AA.Danger validationMessagesHtml)
+    else text2DOM ""
+
+  in div $ (form' (class' "form-horizontal") $ B.grid $
     [companyNameHeader] ++
     [header] ++
     map machineRow machines ++ 
     [dateRow, employeeSelectRow] ++ 
     additionalRows ++ 
-    [submitButton]
+    [submitButton]) : messagesPart : []
