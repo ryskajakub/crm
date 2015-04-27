@@ -14,6 +14,7 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Nav as BN
 import qualified HaskellReact.Bootstrap.Button as BTN
+import qualified HaskellReact.BackboneRouter as BR
 
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -31,6 +32,7 @@ upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.M
               -> CrmRouter
               -> DOMElement
 upkeepHistory upkeepsInfo companyId router = let
+
   upkeepHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = let
     employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
     (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
@@ -43,8 +45,7 @@ upkeepHistory upkeepsInfo companyId router = let
         _ -> Defined "upkeep-row"
       in attributes { className = newClassname }
     deleteButton = let
-      doNavigate = navigate (maintenances companyId) router
-      doDelete = deleteUpkeep upkeepId doNavigate
+      doDelete = deleteUpkeep upkeepId BR.refresh
       buttonProps = (BTN.buttonProps {
         BTN.bsStyle = Defined "danger" ,
         BTN.onClick = Defined $ const doDelete })
