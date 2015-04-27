@@ -92,11 +92,11 @@ toggle lists findElem = let
   in toggleInternal lists True
 
 mkSubmitButton :: Renderable a
-               => Bool
-               -> a
+               => a
                -> Fay ()
+               -> Bool
                -> DOMElement
-mkSubmitButton enabled buttonLabel handler = let
+mkSubmitButton buttonLabel handler enabled = let
   basicButtonProps = BTN.buttonProps {
     BTN.bsStyle = Defined "primary" }
   buttonProps = if enabled
@@ -126,7 +126,6 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
             (upkeep3, selectedEmployee)
             (navigate (maintenances companyId) router)
           in mkSubmitButton 
-            (not $ null upkeepMachines) 
             [span' (row "1") G.plus , span' (row "2") " Uzavřít"]
             closeUpkeepHandler
 
@@ -144,14 +143,13 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
   upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE
     where
       (upkeepU, upkeepMachines) = upkeep
-      mkSubmitButton' = mkSubmitButton (not $ null upkeepMachines)
       (pageHeader, submitButton) = case upkeepIdentification of 
         Left (companyId) -> let
           newUpkeepHandler = createUpkeep
             (upkeepU, upkeepMachines, mE)
             companyId
             (navigate R.plannedUpkeeps router)
-          button = mkSubmitButton'
+          button = mkSubmitButton
             [G.plus , text2DOM " Naplánovat"]
             newUpkeepHandler
           in ("Naplánovat servis", button)
@@ -159,7 +157,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
           replanUpkeepHandler = updateUpkeep
             ((upkeepId, upkeepU, upkeepMachines), mE)
             (navigate R.plannedUpkeeps router)
-          button = mkSubmitButton'
+          button = mkSubmitButton
             [text2DOM "Přeplánovat"]
             replanUpkeepHandler
           in ("Přeplánovat servis", button)
@@ -171,7 +169,7 @@ upkeepForm :: Var D.AppState
            -> [UM.UpkeepMachine']
            -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
               -- ^ machine ids -> machines
-           -> DOMElement -- ^ submit button
+           -> (Bool -> DOMElement) -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> [E.Employee']
            -> Maybe E.EmployeeId
@@ -274,7 +272,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         warrantyUpkeepRow , noteField (Defined "4")]
       else [machineToggleLink, noteField (Defined "2")]
     in B.row rowItems
-  submitButton = formRow "" button
   datePicker = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}) 
@@ -317,9 +314,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
   companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
-  validationMessages = if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
+  validationMessages' = if (null upkeepMachines)
+    then ["V servisu musí figurovat alespoň jeden stroj."]
+    else []
+  validationMessages = validationMessages' ++ (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
     then []
-    else ["Musí být nastaveno správně datum."]
+    else ["Musí být nastaveno správně datum."])
+  submitButton = formRow "" (button $ null validationMessages)
 
   validationMessagesHtml = map (\message -> p message) validationMessages
   messagesPart = if null validationMessages
