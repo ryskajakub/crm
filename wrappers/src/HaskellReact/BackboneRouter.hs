@@ -31,6 +31,9 @@ startRouter = ffi " \
 \ })()\
 \ "
 
+refresh :: Fay ()
+refresh = ffi " require('backbone').history.loadUrl(require('backbone').history.fragment) "
+
 navigate :: Text -- ^ url to navigate
          -> BackboneRouter -- ^ router instance where the url will be handled
          -> Fay ()

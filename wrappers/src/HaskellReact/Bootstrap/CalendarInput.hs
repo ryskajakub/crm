@@ -21,8 +21,6 @@ import qualified HaskellReact.Tag.Hyperlink as A
 import qualified Moment as M
 import Moment
 
-import Debug.Trace
-
 type PickDate = (Int -> Int -> Int -> Text -> Fay ())
 
 monthCalendar :: M.MomentObject -> PickDate -> DOMElement
