@@ -18,7 +18,7 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import Crm.Server (createEmployee)
-import Crm.Component.Form (row', saveButtonRow)
+import Crm.Component.Form (row', saveButtonRow')
 import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Employee as E
 import Crm.Router (CrmRouter, navigate, newEmployee)
@@ -58,7 +58,7 @@ employeeForm router employee appVar = let
           D.navigation = case D.navigation appState of 
             D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
             _ -> D.navigation appState }))) ,
-      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow
+      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow' (null validationMessages)
         "Přidat servismena"
         (createEmployee employee $ navigate R.employeePage router)]) :
     (validationHtml validationMessages) : []
