@@ -65,7 +65,7 @@ addUpkeep :: Connection
 addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   upkeepIds <- runInsertReturning
     connection
-    upkeepTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
+    upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
       pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId, 
       pgString $ U.workHours upkeep, pgString $ U.workDescription upkeep, 
       pgString $ U.recommendation upkeep)

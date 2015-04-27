@@ -58,7 +58,7 @@ removeUpkeep = mkConstHandler (jsonO . someO) (do
       deleteUpkeepRow row = sel1 row .== pgInt4 upkeepId
       deleteUpkeepMachineRow row = sel1 row .== pgInt4 upkeepId
       in liftIO $ do
-        runDelete connection upkeepTable deleteUpkeepRow
+        runDelete connection upkeepsTable deleteUpkeepRow
         runDelete connection upkeepMachinesTable deleteUpkeepMachineRow
   maybeId maybeInt handle)
 
@@ -90,7 +90,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
         maybeToNullable $ fmap pgInt4 employeeId, pgString $ U.workHours upkeep, 
         pgString $ U.workDescription upkeep, pgString $ U.recommendation upkeep)
-    in runUpdate conn upkeepTable readToWrite condition
+    in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== pgInt4 upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   return ()

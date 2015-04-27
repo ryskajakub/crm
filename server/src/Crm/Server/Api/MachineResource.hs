@@ -4,15 +4,17 @@ module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4)
+import Opaleye.Manipulation (runDelete)
+import Opaleye.Operators ((.==))
 
 import Data.Tuple.All (uncurryN)
 import Data.Traversable (forM)
-import Data.Tuple.All (sel2)
+import Data.Tuple.All (sel2, sel1)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
+import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
@@ -36,8 +38,16 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just machineSingle ,
   update = Just machineUpdate ,
   name = A.machines ,
+  remove = Just machineDelete ,
   schema = S.withListing () (S.unnamedSingle readMay') }
     
+machineDelete :: Handler IdDependencies
+machineDelete = mkConstHandler (jsonO . someO) (do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\machineId -> let
+    deleteMachineRow machine = sel1 machine .== pgInt4 machineId
+    in liftIO $ runDelete connection machinesTable deleteMachineRow))
+
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . someI) (\(machine) ->
   ask >>= \(conn, id') -> maybeId id' (\machineId -> do
