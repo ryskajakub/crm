@@ -116,7 +116,7 @@ upkeepDetail :: CrmRouter
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployee =
-  upkeepForm appState "Uzvařít servis" upkeep2 datePicker notCheckedMachines 
+  upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
     machines submitButton True employees selectedEmployee
       where
         (_,upkeep,upkeepMachines) = upkeep3

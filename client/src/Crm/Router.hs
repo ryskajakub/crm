@@ -230,7 +230,7 @@ startRouter appVar = let
               upkeep' = upkeep { U.upkeepClosed = True }
               upkeepDate = U.upkeepDate upkeep
               in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), "") employees 
+                (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
                 selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
