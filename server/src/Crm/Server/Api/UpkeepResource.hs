@@ -55,8 +55,11 @@ removeUpkeep = mkConstHandler (jsonO . someO) (do
   (connection, maybeInt) <- ask
   let 
     handle upkeepId = let 
-      deleteRow row = sel1 row .== pgInt4 upkeepId
-      in liftIO $ runDelete connection upkeepTable deleteRow
+      deleteUpkeepRow row = sel1 row .== pgInt4 upkeepId
+      deleteUpkeepMachineRow row = sel1 row .== pgInt4 upkeepId
+      in liftIO $ do
+        runDelete connection upkeepTable deleteUpkeepRow
+        runDelete connection upkeepMachinesTable deleteUpkeepMachineRow
   maybeId maybeInt handle)
 
 upkeepResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
