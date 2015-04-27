@@ -76,7 +76,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
         [] -> undefined
         x : xs -> (x,xs)
       nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
-    return (machine, companyId, machineTypeId, (machineType, 
+    return (companyId, machine, machineTypeId, (machineType, 
       upkeepSequences), dayToYmd $ nextServiceYmd, upkeepsData))))
 
 machineListing :: ListHandler Dependencies
