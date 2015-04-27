@@ -281,7 +281,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> rmap (const open) t) (UD.upkeepDatePicker upkeepData)})
     setDate date = case date of
-      Right date' -> setUpkeep (upkeep { U.upkeepDate = date' }, upkeepMachines)
+      Right date' -> setUpkeepFull (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
       Left text' -> setUpkeepFull (upkeep, upkeepMachines) text'
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
       setPickerOpenness (Left rawUpkeepDate) setDate
@@ -320,8 +320,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   validationMessages = []::[DOMElement]
   validationMessagesHtml = map (\message -> p message) validationMessages
   messagesPart = if null validationMessages
-    then B.grid $ B.row $ B.col (B.mkColProps 12) (AA.alert AA.Danger validationMessagesHtml)
-    else text2DOM ""
+    then text2DOM ""
+    else B.grid $ B.row $ B.col (B.mkColProps 12) (AA.alert AA.Danger validationMessagesHtml)
 
   in div $ (form' (class' "form-horizontal") $ B.grid $
     [companyNameHeader] ++
