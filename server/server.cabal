@@ -88,6 +88,7 @@ Test-Suite tests
     , old-locale
     , time
     , random
+    , random-shuffle
     , safe
     , Unique
 

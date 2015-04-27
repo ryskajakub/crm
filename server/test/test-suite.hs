@@ -25,6 +25,7 @@ import Data.List.Unique (repeated)
 
 import System.Locale (defaultTimeLocale)
 import System.Random (next, mkStdGen, StdGen)
+import System.Random.Shuffle (shuffle')
 
 import Control.Monad.Error.Class (Error)
 import Control.Monad (forM_)
@@ -139,9 +140,10 @@ closedUpkeeps = let
 
 propertyTests :: TestTree
 propertyTests = let
-  option = QuickCheckReplay $ Just (mkQCGen 0, 0)
+  random = mkQCGen 0
+  option = QuickCheckReplay $ Just (random, 0)
   in localOption option $ testGroup "Next service day: Property tests" [
-    testProperty "When there are planned upkeeps, the earliest is taken" plannedUpkeepsProperty ]
+    testProperty "When there are planned upkeeps, the earliest is taken" $ plannedUpkeepsProperty random ]
 
 dayGen :: Gen Day
 dayGen = do 
@@ -163,9 +165,11 @@ instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
 
-plannedUpkeepsProperty :: NonEmptyList Day -> [Day] -> Bool
-plannedUpkeepsProperty plannedUpkeepDays closedUpkeepDays = let
+plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
+plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
   closedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
+  upkeeps = (plannedUpkeeps ++ closedUpkeeps)
+  upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
-  in nextServiceDate undefined undefined (plannedUpkeeps ++ closedUpkeeps) undefined == earliestDay 
+  in nextServiceDate undefined undefined upkeepsShuffled undefined == earliestDay 
