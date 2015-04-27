@@ -56,7 +56,7 @@ machineDetail :: Bool
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> DOMElement
 machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePerYearRaw, 
-    datePickerText) machineTypeId machineTypeTuple machineId nextService photos upkeeps = 
+    datePickerText) _ machineTypeTuple machineId nextService photos upkeeps = 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
     where
@@ -127,10 +127,10 @@ machineDetail editing appVar calendarOpen (machine, initialMileageRaw, mileagePe
         (_, []) -> []
         _ -> [photoCarouselRow]) ++ extraRow
       setEditing :: Bool -> Fay ()
-      setEditing editing = modify appVar (\appState -> appState {
+      setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
           D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing f g i)))
+            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing' f g i)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
