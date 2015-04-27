@@ -317,7 +317,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
   companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
-  validationMessages = []::[DOMElement]
+  validationMessages = if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
+    then []
+    else ["Musí být nastaveno správně datum."]
+
   validationMessagesHtml = map (\message -> p message) validationMessages
   messagesPart = if null validationMessages
     then text2DOM ""
