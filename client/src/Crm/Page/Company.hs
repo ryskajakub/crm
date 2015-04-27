@@ -148,7 +148,7 @@ companyDetail editing' router var (companyId, company') machines' = let
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma")) :
     companyFormSection) ++ [
       B.grid [ 
-        B.row $ (B.mkColProps 12) $ BN.nav [
+        B.row $ B.col (B.mkColProps 12) $ BN.nav [
           R.link "Historie servisů" (R.maintenances companyId) router ,
           form' (class' "navbar-form") $
             BTN.button' (BTN.buttonProps {

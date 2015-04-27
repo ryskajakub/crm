@@ -23,7 +23,7 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Employee as E
 import Crm.Router (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router as R
-import Crm.Helpers (pageInfo)
+import Crm.Helpers (pageInfo, validationHtml)
 
 employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)] 
@@ -44,9 +44,12 @@ employeeForm :: CrmRouter
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeForm router employee appVar = 
-  form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid $ (B.row $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
+employeeForm router employee appVar = let 
+  validationMessages = if (length $ E.name employee) > 0
+    then []
+    else ["Jméno musí mít alespoň jeden znak."]
+  in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
+    (B.grid $ (B.row $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
       B.row $ B.col (B.mkColProps 12) $ row'
         True 
         "Jméno" 
@@ -57,4 +60,5 @@ employeeForm router employee appVar =
             _ -> D.navigation appState }))) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow
         "Přidat servismena"
-        (createEmployee employee $ navigate R.employeePage router) ]
+        (createEmployee employee $ navigate R.employeePage router)]) :
+    (validationHtml validationMessages) : []
