@@ -7,7 +7,7 @@ module Crm.Server.DB (
   companiesTable ,
   machinesTable ,
   machineTypesTable ,
-  upkeepTable ,
+  upkeepsTable ,
   upkeepMachinesTable ,
   employeesTable ,
   upkeepSequencesTable ,
@@ -117,8 +117,8 @@ type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, Column (Nullable PGDate), 
 type MachineTypesTable = (DBInt, DBText, DBText)
 type MachineTypesWriteTable = (Maybe DBInt, DBText, DBText)
 
-type UpkeepTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
-type UpkeepWriteTable = (Maybe DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
+type UpkeepsTable = (DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
+type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, Column (Nullable PGInt4), DBText, DBText, DBText)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
@@ -177,8 +177,8 @@ machineTypesTable = Table "machine_types" $ p3 (
   required "name" ,
   required "manufacturer" )
 
-upkeepTable :: Table UpkeepWriteTable UpkeepTable
-upkeepTable = Table "upkeeps" $ p7 (
+upkeepsTable :: Table UpkeepsWriteTable UpkeepsTable
+upkeepsTable = Table "upkeeps" $ p7 (
   optional "id" ,
   required "date_" ,
   required "closed" ,
@@ -226,8 +226,8 @@ machinesQuery = queryTable machinesTable
 machineTypesQuery :: Query MachineTypesTable
 machineTypesQuery = queryTable machineTypesTable
 
-upkeepsQuery :: Query UpkeepTable
-upkeepsQuery = queryTable upkeepTable
+upkeepsQuery :: Query UpkeepsTable
+upkeepsQuery = queryTable upkeepsTable
 
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
@@ -349,7 +349,7 @@ machinesInCompanyQuery companyId = orderBy
     restrict -< (pgInt4 companyId .== companyFK)
     returnA -< (m, mt)
 
-companyUpkeepsQuery :: Int -> Query (UpkeepTable, EmployeeLeftJoinTable)
+companyUpkeepsQuery :: Int -> Query (UpkeepsTable, EmployeeLeftJoinTable)
 companyUpkeepsQuery companyId = let 
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_,_) <- upkeepMachinesQuery -< ()
@@ -389,7 +389,7 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     mt <- join machineTypesQuery -< machineTypeFK
     returnA -< (companyPK, m, mt)
 
-lastClosedMaintenanceQuery :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
+lastClosedMaintenanceQuery :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
 lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_,_,_,_),_) -> date)) $ 
     proc () -> do
   upkeepMachineRow @ (upkeepFK,_,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
@@ -397,7 +397,7 @@ lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_,_,_
   restrict -< pgBool True .== upkeepClosed
   returnA -< (upkeepRow, upkeepMachineRow)
 
-nextMaintenanceQuery :: Int -> Query (UpkeepTable)
+nextMaintenanceQuery :: Int -> Query (UpkeepsTable)
 nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_,_,_,_) -> date)) $ proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
   restrict -< (upkeepClosed .== pgBool False)
@@ -405,13 +405,13 @@ nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_,_,_,_) -> d
   restrict -< pgInt4 machineId .== machineFK
   returnA -< upkeepRow
 
-expandedUpkeepsQuery2 :: Int -> Query (UpkeepTable, UpkeepMachinesTable)
+expandedUpkeepsQuery2 :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
 expandedUpkeepsQuery2 upkeepId = proc () -> do
   upkeepRow <- join upkeepsQuery -< pgInt4 upkeepId
   upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< (upkeepRow, upkeepMachineRow)
 
-expandedUpkeepsQuery :: Query (UpkeepTable, UpkeepMachinesTable)
+expandedUpkeepsQuery :: Query (UpkeepsTable, UpkeepMachinesTable)
 expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
@@ -423,7 +423,7 @@ nextServiceMachinesQuery companyId = proc () -> do
   restrict -< sel2 machineRow .== pgInt4 companyId
   returnA -< machineRow
 
-nextServiceUpkeepsQuery :: Int -> Query UpkeepTable
+nextServiceUpkeepsQuery :: Int -> Query UpkeepsTable
 nextServiceUpkeepsQuery machineId = proc () -> do
   machineRow <- join machinesQuery -< pgInt4 machineId
   upkeepMachineRow <- upkeepMachinesQuery -< ()
@@ -431,7 +431,7 @@ nextServiceUpkeepsQuery machineId = proc () -> do
   upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
   returnA -< upkeepRow
 
-upkeepsDataForMachine :: Int -> Query ((UpkeepTable, UpkeepMachinesTable), EmployeeLeftJoinTable)
+upkeepsDataForMachine :: Int -> Query ((UpkeepsTable, UpkeepMachinesTable), EmployeeLeftJoinTable)
 upkeepsDataForMachine machineId = let 
   upkeepUpkeepMachine = proc () -> do
     machineRow <- join machinesQuery -< pgInt4 machineId
@@ -452,7 +452,7 @@ nextServiceUpkeepSequencesQuery machineId = proc () -> do
   returnA -< upkeepSequenceRow
 
 expandedUpkeepsByCompanyQuery :: Int -> Query 
-  (UpkeepTable, UpkeepMachinesTable, MachineTypesTable, DBInt, EmployeeLeftJoinTable)
+  (UpkeepsTable, UpkeepMachinesTable, MachineTypesTable, DBInt, EmployeeLeftJoinTable)
 expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
     upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
@@ -470,7 +470,7 @@ expandedUpkeepsByCompanyQuery companyId = let
     returnA -< (a,b,c,d,e)
   in flattenedQuery
 
-plannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
+plannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
   restrict -< upkeepClosed .== pgBool False
@@ -479,7 +479,7 @@ plannedUpkeepsQuery = proc () -> do
   companyRow <- join companiesQuery -< companyFK
   returnA -< (upkeepRow, companyRow)
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepTable, CompaniesTable)
+groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
   AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
     p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
