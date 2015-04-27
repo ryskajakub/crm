@@ -25,9 +25,10 @@ module Crm.Server (
   fetchUpkeep ,
   fetchEmployees ,
   fetchCompany ,
+  deleteUpkeep ,
   getPhoto ) where
 
-import FFI (ffi, Automatic, Defined(Defined))
+import FFI (ffi, Automatic, Defined(Defined, Undefined))
 import "fay-base" Prelude hiding (putStrLn)
 import "fay-base" Data.Text (Text, (<>), unpack, pack)
 
@@ -67,19 +68,38 @@ post = pack "POST"
 put :: Text
 put = pack "PUT"
 
-ajax :: a -- data to send
-     -> Text -- url
-     -> Text -- method PUT | POST
-     -> (b -> Fay ()) -- callback
-     -> Fay ()
-ajax data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
+delete :: Text
+delete = pack "DELETE"
+
+ajax' :: Defined a -- data to send
+      -> Text -- url
+      -> Text -- method PUT | POST
+      -> (b -> Fay ()) -- callback
+      -> Fay ()
+ajax' data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
   JQ.success = Defined callback ,
-  JQ.data' = Defined data' ,
+  JQ.data' = data' ,
   JQ.url = Defined $ apiRoot <> url ,
   JQ.type' = Defined method ,
   JQ.processData = Defined False ,
   JQ.contentType = Defined $ pack "application/json" ,
   JQ.dataType = Defined $ pack "json" }
+
+ajax :: a -- data to send
+     -> Text -- url
+     -> Text -- method PUT | POST
+     -> (b -> Fay ()) -- callback
+     -> Fay ()
+ajax data' = ajax' (Defined data')
+
+deleteUpkeep :: U.UpkeepId
+             -> Fay ()
+             -> Fay ()
+deleteUpkeep upkeepId callback = ajax'
+  Undefined
+  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+  delete
+  (const callback)
 
 getPhoto :: P.PhotoId
          -> Text

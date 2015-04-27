@@ -13,6 +13,7 @@ import "fay-base" FFI (Defined(Defined))
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Nav as BN
+import qualified HaskellReact.Bootstrap.Button as BTN
 
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
@@ -22,6 +23,7 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Company as C
 import Crm.Helpers (displayDate)
 import Crm.Router
+import Crm.Server (deleteUpkeep)
 
 upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
                  Maybe E.Employee')]
@@ -40,12 +42,21 @@ upkeepHistory upkeepsInfo companyId router = let
         Defined text -> Defined $ text <> " upkeep-row"
         _ -> Defined "upkeep-row"
       in attributes { className = newClassname }
+    deleteButton = let
+      doNavigate = navigate (maintenances companyId) router
+      doDelete = deleteUpkeep upkeepId doNavigate
+      buttonProps = (BTN.buttonProps {
+        BTN.bsStyle = Defined "danger" ,
+        BTN.onClick = Defined $ const doDelete })
+      in span' (class' "delete") $ BTN.button' buttonProps "Smazat"
     in [
-      B.row' marginTop $ B.col (B.mkColProps 12) (div' (class' "relative") [
-        p [text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep, 
-          span' (class'' ["label", labelClass]) labelText ] ,
-        div' (class' "same-line") $ p' (class' "text-center") [strong "Servisman: ", text2DOM employeeText] ,
-        div' (class' "same-line") $ div' (class' "text-right") formLink ]) ,
+      B.row' marginTop [
+        B.col (B.mkColProps 4) [
+          text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep ,
+          span' (class'' ["label", "upkeep-state" , labelClass]) labelText ] ,
+        B.col (B.mkColProps 4) [ strong "Servisman: ", text2DOM employeeText ] ,
+        B.col (B.mkColProps 2) $ formLink , 
+        B.col (B.mkColProps 2) $ deleteButton ] ,
       B.row $ map (\(upkeepMachine, machineType, machineId) ->
         B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
           (pack $ MT.machineTypeName machineType)
