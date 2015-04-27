@@ -11,7 +11,7 @@ module Crm.Page.Company (
 import "fay-base" Data.Text (fromString, unpack, pack) 
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
-import FFI (Defined(Defined))
+import FFI (Defined(Defined, Undefined))
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
@@ -29,7 +29,7 @@ import qualified Crm.Data.Data as D
 import Crm.Component.Form (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, pageInfo)
+import Crm.Helpers (displayDate, pageInfo, validationHtml)
 
 companiesList :: R.CrmRouter
               -> C.OrderType
@@ -101,10 +101,9 @@ companyNew router var company' = let
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
-  in B.grid $ B.row [
-    B.col (B.mkColProps 12) $ h2 "Nová firma" ,
-    B.col (B.mkColProps 12) $
-      companyForm editing' var setCompany company' saveHandler ]
+  in section $
+    (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 "Nová firma") :
+    companyForm editing' var setCompany company' saveHandler
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
@@ -137,6 +136,7 @@ companyDetail editing' router var (companyId, company') machines' = let
           dt "Rok výroby" ,
           dd $ pack $ M.yearOfManufacture machine' ]]
   machineBoxes = map machineBox machines'
+
   companyFormSection = companyForm editing' var setCompany company' saveHandler
   machineBoxesRow = B.row (machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
@@ -144,73 +144,77 @@ companyDetail editing' router var (companyId, company') machines' = let
         R.navigate (R.newMachinePhase1 companyId) router }
     button = BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
     in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ])
-  in B.grid $ B.row [ 
-    B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma") ,
-    B.col (B.mkColProps 12) $ main [
-      companyFormSection ,
-      section $ B.grid [
-        BN.nav [
-          R.link "Historie servisů" (R.maintenances companyId) router ,
-          form' (class' "navbar-form") $
-            BTN.button' (BTN.buttonProps {
-              BTN.disabled = Defined $ if null machines' then True else False ,
-              BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
-              [G.plus, text2DOM "Naplánovat servis" ]] ,
-        machineBoxesRow ]]] 
+  in section $ (
+    (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma")) :
+    companyFormSection) ++ [
+      B.grid $ B.col (B.mkColProps 12) $ section $ B.grid [
+          BN.nav [
+            R.link "Historie servisů" (R.maintenances companyId) router ,
+            form' (class' "navbar-form") $
+              BTN.button' (BTN.buttonProps {
+                BTN.disabled = Defined $ if null machines' then True else False ,
+                BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
+                [G.plus, text2DOM "Naplánovat servis" ]] ,
+          machineBoxesRow ]]
 
 companyForm :: Bool -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
-            -> C.Company -- ^ company, which data are displayed on this screen
+            -> C.Company -- ^ company, whose data are displayed on this screen
             -> Fay () -- ^ handler called when the user hits save
-            -> DOMElement -- ^ company detail page fraction
-companyForm editing' var setCompany company' saveHandler' = 
-  section $ let
-    editButton = let
-      editButtonBody = [G.pencil, HR.text2DOM " Editovat"]
-      editButtonHandler _ = modify var (\appState ->
-        appState {
-          D.navigation = case D.navigation appState of
-            cd @ (D.CompanyDetail _ _ _ _) -> cd { D.editing = True }
-            _ -> D.navigation appState })
-      editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
-      in BTN.button' editButtonProps editButtonBody
-    headerDisplay = h1 $ pack $ C.companyName company'
-    headerSet newHeader = let
-      company'' = company' {
-        C.companyName = unpack $ newHeader }
-      in setCompany company''
-    inputWrapper input = dl [
-      dt "Jméno firmy" ,
-      dd input ]
-    header = editable' Nothing inputWrapper editing' headerDisplay (pack $ C.companyName company') headerSet
-    saveHandler _ = saveHandler'
-    saveEditButton' = BTN.button' (BTN.buttonProps {
-      BTN.onClick = Defined saveHandler , 
-      BTN.bsStyle = Defined "primary" }) "Uložit"
-    saveEditButton = if editing'
-      then [saveEditButton']
-      else []
-    hereEditablePlain = editablePlain editing'
-    companyBasicInfo = [
-      header , 
-      dl $ [
-        dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
-        dd $ hereEditablePlain
-          (pack $ C.companyPlant company') 
-          (\text -> setCompany (company' { C.companyPlant = unpack text })) , 
-        dt "Adresa" , 
-        dd $ hereEditablePlain
-          (pack $ C.companyAddress company')
-          (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
-        dt "Jméno kontaktní osoby" , 
-        dd $ hereEditablePlain
-          (pack $ C.companyPerson company')
-          (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
-        dt "Telefon na kontaktní osobu" , 
-        dd $ hereEditablePlain
-          (pack $ C.companyPhone company')
-          (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
-        ++ saveEditButton ]
-    companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
-    in B.jumbotron companyBasicInfo'
+            -> [DOMElement] -- ^ company detail page fraction
+companyForm editing' var setCompany company' saveHandler' = let
+  editButton = let
+    editButtonBody = [G.pencil, HR.text2DOM " Editovat"]
+    editButtonHandler _ = modify var (\appState ->
+      appState {
+        D.navigation = case D.navigation appState of
+          cd @ (D.CompanyDetail _ _ _ _) -> cd { D.editing = True }
+          _ -> D.navigation appState })
+    editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
+    in BTN.button' editButtonProps editButtonBody
+  headerDisplay = h1 $ pack $ C.companyName company'
+  headerSet newHeader = let
+    company'' = company' {
+      C.companyName = unpack $ newHeader }
+    in setCompany company''
+  inputWrapper input = dl [
+    dt "Jméno firmy" ,
+    dd input ]
+  header = editable' Nothing inputWrapper editing' headerDisplay (pack $ C.companyName company') headerSet
+
+  validationMessages = if (length $ C.companyName company') > 0
+    then []
+    else ["Název firmy musí mít alespoň jeden znak."]
+  validationHtml' = validationHtml validationMessages
+
+  saveEditButton' = BTN.button' (BTN.buttonProps {
+    BTN.onClick = Defined $ const saveHandler' , 
+    BTN.disabled = if null validationMessages then Undefined else Defined True ,
+    BTN.bsStyle = Defined "primary" }) "Uložit"
+  saveEditButton = if editing'
+    then [saveEditButton']
+    else []
+  hereEditablePlain = editablePlain editing'
+  companyBasicInfo = [
+    header , 
+    dl $ [
+      dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
+      dd $ hereEditablePlain
+        (pack $ C.companyPlant company') 
+        (\text -> setCompany (company' { C.companyPlant = unpack text })) , 
+      dt "Adresa" , 
+      dd $ hereEditablePlain
+        (pack $ C.companyAddress company')
+        (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
+      dt "Jméno kontaktní osoby" , 
+      dd $ hereEditablePlain
+        (pack $ C.companyPerson company')
+        (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
+      dt "Telefon na kontaktní osobu" , 
+      dd $ hereEditablePlain
+        (pack $ C.companyPhone company')
+        (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
+      ++ saveEditButton ]
+  companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
+  in (B.grid $ B.row $ B.col (B.mkColProps 12) $ B.jumbotron companyBasicInfo') : validationHtml' : []

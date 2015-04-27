@@ -26,6 +26,13 @@ data FileList
 data File
 data FileContents
 
+validationHtml :: (Renderable a) => [a] -> DOMElement
+validationHtml validationMessages = let
+  validationMessagesHtml = map (\message -> p message) validationMessages
+  in if null validationMessages
+    then text2DOM ""
+    else B.grid $ B.row $ B.col (B.mkColProps 12) (A.alert A.Danger validationMessagesHtml)
+
 pageInfo :: Renderable a
          => Text
          -> Maybe a

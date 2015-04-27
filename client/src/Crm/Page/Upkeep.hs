@@ -20,7 +20,6 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
-import qualified HaskellReact.Bootstrap.Alert as AA
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -36,7 +35,7 @@ import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox, formRow)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap, pageInfo)
+import Crm.Helpers (displayDate, parseSafely, lmap, rmap, pageInfo, validationHtml)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -321,11 +320,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     then []
     else ["Musí být nastaveno správně datum."])
   submitButton = formRow "" (button $ null validationMessages)
-
-  validationMessagesHtml = map (\message -> p message) validationMessages
-  messagesPart = if null validationMessages
-    then text2DOM ""
-    else B.grid $ B.row $ B.col (B.mkColProps 12) (AA.alert AA.Danger validationMessagesHtml)
+  messagesPart = validationHtml validationMessages
 
   in div $ (form' (class' "form-horizontal") $ B.grid $
     [companyNameHeader] ++
