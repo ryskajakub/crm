@@ -48,14 +48,20 @@ import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
 
-deleteRows :: Sel1 read (Column PGInt4)
-           => Table a read 
+deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
+           => Table a1 read1
+           -> Maybe (Table a2 read2)
            -> Handler IdDependencies
-deleteRows table = mkConstHandler (jsonO . someO) (do
+deleteRows table maybeTable = mkConstHandler (jsonO . someO) (do
   (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> let
-    deleteRow row = sel1 row .== pgInt4 theId
-    in liftIO $ runDelete connection table deleteRow))
+  maybeId maybeInt (\theId -> liftIO $ do
+    let 
+      locateRow row = sel1 row .== pgInt4 theId
+      deleteRow table' = runDelete connection table locateRow
+    case maybeTable of
+      Just table' -> deleteRow table' >> return ()
+      Nothing -> return ()
+    deleteRow table))
 
 today :: IO Day
 today = fmap utctDay getCurrentTime

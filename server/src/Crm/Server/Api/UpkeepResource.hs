@@ -29,7 +29,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, mapUpkeeps, ymdToDay,
-  maybeToNullable )
+  maybeToNullable, deleteRows)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -51,16 +51,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
   in forM_ upkeepMachines insertUpkeepMachine
 
 removeUpkeep :: Handler IdDependencies
-removeUpkeep = mkConstHandler (jsonO . someO) (do
-  (connection, maybeInt) <- ask
-  let 
-    handle upkeepId = let 
-      deleteUpkeepRow row = sel1 row .== pgInt4 upkeepId
-      deleteUpkeepMachineRow row = sel1 row .== pgInt4 upkeepId
-      in liftIO $ do
-        runDelete connection upkeepsTable deleteUpkeepRow
-        runDelete connection upkeepMachinesTable deleteUpkeepMachineRow
-  maybeId maybeInt handle)
+removeUpkeep = deleteRows upkeepsTable $ Just upkeepMachinesTable
 
 upkeepResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {

@@ -26,6 +26,7 @@ module Crm.Server (
   fetchEmployees ,
   fetchCompany ,
   deleteUpkeep ,
+  deleteCompany ,
   deleteMachine ,
   getPhoto ) where
 
@@ -93,23 +94,32 @@ ajax :: a -- data to send
      -> Fay ()
 ajax data' = ajax' (Defined data')
 
+doDelete :: Text
+         -> Fay ()
+         -> Fay ()
+doDelete url callback = ajax'
+  Undefined url delete (const callback)
+
+deleteCompany :: C.CompanyId
+              -> Fay ()
+              -> Fay ()
+deleteCompany companyId callback = doDelete
+  (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
+  callback
+
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
              -> Fay ()
-deleteUpkeep upkeepId callback = ajax'
-  Undefined
+deleteUpkeep upkeepId callback = doDelete
   (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
-  delete
-  (const callback)
+  callback
 
 deleteMachine :: M.MachineId
               -> Fay ()
               -> Fay ()
-deleteMachine machineId callback = ajax'
-  Undefined
+deleteMachine machineId callback = doDelete
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-  delete
-  (const callback)
+  callback
 
 getPhoto :: P.PhotoId
          -> Text

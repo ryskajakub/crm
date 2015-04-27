@@ -3,13 +3,14 @@
 module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4)
+import Opaleye.PGTypes (pgInt4, PGInt4)
 import Opaleye.Manipulation (runDelete)
 import Opaleye.Operators ((.==))
+import Opaleye.Table (Table)
+import Opaleye.Column (Column)
 
-import Data.Tuple.All (uncurryN)
+import Data.Tuple.All (uncurryN, sel2, sel1)
 import Data.Traversable (forM)
-import Data.Tuple.All (sel2, sel1)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -43,7 +44,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineDelete :: Handler IdDependencies
-machineDelete = deleteRows machinesTable
+machineDelete = deleteRows machinesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . someI) (\(machine) ->

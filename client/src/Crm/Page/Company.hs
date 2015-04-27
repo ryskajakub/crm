@@ -18,6 +18,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav as BN
+import qualified HaskellReact.BackboneRouter as BR
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -27,7 +28,7 @@ import qualified Crm.Shared.Direction as DIR
 
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (editablePlain, editable')
-import Crm.Server (createCompany, updateCompany)
+import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, pageInfo, validationHtml)
 
@@ -103,7 +104,7 @@ companyNew router var company' = let
       _ -> D.navigation appState })
   in section $
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 "Nová firma") :
-    companyForm editing' var setCompany company' saveHandler
+    companyForm editing' var setCompany company' saveHandler []
 
 companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
@@ -137,7 +138,12 @@ companyDetail editing' router var (companyId, company') machines' = let
           dd $ pack $ M.yearOfManufacture machine' ]]
   machineBoxes = map machineBox machines'
 
-  companyFormSection = companyForm editing' var setCompany company' saveHandler
+  deleteButton = BTN.button' (BTN.buttonProps {
+    BTN.onClick = Defined $ const $ deleteCompany companyId BR.refresh ,
+    BTN.disabled = if null machines' then Undefined else Defined True ,
+    BTN.bsStyle = Defined "danger" }) "Smazat"
+
+  companyFormSection = companyForm editing' var setCompany company' saveHandler [deleteButton]
   machineBoxesRow = B.row (machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const $
@@ -162,8 +168,9 @@ companyForm :: Bool -- ^ is the page editing mode
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
             -> C.Company -- ^ company, whose data are displayed on this screen
             -> Fay () -- ^ handler called when the user hits save
+            -> [DOMElement] -- ^ delete button
             -> [DOMElement] -- ^ company detail page fraction
-companyForm editing' var setCompany company' saveHandler' = let
+companyForm editing' var setCompany company' saveHandler' deleteButton = let
   editButton = let
     editButtonBody = [G.pencil, HR.text2DOM " Editovat"]
     editButtonHandler _ = modify var (\appState ->
@@ -193,8 +200,9 @@ companyForm editing' var setCompany company' saveHandler' = let
     BTN.disabled = if null validationMessages then Undefined else Defined True ,
     BTN.bsStyle = Defined "primary" }) "Uložit"
   saveEditButton = if editing'
-    then [saveEditButton']
+    then saveEditButton' : deleteButton
     else []
+
   hereEditablePlain = editablePlain editing'
   companyBasicInfo = [
     header , 

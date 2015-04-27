@@ -4,16 +4,18 @@
 module Crm.Server.Api.CompanyResource where
 
 import Opaleye.Operators ((.==))
-import Opaleye.PGTypes (pgInt4, pgString)
+import Opaleye.PGTypes (pgInt4, pgString, PGInt4)
 import Opaleye.Manipulation (runUpdate, runDelete)
 import Opaleye.RunQuery (runQuery)
+import Opaleye.Table (Table)
+import Opaleye.Column (Column)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
 
 import Data.List (sortBy)
-import Data.Tuple.All (sel1, sel2, sel3, uncurryN)
+import Data.Tuple.All (sel1, sel2, sel3, uncurryN, OneTuple)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
 
@@ -106,7 +108,7 @@ updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
     return ()))
 
 deleteCompany :: Handler IdDependencies
-deleteCompany = deleteRows companiesTable
+deleteCompany = deleteRows companiesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
