@@ -5,7 +5,7 @@ module Crm.Server.Api.CompanyResource where
 
 import Opaleye.Operators ((.==))
 import Opaleye.PGTypes (pgInt4, pgString)
-import Opaleye.Manipulation (runUpdate)
+import Opaleye.Manipulation (runUpdate, runDelete)
 import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.Reader (ask)
@@ -18,7 +18,7 @@ import qualified Data.Text.ICU as I
 import Data.Text (pack)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
-  update )
+  update, remove )
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler)
@@ -105,6 +105,13 @@ updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
     _ <- liftIO $ runUpdate conn companiesTable readToWrite condition
     return ()))
 
+deleteCompany :: Handler IdDependencies
+deleteCompany = mkConstHandler (jsonO . someO) (do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\machineId -> let
+    deleteMachineRow machine = sel1 machine .== pgInt4 machineId
+    in liftIO $ runDelete connection companiesTable deleteMachineRow))
+
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const listing ,
@@ -112,4 +119,5 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.companies ,
   get = Just singleCompany ,
   update = Just updateCompany ,
+  remove = Just deleteCompany ,
   schema = S.withListing () $ S.unnamedSingle readMay' }
