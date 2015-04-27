@@ -30,7 +30,7 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today, deleteRows)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -106,11 +106,7 @@ updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
     return ()))
 
 deleteCompany :: Handler IdDependencies
-deleteCompany = mkConstHandler (jsonO . someO) (do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\machineId -> let
-    deleteMachineRow machine = sel1 machine .== pgInt4 machineId
-    in liftIO $ runDelete connection companiesTable deleteMachineRow))
+deleteCompany = deleteRows companiesTable
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {

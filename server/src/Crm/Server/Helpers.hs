@@ -1,4 +1,7 @@
+{-# LANGUAGE FlexibleContexts #-}
+
 module Crm.Server.Helpers (
+  deleteRows ,
   today ,
   ymdToDay ,
   dayToYmd ,
@@ -14,26 +17,45 @@ module Crm.Server.Helpers (
 
 import Opaleye.Column (Column, toNullable, Nullable)
 import qualified Opaleye.Column as COL
+import Opaleye.Manipulation (runDelete)
+import Opaleye.Operators ((.==))
+import Opaleye.PGTypes (pgInt4, PGInt4)
+import Opaleye.Table (Table)
 
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT)
-import Data.Functor.Identity (runIdentity)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
+import Control.Monad.IO.Class (liftIO)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
+import Rest.Dictionary.Combinators (jsonO, someO)
+import Rest.Handler (Handler, mkConstHandler)
 
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 
+import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
+import Data.Tuple.All (sel1, Sel1)
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 
+import Crm.Server.Types (IdDependencies)
+
 import Safe (readMay)
+
+deleteRows :: Sel1 read (Column PGInt4)
+           => Table a read 
+           -> Handler IdDependencies
+deleteRows table = mkConstHandler (jsonO . someO) (do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\theId -> let
+    deleteRow row = sel1 row .== pgInt4 theId
+    in liftIO $ runDelete connection table deleteRow))
 
 today :: IO Day
 today = fmap utctDay getCurrentTime
