@@ -9,13 +9,13 @@ import Crm.Server.DB
 import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Reader (ReaderT, runReaderT)
 
-import Snap.Http.Server (quickHttpServe)
-import Snap.Core (Snap)
-
-import Rest.Driver.Snap (apiToHandler')
-
-runDependencies :: Dependencies a -> Snap a
-runDependencies deps = liftIO $ withConnection (\c -> runReaderT deps $ c)
+import Network.Wai.Handler.Warp (run)
+import Rest.Driver.Wai (apiToApplication)
 
 main :: IO ()
-main = quickHttpServe $ apiToHandler' runDependencies api
+main = do
+  putStrLn "Starting warp server on http://localhost:8000"
+  run 8000 $ apiToApplication runDependencies api
+
+runDependencies :: Dependencies a -> IO a
+runDependencies deps = withConnection (\c -> runReaderT deps $ c)
