@@ -24,6 +24,7 @@ module Crm.Server.DB (
   upkeepSequencesQuery ,
   machinePhotosQuery ,
   getMachinePhoto ,
+  singleEmployeeQuery ,
   -- manipulations
   addCompany ,
   addMachinePhoto ,
@@ -472,6 +473,11 @@ expandedUpkeepsByCompanyQuery companyId = let
     returnA -< (a,b,c,d,e)
   in flattenedQuery
 
+singleEmployeeQuery :: Int -> Query (EmployeeTable)
+singleEmployeeQuery employeeId = proc () -> do
+  employeeRow <- join employeesQuery -< (pgInt4 employeeId)
+  returnA -< employeeRow
+
 plannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
 plannedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
@@ -605,7 +611,7 @@ addCompany :: Connection -- ^ database connection
 addCompany connection newCompany = do
   newId <- runInsertReturning
     connection
-    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany , pgString $ 
+    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ 
       C.companyAddress newCompany, pgString $ C.companyPerson newCompany, pgString $ C.companyPhone newCompany )
     sel1
   return $ head newId -- todo safe

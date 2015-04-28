@@ -7,10 +7,12 @@ import Opaleye.PGTypes (pgString)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
-import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceId, mkResourceReaderWith)
+import Data.Tuple.All (uncurryN, sel1)
+
+import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceId, mkResourceReaderWith, get)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler)
+import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Employee as E
@@ -18,14 +20,23 @@ import qualified Crm.Shared.Employee as E
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
 
-employeeResource :: Resource Dependencies Dependencies Void () Void
-employeeResource = mkResourceId {
+employeeResource :: Resource Dependencies IdDependencies UrlId () Void
+employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.employees ,
-  schema = S.withListing () $ S.named [] ,
-  list = const $ employeesListing ,
+  schema = S.withListing () $ S.unnamedSingle readMay' ,
+  list = const employeesListing ,
+  get = Just getEmployeeHandler ,
   create = Just createEmployeeHandler }
+
+getEmployeeHandler :: Handler IdDependencies
+getEmployeeHandler = mkConstHandler (jsonO . someO) $ do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\theId -> liftIO $ do
+    rows <- runQuery connection (singleEmployeeQuery theId) :: IO [(Int, String, String, String)]
+    let result = fmap (\(employeeFields) -> ((sel1 employeeFields), (uncurryN (const E.Employee)) employeeFields )) rows
+    return result)
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newEmployee -> do
