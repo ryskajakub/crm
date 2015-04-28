@@ -62,7 +62,9 @@ create table upkeep_machines (
 drop table employees;
 create table employees (
   id serial ,
-  name varchar (500) );
+  name varchar (500) ,
+  contact varchar (500) ,
+  capabilities varchar (500) );
 
 drop table upkeep_sequences;
 create table upkeep_sequences (
