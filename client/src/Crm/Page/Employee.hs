@@ -45,19 +45,33 @@ employeeForm :: CrmRouter
              -> Var D.AppState
              -> DOMElement
 employeeForm router employee appVar = let 
+
+  modify' :: E.Employee -> Fay ()
+  modify' employee' = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of 
+      D.EmployeeNew _ -> D.EmployeeNew employee'
+      _ -> D.navigation appState })
+
   validationMessages = if (length $ E.name employee) > 0
     then []
     else ["Jméno musí mít alespoň jeden znak."]
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
-      B.row $ B.col (B.mkColProps 12) $ row'
+      row'
         True 
         "Jméno" 
         (E.name employee) 
-        (eventString >=> (\employeeName -> modify appVar (\appState -> appState {
-          D.navigation = case D.navigation appState of 
-            D.EmployeeNew _ -> D.EmployeeNew $ E.newEmployee { E.name = employeeName }
-            _ -> D.navigation appState }))) ,
+        (eventString >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
+      row'
+        True
+        "Kontakt"
+        (E.contact employee)
+        (eventString >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
+      row'
+        True
+        "Kvalifikace"
+        (E.capabilities employee)
+        (eventString >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow' (null validationMessages)
         "Přidat servismena"
         (createEmployee employee $ navigate R.employeePage router)]) :
