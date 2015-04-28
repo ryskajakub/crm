@@ -24,6 +24,7 @@ module Crm.Server (
   fetchMachineTypesManufacturer ,
   fetchUpkeep ,
   fetchEmployees ,
+  fetchEmployee ,
   fetchCompany ,
   deleteUpkeep ,
   deleteCompany ,
@@ -217,6 +218,14 @@ fetchMachine machineId callback = let
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     (callback . fun)
     noopOnError
+
+fetchEmployee :: E.EmployeeId
+              -> (E.Employee -> Fay ())
+              -> Fay ()
+fetchEmployee employeeId callback = JQ.ajax
+  (apiRoot <> (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId)))
+  callback
+  noopOnError
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, 

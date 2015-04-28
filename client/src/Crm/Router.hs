@@ -24,7 +24,8 @@ module Crm.Router (
   machineTypeEdit ,
   machineDetail ,
   employeePage ,
-  newEmployee ) where
+  newEmployee ,
+  editEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span) 
@@ -38,7 +39,7 @@ import Moment (now, requireMoment, day)
 
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos )
+  fetchMachinePhotos, fetchEmployee )
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -52,6 +53,7 @@ import qualified Crm.Shared.Employee as E
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
 import qualified Crm.Data.UpkeepData as UD
+import qualified Crm.Data.EmployeeData as ED
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -107,6 +109,9 @@ employeePage = CrmRoute "employees"
 
 newEmployee :: CrmRoute
 newEmployee = CrmRoute "employees/new"
+
+editEmployee :: E.EmployeeId -> CrmRoute
+editEmployee employeeId = CrmRoute $ "employees/" <> (showInt $ E.getEmployeeId employeeId)
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -260,8 +265,15 @@ startRouter appVar = let
     "employees", const $
       fetchEmployees (\employees -> modify' $ D.EmployeeList employees)
   ),(
-    "employees/new", const $
-      modify' $ D.EmployeeNew E.newEmployee )] 
+    "employees/:id", \params -> let
+      headParam = head params
+      in case parseSafely headParam of
+        Just employeeId' -> let
+          employeeId = E.EmployeeId employeeId'
+          in fetchEmployee employeeId (\employee ->
+            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId))
+        Nothing | headParam == "new" -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
+        Nothing -> modify' D.NotFound )]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

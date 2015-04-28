@@ -20,6 +20,7 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import Crm.Server (createEmployee)
 import Crm.Component.Form (row', saveButtonRow')
 import qualified Crm.Data.Data as D
+import qualified Crm.Data.EmployeeData as ED
 import qualified Crm.Shared.Employee as E
 import Crm.Router (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router as R
@@ -58,7 +59,7 @@ employeeForm router employee appVar = let
   modify' :: E.Employee -> Fay ()
   modify' employee' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.EmployeeNew _ -> D.EmployeeNew employee'
+      D.EmployeeManage (ED.EmployeeData _ a) -> D.EmployeeManage (ED.EmployeeData employee' a)
       _ -> D.navigation appState })
 
   validationMessages = if (length $ E.name employee) > 0

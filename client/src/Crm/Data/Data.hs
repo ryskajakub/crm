@@ -19,6 +19,7 @@ import qualified Crm.Shared.Direction as DIR
 
 import Crm.Data.MachineData
 import Crm.Data.UpkeepData
+import Crm.Data.EmployeeData
 
 data NavigationState =
   FrontPage {
@@ -51,8 +52,7 @@ data NavigationState =
     companyId :: C.CompanyId } |
   EmployeeList {
     employees :: [(E.EmployeeId, E.Employee)] } |
-  EmployeeNew {
-    employee :: E.Employee }
+  EmployeeManage EmployeeData
 
 data AppState = AppState {
   navigation :: NavigationState ,

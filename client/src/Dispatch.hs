@@ -18,6 +18,7 @@ import Crm.Page.NotFound (notFound)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
+import qualified Crm.Data.EmployeeData as ED
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -60,7 +61,7 @@ main' = do
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> emptyCallback $ employeePage router employees
-      D.EmployeeNew employee -> emptyCallback $ employeeForm router employee appVar'
+      D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ employeeForm router employee appVar'
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
