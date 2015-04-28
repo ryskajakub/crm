@@ -56,7 +56,7 @@ employeeForm router employee appVar = let
         (E.name employee) 
         (eventString >=> (\employeeName -> modify appVar (\appState -> appState {
           D.navigation = case D.navigation appState of 
-            D.EmployeeNew _ -> D.EmployeeNew $ E.Employee employeeName
+            D.EmployeeNew _ -> D.EmployeeNew $ E.newEmployee { E.name = employeeName }
             _ -> D.navigation appState }))) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow' (null validationMessages)
         "Přidat servismena"

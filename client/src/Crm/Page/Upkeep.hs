@@ -290,7 +290,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     selectEmployeeLink eId e = let
       selectEmployeeAction = modify' (\s -> s { UD.selectedEmployee = eId })
       in A.a''' (click selectEmployeeAction) (pack $ E.name e)
-    withNoEmployee = (Nothing, E.Employee $ unpack noEmployeeLabel) : (map (lmap Just) employees)
+    withNoEmployee = (Nothing, E.newEmployee { E.name = unpack noEmployeeLabel }) : (map (lmap Just) employees)
     elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
