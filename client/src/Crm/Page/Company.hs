@@ -18,7 +18,6 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav as BN
-import qualified HaskellReact.BackboneRouter as BR
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -139,7 +138,7 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBoxes = map machineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {
-    BTN.onClick = Defined $ const $ deleteCompany companyId BR.refresh ,
+    BTN.onClick = Defined $ const $ deleteCompany companyId $ R.navigate R.defaultFrontPage router ,
     BTN.disabled = if null machines' then Undefined else Defined True ,
     BTN.bsStyle = Defined "danger" }) "Smazat"
 
