@@ -14,6 +14,7 @@ import Data.Traversable (forM)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
+import Control.Applicative (liftA3)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
@@ -64,8 +65,8 @@ machineSingle = mkConstHandler (jsonO . someO) (
     let 
       upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
       upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),
-          (_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String)) -> let
-        maybeEmployee = fmap E.Employee eName
+          (_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String,eC::Maybe String,eCap::Maybe String)) -> let
+        maybeEmployee = liftA3 E.Employee eName eC eCap
         upkeep = U.Upkeep (dayToYmd a) b c d e
         upkeepMachine = UM.UpkeepMachine f g h
         in (uId, upkeep, upkeepMachine, toMyMaybe maybeEmployee)) upkeepRows

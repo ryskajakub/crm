@@ -20,10 +20,12 @@ newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
 type Employee' = (EmployeeId, Employee)
 
 data Employee = Employee {
-  name :: String }
+  name :: String ,
+  contact :: String ,
+  capabilities :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newEmployee :: Employee
-newEmployee = Employee ""
+newEmployee = Employee "" "" ""

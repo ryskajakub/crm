@@ -41,9 +41,9 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
     let 
       mappedResults = mapResultsToList 
         sel1
-        (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName)) -> 
+        (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName, eC, eCap)) -> 
           (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
-            toMyMaybe $ pure (\eId' e -> (eId' :: Int, E.Employee e)) <*> employeeId <*> employeeName))
+            toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
         (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
           (_ :: Int,name',manufacturer),machineId,_) -> let
           machineType' = MT.MachineType name' manufacturer

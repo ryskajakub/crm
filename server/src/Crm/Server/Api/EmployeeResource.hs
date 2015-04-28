@@ -30,12 +30,13 @@ employeeResource = mkResourceId {
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newEmployee -> do
   conn <- ask 
-  _ <- liftIO $ runInsert conn employeesTable (Nothing, pgString $ E.name newEmployee)
+  _ <- liftIO $ runInsert conn employeesTable (Nothing, pgString $ E.name newEmployee,
+    pgString $ E.contact newEmployee, pgString $ E.capabilities newEmployee)
   return () )
 
 employeesListing :: ListHandler Dependencies 
 employeesListing = mkListing (jsonO . someO) (const $
   ask >>= \conn -> do 
     rawRows <- liftIO $ runQuery conn employeesQuery
-    let rowsMapped = map (\(eId,employeeName) -> (eId :: Int, E.Employee employeeName)) rawRows 
+    let rowsMapped = map (\(eId,employeeName,b,c) -> (eId :: Int, E.Employee employeeName b c)) rawRows 
     return rowsMapped )

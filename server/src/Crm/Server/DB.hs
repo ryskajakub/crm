@@ -122,9 +122,9 @@ type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, Column (Nullable PGInt4),
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
-type EmployeeTable = (DBInt, DBText)
-type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText))
-type EmployeeWriteTable = (Maybe DBInt, DBText)
+type EmployeeTable = (DBInt, DBText, DBText, DBText)
+type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
+type EmployeeWriteTable = (Maybe DBInt, DBText, DBText, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
@@ -196,9 +196,11 @@ upkeepMachinesTable = Table "upkeep_machines" $ p5 (
   required "warranty" )
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
-employeesTable = Table "employees" $ p2 (
+employeesTable = Table "employees" $ p4 (
   optional "id" ,
-  required "name" )
+  required "name" ,
+  required "contact" ,
+  required "capabilities" )
 
 upkeepSequencesTable :: Table UpkeepSequencesTable UpkeepSequencesTable
 upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
@@ -361,9 +363,9 @@ companyUpkeepsQuery companyId = let
   aggregatedUpkeepsQuery = AGG.aggregate (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, 
     AGG.min, AGG.min, AGG.min)) upkeepsQuery'
   joinedEmployeesQuery = leftJoin aggregatedUpkeepsQuery employeesQuery (
-    (\((_,_,_,maybeEmployeeFK,_,_,_),(employeePK,_)) -> 
+    (\((_,_,_,maybeEmployeeFK,_,_,_),(employeePK,_,_,_)) -> 
       maybeEmployeeFK .== (maybeToNullable $ Just employeePK)))
-  orderedUpkeepQuery = orderBy (asc(\((_,date,_,_,_,_,_),(_,_)) -> date)) $ joinedEmployeesQuery
+  orderedUpkeepQuery = orderBy (asc(\((_,date,_,_,_,_,_),_) -> date)) $ joinedEmployeesQuery
   in orderedUpkeepQuery
 
 -- | query, that returns expanded machine type, not just the id
@@ -439,7 +441,7 @@ upkeepsDataForMachine machineId = let
     restrict -< sel3 upkeepMachineRow .== sel1 machineRow
     upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
     returnA -< (upkeepRow, upkeepMachineRow)
-  employeeJoinedRow = leftJoin upkeepUpkeepMachine employeesQuery (\(upkeepPart,(employeePK,_)) ->
+  employeeJoinedRow = leftJoin upkeepUpkeepMachine employeesQuery (\(upkeepPart,(employeePK,_,_,_)) ->
     ((sel4 $ sel1 upkeepPart) .== (maybeToNullable $ Just employeePK)))
   in employeeJoinedRow
 
@@ -462,7 +464,7 @@ expandedUpkeepsByCompanyQuery companyId = let
     restrict -< sel2 machine .== pgInt4 companyId
     returnA -< (upkeepRow, upkeepMachineRow, machineType, sel1 machine)
   joinedEmployeesQuery = leftJoin upkeepsWithMachines employeesQuery (
-    (\(upkeepTuple,(employeePK,_)) ->
+    (\(upkeepTuple,(employeePK,_,_,_)) ->
       (sel4 $ sel1 upkeepTuple) .== (maybeToNullable $ Just employeePK)))
   nestedQuery = orderBy (asc(sel2 . sel1 . sel1)) joinedEmployeesQuery
   flattenedQuery = proc () -> do
@@ -521,7 +523,7 @@ runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
 runCompanyUpkeepsQuery :: Int -> Connection -> 
-  IO[((Int, Day, Bool, Maybe Int, String, String, String), (Maybe Int, Maybe String))]
+  IO[((Int, Day, Bool, Maybe Int, String, String, String), (Maybe Int, Maybe String, Maybe String, Maybe String))]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
