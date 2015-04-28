@@ -29,16 +29,25 @@ employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)] 
              -> DOMElement
 employeePage router employees = let 
-  listEmployee employee = li $ pack $ E.name $ snd employee
+  rowEmployee (_, employee) = tr [ 
+    td $ pack $ E.name employee ,
+    td $ pack $ E.contact employee ,
+    td $ pack $ E.capabilities employee ]
   goToAddEmployee = navigate newEmployee router
   addEmployeeButton = BTN.button'
     (BTN.buttonProps {
       BTN.onClick = Defined $ const goToAddEmployee })
     [G.plus, text2DOM " Přidat servismana"]
+  head' =
+    thead $ tr [
+      th $ "Jméno" ,
+      th $ "Kontakt" ,
+      th $ "Kvalifikace" ]
+  body = tbody $ map rowEmployee employees
   in B.grid [
     B.row $ B.col (B.mkColProps 12) $ h2 "Servismani" ,
     B.row $ B.col (B.mkColProps 12) $ addEmployeeButton ,
-    B.row $ B.col (B.mkColProps 12) $ ul' (class' "list-unstyled") $ map listEmployee employees ]
+    B.row $ B.col (B.mkColProps 12) $ B.table [ head' , body ]]
 
 employeeForm :: CrmRouter
              -> E.Employee
