@@ -200,8 +200,8 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     BTN.disabled = if null validationMessages then Undefined else Defined True ,
     BTN.bsStyle = Defined "primary" }) "Uložit"
   saveEditButton = if editing'
-    then saveEditButton' : deleteButton
-    else []
+    then div' (class' "company") $ saveEditButton' : deleteButton
+    else text2DOM ""
 
   hereEditablePlain = editablePlain editing'
   companyBasicInfo = [
@@ -223,6 +223,6 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
       dd $ hereEditablePlain
         (pack $ C.companyPhone company')
         (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
-      ++ saveEditButton ]
+      ++ [saveEditButton] ]
   companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
   in (B.grid $ B.row $ B.col (B.mkColProps 12) $ B.jumbotron companyBasicInfo') : validationHtml' : []

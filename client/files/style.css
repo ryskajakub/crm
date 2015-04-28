@@ -30,6 +30,13 @@ form.upkeep-sequence-form input[type=checkbox] {
   top: -9px;
   position: relative; }
 
+.company {
+  position: relative; }
+
+.company .btn-danger {
+  right: 0px;
+  position: absolute; }
+
 /* my carousel */
 #my-carousel {
   min-height: 600px; }
