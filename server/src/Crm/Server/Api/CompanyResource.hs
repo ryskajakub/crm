@@ -15,7 +15,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
 
 import Data.List (sortBy)
-import Data.Tuple.All (sel1, sel2, sel3, uncurryN, OneTuple)
+import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6, uncurryN, OneTuple)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
 
@@ -63,7 +63,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
   unsortedResult <- liftIO $ forM rows (\companyRow -> do
     let companyId = sel1 companyRow
     machines <- runMachinesInCompanyQuery companyId conn
-    nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _) -> do
+    nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
       today' <- today
@@ -95,7 +95,8 @@ singleCompany = mkConstHandler (jsonO . someO) (
     rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
     company <- singleRowOrColumn rows
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    return ((uncurryN (const C.Company)) company , machines)))
+    let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines
+    return ((uncurryN (const C.Company)) company, machinesMyMaybe)))
 
 updateCompany :: Handler IdDependencies
 updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
