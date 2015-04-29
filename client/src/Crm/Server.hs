@@ -6,13 +6,17 @@ module Crm.Server (
   createMachine , 
   createUpkeep , 
   createEmployee ,
+  createContactPerson ,
+
   updateUpkeep ,
   updateMachine , 
   updateCompany ,
   updateEmployee ,
   updateMachineType , 
+
   uploadPhotoData ,
   uploadPhotoMeta ,
+
   fetchMachine , 
   fetchMachinePhotos ,
   fetchUpkeeps , 
@@ -27,9 +31,11 @@ module Crm.Server (
   fetchEmployees ,
   fetchEmployee ,
   fetchCompany ,
+
   deleteUpkeep ,
   deleteCompany ,
   deleteMachine ,
+
   getPhoto ) where
 
 import FFI (ffi, Automatic, Defined(Defined, Undefined))
@@ -39,6 +45,7 @@ import "fay-base" Data.Text (Text, (<>), unpack, pack)
 import qualified JQuery as JQ
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -349,6 +356,17 @@ createEmployee employee callback =
   ajax
     employee
     (pack $ A.employees)
+    post
+    (const callback)
+
+createContactPerson :: C.CompanyId
+                    -> CP.ContactPerson
+                    -> Fay ()
+                    -> Fay ()
+createContactPerson companyId contactPerson callback =
+  ajax
+    contactPerson
+    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
     post
     (const callback)
 

@@ -74,6 +74,13 @@ create table upkeep_sequences (
   machine_type_id integer ,
   one_time boolean );
 
+drop table contact_persons;
+create table contact_persons (
+  id serial ,
+  company_id integer ,
+  name varchar (500) ,
+  phone varchar (500) ,
+  position varchar (500) )
 
 insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
 insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 

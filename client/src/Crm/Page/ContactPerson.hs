@@ -19,18 +19,19 @@ import qualified Crm.Shared.ContactPerson as CP
 
 import Crm.Component.Form (row', saveButtonRow')
 import Crm.Helpers (pageInfo, validationHtml)
+import Crm.Server (createContactPerson)
 import qualified Crm.Data.Data as D
 
 contactPersonForm :: CP.ContactPerson
                   -> C.CompanyId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm contactPerson _ appVar = let
+contactPersonForm contactPerson companyId appVar = let
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.ContactPersonPage _ companyId -> D.ContactPersonPage contactPerson' companyId
+      D.ContactPersonPage _ companyId' -> D.ContactPersonPage contactPerson' companyId'
       _ -> D.navigation appState })
 
   pageInfo' = pageInfo "Nová kontaktní osoba" (Nothing :: Maybe DOMElement)
@@ -40,7 +41,10 @@ contactPersonForm contactPerson _ appVar = let
     else ["Jméno musí mít alespoň jeden znak."]
   
   buttonLabel = "Vytvoř"
-  buttonAction = return ()
+  buttonAction = createContactPerson
+    companyId
+    contactPerson
+    (return ())
 
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
