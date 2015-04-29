@@ -13,7 +13,7 @@ import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
-import Crm.Page.Employee (employeePage, newEmployeeForm)
+import Crm.Page.Employee (employeePage, newEmployeeForm, employeeEdit)
 import Crm.Page.NotFound (notFound)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
@@ -61,6 +61,8 @@ main' = do
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> emptyCallback $ employeePage router employees
+      D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> 
+        emptyCallback $ employeeEdit employeeId router employee appVar'
       D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ newEmployeeForm router employee appVar'
     in Navigation.navigation' router newElementAndCallback )
   return ()

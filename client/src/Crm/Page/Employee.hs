@@ -4,6 +4,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.Employee (
+  employeeEdit ,
   employeePage ,
   newEmployeeForm ) where
 
@@ -56,6 +57,14 @@ newEmployeeForm :: CrmRouter
                 -> DOMElement
 newEmployeeForm = employeeForm pageInfo' where
   pageInfo' = pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího."
+
+employeeEdit :: E.EmployeeId
+             -> CrmRouter
+             -> E.Employee
+             -> Var D.AppState
+             -> DOMElement
+employeeEdit employeeId = employeeForm pageInfo' where
+  pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
 employeeForm :: (Renderable a)
              => a
