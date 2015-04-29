@@ -8,7 +8,7 @@ module Crm.Page.Employee (
   employeePage ,
   newEmployeeForm ) where
 
-import "fay-base" Data.Text (fromString, pack)
+import "fay-base" Data.Text (fromString, pack, Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" FFI (Defined (Defined))
 import "fay-base" Data.Var (Var, modify)
@@ -55,7 +55,9 @@ newEmployeeForm :: CrmRouter
                 -> E.Employee
                 -> Var D.AppState
                 -> DOMElement
-newEmployeeForm = employeeForm pageInfo' where
+newEmployeeForm router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
+  buttonLabel = "Přidat servismena"
+  buttonAction = createEmployee employee $ navigate R.employeePage router
   pageInfo' = pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího."
 
 employeeEdit :: E.EmployeeId
@@ -63,16 +65,19 @@ employeeEdit :: E.EmployeeId
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeEdit employeeId = employeeForm pageInfo' where
+employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
+  buttonLabel = "Edituj"
+  updateEmployee _ x = x
+  buttonAction = updateEmployee employee $ navigate R.employeePage router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
 employeeForm :: (Renderable a)
              => a
-             -> CrmRouter
+             -> (Text, Fay ())
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeForm pageInfo' router employee appVar = let 
+employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let 
 
   modify' :: E.Employee -> Fay ()
   modify' employee' = modify appVar (\appState -> appState {
@@ -100,7 +105,8 @@ employeeForm pageInfo' router employee appVar = let
         "Kvalifikace"
         (E.capabilities employee)
         (eventString >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
-      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow' (null validationMessages)
+      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
+        (null validationMessages)
         "Přidat servismena"
-        (createEmployee employee $ navigate R.employeePage router)]) :
+        buttonAction]) :
     (validationHtml validationMessages) : []
