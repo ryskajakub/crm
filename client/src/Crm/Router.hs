@@ -19,6 +19,7 @@ module Crm.Router (
   closeUpkeep ,
   replanUpkeep ,
   maintenances ,
+  newContactPerson ,
   plannedUpkeeps ,
   machineTypesList ,
   machineTypeEdit ,
@@ -37,23 +38,25 @@ import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact hiding (id)
 import Moment (now, requireMoment, day)
 
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
-  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos, fetchEmployee )
-import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Data.Data as D
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Employee as E
+
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
+import qualified Crm.Data.Data as D
 import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
+  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
+  fetchMachinePhotos, fetchEmployee )
+import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -82,6 +85,9 @@ newMachinePhase2 companyId = CrmRoute $ "companies/" <> showCompanyId companyId 
 
 newMaintenance :: C.CompanyId -> CrmRoute
 newMaintenance companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-maintenance"
+
+newContactPerson :: C.CompanyId -> CrmRoute
+newContactPerson companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-contact-person"
 
 maintenances :: C.CompanyId -> CrmRoute
 maintenances companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/maintenances"
@@ -165,6 +171,12 @@ startRouter appVar = let
       params
       (\companyId (_,_) ->
         D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)
+  ),(
+    "companies/:id/new-contact-person", \params ->
+    withCompany
+      params
+      (\companyId (_,_) ->
+        D.ContactPersonPage (CP.newContactPerson) companyId)
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params
