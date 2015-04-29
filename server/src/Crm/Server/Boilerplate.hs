@@ -13,6 +13,7 @@ import Data.Maybe (fromJust)
 import Data.JSON.Schema.Generic (gSchema)
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
@@ -62,6 +63,8 @@ instance FromJSON PM.PhotoMeta where
   parseJSON = fayInstance
 instance FromJSON E.Employee where
   parseJSON = fayInstance
+instance FromJSON CP.ContactPerson where
+  parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
@@ -87,6 +90,8 @@ instance ToJSON PM.PhotoMeta where
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
+instance JS.JSONSchema CP.ContactPerson where
+  schema = gSchema
 instance JS.JSONSchema PM.PhotoMeta where
   schema = gSchema
 instance JS.JSONSchema E.Employee where
