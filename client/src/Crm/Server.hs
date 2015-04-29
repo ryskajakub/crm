@@ -9,6 +9,7 @@ module Crm.Server (
   updateUpkeep ,
   updateMachine , 
   updateCompany ,
+  updateEmployee ,
   updateMachineType , 
   uploadPhotoData ,
   uploadPhotoMeta ,
@@ -281,6 +282,16 @@ createMachine machine companyId machineType callback =
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
+
+updateEmployee :: E.EmployeeId
+               -> E.Employee
+               -> Fay ()
+               -> Fay ()
+updateEmployee employeeId employee callback = ajax
+  employee
+  (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
+  put
+  (const callback)
 
 updateCompany :: C.CompanyId
               -> C.Company

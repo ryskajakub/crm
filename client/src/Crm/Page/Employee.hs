@@ -18,7 +18,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import Crm.Server (createEmployee)
+import Crm.Server (createEmployee, updateEmployee)
 import Crm.Component.Form (row', saveButtonRow')
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.EmployeeData as ED
@@ -67,8 +67,7 @@ employeeEdit :: E.EmployeeId
              -> DOMElement
 employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
   buttonLabel = "Edituj"
-  updateEmployee _ x = x
-  buttonAction = updateEmployee employee $ navigate R.employeePage router
+  buttonAction = updateEmployee employeeId employee $ navigate R.employeePage router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
 employeeForm :: (Renderable a)
@@ -107,6 +106,6 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
         (eventString >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
         (null validationMessages)
-        "Přidat servismena"
+        buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []
