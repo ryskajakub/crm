@@ -57,7 +57,7 @@ addMachine connection machine companyId' machineType = do
       serialNumber yearOfManufacture = machine
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', pgInt4 machineTypeId , 
+    machinesTable (Nothing, pgInt4 companyId', maybeToNullable Nothing, pgInt4 machineTypeId , 
       maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate' ,
       pgInt4 initialMileage, pgInt4 mileagePerYear ,
       pgString note, pgString serialNumber, pgString yearOfManufacture)

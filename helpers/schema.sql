@@ -33,6 +33,7 @@ drop table machines;
 create table machines (
   id serial , 
   company_id integer , 
+  contact_person_id integer , 
   machine_type_id integer , 
   operation_start date ,
   initial_mileage integer ,
