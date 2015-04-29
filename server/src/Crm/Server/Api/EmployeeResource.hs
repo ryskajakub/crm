@@ -34,10 +34,11 @@ employeeResource = (mkResourceReaderWith prepareReaderTuple) {
 getEmployeeHandler :: Handler IdDependencies
 getEmployeeHandler = mkConstHandler (jsonO . someO) $ do
   (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> liftIO $ do
-    rows <- runQuery connection (singleEmployeeQuery theId) :: IO [(Int, String, String, String)]
-    let result = fmap (\(employeeFields) -> ((sel1 employeeFields), (uncurryN (const E.Employee)) employeeFields )) rows
-    return result)
+  maybeId maybeInt (\theId -> do
+    rows <- liftIO $ runQuery connection (singleEmployeeQuery theId)
+    let r' = rows :: [(Int, String, String, String)]
+    let result = fmap (\(employeeFields) -> (uncurryN (const E.Employee)) employeeFields) rows
+    singleRowOrColumn result)
 
 updateEmployeeHandler :: Handler IdDependencies
 updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> do
