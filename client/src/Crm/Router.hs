@@ -55,7 +55,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos, fetchEmployee )
+  fetchMachinePhotos, fetchEmployee, fetchContactPersons)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
@@ -188,9 +188,9 @@ startRouter appVar = let
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
             machineQuadruple = (M.newMachine nowYMD, "", "", "")
-          modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) Nothing []
-              (Right $ MachineNew companyId maybeMachineTypeId)
+          fetchContactPersons companyId (\cps -> modify' $ 
+            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) Nothing cps
+              (Right $ MachineNew companyId maybeMachineTypeId))
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
