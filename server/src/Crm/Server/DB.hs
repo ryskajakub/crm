@@ -14,6 +14,7 @@ module Crm.Server.DB (
   machinePhotosTable ,
   photosMetaTable ,
   photosTable ,
+  contactPersonsTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,
@@ -25,6 +26,7 @@ module Crm.Server.DB (
   machinePhotosQuery ,
   getMachinePhoto ,
   singleEmployeeQuery ,
+  contactPersonsQuery ,
   -- manipulations
   addCompany ,
   addMachinePhoto ,
@@ -161,8 +163,8 @@ companiesTable = Table "companies" $ p4 (
   required "plant" ,
   required "address" )
 
-contactPersons :: Table ContactPersonWriteTable ContactPersonTable
-contactPersons = Table "contact_persons" $ p4 (
+contactPersonsTable :: Table ContactPersonWriteTable ContactPersonTable
+contactPersonsTable = Table "contact_persons" $ p4 (
   optional "id" ,
   required "name" ,
   required "phone" ,
@@ -218,6 +220,9 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "repetition" ,
   required "machine_type_id" ,
   required "one_time" )
+
+contactPersonsQuery :: Query ContactPerson
+contactPersonsQuery = queryTable contactPersonsTable
 
 photosQuery :: Query PhotosTable
 photosQuery = queryTable photosTable
