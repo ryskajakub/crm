@@ -22,17 +22,10 @@ data OrderType = CompanyName | NextService
 data Company = Company {
   companyName :: String , 
   companyPlant :: String ,
-  companyAddress :: String ,
-  companyPerson :: String ,
-  companyPhone :: String }
+  companyAddress :: String }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newCompany :: Company
-newCompany = Company {
-  companyName = "" , 
-  companyPlant = "" ,
-  companyAddress = "" ,
-  companyPerson = "" ,
-  companyPhone = "" }
+newCompany = Company "" "" ""

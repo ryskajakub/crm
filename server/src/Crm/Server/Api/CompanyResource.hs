@@ -101,8 +101,8 @@ updateCompany :: Handler IdDependencies
 updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
   ask >>= \(conn, companyId') -> maybeId companyId' (\companyId -> do
     let
-      readToWrite = const (Nothing, pgString $ C.companyName company, pgString $ C.companyPlant company ,
-        pgString $ C.companyAddress company, pgString $ C.companyPerson company, pgString $ C.companyPhone company)
+      readToWrite = const (Nothing, pgString $ C.companyName company, 
+        pgString $ C.companyPlant company, pgString $ C.companyAddress company)
       condition = (pgInt4 companyId .==) . sel1
     _ <- liftIO $ runUpdate conn companiesTable readToWrite condition
     return ()))

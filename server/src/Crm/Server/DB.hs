@@ -109,8 +109,8 @@ type DBDate = Column PGDate
 type DBBool = Column PGBool
 type DBByteA = Column PGByteA
 
-type CompaniesTable = (DBInt, DBText, DBText, DBText, DBText, DBText)
-type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText, DBText)
+type CompaniesTable = (DBInt, DBText, DBText, DBText)
+type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText)
 
 type MachinesTable = (DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
@@ -152,13 +152,11 @@ photosTable = Table "photos" $ p2 (
   required "data" )
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
-companiesTable = Table "companies" $ p6 (
+companiesTable = Table "companies" $ p4 (
   optional "id" ,
   required "name" ,
   required "plant" ,
-  required "address" ,
-  required "person" ,
-  required "phone" )
+  required "address" )
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" $ p9 (
@@ -330,7 +328,7 @@ companyWithMachinesQuery companyId = proc () -> do
   restrict -< (pgInt4 companyId .== sel1 company)
   returnA -< company
 
-runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String,String,String,String)]
+runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String,String)]
 runCompanyWithMachinesQuery companyId connection =
   runQuery connection (companyWithMachinesQuery companyId)
 
@@ -490,7 +488,7 @@ plannedUpkeepsQuery = proc () -> do
 groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
   AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
-    p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+    p4(AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do
@@ -505,7 +503,7 @@ machinesInUpkeepQuery upkeepId = proc () -> do
   upkeepMachine <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< (upkeepMachine)
 
-runCompaniesQuery :: Connection -> IO [(Int, String, String, String, String, String)]
+runCompaniesQuery :: Connection -> IO [(Int, String, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
 runMachinesInCompanyQuery' :: Int -> Connection ->
@@ -560,7 +558,7 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
-  (Int, String, String, String, String, String))]
+  (Int, String, String, String))]
 runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 runSingleUpkeepQuery :: Connection 
@@ -611,8 +609,8 @@ addCompany :: Connection -- ^ database connection
 addCompany connection newCompany = do
   newId <- runInsertReturning
     connection
-    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ 
-      C.companyAddress newCompany, pgString $ C.companyPerson newCompany, pgString $ C.companyPhone newCompany )
+    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, 
+      pgString $ C.companyAddress newCompany)
     sel1
   return $ head newId -- todo safe
 
