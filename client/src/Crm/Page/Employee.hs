@@ -5,7 +5,7 @@
 
 module Crm.Page.Employee (
   employeePage ,
-  employeeForm ) where
+  newEmployeeForm ) where
 
 import "fay-base" Data.Text (fromString, pack)
 import "fay-base" Prelude hiding (div, span, id)
@@ -50,11 +50,20 @@ employeePage router employees = let
     B.row $ B.col (B.mkColProps 12) $ addEmployeeButton ,
     B.row $ B.col (B.mkColProps 12) $ B.table [ head' , body ]]
 
-employeeForm :: CrmRouter
+newEmployeeForm :: CrmRouter
+                -> E.Employee
+                -> Var D.AppState
+                -> DOMElement
+newEmployeeForm = employeeForm pageInfo' where
+  pageInfo' = pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího."
+
+employeeForm :: (Renderable a)
+             => a
+             -> CrmRouter
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeForm router employee appVar = let 
+employeeForm pageInfo' router employee appVar = let 
 
   modify' :: E.Employee -> Fay ()
   modify' employee' = modify appVar (\appState -> appState {
@@ -66,7 +75,7 @@ employeeForm router employee appVar = let
     then []
     else ["Jméno musí mít alespoň jeden znak."]
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    (B.grid $ (B.row $ pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího.") : [
+    (B.grid $ (B.row $ pageInfo') : [
       row'
         True 
         "Jméno" 
