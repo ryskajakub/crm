@@ -124,7 +124,7 @@ startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
               -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine,
-                   C.CompanyId, MT.MachineTypeId, MT.MachineType)]) 
+                   C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]) 
                  -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
@@ -197,7 +197,8 @@ startRouter appVar = let
       fetchEmployees (\employees -> 
         withCompany
           params
-          (\companyId (_, machines) -> let
+          (\companyId (_, machines') -> let
+            machines = map (\(a,b,c,d,e,_) -> (a,b,c,d,e)) machines'
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 

@@ -20,6 +20,7 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav as BN
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -109,7 +110,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
               -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
+              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)] 
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
@@ -120,7 +121,7 @@ companyDetail editing' router var (companyId, company') machines' = let
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
-  machineBox (machineId', machine', _, _, machineType) =
+  machineBox (machineId', machine', _, _, machineType, contactPerson) =
     B.col (B.mkColProps 4) $
       B.panel [
         h3 $ 
@@ -134,7 +135,9 @@ companyDetail editing' router var (companyId, company') machines' = let
           dt "Výrobní číslo" ,
           dd $ pack $ M.serialNumber machine' ,
           dt "Rok výroby" ,
-          dd $ pack $ M.yearOfManufacture machine' ]]
+          dd $ pack $ M.yearOfManufacture machine' ,
+          dt "Servisman" ,
+          dd $ maybe "" (pack . CP.name) contactPerson ]]
   machineBoxes = map machineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {

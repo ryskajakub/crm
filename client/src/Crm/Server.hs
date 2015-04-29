@@ -60,7 +60,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
 import Crm.Shared.MyMaybe
 
-import Crm.Helpers (File)
+import Crm.Helpers (File, rmap)
 
 data Items
 
@@ -246,12 +246,12 @@ fetchContactPersons companyId callback = JQ.ajax
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, 
-               MT.MachineTypeId, MT.MachineType)]) -> Fay ()) -- ^ callback
+               MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId)))
-    callback
+    (callback . (rmap (map (\(a,b,c,d,e,f) -> (a,b,c,d,e,toMaybe f)))))
     noopOnError
 
 fetchFrontPageData :: C.OrderType
