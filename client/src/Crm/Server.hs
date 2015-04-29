@@ -290,11 +290,12 @@ createCompany company callback = ajax
 createMachine :: M.Machine 
               -> C.CompanyId
               -> MT.MyEither
+              -> Maybe CP.ContactPersonId
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType callback =
+createMachine machine companyId machineType contactPersonId callback =
   ajax
-    (machine, machineType)
+    (machine, machineType, toMyMaybe contactPersonId)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
