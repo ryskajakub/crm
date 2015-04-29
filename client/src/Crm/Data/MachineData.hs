@@ -5,6 +5,7 @@ module Crm.Data.MachineData where
 import "fay-base" Data.Text (Text)
 
 import Crm.Shared.Company
+import Crm.Shared.ContactPerson
 import Crm.Shared.Machine
 import Crm.Shared.MachineType
 import Crm.Shared.YearMonthDay
@@ -21,6 +22,8 @@ data MachineData = MachineData {
   machine :: (Machine, Text, Text, Text) ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
+  contactPersonId :: Maybe ContactPersonId ,
+  contactPersons :: [(ContactPersonId, ContactPerson)] ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {

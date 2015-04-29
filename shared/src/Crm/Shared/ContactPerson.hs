@@ -15,6 +15,7 @@ import "fay-base" Prelude
 #endif
 
 newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
+  deriving Eq
 
 data ContactPerson = ContactPerson {
   name :: String , 

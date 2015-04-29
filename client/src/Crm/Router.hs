@@ -189,7 +189,7 @@ startRouter appVar = let
             companyId = C.CompanyId companyIdInt
             machineQuadruple = (M.newMachine nowYMD, "", "", "")
           modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False)
+            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) Nothing []
               (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
@@ -225,7 +225,7 @@ startRouter appVar = let
                 let 
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (startDateInCalendar, False) $
+                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (startDateInCalendar, False) Nothing []
                   (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId)))
         _ -> modify' D.NotFound
   ),(

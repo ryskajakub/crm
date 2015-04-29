@@ -27,6 +27,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
@@ -59,8 +60,8 @@ machineDetail :: Bool
 machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
     mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps = 
 
-  machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw, 
-      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid
+  machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
+      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid Nothing []
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -139,8 +140,8 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a b c (Left (MD.MachineDetail d e editing' f g i j)))
+          D.MachineScreen (MD.MachineData a b c c1 c2 (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a b c c1 c2 (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -159,12 +160,14 @@ machineNew :: R.CrmRouter
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
+           -> Maybe CP.ContactPersonId
+           -> [(CP.ContactPersonId, CP.ContactPerson)]
            -> DOMElement
-machineNew router appState datePickerCalendar (machine', initialMileageRaw, 
-    mileagePerYearRaw, datePickerText) companyId machineTypeTuple machineTypeId = 
-  machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru" 
+machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
+    datePickerText) companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
+  machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru"
     buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
-      mileagePerYearRaw, datePickerText) machineTypeTuple [] Nothing
+      mileagePerYearRaw, datePickerText) machineTypeTuple [] Nothing contactPersonId contactPersons
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -182,15 +185,17 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
+               -> Maybe (CP.ContactPersonId)
+               -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     initialMileageRaw, mileagePerYearRaw, datePickerText) (machineType, 
-    upkeepSequences) extraRows extraGrid = let
+    upkeepSequences) extraRows extraGrid contactPersonId contactPersons = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      (D.MachineScreen (md @ (MD.MachineData _ _ _ _))) -> D.MachineScreen $ fun md
+      (D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _))) -> D.MachineScreen $ fun md
       _ -> D.navigation appState })
 
   setMachine :: M.Machine -> Fay ()
@@ -235,6 +240,18 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
+        formRow "Kontaktní osoba" (let
+          noContactPersonLabel = "---"
+          selectedEmployeeName = maybe noContactPersonLabel (\cpId -> let
+            contactPersonFoundInList = lookup cpId contactPersons
+            in maybe noContactPersonLabel (pack . CP.name) contactPersonFoundInList) contactPersonId
+          selectCpLink cpId c = let
+            selectCpAction = changeNavigationState (\md -> md { MD.contactPersonId = cpId })
+            in A.a''' (click selectCpAction) (pack $ CP.name c)
+          withNoCp = (Nothing, CP.newContactPerson { CP.name = unpack noContactPersonLabel }) : (map (lmap Just) contactPersons)
+          selectElements = map (\(cId,c) -> li $ selectCpLink cId c) withNoCp
+          buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
+          in BD.buttonDropdown buttonLabel selectElements ) ,
         row'
           editing
           "Výrobní číslo"
