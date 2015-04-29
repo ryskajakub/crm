@@ -43,6 +43,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  contactPersonsByIdQuery ,
   nextServiceMachinesQuery ,
   nextServiceUpkeepsQuery ,
   nextServiceUpkeepSequencesQuery ,
@@ -433,6 +434,12 @@ expandedUpkeepsQuery = proc () -> do
   upkeepRow @ (upkeepPK,_,_,_,_,_,_) <- upkeepsQuery -< ()
   upkeepMachineRow <- join upkeepMachinesQuery -< upkeepPK
   returnA -< (upkeepRow, upkeepMachineRow)
+
+contactPersonsByIdQuery :: Int -> Query ContactPersonsTable
+contactPersonsByIdQuery companyId = proc () -> do
+  contactPersonRow <- contactPersonsQuery -< ()
+  restrict -< sel2 contactPersonRow .== pgInt4 companyId
+  returnA -< contactPersonRow
 
 nextServiceMachinesQuery :: Int -> Query MachinesTable
 nextServiceMachinesQuery companyId = proc () -> do

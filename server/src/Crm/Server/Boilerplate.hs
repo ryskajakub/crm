@@ -87,6 +87,8 @@ instance ToJSON US.UpkeepSequence where
   toJSON = fromJust . showToFay
 instance ToJSON PM.PhotoMeta where
   toJSON = fromJust . showToFay
+instance ToJSON CP.ContactPerson where
+  toJSON = fromJust . showToFay
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 

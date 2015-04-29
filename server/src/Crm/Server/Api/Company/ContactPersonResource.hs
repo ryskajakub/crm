@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Crm.Server.Api.Company.ContactPersonResource ( 
   contactPersonResource ) where
 
@@ -5,16 +7,17 @@ import Database.PostgreSQL.Simple (Connection)
 
 import Opaleye.PGTypes (pgString, pgInt4)
 import Opaleye.Manipulation (runInsertReturning)
+import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Tuple.All (sel1)
 
-import Rest.Resource (Resource, Void, schema, name, create, mkResourceId)
+import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (mkInputHandler, Handler)
+import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
@@ -36,8 +39,17 @@ createContactPersonHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(c
     let contactPersonId = head contactPersonIds
     return (contactPersonId :: Int)))
 
-contactPersonResource :: Resource IdDependencies IdDependencies Void Void Void
+contactPersonResource :: Resource IdDependencies IdDependencies Void () Void
 contactPersonResource = mkResourceId {
   name = A.contactPersons ,
-  schema = S.noListing $ S.named [] ,
+  schema = S.withListing () $ S.named [] ,
+  list = const listing ,
   create = Just createContactPersonHandler }
+
+listing :: ListHandler IdDependencies 
+listing = mkListing (jsonO . someO) (const $ do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\theId -> do
+    rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
+    let rowsMapped = map (\(cpId,_::Int,a,b,c) -> (cpId :: Int, CP.ContactPerson a b c)) rawRows 
+    return rowsMapped))
