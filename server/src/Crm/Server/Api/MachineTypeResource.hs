@@ -3,8 +3,8 @@ module Crm.Server.Api.MachineTypeResource (
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==))
-import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
 import Opaleye.PGTypes (pgInt4, pgString, pgBool)
+import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)

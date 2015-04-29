@@ -1,8 +1,9 @@
 module Crm.Server.Api.EmployeeResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Manipulation (runInsert)
-import Opaleye.PGTypes (pgString)
+import Opaleye.Manipulation (runInsert, runUpdate)
+import Opaleye.PGTypes (pgString, pgInt4)
+import Opaleye.Operators ((.==))
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -37,6 +38,15 @@ getEmployeeHandler = mkConstHandler (jsonO . someO) $ do
     rows <- runQuery connection (singleEmployeeQuery theId) :: IO [(Int, String, String, String)]
     let result = fmap (\(employeeFields) -> ((sel1 employeeFields), (uncurryN (const E.Employee)) employeeFields )) rows
     return result)
+
+updateEmployeeHandler :: Handler IdDependencies
+updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> do
+  (connection, maybeInt) <- ask
+  maybeId maybeInt (\theId -> liftIO $ let
+    readToWrite = const (Nothing, pgString $ E.name employee, 
+      pgString $ E.contact employee, pgString $ E.capabilities employee)
+    condition employeeRow = sel1 employeeRow .== pgInt4 theId
+    in runUpdate connection employeesTable readToWrite condition))
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newEmployee -> do
