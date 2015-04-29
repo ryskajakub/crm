@@ -112,6 +112,9 @@ type DBByteA = Column PGByteA
 type CompaniesTable = (DBInt, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText)
 
+type ContactPersonTable = (DBInt, DBText, DBText, DBText)
+type ContactPersonWriteTable = (Maybe DBInt, DBText, DBText, DBText)
+
 type MachinesTable = (DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 
@@ -157,6 +160,13 @@ companiesTable = Table "companies" $ p4 (
   required "name" ,
   required "plant" ,
   required "address" )
+
+contactPersons :: Table ContactPersonWriteTable ContactPersonTable
+contactPersons = Table "contact_persons" $ p4 (
+  optional "id" ,
+  required "name" ,
+  required "phone" ,
+  required "position" )
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" $ p9 (
