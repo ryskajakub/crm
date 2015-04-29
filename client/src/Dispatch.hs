@@ -9,6 +9,7 @@ import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
+import Crm.Page.ContactPerson (contactPersonForm)
 import Crm.Page.Machine (machineNew, machineDetail)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
@@ -64,6 +65,7 @@ main' = do
       D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> 
         emptyCallback $ employeeEdit employeeId router employee appVar'
       D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ newEmployeeForm router employee appVar'
+      D.ContactPersonPage contactPerson companyId -> emptyCallback $ contactPersonForm contactPerson companyId
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
