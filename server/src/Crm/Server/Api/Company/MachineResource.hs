@@ -22,6 +22,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
+import Crm.Shared.MyMaybe (toMaybe)
 
 import Crm.Server.Helpers (maybeId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
@@ -29,16 +30,17 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine,machineType) ->
+createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine, machineType, contactPersonId) ->
   ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> 
-    liftIO $ addMachine connection newMachine companyId machineType))
+    liftIO $ addMachine connection newMachine companyId machineType (toMaybe contactPersonId)))
 
 addMachine :: Connection
            -> M.Machine
            -> Int
            -> MT.MyEither
+           -> Maybe Int
            -> IO Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType = do
+addMachine connection machine companyId' machineType contactPersonId = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType name' manufacturer, upkeepSequences) -> do
@@ -57,10 +59,10 @@ addMachine connection machine companyId' machineType = do
       serialNumber yearOfManufacture = machine
   machineId <- runInsertReturning
     connection
-    machinesTable (Nothing, pgInt4 companyId', maybeToNullable Nothing, pgInt4 machineTypeId , 
-      maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate' ,
-      pgInt4 initialMileage, pgInt4 mileagePerYear ,
-      pgString note, pgString serialNumber, pgString yearOfManufacture)
+    machinesTable (Nothing, pgInt4 companyId', maybeToNullable $ fmap pgInt4 contactPersonId, 
+      pgInt4 machineTypeId, maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
+      pgInt4 initialMileage, pgInt4 mileagePerYear, pgString note, 
+      pgString serialNumber, pgString yearOfManufacture)
     sel1
   return $ head machineId -- todo safe
 
