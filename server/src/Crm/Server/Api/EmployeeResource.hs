@@ -10,7 +10,7 @@ import Control.Monad.IO.Class (liftIO)
 
 import Data.Tuple.All (uncurryN, sel1)
 
-import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceId, mkResourceReaderWith, get)
+import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceId, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
@@ -29,6 +29,7 @@ employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () $ S.unnamedSingle readMay' ,
   list = const employeesListing ,
   get = Just getEmployeeHandler ,
+  update = Just updateEmployeeHandler ,
   create = Just createEmployeeHandler }
 
 getEmployeeHandler :: Handler IdDependencies
