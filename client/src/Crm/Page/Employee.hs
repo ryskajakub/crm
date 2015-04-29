@@ -30,8 +30,8 @@ employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)] 
              -> DOMElement
 employeePage router employees = let 
-  rowEmployee (_, employee) = tr [ 
-    td $ pack $ E.name employee ,
+  rowEmployee (employeeId, employee) = tr [ 
+    td $ R.link (pack $ E.name employee) (R.editEmployee employeeId) router ,
     td $ pack $ E.contact employee ,
     td $ pack $ E.capabilities employee ]
   goToAddEmployee = navigate newEmployee router
