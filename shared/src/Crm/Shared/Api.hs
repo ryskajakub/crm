@@ -6,6 +6,7 @@ module Crm.Shared.Api (
   companies, companiesClient ,
   machines, machinesClient ,
   upkeep, upkeepsClient ,
+  contactPersons ,
   photos ,
   photoMeta ,
   planned ,
@@ -26,6 +27,9 @@ import "fay-base" Data.Char
 
 companies :: String
 companies = "companies"
+
+contactPersons :: String
+contactPersons = "contact-persons"
 
 machineTypes :: String
 machineTypes = "machine-types"

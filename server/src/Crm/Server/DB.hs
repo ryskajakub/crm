@@ -114,8 +114,8 @@ type DBByteA = Column PGByteA
 type CompaniesTable = (DBInt, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText)
 
-type ContactPersonTable = (DBInt, DBText, DBText, DBText)
-type ContactPersonWriteTable = (Maybe DBInt, DBText, DBText, DBText)
+type ContactPersonsTable = (DBInt, DBInt, DBText, DBText, DBText)
+type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
 type MachinesTable = (DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 type MachinesWriteTable = (Maybe DBInt, DBInt, DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
@@ -163,9 +163,10 @@ companiesTable = Table "companies" $ p4 (
   required "plant" ,
   required "address" )
 
-contactPersonsTable :: Table ContactPersonWriteTable ContactPersonTable
-contactPersonsTable = Table "contact_persons" $ p4 (
+contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable
+contactPersonsTable = Table "contact_persons" $ p5 (
   optional "id" ,
+  required "company_id" ,
   required "name" ,
   required "phone" ,
   required "position" )
@@ -221,7 +222,7 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "machine_type_id" ,
   required "one_time" )
 
-contactPersonsQuery :: Query ContactPerson
+contactPersonsQuery :: Query ContactPersonsTable
 contactPersonsQuery = queryTable contactPersonsTable
 
 photosQuery :: Query PhotosTable
