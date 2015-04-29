@@ -213,15 +213,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
       dt "Adresa" , 
       dd $ hereEditablePlain
         (pack $ C.companyAddress company')
-        (\text -> setCompany (company' { C.companyAddress = unpack text })) , 
-      dt "Jméno kontaktní osoby" , 
-      dd $ hereEditablePlain
-        (pack $ C.companyPerson company')
-        (\text -> setCompany (company' { C.companyPerson = unpack text })) , 
-      dt "Telefon na kontaktní osobu" , 
-      dd $ hereEditablePlain
-        (pack $ C.companyPhone company')
-        (\text -> setCompany (company' { C.companyPhone = unpack text })) ]
+        (\text -> setCompany (company' { C.companyAddress = unpack text }))]
       ++ [saveEditButton] ]
   companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
   in (B.grid $ B.row $ B.col (B.mkColProps 12) $ B.jumbotron companyBasicInfo') : validationHtml' : []
