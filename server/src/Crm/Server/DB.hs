@@ -53,6 +53,7 @@ module Crm.Server.DB (
   machineTypesWithCountQuery ,
   upkeepSequencesByIdQuery ,
   singleMachineTypeQuery ,
+  singleContactPersonQuery ,
   machinesInUpkeepQuery ,
   machinePhotosByMachineId ,
   photoMetaQuery ,
@@ -564,6 +565,11 @@ groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
 groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
   AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
     p4(AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+
+singleContactPersonQuery :: Int -> Query ContactPersonsTable
+singleContactPersonQuery contactPersonId = proc () -> do
+  contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
+  returnA -< contactPersonRow
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do
