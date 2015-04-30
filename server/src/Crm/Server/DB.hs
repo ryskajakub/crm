@@ -304,8 +304,8 @@ mapMaybeContactPerson tuple = let
   maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
   in (sel1 tuple, sel2 tuple, maybeCp)
 
-mapMachineType :: (Int, Int, String, String) -> (Int, Int, MT.MachineType)
-mapMachineType tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const MT.MachineType) tuple)
+mapMachineType :: (Int, Int, String, String) -> (Int, MT.MachineType)
+mapMachineType tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) tuple)
 
 mapMaybeEmployee :: (Maybe Int, Maybe String, Maybe String, Maybe String) -> (Maybe Int, Maybe E.Employee)
 mapMaybeEmployee tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
@@ -617,15 +617,17 @@ runMachinesInCompanyQuery companyId connection = do
 convertExpanded :: (((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
                    (Int, Int, String, String)), (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String))
                 -> (Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)
-convertExpanded = (\(((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),(mtId,_,mtN,mtMf)),(_,_,cpN,cpP,cpPos)) -> let
+convertExpanded = (\(((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),mtResult),(_,_,cpN,cpP,cpPos)) -> let
+  (mtId, mt) = mapMachineType mtResult
   companyPerson = liftA3 CP.ContactPerson cpN cpP cpPos
-  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, (MT.MachineType mtN mtMf), companyPerson))
+  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, mt, companyPerson))
 
 convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
                     (Int, Int, String, String))
                  -> (Int, M.Machine, Int, Int, MT.MachineType)
-convertExpanded2 = (\((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),(mtId,_,mtN,mtMf)) -> let
-  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, (MT.MachineType mtN mtMf)))
+convertExpanded2 = (\((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),mtResult) -> let
+  (mtId, mt) = mapMachineType mtResult
+  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, mt))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
   -> IO[((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String), (Int, Int, String, String))]

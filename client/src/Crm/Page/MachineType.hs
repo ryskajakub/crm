@@ -265,7 +265,7 @@ machineTypesList router machineTypes = let
       th "Název typu" , 
       th "Výrobce" , 
       th "Počet zařízení v systému" ]
-  body = tbody $ map (\((machineTypeId,(MT.MachineType name manufacturer)), count) ->
+  body = tbody $ map (\((machineTypeId,(MT.MachineType _ name manufacturer)), count) ->
     tr [
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 

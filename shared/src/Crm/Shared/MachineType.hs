@@ -21,6 +21,7 @@ type MachineType' = (MachineTypeId, MachineType)
 
 -- | Machine type can be either an id or the machine type object
 data MachineType = MachineType {
+  machineTypeType :: Int ,
   machineTypeName :: String ,
   machineTypeManufacturer :: String }
 #ifndef FAY
@@ -28,7 +29,7 @@ data MachineType = MachineType {
 #endif
 
 newMachineType :: MachineType
-newMachineType = MachineType "" ""
+newMachineType = MachineType 0 "" ""
 
 data MyEither = 
   MyMachineType (MachineType, [US.UpkeepSequence])
