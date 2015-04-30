@@ -45,7 +45,7 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
           (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
             toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
         (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
-          (_ :: Int,name',manufacturer),machineId,_) -> let
+          (_ :: Int,_::Int,name',manufacturer),machineId,_) -> let
           machineType' = MT.MachineType name' manufacturer
           in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
         rows

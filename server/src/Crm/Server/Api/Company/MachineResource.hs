@@ -46,7 +46,7 @@ addMachine connection machine companyId' machineType contactPersonId = do
     MT.MyMachineType (MT.MachineType name' manufacturer, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
         connection
-        machineTypesTable (Nothing, pgString name', pgString manufacturer)
+        machineTypesTable (Nothing, pgInt4 0, pgString name', pgString manufacturer)
         sel1
       let machineTypeId = head newMachineTypeId -- todo safe
       forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert

@@ -1,3 +1,5 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
 
@@ -11,7 +13,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad (forM_)
 
-import Data.Tuple.All (sel1, sel4)
+import Data.Tuple.All (sel1, sel2, sel4)
 import Data.Int (Int64)
 
 import Rest.Types.Error (Reason(NotFound, UnsupportedRoute))
@@ -46,8 +48,8 @@ machineTypesListing (AutocompleteManufacturer mid) = mkListing (jsonO . someO) (
 machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
-    mapRow :: ((Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
-    mapRow ((m1,m2,m3),count) = ((m1, MT.MachineType m2 m3), fromIntegral count)
+    mapRow :: ((Int,Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
+    mapRow ((m1,_,m2,m3),count) = ((m1, MT.MachineType m2 m3), fromIntegral count)
     mappedRows = map mapRow rows
   return mappedRows )
 
@@ -57,10 +59,10 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
       let 
-        readToWrite = const (Nothing, pgString $ MT.machineTypeName machineType, 
+        readToWrite row = (Nothing, sel2 row, pgString $ MT.machineTypeName machineType, 
           pgString $ MT.machineTypeManufacturer machineType)
         condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
-      _ <- runUpdate conn machineTypesTable readToWrite condition 
+      _ <- runUpdate conn machineTypesTable readToWrite condition
       _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
       forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
@@ -77,7 +79,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (do
       MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left mtName)
   rows <- result
   case rows of
-    (mtId, mtName, m3) : xs | null xs -> do 
+    (mtId, _::Int, mtName, m3) : xs | null xs -> do 
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 mtId)
       return $ MyJust (mtId :: Int, MT.MachineType mtName m3, mappedUpkeepSequences upkeepSequences)
     [] -> onEmptyResult
