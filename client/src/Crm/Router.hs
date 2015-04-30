@@ -206,6 +206,15 @@ startRouter appVar = let
               ((nowYMD, False), displayDate nowYMD) employees 
               Nothing (Right $ UD.UpkeepNew $ Left companyId)))
   ),(
+    "companies/:id/contact-persons", \params ->
+      case (parseSafely $ head params) of
+        Just(companyIdInt) -> 
+          let companyId = C.CompanyId companyIdInt
+          in fetchContactPersons companyId (\data' -> let
+            ns = D.ContactPersonList data'
+            in modify' ns)
+        _ -> modify' D.NotFound
+  ),(
     "companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
         Just(companyIdInt) -> 

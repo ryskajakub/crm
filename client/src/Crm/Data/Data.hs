@@ -56,7 +56,9 @@ data NavigationState =
   EmployeeManage EmployeeData |
   ContactPersonPage {
     contactPerson :: CP.ContactPerson ,
-    companyId :: C.CompanyId }
+    companyId :: C.CompanyId } |
+  ContactPersonList {
+    contactPersons :: [CP.ContactPerson'] }
 
 data AppState = AppState {
   navigation :: NavigationState ,
