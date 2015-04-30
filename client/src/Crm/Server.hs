@@ -32,6 +32,7 @@ module Crm.Server (
   fetchEmployee ,
   fetchCompany ,
   fetchContactPersons ,
+  fetchContactPerson ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -235,6 +236,11 @@ fetchEmployee employeeId callback = JQ.ajax
   (apiRoot <> (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId)))
   callback
   noopOnError
+
+fetchContactPerson :: CP.ContactPersonId
+                   -> (CP.ContactPerson -> Fay ())
+                   -> Fay ()
+fetchContactPerson _ callback = callback $ CP.ContactPerson "pepa" "777" "sklář"
 
 fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())

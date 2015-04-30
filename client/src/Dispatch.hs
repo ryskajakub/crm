@@ -66,8 +66,8 @@ main' = do
       D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> 
         emptyCallback $ employeeEdit employeeId router employee appVar'
       D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ newEmployeeForm router employee appVar'
-      D.ContactPersonPage contactPerson companyId -> 
-        emptyCallback $ contactPersonForm contactPerson companyId appVar'
+      D.ContactPersonPage contactPerson identification -> 
+        emptyCallback $ contactPersonForm contactPerson identification appVar'
       D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList contactPersons
     in Navigation.navigation' router newElementAndCallback )
   return ()

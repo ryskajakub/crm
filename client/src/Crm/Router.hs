@@ -27,6 +27,7 @@ module Crm.Router (
   employeePage ,
   newEmployee ,
   contactPersonList ,
+  contactPersonEdit ,
   editEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
@@ -56,7 +57,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos, fetchEmployee, fetchContactPersons)
+  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
@@ -123,6 +124,9 @@ editEmployee employeeId = CrmRoute $ "employees/" <> (showInt $ E.getEmployeeId 
 contactPersonList :: C.CompanyId -> CrmRoute
 contactPersonList companyId = CrmRoute $ "companies/" <> (showInt $ C.getCompanyId companyId) <> "/contact-persons"
 
+contactPersonEdit :: CP.ContactPersonId -> CrmRoute
+contactPersonEdit contactPersonId = CrmRoute $ "contact-persons/" <> (showInt $ CP.getContactPersonId contactPersonId)
+
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
@@ -180,7 +184,7 @@ startRouter appVar = let
     withCompany
       params
       (\companyId (_,_) ->
-        D.ContactPersonPage (CP.newContactPerson) companyId)
+        D.ContactPersonPage (CP.newContactPerson) (Left companyId))
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params
@@ -287,6 +291,14 @@ startRouter appVar = let
               modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), "")
                 employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
+        _ -> modify' D.NotFound
+  ),(
+    "contact-persons/:id", \params -> let
+      maybeId = parseSafely $ head params
+      in case maybeId of 
+        Just (contactPersonId') -> let
+          contactPersonId = CP.ContactPersonId contactPersonId'
+          in fetchContactPerson contactPersonId (\cp -> modify' $ D.ContactPersonPage cp (Right contactPersonId))
         _ -> modify' D.NotFound
   ),(
     "employees", const $

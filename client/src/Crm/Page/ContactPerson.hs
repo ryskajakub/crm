@@ -30,10 +30,10 @@ contactPersonsList contactPersons = let
   in B.grid $ B.row $ map displayContactPerson contactPersons
 
 contactPersonForm :: CP.ContactPerson
-                  -> C.CompanyId
+                  -> Either C.CompanyId CP.ContactPersonId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm contactPerson companyId appVar = let
+contactPersonForm contactPerson (Left companyId) appVar = let
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {

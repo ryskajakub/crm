@@ -56,7 +56,7 @@ data NavigationState =
   EmployeeManage EmployeeData |
   ContactPersonPage {
     contactPerson :: CP.ContactPerson ,
-    companyId :: C.CompanyId } |
+    identification :: Either C.CompanyId CP.ContactPersonId } |
   ContactPersonList {
     contactPersons :: [CP.ContactPerson'] }
 
