@@ -26,6 +26,7 @@ module Crm.Router (
   machineDetail ,
   employeePage ,
   newEmployee ,
+  contactPersonList ,
   editEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
@@ -118,6 +119,9 @@ newEmployee = CrmRoute "employees/new"
 
 editEmployee :: E.EmployeeId -> CrmRoute
 editEmployee employeeId = CrmRoute $ "employees/" <> (showInt $ E.getEmployeeId employeeId)
+
+contactPersonList :: C.CompanyId -> CrmRoute
+contactPersonList companyId = CrmRoute $ "companies/" <> (showInt $ C.getCompanyId companyId) <> "/contact-persons"
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let

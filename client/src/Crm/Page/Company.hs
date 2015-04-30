@@ -166,7 +166,8 @@ companyDetail editing' router var (companyId, company') machines' = let
           form' (class' "navbar-form") $
             BTN.button' (BTN.buttonProps {
               BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
-              [G.plus, text2DOM "Přidat kontaktní osobu" ]] ,
+              [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
+          R.link "Kontaktní osoby" (R.contactPersonList companyId) router ] ,
         machineBoxesRow ]]
 
 companyForm :: Bool -- ^ is the page editing mode
