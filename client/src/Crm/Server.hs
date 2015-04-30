@@ -324,7 +324,11 @@ updateContactPerson :: CP.ContactPersonId
                     -> CP.ContactPerson
                     -> Fay ()
                     -> Fay ()
-updateContactPerson cpId cp callback = callback
+updateContactPerson cpId cp callback = ajax
+  cp
+  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId cpId))
+  put
+  (const callback)
 
 updateCompany :: C.CompanyId
               -> C.Company
