@@ -41,7 +41,7 @@ main' = do
         emptyCallback $ case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing _ photos upkeeps companyId) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine
-              machineTypeTuple machineId nextService photos upkeeps
+              machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
             machineNew router appVar' operationStartCalendar machine
               companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons

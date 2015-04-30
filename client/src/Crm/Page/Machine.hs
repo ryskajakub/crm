@@ -56,12 +56,15 @@ machineDetail :: Bool
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
+              -> Maybe CP.ContactPersonId
+              -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
-    mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps = 
+    mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps
+    contactPersonId contactPersons = 
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
-      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid Nothing []
+      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid contactPersonId contactPersons
     where
       pageHeader = if editing then "Editace kompresoru" else "Kompresor"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]

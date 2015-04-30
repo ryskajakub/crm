@@ -226,8 +226,9 @@ startRouter appVar = let
                 let 
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-                in modify' $ D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (startDateInCalendar, False) Nothing []
-                  (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId)))
+                in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData 
+                  machineQuadruple machineTypeTuple (startDateInCalendar, False) Nothing cps
+                    (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
         _ -> modify' D.NotFound
   ),(
     "planned", const $
