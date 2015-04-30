@@ -4,9 +4,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.ContactPerson (
+  contactPersonsList ,
   contactPersonForm ) where
 
-import "fay-base" Data.Text (fromString) 
+import "fay-base" Data.Text (fromString, pack)
 import "fay-base" Prelude hiding (div)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined (Defined))
@@ -21,6 +22,12 @@ import Crm.Component.Form (row', saveButtonRow')
 import Crm.Helpers (pageInfo, validationHtml)
 import Crm.Server (createContactPerson)
 import qualified Crm.Data.Data as D
+
+contactPersonsList :: [(CP.ContactPersonId, CP.ContactPerson)]
+                   -> DOMElement
+contactPersonsList contactPersons = let
+  displayContactPerson (_,contactPerson) = B.col (B.mkColProps 12) $ pack $ CP.name contactPerson
+  in B.grid $ B.row $ map displayContactPerson contactPersons
 
 contactPersonForm :: CP.ContactPerson
                   -> C.CompanyId
