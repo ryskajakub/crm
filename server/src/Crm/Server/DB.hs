@@ -428,6 +428,16 @@ expandedMachinesQuery machineId = proc () -> do
     Nothing -> pgBool True )
   returnA -< (machineRow, machineTypesRow)
 
+machineDetailQuery :: Int -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
+machineDetailQuery machineId = let
+  joined = leftJoin 
+    (expandedMachinesQuery $ Just machineId)
+    contactPersonsQuery 
+    (\((machineRow,_), cpRow) -> sel3 machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
+  in proc () -> do
+    ((m,mt), cp) <- joined -< ()
+    returnA -< (m, mt, cp)
+
 machinesInCompanyByUpkeepQuery :: Int -> Query (DBInt, MachinesTable, MachineTypesTable)
 machinesInCompanyByUpkeepQuery upkeepId = let
   companyPKQuery = limit 1 $ proc () -> do
