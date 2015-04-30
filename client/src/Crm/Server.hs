@@ -11,6 +11,7 @@ module Crm.Server (
   updateUpkeep ,
   updateMachine , 
   updateCompany ,
+  updateContactPerson ,
   updateEmployee ,
   updateMachineType , 
 
@@ -315,6 +316,12 @@ updateEmployee employeeId employee callback = ajax
   (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
   put
   (const callback)
+
+updateContactPerson :: CP.ContactPersonId
+                    -> CP.ContactPerson
+                    -> Fay ()
+                    -> Fay ()
+updateContactPerson cpId cp callback = callback
 
 updateCompany :: C.CompanyId
               -> C.Company

@@ -20,7 +20,7 @@ import qualified Crm.Shared.ContactPerson as CP
 
 import Crm.Component.Form (row', saveButtonRow')
 import Crm.Helpers (pageInfo, validationHtml)
-import Crm.Server (createContactPerson)
+import Crm.Server (createContactPerson, updateContactPerson)
 import qualified Crm.Data.Data as D
 
 contactPersonsList :: [(CP.ContactPersonId, CP.ContactPerson)]
@@ -33,25 +33,29 @@ contactPersonForm :: CP.ContactPerson
                   -> Either C.CompanyId CP.ContactPersonId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm contactPerson (Left companyId) appVar = let
+contactPersonForm contactPerson identification appVar = let
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.ContactPersonPage _ companyId' -> D.ContactPersonPage contactPerson' companyId'
+      D.ContactPersonPage _ identification' -> D.ContactPersonPage contactPerson' identification'
       _ -> D.navigation appState })
-
-  pageInfo' = pageInfo "Nová kontaktní osoba" (Nothing :: Maybe DOMElement)
 
   validationMessages = if (length $ CP.name contactPerson) > 0
     then []
     else ["Jméno musí mít alespoň jeden znak."]
   
-  buttonLabel = "Vytvoř"
-  buttonAction = createContactPerson
-    companyId
-    contactPerson
-    (return ())
+  (buttonLabel, header, buttonAction) = case identification of
+    Left companyId -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
+      companyId
+      contactPerson
+      (return ()))
+    Right contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
+      contactPersonId
+      contactPerson
+      (return ()))
+
+  pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
 
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
