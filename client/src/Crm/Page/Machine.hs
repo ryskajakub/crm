@@ -243,7 +243,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Výrobce"
           (MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        formRow "Kontaktní osoba" (let
+        formRowCol "Kontaktní osoba" [let
           noContactPersonLabel = "---"
           selectedEmployeeName = maybe noContactPersonLabel (\cpId -> let
             contactPersonFoundInList = lookup cpId contactPersons
@@ -254,7 +254,9 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           withNoCp = (Nothing, CP.newContactPerson { CP.name = unpack noContactPersonLabel }) : (map (lmap Just) contactPersons)
           selectElements = map (\(cId,c) -> li $ selectCpLink cId c) withNoCp
           buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
-          in BD.buttonDropdown buttonLabel selectElements ) ,
+          in if editing
+            then div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel selectElements
+            else span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedEmployeeName] ,
         row'
           editing
           "Výrobní číslo"
