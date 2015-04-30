@@ -241,7 +241,10 @@ fetchEmployee employeeId callback = JQ.ajax
 fetchContactPerson :: CP.ContactPersonId
                    -> (CP.ContactPerson -> Fay ())
                    -> Fay ()
-fetchContactPerson _ callback = callback $ CP.ContactPerson "pepa" "777" "sklář"
+fetchContactPerson contactPersonId callback = JQ.ajax
+  (apiRoot <> (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId)))
+  callback
+  noopOnError
 
 fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
