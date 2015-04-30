@@ -9,7 +9,7 @@ import Opaleye.Operators ((.==))
 import Opaleye.Table (Table)
 import Opaleye.Column (Column)
 
-import Data.Tuple.All (uncurryN, sel2, sel1)
+import Data.Tuple.All (uncurryN, sel2, sel1, sel3, sel5)
 import Data.Traversable (forM)
 
 import Control.Monad.Reader (ask)
@@ -57,8 +57,14 @@ machineUpdate = mkInputHandler (jsonI . someI) (\(machine) ->
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) (
   ask >>= (\(conn,id') -> maybeId id' (\id'' -> do
-    rows <- liftIO $ runExpandedMachinesQuery (Just id'') conn
-    (machineId, machine, companyId, machineTypeId, machineType) <- singleRowOrColumn rows
+    rows <- liftIO $ runQuery conn (machineDetailQuery id'')
+    row @ (_,_,_) <- singleRowOrColumn rows
+    let 
+      (machineId, machine, companyId, machineTypeId, machineType, contactPersonId) = let
+        m = mapMachine $ sel1 row
+        mt = mapMachineType $ sel2 row
+        cp = mapMaybeContactPerson $ sel3 row
+        in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
     upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
     upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
     today' <- liftIO today
@@ -76,7 +82,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
         x : xs -> (x,xs)
       nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
     return (companyId, machine, machineTypeId, (machineType, 
-      upkeepSequences), dayToYmd $ nextServiceYmd, upkeepsData))))
+      upkeepSequences), dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData))))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO . someO) (const $ do

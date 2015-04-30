@@ -43,6 +43,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  machineDetailQuery ,
   contactPersonsByIdQuery ,
   nextServiceMachinesQuery ,
   nextServiceUpkeepsQuery ,
@@ -58,7 +59,14 @@ module Crm.Server.DB (
   machineManufacturersQuery ,
   -- helpers
   withConnection ,
-  singleRowOrColumn ) where
+  singleRowOrColumn ,
+  -- mappings
+  mapMachine ,
+  mapMachineType ,
+  mapContactPerson ,
+  mapMaybeContactPerson ,
+  mapMaybeEmployee ,
+  mapCompany ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
   Only(..), Binary(..), returning, query_ )
