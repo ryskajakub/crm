@@ -22,11 +22,14 @@ import Crm.Component.Form (row', saveButtonRow')
 import Crm.Helpers (pageInfo, validationHtml)
 import Crm.Server (createContactPerson, updateContactPerson)
 import qualified Crm.Data.Data as D
+import qualified Crm.Router as R
 
-contactPersonsList :: [(CP.ContactPersonId, CP.ContactPerson)]
+contactPersonsList :: R.CrmRouter
+                   -> [(CP.ContactPersonId, CP.ContactPerson)]
                    -> DOMElement
-contactPersonsList contactPersons = let
-  displayContactPerson (_,contactPerson) = B.col (B.mkColProps 12) $ pack $ CP.name contactPerson
+contactPersonsList router contactPersons = let
+  displayContactPerson (cpId,contactPerson) = B.col (B.mkColProps 12) $ 
+    R.link (pack $ CP.name contactPerson) (R.contactPersonEdit cpId) router
   in B.grid $ B.row $ map displayContactPerson contactPersons
 
 contactPersonForm :: CP.ContactPerson

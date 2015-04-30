@@ -68,7 +68,7 @@ main' = do
       D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ newEmployeeForm router employee appVar'
       D.ContactPersonPage contactPerson identification -> 
         emptyCallback $ contactPersonForm contactPerson identification appVar'
-      D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList contactPersons
+      D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList router contactPersons
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
