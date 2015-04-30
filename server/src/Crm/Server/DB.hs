@@ -82,19 +82,20 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 import Control.Monad (liftM, forM)
 import Control.Arrow (returnA)
-import Control.Applicative (liftA3)
+import Control.Applicative (liftA3, (<*>), pure)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p10)
 import Data.Time.Calendar (Day, addDays)
 import Data.Int (Int64)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5)
 import Data.ByteString.Lazy (ByteString)
 import Data.ByteString.Lazy.Char8 (unpack)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
@@ -261,6 +262,29 @@ employeesQuery = queryTable employeesTable
 
 upkeepSequencesQuery :: Query UpkeepSequencesTable
 upkeepSequencesQuery = queryTable upkeepSequencesTable
+
+-- ^ a little boilerplate
+mapCompany :: (Int, String, String, String) -> (Int, C.Company)
+mapCompany tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
+
+mapMachine :: (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) -> (Int, Int, Maybe Int, Int, M.Machine)
+mapMachine tuple = let
+  machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
+  in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
+
+mapContactPerson :: (Int, Int, String, String, String) -> (Int, Int, CP.ContactPerson)
+mapContactPerson tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
+
+mapMaybeContactPerson :: (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) -> (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
+mapMaybeContactPerson tuple = let
+  maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
+  in (sel1 tuple, sel2 tuple, maybeCp)
+
+mapMachineType :: (Int, String, String) -> (Int, MT.MachineType)
+mapMachineType tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) tuple)
+
+mapMaybeEmployee :: (Maybe Int, Maybe String, Maybe String, Maybe String) -> (Maybe Int, Maybe E.Employee)
+mapMaybeEmployee tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
