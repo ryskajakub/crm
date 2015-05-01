@@ -19,7 +19,6 @@ module Crm.Server.DB (
   upkeepSequencesTable ,
   machinePhotosTable ,
   photosMetaTable ,
-  photosTable ,
   contactPersonsTable ,
   -- basic queries
   companiesQuery ,
@@ -78,36 +77,31 @@ module Crm.Server.DB (
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
-  Only(..), Binary(..), returning, query_ )
+  Only(..), Binary(..))
 
 import Opaleye.QueryArr (Query, QueryArr)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column, Nullable)
-import Opaleye.Order (orderBy, asc, limit, desc)
+import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Operators ((.==), (.&&), (.||), restrict, lower, (.<))
-import qualified Opaleye.Operators as OO
+import Opaleye.Operators ((.&&), restrict, lower, (.==))
 import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
-import Opaleye.Manipulation (runUpdate, runInsertReturning, runInsert)
+import Opaleye.Manipulation (runUpdate, runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
 
-import Control.Monad.Reader (ReaderT, ask)
-import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
-import Control.Monad (liftM, forM)
 import Control.Arrow (returnA)
-import Control.Applicative (liftA3, (<*>), pure)
+import Control.Applicative ((<*>), pure)
 
-import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p10)
-import Data.Time.Calendar (Day, addDays)
+import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
+import Data.Time.Calendar (Day)
 import Data.Int (Int64)
 import Data.List (intersperse)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5)
 import Data.ByteString.Lazy (ByteString)
-import Data.ByteString.Lazy.Char8 (unpack)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -116,13 +110,10 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.YearMonthDay as D
 
 import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import Opaleye.PGTypes (literalColumn)
-import Opaleye.Column (Column)
 import qualified Opaleye.Internal.Column as C
 
 type DBInt = Column PGInt4
@@ -164,8 +155,6 @@ type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
 type PhotosMetaTable = (DBInt, DBText, DBText)
 
-type PhotosTable = (DBInt, DBByteA)
-
 type MachinePhotosTable = (DBInt, DBInt)
 
 photosMetaTable :: Table PhotosMetaTable PhotosMetaTable
@@ -178,11 +167,6 @@ machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
   required "photo_id" ,
   required "machine_id" )
-
-photosTable :: Table PhotosTable PhotosTable
-photosTable = Table "photos" $ p2 (
-  required "id" ,
-  required "data" )
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
 companiesTable = Table "companies" $ p4 (
@@ -264,9 +248,6 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
 
 contactPersonsQuery :: Query ContactPersonsTable
 contactPersonsQuery = queryTable contactPersonsTable
-
-photosQuery :: Query PhotosTable
-photosQuery = queryTable photosTable
 
 photosMetaQuery :: Query PhotosMetaTable
 photosMetaQuery = queryTable photosMetaTable
@@ -371,28 +352,6 @@ upkeepSequencesByIdQuery machineTypeId = proc () -> do
   upkeepSequenceRow' <- upkeepSequencesByIdQuery' -< machineTypeId
   returnA -< upkeepSequenceRow'
 
-actualUpkeepRepetitionQuery :: Int -> Query DBInt
-actualUpkeepRepetitionQuery machineTypeId' = let  
-  machineTypeId = pgInt4 machineTypeId'
-  -- find out maximum recorded mileages
-  -- to find out later, if the mileage are enough so the 
-  -- initial upkeep should already passed
-  mileages = proc () -> do
-    (_,_,_,machineTypeFK,_,initialMileage,_,_,_,_) <- machinesQuery -< ()
-    restrict -< machineTypeFK .== machineTypeId
-    (_,_,_,recordedMileage,_) <- upkeepMachinesQuery -< ()
-    returnA -< (recordedMileage, initialMileage)
-  maxMileages = AGG.aggregate (p2 (AGG.max, AGG.max)) mileages
-
-  upkeepsInOneMachineType = proc () -> do
-    (recordedMileage, initialMileage) <- maxMileages -< ()
-    (_,_,repetition,machineTypeFK,oneTime) <- upkeepSequencesQuery -< ()
-    restrict -< machineTypeFK .== machineTypeId
-    restrict -< (OO.not oneTime) .|| (recordedMileage .< repetition .&& initialMileage .< repetition)
-    returnA -< repetition
-  
-  in AGG.aggregate (p1 AGG.min) upkeepsInOneMachineType
-
 runMachineUpdate :: (Int, M.Machine) 
                  -> Connection 
                  -> IO Int64
@@ -428,11 +387,11 @@ runCompanyWithMachinesQuery companyId connection =
 
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
-  query = proc () -> do
+  query' = proc () -> do
     (machinePK,_,_,machineTypeFK,_,_,_,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< (machineTypeFK)
     returnA -< (mt, machinePK)
-  aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query
+  aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query'
   orderedQuery = orderBy (asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
@@ -500,22 +459,6 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     restrict -< (companyFK .== companyPK)
     mt <- join machineTypesQuery -< machineTypeFK
     returnA -< (companyPK, m, mt)
-
-lastClosedMaintenanceQuery :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
-lastClosedMaintenanceQuery machineId = limit 1 $ orderBy (desc(\((_,date,_,_,_,_,_),_) -> date)) $ 
-    proc () -> do
-  upkeepMachineRow @ (upkeepFK,_,_,_,_) <- join upkeepMachinesQuery -< pgInt4 machineId
-  upkeepRow @ (_,_,upkeepClosed,_,_,_,_) <- join upkeepsQuery -< upkeepFK
-  restrict -< pgBool True .== upkeepClosed
-  returnA -< (upkeepRow, upkeepMachineRow)
-
-nextMaintenanceQuery :: Int -> Query (UpkeepsTable)
-nextMaintenanceQuery machineId = limit 1 $ orderBy (asc(\(_,date,_,_,_,_,_) -> date)) $ proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
-  restrict -< (upkeepClosed .== pgBool False)
-  (_,_,machineFK,_,_) <- join upkeepMachinesQuery -< upkeepPK
-  restrict -< pgInt4 machineId .== machineFK
-  returnA -< upkeepRow
 
 expandedUpkeepsQuery2 :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
 expandedUpkeepsQuery2 upkeepId = proc () -> do
@@ -662,15 +605,6 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runLastClosedMaintenanceQuery :: Int -> Connection -> IO[
-  ((Int, Day, Bool, Maybe Int, String, String, String),(Int, String, Int, Int, Bool))]
-runLastClosedMaintenanceQuery machineId connection =
-  runQuery connection (lastClosedMaintenanceQuery machineId)
-
-runNextMaintenanceQuery :: Int -> Connection -> 
-  IO[(Int, Day, Bool, Maybe Int, String, String, String)]
-runNextMaintenanceQuery machineId connection = runQuery connection (nextMaintenanceQuery machineId)
-
 runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String),
   (Int, String, Int, Int, Bool))]
 runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
@@ -715,16 +649,13 @@ addMachinePhoto :: Connection
                 -> Int
                 -> ByteString
                 -> IO [Int]
-addMachinePhoto connection machineId photo = do
+addMachinePhoto connection _ photo = do
   let q = " insert into photos(data) values (?) returning id "
   newIds <- query connection q (Only $ Binary photo)
-  let ints = map (\(Only id) -> id) newIds
+  let ints = map (\(Only id') -> id') newIds
   return ints
   
 data PGByteA
-
-pgByteA :: ByteString -> Column PGByteA
-pgByteA = literalColumn . HPQ.OtherLit . unpack
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
