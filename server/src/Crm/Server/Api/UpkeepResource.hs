@@ -2,10 +2,10 @@ module Crm.Server.Api.UpkeepResource (
   insertUpkeepMachines ,
   upkeepResource ) where
 
-import Opaleye.PGTypes (pgInt4, pgString)
 import Opaleye.Operators ((.==))
 import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
-import Opaleye.PGTypes (pgDay, pgBool)
+import Opaleye.PGTypes (pgDay, pgBool, pgInt4, pgString)
+import Opaleye (runQuery)
 
 import Database.PostgreSQL.Simple (Connection)
 
@@ -88,7 +88,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runExpandedUpkeepsQuery conn
+  rows <- ask >>= \conn -> liftIO $ runQuery conn expandedUpkeepsQuery
   return $ mapUpkeeps rows) 
 
 upkeepsPlannedListing :: ListHandler Dependencies

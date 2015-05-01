@@ -40,12 +40,12 @@ module Crm.Server.DB (
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
   runMachineTypesQuery' ,
-  runExpandedUpkeepsQuery ,
   runPlannedUpkeepsQuery ,
   runSingleUpkeepQuery ,
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  expandedUpkeepsQuery ,
   companyByIdQuery ,
   machineDetailQuery ,
   contactPersonsByIdQuery ,
@@ -595,10 +595,6 @@ runExpandedMachinesQuery machineId connection = do
 
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
-
-runExpandedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String),
-  (Int, String, Int, Int, Bool))]
-runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 
 runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
