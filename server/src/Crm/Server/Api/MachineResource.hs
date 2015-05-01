@@ -62,9 +62,9 @@ machineSingle = mkConstHandler (jsonO . someO) (
     row @ (_,_,_) <- singleRowOrColumn rows
     let 
       (machineId, machine, companyId, machineTypeId, machineType, contactPersonId) = let
-        m = convert $ sel1 row :: (Int, Int, Maybe Int, Int, M.Machine)
-        mt = mapMachineType $ sel2 row
-        cp = mapMaybeContactPerson $ sel3 row
+        m = convert $ sel1 row :: MachineMapped
+        mt = convert $ sel2 row :: MachineTypeMapped
+        cp = convert $ sel3 row :: MaybeContactPersonMapped
         in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
     upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
     upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)

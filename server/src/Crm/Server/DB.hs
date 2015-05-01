@@ -67,12 +67,14 @@ module Crm.Server.DB (
   withConnection ,
   singleRowOrColumn ,
   -- mappings
-  mapMachineType ,
-  mapContactPerson ,
-  mapMaybeContactPerson ,
-  mapMaybeEmployee ,
   ColumnToRecordDeep ,
-  convert ) where
+  convert ,
+  MaybeContactPersonMapped ,
+  MachineTypeMapped ,
+  ContactPersonMapped ,
+  CompanyMapped ,
+  MaybeEmployeeMapped ,
+  MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
   Only(..), Binary(..), returning, query_ )
@@ -306,6 +308,10 @@ class ColumnToRecord column record | record -> column where
 
 type MachineMapped = (Int, Int, Maybe Int, Int, M.Machine)
 type CompanyMapped = (Int, C.Company)
+type MachineTypeMapped = (Int, MT.MachineType)
+type ContactPersonMapped = (Int, Int, CP.ContactPerson)
+type MaybeContactPersonMapped = (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
+type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -315,21 +321,16 @@ instance ColumnToRecord
   convert tuple = let
     machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
     in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
-
--- ^ a little boilerplate
-mapContactPerson :: (Int, Int, String, String, String) -> (Int, Int, CP.ContactPerson)
-mapContactPerson tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
-
-mapMaybeContactPerson :: (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) -> (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
-mapMaybeContactPerson tuple = let
-  maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
-  in (sel1 tuple, sel2 tuple, maybeCp)
-
-mapMachineType :: (Int, Int, String, String) -> (Int, MT.MachineType)
-mapMachineType tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) tuple)
-
-mapMaybeEmployee :: (Maybe Int, Maybe String, Maybe String, Maybe String) -> (Maybe Int, Maybe E.Employee)
-mapMaybeEmployee tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
+instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
+  convert tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) tuple)
+instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
+  convert tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
+instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where
+  convert tuple = let
+    maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
+    in (sel1 tuple, sel2 tuple, maybeCp)
+instance ColumnToRecord (Maybe Int, Maybe String, Maybe String, Maybe String) MaybeEmployeeMapped where
+  convert tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
@@ -633,8 +634,8 @@ runMachinesInCompanyQuery companyId connection = do
   let 
     mapRow (mCols,mtCols,cpCols) = let
       (m1,m2,m3,m4,m5) = convert mCols :: MachineMapped
-      machineType = mapMachineType mtCols
-      contactPerson = mapMaybeContactPerson cpCols
+      machineType = convert mtCols :: MachineTypeMapped
+      contactPerson = convert cpCols :: MaybeContactPersonMapped
       in (m1, m5 :: M.Machine, m2, sel1 machineType, sel2 machineType, sel3 contactPerson)
   return $ fmap mapRow rows
 
@@ -642,7 +643,7 @@ convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, Str
                     (Int, Int, String, String))
                  -> (Int, M.Machine, Int, Int, MT.MachineType)
 convertExpanded2 = (\((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),mtResult) -> let
-  (mtId, mt) = mapMachineType mtResult
+  (mtId, mt) = convert mtResult :: MachineTypeMapped
   in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, mt))
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 

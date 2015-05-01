@@ -49,7 +49,7 @@ machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
     mapRow :: ((Int,Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
-    mapRow (mtRow, count) = (mapMachineType mtRow, fromIntegral count)
+    mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
     mappedRows = map mapRow rows
   return mappedRows )
 
@@ -80,7 +80,7 @@ machineTypesSingle = mkConstHandler (jsonO . someO) (do
   rows <- result
   case rows of
     x:xs | null xs -> do 
-      let mt = mapMachineType x
+      let mt = convert x :: MachineTypeMapped
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ sel1 mt)
       return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences upkeepSequences)
     [] -> onEmptyResult

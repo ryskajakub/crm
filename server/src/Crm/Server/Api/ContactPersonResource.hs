@@ -33,7 +33,7 @@ getHandler = mkConstHandler (jsonO . someO) $ do
   maybeId maybeInt (\theId -> do
     rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
     row <- singleRowOrColumn rows
-    return $ sel3 $ mapContactPerson row)
+    return $ sel3 $ (convert row :: ContactPersonMapped))
 
 updateHandler :: Handler IdDependencies
 updateHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\contactPerson -> do

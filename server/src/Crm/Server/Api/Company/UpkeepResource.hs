@@ -46,7 +46,7 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
             toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
         (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
           mtDbRow,machineId,_) -> let
-          machineType' = sel2 $ mapMachineType mtDbRow
+          machineType' = sel2 $ (convert mtDbRow :: MachineTypeMapped )
           in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
         rows
     return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
