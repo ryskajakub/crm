@@ -44,6 +44,7 @@ import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMet
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
 import qualified Crm.Router as R
+import Crm.Page.MachineKind (compressorExtraRows, dryerExtraRows)
 
 machineDetail :: Bool
               -> Var D.AppState
@@ -229,6 +230,13 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
+  machineKind = MT.machineTypeType machineType
+  machineSpecificRows = if 0 == machineKind 
+    then compressorExtraRows
+    else if 1 == machineKind
+    then dryerExtraRows
+    else undefined
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -308,7 +316,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
-            M.note = str } ) <=< eventString) editing False) ] ++ extraRows ++ [
+            M.note = str } ) <=< eventString) editing False)] ++ machineSpecificRows ++ extraRows ++ [
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
