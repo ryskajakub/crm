@@ -9,6 +9,7 @@ import Opaleye.Manipulation (runUpdate, runDelete)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Table (Table)
 import Opaleye.Column (Column)
+import Opaleye (queryTable)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -59,10 +60,10 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
         GT -> LT
         EQ -> EQ
   conn <- ask 
-  rows <- liftIO $ runCompaniesQuery conn
+  rows <- liftIO $ runQuery conn (queryTable companiesTable)
   unsortedResult <- liftIO $ forM rows (\companyRow -> do
-    let companyId = sel1 companyRow
-    machines <- runMachinesInCompanyQuery companyId conn
+    let companyRecord = convert companyRow :: CompanyMapped
+    machines <- runMachinesInCompanyQuery (sel1 companyRecord) conn
     nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
@@ -75,7 +76,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
           x : xs -> (x, xs)
         nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps today'
       return $ dayToYmd nextServiceDay)
-    return $ (companyId, (uncurryN $ const C.Company) companyRow, toMyMaybe $ minimumMay nextDays))
+    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->

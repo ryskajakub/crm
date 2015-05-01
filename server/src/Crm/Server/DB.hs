@@ -38,7 +38,6 @@ module Crm.Server.DB (
   runMachineUpdate ,
   -- runs
   runExpandedMachinesQuery ,
-  runCompaniesQuery ,
   runMachinesInCompanyQuery ,
   runCompanyWithMachinesQuery ,
   runMachineTypesQuery' ,
@@ -567,9 +566,6 @@ machinesInUpkeepQuery :: Int -> Query UpkeepMachinesTable
 machinesInUpkeepQuery upkeepId = proc () -> do
   upkeepMachine <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< (upkeepMachine)
-
-runCompaniesQuery :: Connection -> IO [(Int, String, String, String)]
-runCompaniesQuery connection = runQuery connection companiesQuery
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO[(Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)]
