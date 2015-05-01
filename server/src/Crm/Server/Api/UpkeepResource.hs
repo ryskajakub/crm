@@ -107,7 +107,7 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [
 upkeepCompanyMachines :: Handler IdDependencies
 upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, maybeUpkeepId) -> maybeId maybeUpkeepId (\upkeepId -> do
-    upkeeps <- liftIO $ fmap mapUpkeeps (runSingleUpkeepQuery conn upkeepId)
+    upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepId)
     upkeep <- singleRowOrColumn upkeeps
     machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
     companyId <- case machines of

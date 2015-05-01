@@ -55,7 +55,7 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $
 getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler (jsonO . someO) ( do
   rows <- ask >>= \(conn, upkeepId') -> maybeId upkeepId' (\upkeepId ->
-    liftIO $ runSingleUpkeepQuery conn upkeepId)
+    liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId)
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
 

@@ -127,6 +127,7 @@ instance Ord YMD.YearMonthDay where
 
 mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
 
+-- todo rather do two queries
 mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
            -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
 mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId,workHours,

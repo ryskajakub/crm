@@ -40,10 +40,10 @@ module Crm.Server.DB (
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
   runMachineTypesQuery' ,
-  runSingleUpkeepQuery ,
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
   companyByIdQuery ,
@@ -609,13 +609,6 @@ runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machi
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
-
-runSingleUpkeepQuery :: Connection 
-                     -> Int -- ^ upkeep id
-                     -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
-                          (Int, String, Int, Int, Bool))]
-runSingleUpkeepQuery connection upkeepId = do
-  runQuery connection (expandedUpkeepsQuery2 upkeepId)
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
