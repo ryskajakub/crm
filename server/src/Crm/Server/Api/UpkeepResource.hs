@@ -14,7 +14,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad (forM_)
 
-import Data.Tuple.All (sel1, uncurryN)
+import Data.Tuple.All (sel1, uncurryN, sel2, sel3)
 
 import Rest.Types.Error (Reason(NotAllowed))
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
@@ -93,12 +93,11 @@ upkeepListing = mkListing (jsonO . someO) (const $ do
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing (jsonO . someO) (const $ do
-  rows <- ask >>= \conn -> liftIO $ runPlannedUpkeepsQuery conn
-  let 
-    mappedRows = map (\((uPK,u2,u3,_,u4,u5,u6),companyRow) ->
-      (uPK, U.Upkeep (dayToYmd u2) u3 u4 u5 u6, sel1 companyRow, 
-        (uncurryN $ const C.Company) companyRow)) rows
-  return mappedRows )
+  conn <- ask
+  rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
+  return $ map (\row -> let
+    (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
+    in (sel1 u, sel3 u, sel1 c, sel2 c)) rows)
 
 upkeepSchema :: S.Schema UrlId UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [

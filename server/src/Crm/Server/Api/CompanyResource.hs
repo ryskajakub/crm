@@ -94,10 +94,10 @@ singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, id') -> maybeId id' (\companyId -> do
     rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
-    company <- singleRowOrColumn rows
+    companyRow <- singleRowOrColumn rows
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
     let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines
-    return ((uncurryN (const C.Company)) company, machinesMyMaybe)))
+    return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe)))
 
 updateCompany :: Handler IdDependencies
 updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->

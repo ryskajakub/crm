@@ -40,11 +40,11 @@ module Crm.Server.DB (
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
   runMachineTypesQuery' ,
-  runPlannedUpkeepsQuery ,
   runSingleUpkeepQuery ,
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
   companyByIdQuery ,
   machineDetailQuery ,
@@ -68,10 +68,12 @@ module Crm.Server.DB (
   -- mappings
   ColumnToRecordDeep ,
   convert ,
+  convertDeep ,
   MaybeContactPersonMapped ,
   MachineTypeMapped ,
   ContactPersonMapped ,
   CompanyMapped ,
+  UpkeepMapped ,
   MaybeEmployeeMapped ,
   MachineMapped ) where
 
@@ -109,6 +111,7 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.Upkeep as U
 
 import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeToNullable)
 
@@ -293,6 +296,7 @@ type MachineTypeMapped = (Int, MT.MachineType)
 type ContactPersonMapped = (Int, Int, CP.ContactPerson)
 type MaybeContactPersonMapped = (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
 type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
+type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -312,6 +316,12 @@ instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe
     in (sel1 tuple, sel2 tuple, maybeCp)
 instance ColumnToRecord (Maybe Int, Maybe String, Maybe String, Maybe String) MaybeEmployeeMapped where
   convert tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
+instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) UpkeepMapped where
+  convert tuple = let
+    (_,a,b,_,c,d,e) = tuple
+    in (sel1 tuple, sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
+instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
+  convert rows = fmap convert rows
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
@@ -530,19 +540,18 @@ singleEmployeeQuery employeeId = proc () -> do
   employeeRow <- join employeesQuery -< (pgInt4 employeeId)
   returnA -< employeeRow
 
-plannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
-plannedUpkeepsQuery = proc () -> do
-  upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
-  restrict -< upkeepClosed .== pgBool False
-  (_,_,machineFK,_,_) <- join upkeepMachinesQuery -< upkeepPK
-  (_,companyFK,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
-  companyRow <- join companiesQuery -< companyFK
-  returnA -< (upkeepRow, companyRow)
-
 groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
-groupedPlannedUpkeepsQuery = orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
-  AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
-    p4(AGG.min, AGG.min, AGG.min, AGG.min))) (plannedUpkeepsQuery)
+groupedPlannedUpkeepsQuery = let
+  plannedUpkeepsQuery = proc () -> do
+    upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
+    restrict -< upkeepClosed .== pgBool False
+    (_,_,machineFK,_,_) <- join upkeepMachinesQuery -< upkeepPK
+    (_,companyFK,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
+    companyRow <- join companiesQuery -< companyFK
+    returnA -< (upkeepRow, companyRow)
+  in orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
+    AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
+      p4(AGG.min, AGG.min, AGG.min, AGG.min))) plannedUpkeepsQuery
 
 singleContactPersonQuery :: Int -> Query ContactPersonsTable
 singleContactPersonQuery contactPersonId = proc () -> do
@@ -600,10 +609,6 @@ runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machi
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
-
-runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
-  (Int, String, String, String))]
-runPlannedUpkeepsQuery connection = runQuery connection groupedPlannedUpkeepsQuery
 
 runSingleUpkeepQuery :: Connection 
                      -> Int -- ^ upkeep id
