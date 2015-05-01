@@ -67,12 +67,12 @@ module Crm.Server.DB (
   withConnection ,
   singleRowOrColumn ,
   -- mappings
-  mapMachine ,
   mapMachineType ,
   mapContactPerson ,
   mapMaybeContactPerson ,
   mapMaybeEmployee ,
-  mapCompany ) where
+  ColumnToRecordDeep ,
+  convert ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
   Only(..), Binary(..), returning, query_ )
@@ -297,7 +297,8 @@ class ColumnToRecordDeep tupleIn tupleOut | tupleIn -> tupleOut where
 
 instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2) => ColumnToRecordDeep (c1,c2) (r1,r2) where
   convertDeep (c1, c2) = (convert c1, convert c2)
-instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) => ColumnToRecordDeep (c1,c2,c3) (r1,r2,r3) where
+instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) => 
+    ColumnToRecordDeep (c1,c2,c3) (r1,r2,r3) where
   convertDeep (c1, c2, c3) = (convert c1, convert c2, convert c3)
 
 class ColumnToRecord column record | record -> column where
@@ -305,16 +306,14 @@ class ColumnToRecord column record | record -> column where
 
 instance ColumnToRecord (Int, String, String, String) (Int, C.Company) where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
+instance ColumnToRecord 
+    (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
+    (Int, Int, Maybe Int, Int, M.Machine) where
+  convert tuple = let
+    machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
+    in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
 
 -- ^ a little boilerplate
-mapCompany :: (Int, String, String, String) -> (Int, C.Company)
-mapCompany tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
-
-mapMachine :: (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) -> (Int, Int, Maybe Int, Int, M.Machine)
-mapMachine tuple = let
-  machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
-  in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
-
 mapContactPerson :: (Int, Int, String, String, String) -> (Int, Int, CP.ContactPerson)
 mapContactPerson tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
 
@@ -432,17 +431,20 @@ machineTypesWithCountQuery = let
   orderedQuery = orderBy (asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
-machinesInCompanyQuery :: Int -> Query ((MachinesTable, MachineTypesTable), ContactPersonsLeftJoinTable)
+machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
 machinesInCompanyQuery companyId = let
   machinesQ = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
     m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< machineTypeFK
     restrict -< (pgInt4 companyId .== companyFK)
     returnA -< (m, mt)
-  in leftJoin 
+  joined = leftJoin 
     machinesQ 
     contactPersonsQuery 
     (\((machineRow,_), cpRow) -> sel3 machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
+  in proc () -> do
+    ((a,b),c) <- joined -< ()
+    returnA -< (a,b,c)
 
 companyUpkeepsQuery :: Int -> Query (UpkeepsTable, EmployeeLeftJoinTable)
 companyUpkeepsQuery companyId = let 
@@ -626,8 +628,8 @@ runMachinesInCompanyQuery :: Int -> Connection ->
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runQuery connection (machinesInCompanyQuery companyId))
   let 
-    mapRow ((mCols,mtCols),cpCols) = let
-      machine = mapMachine mCols
+    mapRow (mCols,mtCols,cpCols) = let
+      machine = convert mCols :: (Int, Int, Maybe Int, Int, M.Machine)
       machineType = mapMachineType mtCols
       contactPerson = mapMaybeContactPerson cpCols
       in (sel1 machine, sel5 machine, sel2 machine, sel1 machineType, sel2 machineType, sel3 contactPerson)

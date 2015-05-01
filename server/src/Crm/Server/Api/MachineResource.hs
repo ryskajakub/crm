@@ -26,6 +26,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.Machine as M
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences, dayToYmd, today,
@@ -61,7 +62,7 @@ machineSingle = mkConstHandler (jsonO . someO) (
     row @ (_,_,_) <- singleRowOrColumn rows
     let 
       (machineId, machine, companyId, machineTypeId, machineType, contactPersonId) = let
-        m = mapMachine $ sel1 row
+        m = convert $ sel1 row :: (Int, Int, Maybe Int, Int, M.Machine)
         mt = mapMachineType $ sel2 row
         cp = mapMaybeContactPerson $ sel3 row
         in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
