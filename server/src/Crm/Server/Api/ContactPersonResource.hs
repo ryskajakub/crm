@@ -18,7 +18,7 @@ import qualified Crm.Shared.ContactPerson as CP
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
+import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay')
 
 resource :: Resource Dependencies IdDependencies UrlId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
@@ -28,18 +28,14 @@ resource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just getHandler }
 
 getHandler :: Handler IdDependencies
-getHandler = mkConstHandler (jsonO . someO) $ do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> do
-    rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
-    row <- singleRowOrColumn rows
-    return $ sel3 $ (convert row :: ContactPersonMapped))
+getHandler = mkConstHandler (jsonO . someO) $ withConnId (\connection theId -> do
+  rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
+  row <- singleRowOrColumn rows
+  return $ sel3 $ (convert row :: ContactPersonMapped))
 
 updateHandler :: Handler IdDependencies
-updateHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\contactPerson -> do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> liftIO $ let
-    readToWrite row = (Nothing, sel2 row, pgString $ CP.name contactPerson,
-      pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
-    condition row = sel1 row .== pgInt4 theId
-    in runUpdate connection contactPersonsTable readToWrite condition))
+updateHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\contactPerson -> withConnId (\conn theId -> liftIO $ let
+  readToWrite row = (Nothing, sel2 row, pgString $ CP.name contactPerson ,
+    pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
+  condition row = sel1 row .== pgInt4 theId
+  in runUpdate conn contactPersonsTable readToWrite condition))

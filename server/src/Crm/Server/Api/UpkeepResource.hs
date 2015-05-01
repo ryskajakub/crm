@@ -28,8 +28,8 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, mapUpkeeps, ymdToDay,
-  maybeToNullable, deleteRows)
+import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', 
+  dayToYmd, mapUpkeeps, ymdToDay, maybeToNullable, deleteRows)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -67,7 +67,7 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
 updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(upkeep,machines,employeeId) -> let 
   upkeepTriple = (upkeep, machines, toMaybe employeeId)
-  in ask >>= \(connection, maybeInt) -> maybeId maybeInt (\upkeepId ->
+  in withConnId (\connection upkeepId ->
     liftIO $ updateUpkeep connection upkeepId upkeepTriple))
 
 updateUpkeep :: Connection
@@ -105,12 +105,11 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [
   (A.single, S.singleBy readMay')])
     
 upkeepCompanyMachines :: Handler IdDependencies
-upkeepCompanyMachines = mkConstHandler (jsonO . someO) (
-  ask >>= \(conn, maybeUpkeepId) -> maybeId maybeUpkeepId (\upkeepId -> do
+upkeepCompanyMachines = mkConstHandler (jsonO . someO) $ withConnId (\conn upkeepId -> do
     upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepId)
     upkeep <- singleRowOrColumn upkeeps
     machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
     companyId <- case machines of
       [] -> throwError NotAllowed
       (companyId',_) : _ -> return companyId'
-    return (companyId, (\(a,b,c) -> (a,toMyMaybe b,c)) (snd upkeep), map snd machines)))
+    return (companyId, (\(a,b,c) -> (a,toMyMaybe b,c)) (snd upkeep), map snd machines))

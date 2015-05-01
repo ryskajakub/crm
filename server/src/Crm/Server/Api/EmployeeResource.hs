@@ -21,7 +21,7 @@ import qualified Crm.Shared.Employee as E
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
+import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay')
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -33,22 +33,18 @@ employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   create = Just createEmployeeHandler }
 
 getEmployeeHandler :: Handler IdDependencies
-getEmployeeHandler = mkConstHandler (jsonO . someO) $ do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> do
-    rows <- liftIO $ runQuery connection (singleEmployeeQuery theId)
-    let r' = rows :: [(Int, String, String, String)]
-    let result = fmap (\(employeeFields) -> (uncurryN (const E.Employee)) employeeFields) rows
-    singleRowOrColumn result)
+getEmployeeHandler = mkConstHandler (jsonO . someO) $ withConnId (\connection theId -> do
+  rows <- liftIO $ runQuery connection (singleEmployeeQuery theId)
+  let r' = rows :: [(Int, String, String, String)]
+  let result = fmap (\(employeeFields) -> (uncurryN (const E.Employee)) employeeFields) rows
+  singleRowOrColumn result)
 
 updateEmployeeHandler :: Handler IdDependencies
-updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> liftIO $ let
-    readToWrite = const (Nothing, pgString $ E.name employee, 
-      pgString $ E.contact employee, pgString $ E.capabilities employee)
-    condition employeeRow = sel1 employeeRow .== pgInt4 theId
-    in runUpdate connection employeesTable readToWrite condition))
+updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> (\connection theId -> liftIO $ let
+  readToWrite = const (Nothing, pgString $ E.name employee, 
+    pgString $ E.contact employee, pgString $ E.capabilities employee)
+  condition employeeRow = sel1 employeeRow .== pgInt4 theId
+  in runUpdate connection employeesTable readToWrite condition))
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newEmployee -> do

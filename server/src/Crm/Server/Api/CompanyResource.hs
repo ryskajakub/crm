@@ -33,7 +33,7 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today, deleteRows, withConnId)
+import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows, withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -100,7 +100,7 @@ singleCompany = mkConstHandler (jsonO . someO) $ withConnId (\conn companyId -> 
 
 updateCompany :: Handler IdDependencies
 updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
-  ask >>= \(conn, companyId') -> maybeId companyId' (\companyId -> do
+  withConnId (\conn companyId -> do
     let
       readToWrite = const (Nothing, pgString $ C.companyName company, 
         pgString $ C.companyPlant company, pgString $ C.companyAddress company)
