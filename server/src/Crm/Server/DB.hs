@@ -304,11 +304,14 @@ instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) =>
 class ColumnToRecord column record | record -> column where
   convert :: column -> record
 
-instance ColumnToRecord (Int, String, String, String) (Int, C.Company) where
+type MachineMapped = (Int, Int, Maybe Int, Int, M.Machine)
+type CompanyMapped = (Int, C.Company)
+
+instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
 instance ColumnToRecord 
     (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
-    (Int, Int, Maybe Int, Int, M.Machine) where
+    MachineMapped where
   convert tuple = let
     machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
     in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
@@ -629,10 +632,10 @@ runMachinesInCompanyQuery companyId connection = do
   rows <- (runQuery connection (machinesInCompanyQuery companyId))
   let 
     mapRow (mCols,mtCols,cpCols) = let
-      machine = convert mCols :: (Int, Int, Maybe Int, Int, M.Machine)
+      (m1,m2,m3,m4,m5) = convert mCols :: MachineMapped
       machineType = mapMachineType mtCols
       contactPerson = mapMaybeContactPerson cpCols
-      in (sel1 machine, sel5 machine, sel2 machine, sel1 machineType, sel2 machineType, sel3 contactPerson)
+      in (m1, m5 :: M.Machine, m2, sel1 machineType, sel2 machineType, sel3 contactPerson)
   return $ fmap mapRow rows
 
 convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
