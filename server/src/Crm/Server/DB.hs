@@ -1,6 +1,11 @@
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Crm.Server.DB (
   -- tables
@@ -286,6 +291,20 @@ employeesQuery = queryTable employeesTable
 
 upkeepSequencesQuery :: Query UpkeepSequencesTable
 upkeepSequencesQuery = queryTable upkeepSequencesTable
+
+class ColumnToRecordDeep tupleIn tupleOut | tupleIn -> tupleOut where
+  convertDeep :: tupleIn -> tupleOut
+
+instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2) => ColumnToRecordDeep (c1,c2) (r1,r2) where
+  convertDeep (c1, c2) = (convert c1, convert c2)
+instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) => ColumnToRecordDeep (c1,c2,c3) (r1,r2,r3) where
+  convertDeep (c1, c2, c3) = (convert c1, convert c2, convert c3)
+
+class ColumnToRecord column record | record -> column where
+  convert :: column -> record
+
+instance ColumnToRecord (Int, String, String, String) (Int, C.Company) where
+  convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
 
 -- ^ a little boilerplate
 mapCompany :: (Int, String, String, String) -> (Int, C.Company)
