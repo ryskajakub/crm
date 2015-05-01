@@ -12,13 +12,15 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isJust)
+import "fay-base" Data.Maybe (isJust, fromJust)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as II
 import qualified HaskellReact.Bootstrap.Alert as A
+import qualified HaskellReact.Tag.Hyperlink as AA
+import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
@@ -202,12 +204,26 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
+  typeTypeSelect = let
+    buttonLabel = [
+      text2DOM $ pack $ fromJust $ lookup (MT.machineTypeType machineType) MT.machineKinds, 
+      text2DOM " ", 
+      span' (class' "caret") "" ]
+    mkLink (kindId, kindLabel) = let
+      selectAction = setMachineType (machineType { MT.machineTypeType = kindId })
+      in li $ AA.a''' (click selectAction) (pack kindLabel)
+    selectElements = map mkLink MT.machineKinds
+    in BD.buttonDropdown buttonLabel selectElements
+
   result =
     (B.grid $ B.row $
       case machineTypeFormType of
         Edit -> editInfo
         Phase1 -> phase1PageInfo) :
     (form' (class'' ["form-horizontal", "upkeep-sequence-form", "container"]) ([
+      formRow
+        "Druh"
+        typeTypeSelect ,
       formRow
         "Typ zařízení"
         typeInputField ,
@@ -269,7 +285,7 @@ machineTypesList router machineTypes = let
     tr [
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
-      td $ showInt count ]) machineTypes
+      td $ showInt count]) machineTypes
   alertInfo = text2DOM "Tady edituješ typ kompresoru - který je společný pro více kompresorů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech kompresorů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u kompresorů a zařízení, tak se ty díly budou přidávat tady." : []
   in B.grid $ B.row $ 
     (pageInfo "Editace typů kompresoru" $ Just alertInfo) ++ [

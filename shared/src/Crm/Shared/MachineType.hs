@@ -37,3 +37,6 @@ data MyEither =
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+machineKinds :: [(Int, String)]
+machineKinds = [(0, "Kompresor"), (1, "Sušička")]
