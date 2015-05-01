@@ -602,25 +602,17 @@ machinesInUpkeepQuery upkeepId = proc () -> do
 runCompaniesQuery :: Connection -> IO [(Int, String, String, String)]
 runCompaniesQuery connection = runQuery connection companiesQuery
 
-runMachinesInCompanyQuery' :: Int -> Connection ->
-  IO[(((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) ,
-      (Int, Int, String, String)) ,
-      (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String))]
-runMachinesInCompanyQuery' companyId connection =
-  runQuery connection (machinesInCompanyQuery companyId)
-
-runMachinesInCompanyQuery :: Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)]
+runMachinesInCompanyQuery :: Int -> Connection -> 
+  IO[(Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)]
 runMachinesInCompanyQuery companyId connection = do
-  rows <- (runMachinesInCompanyQuery' companyId connection)
-  return $ map convertExpanded rows
-
-convertExpanded :: (((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
-                   (Int, Int, String, String)), (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String))
-                -> (Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)
-convertExpanded = (\(((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),mtResult),(_,_,cpN,cpP,cpPos)) -> let
-  (mtId, mt) = mapMachineType mtResult
-  companyPerson = liftA3 CP.ContactPerson cpN cpP cpPos
-  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, mt, companyPerson))
+  rows <- (runQuery connection (machinesInCompanyQuery companyId))
+  let 
+    mapRow ((mCols,mtCols),cpCols) = let
+      machine = mapMachine mCols
+      machineType = mapMachineType mtCols
+      contactPerson = mapMaybeContactPerson cpCols
+      in (sel1 machine, sel5 machine, sel2 machine, sel1 machineType, sel2 machineType, sel3 contactPerson)
+  return $ fmap mapRow rows
 
 convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
                     (Int, Int, String, String))
