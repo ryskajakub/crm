@@ -22,22 +22,22 @@ import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
 
-import Crm.Server.Helpers (maybeId, ymdToDay, maybeToNullable)
+import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 
 createContactPersonHandler :: Handler IdDependencies
-createContactPersonHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(contactPerson) ->
-  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> liftIO $ do
-    contactPersonIds <- runInsertReturning
-      connection
-      contactPersonsTable
-      (Nothing, pgInt4 companyId, pgString $ CP.name contactPerson,
-        pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
-      sel1
-    let contactPersonId = head contactPersonIds
-    return (contactPersonId :: Int)))
+createContactPersonHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\contactPerson -> 
+    withConnId (\connection companyId -> liftIO $ do
+  contactPersonIds <- runInsertReturning
+    connection
+    contactPersonsTable
+    (Nothing, pgInt4 companyId, pgString $ CP.name contactPerson,
+      pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
+    sel1
+  let contactPersonId = head contactPersonIds
+  return (contactPersonId :: Int)))
 
 contactPersonResource :: Resource IdDependencies IdDependencies Void () Void
 contactPersonResource = mkResourceId {
@@ -47,9 +47,7 @@ contactPersonResource = mkResourceId {
   create = Just createContactPersonHandler }
 
 listing :: ListHandler IdDependencies 
-listing = mkListing (jsonO . someO) (const $ do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> do
-    rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
-    let rowsMapped = map (\(cpId,_::Int,a,b,c) -> (cpId :: Int, CP.ContactPerson a b c)) rawRows 
-    return rowsMapped))
+listing = mkListing (jsonO . someO) (const $ withConnId (\connection theId -> do
+  rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
+  let rowsMapped = map (\(cpId,_::Int,a,b,c) -> (cpId :: Int, CP.ContactPerson a b c)) rawRows 
+  return rowsMapped))

@@ -40,7 +40,7 @@ getEmployeeHandler = mkConstHandler (jsonO . someO) $ withConnId (\connection th
   singleRowOrColumn result)
 
 updateEmployeeHandler :: Handler IdDependencies
-updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> (\connection theId -> liftIO $ let
+updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> withConnId (\connection theId -> liftIO $ let
   readToWrite = const (Nothing, pgString $ E.name employee, 
     pgString $ E.contact employee, pgString $ E.capabilities employee)
   condition employeeRow = sel1 employeeRow .== pgInt4 theId

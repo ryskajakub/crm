@@ -28,34 +28,32 @@ import qualified Crm.Shared.MachineType as MT
 import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
-import Crm.Server.Helpers (maybeId, ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay',
-  maybeToNullable, mapResultsToList)
+import Crm.Server.Helpers (ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay',
+  maybeToNullable, mapResultsToList, withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 
 companyUpkeepsListing :: ListHandler IdDependencies
-companyUpkeepsListing = mkListing (jsonO . someO) (const $
-  ask >>= \(conn,id') -> maybeId id' (\id'' -> do
-    rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
-    let 
-      mappedResults = mapResultsToList 
-        sel1
-        (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName, eC, eCap)) -> 
-          (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
-            toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
-        (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
-          mtDbRow,machineId,_) -> let
-          machineType' = sel2 $ (convert mtDbRow :: MachineTypeMapped )
-          in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
-        rows
-    return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
-      (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
+companyUpkeepsListing = mkListing (jsonO . someO) (const $ withConnId (\conn id'' -> do
+  rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
+  let 
+    mappedResults = mapResultsToList 
+      sel1
+      (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName, eC, eCap)) -> 
+        (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
+          toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
+      (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
+        mtDbRow,machineId,_) -> let
+        machineType' = sel2 $ (convert mtDbRow :: MachineTypeMapped )
+        in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
+      rows
+  return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
+    (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
 
 getUpkeep :: Handler IdDependencies
-getUpkeep = mkConstHandler (jsonO . someO) ( do
-  rows <- ask >>= \(conn, upkeepId') -> maybeId upkeepId' (\upkeepId ->
-    liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId)
+getUpkeep = mkConstHandler (jsonO . someO) $ withConnId (\conn upkeepId -> do
+  rows <- liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
 
@@ -78,9 +76,9 @@ createUpkeepHandler :: Handler IdDependencies
 createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep -> let 
   (_,_,selectedEmployeeId) = newUpkeep
   newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
-  in ask >>= \(connection, maybeInt) -> maybeId maybeInt (
+  in withConnId (\connection _ ->
     -- todo check that the machines are belonging to this company
-    const $ liftIO $ addUpkeep connection newUpkeep'))
+    liftIO $ addUpkeep connection newUpkeep'))
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {

@@ -17,7 +17,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Server.Types
 import Crm.Server.DB (addMachinePhoto, singleRowOrColumn, machinePhotosByMachineId, machinePhotosTable)
-import Crm.Server.Helpers (maybeId, readMay')
+import Crm.Server.Helpers (withConnId, readMay')
 import Crm.Server.Boilerplate ()
 
 photoResource :: Resource IdDependencies IdDependencies UrlId () Void
@@ -28,16 +28,13 @@ photoResource = mkResourceId {
   list = const listPhotoHandler }
 
 addPhotoHandler :: Handler IdDependencies
-addPhotoHandler = mkInputHandler (fileI . someI . jsonO . someO) (\photo -> do 
-  (connection, maybeMachineIdInt) <- ask
-  maybeId maybeMachineIdInt (\machineId -> do
-    newPhotoIds <- liftIO $ addMachinePhoto connection machineId photo
-    newPhotoId <- singleRowOrColumn newPhotoIds
-    _ <- liftIO $ runInsert connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineId) 
-    return newPhotoId))
+addPhotoHandler = mkInputHandler (fileI . someI . jsonO . someO) (\photo -> withConnId (\connection machineId -> do 
+  newPhotoIds <- liftIO $ addMachinePhoto connection machineId photo
+  newPhotoId <- singleRowOrColumn newPhotoIds
+  _ <- liftIO $ runInsert connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineId) 
+  return newPhotoId))
 
 listPhotoHandler :: ListHandler IdDependencies
-listPhotoHandler = mkListing (jsonO . someO) (const $ do 
-  rows <- ask >>= (\(conn, machineId') -> maybeId machineId' (\machineId ->
-    liftIO $ (runQuery conn (machinePhotosByMachineId machineId))))
-  return $ map (\(r1,r2,r3) -> (r1 :: Int, PM.PhotoMeta r2 r3) ) rows )
+listPhotoHandler = mkListing (jsonO . someO) $ const $ withConnId (\conn machineId -> do 
+  rows <- liftIO $ runQuery conn (machinePhotosByMachineId machineId)
+  return $ map (\(r1,r2,r3) -> (r1 :: Int, PM.PhotoMeta r2 r3)) rows)

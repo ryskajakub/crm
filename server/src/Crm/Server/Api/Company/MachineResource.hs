@@ -24,14 +24,14 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
-import Crm.Server.Helpers (maybeId, ymdToDay, maybeToNullable)
+import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 
 createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine, machineType, contactPersonId) ->
-  ask >>= \(connection, maybeInt) -> maybeId maybeInt (\companyId -> 
+  withConnId (\connection companyId -> 
     liftIO $ addMachine connection newMachine companyId machineType (toMaybe contactPersonId)))
 
 addMachine :: Connection
