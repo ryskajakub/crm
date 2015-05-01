@@ -6,6 +6,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.DB (
   -- tables
@@ -294,7 +295,7 @@ employeesQuery = queryTable employeesTable
 upkeepSequencesQuery :: Query UpkeepSequencesTable
 upkeepSequencesQuery = queryTable upkeepSequencesTable
 
-class ColumnToRecordDeep tupleIn tupleOut | tupleIn -> tupleOut where
+class ColumnToRecordDeep tupleIn tupleOut | tupleOut -> tupleIn where
   convertDeep :: tupleIn -> tupleOut
 
 instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2) => ColumnToRecordDeep (c1,c2) (r1,r2) where
@@ -632,11 +633,11 @@ runMachinesInCompanyQuery :: Int -> Connection ->
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runQuery connection (machinesInCompanyQuery companyId))
   let 
-    mapRow (mCols,mtCols,cpCols) = let
-      (m1,m2,m3,m4,m5) = convert mCols :: MachineMapped
-      machineType = convert mtCols :: MachineTypeMapped
-      contactPerson = convert cpCols :: MaybeContactPersonMapped
-      in (m1, m5 :: M.Machine, m2, sel1 machineType, sel2 machineType, sel3 contactPerson)
+    mapRow row = let
+      (machine :: MachineMapped, machineType :: MachineTypeMapped, 
+        contactPerson :: MaybeContactPersonMapped) = convertDeep row
+      in (sel1 machine, sel5 machine, sel2 machine, 
+        sel1 machineType, sel2 machineType, sel3 contactPerson)
   return $ fmap mapRow rows
 
 convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
