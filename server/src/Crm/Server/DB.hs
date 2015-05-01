@@ -640,13 +640,6 @@ runMachinesInCompanyQuery companyId connection = do
         sel1 machineType, sel2 machineType, sel3 contactPerson)
   return $ fmap mapRow rows
 
-convertExpanded2 :: ((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String),
-                    (Int, Int, String, String))
-                 -> (Int, M.Machine, Int, Int, MT.MachineType)
-convertExpanded2 = (\((mId,cId,_,_,mOs,m3,m4,m5,m6,m7),mtResult) -> let
-  (mtId, mt) = convert mtResult :: MachineTypeMapped
-  in (mId, M.Machine (fmap dayToYmd mOs) m3 m4 m5 m6 m7, cId, mtId, mt))
-
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
   -> IO[((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String), (Int, Int, String, String))]
 runExpandedMachinesQuery' machineId connection =
@@ -657,10 +650,14 @@ runCompanyUpkeepsQuery :: Int -> Connection ->
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
+convertExpanded row = let 
+  (m :: MachineMapped, mt :: MachineTypeMapped) = convertDeep row
+  in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt)
+
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
-  return $ fmap convertExpanded2 rows
+  return $ fmap convertExpanded rows
 
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
@@ -681,7 +678,7 @@ runExpandedUpkeepsQuery connection = runQuery connection expandedUpkeepsQuery
 runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
-  return $ map (\(companyId,a,b) -> (companyId, convertExpanded2 (a,b))) rows
+  return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
 
 runPlannedUpkeepsQuery :: Connection -> IO[((Int, Day, Bool, Maybe Int, String, String, String), 
   (Int, String, String, String))]
