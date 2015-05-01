@@ -93,7 +93,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler (jsonO . someO) (
   ask >>= \(conn, id') -> maybeId id' (\companyId -> do
-    rows <- liftIO $ runCompanyWithMachinesQuery companyId conn
+    rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
     company <- singleRowOrColumn rows
     machines <- liftIO $ runMachinesInCompanyQuery companyId conn
     let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines

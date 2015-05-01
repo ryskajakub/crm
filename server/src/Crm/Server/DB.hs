@@ -39,7 +39,6 @@ module Crm.Server.DB (
   -- runs
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
-  runCompanyWithMachinesQuery ,
   runMachineTypesQuery' ,
   runExpandedUpkeepsQuery ,
   runPlannedUpkeepsQuery ,
@@ -47,6 +46,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  companyByIdQuery ,
   machineDetailQuery ,
   contactPersonsByIdQuery ,
   nextServiceMachinesQuery ,
@@ -374,15 +374,10 @@ machineTypesQuery' mid = proc () -> do
   restrict -< (lower name' `like` (lower $ pgString ("%" ++ (intersperse '%' mid) ++ "%")))
   returnA -< name'
 
-companyWithMachinesQuery :: Int -> Query (CompaniesTable)
-companyWithMachinesQuery companyId = proc () -> do
-  company <- companiesQuery -< ()
-  restrict -< (pgInt4 companyId .== sel1 company)
+companyByIdQuery :: Int -> Query (CompaniesTable)
+companyByIdQuery companyId = proc () -> do
+  company <- join companiesQuery -< pgInt4 companyId
   returnA -< company
-
-runCompanyWithMachinesQuery :: Int -> Connection -> IO[(Int,String,String,String)]
-runCompanyWithMachinesQuery companyId connection =
-  runQuery connection (companyWithMachinesQuery companyId)
 
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
