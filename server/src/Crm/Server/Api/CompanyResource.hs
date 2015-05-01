@@ -33,7 +33,7 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today, deleteRows)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', dayToYmd, today, deleteRows, withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -91,13 +91,12 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
       ) unsortedResult)
 
 singleCompany :: Handler IdDependencies
-singleCompany = mkConstHandler (jsonO . someO) (
-  ask >>= \(conn, id') -> maybeId id' (\companyId -> do
-    rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
-    companyRow <- singleRowOrColumn rows
-    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines
-    return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe)))
+singleCompany = mkConstHandler (jsonO . someO) $ withConnId (\conn companyId -> do
+  rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
+  companyRow <- singleRowOrColumn rows
+  machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+  let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines
+  return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe))
 
 updateCompany :: Handler IdDependencies
 updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->

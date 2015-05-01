@@ -6,6 +6,7 @@ module Crm.Server.Helpers (
   ymdToDay ,
   dayToYmd ,
   maybeId ,
+  withConnId ,
   readMay' ,
   mapUpkeeps ,
   mappedUpkeepSequences ,
@@ -15,6 +16,8 @@ module Crm.Server.Helpers (
   prepareReaderIdentity ,
   prepareReaderTuple ) where
 
+import Database.PostgreSQL.Simple (Connection)
+
 import Opaleye.Column (Column, toNullable, Nullable)
 import qualified Opaleye.Column as COL
 import Opaleye.Manipulation (runDelete)
@@ -22,7 +25,7 @@ import Opaleye.Operators ((.==))
 import Opaleye.PGTypes (pgInt4, PGInt4)
 import Opaleye.Table (Table)
 
-import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT)
+import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
 import Control.Monad.IO.Class (liftIO)
@@ -98,14 +101,21 @@ prepareReaderTuple :: ReaderT (c, b) IO a
                    -> ReaderT b (ReaderT c IO) a
 prepareReaderTuple = prepareReader (\b c -> (c, b))
 
-maybeId :: Monad b
+maybeId :: Monad m
         => Either String Int 
-        -> (Int -> ErrorT (Reason r) b a)
-        -> ErrorT (Reason r) b a
+        -> (Int -> ErrorT (Reason r) m a)
+        -> ErrorT (Reason r) m a
 maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
+
+withConnId :: (MonadReader (Connection, Either String Int) m)
+           => (Connection -> Int -> ErrorT (Reason r) m a)
+           -> ErrorT (Reason r) m a
+withConnId f = do 
+  (conn, id) <- ask
+  maybeId id (f conn)
 
 readMay' :: (Read a) => String -> Either String a
 readMay' string = passStringOnNoRead $ readMay string
