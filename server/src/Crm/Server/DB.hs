@@ -217,7 +217,7 @@ machinesTable = Table "machines" $ p10 (
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" $ p4 (
   optional "id" ,
-  required "machine_type_type" ,
+  required "machine_kind" ,
   required "name" ,
   required "manufacturer" )
 
@@ -382,7 +382,7 @@ runMachineUpdate (machineId', machine') connection =
           maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
           pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
           pgString $ M.note machine', pgString $ M.serialNumber machine',
-          pgString $ M.yearOfManufacture machine' )
+          pgString $ M.yearOfManufacture machine')
 
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike

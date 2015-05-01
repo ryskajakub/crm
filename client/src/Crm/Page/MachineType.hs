@@ -32,7 +32,7 @@ import Crm.Component.Form (saveButtonRow', editingCheckbox,
   editingInput, editingInput', formRow, inputNormalAttrs)
 import Crm.Helpers (lmap, rmap, pageInfo, parseSafely)
 import Crm.Server (updateMachineType, fetchMachineType, 
-  fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer )
+  fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
 import Crm.Component.Autocomplete (autocompleteInput)
 
 data MachineTypeForm = Phase1 | Edit
@@ -206,11 +206,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   typeTypeSelect = let
     buttonLabel = [
-      text2DOM $ pack $ fromJust $ lookup (MT.machineTypeType machineType) MT.machineKinds, 
+      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MT.machineKinds, 
       text2DOM " ", 
       span' (class' "caret") "" ]
     mkLink (kindId, kindLabel) = let
-      selectAction = setMachineType (machineType { MT.machineTypeType = kindId })
+      selectAction = setMachineType (machineType { MT.kind = kindId })
       in li $ AA.a''' (click selectAction) (pack kindLabel)
     selectElements = map mkLink MT.machineKinds
     in BD.buttonDropdown buttonLabel selectElements

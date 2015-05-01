@@ -230,7 +230,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
-  machineKind = MT.machineTypeType machineType
+  machineKind = MT.kind machineType
   machineSpecificRows = if 0 == machineKind 
     then compressorExtraRows
     else if 1 == machineKind

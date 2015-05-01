@@ -1,1 +1,1 @@
-alter table machine_types add machine_type_type integer default 0;
+alter table machine_types add machine_kind integer default 0;
