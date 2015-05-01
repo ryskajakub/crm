@@ -20,7 +20,7 @@ Apart from the CRUD, the application computes, when there should occur the next 
 
 Haskell
 
-### Serveside ###
+### Serverside ###
 1. opaleye
 1. rest
 
