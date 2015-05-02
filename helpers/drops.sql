@@ -1,0 +1,11 @@
+drop table upkeeps;
+drop table photos;
+drop table photos_meta;
+drop table machine_photos;
+drop table companies;
+drop table machine_types;
+drop table machines;
+drop table upkeep_sequences;
+drop table employees;
+drop table upkeep_machines;
+drop table contact_persons;
