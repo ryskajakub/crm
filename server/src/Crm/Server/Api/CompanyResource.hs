@@ -26,7 +26,6 @@ import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkC
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
@@ -69,7 +68,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
       today' <- today
       let
         upkeeps = fmap (\(_::Int,a,b,_::(Maybe Int),c,d,e) -> U.Upkeep (dayToYmd a) b c d e) upkeepRows
-        upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
+        upkeepSequences = fmap (\r -> sel2 (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)

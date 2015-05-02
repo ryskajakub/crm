@@ -6,8 +6,7 @@ import qualified Crm.Shared.Upkeep as U
 
 import Crm.Server.Helpers (ymdToDay)
 
-import Data.Time.Calendar (Day, fromGregorian, addDays)
-import Data.List (find)
+import Data.Time.Calendar (Day, addDays)
 
 import Safe.Foldable (minimumMay)
 
@@ -35,7 +34,7 @@ nextServiceDate machine sequences upkeeps today = let
         Just operationStartDate' -> ymdToDay operationStartDate'
         Nothing -> today
       filteredSequences = case filter US.oneTime nonEmptySequences of
-        x : xs -> [x]
+        x : _ -> [x]
         [] -> nonEmptySequences
       in computeBasedOnPrevious operationStartDate filteredSequences
     xs -> let

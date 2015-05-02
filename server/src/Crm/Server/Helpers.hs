@@ -1,3 +1,5 @@
+{-# OPTIONS -fno-warn-orphans #-}
+
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE ExistentialQuantification #-}
@@ -12,7 +14,6 @@ module Crm.Server.Helpers (
   withConnId ,
   readMay' ,
   mapUpkeeps ,
-  mappedUpkeepSequences ,
   maybeToNullable ,
   mapResultsToList ,
   prepareReader , 
@@ -31,15 +32,13 @@ import Opaleye.Table (Table)
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT)
-import Control.Monad (liftM)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
 
 import Control.Monad.Error.Class (throwError)
-import Control.Monad.Error (ErrorT)
 
 import Data.JSON.Schema.Types (JSONSchema)
 import Data.Functor.Identity (runIdentity)
@@ -50,11 +49,9 @@ import Data.Aeson.Types (FromJSON)
 import Data.Typeable (Typeable)
 
 import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 
-import Crm.Server.Boilerplate
 import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
@@ -65,7 +62,7 @@ updateRows :: forall record m columnsW columnsR.
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
            -> Handler m
-updateRows table readToWrite = mkInputHandler (jsonI . someI . jsonO . someO) 
+updateRows table readToWrite = mkInputHandler (jsonI . jsonO) 
     (\(record :: record) -> withConnId (\conn recordId -> do
   let condition row = pgInt4 recordId .== sel1 row
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition
@@ -75,16 +72,14 @@ deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
            => Table a1 read1
            -> Maybe (Table a2 read2)
            -> Handler IdDependencies
-deleteRows table maybeTable = mkConstHandler (jsonO . someO) (do
-  (connection, maybeInt) <- ask
-  maybeId maybeInt (\theId -> liftIO $ do
-    let 
-      locateRow row = sel1 row .== pgInt4 theId
-      deleteRow table' = runDelete connection table locateRow
-    case maybeTable of
-      Just table' -> deleteRow table' >> return ()
-      Nothing -> return ()
-    deleteRow table))
+deleteRows table maybeTable = mkConstHandler jsonO $ withConnId (\connection theId -> liftIO $ do
+  let 
+    locateRow row = sel1 row .== pgInt4 theId
+    deleteRow table' = runDelete connection table' locateRow
+  case maybeTable of
+    Just table' -> deleteRow table' >> return ()
+    Nothing -> return ()
+  deleteRow table)
 
 today :: IO Day
 today = fmap utctDay getCurrentTime
@@ -134,8 +129,8 @@ withConnId :: (MonadReader (Connection, Either String Int) m)
            => (Connection -> Int -> ExceptT (Reason r) m a)
            -> ExceptT (Reason r) m a
 withConnId f = do 
-  (conn, id) <- ask
-  maybeId id (f conn)
+  (conn, id') <- ask
+  maybeId id' (f conn)
 
 readMay' :: (Read a) => String -> Either String a
 readMay' string = passStringOnNoRead $ readMay string
@@ -154,8 +149,6 @@ instance Ord YMD.YearMonthDay where
       LT -> LT
       EQ -> nextComparison
     in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
-
-mappedUpkeepSequences = map (\(a1,a2,a3,a4) -> US.UpkeepSequence a1 a2 a3 a4) 
 
 -- todo rather do two queries
 mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 

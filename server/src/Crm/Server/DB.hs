@@ -1,3 +1,5 @@
+{-# OPTIONS -fno-warn-missing-signatures #-}
+
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -32,6 +34,8 @@ module Crm.Server.DB (
   getMachinePhoto ,
   singleEmployeeQuery ,
   contactPersonsQuery ,
+  compressorsQuery ,
+  dryersQuery ,
   -- manipulations
   addCompany ,
   addMachinePhoto ,
@@ -75,6 +79,7 @@ module Crm.Server.DB (
   UpkeepMapped ,
   MaybeEmployeeMapped ,
   EmployeeMapped ,
+  UpkeepSequenceMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -85,9 +90,9 @@ import Opaleye.Table (Table(Table), required, queryTable, optional)
 import Opaleye.Column (Column, Nullable)
 import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Operators ((.&&), restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, pgDay, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
-import Opaleye.Manipulation (runUpdate, runInsertReturning)
+import Opaleye.Operators (restrict, lower, (.==))
+import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
+import Opaleye.Manipulation (runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
@@ -99,7 +104,6 @@ import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
 import Data.Time.Calendar (Day)
-import Data.Int (Int64)
 import Data.List (intersperse)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5)
 import Data.ByteString.Lazy (ByteString)
@@ -112,8 +116,9 @@ import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepSequence as US
 
-import Crm.Server.Helpers (ymdToDay, dayToYmd, maybeToNullable)
+import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
@@ -123,7 +128,6 @@ type DBInt8 = Column PGInt8
 type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
-type DBByteA = Column PGByteA
 
 type CompaniesTable = (DBInt, DBText, DBText, DBText)
 type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText)
@@ -248,6 +252,12 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "machine_type_id" ,
   required "one_time" )
 
+dryersQuery :: Query DryersTable
+dryersQuery = queryTable dryersTable
+
+compressorsQuery :: Query CompressorsTable
+compressorsQuery = queryTable compressorsTable
+
 contactPersonsQuery :: Query ContactPersonsTable
 contactPersonsQuery = queryTable contactPersonsTable
 
@@ -298,6 +308,7 @@ type MaybeContactPersonMapped = (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
 type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
 type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
 type EmployeeMapped = (Int, E.Employee)
+type UpkeepSequenceMapped = (Int, US.UpkeepSequence)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -323,6 +334,8 @@ instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) Upke
     in (sel1 tuple, sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
 instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
   convert tuple = (sel1 tuple, uncurryN (const E.Employee) $ tuple)
+instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
+  convert (a,b,c,d,e) = (d, US.UpkeepSequence a b c e)
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
@@ -353,13 +366,13 @@ photoMetaQuery photoId = proc () -> do
   result <- join photosMetaQuery -< pgInt4 photoId
   returnA -< result
 
-upkeepSequencesByIdQuery' :: QueryArr DBInt (DBInt, DBText, DBInt, DBBool)
+upkeepSequencesByIdQuery' :: QueryArr DBInt (DBInt, DBText, DBInt, DBInt, DBBool)
 upkeepSequencesByIdQuery' = proc (machineTypeId) -> do
-  (a,b,c,machineTypeFK,d) <- upkeepSequencesQuery -< ()
-  restrict -< machineTypeFK .== machineTypeId
-  returnA -< (a,b,c,d)
+  row <- upkeepSequencesQuery -< ()
+  restrict -< sel4 row .== machineTypeId
+  returnA -< row
 
-upkeepSequencesByIdQuery :: DBInt -> Query (DBInt, DBText, DBInt, DBBool)
+upkeepSequencesByIdQuery :: DBInt -> Query (DBInt, DBText, DBInt, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
   upkeepSequenceRow' <- upkeepSequencesByIdQuery' -< machineTypeId
   returnA -< upkeepSequenceRow'
@@ -497,7 +510,7 @@ upkeepsDataForMachine machineId = let
     ((sel4 $ sel1 upkeepPart) .== (maybeToNullable $ Just employeePK)))
   in employeeJoinedRow
 
-nextServiceUpkeepSequencesQuery :: Int -> Query (DBInt, DBText, DBInt, DBBool)
+nextServiceUpkeepSequencesQuery :: Int -> Query (DBInt, DBText, DBInt, DBInt, DBBool)
 nextServiceUpkeepSequencesQuery machineId = proc () -> do
   machineRow <- join machinesQuery -< pgInt4 machineId
   machineTypeRow <- machineTypesQuery -< ()
@@ -628,8 +641,6 @@ addMachinePhoto connection _ photo = do
   newIds <- query connection q (Only $ Binary photo)
   let ints = map (\(Only id') -> id') newIds
   return ints
-  
-data PGByteA
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db

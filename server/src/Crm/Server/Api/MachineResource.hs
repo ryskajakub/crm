@@ -20,7 +20,6 @@ import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
@@ -68,7 +67,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
   upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
   today' <- liftIO today
   let 
-    upkeepSequences = fmap (\(a,b,c,d) -> US.UpkeepSequence a b c d) upkeepSequenceRows
+    upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),
         (_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String,eC::Maybe String,eCap::Maybe String)) -> let
       maybeEmployee = liftA3 E.Employee eName eC eCap

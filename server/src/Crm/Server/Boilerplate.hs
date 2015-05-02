@@ -6,7 +6,7 @@
 module Crm.Server.Boilerplate where
 
 import Generics.Regular (deriveAll, PF)
-import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON)
+import Data.Aeson.Types (toJSON, ToJSON, FromJSON, parseJSON, Value)
 import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Fay.Convert (showToFay, readFromFay')
 import Data.Maybe (fromJust)
@@ -24,7 +24,6 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Shared.MyMaybe
 
-import GHC.Generics
 import Data.Data
 
 deriveAll ''C.Company "PFCompany"
@@ -42,6 +41,7 @@ type instance PF U.Upkeep = PFUpkeep
 deriveAll ''UM.UpkeepMachine "PFUpkeepMachine"
 type instance PF UM.UpkeepMachine = PFUpkeepMachine
 
+fayInstance :: (Monad m, Data a) => Value -> m a
 fayInstance value = case readFromFay' value of
   Left e -> fail e
   Right ok -> return ok

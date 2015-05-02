@@ -26,7 +26,7 @@ import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
 
-import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay', mappedUpkeepSequences)
+import Crm.Server.Helpers (prepareReaderTuple, maybeId, readMay')
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -82,7 +82,8 @@ machineTypesSingle = mkConstHandler jsonO (do
     x:xs | null xs -> do 
       let mt = convert x :: MachineTypeMapped
       upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ sel1 mt)
-      return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences upkeepSequences)
+      let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
+      return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
     [] -> onEmptyResult
     _ -> throwError NotFound)
 
