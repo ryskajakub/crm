@@ -17,11 +17,12 @@ create table companies (
   plant varchar(500) ,
   address varchar (500) ,
   person varchar (500) ,
-  phone varchar (500) );
+  phone varchar (500) ,
+  unique (name, plant) );
 
 create table machine_types (
   id serial , 
-  name varchar(500) , 
+  name varchar(500) unique , 
   manufacturer varchar (500) );
 
 create table machines (
@@ -54,7 +55,7 @@ create table upkeep_machines (
 
 create table employees (
   id serial ,
-  name varchar (500) ,
+  name varchar (500) unique ,
   contact varchar (500) ,
   capabilities varchar (500) );
 
