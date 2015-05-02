@@ -4,6 +4,7 @@
 
 module Crm.Server.Helpers (
   deleteRows ,
+  updateRows ,
   today ,
   ymdToDay ,
   dayToYmd ,
@@ -46,6 +47,7 @@ import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
 import Data.Tuple.All (sel1, Sel1)
 import Data.Aeson.Types (FromJSON)
 import Data.Typeable (Typeable)
+import Data.Tagged (Tagged (Tagged))
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
@@ -57,18 +59,17 @@ import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
 
-data TypedHandler m record = TypedHandler (Handler m)
-
 updateRows :: forall record m columnsW columnsR.
-              (MonadIO m, MonadReader (Connection, Either String Int) m, Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+              (MonadIO m, MonadReader (Connection, Either String Int) m, 
+                Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
-           -> (columnsR -> columnsW) 
-           -> TypedHandler m record
-updateRows table readToWrite = TypedHandler $ 
-  mkInputHandler (jsonI . someI . jsonO . someO) (\(record :: record) -> withConnId (\conn recordId -> do
-    let condition row = pgInt4 recordId .== sel1 row
-    _ <- liftIO $ runUpdate conn table readToWrite condition
-    return ()))
+           -> (record -> columnsR -> columnsW) 
+           -> Tagged record (Handler m)
+updateRows table readToWrite = Tagged $ mkInputHandler (jsonI . someI . jsonO . someO) 
+    (\(record :: record) -> withConnId (\conn recordId -> do
+  let condition row = pgInt4 recordId .== sel1 row
+  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
+  return ()))
 
 deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
            => Table a1 read1
