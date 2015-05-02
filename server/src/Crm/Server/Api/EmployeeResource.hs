@@ -21,7 +21,7 @@ import qualified Crm.Shared.Employee as E
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay')
+import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -40,11 +40,10 @@ getEmployeeHandler = mkConstHandler (jsonO . someO) $ withConnId (\connection th
   singleRowOrColumn result)
 
 updateEmployeeHandler :: Handler IdDependencies
-updateEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\employee -> withConnId (\connection theId -> liftIO $ let
-  readToWrite = const (Nothing, pgString $ E.name employee, 
+updateEmployeeHandler = let
+  readToWrite employee = const (Nothing, pgString $ E.name employee, 
     pgString $ E.contact employee, pgString $ E.capabilities employee)
-  condition employeeRow = sel1 employeeRow .== pgInt4 theId
-  in runUpdate connection employeesTable readToWrite condition))
+  in updateRows employeesTable readToWrite
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newEmployee -> do

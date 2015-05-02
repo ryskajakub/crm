@@ -35,7 +35,6 @@ module Crm.Server.DB (
   -- manipulations
   addCompany ,
   addMachinePhoto ,
-  runMachineUpdate ,
   -- runs
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
@@ -360,20 +359,6 @@ upkeepSequencesByIdQuery :: DBInt -> Query (DBInt, DBText, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
   upkeepSequenceRow' <- upkeepSequencesByIdQuery' -< machineTypeId
   returnA -< upkeepSequenceRow'
-
-runMachineUpdate :: (Int, M.Machine) 
-                 -> Connection 
-                 -> IO Int64
-runMachineUpdate (machineId', machine') connection =
-  runUpdate connection machinesTable readToWrite condition
-    where
-      condition machine = sel1 machine .== pgInt4 machineId'
-      readToWrite (_,companyId, contactPersonId, machineTypeId,_,_,_,_,_,_) =
-        (Nothing, companyId, contactPersonId, machineTypeId,
-          maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
-          pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
-          pgString $ M.note machine', pgString $ M.serialNumber machine',
-          pgString $ M.yearOfManufacture machine')
 
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike

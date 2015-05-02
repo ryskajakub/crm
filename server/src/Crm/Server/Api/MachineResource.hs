@@ -3,7 +3,7 @@
 module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, PGInt4)
+import Opaleye.PGTypes (pgInt4, PGInt4, pgString, pgDay)
 import Opaleye.Manipulation (runDelete)
 import Opaleye.Operators ((.==))
 import Opaleye.Table (Table)
@@ -30,7 +30,7 @@ import qualified Crm.Shared.Machine as M
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', mappedUpkeepSequences, dayToYmd, today,
-  deleteRows, withConnId)
+  deleteRows, withConnId, updateRows, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -49,10 +49,13 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows machinesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . someI) (\machine -> withConnId (\conn machineId -> do
-  _ <- liftIO $ runMachineUpdate (machineId, machine) conn
-  -- todo singal error if the update didn't hit a row
-  return ()))
+machineUpdate = updateRows machinesTable readToWrite where
+  readToWrite machine' (_,companyId, contactPersonId, machineTypeId,_,_,_,_,_,_) =
+    (Nothing, companyId, contactPersonId, machineTypeId,
+      maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
+      pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
+      pgString $ M.note machine', pgString $ M.serialNumber machine',
+      pgString $ M.yearOfManufacture machine')
 
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler (jsonO . someO) $ withConnId (\conn id'' -> do
