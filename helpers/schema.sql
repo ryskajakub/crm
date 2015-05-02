@@ -1,18 +1,19 @@
 create table photos (
-  id serial ,
+  id serial primary key ,
   data bytea );
 
 create table photos_meta (
-  photo_id integer ,
+  photo_id integer primary key ,
   mime_type varchar (500) ,
   file_name varchar (500) );
 
 create table machine_photos (
   photo_id integer ,
-  machine_id integer );
+  machine_id integer ,
+  primary key (photo_id, machine_id) );
 
 create table companies (
-  id serial , 
+  id serial primary key , 
   name varchar(500) , 
   plant varchar(500) ,
   address varchar (500) ,
@@ -21,12 +22,12 @@ create table companies (
   unique (name, plant) );
 
 create table machine_types (
-  id serial , 
+  id serial primary key , 
   name varchar(500) unique , 
   manufacturer varchar (500) );
 
 create table machines (
-  id serial , 
+  id serial primary key , 
   company_id integer , 
   contact_person_id integer , 
   machine_type_id integer , 
@@ -38,7 +39,7 @@ create table machines (
   year_of_manufacture varchar (500) );
 
 create table upkeeps (
-  id serial ,
+  id serial primary key ,
   date_ date , 
   closed boolean ,
   employee_id integer ,
@@ -51,10 +52,11 @@ create table upkeep_machines (
   note varchar (5000) ,
   machine_id integer ,
   recorded_mileage integer ,
-  warranty boolean );
+  warranty boolean ,
+  primary key (upkeep_id, machine_id) );
 
 create table employees (
-  id serial ,
+  id serial primary key ,
   name varchar (500) unique ,
   contact varchar (500) ,
   capabilities varchar (500) );
@@ -64,11 +66,12 @@ create table upkeep_sequences (
   label varchar (500) ,
   repetition integer ,
   machine_type_id integer ,
-  one_time boolean );
+  one_time boolean ,
+  primary key (display_ordering, machine_type_id));
 
 create table contact_persons (
-  id serial ,
+  id serial primary key ,
   company_id integer ,
   name varchar (500) ,
   phone varchar (500) ,
-  position varchar (500) )
+  position varchar (500) );
