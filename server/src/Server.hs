@@ -12,6 +12,8 @@ import Control.Monad.Reader (ReaderT, runReaderT)
 import Network.Wai.Handler.Warp (run)
 import Rest.Driver.Wai (apiToApplication)
 
+import Control.Monad.Trans.Except (ExceptT)
+
 main :: IO ()
 main = do
   putStrLn "Starting warp server on http://localhost:8000"

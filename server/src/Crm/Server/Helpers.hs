@@ -30,6 +30,7 @@ import Opaleye.Table (Table)
 
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
+import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad (liftM)
 import Control.Monad.IO.Class (liftIO, MonadIO)
 
@@ -122,16 +123,16 @@ prepareReaderTuple = prepareReader (\b c -> (c, b))
 
 maybeId :: Monad m
         => Either String Int 
-        -> (Int -> ErrorT (Reason r) m a)
-        -> ErrorT (Reason r) m a
+        -> (Int -> ExceptT (Reason r) m a)
+        -> ExceptT (Reason r) m a
 maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
 
 withConnId :: (MonadReader (Connection, Either String Int) m)
-           => (Connection -> Int -> ErrorT (Reason r) m a)
-           -> ErrorT (Reason r) m a
+           => (Connection -> Int -> ExceptT (Reason r) m a)
+           -> ExceptT (Reason r) m a
 withConnId f = do 
   (conn, id) <- ask
   maybeId id (f conn)

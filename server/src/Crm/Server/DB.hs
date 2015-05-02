@@ -92,9 +92,9 @@ import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
 
 import Control.Monad.Error.Class (throwError)
-import Control.Monad.Error (ErrorT)
 import Control.Arrow (returnA)
 import Control.Applicative ((<*>), pure)
+import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
 import Data.Time.Calendar (Day)
@@ -640,7 +640,7 @@ addCompany connection newCompany = do
 
 singleRowOrColumn :: Monad m
                   => [a] 
-                  -> ErrorT (Reason r) m a
+                  -> ExceptT (Reason r) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   _ -> throwError $ InputError $ ParseError "more than one record failure"
