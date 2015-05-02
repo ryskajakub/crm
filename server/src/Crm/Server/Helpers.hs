@@ -47,7 +47,6 @@ import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
 import Data.Tuple.All (sel1, Sel1)
 import Data.Aeson.Types (FromJSON)
 import Data.Typeable (Typeable)
-import Data.Tagged (Tagged (Tagged))
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
@@ -64,8 +63,8 @@ updateRows :: forall record m columnsW columnsR.
                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
-           -> Tagged record (Handler m)
-updateRows table readToWrite = Tagged $ mkInputHandler (jsonI . someI . jsonO . someO) 
+           -> Handler m
+updateRows table readToWrite = mkInputHandler (jsonI . someI . jsonO . someO) 
     (\(record :: record) -> withConnId (\conn recordId -> do
   let condition row = pgInt4 recordId .== sel1 row
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition

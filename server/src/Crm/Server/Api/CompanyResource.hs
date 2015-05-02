@@ -19,7 +19,6 @@ import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6, uncurryN, OneTuple)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
-import Data.Tagged (unTagged)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
@@ -104,7 +103,7 @@ updateCompany :: Handler IdDependencies
 updateCompany = let
   readToWrite company = const (Nothing, pgString $ C.companyName company, 
     pgString $ C.companyPlant company, pgString $ C.companyAddress company)
-  in unTagged $ updateRows companiesTable readToWrite
+  in updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
 deleteCompany = deleteRows companiesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))

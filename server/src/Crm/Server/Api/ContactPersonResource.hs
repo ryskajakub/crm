@@ -6,7 +6,6 @@ import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Tuple.All (sel1, sel2, sel3)
-import Data.Tagged (unTagged)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
@@ -38,4 +37,4 @@ updateHandler :: Handler IdDependencies
 updateHandler = let
   readToWrite contactPerson row = (Nothing, sel2 row, pgString $ CP.name contactPerson ,
     pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
-  in unTagged $ updateRows contactPersonsTable readToWrite
+  in updateRows contactPersonsTable readToWrite
