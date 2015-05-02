@@ -1,44 +1,44 @@
 create table photos (
   id serial primary key ,
-  data bytea );
+  data bytea not null );
 
 create table photos_meta (
   photo_id integer primary key references photos (id) ,
-  mime_type varchar (500) ,
-  file_name varchar (500) );
+  mime_type varchar (500) not null ,
+  file_name varchar (500) not null );
 
 create table companies (
   id serial primary key , 
-  name varchar(500) , 
-  plant varchar(500) ,
-  address varchar (500) ,
-  person varchar (500) ,
-  phone varchar (500) ,
+  name varchar(500) not null , 
+  plant varchar(500) not null ,
+  address varchar (500) not null ,
+  person varchar (500) not null ,
+  phone varchar (500) not null ,
   unique (name, plant) );
 
 create table machine_types (
   id serial primary key , 
-  name varchar(500) unique , 
+  name varchar(500) unique not null , 
   manufacturer varchar (500) );
 
 create table contact_persons (
   id serial primary key ,
-  company_id integer references companies (id) ,
-  name varchar (500) ,
-  phone varchar (500) ,
-  position varchar (500) );
+  company_id integer references companies (id) not null ,
+  name varchar (500) not null ,
+  phone varchar (500) not null ,
+  position varchar (500) not null );
 
 create table machines (
   id serial primary key ,
-  company_id integer references companies (id) ,
+  company_id integer references companies (id) not null ,
   contact_person_id integer references contact_persons (id) ,
-  machine_type_id integer references machine_types (id) ,
+  machine_type_id integer references machine_types (id) not null ,
   operation_start date ,
-  initial_mileage integer ,
-  mileage_per_year integer ,
-  note varchar (500) ,
-  serial_number varchar (500) ,
-  year_of_manufacture varchar (500) );
+  initial_mileage integer not null ,
+  mileage_per_year integer not null ,
+  note varchar (500) not null ,
+  serial_number varchar (500) not null ,
+  year_of_manufacture varchar (500) not null );
 
 create table machine_photos (
   photo_id integer references photos_meta (photo_id) ,
@@ -47,31 +47,31 @@ create table machine_photos (
 
 create table employees (
   id serial primary key ,
-  name varchar (500) unique ,
-  contact varchar (500) ,
-  capabilities varchar (500) );
+  name varchar (500) unique not null ,
+  contact varchar (500) not null ,
+  capabilities varchar (500) not null );
 
 create table upkeeps (
   id serial primary key ,
-  date_ date , 
-  closed boolean ,
+  date_ date not null , 
+  closed boolean not null ,
   employee_id integer references employees (id) ,
-  work_hours varchar (500) ,
-  work_description varchar (5000) ,
-  recommendation varchar (5000) );
+  work_hours varchar (500) not null ,
+  work_description varchar (5000) not null ,
+  recommendation varchar (5000) not null );
 
 create table upkeep_machines (
   upkeep_id integer references upkeeps (id) ,
-  note varchar (5000) ,
+  note varchar (5000) not null ,
   machine_id integer references machines (id) ,
-  recorded_mileage integer ,
-  warranty boolean ,
+  recorded_mileage integer not null ,
+  warranty boolean not null ,
   primary key (upkeep_id, machine_id) );
 
 create table upkeep_sequences (
   display_ordering integer ,
-  label varchar (500) ,
-  repetition integer ,
+  label varchar (500) not null ,
+  repetition integer not null ,
   machine_type_id integer references machine_types (id) ,
-  one_time boolean ,
+  one_time boolean not null ,
   primary key (display_ordering, machine_type_id) );
