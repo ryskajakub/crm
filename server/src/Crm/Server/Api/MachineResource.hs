@@ -4,13 +4,10 @@ module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4, PGInt4, pgString, pgDay)
-import Opaleye.Manipulation (runDelete)
-import Opaleye.Operators ((.==))
 import Opaleye.Table (Table)
 import Opaleye.Column (Column)
 
-import Data.Tuple.All (uncurryN, sel2, sel1, sel3, sel5)
-import Data.Traversable (forM)
+import Data.Tuple.All (sel2, sel1, sel3, sel5)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -18,8 +15,8 @@ import Control.Applicative (liftA3)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
+import Rest.Dictionary.Combinators (jsonO)
+import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
@@ -29,7 +26,7 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', mappedUpkeepSequences, dayToYmd, today,
+import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today,
   deleteRows, withConnId, updateRows, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
@@ -58,7 +55,7 @@ machineUpdate = updateRows machinesTable readToWrite where
       pgString $ M.yearOfManufacture machine')
 
 machineSingle :: Handler IdDependencies
-machineSingle = mkConstHandler (jsonO . someO) $ withConnId (\conn id'' -> do
+machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
   rows <- liftIO $ runQuery conn (machineDetailQuery id'')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
@@ -87,5 +84,5 @@ machineSingle = mkConstHandler (jsonO . someO) $ withConnId (\conn id'' -> do
     upkeepSequences), dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO . someO) (const $ do
+machineListing = mkListing (jsonO) (const $ do
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)

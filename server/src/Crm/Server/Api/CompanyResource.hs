@@ -3,9 +3,7 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import Opaleye.Operators ((.==))
-import Opaleye.PGTypes (pgInt4, pgString, PGInt4)
-import Opaleye.Manipulation (runUpdate, runDelete)
+import Opaleye.PGTypes (pgString, PGInt4)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Table (Table)
 import Opaleye.Column (Column)
@@ -16,14 +14,14 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
 
 import Data.List (sortBy)
-import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6, uncurryN, OneTuple)
+import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Company as C
@@ -43,11 +41,11 @@ import Crm.Server.Core (nextServiceDate)
 import Safe (minimumMay, readMay)
 
 createCompanyHandler :: Handler Dependencies
-createCompanyHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newCompany ->
+createCompanyHandler = mkInputHandler (jsonO . jsonI) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
 
 listing :: ListHandler Dependencies
-listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
+listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
   let 
     order = rawOrder >>= readMay
     direction = rawDirection >>= readMay
@@ -65,7 +63,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
   unsortedResult <- liftIO $ forM rows (\companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
     machines <- runMachinesInCompanyQuery (sel1 companyRecord) conn
-    nextDays <- forM machines (\(machineId, machine, _, machineTypeId, _, _) -> do
+    nextDays <- forM machines (\(machineId, machine, _, _, _, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
       today' <- today
@@ -92,7 +90,7 @@ listing = mkOrderedListing (jsonO . someO) (\(_, rawOrder, rawDirection) -> do
       ) unsortedResult)
 
 singleCompany :: Handler IdDependencies
-singleCompany = mkConstHandler (jsonO . someO) $ withConnId (\conn companyId -> do
+singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
   rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
   companyRow <- singleRowOrColumn rows
   machines <- liftIO $ runMachinesInCompanyQuery companyId conn

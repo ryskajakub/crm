@@ -7,7 +7,6 @@ import Opaleye.PGTypes (pgInt4, pgString)
 import Opaleye.Manipulation (runInsert, runInsertReturning)
 import Opaleye.PGTypes (pgDay, pgBool)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM_)
 
@@ -15,7 +14,7 @@ import Data.Tuple.All (sel1)
 
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId )
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (mkInputHandler, Handler)
 
 import qualified Crm.Shared.UpkeepSequence as US
@@ -30,7 +29,7 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\(newMachine, machineType, contactPersonId) ->
+createMachineHandler = mkInputHandler (jsonO . jsonI) (\(newMachine, machineType, contactPersonId) ->
   withConnId (\connection companyId -> 
     liftIO $ addMachine connection newMachine companyId machineType (toMaybe contactPersonId)))
 

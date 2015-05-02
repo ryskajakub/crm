@@ -9,7 +9,6 @@ import Opaleye.PGTypes (pgInt4, pgDay, pgBool, pgString)
 import Opaleye.Manipulation (runInsertReturning)
 import Opaleye.RunQuery (runQuery)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (pure, (<*>))
 
@@ -17,14 +16,13 @@ import Data.Tuple.All (sel1, sel2, upd3)
 
 import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHandler)
 
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.MachineType as MT
 import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
@@ -35,7 +33,7 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 companyUpkeepsListing :: ListHandler IdDependencies
-companyUpkeepsListing = mkListing (jsonO . someO) (const $ withConnId (\conn id'' -> do
+companyUpkeepsListing = mkListing jsonO (const $ withConnId (\conn id'' -> do
   rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
   let 
     mappedResults = mapResultsToList 
@@ -52,7 +50,7 @@ companyUpkeepsListing = mkListing (jsonO . someO) (const $ withConnId (\conn id'
     (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
 
 getUpkeep :: Handler IdDependencies
-getUpkeep = mkConstHandler (jsonO . someO) $ withConnId (\conn upkeepId -> do
+getUpkeep = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
   rows <- liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId
   let result = mapUpkeeps rows
   singleRowOrColumn (map snd result))
@@ -73,7 +71,7 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   return upkeepId
 
 createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\newUpkeep -> let 
+createUpkeepHandler = mkInputHandler (jsonO . jsonI) (\newUpkeep -> let 
   (_,_,selectedEmployeeId) = newUpkeep
   newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
   in withConnId (\connection _ ->

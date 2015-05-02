@@ -7,7 +7,7 @@ import Opaleye.PGTypes (pgString)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
-import Data.Tuple.All (uncurryN, sel2)
+import Data.Tuple.All (sel2)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S

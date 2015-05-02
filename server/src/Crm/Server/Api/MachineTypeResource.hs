@@ -19,7 +19,7 @@ import Data.Int (Int64)
 import Rest.Types.Error (Reason(NotFound, UnsupportedRoute))
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Api as A
@@ -41,11 +41,11 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = autocompleteSchema }
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
-machineTypesListing (Autocomplete mid) = mkListing (jsonO . someO) (const $ 
+machineTypesListing (Autocomplete mid) = mkListing jsonO (const $ 
   ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn)
-machineTypesListing (AutocompleteManufacturer mid) = mkListing (jsonO . someO) (const $
+machineTypesListing (AutocompleteManufacturer mid) = mkListing jsonO (const $
   ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [String]))
-machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
+machineTypesListing CountListing = mkListing jsonO (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
     mapRow :: ((Int,Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
@@ -54,7 +54,7 @@ machineTypesListing CountListing = mkListing (jsonO . someO) (const $ do
   return mappedRows )
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineType, upkeepSequences) ->
+updateMachineType = mkInputHandler (jsonO . jsonI) (\(machineType, upkeepSequences) ->
   ask >>= \(conn, sid) -> case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
@@ -69,7 +69,7 @@ updateMachineType = mkInputHandler (jsonO . jsonI . someI . someO) (\(machineTyp
           pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
 
 machineTypesSingle :: Handler MachineTypeDependencies
-machineTypesSingle = mkConstHandler (jsonO . someO) (do
+machineTypesSingle = mkConstHandler jsonO (do
   (conn, machineTypeSid) <- ask
   let 
     performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)

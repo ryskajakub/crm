@@ -3,13 +3,10 @@
 module Crm.Server.Api.Company.ContactPersonResource ( 
   contactPersonResource ) where
 
-import Database.PostgreSQL.Simple (Connection)
-
 import Opaleye.PGTypes (pgString, pgInt4)
 import Opaleye.Manipulation (runInsertReturning)
 import Opaleye.RunQuery (runQuery)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Data.Tuple.All (sel1)
@@ -22,7 +19,7 @@ import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
 
-import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
+import Crm.Server.Helpers (withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
