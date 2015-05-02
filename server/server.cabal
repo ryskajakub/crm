@@ -33,6 +33,7 @@ Library
     , Crm.Server.Helpers
     , Crm.Server.Types
     , Crm.Server.Core
+    , Crm.Server.Test
 
     , Crm.Shared.Direction
     , Crm.Shared.MyMaybe

@@ -44,6 +44,8 @@ import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
 import Data.Tuple.All (sel1, Sel1)
+import Data.Aeson.Types (FromJSON)
+import Data.Typeable (Typeable)
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepSequence as US
@@ -55,12 +57,15 @@ import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
 
-updateRows :: (Monad m, MonadIO m, MonadReader (Connection, Either String Int) m, Sel1 columnsR (Column PGInt4))
+data TypedHandler m record = TypedHandler (Handler m)
+
+updateRows :: forall record m columnsW columnsR.
+              (MonadIO m, MonadReader (Connection, Either String Int) m, Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
            -> (columnsR -> columnsW) 
-           -> Handler m
-updateRows table readToWrite = 
-  mkInputHandler (jsonI . someI . jsonO . someO) (\(record :: U.Upkeep) -> withConnId (\conn recordId -> do
+           -> TypedHandler m record
+updateRows table readToWrite = TypedHandler $ 
+  mkInputHandler (jsonI . someI . jsonO . someO) (\(record :: record) -> withConnId (\conn recordId -> do
     let condition row = pgInt4 recordId .== sel1 row
     _ <- liftIO $ runUpdate conn table readToWrite condition
     return ()))
