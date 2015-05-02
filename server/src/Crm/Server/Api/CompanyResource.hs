@@ -19,6 +19,7 @@ import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6, uncurryN, OneTuple)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
+import Data.Tagged (unTagged)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
@@ -33,7 +34,8 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows, withConnId)
+import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows, withConnId, 
+  updateRows)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -99,14 +101,10 @@ singleCompany = mkConstHandler (jsonO . someO) $ withConnId (\conn companyId -> 
   return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe))
 
 updateCompany :: Handler IdDependencies
-updateCompany = mkInputHandler (jsonI . someI . jsonO . someO) (\company ->
-  withConnId (\conn companyId -> do
-    let
-      readToWrite = const (Nothing, pgString $ C.companyName company, 
-        pgString $ C.companyPlant company, pgString $ C.companyAddress company)
-      condition = (pgInt4 companyId .==) . sel1
-    _ <- liftIO $ runUpdate conn companiesTable readToWrite condition
-    return ()))
+updateCompany = let
+  readToWrite company = const (Nothing, pgString $ C.companyName company, 
+    pgString $ C.companyPlant company, pgString $ C.companyAddress company)
+  in unTagged $ updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
 deleteCompany = deleteRows companiesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
