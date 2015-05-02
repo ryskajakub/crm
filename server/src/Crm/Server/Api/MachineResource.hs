@@ -46,7 +46,7 @@ machineDelete = deleteRows machinesTable (Nothing :: Maybe (Table (Column PGInt4
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = updateRows machinesTable readToWrite where
-  readToWrite machine' (_,companyId, contactPersonId, machineTypeId,_,_,_,_,_,_) =
+  readToWrite machine' (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_) =
     (Nothing, companyId, contactPersonId, machineTypeId,
       maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
       pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 

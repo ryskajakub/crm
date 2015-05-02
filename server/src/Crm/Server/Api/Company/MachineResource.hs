@@ -20,6 +20,7 @@ import Rest.Handler (mkInputHandler, Handler)
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
@@ -37,9 +38,10 @@ addMachine :: Connection
            -> M.Machine
            -> Int
            -> MT.MyEither
-           -> Maybe Int
+           -> Maybe (CP.ContactPersonId)
            -> IO Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType contactPersonId = do
+addMachine connection machine companyId' machineType contactPersonId' = do
+  let contactPersonId = fmap CP.getContactPersonId contactPersonId'
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType type' name' manufacturer, upkeepSequences) -> do
