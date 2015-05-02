@@ -5,10 +5,9 @@ import Opaleye.RunQuery (runQuery)
 
 import Rest.Resource (Resource, Void, schema, name, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (fileO, someO)
+import Rest.Dictionary.Combinators (fileO)
 import Rest.Handler (Handler, mkConstHandler)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
@@ -23,7 +22,7 @@ photoResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just getPhotoHandler }
 
 getPhotoHandler :: Handler IdDependencies
-getPhotoHandler = mkConstHandler (fileO . someO) $ withConnId (\conn photoId -> do
+getPhotoHandler = mkConstHandler (fileO) $ withConnId (\conn photoId -> do
   photo <- liftIO $ getMachinePhoto conn photoId
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoId)
   photoMeta <- singleRowOrColumn photoMetas

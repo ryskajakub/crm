@@ -6,13 +6,10 @@ import Crm.Server.Base
 import Crm.Server.Types
 import Crm.Server.DB
 
-import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad.Reader (ReaderT, runReaderT)
 
 import Network.Wai.Handler.Warp (run)
 import Rest.Driver.Wai (apiToApplication)
-
-import Control.Monad.Trans.Except (ExceptT)
 
 main :: IO ()
 main = do

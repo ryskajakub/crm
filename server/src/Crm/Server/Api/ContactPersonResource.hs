@@ -1,16 +1,15 @@
 module Crm.Server.Api.ContactPersonResource (resource) where
 
-import Opaleye (runQuery, (.==), pgInt4, pgString, runUpdate)
+import Opaleye (runQuery, pgString)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
-import Data.Tuple.All (sel1, sel2, sel3)
+import Data.Tuple.All (sel2, sel3)
 
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
+import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
-import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
+import Rest.Handler (Handler, mkConstHandler)
+import Rest.Dictionary.Combinators (jsonO)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.ContactPerson as CP
@@ -28,7 +27,7 @@ resource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just getHandler }
 
 getHandler :: Handler IdDependencies
-getHandler = mkConstHandler (jsonO . someO) $ withConnId (\connection theId -> do
+getHandler = mkConstHandler jsonO $ withConnId (\connection theId -> do
   rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
   row <- singleRowOrColumn rows
   return $ sel3 $ (convert row :: ContactPersonMapped))

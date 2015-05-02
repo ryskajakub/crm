@@ -16,7 +16,7 @@ import Data.Tuple.All (sel1)
 
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 
 import qualified Crm.Shared.ContactPerson as CP
@@ -28,7 +28,7 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 createContactPersonHandler :: Handler IdDependencies
-createContactPersonHandler = mkInputHandler (jsonO . jsonI . someI . someO) (\contactPerson -> 
+createContactPersonHandler = mkInputHandler (jsonO . jsonI) (\contactPerson -> 
     withConnId (\connection companyId -> liftIO $ do
   contactPersonIds <- runInsertReturning
     connection
@@ -47,7 +47,7 @@ contactPersonResource = mkResourceId {
   create = Just createContactPersonHandler }
 
 listing :: ListHandler IdDependencies 
-listing = mkListing (jsonO . someO) (const $ withConnId (\connection theId -> do
+listing = mkListing (jsonO) (const $ withConnId (\connection theId -> do
   rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
   let rowsMapped = map (\(cpId,_::Int,a,b,c) -> (cpId :: Int, CP.ContactPerson a b c)) rawRows 
   return rowsMapped))

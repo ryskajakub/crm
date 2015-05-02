@@ -6,10 +6,9 @@ import Opaleye.PGTypes (pgInt4, pgString)
 
 import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, update)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (someI, jsonI)
+import Rest.Dictionary.Combinators (jsonI)
 import Rest.Handler (mkInputHandler, Handler)
 
-import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 
 import Crm.Server.Boilerplate ()
@@ -26,7 +25,7 @@ photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {
   update = Just setPhotoMetaDataHandler }
 
 setPhotoMetaDataHandler :: Handler IdDependencies
-setPhotoMetaDataHandler = mkInputHandler (jsonI . someI) (\photoMeta -> withConnId (\conn photoId -> do
+setPhotoMetaDataHandler = mkInputHandler (jsonI) (\photoMeta -> withConnId (\conn photoId -> do
   _ <- liftIO $ runInsert conn photosMetaTable 
     (pgInt4 photoId, pgString $ PM.mimeType photoMeta, pgString $ PM.fileName photoMeta)
   return ()))

@@ -74,6 +74,7 @@ module Crm.Server.DB (
   CompanyMapped ,
   UpkeepMapped ,
   MaybeEmployeeMapped ,
+  EmployeeMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -296,6 +297,7 @@ type ContactPersonMapped = (Int, Int, CP.ContactPerson)
 type MaybeContactPersonMapped = (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
 type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
 type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
+type EmployeeMapped = (Int, E.Employee)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -319,6 +321,8 @@ instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) Upke
   convert tuple = let
     (_,a,b,_,c,d,e) = tuple
     in (sel1 tuple, sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
+instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
+  convert tuple = (sel1 tuple, uncurryN (const E.Employee) $ tuple)
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
