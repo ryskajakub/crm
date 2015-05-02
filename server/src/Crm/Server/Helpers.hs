@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE ExistentialQuantification #-}
 
 module Crm.Server.Helpers (
   deleteRows ,
@@ -20,7 +22,7 @@ import Database.PostgreSQL.Simple (Connection)
 
 import Opaleye.Column (Column, toNullable, Nullable)
 import qualified Opaleye.Column as COL
-import Opaleye.Manipulation (runDelete)
+import Opaleye.Manipulation (runDelete, runUpdate)
 import Opaleye.Operators ((.==))
 import Opaleye.PGTypes (pgInt4, PGInt4)
 import Opaleye.Table (Table)
@@ -28,15 +30,16 @@ import Opaleye.Table (Table)
 import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad (liftM)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class (liftIO, MonadIO)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
-import Rest.Dictionary.Combinators (jsonO, someO)
-import Rest.Handler (Handler, mkConstHandler)
+import Rest.Dictionary.Combinators (jsonO, someO, jsonI, someI)
+import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
 
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.Error (ErrorT)
 
+import Data.JSON.Schema.Types (JSONSchema)
 import Data.Functor.Identity (runIdentity)
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
@@ -47,9 +50,20 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 
+import Crm.Server.Boilerplate
 import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
+
+updateRows :: (Monad m, MonadIO m, MonadReader (Connection, Either String Int) m, Sel1 columnsR (Column PGInt4))
+           => Table columnsW columnsR 
+           -> (columnsR -> columnsW) 
+           -> Handler m
+updateRows table readToWrite = 
+  mkInputHandler (jsonI . someI . jsonO . someO) (\(record :: U.Upkeep) -> withConnId (\conn recordId -> do
+    let condition row = pgInt4 recordId .== sel1 row
+    _ <- liftIO $ runUpdate conn table readToWrite condition
+    return ()))
 
 deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
            => Table a1 read1
