@@ -15,6 +15,8 @@ import "fay-base" Prelude
 #endif
 
 import qualified Crm.Shared.UpkeepSequence as US
+import Crm.Shared.Dryer
+import Crm.Shared.Compressor
 
 newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
 type MachineType' = (MachineTypeId, MachineType)
@@ -40,3 +42,9 @@ data MyEither =
 
 machineKinds :: [(Int, String)]
 machineKinds = [(0, "Kompresor"), (1, "Sušička")]
+
+data MachineKindSpecific = 
+  CompressorSpecific {
+    compressor :: Compressor } |
+  DryerSpecific {
+    dryer :: Dryer }
