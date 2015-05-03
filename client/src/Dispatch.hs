@@ -1,10 +1,16 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RebindableSyntax #-}
 
 module Dispatch where
 
 import "fay-base" Prelude hiding (span, div, elem)
 import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
+import "fay-base" Data.LocalStorage
+import "fay-base" Data.Defined (fromDefined)
+import "fay-base" Data.Text (unpack, fromString)
+import "fay-base" Data.Maybe (onJust, joinMaybe)
 
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
@@ -20,6 +26,8 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
+import Crm.Helpers (parseSafely)
+import qualified Crm.Shared.MachineType as MT
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -72,5 +80,26 @@ main' = do
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
+loadFromLocalStorage :: Fay (Maybe (MT.MachineType, Maybe MT.MachineTypeId))
+loadFromLocalStorage = do
+  name <- getLocalStorage "mt.name"
+  kind <- getLocalStorage "mt.kind"
+  manufacturer <- getLocalStorage "mt.manufacturer"
+  case (fromDefined name, joinMaybe $ parseSafely `onJust` fromDefined kind, fromDefined manufacturer) of
+    (Just name', Just kind', Just manufacturer') -> do
+      mtId <- getLocalStorage "mt.id"
+      let mtId' = MT.MachineTypeId `onJust` (joinMaybe $ parseSafely `onJust` fromDefined mtId)
+      let machineType = MT.MachineType kind' (unpack name') (unpack manufacturer')
+      return $ Just (machineType, mtId')
+    _ -> return Nothing
+
 appVar :: Fay (Var D.AppState)
-appVar = newVar D.defaultAppState
+appVar = do
+  storedState <- loadFromLocalStorage
+  let 
+    appState = case storedState of
+      Just state -> D.defaultAppState {
+        D.maybeMachineIdFromPhase1 = snd state ,
+        D.machineTypeFromPhase1 = (fst state, []) }
+      _ -> D.defaultAppState
+  newVar appState

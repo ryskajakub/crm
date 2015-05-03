@@ -65,7 +65,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       let MT.MachineType kind name manufacturer = machineType
       setLocalStorage "mt.name" (pack name)
       setLocalStorage "mt.kind" (showInt kind)
-      setLocalStorage "mt.manufaturer" (pack manufacturer)
+      setLocalStorage "mt.manufacturer" (pack manufacturer)
     else return ()
 
   setMachineType machineType = do
