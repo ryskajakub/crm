@@ -9,7 +9,7 @@ import "fay-base" Prelude hiding (span, div, elem)
 import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
 import "fay-base" Data.LocalStorage
 import "fay-base" Data.Defined (fromDefined)
-import "fay-base" Data.Text (unpack, fromString)
+import "fay-base" Data.Text (unpack, fromString, (<>), showInt)
 import "fay-base" Data.Maybe (onJust, joinMaybe)
 
 import Crm.Router (startRouter)
@@ -27,7 +27,9 @@ import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Helpers (parseSafely)
+
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.UpkeepSequence as US
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -80,17 +82,45 @@ main' = do
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
-loadFromLocalStorage :: Fay (Maybe (MT.MachineType, Maybe MT.MachineTypeId))
+loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))
 loadFromLocalStorage = do
   name <- getLocalStorage "mt.name"
   kind <- getLocalStorage "mt.kind"
   manufacturer <- getLocalStorage "mt.manufacturer"
-  case (fromDefined name, joinMaybe $ parseSafely `onJust` fromDefined kind, fromDefined manufacturer) of
-    (Just name', Just kind', Just manufacturer') -> do
+  upkeepSequencesCount' <- getLocalStorage "us.length"
+  case (fromDefined name, joinMaybe $ parseSafely `onJust` fromDefined kind, fromDefined manufacturer, 
+      parseSafely `onJust` fromDefined upkeepSequencesCount') of
+    (Just name', Just kind', Just manufacturer', Just upkeepSequencesCount) -> do
       mtId <- getLocalStorage "mt.id"
       let mtId' = MT.MachineTypeId `onJust` (joinMaybe $ parseSafely `onJust` fromDefined mtId)
       let machineType = MT.MachineType kind' (unpack name') (unpack manufacturer')
-      return $ Just (machineType, mtId')
+      seqs <- case upkeepSequencesCount of
+        Just count -> do
+          let 
+            loadUpkeepSequence i = do
+              let 
+                index = showInt i
+                parseBool text = case text of
+                  _ | text == "True" -> Just $ True
+                  _ | text == "False" -> Just $ True
+                  _ -> Nothing
+              displayOrdering <- getLocalStorage ("us." <> index <> ".displayOrdering") 
+              label <- getLocalStorage ("us." <> index <> ".label") 
+              repetition <- getLocalStorage ("us." <> index <> ".repetition") 
+              oneTime <- getLocalStorage ("us." <> index <> ".oneTime") 
+              return $ case (joinMaybe $ parseSafely `onJust` fromDefined displayOrdering, fromDefined label, joinMaybe $ 
+                  parseSafely `onJust` fromDefined repetition, joinMaybe $ parseBool `onJust` fromDefined oneTime) of
+                (Just d, Just l, Just r, Just o) -> Just $ US.UpkeepSequence d (unpack l) r o
+                _ -> Nothing
+          maybeBrokenUSs <- forM [0..(count - 1)] loadUpkeepSequence
+          let 
+            verifiedUSs = foldl (\acc elem -> case (acc, elem) of
+              (Just acc', Just e) -> Just $ acc' ++ [e]
+              _ -> Nothing) (Just []) maybeBrokenUSs
+          return $ maybe [] id verifiedUSs
+        Nothing -> return []
+
+      return $ Just (machineType, seqs, mtId')
     _ -> return Nothing
 
 appVar :: Fay (Var D.AppState)
@@ -98,8 +128,8 @@ appVar = do
   storedState <- loadFromLocalStorage
   let 
     appState = case storedState of
-      Just state -> D.defaultAppState {
-        D.maybeMachineIdFromPhase1 = snd state ,
-        D.machineTypeFromPhase1 = (fst state, []) }
+      Just (mt, seqs, mtId) -> D.defaultAppState {
+        D.maybeMachineIdFromPhase1 = mtId ,
+        D.machineTypeFromPhase1 = (mt, seqs) }
       _ -> D.defaultAppState
   newVar appState
