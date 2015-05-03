@@ -49,12 +49,18 @@ machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> C.CompanyId
                       -> (DOMElement, Fay ())
 machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
+
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
-  setMachineTypeId machineTypeId' = 
+  setMachineTypeId machineTypeId' = do
+    if hasLocalStorage 
+      then case machineTypeId' of
+        Just machineTypeId -> setLocalStorage "mt.id" $ showInt $ MT.getMachineTypeId machineTypeId
+        Nothing -> removeLocalStorage "mt.id"
+      else return ()
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
 
-  storeMachineTypeIntoLocalStorage :: MT.MachineType -> Maybe MT.MachineTypeId -> Fay ()
-  storeMachineTypeIntoLocalStorage machineType machineTypeId' = if hasLocalStorage
+  storeMachineTypeIntoLocalStorage :: MT.MachineType -> Fay ()
+  storeMachineTypeIntoLocalStorage machineType = if hasLocalStorage
     then do
       let MT.MachineType kind name manufacturer = machineType
       setLocalStorage "mt.name" (pack name)
@@ -63,12 +69,12 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     else return ()
 
   setMachineType machineType = do
-    storeMachineTypeIntoLocalStorage machineType Nothing
+    storeMachineTypeIntoLocalStorage machineType
     mkSetMachineType appVar machineType
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
   setMachineWhole machineTypeTuple = do
-    storeMachineTypeIntoLocalStorage (fst machineTypeTuple) Nothing
+    storeMachineTypeIntoLocalStorage (fst machineTypeTuple)
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
