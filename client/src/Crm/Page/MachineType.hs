@@ -13,6 +13,7 @@ import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 import "fay-base" Data.Maybe (isJust, fromJust)
+import "fay-base" Data.LocalStorage
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -51,6 +52,16 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
   setMachineTypeId machineTypeId' = 
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
+
+  storeMachineTypeIntoLocalStorage :: MT.MachineType -> Maybe MT.MachineTypeId -> Fay ()
+  storeMachineTypeIntoLocalStorage machineType machineTypeId' = if hasLocalStorage
+    then do
+      let MT.MachineType kind name manufacturer = machineType
+      setLocalStorage "mt.name" (pack name)
+      setLocalStorage "mt.kind" (showInt kind)
+      setLocalStorage "mt.manufaturer" (pack manufacturer)
+    else return ()
+
   setMachineType = mkSetMachineType appVar
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
