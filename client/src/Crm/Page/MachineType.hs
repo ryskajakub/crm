@@ -93,7 +93,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId', machineType', upkeepSequences') -> do
-            setMachineWhole (machineType', map (\us -> (us, "0")) upkeepSequences')
+            setMachineWhole (machineType', [])
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
