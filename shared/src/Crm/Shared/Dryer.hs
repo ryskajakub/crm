@@ -20,5 +20,5 @@ data Dryer = Dryer {
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-newCompressor :: Dryer
-newCompressor = Dryer ""
+newDryer :: Dryer
+newDryer = Dryer ""

@@ -36,14 +36,14 @@ main' = do
       D.CompanyDetail companyId' company' editing' machines' ->
         emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
       D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
-      D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar 
+      D.MachineScreen (MD.MachineData machine machineSpecific machineTypeTuple operationStartCalendar 
           companyPersonId companyPersons machinePageMode) ->
         emptyCallback $ case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing _ photos upkeeps companyId) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons
           Right (MD.MachineNew companyId maybeMachineTypeId) ->
-            machineNew router appVar' operationStartCalendar machine
+            machineNew router appVar' operationStartCalendar machine machineSpecific
               companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
         upkeepDatePicker employees selectedEmployee upkeepPageMode) ->

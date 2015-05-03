@@ -193,12 +193,18 @@ startRouter appVar = let
           appState <- get appVar
           let
             machineTypeTuple = D.machineTypeFromPhase1 appState
+            machineKind = MT.kind $ fst machineTypeTuple
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
             machineQuadruple = (M.newMachine nowYMD, "", "", "")
+            machineSpecific = if machineKind == 0 
+              then MT.newCompressorSpecific
+              else if machineKind == 1
+              then MT.newDryerSpecific
+              else undefined
           fetchContactPersons companyId (\cps -> modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) Nothing cps
-              (Right $ MachineNew companyId maybeMachineTypeId))
+            D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 
+              (nowYMD, False) Nothing cps (Right $ MachineNew companyId maybeMachineTypeId))
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -244,7 +250,7 @@ startRouter appVar = let
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
-                  machineQuadruple machineTypeTuple (startDateInCalendar, False) contactPersonId cps
+                  machineQuadruple undefined machineTypeTuple (startDateInCalendar, False) contactPersonId cps
                     (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
         _ -> modify' D.NotFound
   ),(

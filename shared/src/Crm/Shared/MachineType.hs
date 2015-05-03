@@ -48,3 +48,9 @@ data MachineKindSpecific =
     compressor :: Compressor } |
   DryerSpecific {
     dryer :: Dryer }
+
+newCompressorSpecific :: MachineKindSpecific
+newCompressorSpecific = CompressorSpecific $ newCompressor
+
+newDryerSpecific :: MachineKindSpecific
+newDryerSpecific = DryerSpecific $ newDryer
