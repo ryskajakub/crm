@@ -54,23 +54,23 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   setMachineTypeId machineTypeId' = do
     if hasLocalStorage 
       then case machineTypeId' of
-        Just machineTypeId -> setLocalStorage "mt.id" $ showInt $ MT.getMachineTypeId machineTypeId
+        Just machineTypeId'' -> setLocalStorage "mt.id" $ showInt $ MT.getMachineTypeId machineTypeId''
         Nothing -> removeLocalStorage "mt.id"
       else return ()
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
 
   storeMachineTypeIntoLocalStorage :: MT.MachineType -> Fay ()
-  storeMachineTypeIntoLocalStorage machineType = if hasLocalStorage
+  storeMachineTypeIntoLocalStorage machineType' = if hasLocalStorage
     then do
-      let MT.MachineType kind name manufacturer = machineType
+      let MT.MachineType kind name manufacturer = machineType'
       setLocalStorage "mt.name" (pack name)
       setLocalStorage "mt.kind" (showInt kind)
       setLocalStorage "mt.manufacturer" (pack manufacturer)
     else return ()
 
-  setMachineType machineType = do
-    storeMachineTypeIntoLocalStorage machineType
-    mkSetMachineType appVar machineType
+  setMachineType machineType' = do
+    storeMachineTypeIntoLocalStorage machineType'
+    mkSetMachineType appVar machineType'
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
   setMachineWhole machineTypeTuple = do
@@ -92,7 +92,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', upkeepSequences') -> do
+          Just (machineTypeId', machineType', _) -> do
             setMachineWhole (machineType', [])
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
@@ -135,12 +135,12 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     showBool :: Bool -> Text
     showBool b = if b then "True" else "False"
 
-    storeUpkeepSequence (i, seq) = do
+    storeUpkeepSequence (i, us) = do
       let index = showInt i
-      setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering seq)
-      setLocalStorage ("us." <> index <> ".label") (pack $ US.label_ seq)
-      setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition seq)
-      setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime seq)
+      setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering us)
+      setLocalStorage ("us." <> index <> ".label") (pack $ US.label_ us)
+      setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition us)
+      setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime us)
 
     in do 
       forM_ seqsWithIndices storeUpkeepSequence
