@@ -9,3 +9,5 @@ drop table upkeep_sequences;
 drop table employees;
 drop table upkeep_machines;
 drop table contact_persons;
+drop table compressors;
+drop table dryers;
