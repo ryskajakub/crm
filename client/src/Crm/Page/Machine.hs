@@ -170,7 +170,7 @@ machineNew :: R.CrmRouter
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
     datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
-  machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru"
+  machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroj"
       buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons
     where
@@ -235,7 +235,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
   machineKind = MT.kind machineType
   machineSpecificRows = case (machineKindSpecific) of
     MT.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor undefined
-    MT.DryerSpecific _ | machineKind == 1 -> dryerExtraRows
+    MT.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer undefined
     _ -> undefined
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $

@@ -13,6 +13,7 @@ import "fay-base" Data.Text (fromString)
 import HaskellReact
 
 import qualified Crm.Shared.Compressor as MC
+import qualified Crm.Shared.Dryer as MD
 
 import Crm.Component.Form (row')
 
@@ -28,5 +29,13 @@ compressorExtraRows editing compressor setCompressor = [
     (eventString >=> (\s -> setCompressor $ compressor { MC.note = s })) ]
 
 
-dryerExtraRows :: [DOMElement]
-dryerExtraRows = []
+dryerExtraRows :: Bool
+               -> MD.Dryer
+               -> (MD.Dryer -> Fay ())
+               -> [DOMElement]
+dryerExtraRows editing dryer setDryer = [
+  row'
+    editing
+    "Poznámka k sušičce"
+    (MD.note dryer)
+    (eventString >=> (\s -> setDryer $ dryer { MD.note = s })) ]
