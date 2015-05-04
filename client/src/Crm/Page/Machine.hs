@@ -178,7 +178,7 @@ machineNew router appState datePickerCalendar (machine', initialMileageRaw, mile
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId
+      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId machineSpecific
         (R.navigate R.defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 

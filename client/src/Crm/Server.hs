@@ -52,6 +52,7 @@ import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Photo as P
@@ -301,9 +302,10 @@ createMachine :: M.Machine
               -> C.CompanyId
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
+              -> MK.MachineKindSpecific
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId callback =
+createMachine machine companyId machineType contactPersonId _ callback =
   ajax
     (machine, machineType, toMyMaybe contactPersonId)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
