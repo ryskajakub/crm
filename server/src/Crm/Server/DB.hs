@@ -48,6 +48,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  machineSpecificQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
@@ -82,6 +83,8 @@ module Crm.Server.DB (
   MaybeEmployeeMapped ,
   EmployeeMapped ,
   UpkeepSequenceMapped ,
+  CompressorMapped ,
+  DryerMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -116,6 +119,8 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.Dryer as MD
+import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
@@ -311,6 +316,8 @@ type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
 type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
 type EmployeeMapped = (Int, E.Employee)
 type UpkeepSequenceMapped = (Int, US.UpkeepSequence)
+type CompressorMapped = (Int, MC.Compressor)
+type DryerMapped = (Int, MD.Dryer)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -338,6 +345,11 @@ instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
   convert tuple = (sel1 tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (d, US.UpkeepSequence a b c e)
+instance ColumnToRecord (Int, String) CompressorMapped where
+  convert tuple = (sel1 tuple, MC.Compressor $ sel2 tuple)
+instance ColumnToRecord (Int, String) DryerMapped where
+  convert tuple = (sel1 tuple, MD.Dryer $ sel2 tuple)
+
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
@@ -362,6 +374,18 @@ machineManufacturersQuery str = distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
   restrict -< (lower manufacturer' `like` (lower $ pgString ("%" ++ (intersperse '%' str) ++ "%")))
   returnA -< manufacturer'
+
+type QEither a b = Either (Query a) (Query b)
+machineSpecificQuery :: Int -> Int -> QEither CompressorsTable DryersTable
+machineSpecificQuery machineTypeId machineId = if machineTypeId == 0
+  then Left $ proc () -> do
+    compressor <- join compressorsQuery -< pgInt4 machineId
+    returnA -< compressor
+  else if machineTypeId == 1
+  then Right $ proc () -> do
+    dryer <- join dryersQuery -< pgInt4 machineId
+    returnA -< dryer
+  else undefined
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do
