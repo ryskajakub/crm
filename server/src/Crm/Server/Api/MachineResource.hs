@@ -3,9 +3,7 @@
 module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, PGInt4, pgString, pgDay)
-import Opaleye.Table (Table)
-import Opaleye.Column (Column)
+import Opaleye.PGTypes (pgInt4, pgString, pgDay)
 
 import Data.Tuple.All (sel2, sel1, sel3, sel5)
 
@@ -31,7 +29,7 @@ import qualified Crm.Shared.Dryer as MD
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
+  withConnId, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB

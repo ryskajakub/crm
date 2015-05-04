@@ -70,7 +70,7 @@ addMachine connection machine companyId' machineType contactPersonId machineSpec
       pgString serialNumber, pgString yearOfManufacture)
     sel1
   let machineId = head machineIds
-  case machineSpecificData of
+  _ <- case machineSpecificData of
     MK.CompressorSpecific compressor -> runInsert
       connection
       compressorsTable

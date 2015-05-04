@@ -3,10 +3,8 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import Opaleye.PGTypes (pgString, PGInt4)
+import Opaleye.PGTypes (pgString)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Table (Table)
-import Opaleye.Column (Column)
 import Opaleye (queryTable)
 
 import Control.Monad.Reader (ask)
