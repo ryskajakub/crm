@@ -37,6 +37,7 @@ import Crm.Server (updateMachineType, fetchMachineType,
 import Crm.Component.Autocomplete (autocompleteInput)
 
 data MachineTypeForm = Phase1 | Edit
+  deriving Eq
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
@@ -275,7 +276,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       formRow
         "Výrobce"
          autocompleteManufacturerField] ++ 
-         (if isJust machineTypeId then [] else upkeepSequenceRows) ++ [
+         (if isJust machineTypeId && machineTypeFormType == Phase1 then [] else upkeepSequenceRows) ++ [
       formRow
         (let 
           addUpkeepSequenceRow = let
