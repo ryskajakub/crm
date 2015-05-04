@@ -6,7 +6,6 @@
 
 module Crm.Server.Helpers (
   createDeletion ,
-  deleteRows ,
   deleteRows' ,
   updateRows ,
   today ,
@@ -84,19 +83,6 @@ createDeletion table pk connection = runDelete
   connection
   table
   (\row -> sel1 row .== pgInt4 pk) >> return ()
-
-deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
-           => Table a1 read1
-           -> Maybe (Table a2 read2)
-           -> Handler IdDependencies
-deleteRows table maybeTable = mkConstHandler jsonO $ withConnId (\connection theId -> liftIO $ do
-  let 
-    locateRow row = sel1 row .== pgInt4 theId
-    deleteRow table' = runDelete connection table' locateRow
-  case maybeTable of
-    Just table' -> deleteRow table' >> return ()
-    Nothing -> return ()
-  deleteRow table)
 
 today :: IO Day
 today = fmap utctDay getCurrentTime

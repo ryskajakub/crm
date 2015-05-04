@@ -28,7 +28,7 @@ import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  deleteRows, withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion)
+  withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
