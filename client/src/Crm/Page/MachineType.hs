@@ -10,9 +10,10 @@ module Crm.Page.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isJust, fromJust)
+import "fay-base" Data.Maybe (isJust, fromJust, whenJust)
+import "fay-base" Data.LocalStorage
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -36,6 +37,7 @@ import Crm.Server (updateMachineType, fetchMachineType,
 import Crm.Component.Autocomplete (autocompleteInput)
 
 data MachineTypeForm = Phase1 | Edit
+  deriving Eq
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
@@ -48,13 +50,30 @@ machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> C.CompanyId
                       -> (DOMElement, Fay ())
 machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
+
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
-  setMachineTypeId machineTypeId' = 
+  setMachineTypeId machineTypeId' = do
+    if hasLocalStorage 
+      then case machineTypeId' of
+        Just machineTypeId'' -> setLocalStorage "mt.id" $ showInt $ MT.getMachineTypeId machineTypeId''
+        Nothing -> removeLocalStorage "mt.id"
+      else return ()
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
-  setMachineType = mkSetMachineType appVar
+
+  storeMachineTypeIntoLocalStorage :: MT.MachineType -> Fay ()
+  storeMachineTypeIntoLocalStorage machineType' = if hasLocalStorage
+    then do
+      let MT.MachineType kind name manufacturer = machineType'
+      setLocalStorage "mt.name" (pack name)
+      setLocalStorage "mt.kind" (showInt kind)
+      setLocalStorage "mt.manufacturer" (pack manufacturer)
+    else return ()
+
+  setMachineType machineType' = setMachineWhole (machineType', upkeepSequences)
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
-  setMachineWhole machineTypeTuple =
+  setMachineWhole machineTypeTuple = do
+    storeMachineTypeIntoLocalStorage (fst machineTypeTuple)
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
@@ -72,8 +91,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', upkeepSequences') -> do
-            setMachineWhole (machineType', map (\us -> (us, "0")) upkeepSequences')
+          Just (machineTypeId', machineType', _) -> do
+            setMachineWhole (machineType', [])
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
@@ -105,14 +124,41 @@ machineTypeForm' :: MachineTypeForm
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
     submitButtonHandler = let
+
+  storeUpkeepSequencesIntoLS :: [US.UpkeepSequence] -> Fay ()
+  storeUpkeepSequencesIntoLS sequences = let
+    lastIndex = length sequences - 1
+    indices = [0..lastIndex]
+    seqsWithIndices = zip indices sequences
+
+    showBool :: Bool -> Text
+    showBool b = if b then "True" else "False"
+
+    storeUpkeepSequence (i, us) = do
+      let index = showInt i
+      setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering us)
+      setLocalStorage ("us." <> index <> ".label") (pack $ US.label_ us)
+      setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition us)
+      setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime us)
+
+    in do 
+      forM_ seqsWithIndices storeUpkeepSequence
+      setLocalStorage "us.length" (showInt $ length sequences)
     
   modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
-  modifyUpkeepSequence displayOrder modifier = let
-    modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
-      if displayOrder == displayOrder' 
-      then modifier (us, repetitionText)
-      else (us, repetitionText)) upkeepSequences
-    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+  modifyUpkeepSequence displayOrder modifier = do
+    currentAppState <- get appVar
+    let 
+      navigation = D.navigation currentAppState
+      maybeSequences = case navigation of
+        D.MachineNewPhase1 _ (_,sequences) _ -> Just $ map fst sequences
+        _ -> Nothing
+      modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
+        if displayOrder == displayOrder' 
+        then modifier (us, repetitionText)
+        else (us, repetitionText)) upkeepSequences
+    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+    whenJust maybeSequences storeUpkeepSequencesIntoLS 
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
@@ -138,7 +184,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
       (div' (class' "col-md-2") labelField) ,
-      (label' (class'' ["control-label", "col-md-2"]) "Počet motodin") ,
+      (label' (class'' ["control-label", "col-md-2"]) "Počet motohodin") ,
       (div' (class' "col-md-1") mthField) ,
       (label' (class'' ["control-label", "col-md-2"]) "První servis") ,
       (div' (class' "col-md-1") firstServiceField) ]
@@ -230,7 +276,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       formRow
         "Výrobce"
          autocompleteManufacturerField] ++ 
-         (if isJust machineTypeId then [] else upkeepSequenceRows) ++ [
+         (if isJust machineTypeId && machineTypeFormType == Phase1 then [] else upkeepSequenceRows) ++ [
       formRow
         (let 
           addUpkeepSequenceRow = let
