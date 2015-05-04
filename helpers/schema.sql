@@ -12,12 +12,11 @@ create table companies (
   name varchar(500) not null , 
   plant varchar(500) not null ,
   address varchar (500) not null ,
-  person varchar (500) not null ,
-  phone varchar (500) not null ,
   unique (name, plant) );
 
 create table machine_types (
   id serial primary key , 
+  machine_kind integer not null ,
   name varchar(500) unique not null , 
   manufacturer varchar (500) );
 
