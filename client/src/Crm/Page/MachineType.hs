@@ -68,9 +68,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       setLocalStorage "mt.manufacturer" (pack manufacturer)
     else return ()
 
-  setMachineType machineType' = do
-    storeMachineTypeIntoLocalStorage machineType'
-    mkSetMachineType appVar machineType'
+  setMachineType machineType' = setMachineWhole (machineType', upkeepSequences)
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
   setMachineWhole machineTypeTuple = do
