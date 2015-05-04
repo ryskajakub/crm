@@ -33,6 +33,12 @@ validationHtml validationMessages = let
     then text2DOM ""
     else B.grid $ B.row $ B.col (B.mkColProps 12) (A.alert A.Danger validationMessagesHtml)
 
+zipWithIndex :: [a] -> [(Int, a)] 
+zipWithIndex sequences = let
+  lastIndex = length sequences - 1
+  indices = [0..lastIndex]
+  in zip indices sequences
+
 pageInfo :: Renderable a
          => Text
          -> Maybe a

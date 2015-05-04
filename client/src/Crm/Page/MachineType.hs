@@ -32,7 +32,7 @@ import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (saveButtonRow', editingCheckbox,
   editingInput, editingInput', formRow, inputNormalAttrs)
-import Crm.Helpers (lmap, rmap, pageInfo, parseSafely)
+import Crm.Helpers (lmap, rmap, pageInfo, parseSafely, zipWithIndex)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
 import Crm.Component.Autocomplete (autocompleteInput)
@@ -128,9 +128,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   storeUpkeepSequencesIntoLS :: [US.UpkeepSequence] -> Fay ()
   storeUpkeepSequencesIntoLS sequences = let
-    lastIndex = length sequences - 1
-    indices = [0..lastIndex]
-    seqsWithIndices = zip indices sequences
+    seqsWithIndices = zipWithIndex sequences
 
     showBool :: Bool -> Text
     showBool b = if b then "True" else "False"
