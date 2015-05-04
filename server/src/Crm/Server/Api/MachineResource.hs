@@ -15,8 +15,8 @@ import Control.Applicative (liftA3)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO)
-import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler)
+import Rest.Dictionary.Combinators (jsonO, jsonI)
+import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
@@ -28,7 +28,7 @@ import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion)
+  withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -47,13 +47,17 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion dryersTable, createDeletion compressorsTable, createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = updateRows machinesTable readToWrite where
-  readToWrite machine' (_,companyId, contactPersonId, machineTypeId,_,_,_,_,_,_) =
-    (Nothing, companyId, contactPersonId, machineTypeId,
-      maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
-      pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
-      pgString $ M.note machine', pgString $ M.serialNumber machine',
-      pgString $ M.yearOfManufacture machine')
+machineUpdate = mkInputHandler (jsonI . jsonO) (\machine' -> withConnId (\conn recordId -> do
+  let 
+    machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_) =
+      (Nothing, companyId, contactPersonId, machineTypeId,
+        maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
+        pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
+        pgString $ M.note machine', pgString $ M.serialNumber machine',
+        pgString $ M.yearOfManufacture machine')
+    updateMachine = prepareUpdate machinesTable machineReadToWrite
+  liftIO $ updateMachine recordId conn
+  return ()))
 
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do

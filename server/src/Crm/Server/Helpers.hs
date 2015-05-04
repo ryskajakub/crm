@@ -6,6 +6,7 @@
 
 module Crm.Server.Helpers (
   createDeletion ,
+  prepareUpdate ,
   deleteRows' ,
   updateRows ,
   today ,
@@ -69,6 +70,18 @@ updateRows table readToWrite = mkInputHandler (jsonI . jsonO)
   let condition row = pgInt4 recordId .== sel1 row
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition
   return ()))
+
+prepareUpdate :: (Sel1 columnsR (Column PGInt4))
+              => Table columnsW columnsR
+              -> (columnsR -> columnsW)
+              -> Int
+              -> Connection
+              -> IO ()
+prepareUpdate table readToWrite theId connection = runUpdate
+  connection
+  table
+  readToWrite
+  (\row -> sel1 row .== pgInt4 theId) >> return ()
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
 deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId -> 
