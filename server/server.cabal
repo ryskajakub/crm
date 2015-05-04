@@ -65,7 +65,7 @@ Library
     , regular
     , transformers
     , json-schema
-    , aeson
+    , aeson >= 0.8 && < 0.9
     , fay == 0.21.2.1
     , opaleye == 0.3
     , product-profunctors
