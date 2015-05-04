@@ -69,7 +69,7 @@ main' = do
         (plannedUpkeeps router plannedUpkeeps')
       D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineTypeId machineType -> 
-        machineTypeForm appVar' machineTypeId machineType 
+        machineTypeForm appVar' machineTypeId machineType
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> emptyCallback $ employeePage router employees

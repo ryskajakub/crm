@@ -184,7 +184,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
       (div' (class' "col-md-2") labelField) ,
-      (label' (class'' ["control-label", "col-md-2"]) "Počet motodin") ,
+      (label' (class'' ["control-label", "col-md-2"]) "Počet motohodin") ,
       (div' (class' "col-md-1") mthField) ,
       (label' (class'' ["control-label", "col-md-2"]) "První servis") ,
       (div' (class' "col-md-1") firstServiceField) ]

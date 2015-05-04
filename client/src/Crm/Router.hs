@@ -44,6 +44,7 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -277,7 +278,7 @@ startRouter appVar = let
         Just (machineTypeIdInt) -> let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
-            let upkeepSequences' = map ((\us -> (us, ""))) upkeepSequences
+            let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
             in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)
         _ -> modify' D.NotFound 
   ),(
