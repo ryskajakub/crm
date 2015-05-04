@@ -12,10 +12,13 @@ import Fay.Convert (showToFay, readFromFay')
 import Data.Maybe (fromJust)
 import Data.JSON.Schema.Generic (gSchema)
 
+import qualified Crm.Shared.Compressor as MC
+import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
@@ -65,6 +68,8 @@ instance FromJSON E.Employee where
   parseJSON = fayInstance
 instance FromJSON CP.ContactPerson where
   parseJSON = fayInstance
+instance FromJSON MK.MachineKindSpecific where
+  parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
@@ -93,6 +98,12 @@ instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
 instance JS.JSONSchema CP.ContactPerson where
+  schema = gSchema
+instance JS.JSONSchema MD.Dryer where
+  schema = gSchema
+instance JS.JSONSchema MC.Compressor where
+  schema = gSchema
+instance JS.JSONSchema MK.MachineKindSpecific where
   schema = gSchema
 instance JS.JSONSchema PM.PhotoMeta where
   schema = gSchema

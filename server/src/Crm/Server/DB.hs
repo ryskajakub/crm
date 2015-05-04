@@ -22,6 +22,8 @@ module Crm.Server.DB (
   machinePhotosTable ,
   photosMetaTable ,
   contactPersonsTable ,
+  compressorsTable ,
+  dryersTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,

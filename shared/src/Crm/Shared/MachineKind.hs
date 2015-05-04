@@ -7,6 +7,8 @@
 module Crm.Shared.MachineKind where
 
 #ifndef FAY
+import GHC.Generics
+import "base" Data.Data
 import "base" Prelude
 #else
 import "fay-base" Prelude
@@ -23,6 +25,9 @@ data MachineKindSpecific =
     compressor :: Compressor } |
   DryerSpecific {
     dryer :: Dryer }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif
 
 newCompressorSpecific :: MachineKindSpecific
 newCompressorSpecific = CompressorSpecific $ newCompressor
