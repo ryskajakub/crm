@@ -54,6 +54,7 @@ machineDetail :: Bool
               -> C.CompanyId
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
+              -> MK.MachineKindSpecific
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
@@ -63,11 +64,11 @@ machineDetail :: Bool
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
-    mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons = 
+    mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
+    contactPersonId contactPersons =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
-      mileagePerYearRaw, datePickerText) undefined machineTypeTuple extraRows extraGrid contactPersonId contactPersons
+      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -240,7 +241,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     _ -> md )
 
   machineKind = MT.kind machineType
-  machineSpecificRows = case (machineKindSpecific) of
+  machineSpecificRows = case machineKindSpecific of
     MK.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor setCompressor
     MK.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer undefined
     _ -> undefined

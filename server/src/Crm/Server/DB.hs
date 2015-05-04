@@ -377,11 +377,11 @@ machineManufacturersQuery str = distinct $ proc () -> do
 
 type QEither a b = Either (Query a) (Query b)
 machineSpecificQuery :: Int -> Int -> QEither CompressorsTable DryersTable
-machineSpecificQuery machineTypeId machineId = if machineTypeId == 0
+machineSpecificQuery machineKind machineId = if machineKind == 0
   then Left $ proc () -> do
     compressor <- join compressorsQuery -< pgInt4 machineId
     returnA -< compressor
-  else if machineTypeId == 1
+  else if machineKind == 1
   then Right $ proc () -> do
     dryer <- join dryersQuery -< pgInt4 machineId
     returnA -< dryer

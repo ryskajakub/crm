@@ -246,13 +246,14 @@ startRouter appVar = let
         Just(machineId') -> let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
-            (\(companyId, machine, machineTypeId, machineTypeTuple, machineNextService, contactPersonId, upkeeps) ->
+            (\(companyId, machine, machineTypeId, machineTypeTuple, 
+                machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
               fetchMachinePhotos machineId (\photos ->
                 let 
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
-                  machineQuadruple undefined machineTypeTuple (startDateInCalendar, False) contactPersonId cps
+                  machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps
                     (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
         _ -> modify' D.NotFound
   ),(
