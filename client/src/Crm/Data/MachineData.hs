@@ -8,6 +8,7 @@ import Crm.Shared.Company
 import Crm.Shared.ContactPerson
 import Crm.Shared.Machine
 import Crm.Shared.MachineType
+import Crm.Shared.MachineKind
 import Crm.Shared.YearMonthDay
 import Crm.Shared.UpkeepSequence
 import Crm.Shared.Photo

@@ -42,6 +42,7 @@ import Moment (now, requireMoment, day)
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
@@ -199,9 +200,9 @@ startRouter appVar = let
             companyId = C.CompanyId companyIdInt
             machineQuadruple = (M.newMachine nowYMD, "", "", "")
             machineSpecific = if machineKind == 0 
-              then MT.newCompressorSpecific
+              then MK.newCompressorSpecific
               else if machineKind == 1
-              then MT.newDryerSpecific
+              then MK.newDryerSpecific
               else undefined
           fetchContactPersons companyId (\cps -> modify' $ 
             D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 

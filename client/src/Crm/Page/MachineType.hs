@@ -26,6 +26,7 @@ import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
@@ -252,13 +253,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   typeTypeSelect = let
     buttonLabel = [
-      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MT.machineKinds, 
+      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MK.machineKinds, 
       text2DOM " ", 
       span' (class' "caret") "" ]
     mkLink (kindId, kindLabel) = let
       selectAction = setMachineType (machineType { MT.kind = kindId })
       in li $ AA.a''' (click selectAction) (pack kindLabel)
-    selectElements = map mkLink MT.machineKinds
+    selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown buttonLabel selectElements
 
   result =

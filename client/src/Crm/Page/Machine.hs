@@ -34,6 +34,7 @@ import qualified Crm.Shared.Photo as P
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
@@ -161,7 +162,7 @@ machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
            -> (M.Machine, Text, Text, Text)
-           -> MT.MachineKindSpecific
+           -> MK.MachineKindSpecific
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
@@ -187,7 +188,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
-               -> MT.MachineKindSpecific
+               -> MK.MachineKindSpecific
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
@@ -234,8 +235,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
 
   machineKind = MT.kind machineType
   machineSpecificRows = case (machineKindSpecific) of
-    MT.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor undefined
-    MT.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer undefined
+    MK.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor undefined
+    MK.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer undefined
     _ -> undefined
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
