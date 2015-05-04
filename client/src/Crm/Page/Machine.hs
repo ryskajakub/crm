@@ -154,7 +154,7 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine (
+      editMachineAction = updateMachine machineId machine machineSpecific (
         setEditing False)
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
