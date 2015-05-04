@@ -22,6 +22,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Compressor as MC
+import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
@@ -70,12 +71,14 @@ addMachine connection machine companyId' machineType contactPersonId machineSpec
     sel1
   let machineId = head machineIds
   case machineSpecificData of
-    MK.CompressorSpecific compressor ->
-      runInsert
-        connection
-        compressorsTable
-        (pgInt4 machineId, pgString $ MC.note compressor)
-    MK.DryerSpecific _ -> undefined
+    MK.CompressorSpecific compressor -> runInsert
+      connection
+      compressorsTable
+      (pgInt4 machineId, pgString $ MC.note compressor)
+    MK.DryerSpecific dryer -> runInsert
+      connection
+      dryersTable
+      (pgInt4 machineId, pgString $ MD.note dryer)
   return machineId -- todo safe
 
 machineResource :: Resource IdDependencies IdDependencies Void Void Void

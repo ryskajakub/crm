@@ -24,7 +24,6 @@ import HaskellReact.Bootstrap.Carousel (carousel)
 import qualified JQuery as JQ
 
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Company as C
@@ -235,15 +234,16 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
-  setCompressor :: MC.Compressor -> Fay ()
-  setCompressor compressor = changeNavigationState (\md -> case MD.machineKindSpecific md of
-    MK.CompressorSpecific _ -> md { MD.machineKindSpecific = MK.CompressorSpecific compressor }
-    _ -> md )
+  mkSetMachineSpecificData :: MK.MachineKindSpecific -> Fay ()
+  mkSetMachineSpecificData mks = changeNavigationState (\md -> md { MD.machineKindSpecific = mks } )
+
+  setCompressor c = mkSetMachineSpecificData $ MK.CompressorSpecific c
+  setDryer d = mkSetMachineSpecificData $ MK.DryerSpecific d
 
   machineKind = MT.kind machineType
   machineSpecificRows = case machineKindSpecific of
     MK.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor setCompressor
-    MK.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer undefined
+    MK.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer setDryer
     _ -> undefined
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
