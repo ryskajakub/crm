@@ -91,8 +91,9 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       [] -> undefined
       x : xs -> (x,xs)
     nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
-  return (companyId, machine, machineTypeId, (machineType, 
-    upkeepSequences), dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData))
+  return -- the result needs to be in nested tuples, because there can be max 7-tuple
+    ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
+    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, machineSpecificData)))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO) (const $ do
