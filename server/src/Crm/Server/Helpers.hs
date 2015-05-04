@@ -5,7 +5,9 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Crm.Server.Helpers (
+  createDeletion ,
   deleteRows ,
+  deleteRows' ,
   updateRows ,
   today ,
   ymdToDay ,
@@ -33,6 +35,7 @@ import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad (forM_)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
 import Rest.Dictionary.Combinators (jsonO, jsonI)
@@ -67,6 +70,20 @@ updateRows table readToWrite = mkInputHandler (jsonI . jsonO)
   let condition row = pgInt4 recordId .== sel1 row
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition
   return ()))
+
+deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
+deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId -> 
+  liftIO $ forM_ deletions (\deletion -> deletion theId connection))
+
+createDeletion :: (Sel1 read (Column PGInt4))
+               => Table write read
+               -> Int
+               -> Connection
+               -> IO ()
+createDeletion table pk connection = runDelete
+  connection
+  table
+  (\row -> sel1 row .== pgInt4 pk) >> return ()
 
 deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
            => Table a1 read1

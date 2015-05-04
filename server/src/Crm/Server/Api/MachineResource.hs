@@ -27,8 +27,8 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today,
-  deleteRows, withConnId, updateRows, ymdToDay, maybeToNullable)
+import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
+  deleteRows, withConnId, updateRows, ymdToDay, maybeToNullable, createDeletion)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -44,7 +44,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineDelete :: Handler IdDependencies
-machineDelete = deleteRows machinesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
+machineDelete = deleteRows' [createDeletion dryersTable, createDeletion compressorsTable, createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = updateRows machinesTable readToWrite where
