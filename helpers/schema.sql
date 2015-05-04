@@ -79,3 +79,7 @@ create table upkeep_sequences (
 create table compressors (
   machine_id integer not null references machines(id) ,
   note varchar (5000) not null );
+
+create table dryers (
+  machine_id integer not null references machines(id) ,
+  note varchar (5000) not null );

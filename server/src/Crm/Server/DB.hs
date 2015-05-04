@@ -146,7 +146,7 @@ type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
 type CompressorsTable = (DBInt, DBText)
 
-type DryersTable = (DBInt, DBInt)
+type DryersTable = (DBInt, DBText)
 
 type MachinesTable = (DBInt, DBInt, Column (Nullable PGInt4) , DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 type MachinesWriteTable = (Maybe DBInt, DBInt, Column (Nullable PGInt4), DBInt, 
@@ -204,7 +204,7 @@ compressorsTable = Table "compressors" $ p2 (
 dryersTable :: Table DryersTable DryersTable
 dryersTable = Table "dryers" $ p2 (
   required "machine_id" ,
-  required "weight" )
+  required "note" )
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" $ p10 (

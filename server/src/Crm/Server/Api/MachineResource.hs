@@ -23,6 +23,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today,
@@ -63,6 +64,17 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
+  machineSpecificData <- case (machineSpecificQuery machineTypeId machineId) of
+    Left compressorQuery -> do
+      compressorRows <- liftIO $ runQuery conn compressorsQuery
+      compressorRow <- singleRowOrColumn compressorRows
+      let compressorMapped = convert compressorRow :: CompressorMapped
+      return $ MK.CompressorSpecific $ sel2 compressorMapped
+    Right dryerQuery -> do
+      dryerRows <- liftIO $ runQuery conn dryersQuery
+      dryerRow <- singleRowOrColumn dryerRows
+      let dryerMapped = convert dryerRow :: DryerMapped
+      return $ MK.DryerSpecific $ sel2 dryerMapped
   upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
   upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
   today' <- liftIO today
