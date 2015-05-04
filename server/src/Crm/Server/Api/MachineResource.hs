@@ -12,6 +12,7 @@ import Data.Tuple.All (sel2, sel1, sel3, sel5)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (liftA3)
+import Control.Monad (forM_)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
@@ -25,6 +26,8 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.Compressor as MC
+import qualified Crm.Shared.Dryer as MD
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
@@ -47,8 +50,9 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion dryersTable, createDeletion compressorsTable, createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) (\machine' -> withConnId (\conn recordId -> do
+machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', machineSpecificData) -> withConnId (\conn recordId -> do
   let 
+
     machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_) =
       (Nothing, companyId, contactPersonId, machineTypeId,
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
@@ -56,7 +60,14 @@ machineUpdate = mkInputHandler (jsonI . jsonO) (\machine' -> withConnId (\conn r
         pgString $ M.note machine', pgString $ M.serialNumber machine',
         pgString $ M.yearOfManufacture machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
-  liftIO $ updateMachine recordId conn
+
+    updateMachineSpecifictData = case machineSpecificData of
+      MK.CompressorSpecific compressor -> prepareUpdate compressorsTable compressorsReadToWrite where
+        compressorsReadToWrite = const (pgInt4 recordId, pgString $ MC.note compressor)
+      MK.DryerSpecific dryer -> prepareUpdate dryersTable dryersReadToWrite where
+        dryersReadToWrite = const (pgInt4 recordId, pgString $ MD.note dryer)
+
+  liftIO $ forM_ [updateMachine, updateMachineSpecifictData] (\updation -> updation recordId conn)
   return ()))
 
 machineSingle :: Handler IdDependencies
