@@ -75,3 +75,7 @@ create table upkeep_sequences (
   machine_type_id integer references machine_types (id) ,
   one_time boolean not null ,
   primary key (display_ordering, machine_type_id) );
+
+create table compressors (
+  machine_id integer not null references machines(id) ,
+  note varchar (5000) not null );

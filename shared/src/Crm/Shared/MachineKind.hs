@@ -30,7 +30,7 @@ data MachineKindSpecific =
 #endif
 
 newCompressorSpecific :: MachineKindSpecific
-newCompressorSpecific = CompressorSpecific $ newCompressor
+newCompressorSpecific = CompressorSpecific newCompressor
 
 newDryerSpecific :: MachineKindSpecific
-newDryerSpecific = DryerSpecific $ newDryer
+newDryerSpecific = DryerSpecific newDryer
