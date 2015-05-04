@@ -67,7 +67,7 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
       mileagePerYearRaw, datePickerText) undefined machineTypeTuple extraRows extraGrid contactPersonId contactPersons
     where
-      pageHeader = if editing then "Editace kompresoru" else "Kompresor"
+      pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
         mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
@@ -170,7 +170,7 @@ machineNew :: R.CrmRouter
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
     datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
-  machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroj"
+  machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
       mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons
     where

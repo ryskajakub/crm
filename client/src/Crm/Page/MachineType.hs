@@ -224,19 +224,19 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     else ["Do políčka \"Počet motohodin\" se smí vyplňovat pouze čísla."]
   validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3
 
-  phase1Advice = p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
+  phase1Advice = p $ text2DOM "Tady vybereš typ stroje, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
   advices phase1 = div $ (if phase1 then phase1Advice else text2DOM "") : [
     h4 "Servisní řada" ,
-    text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se kompresor opravuje. U každého typu kompresoru musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
+    text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se stroj opravuje. U každého typu stroje musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
     ul [
       li "Generální oprava po 50000 mth" ,
       li "Střední oprava po 25000 mth" ,
       li "Běžná oprava po 5000 mth" ,
       li "Úvodní servis po 500 mth" ]]
 
-  editInfo = pageInfo "Editace kompresoru" $ Just $ advices False
+  editInfo = pageInfo "Editace stroje" $ Just $ advices False
     
-  phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just $ advices True
+  phase1PageInfo = pageInfo "Nový stroj - fáze 1 - výběr typu stroje" $ Just $ advices True
 
   (autocompleteManufacturerField, autocompleteManufacturerCb) = case manufacturerAutocompleteSubstitution of
     Just substitution -> (substitution, return ())
@@ -332,8 +332,8 @@ machineTypesList router machineTypes = let
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
       td $ showInt count]) machineTypes
-  alertInfo = text2DOM "Tady edituješ typ kompresoru - který je společný pro více kompresorů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech kompresorů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u kompresorů a zařízení, tak se ty díly budou přidávat tady." : []
+  alertInfo = text2DOM "Tady edituješ typ stroje - který je společný pro více strojů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech strojů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u strojů a zařízení, tak se ty díly budou přidávat tady." : []
   in B.grid $ B.row $ 
-    (pageInfo "Editace typů kompresoru" $ Just alertInfo) ++ [
+    (pageInfo "Editace typů strojů" $ Just alertInfo) ++ [
       B.col (B.mkColProps 12) $ main $ section $
         B.table [ head', body ]]
