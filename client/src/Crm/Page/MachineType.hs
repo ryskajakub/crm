@@ -210,11 +210,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       in (countOfOneTimeSequencesAccNew, parseOkAccNew))
     (0 :: Int, True) 
     upkeepSequences
-  validationMessages1 = if length upkeepSequences == 0 
-    then ["Je třeba vytvořit alespoň jednu servisní řadu."]
-    else if length upkeepSequences == countOfOneTimeSequences
-      then ["Musí existovat alespoň jedna pravidelná servisní řada."]
-      else []
+  validationMessages1 = if machineTypeFormType == Phase1 && isJust machineTypeId
+    then []
+    else if null upkeepSequences 
+      then ["Je třeba vytvořit alespoň jednu servisní řadu."]
+      else if length upkeepSequences == countOfOneTimeSequences
+        then ["Musí existovat alespoň jedna pravidelná servisní řada."]
+        else []
   validationMessages2 = if countOfOneTimeSequences > 1
     then ["Může být pouze jeden úvodní servis."]
     else []
@@ -285,14 +287,14 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
             in D.modifyState appVar (\navig -> 
               navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-          disabledProps = if (isJust machineTypeId) 
+          disabledProps = if (machineTypeFormType == Phase1 && isJust machineTypeId) 
             then BTN.buttonProps { BTN.disabled = Defined True }
             else BTN.buttonProps 
           buttonProps = disabledProps {
             BTN.onClick = Defined $ const addUpkeepSequenceRow }
           in BTN.button' buttonProps "Přidat servisní řadu")
          (text2DOM "") ,
-      div' (class' "form-group") (saveButtonRow' (null validationMessages || isJust machineTypeId)
+      div' (class' "form-group") (saveButtonRow' (null validationMessages)
         submitButtonLabel submitButtonHandler)])) : (
     if null validationMessages
     then []
