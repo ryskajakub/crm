@@ -251,7 +251,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
-  typeTypeSelect = let
+  kindSelect = let
     buttonLabel = [
       text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MK.machineKinds, 
       text2DOM " ", 
@@ -260,7 +260,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       selectAction = setMachineType (machineType { MT.kind = kindId })
       in li $ AA.a''' (click selectAction) (pack kindLabel)
     selectElements = map mkLink MK.machineKinds
-    in BD.buttonDropdown buttonLabel selectElements
+    in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
 
   result =
     (B.grid $ B.row $
@@ -270,7 +270,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     (form' (class'' ["form-horizontal", "upkeep-sequence-form", "container"]) ([
       formRow
         "Druh"
-        typeTypeSelect ,
+        kindSelect ,
       formRow
         "Typ zařízení"
         typeInputField ,
