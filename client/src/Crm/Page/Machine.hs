@@ -287,7 +287,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         editDisplayRow
           editing
           ("Datum uvedení do provozu") 
-          datePicker ,
+          datePicker ] ++ (if MT.kind machineType == 1 then [] else [
         row'
           editing
           "Úvodní stav motohodin"
@@ -321,7 +321,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
                 in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
               buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown' editing buttonLabel' selectElements)) ] ,
+              in BD.buttonDropdown' editing buttonLabel' selectElements)) ]]) ++ [
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
