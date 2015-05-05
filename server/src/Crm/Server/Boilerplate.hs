@@ -2,6 +2,8 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Server.Boilerplate where
 
@@ -11,6 +13,7 @@ import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Fay.Convert (showToFay, readFromFay')
 import Data.Maybe (fromJust)
 import Data.JSON.Schema.Generic (gSchema)
+import Data.Data
 
 import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.Dryer as MD
@@ -26,8 +29,6 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Shared.MyMaybe
-
-import Data.Data
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
@@ -68,7 +69,7 @@ instance FromJSON E.Employee where
   parseJSON = fayInstance
 instance FromJSON CP.ContactPerson where
   parseJSON = fayInstance
-instance FromJSON MK.MachineKindSpecific where
+instance FromJSON MK.MachineKindData where
   parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
@@ -94,7 +95,7 @@ instance ToJSON PM.PhotoMeta where
   toJSON = fromJust . showToFay
 instance ToJSON CP.ContactPerson where
   toJSON = fromJust . showToFay
-instance ToJSON MK.MachineKindSpecific where
+instance ToJSON MK.MachineKindData where
   toJSON = fromJust . showToFay
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
@@ -105,7 +106,7 @@ instance JS.JSONSchema MD.Dryer where
   schema = gSchema
 instance JS.JSONSchema MC.Compressor where
   schema = gSchema
-instance JS.JSONSchema MK.MachineKindSpecific where
+instance JS.JSONSchema MK.MachineKindData where
   schema = gSchema
 instance JS.JSONSchema PM.PhotoMeta where
   schema = gSchema

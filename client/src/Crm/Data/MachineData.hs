@@ -21,7 +21,7 @@ import Crm.Component.DatePicker
 
 data MachineData = MachineData {
   machine :: (Machine, Text, Text, Text) ,
-  machineKindSpecific :: MachineKindSpecific ,
+  machineKindSpecific :: MachineKindData ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
   contactPersonId :: Maybe ContactPersonId ,

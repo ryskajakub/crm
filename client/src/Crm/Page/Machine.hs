@@ -53,7 +53,7 @@ machineDetail :: Bool
               -> C.CompanyId
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
-              -> MK.MachineKindSpecific
+              -> MK.MachineKindData
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
@@ -163,7 +163,7 @@ machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
            -> (M.Machine, Text, Text, Text)
-           -> MK.MachineKindSpecific
+           -> MK.MachineKindData
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
@@ -189,7 +189,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
-               -> MK.MachineKindSpecific
+               -> MK.MachineKindData
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
@@ -234,7 +234,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
-  mkSetMachineSpecificData :: MK.MachineKindSpecific -> Fay ()
+  mkSetMachineSpecificData :: MK.MachineKindData -> Fay ()
   mkSetMachineSpecificData mks = changeNavigationState (\md -> md { MD.machineKindSpecific = mks } )
 
   setCompressor c = mkSetMachineSpecificData $ MK.CompressorSpecific c

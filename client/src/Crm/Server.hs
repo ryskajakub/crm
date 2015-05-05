@@ -221,7 +221,7 @@ fetchMachinePhotos machineId callback =
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], MK.MachineKindSpecific) -> Fay()) -- ^ callback
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], MK.MachineKindData) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
@@ -302,7 +302,7 @@ createMachine :: M.Machine
               -> C.CompanyId
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
-              -> MK.MachineKindSpecific
+              -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
 createMachine machine companyId machineType contactPersonId machineSpecific callback =
@@ -362,7 +362,7 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
-              -> MK.MachineKindSpecific
+              -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine machineSpecificData callback = ajax

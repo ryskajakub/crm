@@ -41,7 +41,7 @@ addMachine :: Connection
            -> Int
            -> MT.MyEither
            -> Maybe Int
-           -> MK.MachineKindSpecific
+           -> MK.MachineKindData
            -> IO Int -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId machineSpecificData = do
   machineTypeId <- case machineType of

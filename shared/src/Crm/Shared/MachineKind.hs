@@ -20,17 +20,19 @@ import Crm.Shared.Compressor
 machineKinds :: [(Int, String)]
 machineKinds = [(0, "Kompresor"), (1, "Sušička")]
 
-data MachineKindSpecific = 
+type MachineKindData = MachineKind Compressor Dryer
+type MachineKindEnum = MachineKind () ()
+data MachineKind compressor dryer = 
   CompressorSpecific {
-    compressor :: Compressor } |
+    compressor :: compressor } |
   DryerSpecific {
-    dryer :: Dryer }
+    dryer :: dryer }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
-newCompressorSpecific :: MachineKindSpecific
+newCompressorSpecific :: MachineKindData
 newCompressorSpecific = CompressorSpecific newCompressor
 
-newDryerSpecific :: MachineKindSpecific
+newDryerSpecific :: MachineKindData
 newDryerSpecific = DryerSpecific newDryer
