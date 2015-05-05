@@ -29,6 +29,7 @@ import qualified Crm.Data.EmployeeData as ED
 import Crm.Helpers (parseSafely)
 
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepSequence as US
 
 emptyCallback :: a -> (a, Fay ())
@@ -88,7 +89,7 @@ loadFromLocalStorage = do
   kind <- getLocalStorage "mt.kind"
   manufacturer <- getLocalStorage "mt.manufacturer"
   upkeepSequencesCount' <- getLocalStorage "us.length"
-  case (fromDefined name, joinMaybe $ parseSafely `onJust` fromDefined kind, fromDefined manufacturer, 
+  case (fromDefined name, MK.dbReprToKind `onJust` ( joinMaybe ( parseSafely `onJust` fromDefined kind)), fromDefined manufacturer, 
       parseSafely `onJust` fromDefined upkeepSequencesCount') of
     (Just name', Just kind', Just manufacturer', Just upkeepSequencesCount) -> do
       mtId <- getLocalStorage "mt.id"

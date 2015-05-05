@@ -66,7 +66,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     then do
       let MT.MachineType kind name manufacturer = machineType'
       setLocalStorage "mt.name" (pack name)
-      setLocalStorage "mt.kind" (showInt kind)
+      setLocalStorage "mt.kind" (showInt $ MK.kindToDbRepr kind)
       setLocalStorage "mt.manufacturer" (pack manufacturer)
     else return ()
 
@@ -267,12 +267,16 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     mkLink (kindId, kindLabel) = let
       selectAction = do
         setMachineType (machineType { MT.kind = kindId })
-        if kindId == 1
-          then set1YearUpkeepSequences
-          else return ()
+        case kindId of
+          MK.CompressorSpecific _ -> return ()
+          MK.DryerSpecific _ -> set1YearUpkeepSequences
       in li $ AA.a''' (click selectAction) (pack kindLabel)
     selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
+
+  fixedUpkeepSequences = case MT.kind machineType of
+    MK.DryerSpecific _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> True
+    _ -> False
 
   result =
     (B.grid $ B.row $
@@ -288,28 +292,28 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         typeInputField ,
       formRow
         "Výrobce"
-         autocompleteManufacturerField] ++ 
-         (if (isJust machineTypeId && machineTypeFormType == Phase1) || MT.kind machineType == 1
-           then [] 
-           else upkeepSequenceRows) ++ [
-      formRow
-        (let 
-          addUpkeepSequenceRow = let
-            newUpkeepSequence = US.newUpkeepSequence {
-              US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
-              US.displayOrdering = length upkeepSequences + 1 }
-            newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
-            in D.modifyState appVar (\navig -> 
-              navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-          disabledProps = if (machineTypeFormType == Phase1 && isJust machineTypeId || MT.kind machineType == 1)
-            then BTN.buttonProps { BTN.disabled = Defined True }
-            else BTN.buttonProps 
-          buttonProps = disabledProps {
-            BTN.onClick = Defined $ const addUpkeepSequenceRow }
-          in BTN.button' buttonProps "Přidat servisní řadu")
-         (text2DOM "") ,
-      div' (class' "form-group") (saveButtonRow' (null validationMessages)
-        submitButtonLabel submitButtonHandler)])) : (
+        autocompleteManufacturerField] ++ 
+        (if fixedUpkeepSequences
+          then []
+          else upkeepSequenceRows) ++ [
+            formRow
+              (let 
+                addUpkeepSequenceRow = let
+                  newUpkeepSequence = US.newUpkeepSequence {
+                    US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
+                    US.displayOrdering = length upkeepSequences + 1 }
+                  newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
+                  in D.modifyState appVar (\navig -> 
+                    navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
+                disabledProps = if (fixedUpkeepSequences)
+                  then BTN.buttonProps { BTN.disabled = Defined True }
+                  else BTN.buttonProps 
+                buttonProps = disabledProps {
+                  BTN.onClick = Defined $ const addUpkeepSequenceRow }
+                in BTN.button' buttonProps "Přidat servisní řadu")
+               (text2DOM "") ,
+            div' (class' "form-group") (saveButtonRow' (null validationMessages)
+              submitButtonLabel submitButtonHandler)])) : (
     if null validationMessages
     then []
     else let

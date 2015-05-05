@@ -33,7 +33,9 @@ data MachineKind compressor dryer =
     compressor :: compressor } |
   DryerSpecific {
     dryer :: dryer }
-#ifndef FAY
+#ifdef FAY
+  deriving (Eq)
+#else
   deriving (Generic, Typeable, Data, Show)
 #endif
 

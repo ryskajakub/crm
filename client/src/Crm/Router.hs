@@ -199,15 +199,13 @@ startRouter appVar = let
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
             machine' = (M.newMachine nowYMD)
-            machine = if machineKind == 1 
-              then machine' { M.mileagePerYear = 8760 }
-              else machine'
+            machine = case machineKind of
+              MK.CompressorSpecific _ -> machine'
+              MK.DryerSpecific _ -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "", "", "")
-            machineSpecific = if machineKind == 0 
-              then MK.newCompressorSpecific
-              else if machineKind == 1
-              then MK.newDryerSpecific
-              else undefined
+            machineSpecific = case machineKind of
+              MK.CompressorSpecific _ -> MK.newCompressorSpecific
+              MK.DryerSpecific _ -> MK.newDryerSpecific
           fetchContactPersons companyId (\cps -> modify' $ 
             D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 
               (nowYMD, False) Nothing cps (Right $ MachineNew companyId maybeMachineTypeId))

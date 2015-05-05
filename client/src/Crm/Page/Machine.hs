@@ -241,10 +241,10 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
   setDryer d = mkSetMachineSpecificData $ MK.DryerSpecific d
 
   machineKind = MT.kind machineType
-  machineSpecificRows = case machineKindSpecific of
-    MK.CompressorSpecific compressor | machineKind == 0 -> compressorExtraRows editing compressor setCompressor
-    MK.DryerSpecific dryer | machineKind == 1 -> dryerExtraRows editing dryer setDryer
-    _ -> undefined
+  -- extra check that machine type kind matches with machine specific data
+  machineSpecificRows = case (machineKindSpecific, machineKind) of
+    (MK.CompressorSpecific compressor, MK.CompressorSpecific _)  -> compressorExtraRows editing compressor setCompressor
+    (MK.DryerSpecific dryer, MK.DryerSpecific _) -> dryerExtraRows editing dryer setDryer
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -287,41 +287,43 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         editDisplayRow
           editing
           ("Datum uvedení do provozu") 
-          datePicker ] ++ (if MT.kind machineType == 1 then [] else [
-        row'
-          editing
-          "Úvodní stav motohodin"
-          (unpack initialMileageRaw)
-          (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
-            Just int -> setMachineFull (machine' { M.initialMileage = int }, 
-              rawInitialMileage', mileagePerYearRaw, datePickerText)
-            Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
-        formRowCol 
-          "Provoz mth/rok (Rok má 8760 mth)" [
-          (div' (class' "col-md-3") 
-            (editingInput 
-              (unpack mileagePerYearRaw)
-              (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
-                Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
-                  initialMileageRaw, rawMileagePerYear', datePickerText)
-                Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
-              editing
-              True)) ,
-          (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
-          (div' (class' "col-md-3") 
-            (let 
-              upkeepPerMileage = minimum repetitions where
-                nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
-                repetitions = map US.repetition nonOneTimeSequences
-              operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
-              buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
-                operationTypeTuples
-              buttonLabel = maybe "Jiný" snd buttonLabelMaybe
-              selectElements = map (\(value, selectLabel) -> let
-                selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
-                in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
-              buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown' editing buttonLabel' selectElements)) ]]) ++ [
+          datePicker ] ++ (case MT.kind machineType of
+            MK.DryerSpecific _ -> []
+            MK.CompressorSpecific _ -> [
+              row'
+                editing
+                "Úvodní stav motohodin"
+                (unpack initialMileageRaw)
+                (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
+                  Just int -> setMachineFull (machine' { M.initialMileage = int }, 
+                    rawInitialMileage', mileagePerYearRaw, datePickerText)
+                  Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
+              formRowCol 
+                "Provoz mth/rok (Rok má 8760 mth)" [
+                (div' (class' "col-md-3") 
+                  (editingInput 
+                    (unpack mileagePerYearRaw)
+                    (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
+                      Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
+                        initialMileageRaw, rawMileagePerYear', datePickerText)
+                      Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
+                    editing
+                    True)) ,
+                (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
+                (div' (class' "col-md-3") 
+                  (let 
+                    upkeepPerMileage = minimum repetitions where
+                      nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
+                      repetitions = map US.repetition nonOneTimeSequences
+                    operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+                    buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
+                      operationTypeTuples
+                    buttonLabel = maybe "Jiný" snd buttonLabelMaybe
+                    selectElements = map (\(value, selectLabel) -> let
+                      selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
+                      in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
+                    buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
+                    in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
