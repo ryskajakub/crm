@@ -42,3 +42,13 @@ newCompressorSpecific = CompressorSpecific newCompressor
 
 newDryerSpecific :: MachineKindData
 newDryerSpecific = DryerSpecific newDryer
+
+kindToDbRepr :: MachineKindEnum -> Int
+kindToDbRepr kind = case kind of
+  CompressorSpecific _ -> 0
+  DryerSpecific _ -> 1
+
+dbReprToKind :: Int -> MachineKindEnum
+dbReprToKind int = if int == 0
+  then compressorValue
+  else dryerValue

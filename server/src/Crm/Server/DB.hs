@@ -126,7 +126,7 @@ import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
 
-import Crm.Server.Helpers (dayToYmd, maybeToNullable, dbReprToKind)
+import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
@@ -330,7 +330,7 @@ instance ColumnToRecord
     in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) 
-    (upd2 (dbReprToKind $ sel2 tuple) tuple))
+    (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
 instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
   convert tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
 instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where

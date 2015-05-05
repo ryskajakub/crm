@@ -5,8 +5,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Crm.Server.Helpers (
-  kindToDbRepr ,
-  dbReprToKind ,
   createDeletion ,
   prepareUpdate ,
   deleteRows' ,
@@ -61,16 +59,6 @@ import qualified Crm.Shared.MachineKind as MK
 import Crm.Server.Types (IdDependencies)
 
 import Safe (readMay)
-
-kindToDbRepr :: MK.MachineKindEnum -> Int
-kindToDbRepr kind = case kind of
-  MK.CompressorSpecific _ -> 0
-  MK.DryerSpecific _ -> 1
-
-dbReprToKind :: Int -> MK.MachineKindEnum
-dbReprToKind int = if int == 0
-  then MK.compressorValue
-  else MK.dryerValue
 
 updateRows :: forall record m columnsW columnsR.
               (MonadIO m, MonadReader (Connection, Either String Int) m, 
