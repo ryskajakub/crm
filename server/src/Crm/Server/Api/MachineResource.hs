@@ -29,7 +29,7 @@ import qualified Crm.Shared.Dryer as MD
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  withConnId, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
+  withConnId, ymdToDay, maybeToNullable, createDeletion, prepareUpdate, kindToDbRepr)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -78,7 +78,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
-  machineSpecificData <- case (machineSpecificQuery (MT.kind machineType) machineId) of
+  machineSpecificData <- case (machineSpecificQuery (kindToDbRepr $ MT.kind machineType) machineId) of
     Left compressorQuery -> do
       compressorRows <- liftIO $ runQuery conn compressorQuery
       compressorRow <- singleRowOrColumn compressorRows

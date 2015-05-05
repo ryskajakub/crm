@@ -100,6 +100,8 @@ instance ToJSON MK.MachineKindData where
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
+instance JS.JSONSchema MK.MachineKindEnum where
+  schema = gSchema
 instance JS.JSONSchema CP.ContactPerson where
   schema = gSchema
 instance JS.JSONSchema MD.Dryer where

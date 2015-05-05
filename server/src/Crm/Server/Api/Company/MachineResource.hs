@@ -26,7 +26,7 @@ import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
-import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
+import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable, kindToDbRepr)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -46,10 +46,10 @@ addMachine :: Connection
 addMachine connection machine companyId' machineType contactPersonId machineSpecificData = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
-    MT.MyMachineType (MT.MachineType type' name' manufacturer, upkeepSequences) -> do
+    MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
         connection
-        machineTypesTable (Nothing, pgInt4 type', pgString name', pgString manufacturer)
+        machineTypesTable (Nothing, pgInt4 $ kindToDbRepr kind, pgString name', pgString manufacturer)
         sel1
       let machineTypeId = head newMachineTypeId -- todo safe
       forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
