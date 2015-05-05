@@ -684,4 +684,5 @@ singleRowOrColumn :: Monad m
                   -> ExceptT (Reason r) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
+  [] -> throwError $ InputError $ ParseError "no record"
   _ -> throwError $ InputError $ ParseError "more than one record failure"
