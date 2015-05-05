@@ -277,7 +277,9 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       formRow
         "Výrobce"
          autocompleteManufacturerField] ++ 
-         (if isJust machineTypeId && machineTypeFormType == Phase1 then [] else upkeepSequenceRows) ++ [
+         (if (isJust machineTypeId && machineTypeFormType == Phase1) || MT.kind machineType == 1
+           then [] 
+           else upkeepSequenceRows) ++ [
       formRow
         (let 
           addUpkeepSequenceRow = let
@@ -287,7 +289,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
             in D.modifyState appVar (\navig -> 
               navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-          disabledProps = if (machineTypeFormType == Phase1 && isJust machineTypeId) 
+          disabledProps = if (machineTypeFormType == Phase1 && isJust machineTypeId || MT.kind machineType == 1)
             then BTN.buttonProps { BTN.disabled = Defined True }
             else BTN.buttonProps 
           buttonProps = disabledProps {
