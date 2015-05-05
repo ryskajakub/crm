@@ -143,6 +143,14 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     in do 
       forM_ seqsWithIndices storeUpkeepSequence
       setLocalStorage "us.length" (showInt $ length sequences)
+
+  set1YearUpkeepSequences :: Fay ()
+  set1YearUpkeepSequences = let
+    us = US.newUpkeepSequence {
+      US.oneTime = False ,
+      US.repetition = 8760 } -- 1 year
+    usTuple = (us, showInt $ US.repetition us)
+    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = rmap (const [usTuple]) (D.machineTypeTuple navig) })
     
   modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
   modifyUpkeepSequence displayOrder modifier = do
@@ -257,7 +265,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       text2DOM " ", 
       span' (class' "caret") "" ]
     mkLink (kindId, kindLabel) = let
-      selectAction = setMachineType (machineType { MT.kind = kindId })
+      selectAction = do
+        setMachineType (machineType { MT.kind = kindId })
+        if kindId == 1
+          then set1YearUpkeepSequences
+          else return ()
       in li $ AA.a''' (click selectAction) (pack kindLabel)
     selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
