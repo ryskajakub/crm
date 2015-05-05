@@ -198,7 +198,11 @@ startRouter appVar = let
             machineKind = MT.kind $ fst machineTypeTuple
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-            machineQuadruple = (M.newMachine nowYMD, "", "", "")
+            machine' = (M.newMachine nowYMD)
+            machine = if machineKind == 1 
+              then machine' { M.mileagePerYear = 8760 }
+              else machine'
+            machineQuadruple = (machine, "", "", "")
             machineSpecific = if machineKind == 0 
               then MK.newCompressorSpecific
               else if machineKind == 1
