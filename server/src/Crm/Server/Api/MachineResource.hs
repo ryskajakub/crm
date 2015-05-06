@@ -49,8 +49,8 @@ machineDelete = deleteRows' [createDeletion dryersTable, createDeletion compress
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', machineSpecificData) -> withConnId (\conn recordId -> do
-  let 
 
+  let 
     machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_) =
       (Nothing, companyId, contactPersonId, machineTypeId,
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),

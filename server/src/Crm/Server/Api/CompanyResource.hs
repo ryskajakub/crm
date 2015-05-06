@@ -72,7 +72,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
           x : xs -> (x, xs)
         nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps today'
       return $ dayToYmd nextServiceDay)
-    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
+    return $ (C.CompanyId $ sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->

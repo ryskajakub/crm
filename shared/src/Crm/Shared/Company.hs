@@ -15,6 +15,9 @@ import "fay-base" Prelude
 #endif
 
 newtype CompanyId = CompanyId { getCompanyId :: Int }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif
 
 data OrderType = CompanyName | NextService
   deriving (Show, Read)
