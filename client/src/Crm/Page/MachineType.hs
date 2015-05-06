@@ -209,14 +209,14 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       div' (class'' ["col-md-1", "col-md-offset-1"]) removeButton ,
       label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
-  (countOfOneTimeSequences,parseOk) = foldl
-    (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
+  (countOfOneTimeSequences, parseOk, repetitionValidationOk) = foldl
+    (\(countOfOneTimeSequencesAcc, parseOkAcc, repetitionValuesOk) (us,repetitionText) -> let
       countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
-      parseOkAccNew = case parseSafely repetitionText of
-        Just _ -> parseOkAcc && True
-        Nothing -> False
-      in (countOfOneTimeSequencesAccNew, parseOkAccNew))
-    (0 :: Int, True) 
+      (parseOkAccNew, repValuesOkNew) = case parseSafely repetitionText of
+        Just int -> (parseOkAcc && True, int > 0 && repetitionValuesOk)
+        Nothing -> (False, repetitionValuesOk)
+      in (countOfOneTimeSequencesAccNew, parseOkAccNew, repValuesOkNew))
+    (0 :: Int, True, True)
     upkeepSequences
   validationMessages1 = if machineTypeFormType == Phase1 && isJust machineTypeId
     then []
@@ -231,7 +231,10 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
   validationMessages3 = if parseOk
     then []
     else ["Do políčka \"Počet motohodin\" se smí vyplňovat pouze čísla."]
-  validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3
+  validationMessages4 = if repetitionValidationOk
+    then []
+    else ["Počet motohodin musí být kladné číslo."]
+  validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3 ++ validationMessages4
 
   phase1Advice = p $ text2DOM "Tady vybereš typ stroje, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
   advices phase1 = div $ (if phase1 then phase1Advice else text2DOM "") : [
