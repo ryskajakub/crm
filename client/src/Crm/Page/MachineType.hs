@@ -278,8 +278,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
 
   fixedUpkeepSequences = case MT.kind machineType of
-    MK.DryerSpecific _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> True
-    _ -> False
+    MK.DryerSpecific _ -> True
+    _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> False
 
   result =
     (B.grid $ B.row $
