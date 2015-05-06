@@ -5,7 +5,9 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Crm.Server.Helpers (
-  deleteRows ,
+  createDeletion ,
+  prepareUpdate ,
+  deleteRows' ,
   updateRows ,
   today ,
   ymdToDay ,
@@ -33,6 +35,7 @@ import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import Control.Monad.Trans.Class (lift)
 import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad.IO.Class (liftIO, MonadIO)
+import Control.Monad (forM_)
 
 import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
 import Rest.Dictionary.Combinators (jsonO, jsonI)
@@ -51,6 +54,7 @@ import Data.Typeable (Typeable)
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.MachineKind as MK
 
 import Crm.Server.Types (IdDependencies)
 
@@ -68,18 +72,31 @@ updateRows table readToWrite = mkInputHandler (jsonI . jsonO)
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition
   return ()))
 
-deleteRows :: (Sel1 read1 (Column PGInt4), Sel1 read2 (Column PGInt4))
-           => Table a1 read1
-           -> Maybe (Table a2 read2)
-           -> Handler IdDependencies
-deleteRows table maybeTable = mkConstHandler jsonO $ withConnId (\connection theId -> liftIO $ do
-  let 
-    locateRow row = sel1 row .== pgInt4 theId
-    deleteRow table' = runDelete connection table' locateRow
-  case maybeTable of
-    Just table' -> deleteRow table' >> return ()
-    Nothing -> return ()
-  deleteRow table)
+prepareUpdate :: (Sel1 columnsR (Column PGInt4))
+              => Table columnsW columnsR
+              -> (columnsR -> columnsW)
+              -> Int
+              -> Connection
+              -> IO ()
+prepareUpdate table readToWrite theId connection = runUpdate
+  connection
+  table
+  readToWrite
+  (\row -> sel1 row .== pgInt4 theId) >> return ()
+
+deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
+deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId -> 
+  liftIO $ forM_ deletions (\deletion -> deletion theId connection))
+
+createDeletion :: (Sel1 read (Column PGInt4))
+               => Table write read
+               -> Int
+               -> Connection
+               -> IO ()
+createDeletion table pk connection = runDelete
+  connection
+  table
+  (\row -> sel1 row .== pgInt4 pk) >> return ()
 
 today :: IO Day
 today = fmap utctDay getCurrentTime

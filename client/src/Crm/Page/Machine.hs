@@ -34,6 +34,7 @@ import qualified Crm.Shared.Photo as P
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
@@ -52,6 +53,7 @@ machineDetail :: Bool
               -> C.CompanyId
               -> DP.DatePicker
               -> (M.Machine, Text, Text, Text)
+              -> MK.MachineKindData
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
@@ -61,13 +63,13 @@ machineDetail :: Bool
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
-    mileagePerYearRaw, datePickerText) machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons = 
+    mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
+    contactPersonId contactPersons =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
-      mileagePerYearRaw, datePickerText) machineTypeTuple extraRows extraGrid contactPersonId contactPersons
+      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons
     where
-      pageHeader = if editing then "Editace kompresoru" else "Kompresor"
+      pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
         mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
@@ -144,15 +146,15 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a b c c1 c2 (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a b c c1 c2 (Left (MD.MachineDetail d e editing' f g i j)))
+          D.MachineScreen (MD.MachineData a a1 b c c1 c2 (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a a1 b c c1 c2 (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine (
+      editMachineAction = updateMachine machineId machine machineSpecific (
         setEditing False)
       saveButtonRow' = saveButtonRow "Edituj" editMachineAction
       button = if editing then saveButtonRow' else editButtonRow
@@ -161,6 +163,7 @@ machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
            -> (M.Machine, Text, Text, Text)
+           -> MK.MachineKindData
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
@@ -168,15 +171,15 @@ machineNew :: R.CrmRouter
            -> [(CP.ContactPersonId, CP.ContactPerson)]
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
-    datePickerText) companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
-  machineDisplay True "Nový kompresor - fáze 2 - specifické údaje o kompresoru"
-    buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
-      mileagePerYearRaw, datePickerText) machineTypeTuple [] Nothing contactPersonId contactPersons
+    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
+  machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
+      buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
+      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId
+      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId machineSpecific
         (R.navigate R.defaultFrontPage router)
       buttonRow = saveButtonRow "Vytvoř" saveNewMachine
 
@@ -186,6 +189,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
+               -> MK.MachineKindData
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
@@ -193,13 +197,13 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
-    initialMileageRaw, mileagePerYearRaw, datePickerText) (machineType, 
+    initialMileageRaw, mileagePerYearRaw, datePickerText) machineKindSpecific (machineType, 
     upkeepSequences) extraRows extraGrid contactPersonId contactPersons = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      (D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _))) -> D.MachineScreen $ fun md
+      (D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _))) -> D.MachineScreen $ fun md
       _ -> D.navigation appState })
 
   setMachine :: M.Machine -> Fay ()
@@ -230,12 +234,17 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
+  mkSetMachineSpecificData :: MK.MachineKindData -> Fay ()
+  mkSetMachineSpecificData mks = changeNavigationState (\md -> md { MD.machineKindSpecific = mks } )
+
+  setCompressor c = mkSetMachineSpecificData $ MK.CompressorSpecific c
+  setDryer d = mkSetMachineSpecificData $ MK.DryerSpecific d
+
   machineKind = MT.kind machineType
-  machineSpecificRows = if 0 == machineKind 
-    then compressorExtraRows
-    else if 1 == machineKind
-    then dryerExtraRows
-    else undefined
+  -- extra check that machine type kind matches with machine specific data
+  machineSpecificRows = case (machineKindSpecific, machineKind) of
+    (MK.CompressorSpecific compressor, MK.CompressorSpecific _)  -> compressorExtraRows editing compressor setCompressor
+    (MK.DryerSpecific dryer, MK.DryerSpecific _) -> dryerExtraRows editing dryer setDryer
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -278,41 +287,43 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         editDisplayRow
           editing
           ("Datum uvedení do provozu") 
-          datePicker ,
-        row'
-          editing
-          "Úvodní stav motohodin"
-          (unpack initialMileageRaw)
-          (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
-            Just int -> setMachineFull (machine' { M.initialMileage = int }, 
-              rawInitialMileage', mileagePerYearRaw, datePickerText)
-            Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
-        formRowCol 
-          "Provoz mth/rok (Rok má 8760 mth)" [
-          (div' (class' "col-md-3") 
-            (editingInput 
-              (unpack mileagePerYearRaw)
-              (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
-                Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
-                  initialMileageRaw, rawMileagePerYear', datePickerText)
-                Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
-              editing
-              True)) ,
-          (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
-          (div' (class' "col-md-3") 
-            (let 
-              upkeepPerMileage = minimum repetitions where
-                nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
-                repetitions = map US.repetition nonOneTimeSequences
-              operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
-              buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
-                operationTypeTuples
-              buttonLabel = maybe "Jiný" snd buttonLabelMaybe
-              selectElements = map (\(value, selectLabel) -> let
-                selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
-                in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
-              buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-              in BD.buttonDropdown' editing buttonLabel' selectElements)) ] ,
+          datePicker ] ++ (case MT.kind machineType of
+            MK.DryerSpecific _ -> []
+            MK.CompressorSpecific _ -> [
+              row'
+                editing
+                "Úvodní stav motohodin"
+                (unpack initialMileageRaw)
+                (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
+                  Just int -> setMachineFull (machine' { M.initialMileage = int }, 
+                    rawInitialMileage', mileagePerYearRaw, datePickerText)
+                  Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
+              formRowCol 
+                "Provoz mth/rok (Rok má 8760 mth)" [
+                (div' (class' "col-md-3") 
+                  (editingInput 
+                    (unpack mileagePerYearRaw)
+                    (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
+                      Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
+                        initialMileageRaw, rawMileagePerYear', datePickerText)
+                      Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
+                    editing
+                    True)) ,
+                (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
+                (div' (class' "col-md-3") 
+                  (let 
+                    upkeepPerMileage = minimum repetitions where
+                      nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
+                      repetitions = map US.repetition nonOneTimeSequences
+                    operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+                    buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
+                      operationTypeTuples
+                    buttonLabel = maybe "Jiný" snd buttonLabelMaybe
+                    selectElements = map (\(value, selectLabel) -> let
+                      selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
+                      in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
+                    buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
+                    in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 

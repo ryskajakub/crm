@@ -8,6 +8,7 @@ import Crm.Shared.Company
 import Crm.Shared.ContactPerson
 import Crm.Shared.Machine
 import Crm.Shared.MachineType
+import Crm.Shared.MachineKind
 import Crm.Shared.YearMonthDay
 import Crm.Shared.UpkeepSequence
 import Crm.Shared.Photo
@@ -20,6 +21,7 @@ import Crm.Component.DatePicker
 
 data MachineData = MachineData {
   machine :: (Machine, Text, Text, Text) ,
+  machineKindSpecific :: MachineKindData ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
   contactPersonId :: Maybe ContactPersonId ,

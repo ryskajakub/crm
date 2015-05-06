@@ -27,8 +27,8 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', 
-  mapUpkeeps, ymdToDay, maybeToNullable, deleteRows)
+import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', createDeletion ,
+  mapUpkeeps, ymdToDay, maybeToNullable, deleteRows')
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -50,7 +50,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
   in forM_ upkeepMachines insertUpkeepMachine
 
 removeUpkeep :: Handler IdDependencies
-removeUpkeep = deleteRows upkeepsTable $ Just upkeepMachinesTable
+removeUpkeep = deleteRows' [createDeletion upkeepMachinesTable, createDeletion upkeepsTable]
 
 upkeepResource :: Resource Dependencies IdDependencies UrlId UpkeepsListing Void
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {

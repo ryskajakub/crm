@@ -3,10 +3,8 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import Opaleye.PGTypes (pgString, PGInt4)
+import Opaleye.PGTypes (pgString)
 import Opaleye.RunQuery (runQuery)
-import Opaleye.Table (Table)
-import Opaleye.Column (Column)
 import Opaleye (queryTable)
 
 import Control.Monad.Reader (ask)
@@ -30,8 +28,8 @@ import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows, withConnId, 
-  updateRows)
+import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows', withConnId, 
+  updateRows, createDeletion)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -103,7 +101,7 @@ updateCompany = let
   in updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
-deleteCompany = deleteRows companiesTable (Nothing :: Maybe (Table (Column PGInt4, Column PGInt4) (Column PGInt4, Column PGInt4)))
+deleteCompany = deleteRows' [createDeletion companiesTable]
 
 companyResource :: Resource Dependencies IdDependencies UrlId () Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {

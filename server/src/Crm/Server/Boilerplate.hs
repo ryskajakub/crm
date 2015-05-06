@@ -2,6 +2,8 @@
 
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Server.Boilerplate where
 
@@ -11,11 +13,15 @@ import qualified Data.JSON.Schema.Types as JS (JSONSchema(schema))
 import Fay.Convert (showToFay, readFromFay')
 import Data.Maybe (fromJust)
 import Data.JSON.Schema.Generic (gSchema)
+import Data.Data
 
+import qualified Crm.Shared.Compressor as MC
+import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.YearMonthDay as D
@@ -23,8 +29,6 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Shared.MyMaybe
-
-import Data.Data
 
 deriveAll ''C.Company "PFCompany"
 type instance PF C.Company = PFCompany
@@ -65,6 +69,8 @@ instance FromJSON E.Employee where
   parseJSON = fayInstance
 instance FromJSON CP.ContactPerson where
   parseJSON = fayInstance
+instance FromJSON MK.MachineKindData where
+  parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
@@ -89,10 +95,20 @@ instance ToJSON PM.PhotoMeta where
   toJSON = fromJust . showToFay
 instance ToJSON CP.ContactPerson where
   toJSON = fromJust . showToFay
+instance ToJSON MK.MachineKindData where
+  toJSON = fromJust . showToFay
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
+instance JS.JSONSchema MK.MachineKindEnum where
+  schema = gSchema
 instance JS.JSONSchema CP.ContactPerson where
+  schema = gSchema
+instance JS.JSONSchema MD.Dryer where
+  schema = gSchema
+instance JS.JSONSchema MC.Compressor where
+  schema = gSchema
+instance JS.JSONSchema MK.MachineKindData where
   schema = gSchema
 instance JS.JSONSchema PM.PhotoMeta where
   schema = gSchema

@@ -52,6 +52,7 @@ import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Photo as P
@@ -220,11 +221,11 @@ fetchMachinePhotos machineId callback =
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]) -> Fay()) -- ^ callback
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], MK.MachineKindData) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-  fun (a,b,c,d,e,e1,g) = (a,b,c,d,e,toMaybe e1,map fun2 g)
+  fun ((a,b,c,d),(e,e1,g,f)) = (a,b,c,d,e,toMaybe e1,map fun2 g,f)
   in JQ.ajax
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     (callback . fun)
@@ -301,11 +302,12 @@ createMachine :: M.Machine
               -> C.CompanyId
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
+              -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId callback =
+createMachine machine companyId machineType contactPersonId machineSpecific callback =
   ajax
-    (machine, machineType, toMyMaybe contactPersonId)
+    (machine, machineType, toMyMaybe contactPersonId, machineSpecific)
     (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
@@ -360,10 +362,11 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
+              -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine callback = ajax
-  machine
+updateMachine machineId machine machineSpecificData callback = ajax
+  (machine, machineSpecificData)
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   put
   (const callback)

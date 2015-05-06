@@ -10,9 +10,10 @@ module Crm.Page.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isJust, fromJust)
+import "fay-base" Data.Maybe (isJust, fromJust, whenJust)
+import "fay-base" Data.LocalStorage
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -25,17 +26,19 @@ import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Component.Form (saveButtonRow', editingCheckbox,
   editingInput, editingInput', formRow, inputNormalAttrs)
-import Crm.Helpers (lmap, rmap, pageInfo, parseSafely)
+import Crm.Helpers (lmap, rmap, pageInfo, parseSafely, zipWithIndex)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
 import Crm.Component.Autocomplete (autocompleteInput)
 
 data MachineTypeForm = Phase1 | Edit
+  deriving Eq
 
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
@@ -48,13 +51,30 @@ machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> C.CompanyId
                       -> (DOMElement, Fay ())
 machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
+
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
-  setMachineTypeId machineTypeId' = 
+  setMachineTypeId machineTypeId' = do
+    if hasLocalStorage 
+      then case machineTypeId' of
+        Just machineTypeId'' -> setLocalStorage "mt.id" $ showInt $ MT.getMachineTypeId machineTypeId''
+        Nothing -> removeLocalStorage "mt.id"
+      else return ()
     D.modifyState appVar (\navig -> navig { D.maybeMachineTypeId = machineTypeId' })
-  setMachineType = mkSetMachineType appVar
+
+  storeMachineTypeIntoLocalStorage :: MT.MachineType -> Fay ()
+  storeMachineTypeIntoLocalStorage machineType' = if hasLocalStorage
+    then do
+      let MT.MachineType kind name manufacturer = machineType'
+      setLocalStorage "mt.name" (pack name)
+      setLocalStorage "mt.kind" (showInt $ MK.kindToDbRepr kind)
+      setLocalStorage "mt.manufacturer" (pack manufacturer)
+    else return ()
+
+  setMachineType machineType' = setMachineWhole (machineType', upkeepSequences)
 
   setMachineWhole :: (MT.MachineType, [(US.UpkeepSequence, Text)]) -> Fay ()
-  setMachineWhole machineTypeTuple =
+  setMachineWhole machineTypeTuple = do
+    storeMachineTypeIntoLocalStorage (fst machineTypeTuple)
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
@@ -72,8 +92,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', upkeepSequences') -> do
-            setMachineWhole (machineType', map (\us -> (us, "0")) upkeepSequences')
+          Just (machineTypeId', machineType', _) -> do
+            setMachineWhole (machineType', [])
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
@@ -105,14 +125,47 @@ machineTypeForm' :: MachineTypeForm
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
     submitButtonHandler = let
+
+  storeUpkeepSequencesIntoLS :: [US.UpkeepSequence] -> Fay ()
+  storeUpkeepSequencesIntoLS sequences = let
+    seqsWithIndices = zipWithIndex sequences
+
+    showBool :: Bool -> Text
+    showBool b = if b then "True" else "False"
+
+    storeUpkeepSequence (i, us) = do
+      let index = showInt i
+      setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering us)
+      setLocalStorage ("us." <> index <> ".label") (pack $ US.label_ us)
+      setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition us)
+      setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime us)
+
+    in do 
+      forM_ seqsWithIndices storeUpkeepSequence
+      setLocalStorage "us.length" (showInt $ length sequences)
+
+  set1YearUpkeepSequences :: Fay ()
+  set1YearUpkeepSequences = let
+    us = US.newUpkeepSequence {
+      US.oneTime = False ,
+      US.repetition = 8760 } -- 1 year
+    usTuple = (us, showInt $ US.repetition us)
+    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = rmap (const [usTuple]) (D.machineTypeTuple navig) })
     
   modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
-  modifyUpkeepSequence displayOrder modifier = let
-    modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
-      if displayOrder == displayOrder' 
-      then modifier (us, repetitionText)
-      else (us, repetitionText)) upkeepSequences
-    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+  modifyUpkeepSequence displayOrder modifier = do
+    currentAppState <- get appVar
+    let 
+      navigation = D.navigation currentAppState
+      maybeSequences = case navigation of
+        D.MachineNewPhase1 _ (_,sequences) _ -> Just $ map fst sequences
+        _ -> Nothing
+      modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
+        if displayOrder == displayOrder' 
+        then modifier (us, repetitionText)
+        else (us, repetitionText)) upkeepSequences
+    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+    whenJust maybeSequences storeUpkeepSequencesIntoLS 
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
@@ -138,7 +191,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
       (div' (class' "col-md-2") labelField) ,
-      (label' (class'' ["control-label", "col-md-2"]) "Počet motodin") ,
+      (label' (class'' ["control-label", "col-md-2"]) "Počet motohodin") ,
       (div' (class' "col-md-1") mthField) ,
       (label' (class'' ["control-label", "col-md-2"]) "První servis") ,
       (div' (class' "col-md-1") firstServiceField) ]
@@ -156,41 +209,46 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       div' (class'' ["col-md-1", "col-md-offset-1"]) removeButton ,
       label' (class'' ["control-label", "col-md-1"]) "Řada"] ++ inputColumns)) upkeepSequences
 
-  (countOfOneTimeSequences,parseOk) = foldl
-    (\(countOfOneTimeSequencesAcc, parseOkAcc) (us,repetitionText) -> let
+  (countOfOneTimeSequences, parseOk, repetitionValidationOk) = foldl
+    (\(countOfOneTimeSequencesAcc, parseOkAcc, repetitionValuesOk) (us,repetitionText) -> let
       countOfOneTimeSequencesAccNew = if US.oneTime us then countOfOneTimeSequencesAcc + 1 else countOfOneTimeSequencesAcc
-      parseOkAccNew = case parseSafely repetitionText of
-        Just _ -> parseOkAcc && True
-        Nothing -> False
-      in (countOfOneTimeSequencesAccNew, parseOkAccNew))
-    (0 :: Int, True) 
+      (parseOkAccNew, repValuesOkNew) = case parseSafely repetitionText of
+        Just int -> (parseOkAcc && True, int > 0 && repetitionValuesOk)
+        Nothing -> (False, repetitionValuesOk)
+      in (countOfOneTimeSequencesAccNew, parseOkAccNew, repValuesOkNew))
+    (0 :: Int, True, True)
     upkeepSequences
-  validationMessages1 = if length upkeepSequences == 0 
-    then ["Je třeba vytvořit alespoň jednu servisní řadu."]
-    else if length upkeepSequences == countOfOneTimeSequences
-      then ["Musí existovat alespoň jedna pravidelná servisní řada."]
-      else []
+  validationMessages1 = if machineTypeFormType == Phase1 && isJust machineTypeId
+    then []
+    else if null upkeepSequences 
+      then ["Je třeba vytvořit alespoň jednu servisní řadu."]
+      else if length upkeepSequences == countOfOneTimeSequences
+        then ["Musí existovat alespoň jedna pravidelná servisní řada."]
+        else []
   validationMessages2 = if countOfOneTimeSequences > 1
     then ["Může být pouze jeden úvodní servis."]
     else []
   validationMessages3 = if parseOk
     then []
     else ["Do políčka \"Počet motohodin\" se smí vyplňovat pouze čísla."]
-  validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3
+  validationMessages4 = if repetitionValidationOk
+    then []
+    else ["Počet motohodin musí být kladné číslo."]
+  validationMessages = validationMessages1 ++ validationMessages2 ++ validationMessages3 ++ validationMessages4
 
-  phase1Advice = p $ text2DOM "Tady vybereš typ kompresoru, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
+  phase1Advice = p $ text2DOM "Tady vybereš typ stroje, např. " : strong "BK 100" : text2DOM " pokud už tento typ existuje v systému, pak se výrobce (např." : strong "REMEZA" : text2DOM ") doplní sám, pokud ne, tak zadáš výrobce ručně. Potom jdeš dál, kde zadáš další informace." : []
   advices phase1 = div $ (if phase1 then phase1Advice else text2DOM "") : [
     h4 "Servisní řada" ,
-    text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se kompresor opravuje. U každého typu kompresoru musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
+    text2DOM "Servisní řada znamená, jak často - po kolika motohodinách se stroj opravuje. U každého typu stroje musí být alespoň jednou, jinak program neví, jak vypočítat datum, kdy se pojede na další servis. Příklad řad může být například: " ,
     ul [
       li "Generální oprava po 50000 mth" ,
       li "Střední oprava po 25000 mth" ,
       li "Běžná oprava po 5000 mth" ,
       li "Úvodní servis po 500 mth" ]]
 
-  editInfo = pageInfo "Editace kompresoru" $ Just $ advices False
+  editInfo = pageInfo "Editace stroje" $ Just $ advices False
     
-  phase1PageInfo = pageInfo "Nový kompresor - fáze 1 - výběr typu kompresoru" $ Just $ advices True
+  phase1PageInfo = pageInfo "Nový stroj - fáze 1 - výběr typu stroje" $ Just $ advices True
 
   (autocompleteManufacturerField, autocompleteManufacturerCb) = case manufacturerAutocompleteSubstitution of
     Just substitution -> (substitution, return ())
@@ -204,16 +262,24 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (II.mkInputAttrs {
         II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
 
-  typeTypeSelect = let
+  kindSelect = let
     buttonLabel = [
-      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MT.machineKinds, 
+      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MK.machineKinds, 
       text2DOM " ", 
       span' (class' "caret") "" ]
     mkLink (kindId, kindLabel) = let
-      selectAction = setMachineType (machineType { MT.kind = kindId })
+      selectAction = do
+        setMachineType (machineType { MT.kind = kindId })
+        case kindId of
+          MK.CompressorSpecific _ -> return ()
+          MK.DryerSpecific _ -> set1YearUpkeepSequences
       in li $ AA.a''' (click selectAction) (pack kindLabel)
-    selectElements = map mkLink MT.machineKinds
-    in BD.buttonDropdown buttonLabel selectElements
+    selectElements = map mkLink MK.machineKinds
+    in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
+
+  fixedUpkeepSequences = case MT.kind machineType of
+    MK.DryerSpecific _ -> True
+    _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> False
 
   result =
     (B.grid $ B.row $
@@ -223,32 +289,34 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     (form' (class'' ["form-horizontal", "upkeep-sequence-form", "container"]) ([
       formRow
         "Druh"
-        typeTypeSelect ,
+        kindSelect ,
       formRow
         "Typ zařízení"
         typeInputField ,
       formRow
         "Výrobce"
-         autocompleteManufacturerField] ++ 
-         (if isJust machineTypeId then [] else upkeepSequenceRows) ++ [
-      formRow
-        (let 
-          addUpkeepSequenceRow = let
-            newUpkeepSequence = US.newUpkeepSequence {
-              US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
-              US.displayOrdering = length upkeepSequences + 1 }
-            newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
-            in D.modifyState appVar (\navig -> 
-              navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
-          disabledProps = if (isJust machineTypeId) 
-            then BTN.buttonProps { BTN.disabled = Defined True }
-            else BTN.buttonProps 
-          buttonProps = disabledProps {
-            BTN.onClick = Defined $ const addUpkeepSequenceRow }
-          in BTN.button' buttonProps "Přidat servisní řadu")
-         (text2DOM "") ,
-      div' (class' "form-group") (saveButtonRow' (null validationMessages || isJust machineTypeId)
-        submitButtonLabel submitButtonHandler)])) : (
+        autocompleteManufacturerField] ++ 
+        (if fixedUpkeepSequences
+          then []
+          else upkeepSequenceRows) ++ [
+            formRow
+              (let 
+                addUpkeepSequenceRow = let
+                  newUpkeepSequence = US.newUpkeepSequence {
+                    US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
+                    US.displayOrdering = length upkeepSequences + 1 }
+                  newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
+                  in D.modifyState appVar (\navig -> 
+                    navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
+                disabledProps = if (fixedUpkeepSequences)
+                  then BTN.buttonProps { BTN.disabled = Defined True }
+                  else BTN.buttonProps 
+                buttonProps = disabledProps {
+                  BTN.onClick = Defined $ const addUpkeepSequenceRow }
+                in BTN.button' buttonProps "Přidat servisní řadu")
+               (text2DOM "") ,
+            div' (class' "form-group") (saveButtonRow' (null validationMessages)
+              submitButtonLabel submitButtonHandler)])) : (
     if null validationMessages
     then []
     else let
@@ -286,8 +354,8 @@ machineTypesList router machineTypes = let
       td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
       td $ pack manufacturer , 
       td $ showInt count]) machineTypes
-  alertInfo = text2DOM "Tady edituješ typ kompresoru - který je společný pro více kompresorů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech kompresorů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u kompresorů a zařízení, tak se ty díly budou přidávat tady." : []
+  alertInfo = text2DOM "Tady edituješ typ stroje - který je společný pro více strojů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech strojů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u strojů a zařízení, tak se ty díly budou přidávat tady." : []
   in B.grid $ B.row $ 
-    (pageInfo "Editace typů kompresoru" $ Just alertInfo) ++ [
+    (pageInfo "Editace typů strojů" $ Just alertInfo) ++ [
       B.col (B.mkColProps 12) $ main $ section $
         B.table [ head', body ]]

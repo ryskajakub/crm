@@ -42,8 +42,10 @@ import Moment (now, requireMoment, day)
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -193,12 +195,20 @@ startRouter appVar = let
           appState <- get appVar
           let
             machineTypeTuple = D.machineTypeFromPhase1 appState
+            machineKind = MT.kind $ fst machineTypeTuple
             maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
             companyId = C.CompanyId companyIdInt
-            machineQuadruple = (M.newMachine nowYMD, "", "", "")
+            machine' = (M.newMachine nowYMD)
+            machine = case machineKind of
+              MK.CompressorSpecific _ -> machine'
+              MK.DryerSpecific _ -> machine' { M.mileagePerYear = 8760 }
+            machineQuadruple = (machine, "", "", "")
+            machineSpecific = case machineKind of
+              MK.CompressorSpecific _ -> MK.newCompressorSpecific
+              MK.DryerSpecific _ -> MK.newDryerSpecific
           fetchContactPersons companyId (\cps -> modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineTypeTuple (nowYMD, False) Nothing cps
-              (Right $ MachineNew companyId maybeMachineTypeId))
+            D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 
+              (nowYMD, False) Nothing cps (Right $ MachineNew companyId maybeMachineTypeId))
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -238,13 +248,14 @@ startRouter appVar = let
         Just(machineId') -> let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
-            (\(companyId, machine, machineTypeId, machineTypeTuple, machineNextService, contactPersonId, upkeeps) ->
+            (\(companyId, machine, machineTypeId, machineTypeTuple, 
+                machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
               fetchMachinePhotos machineId (\photos ->
                 let 
                   machineQuadruple = (machine, "", "", "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
-                  machineQuadruple machineTypeTuple (startDateInCalendar, False) contactPersonId cps
+                  machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps
                     (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
         _ -> modify' D.NotFound
   ),(
@@ -277,7 +288,7 @@ startRouter appVar = let
         Just (machineTypeIdInt) -> let
           machineTypeId = (MT.MachineTypeId machineTypeIdInt)
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
-            let upkeepSequences' = map ((\us -> (us, ""))) upkeepSequences
+            let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
             in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)
         _ -> modify' D.NotFound 
   ),(

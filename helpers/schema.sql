@@ -1,143 +1,84 @@
-drop table photos;
 create table photos (
-  id serial ,
-  data bytea );
+  id serial primary key ,
+  data bytea not null );
 
-drop table photos_meta;
 create table photos_meta (
-  photo_id integer ,
-  mime_type varchar (500) ,
-  file_name varchar (500) );
+  photo_id integer primary key references photos (id) ,
+  mime_type varchar (500) not null ,
+  file_name varchar (500) not null );
 
-drop table machine_photos;
-create table machine_photos (
-  photo_id integer ,
-  machine_id integer );
-
-drop table companies;
 create table companies (
-  id serial , 
-  name varchar(500) , 
-  plant varchar(500) ,
-  address varchar (500) ,
-  person varchar (500) ,
-  phone varchar (500) );
+  id serial primary key , 
+  name varchar(500) not null , 
+  plant varchar(500) not null ,
+  address varchar (500) not null ,
+  unique (name, plant) );
 
-drop table machine_types;
 create table machine_types (
-  id serial , 
-  name varchar(500) , 
+  id serial primary key , 
+  machine_kind integer not null ,
+  name varchar(500) unique not null , 
   manufacturer varchar (500) );
 
-drop table machines;
+create table contact_persons (
+  id serial primary key ,
+  company_id integer references companies (id) not null ,
+  name varchar (500) not null ,
+  phone varchar (500) not null ,
+  position varchar (500) not null );
+
 create table machines (
-  id serial , 
-  company_id integer , 
-  contact_person_id integer , 
-  machine_type_id integer , 
+  id serial primary key ,
+  company_id integer references companies (id) not null ,
+  contact_person_id integer references contact_persons (id) ,
+  machine_type_id integer references machine_types (id) not null ,
   operation_start date ,
-  initial_mileage integer ,
-  mileage_per_year integer ,
-  note varchar (500) ,
-  serial_number varchar (500) ,
-  year_of_manufacture varchar (500) );
+  initial_mileage integer not null ,
+  mileage_per_year integer not null ,
+  note varchar (500) not null ,
+  serial_number varchar (500) not null ,
+  year_of_manufacture varchar (500) not null );
 
-drop table upkeeps;
-create table upkeeps (
-  id serial ,
-  date_ date , 
-  closed boolean ,
-  employee_id integer ,
-  work_hours varchar (500) ,
-  work_description varchar (5000) ,
-  recommendation varchar (5000) );
+create table machine_photos (
+  photo_id integer references photos_meta (photo_id) ,
+  machine_id integer references machines (id) ,
+  primary key (photo_id, machine_id) );
 
-drop table upkeep_machines;
-create table upkeep_machines (
-  upkeep_id integer ,
-  note varchar (5000) ,
-  machine_id integer ,
-  recorded_mileage integer ,
-  warranty boolean );
-
-drop table employees;
 create table employees (
-  id serial ,
-  name varchar (500) ,
-  contact varchar (500) ,
-  capabilities varchar (500) );
+  id serial primary key ,
+  name varchar (500) unique not null ,
+  contact varchar (500) not null ,
+  capabilities varchar (500) not null );
 
-drop table upkeep_sequences;
+create table upkeeps (
+  id serial primary key ,
+  date_ date not null , 
+  closed boolean not null ,
+  employee_id integer references employees (id) ,
+  work_hours varchar (500) not null ,
+  work_description varchar (5000) not null ,
+  recommendation varchar (5000) not null );
+
+create table upkeep_machines (
+  upkeep_id integer references upkeeps (id) ,
+  note varchar (5000) not null ,
+  machine_id integer references machines (id) ,
+  recorded_mileage integer not null ,
+  warranty boolean not null ,
+  primary key (upkeep_id, machine_id) );
+
 create table upkeep_sequences (
   display_ordering integer ,
-  label varchar (500) ,
-  repetition integer ,
-  machine_type_id integer ,
-  one_time boolean );
+  label varchar (500) not null ,
+  repetition integer not null ,
+  machine_type_id integer references machine_types (id) ,
+  one_time boolean not null ,
+  primary key (display_ordering, machine_type_id) );
 
-drop table contact_persons;
-create table contact_persons (
-  id serial ,
-  company_id integer ,
-  name varchar (500) ,
-  phone varchar (500) ,
-  position varchar (500) )
+create table compressors (
+  machine_id integer not null references machines(id) ,
+  note varchar (5000) not null );
 
-insert into machine_types(name, manufacturer) values ('BK 150', 'Remeza');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
-  values (1, '4000 mth', 5000, 1, FALSE);
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
-  values (2, 'Generální', 30000, 1, FALSE);
-
-insert into machine_types(name, manufacturer) values ('BK 75', 'Remeza');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
-  values (1, 'Běžný', 2000, 2, FALSE);
-
-insert into machine_types(name, manufacturer) values ('EK 4', 'Orlík');
-insert into upkeep_sequences(display_ordering, label, repetition, machine_type_id, one_time) 
-  values (1, 'Běžný', 2000, 3, FALSE);
-
-
-insert into companies(name, plant, address, person, phone) values ('Continental', 'I', 'Kolín', 'Novák', '777 123 456');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
-  mileage_per_year, note, serial_number, year_of_manufacture)
-    values (1, 1, '1999-01-01', 0, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
-  mileage_per_year, note, serial_number, year_of_manufacture)
-    values (1, 2, '1999-01-01', 10000, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
-  mileage_per_year, note, serial_number, year_of_manufacture)
-    values (1, 3, '2007-01-01', 0, 365 * 8, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
-
-insert into companies(name, plant, address, person, phone) values ('České dráhy', 'I', 'Ostrava', 'Zbieczuk', '777 888 222');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
-  mileage_per_year, note, serial_number, year_of_manufacture)
-    values (2, 1, '2001-01-01', 30000, 365 * 12, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
-insert into machines(company_id, machine_type_id, operation_start, initial_mileage, 
-  mileage_per_year, note, serial_number, year_of_manufacture)
-    values (2, 3, '2008-01-01', 0, 365 * 24, '', 'b5789f8f1125c5d673ebb8a89c22b836', '1999');
-
-
-insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Ústředna', 'Praha', 'Loučka', '777 111 111');
-insert into companies(name, plant, address, person, phone) values ('FOMA Bohemia', 'Provozovna', 'Vodňany', 'Mysliveček', '335 881 233');
-
-
-insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
-  values ('1999-01-01', FALSE, null, '0', '', '');
-insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
-  values ('2001-01-01', FALSE, null, '0', '', '');
-insert into upkeeps(date_, closed, employee_id, work_hours, work_description, recommendation)
-  values ('2008-01-01', FALSE, 1, '0', '', '');
-
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
-  values (1, 'oprava', 1, 0, FALSE);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
-  values (1, 'pravidelný', 2, 0, FALSE);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
-  values (2, 'oprava 2', 2, 0, FALSE);
-insert into upkeep_machines(upkeep_id, note, machine_id, recorded_mileage, warranty)
-  values (3, 'údržba', 4, 0, FALSE);
-
-
-insert into employees(name) values ('Kutička');
-insert into employees(name) values ('Mandlík');
+create table dryers (
+  machine_id integer not null references machines(id) ,
+  note varchar (5000) not null );

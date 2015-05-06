@@ -30,7 +30,7 @@ import qualified Crm.Data.Data as D
 import Crm.Component.Form (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, pageInfo, validationHtml)
+import Crm.Helpers (displayDate, pageInfo, validationHtml, zipWithIndex)
 
 companiesList :: R.CrmRouter
               -> C.OrderType
@@ -146,17 +146,29 @@ companyDetail editing' router var (companyId, company') machines' = let
     BTN.bsStyle = Defined "danger" }) "Smazat"
 
   companyFormSection = companyForm editing' var setCompany company' saveHandler [deleteButton]
-  machineBoxesRow = B.row (machineBoxes ++ [ let
+  machineBoxItems = machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const $
         R.navigate (R.newMachinePhase1 companyId) router }
     button = BTN.button' buttonProps [G.plus, text2DOM "Přidat zařízení"]
-    in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ])
+    in B.col (B.mkColProps 4) $ B.panel $ h2 $ button ]
+
+  machineBoxItems' = foldl (\acc (i, e) -> 
+    if i `mod` 3 == 0
+      then acc ++ [[e]]
+      else let
+        unmodifiedList = init acc
+        appendedToLast = last acc ++ [e]
+        in unmodifiedList ++ [appendedToLast]
+    ) [] (zipWithIndex machineBoxItems)
+  machineBoxItemsHtml :: [DOMElement]
+  machineBoxItemsHtml = map B.row machineBoxItems'
+
   in section $ (
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma")) :
     companyFormSection) ++ [
-      B.grid [ 
-        B.row $ B.col (B.mkColProps 12) $ BN.nav [
+      B.grid [
+        (B.row $ B.col (B.mkColProps 12) $ BN.nav [
           R.link "Historie servisů" (R.maintenances companyId) router ,
           form' (class' "navbar-form") $
             BTN.button' (BTN.buttonProps {
@@ -167,8 +179,7 @@ companyDetail editing' router var (companyId, company') machines' = let
             BTN.button' (BTN.buttonProps {
               BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
               [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
-          R.link "Kontaktní osoby" (R.contactPersonList companyId) router ] ,
-        machineBoxesRow ]]
+          R.link "Kontaktní osoby" (R.contactPersonList companyId) router ]) : machineBoxItemsHtml ]]
 
 companyForm :: Bool -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set

@@ -22,6 +22,8 @@ module Crm.Server.DB (
   machinePhotosTable ,
   photosMetaTable ,
   contactPersonsTable ,
+  compressorsTable ,
+  dryersTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,
@@ -46,6 +48,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  machineSpecificQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
@@ -80,6 +83,8 @@ module Crm.Server.DB (
   MaybeEmployeeMapped ,
   EmployeeMapped ,
   UpkeepSequenceMapped ,
+  CompressorMapped ,
+  DryerMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -105,7 +110,7 @@ import Control.Monad.Trans.Except (ExceptT)
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2)
 import Data.ByteString.Lazy (ByteString)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
@@ -114,7 +119,10 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.Dryer as MD
+import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.MachineType as MT
+import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
 
@@ -139,7 +147,7 @@ type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
 type CompressorsTable = (DBInt, DBText)
 
-type DryersTable = (DBInt, DBInt)
+type DryersTable = (DBInt, DBText)
 
 type MachinesTable = (DBInt, DBInt, Column (Nullable PGInt4) , DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 type MachinesWriteTable = (Maybe DBInt, DBInt, Column (Nullable PGInt4), DBInt, 
@@ -197,7 +205,7 @@ compressorsTable = Table "compressors" $ p2 (
 dryersTable :: Table DryersTable DryersTable
 dryersTable = Table "dryers" $ p2 (
   required "machine_id" ,
-  required "weight" )
+  required "note" )
 
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" $ p10 (
@@ -309,6 +317,8 @@ type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
 type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
 type EmployeeMapped = (Int, E.Employee)
 type UpkeepSequenceMapped = (Int, US.UpkeepSequence)
+type CompressorMapped = (Int, MC.Compressor)
+type DryerMapped = (Int, MD.Dryer)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -319,7 +329,8 @@ instance ColumnToRecord
     machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
     in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
-  convert tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) tuple)
+  convert tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) 
+    (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
 instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
   convert tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
 instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where
@@ -336,6 +347,11 @@ instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
   convert tuple = (sel1 tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (d, US.UpkeepSequence a b c e)
+instance ColumnToRecord (Int, String) CompressorMapped where
+  convert tuple = (sel1 tuple, MC.Compressor $ sel2 tuple)
+instance ColumnToRecord (Int, String) DryerMapped where
+  convert tuple = (sel1 tuple, MD.Dryer $ sel2 tuple)
+
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
@@ -360,6 +376,18 @@ machineManufacturersQuery str = distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
   restrict -< (lower manufacturer' `like` (lower $ pgString ("%" ++ (intersperse '%' str) ++ "%")))
   returnA -< manufacturer'
+
+type QEither a b = Either (Query a) (Query b)
+machineSpecificQuery :: Int -> Int -> QEither CompressorsTable DryersTable
+machineSpecificQuery machineKind machineId = if machineKind == 0
+  then Left $ proc () -> do
+    compressor <- join compressorsQuery -< pgInt4 machineId
+    returnA -< compressor
+  else if machineKind == 1
+  then Right $ proc () -> do
+    dryer <- join dryersQuery -< pgInt4 machineId
+    returnA -< dryer
+  else undefined
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do
@@ -658,4 +686,5 @@ singleRowOrColumn :: Monad m
                   -> ExceptT (Reason r) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
+  [] -> throwError $ InputError $ ParseError "no record"
   _ -> throwError $ InputError $ ParseError "more than one record failure"
