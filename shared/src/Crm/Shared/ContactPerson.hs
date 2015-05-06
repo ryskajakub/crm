@@ -21,7 +21,7 @@ newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Data, Typeable, ToJSON, FromJSON, JSONSchema)
+  deriving (Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
 #endif
 
 type ContactPerson' = (ContactPersonId, ContactPerson)

@@ -23,6 +23,7 @@ import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.Dryer as MD
+import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
@@ -32,9 +33,10 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI) (\(newMachine, machineType, contactPersonId, machineSpecificData) ->
-  withConnId (\connection companyId -> 
-    liftIO $ addMachine connection newMachine companyId machineType (toMaybe contactPersonId) machineSpecificData))
+createMachineHandler = mkInputHandler (jsonO . jsonI) (\(newMachine, machineType, contactPersonId, machineSpecificData) -> let
+  contactPersonId' = fmap CP.getContactPersonId (toMaybe contactPersonId)
+  in withConnId (\connection companyId -> 
+    liftIO $ addMachine connection newMachine companyId machineType contactPersonId' machineSpecificData))
 
 addMachine :: Connection
            -> M.Machine

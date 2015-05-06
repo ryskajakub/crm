@@ -97,13 +97,9 @@ instance ToJSON CP.ContactPerson where
   toJSON = fromJust . showToFay
 instance ToJSON MK.MachineKindData where
   toJSON = fromJust . showToFay
-instance ToJSON C.CompanyId where
-  toJSON = fromJust . showToFay
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
-instance JS.JSONSchema C.CompanyId where
-  schema = gSchema
 instance JS.JSONSchema MK.MachineKindEnum where
   schema = gSchema
 instance JS.JSONSchema CP.ContactPerson where
