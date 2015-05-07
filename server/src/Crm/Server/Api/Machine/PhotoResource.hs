@@ -15,7 +15,7 @@ import Control.Monad.IO.Class (liftIO)
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.PhotoMeta as PM
 import Crm.Server.Types
-import Crm.Server.DB (addMachinePhoto, singleRowOrColumn, machinePhotosByMachineId, machinePhotosTable)
+import Crm.Server.DB
 import Crm.Server.Helpers (withConnId, readMay')
 import Crm.Server.Boilerplate ()
 
@@ -36,4 +36,4 @@ addPhotoHandler = mkInputHandler (fileI . jsonO) (\photo -> withConnId (\connect
 listPhotoHandler :: ListHandler IdDependencies
 listPhotoHandler = mkListing (jsonO) $ const $ withConnId (\conn machineId -> do 
   rows <- liftIO $ runQuery conn (machinePhotosByMachineId machineId)
-  return $ map (\(r1,r2,r3) -> (r1 :: Int, PM.PhotoMeta r2 r3)) rows)
+  return $ (convert rows :: [PhotoMetaMapped]))
