@@ -251,6 +251,19 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       in B.col' (B.mkColProps (if closeUpkeep' then 4 else 6)) (Defined "1") innerRow
     recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id'))
       (showInt . UM.recordedMileage) I.input 2
+
+    (machineToDisplay, setUpkeepMachine, editing) = case (thisUpkeepMachine, thatUpkeepMachine) of
+      (Just(thisMachine), Nothing) -> let
+        setter :: UM.UpkeepMachine -> Fay ()
+        setter upkeepMachine = let
+          ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
+            then (upkeepMachine, machineId')
+            else um) upkeepMachines 
+          in setUpkeep (upkeep, ums)
+        in (thisMachine, setter, True)
+      (Nothing, Just(thatMachine)) ->
+        (thatMachine, const $ return (), False)
+
     warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
       (Just(thisMachine), Nothing) -> 
         editingCheckbox (UM.warrantyUpkeep $ fst thisMachine) (\boolean -> let
@@ -263,12 +276,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         editingCheckbox (UM.warrantyUpkeep $ fst thatMachine) (const $ return ()) False
       _ -> undefined
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
-    noteField = field (\a -> Just a) (\note (um,id') -> (um { UM.upkeepMachineNote = unpack note }, id')) 
-      (pack . UM.upkeepMachineNote) I.textarea (if closeUpkeep' then 5 else 6)
+    noteField = B.col (B.mkColProps 5) $ editingInput (UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
+      setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }) editing
+
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField (Defined "2"), 
-        warrantyUpkeepRow , noteField (Defined "4")]
-      else [machineToggleLink, noteField (Defined "2")]
+        warrantyUpkeepRow , noteField]
+      else [machineToggleLink, noteField]
     in B.row rowItems
   datePicker = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
