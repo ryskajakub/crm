@@ -12,6 +12,8 @@ create table companies (
   name varchar(500) not null , 
   plant varchar(500) not null ,
   address varchar (500) not null ,
+  latitude float8 ,
+  longitude float8 ,
   unique (name, plant) );
 
 create table machine_types (

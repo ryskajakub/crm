@@ -1,6 +1,5 @@
 module Server (
-  main, api
-) where
+  main, api) where
 
 import Crm.Server.Base
 import Crm.Server.Types
