@@ -38,8 +38,8 @@ import "fay-base" Data.Text (Text, fromString)
 import HaskellReact.Tag.Construct
 
 type URL = Text
-newtype Rel = Rel Text
-newtype HyperlinkTarget = HyperlinkTarget Text
+type Rel = Text
+type HyperlinkTarget = Text
 
 data HyperlinkAttributes = HyperlinkAttributes {
   href :: Defined URL
@@ -48,55 +48,55 @@ data HyperlinkAttributes = HyperlinkAttributes {
 }
 
 author :: Rel
-author = Rel "author"
+author = "author"
 
 alternate :: Rel
-alternate = Rel "alternate"
+alternate = "alternate"
 
 bookmark :: Rel
-bookmark = Rel "bookmark"
+bookmark = "bookmark"
 
 help :: Rel
-help = Rel "help"
+help = "help"
 
 license :: Rel
-license = Rel "license"
+license = "license"
 
 next :: Rel
-next = Rel "next"
+next = "next"
 
 nofollow :: Rel
-nofollow = Rel "nofollow"
+nofollow = "nofollow"
 
 noreferrer :: Rel
-noreferrer = Rel "noreferrer"
+noreferrer = "noreferrer"
 
 prefetch :: Rel
-prefetch = Rel "prefetch"
+prefetch = "prefetch"
 
 prev :: Rel
-prev = Rel "prev"
+prev = "prev"
 
 search :: Rel
-search = Rel "search"
+search = "search"
 
 tag :: Rel
-tag = Rel "tag"
+tag = "tag"
 
 blank :: HyperlinkTarget
-blank = HyperlinkTarget "_blank"
+blank = "_blank"
 
 parent :: HyperlinkTarget
-parent = HyperlinkTarget "_parent"
+parent = "_parent"
 
 self :: HyperlinkTarget
-self = HyperlinkTarget "_self"
+self = "_self"
 
 top :: HyperlinkTarget
-top = HyperlinkTarget "_top"
+top = "_top"
 
 framename :: Text -> HyperlinkTarget
-framename = HyperlinkTarget
+framename = Prelude.id
 
 mkAAttrs :: HyperlinkAttributes
 mkAAttrs = defaultHyperlinkAttributes

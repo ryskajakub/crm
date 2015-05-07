@@ -41,77 +41,76 @@ import "fay-base" Data.Text (Text, fromString)
 import HaskellReact.Tag.Construct
 import HaskellReact.Event
 
-newtype InputType = InputType Text
-  deriving Eq
+type InputType = Text
 
 button :: InputType
-button = InputType "button"
+button = "button"
 
 checkbox :: InputType
-checkbox = InputType "checkbox"
+checkbox = "checkbox"
 
 color :: InputType
-color = InputType "color"
+color = "color"
 
 date :: InputType
-date = InputType "date"
+date = "date"
 
 datetime :: InputType
-datetime = InputType "datetime"
+datetime = "datetime"
 
 datetimeLocal :: InputType
-datetimeLocal = InputType "datetime-local"
+datetimeLocal = "datetime-local"
 
 email :: InputType
-email = InputType "email"
+email = "email"
 
 file :: InputType
-file = InputType "file"
+file = "file"
 
 hidden :: InputType
-hidden = InputType "hidden"
+hidden = "hidden"
 
 image :: InputType
-image = InputType "image"
+image = "image"
 
 month :: InputType
-month = InputType "month"
+month = "month"
 
 number :: InputType
-number = InputType "number"
+number = "number"
 
 password :: InputType
-password = InputType "password"
+password = "password"
 
 radio :: InputType
-radio = InputType "radio"
+radio = "radio"
 
 range :: InputType
-range = InputType "range"
+range = "range"
 
 reset :: InputType
-reset = InputType "reset"
+reset = "reset"
 
 search :: InputType
-search = InputType "search"
+search = "search"
 
 submit :: InputType
-submit = InputType "submit"
+submit = "submit"
 
 tel :: InputType
-tel = InputType "tel"
+tel = "tel"
 
 text :: InputType
-text = InputType "text"
+text = "text"
 
 time :: InputType
-time = InputType "time"
+time = "time"
 
 url :: InputType
-url = InputType "url"
+url = "url"
 
 week :: InputType
-week = InputType "week"
+week = "week"
 
 
 data InputAttributes = InputAttributes {
