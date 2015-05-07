@@ -15,7 +15,6 @@ module Crm.Server.Helpers (
   maybeId ,
   withConnId ,
   readMay' ,
-  mapUpkeeps ,
   maybeToNullable ,
   mapResultsToList ,
   prepareReader , 
@@ -166,23 +165,6 @@ instance Ord YMD.YearMonthDay where
       LT -> LT
       EQ -> nextComparison
     in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
-
--- todo rather do two queries
-mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
-           -> [(Int, (U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)]))]
-mapUpkeeps rows = foldl (\acc ((upkeepId,date,upkeepClosed,employeeId,workHours,
-    workDescription, recommendation), (_,note,machineId,recordedMileage, warranty)) ->
-  let
-    addUpkeep' = (upkeepId, (U.Upkeep (dayToYmd date) upkeepClosed workHours workDescription 
-      recommendation ,employeeId, [(UM.UpkeepMachine note recordedMileage warranty, machineId)]))
-    in case acc of
-      [] -> [addUpkeep']
-      (upkeepId', (upkeep, e, upkeepMachines)) : rest | upkeepId' == upkeepId -> let
-        modifiedUpkeepMachines = 
-          (UM.UpkeepMachine note recordedMileage warranty, machineId) : upkeepMachines
-        in (upkeepId', (upkeep, e, modifiedUpkeepMachines)) : rest
-      _ -> addUpkeep' : acc
-  ) [] rows
 
 maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable (Just a) = toNullable a

@@ -14,7 +14,7 @@ import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Error.Class (throwError)
 import Control.Monad (forM_)
 
-import Data.Tuple.All (sel1, sel2, sel3)
+import Data.Tuple.All (sel1, sel2, sel3, sel4)
 
 import Rest.Types.Error (Reason(NotAllowed))
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
@@ -28,7 +28,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', createDeletion ,
-  mapUpkeeps, ymdToDay, maybeToNullable, deleteRows')
+  ymdToDay, maybeToNullable, deleteRows')
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -105,10 +105,10 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [
     
 upkeepCompanyMachines :: Handler IdDependencies
 upkeepCompanyMachines = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
-    upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepId)
-    upkeep <- singleRowOrColumn upkeeps
-    machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
-    companyId <- case machines of
-      [] -> throwError NotAllowed
-      (companyId',_) : _ -> return companyId'
-    return (companyId, (\(a,b,c) -> (a,toMyMaybe b,c)) (snd upkeep), map snd machines))
+  upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepId)
+  upkeep <- singleRowOrColumn upkeeps
+  machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn
+  companyId <- case machines of
+    [] -> throwError NotAllowed
+    (companyId',_) : _ -> return companyId'
+  return (companyId, (sel2 upkeep, sel3 upkeep, sel4 upkeep), map snd machines))

@@ -12,7 +12,7 @@ import Opaleye.RunQuery (runQuery)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (pure, (<*>))
 
-import Data.Tuple.All (sel1, sel2, sel3, upd3)
+import Data.Tuple.All (sel1, sel2, sel3, sel4, upd3)
 
 import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
@@ -26,7 +26,7 @@ import qualified Crm.Shared.Employee as E
 import Crm.Shared.MyMaybe
 import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
-import Crm.Server.Helpers (ymdToDay, dayToYmd, mapUpkeeps, prepareReaderIdentity, readMay',
+import Crm.Server.Helpers (ymdToDay, dayToYmd, prepareReaderIdentity, readMay',
   maybeToNullable, mapResultsToList, withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
@@ -57,7 +57,7 @@ getUpkeep :: Handler IdDependencies
 getUpkeep = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
   rows <- liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId
   let result = mapUpkeeps rows
-  singleRowOrColumn (map snd result))
+  singleRowOrColumn (map (\x -> (sel2 x, sel3 x, sel4 x)) result))
 
 addUpkeep :: Connection
           -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)

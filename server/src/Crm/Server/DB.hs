@@ -71,6 +71,7 @@ module Crm.Server.DB (
   -- helpers
   withConnection ,
   singleRowOrColumn ,
+  mapUpkeeps ,
   -- mappings
   ColumnToRecordDeep ,
   convert ,
@@ -111,7 +112,7 @@ import Control.Monad.Trans.Except (ExceptT)
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4)
 import Data.ByteString.Lazy (ByteString)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
@@ -359,6 +360,23 @@ instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
+
+-- todo rather do two queries
+mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
+           -> [(Int, U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)])]
+mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
+  let
+    upkeepToAdd = convert upkeepCols :: UpkeepMapped
+    upkeepMachineToAdd' = convert upkeepMachineCols :: UpkeepMachineMapped
+    upkeepMachineToAdd = (sel3 upkeepMachineToAdd', sel2 upkeepMachineToAdd')
+    addUpkeep' = (sel1 upkeepToAdd, sel3 upkeepToAdd, sel2 upkeepToAdd, [upkeepMachineToAdd])
+    in case acc of
+      [] -> [addUpkeep']
+      row : rest | sel1 row == sel1 upkeepToAdd -> let
+        modifiedUpkeepMachines = upkeepMachineToAdd : sel4 row
+        in upd4 modifiedUpkeepMachines row : rest
+      _ -> addUpkeep' : acc
+  ) [] rows
 
 -- | joins table according with the id in
 join :: (Sel1 a DBInt)
