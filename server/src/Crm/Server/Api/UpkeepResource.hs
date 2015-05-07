@@ -113,4 +113,4 @@ upkeepCompanyMachines = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
   companyId <- case machines of
     [] -> throwError NotAllowed
     (companyId',_) : _ -> return companyId'
-  return (companyId, (sel2 upkeep, sel3 upkeep, sel4 upkeep), map snd machines))
+  return (companyId, (sel2 upkeep, toMyMaybe $ sel3 upkeep, sel4 upkeep), map snd machines))
