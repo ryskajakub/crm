@@ -295,13 +295,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     in BD.buttonDropdown buttonLabel elements )
   workHoursRow = formRow "Hodiny" $ 
     editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True False
+      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True
   workDescriptionRow = formRow "Popis práce" $
     editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True False 
+      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True
   recommendationRow = formRow "Doporučení" $
     editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True False
+      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
   header = B.row $ [

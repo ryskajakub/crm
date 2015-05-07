@@ -307,8 +307,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                       Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
                         initialMileageRaw, rawMileagePerYear', datePickerText)
                       Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
-                    editing
-                    True)) ,
+                    editing)) ,
                 (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
                 (div' (class' "col-md-3") 
                   (let 
@@ -327,7 +326,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         formRow
           "Poznámka" 
           (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
-            M.note = str } ) <=< eventString) editing False)] ++ machineSpecificRows ++ extraRows ++ [
+            M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])

@@ -79,7 +79,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
 
   displayManufacturer = let
     manufacturerField = editingInput' False (MT.machineTypeManufacturer machineType)
-      (const $ return ()) False False
+      (const $ return ()) False
     in case machineTypeId of
       Nothing -> Nothing  
       _ -> Just manufacturerField
@@ -173,7 +173,6 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
-      False
     mthField = editingInput
       (unpack rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
@@ -183,7 +182,6 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
           Nothing -> modifyUpkeepSequence displayOrder
             (\(us,_) -> (us, modifiedRepetition))))
       True
-      False
     firstServiceField = editingCheckbox
       (oneTime)
       (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> ((fst us) { US.oneTime = oneTimeSequence }, snd us)))
@@ -335,7 +333,6 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     (MT.machineTypeName machineType)
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
-    False
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = updateMachineType (machineTypeId, machineType, map fst upkeepSequences) (return ())
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
