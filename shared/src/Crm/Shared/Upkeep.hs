@@ -3,7 +3,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Crm.Shared.Upkeep where
 
@@ -14,8 +13,6 @@ import Crm.Shared.UpkeepMachine as UM
 import GHC.Generics
 import "base" Data.Data
 import "base" Prelude
-import Data.JSON.Schema.Types (JSONSchema)
-import Data.Aeson.Types (ToJSON, FromJSON)
 #else
 import "fay-base" Prelude
 #endif
@@ -24,7 +21,7 @@ newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Eq, Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
+  deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
 type Upkeep'' = (UpkeepId, Upkeep)

@@ -3,7 +3,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Crm.Shared.ContactPerson where
 
@@ -11,8 +10,6 @@ module Crm.Shared.ContactPerson where
 import GHC.Generics
 import "base" Data.Data
 import "base" Prelude
-import Data.JSON.Schema.Types (JSONSchema)
-import Data.Aeson.Types (ToJSON, FromJSON)
 #else
 import "fay-base" Prelude
 #endif
@@ -21,7 +18,7 @@ newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 
 type ContactPerson' = (ContactPersonId, ContactPerson)

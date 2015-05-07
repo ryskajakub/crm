@@ -3,7 +3,6 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Crm.Shared.Machine where
 
@@ -13,8 +12,6 @@ import Crm.Shared.YearMonthDay (YearMonthDay)
 import GHC.Generics
 import "base" Data.Data
 import "base" Prelude
-import Data.JSON.Schema.Types (JSONSchema)
-import Data.Aeson.Types (ToJSON, FromJSON)
 #else
 import "fay-base" Prelude
 #endif
@@ -23,7 +20,7 @@ newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 
 data Machine = Machine {

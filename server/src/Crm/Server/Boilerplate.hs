@@ -28,6 +28,7 @@ import qualified Crm.Shared.YearMonthDay as D
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
+import qualified Crm.Shared.Photo as P
 import Crm.Shared.MyMaybe
 
 deriveAll ''C.Company "PFCompany"
@@ -136,3 +137,53 @@ instance JS.JSONSchema US.UpkeepSequence where
   schema = gSchema
 instance (JS.JSONSchema a) => JS.JSONSchema (MyMaybe a) where
   schema = gSchema
+
+
+instance JS.JSONSchema C.CompanyId where
+  schema = gSchema
+instance ToJSON C.CompanyId where
+  toJSON = fromJust . showToFay
+instance FromJSON C.CompanyId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema CP.ContactPersonId where
+  schema = gSchema
+instance ToJSON CP.ContactPersonId where
+  toJSON = fromJust . showToFay
+instance FromJSON CP.ContactPersonId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema E.EmployeeId where
+  schema = gSchema
+instance ToJSON E.EmployeeId where
+  toJSON = fromJust . showToFay
+instance FromJSON E.EmployeeId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema M.MachineId where
+  schema = gSchema
+instance ToJSON M.MachineId where
+  toJSON = fromJust . showToFay
+instance FromJSON M.MachineId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema MT.MachineTypeId where
+  schema = gSchema
+instance ToJSON MT.MachineTypeId where
+  toJSON = fromJust . showToFay
+instance FromJSON MT.MachineTypeId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema P.PhotoId where
+  schema = gSchema
+instance ToJSON P.PhotoId where
+  toJSON = fromJust . showToFay
+instance FromJSON P.PhotoId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema U.UpkeepId where
+  schema = gSchema
+instance ToJSON U.UpkeepId where
+  toJSON = fromJust . showToFay
+instance FromJSON U.UpkeepId where
+  parseJSON = fayInstance
