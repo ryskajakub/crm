@@ -99,7 +99,7 @@ import Opaleye.Column (Column, Nullable)
 import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators (restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool)
+import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool, PGFloat8, pgDouble)
 import Opaleye.Manipulation (runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
@@ -110,7 +110,7 @@ import Control.Arrow (returnA)
 import Control.Applicative ((<*>), pure)
 import Control.Monad.Trans.Except (ExceptT)
 
-import Data.Profunctor.Product (p1, p2, p3, p4, p5, p7, p10)
+import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p10)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4)
@@ -143,8 +143,8 @@ type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
 
-type CompaniesTable = (DBInt, DBText, DBText, DBText)
-type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText)
+type CompaniesTable = (DBInt, DBText, DBText, DBText, Column (Nullable PGFloat8), Column (Nullable PGFloat8))
+type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, Column (Nullable PGFloat8), Column (Nullable PGFloat8))
 
 type ContactPersonsTable = (DBInt, DBInt, DBText, DBText, DBText)
 type ContactPersonsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGInt4), 
@@ -189,11 +189,13 @@ machinePhotosTable = Table "machine_photos" $ p2 (
   required "machine_id" )
 
 companiesTable :: Table CompaniesWriteTable CompaniesTable
-companiesTable = Table "companies" $ p4 (
+companiesTable = Table "companies" $ p6 (
   optional "id" ,
   required "name" ,
   required "plant" ,
-  required "address" )
+  required "address" ,
+  required "latitude" ,
+  required "longitude" )
 
 contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable
 contactPersonsTable = Table "contact_persons" $ p5 (
@@ -328,8 +330,10 @@ type DryerMapped = (M.MachineId, MD.Dryer)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 
-instance ColumnToRecord (Int, String, String, String) CompanyMapped where
-  convert tuple = (C.CompanyId $ sel1 tuple, (uncurryN $ const C.Company) tuple)
+instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
+  convert tuple = let 
+    company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
+    in (C.CompanyId $ sel1 tuple, company)
 instance ColumnToRecord 
     (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
@@ -612,7 +616,7 @@ groupedPlannedUpkeepsQuery = let
     returnA -< (upkeepRow, companyRow)
   in orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
     AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
-      p4(AGG.min, AGG.min, AGG.min, AGG.min))) plannedUpkeepsQuery
+      p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) plannedUpkeepsQuery
 
 singleContactPersonQuery :: Int -> Query ContactPersonsTable
 singleContactPersonQuery contactPersonId = proc () -> do
@@ -709,7 +713,7 @@ addCompany connection newCompany = do
   newId <- runInsertReturning
     connection
     companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, 
-      pgString $ C.companyAddress newCompany)
+      pgString $ C.companyAddress newCompany, maybeToNullable $ Nothing, maybeToNullable $ Nothing)
     sel1
   return $ head newId -- todo safe
 

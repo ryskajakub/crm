@@ -30,7 +30,7 @@ import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows', withConnId, 
-  updateRows, createDeletion)
+  updateRows, createDeletion, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -98,7 +98,7 @@ singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
 updateCompany :: Handler IdDependencies
 updateCompany = let
   readToWrite company = const (Nothing, pgString $ C.companyName company, 
-    pgString $ C.companyPlant company, pgString $ C.companyAddress company)
+    pgString $ C.companyPlant company, pgString $ C.companyAddress company, maybeToNullable Nothing, maybeToNullable Nothing)
   in updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
