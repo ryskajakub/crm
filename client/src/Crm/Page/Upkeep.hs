@@ -249,8 +249,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       innerRow = B.row [B.col' (B.mkColProps 2) (Defined "1") icon, 
         B.col' (B.mkColProps 10) (Defined "2") link']
       in B.col' (B.mkColProps (if closeUpkeep' then 4 else 6)) (Defined "1") innerRow
-    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id'))
-      (showInt . UM.recordedMileage) I.input 2
 
     (machineToDisplay, setUpkeepMachine, editing) = case (thisUpkeepMachine, thatUpkeepMachine) of
       (Just(thisMachine), Nothing) -> let
@@ -264,17 +262,12 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       (Nothing, Just(thatMachine)) ->
         (thatMachine, const $ return (), False)
 
-    warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
-      (Just(thisMachine), Nothing) -> 
-        editingCheckbox (UM.warrantyUpkeep $ fst thisMachine) (\boolean -> let
-          updatedUpkeep = (fst thisMachine) { UM.warrantyUpkeep = boolean }
-          ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
-            then (updatedUpkeep, machineId')
-            else um ) upkeepMachines 
-          in setUpkeep (upkeep, ums) ) True
-      (Nothing, Just(thatMachine)) ->
-        editingCheckbox (UM.warrantyUpkeep $ fst thatMachine) (const $ return ()) False
-      _ -> undefined
+    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id'))
+      (showInt . UM.recordedMileage) I.input 2
+
+    warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep ->
+      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep }) editing
+
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
     noteField = B.col (B.mkColProps 5) $ editingInput (UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }) editing
