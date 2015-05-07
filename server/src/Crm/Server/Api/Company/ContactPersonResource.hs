@@ -9,7 +9,7 @@ import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.IO.Class (liftIO)
 
-import Data.Tuple.All (sel1)
+import Data.Tuple.All (sel1, sel3)
 
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
@@ -46,5 +46,5 @@ contactPersonResource = mkResourceId {
 listing :: ListHandler IdDependencies 
 listing = mkListing (jsonO) (const $ withConnId (\connection theId -> do
   rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
-  let rowsMapped = map (\(cpId,_::Int,a,b,c) -> (cpId :: Int, CP.ContactPerson a b c)) rawRows 
+  let rowsMapped = (\x -> (sel1 x, sel3 x)) `fmap` (convert rawRows :: [ContactPersonMapped])
   return rowsMapped))

@@ -85,6 +85,7 @@ module Crm.Server.DB (
   UpkeepSequenceMapped ,
   CompressorMapped ,
   DryerMapped ,
+  UpkeepMachineMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -125,6 +126,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.UpkeepMachine as UM
 
 import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
@@ -319,6 +321,7 @@ type EmployeeMapped = (Int, E.Employee)
 type UpkeepSequenceMapped = (Int, US.UpkeepSequence)
 type CompressorMapped = (Int, MC.Compressor)
 type DryerMapped = (Int, MD.Dryer)
+type UpkeepMachineMapped = (Int, Int, UM.UpkeepMachine)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
   convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
@@ -351,6 +354,8 @@ instance ColumnToRecord (Int, String) CompressorMapped where
   convert tuple = (sel1 tuple, MC.Compressor $ sel2 tuple)
 instance ColumnToRecord (Int, String) DryerMapped where
   convert tuple = (sel1 tuple, MD.Dryer $ sel2 tuple)
+instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
+  convert (a,b,c,d,e) = (a, c, UM.UpkeepMachine b d e)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows

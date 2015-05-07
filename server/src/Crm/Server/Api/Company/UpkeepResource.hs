@@ -12,7 +12,7 @@ import Opaleye.RunQuery (runQuery)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (pure, (<*>))
 
-import Data.Tuple.All (sel1, sel2, upd3)
+import Data.Tuple.All (sel1, sel2, sel3, upd3)
 
 import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
 import qualified Rest.Schema as S
@@ -38,13 +38,17 @@ companyUpkeepsListing = mkListing jsonO (const $ withConnId (\conn id'' -> do
   let 
     mappedResults = mapResultsToList 
       sel1
-      (\((upkeepId,date,closed,_ :: Maybe Int,w1,w2,w3),_,_,_,(employeeId, employeeName, eC, eCap)) -> 
-        (upkeepId :: Int, U.Upkeep (dayToYmd date) closed w1 w2 w3,
-          toMyMaybe $ pure (\eId' e e2 e3 -> (eId' :: Int, E.Employee e e2 e3)) <*> employeeId <*> employeeName <*> eC <*> eCap))
-      (\(_,(_:: Int,note,_ :: Int,recordedMileage,warranty),
-        mtDbRow,machineId,_) -> let
-        machineType' = sel2 $ (convert mtDbRow :: MachineTypeMapped )
-        in (UM.UpkeepMachine note recordedMileage warranty, machineType', machineId :: Int))
+      (\(upkeepCols,_,_,_,employeeCols) -> let
+        upkeep = convert upkeepCols :: UpkeepMapped
+        employee = convert employeeCols :: MaybeEmployeeMapped
+        employeeInsideMyMaybe = toMyMaybe $ pure (,) <*> sel1 employee <*> sel2 employee
+        in (sel1 upkeep, sel3 upkeep, employeeInsideMyMaybe))
+      (\(_,upkeepMachine',machineType',machineId'::Int,_) -> let
+        upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
+        upkeepMachine = sel3 upkeepMachineMapped
+        machineType = sel2 (convert machineType' :: MachineTypeMapped)
+        machineId = sel1 upkeepMachineMapped
+        in (upkeepMachine, machineType, machineId))
       rows
   return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
     (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))

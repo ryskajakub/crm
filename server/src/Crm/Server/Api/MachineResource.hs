@@ -94,12 +94,11 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
   today' <- liftIO today
   let 
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
-    upkeepsData = fmap (\(((uId::Int,a,b,_::(Maybe Int),c,d,e),
-        (_::Int,f,_::Int,g,h)),(_::(Maybe Int),eName::Maybe String,eC::Maybe String,eCap::Maybe String)) -> let
-      maybeEmployee = liftA3 E.Employee eName eC eCap
-      upkeep = U.Upkeep (dayToYmd a) b c d e
-      upkeepMachine = UM.UpkeepMachine f g h
-      in (uId, upkeep, upkeepMachine, toMyMaybe maybeEmployee)) upkeepRows
+    upkeepsData = fmap (\((upkeep', upkeepMachine'), maybeEmployee') -> let
+      maybeEmployee = convert maybeEmployee' :: MaybeEmployeeMapped
+      upkeep = convert upkeep' :: UpkeepMapped
+      upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
+      in (sel1 upkeep, sel3 upkeep, sel3 upkeepMachine, toMyMaybe $ sel2 maybeEmployee)) upkeepRows
     upkeeps = fmap sel2 upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined

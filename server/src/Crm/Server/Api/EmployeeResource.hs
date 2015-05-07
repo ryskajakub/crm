@@ -54,5 +54,5 @@ employeesListing :: ListHandler Dependencies
 employeesListing = mkListing (jsonO) (const $
   ask >>= \conn -> do 
     rawRows <- liftIO $ runQuery conn employeesQuery
-    let rowsMapped = map (\(eId,employeeName,b,c) -> (eId :: Int, E.Employee employeeName b c)) rawRows 
+    let rowsMapped = convert rawRows :: [EmployeeMapped]
     return rowsMapped )

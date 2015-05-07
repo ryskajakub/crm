@@ -65,12 +65,12 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
       today' <- today
       let
-        upkeeps = fmap (\(_::Int,a,b,_::(Maybe Int),c,d,e) -> U.Upkeep (dayToYmd a) b c d e) upkeepRows
+        upkeeps = convert upkeepRows :: [UpkeepMapped] 
         upkeepSequences = fmap (\r -> sel2 (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)
-        nextServiceDay = nextServiceDate machine upkeepSequenceTuple upkeeps today'
+        nextServiceDay = nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
       return $ dayToYmd nextServiceDay)
     return $ (C.CompanyId $ sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
