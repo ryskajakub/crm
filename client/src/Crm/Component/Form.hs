@@ -102,7 +102,7 @@ editingInput' textarea value' onChange' editing' = let
     commonInputAttrs = if textarea
       then I.mkInputAttrs
       else I.mkInputAttrs {
-        I.value_ = Defined $ pack value' }
+        I.defaultValue = Defined $ pack value' }
     in if editing' 
       then commonInputAttrs {
         I.onChange = Defined onChange' }

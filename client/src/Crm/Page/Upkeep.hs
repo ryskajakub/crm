@@ -8,14 +8,13 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, Text, (<>))
+import "fay-base" Data.Text (fromString, unpack, pack, Text, (<>))
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import FFI (Defined(Defined))
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Input as I
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink as A
@@ -35,7 +34,7 @@ import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox, formRow)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, parseSafely, lmap, rmap, pageInfo, validationHtml)
+import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt)
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -163,9 +162,9 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
 
 upkeepForm :: Var D.AppState
            -> Text -- ^ page header
-           -> (U.Upkeep, [UM.UpkeepMachine'])
+           -> (U.Upkeep, [(UM.UpkeepMachine')])
            -> (DP.DatePicker, Text) -- ^ datepicker, datepicker openness
-           -> [UM.UpkeepMachine']
+           -> [(UM.UpkeepMachine')]
            -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
               -- ^ machine ids -> machines
            -> (Bool -> DOMElement) -- ^ submit button
@@ -202,35 +201,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     thisUpkeepMachine = find findMachineById upkeepMachines
     thatUpkeepMachine = find findMachineById notCheckedMachines''
     checkedMachineIds = map snd upkeepMachines
-    field :: (Text -> Maybe a) 
-          -> (a -> UM.UpkeepMachine' -> UM.UpkeepMachine')
-          -> (UM.UpkeepMachine -> Text)
-          -> (I.InputProps -> DOMElement)
-          -> Int -- ^ row width
-          -> Defined Text
-          -> DOMElement
-    field parseText setValue showValue inputType rowWidth key' = let
-      defaultValue upkeepMachine = Defined $ showValue $ fst upkeepMachine
-      inputProps = case (thisUpkeepMachine, thatUpkeepMachine) of
-        (Just(upkeepMachine), _) -> I.mkInputProps {
-          I.onChange = Defined $ \event -> do
-            rawValue <- eventValue event
-            case parseText rawValue of
-              Just(value) -> let
-                newUpkeepMachine = setValue value upkeepMachine
-                newUpkeepMachines = map (\ um @ (_,machineId') ->
-                  if machineId' == machineId
-                    then newUpkeepMachine
-                    else um) upkeepMachines
-                in setUpkeep (upkeep, newUpkeepMachines)
-              _ -> return (),
-          I.defaultValue = defaultValue upkeepMachine }
-        (_, Just(upkeepMachine)) -> I.mkInputProps {
-          I.defaultValue = defaultValue upkeepMachine ,
-          I.disabled = Defined True }
-        _ -> I.mkInputProps { -- this shouldn't happen, really
-          I.disabled = Defined True }
-      in B.col' (B.mkColProps rowWidth) key' $ inputType inputProps
     machineToggleLink = let
       content = pack $ MT.machineTypeName machineType
       clickHandler = let
@@ -262,19 +232,18 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       (Nothing, Just(thatMachine)) ->
         (thatMachine, const $ return (), False)
 
-    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id'))
-      (showInt . UM.recordedMileage) I.input 2
+    recordedMileageField = B.col (B.mkColProps 2) $ editingInput (show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i
+      -> setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i }))) editing
 
-    warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep ->
-      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep }) editing
-
+    warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
+      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }) editing
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
+
     noteField = B.col (B.mkColProps 5) $ editingInput (UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
-      setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }) editing
+      setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
 
     rowItems = if closeUpkeep'
-      then [machineToggleLink, recordedMileageField (Defined "2"), 
-        warrantyUpkeepRow , noteField]
+      then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
     in B.row rowItems
   datePicker = let
