@@ -48,7 +48,7 @@ machineTypesListing (AutocompleteManufacturer mid) = mkListing jsonO (const $
 machineTypesListing CountListing = mkListing jsonO (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
-    mapRow :: ((Int,Int,String,String),Int64) -> ((Int, MT.MachineType), Int)
+    mapRow :: ((Int,Int,String,String),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
     mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
     mappedRows = map mapRow rows
   return mappedRows )
@@ -81,7 +81,7 @@ machineTypesSingle = mkConstHandler jsonO (do
   case rows of
     x:xs | null xs -> do 
       let mt = convert x :: MachineTypeMapped
-      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ sel1 mt)
+      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId $ sel1 mt)
       let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
       return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
     [] -> onEmptyResult

@@ -23,6 +23,7 @@ import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler)
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
@@ -59,10 +60,10 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
   unsortedResult <- liftIO $ forM rows (\companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
-    machines <- runMachinesInCompanyQuery (sel1 companyRecord) conn
+    machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
     nextDays <- forM machines (\(machineId, machine, _, _, _, _) -> do
-      upkeepRows <- runQuery conn (nextServiceUpkeepsQuery machineId)
-      upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery machineId)
+      upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId machineId)
+      upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId machineId)
       today' <- today
       let
         upkeeps = convert upkeepRows :: [UpkeepMapped] 
@@ -72,7 +73,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
           x : xs -> (x, xs)
         nextServiceDay = nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
       return $ dayToYmd nextServiceDay)
-    return $ (C.CompanyId $ sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
+    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->

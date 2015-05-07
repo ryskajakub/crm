@@ -48,6 +48,7 @@ Library
     , Crm.Shared.Employee
     , Crm.Shared.UpkeepSequence
     , Crm.Shared.PhotoMeta
+    , Crm.Shared.Photo
     , Crm.Shared.Compressor
     , Crm.Shared.Dryer
 

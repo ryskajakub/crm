@@ -24,6 +24,8 @@ import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHan
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
 
@@ -35,15 +37,15 @@ import Crm.Server.DB
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
-insertUpkeepMachines :: Connection -> Int -> [(UM.UpkeepMachine, Int)] -> IO ()
+insertUpkeepMachines :: Connection -> U.UpkeepId -> [(UM.UpkeepMachine, M.MachineId)] -> IO ()
 insertUpkeepMachines connection upkeepId upkeepMachines = let
   insertUpkeepMachine (upkeepMachine', upkeepMachineId) = do
     _ <- runInsert
       connection
       upkeepMachinesTable (
-        pgInt4 upkeepId ,
+        pgInt4 $ U.getUpkeepId upkeepId ,
         pgString $ UM.upkeepMachineNote upkeepMachine' ,
-        pgInt4 upkeepMachineId ,
+        pgInt4 $ M.getMachineId upkeepMachineId ,
         pgInt4 $ UM.recordedMileage upkeepMachine' , 
         pgBool $ UM.warrantyUpkeep upkeepMachine' )
     return ()
@@ -67,21 +69,21 @@ updateUpkeepHandler :: Handler IdDependencies
 updateUpkeepHandler = mkInputHandler (jsonO . jsonI) (\(upkeep,machines,employeeId) -> let 
   upkeepTriple = (upkeep, machines, toMaybe employeeId)
   in withConnId (\connection upkeepId ->
-    liftIO $ updateUpkeep connection upkeepId upkeepTriple))
+    liftIO $ updateUpkeep connection (U.UpkeepId upkeepId) upkeepTriple))
 
 updateUpkeep :: Connection
-             -> Int
-             -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
+             -> U.UpkeepId
+             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
              -> IO ()
 updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   _ <- let
-    condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 upkeepId
+    condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 (U.getUpkeepId upkeepId)
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        maybeToNullable $ fmap pgInt4 employeeId, pgString $ U.workHours upkeep, 
+        maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, pgString $ U.workHours upkeep, 
         pgString $ U.workDescription upkeep, pgString $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== pgInt4 upkeepId)
+  _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== (pgInt4 $ U.getUpkeepId upkeepId))
   insertUpkeepMachines conn upkeepId upkeepMachines
   return ()
 

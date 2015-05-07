@@ -20,6 +20,7 @@ import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (mkInputHandler, Handler, ListHandler, mkListing, mkConstHandler)
 
 import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Employee as E
@@ -60,17 +61,17 @@ getUpkeep = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
   singleRowOrColumn (map (\x -> (sel2 x, sel3 x, sel4 x)) result))
 
 addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, Int)], Maybe Int)
-          -> IO Int -- ^ id of the upkeep
+          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
+          -> IO U.UpkeepId -- ^ id of the upkeep
 addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ fmap pgInt4 employeeId, 
+      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, 
       pgString $ U.workHours upkeep, pgString $ U.workDescription upkeep, 
       pgString $ U.recommendation upkeep)
     sel1
-  let upkeepId = head upkeepIds
+  let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
   return upkeepId
 

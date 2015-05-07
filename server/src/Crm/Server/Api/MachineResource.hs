@@ -78,7 +78,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
-  machineSpecificData <- case (machineSpecificQuery (MK.kindToDbRepr $ MT.kind machineType) machineId) of
+  machineSpecificData <- case (machineSpecificQuery (MK.kindToDbRepr $ MT.kind machineType) (M.getMachineId machineId)) of
     Left compressorQuery -> do
       compressorRows <- liftIO $ runQuery conn compressorQuery
       compressorRow <- singleRowOrColumn compressorRows
@@ -89,8 +89,8 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       dryerRow <- singleRowOrColumn dryerRows
       let dryerMapped = convert dryerRow :: DryerMapped
       return $ MK.DryerSpecific $ sel2 dryerMapped
-  upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 machineTypeId)
-  upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine machineId)
+  upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
+  upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine $ M.getMachineId machineId)
   today' <- liftIO today
   let 
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
