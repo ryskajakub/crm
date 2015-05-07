@@ -24,7 +24,7 @@ newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
+  deriving (Eq, Generic, Typeable, Data, Show, JSONSchema, ToJSON, FromJSON)
 #endif
 
 type Upkeep'' = (UpkeepId, Upkeep)

@@ -130,6 +130,7 @@ import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.PhotoMeta as PM
+import qualified Crm.Shared.Photo as P
 
 import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
@@ -313,62 +314,64 @@ instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) =>
 class ColumnToRecord column record | record -> column where
   convert :: column -> record
 
-type MachineMapped = (Int, Int, Maybe Int, Int, M.Machine)
-type CompanyMapped = (Int, C.Company)
-type MachineTypeMapped = (Int, MT.MachineType)
-type ContactPersonMapped = (Int, Int, CP.ContactPerson)
-type MaybeContactPersonMapped = (Maybe Int, Maybe Int, Maybe CP.ContactPerson)
-type MaybeEmployeeMapped = (Maybe Int, Maybe E.Employee)
-type UpkeepMapped = (Int, Maybe Int, U.Upkeep)
-type EmployeeMapped = (Int, E.Employee)
-type UpkeepSequenceMapped = (Int, US.UpkeepSequence)
-type CompressorMapped = (Int, MC.Compressor)
-type DryerMapped = (Int, MD.Dryer)
-type UpkeepMachineMapped = (Int, Int, UM.UpkeepMachine)
-type PhotoMetaMapped = (Int, PM.PhotoMeta)
+type MachineMapped = (M.MachineId, C.CompanyId, Maybe CP.ContactPersonId, MT.MachineTypeId, M.Machine)
+type CompanyMapped = (C.CompanyId, C.Company)
+type MachineTypeMapped = (MT.MachineTypeId, MT.MachineType)
+type ContactPersonMapped = (CP.ContactPersonId, C.CompanyId, CP.ContactPerson)
+type MaybeContactPersonMapped = (Maybe CP.ContactPersonId, Maybe C.CompanyId, Maybe CP.ContactPerson)
+type MaybeEmployeeMapped = (Maybe E.EmployeeId, Maybe E.Employee)
+type UpkeepMapped = (U.UpkeepId, Maybe E.EmployeeId, U.Upkeep)
+type EmployeeMapped = (E.EmployeeId, E.Employee)
+type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
+type CompressorMapped = (M.MachineId, MC.Compressor)
+type DryerMapped = (M.MachineId, MD.Dryer)
+type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
+type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 
 instance ColumnToRecord (Int, String, String, String) CompanyMapped where
-  convert tuple = (sel1 tuple, (uncurryN $ const C.Company) tuple)
+  convert tuple = (C.CompanyId $ sel1 tuple, (uncurryN $ const C.Company) tuple)
 instance ColumnToRecord 
     (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
   convert tuple = let
     machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
-    in (sel1 tuple, sel2 tuple, sel3 tuple, sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
+    in (M.MachineId $ sel1 tuple, C.CompanyId $ sel2 tuple, CP.ContactPersonId `fmap` sel3 tuple, 
+      MT.MachineTypeId $ sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
-  convert tuple = (sel1 tuple, (uncurryN $ const MT.MachineType) 
+  convert tuple = (MT.MachineTypeId $ sel1 tuple, (uncurryN $ const MT.MachineType) 
     (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
 instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
-  convert tuple = (sel1 tuple, sel2 tuple, (uncurryN $ const $ const CP.ContactPerson) tuple)
+  convert tuple = (CP.ContactPersonId $ sel1 tuple, C.CompanyId $ sel2 tuple, 
+    (uncurryN $ const $ const CP.ContactPerson) tuple)
 instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where
   convert tuple = let
     maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
-    in (sel1 tuple, sel2 tuple, maybeCp)
+    in (CP.ContactPersonId `fmap` sel1 tuple, C.CompanyId `fmap` sel2 tuple, maybeCp)
 instance ColumnToRecord (Maybe Int, Maybe String, Maybe String, Maybe String) MaybeEmployeeMapped where
-  convert tuple = (sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
+  convert tuple = (E.EmployeeId `fmap` sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
 instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) UpkeepMapped where
   convert tuple = let
     (_,a,b,_,c,d,e) = tuple
-    in (sel1 tuple, sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
+    in (U.UpkeepId $ sel1 tuple, E.EmployeeId `fmap` sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
 instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
-  convert tuple = (sel1 tuple, uncurryN (const E.Employee) $ tuple)
+  convert tuple = (E.EmployeeId $ sel1 tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
-  convert (a,b,c,d,e) = (d, US.UpkeepSequence a b c e)
+  convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
 instance ColumnToRecord (Int, String) CompressorMapped where
-  convert tuple = (sel1 tuple, MC.Compressor $ sel2 tuple)
+  convert tuple = (M.MachineId $ sel1 tuple, MC.Compressor $ sel2 tuple)
 instance ColumnToRecord (Int, String) DryerMapped where
-  convert tuple = (sel1 tuple, MD.Dryer $ sel2 tuple)
+  convert tuple = (M.MachineId $ sel1 tuple, MD.Dryer $ sel2 tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
-  convert (a,b,c,d,e) = (a, c, UM.UpkeepMachine b d e)
+  convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
 instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
-  convert tuple = (sel1 tuple, (uncurryN $ const PM.PhotoMeta) tuple)
+  convert tuple = (P.PhotoId $ sel1 tuple, (uncurryN $ const PM.PhotoMeta) tuple)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
 -- todo rather do two queries
 mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
-           -> [(Int, U.Upkeep, Maybe Int, [(UM.UpkeepMachine, Int)])]
+           -> [(U.UpkeepId, U.Upkeep, Maybe E.EmployeeId, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
     upkeepToAdd = convert upkeepCols :: UpkeepMapped
@@ -630,7 +633,7 @@ machinesInUpkeepQuery upkeepId = proc () -> do
   returnA -< (upkeepMachine)
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
-  IO[(Int, M.Machine, Int, Int, MT.MachineType, Maybe CP.ContactPerson)]
+  IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runQuery connection (machinesInCompanyQuery companyId))
   let 
@@ -655,7 +658,7 @@ convertExpanded row = let
   (m :: MachineMapped, mt :: MachineTypeMapped) = convertDeep row
   in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt)
 
-runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(Int, M.Machine, Int, Int, MT.MachineType)]
+runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ fmap convertExpanded rows
@@ -663,10 +666,11 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[String]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> IO[(Int, (Int, M.Machine, Int, Int, MT.MachineType))]
+runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> 
+  IO[(C.CompanyId, (M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
-  return $ map (\(companyId,a,b) -> (companyId, convertExpanded (a,b))) rows
+  return $ map (\(companyId,a,b) -> (C.CompanyId companyId, convertExpanded (a,b))) rows
 
 withConnection :: (Connection -> IO a) -> IO a
 withConnection runQ = do
