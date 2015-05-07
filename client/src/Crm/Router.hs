@@ -9,6 +9,7 @@ module Crm.Router (
   link ,
   CrmRouter ,
   CrmRoute ,
+  dashboard ,
   frontPage ,
   defaultFrontPage ,
   newCompany ,
@@ -64,6 +65,9 @@ import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
+
+dashboard :: CrmRoute
+dashboard = CrmRoute "dashboard"
 
 defaultFrontPage :: CrmRoute
 defaultFrontPage = frontPage C.NextService DIR.Asc
@@ -147,6 +151,9 @@ startRouter appVar = let
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
+    "dashboard", const $
+      modify appVar (\appState -> appState { D.navigation = D.Dashboard })
+  ),(
     "", const $
       fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
         (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }))

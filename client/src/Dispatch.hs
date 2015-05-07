@@ -22,6 +22,7 @@ import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import Crm.Page.Employee (employeePage, newEmployeeForm, employeeEdit)
 import Crm.Page.NotFound (notFound)
+import Crm.Page.Dashboard (dashboard)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
@@ -41,6 +42,7 @@ main' = do
   router <- startRouter appVar'
   _ <- subscribeAndRead appVar' (\appState -> let
     newElementAndCallback = case D.navigation appState of
+      D.Dashboard -> emptyCallback dashboard
       D.FrontPage ordering data' -> emptyCallback 
         (companiesList router (fst ordering) (snd ordering) data')
       D.NotFound -> emptyCallback $ notFound
