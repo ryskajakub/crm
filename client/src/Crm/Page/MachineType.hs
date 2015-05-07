@@ -279,7 +279,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   fixedUpkeepSequences = case MT.kind machineType of
     MK.DryerSpecific _ -> True
-    _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> False
+    MK.CompressorSpecific _ | (isJust machineTypeId && machineTypeFormType == Phase1) -> True
+    MK.CompressorSpecific _ -> False
 
   result =
     (B.grid $ B.row $
