@@ -13,6 +13,18 @@ form.upkeep-sequence-form input[type=checkbox] {
   position: relative;
   top: 6px; }
 
+#half-container {
+  position: relative; 
+  width: 100%;
+  padding-bottom: 50%; }
+
+#dashboard-map {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  width: 100%;
+  height: 100%; }
+
 #overcast {
   width: 20000px;
   height: 20000px;
