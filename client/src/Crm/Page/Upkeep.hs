@@ -191,9 +191,11 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Fay ()
   setUpkeep modifiedUpkeep = setUpkeepFull modifiedUpkeep rawUpkeepDate
 
-  setNotCheckedMachines :: [UM.UpkeepMachine'] -> Fay ()
-  setNotCheckedMachines notCheckedMachines' = modify' 
-    (\upkeepData -> upkeepData { UD.notCheckedMachines = notCheckedMachines' })
+  setNotCheckedMachines :: [UM.UpkeepMachine'] -> [UM.UpkeepMachine'] -> Fay ()
+  setNotCheckedMachines checkedMachines notCheckedMachines' = modify' 
+    (\upkeepData -> upkeepData { 
+      UD.upkeep = (upkeep, checkedMachines) ,
+      UD.notCheckedMachines = notCheckedMachines' })
     
   machineRow (machineId,_,_,_,machineType) = let
     findMachineById (_,id') = machineId == id'
@@ -236,10 +238,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           upkeepMachines ,
           notCheckedMachines'' )
           (\(_,machineId') -> machineId' == machineId)
-        newUpkeep = (upkeep, newCheckedMachines)
-        in do 
-          setUpkeep newUpkeep 
-          setNotCheckedMachines newNotCheckedMachines
+        in setNotCheckedMachines newCheckedMachines newNotCheckedMachines
       link' = A.a''
         (mkAttrs {onClick = Defined $ const clickHandler} )
         (A.mkAAttrs)
@@ -250,7 +249,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       innerRow = B.row [B.col' (B.mkColProps 2) (Defined "1") icon, 
         B.col' (B.mkColProps 10) (Defined "2") link']
       in B.col' (B.mkColProps (if closeUpkeep' then 4 else 6)) (Defined "1") innerRow
-    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id') )
+    recordedMileageField = field parseSafely (\v (um,id') -> (um { UM.recordedMileage = v },id'))
       (showInt . UM.recordedMileage) I.input 2
     warrantyUpkeep = case (thisUpkeepMachine, thatUpkeepMachine) of
       (Just(thisMachine), Nothing) -> 
