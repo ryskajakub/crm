@@ -38,12 +38,12 @@ companyUpkeepsListing = mkListing jsonO (const $ withConnId (\conn id'' -> do
   let 
     mappedResults = mapResultsToList 
       sel1
-      (\(upkeepCols,_,_,_,employeeCols) -> let
+      (\(upkeepCols,_,_,employeeCols) -> let
         upkeep = convert upkeepCols :: UpkeepMapped
         employee = convert employeeCols :: MaybeEmployeeMapped
         employeeInsideMyMaybe = toMyMaybe $ pure (,) <*> sel1 employee <*> sel2 employee
         in (sel1 upkeep, sel3 upkeep, employeeInsideMyMaybe))
-      (\(_,upkeepMachine',machineType',machineId'::Int,_) -> let
+      (\(_,upkeepMachine',machineType',_) -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
