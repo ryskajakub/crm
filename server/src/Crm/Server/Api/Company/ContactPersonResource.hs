@@ -4,7 +4,7 @@ module Crm.Server.Api.Company.ContactPersonResource (
   contactPersonResource ) where
 
 import Opaleye.PGTypes (pgString, pgInt4)
-import Opaleye.Manipulation (runInsertReturning)
+import Opaleye.Manipulation (runInsert)
 import Opaleye.RunQuery (runQuery)
 
 import Control.Monad.IO.Class (liftIO)
@@ -27,14 +27,12 @@ import Crm.Server.DB
 createContactPersonHandler :: Handler IdDependencies
 createContactPersonHandler = mkInputHandler (jsonO . jsonI) (\contactPerson -> 
     withConnId (\connection companyId -> liftIO $ do
-  contactPersonIds <- runInsertReturning
+  _ <- runInsert
     connection
     contactPersonsTable
     (Nothing, pgInt4 companyId, pgString $ CP.name contactPerson,
       pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
-    sel1
-  let contactPersonId = head contactPersonIds
-  return (contactPersonId :: Int)))
+  return ()))
 
 contactPersonResource :: Resource IdDependencies IdDependencies Void () Void
 contactPersonResource = mkResourceId {
