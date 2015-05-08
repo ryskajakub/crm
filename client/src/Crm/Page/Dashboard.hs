@@ -41,4 +41,4 @@ dashboard companies = let
     div' (mkAttrs { id = Defined $ pack "half-container" }) $ 
       div' (mkAttrs { id = Defined $ pack "dashboard-map" }) (pack "")
 
-  in (element, startMapOnLoad constructMap )
+  in (element, constructMap)
