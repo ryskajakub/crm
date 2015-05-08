@@ -9,7 +9,8 @@ var commonSources = [
   '../../fay-react/wrappers/src/' ,
   './shared/' ,
   '../../fay-jquery/src/' ,
-  '../../fay-moment/src/' ];
+  '../../fay-moment/src/' ,
+  '../../fay-googlemaps/src' ];
 var playgroundSources = commonSources.concat('playground/');
 var mainSources = commonSources.concat('src/');
 
