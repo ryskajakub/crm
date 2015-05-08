@@ -2,12 +2,15 @@
 
 module GoogleMaps (
   Map ,
-  MapOptions (..) ,
+  MapOptions ,
+  mkMapOptions ,
   LatLng ,
   mkMap , 
+  addMarker ,
   mkLatLng ,
   startMapOnLoad ,
   computeCoordinates ) where
+
 
 import FFI
 import "fay-base" Data.Text (Text)
@@ -16,6 +19,8 @@ import DOM (Element)
 import Data.Nullable
 import Data.Maybe
 
+
+data MapOptions
 data Map
 
 data LatLng
@@ -25,9 +30,9 @@ data GeocoderResults
 data GeocoderResult
 data GeocoderRequest 
 
-data MapOptions = MapOptions {
-  zoom :: Defined Int ,
-  center :: Defined LatLng }
+
+mkMapOptions :: Int -> LatLng -> MapOptions
+mkMapOptions = ffi " {zoom: %1, center: %2} "
 
 mkMap :: Element -> MapOptions -> Fay Map
 mkMap = ffi " new google.maps.Map(%1,%2) "
