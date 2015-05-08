@@ -37,5 +37,8 @@ data Company = Company {
   deriving (Generic, Typeable, Data, Show)
 #endif
 
+mkCoordinates :: (Double, Double) -> Coordinates
+mkCoordinates (lat, lng) = Coordinates lat lng
+
 newCompany :: Company
 newCompany = Company "" "" ""

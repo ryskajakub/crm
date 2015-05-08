@@ -11,6 +11,7 @@ module Crm.Page.Company (
 import "fay-base" Data.Text (fromString, unpack, pack) 
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Maybe (onJust)
 import FFI (Defined(Defined, Undefined))
 
 import HaskellReact as HR
@@ -18,6 +19,8 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav as BN
+
+import GoogleMaps (computeCoordinates)
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
@@ -114,8 +117,8 @@ companyDetail :: Bool -- ^ is the page editing mode
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
-  saveHandler = do
-    updateCompany companyId company'
+  saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> do
+    updateCompany companyId company' $ C.mkCoordinates `onJust` coordinates
     R.navigate (R.defaultFrontPage) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of

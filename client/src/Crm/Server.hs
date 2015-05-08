@@ -334,9 +334,10 @@ updateContactPerson cpId cp callback = ajax
 
 updateCompany :: C.CompanyId
               -> C.Company
+              -> Maybe C.Coordinates
               -> Fay ()
-updateCompany companyId company = ajax
-  (company)
+updateCompany companyId company coordinates = ajax
+  (company, toMyMaybe coordinates)
   (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
   put
   (const $ return ())
