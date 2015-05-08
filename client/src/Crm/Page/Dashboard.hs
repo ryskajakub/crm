@@ -12,10 +12,12 @@ import DOM
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
+import qualified Crm.Shared.Company as C
+
 import GoogleMaps
 
-dashboard :: (DOMElement, Fay ())
-dashboard = let 
+dashboard :: [(C.CompanyId, C.Company, Maybe C.Coordinates)] -> (DOMElement, Fay ())
+dashboard _ = let
 
   constructMap = do
     let czCenter = mkLatLng 49.7437400818 15.3386173248

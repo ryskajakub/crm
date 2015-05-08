@@ -34,6 +34,7 @@ module Crm.Server (
   fetchCompany ,
   fetchContactPersons ,
   fetchContactPerson ,
+  fetchCompaniesForMap ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -287,6 +288,14 @@ fetchPlannedUpkeeps callback =
   JQ.ajax
     (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.planned))
     (callback . items)
+    noopOnError
+
+fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe C.Coordinates)] -> Fay ())
+                     -> Fay ()
+fetchCompaniesForMap callback =
+  JQ.ajax
+    (apiRoot <> (pack $ A.companies ++ "/" ++ A.map'))
+    (callback . (map (\(a,b,c) -> (a,b,toMaybe c))) . items)
     noopOnError
 
 createCompany :: C.Company

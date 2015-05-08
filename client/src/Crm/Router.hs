@@ -60,7 +60,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson)
+  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
@@ -152,7 +152,8 @@ startRouter appVar = let
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [(
     "dashboard", const $
-      modify appVar (\appState -> appState { D.navigation = D.Dashboard })
+      fetchCompaniesForMap (\companiesTriple -> 
+        modify appVar (\appState -> appState { D.navigation = D.Dashboard companiesTriple }))
   ),(
     "", const $
       fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
