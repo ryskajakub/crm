@@ -19,8 +19,10 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav as BN
+import qualified HaskellReact.BackboneRouter as BR
 
 import GoogleMaps (computeCoordinates)
+
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
@@ -121,7 +123,6 @@ companyDetail :: Bool -- ^ is the page editing mode
 companyDetail editing' router var (companyId, company') machines' = let
   saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> do
     updateCompany companyId company' $ C.mkCoordinates `onJust` coordinates
-    R.navigate (R.defaultFrontPage) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }

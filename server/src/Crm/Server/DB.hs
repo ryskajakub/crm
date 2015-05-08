@@ -39,7 +39,6 @@ module Crm.Server.DB (
   compressorsQuery ,
   dryersQuery ,
   -- manipulations
-  addCompany ,
   addMachinePhoto ,
   -- runs
   runExpandedMachinesQuery ,
@@ -100,7 +99,6 @@ import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators (restrict, lower, (.==))
 import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool, PGFloat8, pgDouble)
-import Opaleye.Manipulation (runInsertReturning)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
@@ -706,19 +704,6 @@ addMachinePhoto connection _ photo = do
   newIds <- query connection q (Only $ Binary photo)
   let ints = map (\(Only id') -> id') newIds
   return ints
-
-addCompany :: Connection -- ^ database connection
-           -> C.Company -- ^ company to save in the db
-           -> Maybe C.Coordinates
-           -> IO Int
-addCompany connection newCompany coordinates = do
-  newId <- runInsertReturning
-    connection
-    companiesTable 
-    (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ C.companyAddress newCompany,
-      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
-    sel1
-  return $ head newId -- todo safe
 
 singleRowOrColumn :: Monad m
                   => [a] 

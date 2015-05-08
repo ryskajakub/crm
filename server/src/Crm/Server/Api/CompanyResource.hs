@@ -6,6 +6,7 @@ module Crm.Server.Api.CompanyResource where
 import Opaleye.PGTypes (pgString)
 import Opaleye.RunQuery (runQuery)
 import Opaleye (queryTable, pgDouble)
+import Opaleye.Manipulation (runInsertReturning)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -42,8 +43,16 @@ import Safe (minimumMay, readMay)
 data MachineMid = NextServiceListing | MapListing
 
 createCompanyHandler :: Handler Dependencies
-createCompanyHandler = mkInputHandler (jsonO . jsonI) (\(newCompany, coordinates) ->
-  ask >>= \conn -> liftIO $ addCompany conn newCompany (toMaybe coordinates))
+createCompanyHandler = mkInputHandler (jsonO . jsonI) (\(newCompany, coordinates) -> do
+  connection <- ask  
+  ids <- liftIO $ runInsertReturning 
+    connection 
+    companiesTable
+    (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ C.companyAddress newCompany,
+      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
+    sel1
+  id <- singleRowOrColumn ids
+  return (id :: Int))
 
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ do
