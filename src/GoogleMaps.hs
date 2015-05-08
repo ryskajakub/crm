@@ -38,6 +38,16 @@ mkLatLng = ffi " new google.maps.LatLng(%1,%2) "
 startMapOnLoad :: Fay () -> Fay ()
 startMapOnLoad = ffi " google.maps.event.addDomListener(window, 'load', %1) "
 
+
+addMarker :: Double -> Double -> Map -> Fay ()
+addMarker lat lng map' = let
+  position = mkLatLng lat lng
+  in mkMarker' position map'
+
+mkMarker' :: LatLng -> Map -> Fay ()
+mkMarker' = ffi " new google.maps.Marker({position: %1, map: %2})  "
+
+
 mkGeocoderRequest :: Text -> GeocoderRequest
 mkGeocoderRequest = ffi " { \"address\":%1 } "
 
