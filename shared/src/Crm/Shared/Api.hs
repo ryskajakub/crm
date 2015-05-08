@@ -15,6 +15,7 @@ module Crm.Shared.Api (
   autocomplete ,
   autocompleteManufacturer ,
   byName, byId ,
+  map' ,
   employees ) where
 
 #ifndef FAY
@@ -66,6 +67,9 @@ byName = "by-name"
 
 single :: String
 single = "single"
+
+map' :: String
+map' = "map"
 
 companiesClient :: String
 companiesClient = firstToUpper companies

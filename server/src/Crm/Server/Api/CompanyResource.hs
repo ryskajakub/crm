@@ -38,6 +38,8 @@ import Crm.Server.Core (nextServiceDate)
 
 import Safe (minimumMay, readMay)
 
+data MachineMid = NextServiceListing | MapListing
+
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
@@ -106,7 +108,7 @@ updateCompany = let
 deleteCompany :: Handler IdDependencies
 deleteCompany = deleteRows' [createDeletion companiesTable]
 
-companyResource :: Resource Dependencies IdDependencies UrlId () Void
+companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const listing ,
   create = Just createCompanyHandler ,
@@ -114,4 +116,6 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just singleCompany ,
   update = Just updateCompany ,
   remove = Just deleteCompany ,
-  schema = S.withListing () $ S.unnamedSingle readMay' }
+  schema = S.withListing NextServiceListing $ S.named [
+    ("single", S.singleBy readMay') ,
+    ("map", S.listing MapListing) ] }

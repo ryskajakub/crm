@@ -117,7 +117,7 @@ deleteCompany :: C.CompanyId
               -> Fay ()
               -> Fay ()
 deleteCompany companyId callback = doDelete
-  (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
   callback
 
 deleteUpkeep :: U.UpkeepId
@@ -261,7 +261,7 @@ fetchCompany :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
-    (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId)))
+    (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
     (callback . (rmap (map (\(a,b,c,d,e,f) -> (a,b,c,d,e,toMaybe f)))))
     noopOnError
 
@@ -338,7 +338,7 @@ updateCompany :: C.CompanyId
               -> Fay ()
 updateCompany companyId company coordinates = ajax
   (company, toMyMaybe coordinates)
-  (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId))
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
   put
   (const $ return ())
 
