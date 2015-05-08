@@ -20,7 +20,7 @@ import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceRead
   update, remove )
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler)
+import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler, mkListing)
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -43,6 +43,13 @@ data MachineMid = NextServiceListing | MapListing
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler (jsonO . jsonI) (\newCompany ->
   ask >>= \conn -> liftIO $ addCompany conn newCompany )
+
+mapListing :: ListHandler Dependencies
+mapListing = mkListing jsonO (const $ do
+  connection <- ask
+  results <- liftIO $ runQuery connection companiesQuery
+  let convertedResults = convert results :: [CompanyMapped]
+  return convertedResults)
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
@@ -110,7 +117,9 @@ deleteCompany = deleteRows' [createDeletion companiesTable]
 
 companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
-  list = const listing ,
+  list = \type' -> case type' of
+    NextServiceListing -> listing 
+    MapListing -> mapListing ,
   create = Just createCompanyHandler ,
   name = A.companies ,
   get = Just singleCompany ,

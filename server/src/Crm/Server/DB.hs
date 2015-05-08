@@ -113,7 +113,7 @@ import Control.Monad.Trans.Except (ExceptT)
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p10)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4, sel6)
 import Data.ByteString.Lazy (ByteString)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
@@ -317,7 +317,7 @@ class ColumnToRecord column record | record -> column where
   convert :: column -> record
 
 type MachineMapped = (M.MachineId, C.CompanyId, Maybe CP.ContactPersonId, MT.MachineTypeId, M.Machine)
-type CompanyMapped = (C.CompanyId, C.Company)
+type CompanyMapped = (C.CompanyId, C.Company, Maybe C.Coordinates)
 type MachineTypeMapped = (MT.MachineTypeId, MT.MachineType)
 type ContactPersonMapped = (CP.ContactPersonId, C.CompanyId, CP.ContactPerson)
 type MaybeContactPersonMapped = (Maybe CP.ContactPersonId, Maybe C.CompanyId, Maybe CP.ContactPerson)
@@ -333,7 +333,8 @@ type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
     company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
-    in (C.CompanyId $ sel1 tuple, company)
+    coordinates = pure C.Coordinates <*> sel5 tuple <*> sel6 tuple
+    in (C.CompanyId $ sel1 tuple, company, coordinates)
 instance ColumnToRecord 
     (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
