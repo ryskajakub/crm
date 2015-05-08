@@ -187,3 +187,10 @@ instance ToJSON U.UpkeepId where
   toJSON = fromJust . showToFay
 instance FromJSON U.UpkeepId where
   parseJSON = fayInstance
+
+instance JS.JSONSchema C.Coordinates where
+  schema = gSchema
+instance ToJSON C.Coordinates where
+  toJSON = fromJust . showToFay
+instance FromJSON C.Coordinates where
+  parseJSON = fayInstance

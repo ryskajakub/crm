@@ -5,7 +5,7 @@ module Crm.Server.Api.CompanyResource where
 
 import Opaleye.PGTypes (pgString)
 import Opaleye.RunQuery (runQuery)
-import Opaleye (queryTable)
+import Opaleye (queryTable, pgDouble)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -97,8 +97,10 @@ singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
 
 updateCompany :: Handler IdDependencies
 updateCompany = let
-  readToWrite company = const (Nothing, pgString $ C.companyName company, 
-    pgString $ C.companyPlant company, pgString $ C.companyAddress company, maybeToNullable Nothing, maybeToNullable Nothing)
+  readToWrite (company, coordinates') = let 
+    coordinates = toMaybe coordinates'
+    in const (Nothing, pgString $ C.companyName company, pgString $ C.companyPlant company, pgString $ C.companyAddress company, 
+      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
   in updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
