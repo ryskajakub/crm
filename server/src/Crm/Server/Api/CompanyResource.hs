@@ -10,6 +10,7 @@ import Opaleye (queryTable, pgDouble)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
+import Control.Lens (_3, over, mapped)
 
 import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6)
@@ -49,6 +50,7 @@ mapListing = mkListing jsonO (const $ do
   connection <- ask
   results <- liftIO $ runQuery connection companiesQuery
   let convertedResults = convert results :: [CompanyMapped]
+  let mappedCoords = over (mapped . _3) toMyMaybe convertedResults
   return convertedResults)
 
 listing :: ListHandler Dependencies
