@@ -299,10 +299,11 @@ fetchCompaniesForMap callback =
     noopOnError
 
 createCompany :: C.Company
+              -> Maybe C.Coordinates
               -> Fay ()
               -> Fay ()
-createCompany company callback = ajax
-  company
+createCompany company coordinates callback = ajax
+  (company, toMyMaybe coordinates)
   (pack A.companies)
   post
   (const callback)

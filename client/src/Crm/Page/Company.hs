@@ -35,8 +35,6 @@ import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, pageInfo, validationHtml, zipWithIndex)
 
-import Debug.Trace
-
 companiesList :: R.CrmRouter
               -> C.OrderType
               -> DIR.Direction
@@ -102,7 +100,9 @@ companyNew :: R.CrmRouter
            -> DOMElement
 companyNew router var company' = let
   editing' = True
-  saveHandler = createCompany company' (R.navigate (R.defaultFrontPage) router)
+  saveHandler =
+    computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> 
+      createCompany company' (C.mkCoordinates `onJust` coordinates) (R.navigate (R.defaultFrontPage) router)
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
@@ -120,7 +120,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
   saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> do
-    trace (show coordinates) $ updateCompany companyId company' $ C.mkCoordinates `onJust` coordinates
+    updateCompany companyId company' $ C.mkCoordinates `onJust` coordinates
     R.navigate (R.defaultFrontPage) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
