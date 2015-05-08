@@ -22,6 +22,13 @@ newtype CompanyId = CompanyId { getCompanyId :: Int }
 data OrderType = CompanyName | NextService
   deriving (Show, Read)
 
+data Coordinates = Coordinates {
+  latitude :: Double ,
+  longitude :: Double }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif
+
 data Company = Company {
   companyName :: String , 
   companyPlant :: String ,
