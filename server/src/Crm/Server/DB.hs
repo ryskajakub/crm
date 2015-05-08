@@ -709,12 +709,14 @@ addMachinePhoto connection _ photo = do
 
 addCompany :: Connection -- ^ database connection
            -> C.Company -- ^ company to save in the db
+           -> Maybe C.Coordinates
            -> IO Int
-addCompany connection newCompany = do
+addCompany connection newCompany coordinates = do
   newId <- runInsertReturning
     connection
-    companiesTable (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, 
-      pgString $ C.companyAddress newCompany, maybeToNullable $ Nothing, maybeToNullable $ Nothing)
+    companiesTable 
+    (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ C.companyAddress newCompany,
+      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
     sel1
   return $ head newId -- todo safe
 

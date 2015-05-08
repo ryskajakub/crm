@@ -42,8 +42,8 @@ import Safe (minimumMay, readMay)
 data MachineMid = NextServiceListing | MapListing
 
 createCompanyHandler :: Handler Dependencies
-createCompanyHandler = mkInputHandler (jsonO . jsonI) (\newCompany ->
-  ask >>= \conn -> liftIO $ addCompany conn newCompany )
+createCompanyHandler = mkInputHandler (jsonO . jsonI) (\(newCompany, coordinates) ->
+  ask >>= \conn -> liftIO $ addCompany conn newCompany (toMaybe coordinates))
 
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ do
