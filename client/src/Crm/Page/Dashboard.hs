@@ -13,9 +13,10 @@ import DOM
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
-import qualified Crm.Shared.Company as C
-
 import GoogleMaps
+
+import qualified Crm.Shared.Company as C
+import Crm.Helpers (pageInfo)
 
 
 collect :: (a -> Maybe b) -> [a] -> [b]
@@ -37,8 +38,10 @@ dashboard companies = let
     mapM_ (\(_,_,C.Coordinates lat lng) -> addMarker lat lng googleMap) companiesWithCoords
     return ()
     
-  element = B.grid $ B.row $ B.col (B.mkColProps 12) $ 
-    div' (mkAttrs { id = Defined $ pack "half-container" }) $ 
-      div' (mkAttrs { id = Defined $ pack "dashboard-map" }) (pack "")
+  info = pageInfo (pack "Nástěnka") $ Just $ pack "Mapa firem. Firma se na mapě zobrazí podle vyplněné adresy."
+  element = B.grid $ B.row $
+    info ++ [B.col (B.mkColProps 12) $ 
+      div' (mkAttrs { id = Defined $ pack "half-container" }) $ 
+        div' (mkAttrs { id = Defined $ pack "dashboard-map" }) (pack "") ]
 
   in (element, constructMap)
