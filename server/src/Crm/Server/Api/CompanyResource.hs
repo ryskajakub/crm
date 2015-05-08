@@ -51,7 +51,7 @@ mapListing = mkListing jsonO (const $ do
   results <- liftIO $ runQuery connection companiesQuery
   let convertedResults = convert results :: [CompanyMapped]
   let mappedCoords = over (mapped . _3) toMyMaybe convertedResults
-  return convertedResults)
+  return mappedCoords)
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do

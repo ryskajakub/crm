@@ -6,6 +6,7 @@ module Crm.Page.Dashboard (
 
 import "fay-base" Data.Text (pack)
 import "fay-base" Prelude hiding (div, span, id)
+import "fay-base" Data.Maybe (onJust)
 import FFI
 import DOM
 
@@ -16,14 +17,24 @@ import qualified Crm.Shared.Company as C
 
 import GoogleMaps
 
+
+collect :: (a -> Maybe b) -> [a] -> [b]
+collect f list = foldr (\e acc -> case f e of
+  Just elem' -> elem' : acc 
+  Nothing -> acc) [] list
+
+
 dashboard :: [(C.CompanyId, C.Company, Maybe C.Coordinates)] -> (DOMElement, Fay ())
-dashboard _ = let
+dashboard companies = let
 
   constructMap = do
-    let czCenter = mkLatLng 49.7437400818 15.3386173248
-    let mapOptions = MapOptions { zoom = Defined 8 , center = Defined czCenter }
+    let 
+      czCenter = mkLatLng 49.7437400818 15.3386173248
+      mapOptions = mkMapOptions 8 czCenter
+      companiesWithCoords = collect (\(a,b,coords) -> (\x -> (a,b,x)) `onJust` coords) companies
     mapContainer <- getElementById $ pack "dashboard-map"
-    _ <- mkMap mapContainer mapOptions
+    googleMap <- mkMap mapContainer mapOptions
+    mapM_ (\(_,_,C.Coordinates lat lng) -> addMarker lat lng googleMap) companiesWithCoords
     return ()
     
   element = B.grid $ B.row $ B.col (B.mkColProps 12) $ 
