@@ -239,8 +239,9 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }) editing
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
-    noteField = B.col (B.mkColProps 5) $ editingTextarea (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
-      setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
+    noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
+      editingTextarea (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
+        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
 
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
