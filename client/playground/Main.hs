@@ -11,13 +11,11 @@ import qualified "base" Prelude as BasePrelude
 #endif
 
 import HaskellReact hiding (main)
-import Other
+import Playground
 
 #ifdef FAY
 main :: Fay ()
-main = let
-  (element1, callback) = developedElement
-  in simpleReactBody' element1 callback
+main = renderLoop
 #else
 main :: BasePrelude.IO ()
 main = undefined
