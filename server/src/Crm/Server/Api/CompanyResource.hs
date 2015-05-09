@@ -32,7 +32,7 @@ import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows', withConnId, 
-  updateRows, createDeletion, maybeToNullable)
+  updateRows, createDeletion, createDeletion', maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -125,7 +125,7 @@ updateCompany = let
   in updateRows companiesTable readToWrite
 
 deleteCompany :: Handler IdDependencies
-deleteCompany = deleteRows' [createDeletion companiesTable]
+deleteCompany = deleteRows' [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable]
 
 companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {

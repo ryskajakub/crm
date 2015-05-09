@@ -6,6 +6,7 @@
 
 module Crm.Server.Helpers (
   createDeletion ,
+  createDeletion' ,
   prepareUpdate ,
   deleteRows' ,
   updateRows ,
@@ -87,15 +88,22 @@ deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
 deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId -> 
   liftIO $ forM_ deletions (\deletion -> deletion theId connection))
 
+createDeletion' :: (read -> (Column PGInt4))
+                -> Table write read
+                -> Int
+                -> Connection
+                -> IO ()
+createDeletion' select table pk connection = runDelete
+  connection
+  table
+  (\row -> select row .== pgInt4 pk) >> return ()
+
 createDeletion :: (Sel1 read (Column PGInt4))
                => Table write read
                -> Int
                -> Connection
                -> IO ()
-createDeletion table pk connection = runDelete
-  connection
-  table
-  (\row -> sel1 row .== pgInt4 pk) >> return ()
+createDeletion = createDeletion' sel1
 
 today :: IO Day
 today = fmap utctDay getCurrentTime
