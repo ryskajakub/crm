@@ -32,11 +32,12 @@ contactPersonsList router contactPersons = let
     R.link (pack $ CP.name contactPerson) (R.contactPersonEdit cpId) router
   in B.grid $ B.row $ map displayContactPerson contactPersons
 
-contactPersonForm :: CP.ContactPerson
+contactPersonForm :: R.CrmRouter 
+                  -> CP.ContactPerson
                   -> Either C.CompanyId CP.ContactPersonId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm contactPerson identification appVar = let
+contactPersonForm router contactPerson identification appVar = let
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {
@@ -52,7 +53,7 @@ contactPersonForm contactPerson identification appVar = let
     Left companyId -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
       companyId
       contactPerson
-      (return ()))
+      (R.navigate (R.companyDetail companyId) router ))
     Right contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
       contactPersonId
       contactPerson
