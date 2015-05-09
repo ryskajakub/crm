@@ -91,7 +91,7 @@ loadFromLocalStorage = do
   kind <- getLocalStorage "mt.kind"
   manufacturer <- getLocalStorage "mt.manufacturer"
   upkeepSequencesCount' <- getLocalStorage "us.length"
-  case (fromDefined name, MK.dbReprToKind `onJust` ( joinMaybe ( parseSafely `onJust` fromDefined kind)), fromDefined manufacturer, 
+  case (fromDefined name, MK.dbReprToKind `onJust` (joinMaybe (parseSafely `onJust` fromDefined kind)), fromDefined manufacturer, 
       parseSafely `onJust` fromDefined upkeepSequencesCount') of
     (Just name', Just kind', Just manufacturer', Just upkeepSequencesCount) -> do
       mtId <- getLocalStorage "mt.id"
