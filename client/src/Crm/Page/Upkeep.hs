@@ -241,7 +241,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
     noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
       editingTextarea (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
-        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
+        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }) editing
 
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
