@@ -206,7 +206,7 @@ fetchUpkeeps :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchUpkeeps companyId callback = 
   JQ.ajax
-    (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep))
+    (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep))
     (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))) . items)
     noopOnError
 
@@ -252,7 +252,7 @@ fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
                     -> Fay ()
 fetchContactPersons companyId callback = JQ.ajax
-  (apiRoot <> (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons))
+  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons))
   (callback . items)
   noopOnError
 
@@ -319,7 +319,7 @@ createMachine :: M.Machine
 createMachine machine companyId machineType contactPersonId machineSpecific callback =
   ajax
     (machine, machineType, toMyMaybe contactPersonId, machineSpecific)
-    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
+    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
     post
     (const callback)
 
@@ -391,7 +391,7 @@ createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
 createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
   ajax 
     (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
     post
     (const callback)
 
@@ -412,7 +412,7 @@ createContactPerson :: C.CompanyId
 createContactPerson companyId contactPerson callback =
   ajax
     contactPerson
-    (pack $ A.companies ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
+    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
     post
     (const callback)
 
