@@ -79,7 +79,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
-    manufacturerField = editingInput True (SetValue $ MT.machineTypeManufacturer machineType)
+    manufacturerField = editingInput False (SetValue $ MT.machineTypeManufacturer machineType)
       (const $ return ()) False
     in case machineTypeId of
       Nothing -> Nothing  
