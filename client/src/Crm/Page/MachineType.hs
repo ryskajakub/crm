@@ -320,11 +320,12 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)])
   in (div result, autocompleteManufacturerCb)
 
-machineTypeForm :: Var D.AppState
+machineTypeForm :: R.CrmRouter
+                -> Var D.AppState
                 -> MT.MachineTypeId
                 -> (MT.MachineType, [(US.UpkeepSequence, Text)])
                 -> (DOMElement, Fay ())
-machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = editingInput
     True
@@ -332,7 +333,9 @@ machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
   submitButtonLabel = text2DOM "Uložit"
-  submitButtonHandler = updateMachineType (machineTypeId, machineType, map fst upkeepSequences) (return ())
+  submitButtonHandler = 
+    updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 
+      (R.navigate R.machineTypesList router)
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
 
