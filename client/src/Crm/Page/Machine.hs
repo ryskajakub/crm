@@ -317,7 +317,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                       operationTypeTuples
                     buttonLabel = maybe "Jiný" snd buttonLabelMaybe
                     selectElements = map (\(value, selectLabel) -> let
-                      selectAction = setMachineFull (machine' { M.mileagePerYear = value }, "", showInt value, datePickerText)
+                      selectAction = setMachineFull (machine' { M.mileagePerYear = value }, initialMileageRaw, 
+                        showInt value, datePickerText)
                       in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
                     buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
                     in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
