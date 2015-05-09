@@ -91,8 +91,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', _) -> do
-            setMachineWhole (machineType', [])
+          Just (machineTypeId', machineType', sequences) -> do
+            setMachineWhole (machineType', map (\x -> (x, showInt $ US.repetition x)) sequences)
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
