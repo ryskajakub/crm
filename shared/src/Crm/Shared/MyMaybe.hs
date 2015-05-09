@@ -19,6 +19,10 @@ data MyMaybe a = MyJust a | MyNothing
   deriving (Generic, Typeable, Data, Show)
 #endif
 
+#ifdef FAY
+instance Eq a => Eq (MyMaybe a)
+#endif
+
 toMaybe :: MyMaybe a -> Maybe a
 toMaybe MyNothing = Nothing
 toMaybe (MyJust a) = Just a

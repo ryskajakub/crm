@@ -16,7 +16,9 @@ import "fay-base" Prelude
 
 data Compressor = Compressor {
   note :: String }
-#ifndef FAY
+#ifdef FAY
+  deriving Eq
+#else
   deriving (Generic, Typeable, Data, Show)
 #endif
 

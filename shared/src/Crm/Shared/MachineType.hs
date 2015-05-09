@@ -10,8 +10,10 @@ module Crm.Shared.MachineType where
 import GHC.Generics
 import "base" Data.Data
 import "base" Prelude
+import Fay.FFI
 #else
 import "fay-base" Prelude
+import FFI
 #endif
 
 import qualified Crm.Shared.UpkeepSequence as US
@@ -28,7 +30,7 @@ type MachineType' = (MachineTypeId, MachineType)
 
 -- | Machine type can be either an id or the machine type object
 data MachineType = MachineType {
-  kind :: MK.MachineKindEnum ,
+  kind :: Automatic MK.MachineKindEnum ,
   machineTypeName :: String ,
   machineTypeManufacturer :: String }
 #ifndef FAY

@@ -16,17 +16,18 @@ import "fay-base" Prelude
 
 import Crm.Shared.Dryer
 import Crm.Shared.Compressor
+import Crm.Shared.MyMaybe
 
 machineKinds :: [(MachineKindEnum, String)]
 machineKinds = [(compressorValue, "Kompresor"), (dryerValue, "Sušička")]
 
 type MachineKindData = MachineKind Compressor Dryer
 
-type MachineKindEnum = MachineKind () ()
+type MachineKindEnum = MachineKind (MyMaybe Compressor) (MyMaybe Dryer)
 compressorValue :: MachineKindEnum
-compressorValue = CompressorSpecific ()
+compressorValue = CompressorSpecific MyNothing
 dryerValue :: MachineKindEnum
-dryerValue = DryerSpecific ()
+dryerValue = DryerSpecific MyNothing
 
 data MachineKind compressor dryer = 
   CompressorSpecific {

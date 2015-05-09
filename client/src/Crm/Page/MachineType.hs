@@ -10,7 +10,7 @@ module Crm.Page.MachineType (
 
 import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify, get)
+import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
 import "fay-base" Data.Maybe (isJust, fromJust)
 import "fay-base" Data.LocalStorage
@@ -155,14 +155,12 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = rmap (const [usTuple]) (D.machineTypeTuple navig) })
     
   modifyUpkeepSequence :: Int -> ((US.UpkeepSequence,Text) -> (US.UpkeepSequence,Text)) -> Fay ()
-  modifyUpkeepSequence displayOrder modifier = do
-    currentAppState <- get appVar
-    let 
-      modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
-        if displayOrder == displayOrder' 
-        then modifier (us, repetitionText)
-        else (us, repetitionText)) upkeepSequences
-    D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
+  modifyUpkeepSequence displayOrder modifier = let
+    modifiedUpkeepSequences = map (\((us @ (US.UpkeepSequence displayOrder' _ _ _),repetitionText)) -> 
+      if displayOrder == displayOrder' 
+      then modifier (us, repetitionText)
+      else (us, repetitionText)) upkeepSequences
+    in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
