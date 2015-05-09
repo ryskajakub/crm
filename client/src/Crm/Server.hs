@@ -300,13 +300,14 @@ fetchCompaniesForMap callback =
 
 createCompany :: C.Company
               -> Maybe C.Coordinates
-              -> Fay ()
+              -> (C.CompanyId -> Fay ())
+
               -> Fay ()
 createCompany company coordinates callback = ajax
   (company, toMyMaybe coordinates)
   (pack A.companies)
   post
-  (const callback)
+  callback
 
 createMachine :: M.Machine 
               -> C.CompanyId
@@ -346,11 +347,12 @@ updateCompany :: C.CompanyId
               -> C.Company
               -> Maybe C.Coordinates
               -> Fay ()
-updateCompany companyId company coordinates = ajax
+              -> Fay ()
+updateCompany companyId company coordinates callback = ajax
   (company, toMyMaybe coordinates)
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
   put
-  (const $ return ())
+  (const $ callback)
 
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()

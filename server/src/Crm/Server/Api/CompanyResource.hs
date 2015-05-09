@@ -43,7 +43,8 @@ import Safe (minimumMay, readMay)
 data MachineMid = NextServiceListing | MapListing
 
 createCompanyHandler :: Handler Dependencies
-createCompanyHandler = mkInputHandler (jsonO . jsonI) (\(newCompany, coordinates) -> do
+createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinates') -> do
+  let coordinates = toMaybe coordinates'
   connection <- ask  
   ids <- liftIO $ runInsertReturning 
     connection 
@@ -52,7 +53,7 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) (\(newCompany, coordinates
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
     sel1
   id <- singleRowOrColumn ids
-  return (id :: Int))
+  return $ C.CompanyId id
 
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ do

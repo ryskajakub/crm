@@ -23,7 +23,6 @@ import qualified HaskellReact.BackboneRouter as BR
 
 import GoogleMaps (computeCoordinates)
 
-
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
@@ -103,8 +102,9 @@ companyNew :: R.CrmRouter
 companyNew router var company' = let
   editing' = True
   saveHandler =
-    computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> 
-      createCompany company' (C.mkCoordinates `onJust` coordinates) (R.navigate (R.defaultFrontPage) router)
+    computeCoordinates (pack $ C.companyAddress company') $ \coordinates ->
+      createCompany company' (C.mkCoordinates `onJust` coordinates) $ \companyId ->
+        R.navigate (R.companyDetail companyId) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
@@ -121,12 +121,16 @@ companyDetail :: Bool -- ^ is the page editing mode
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
-  saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates -> do
-    updateCompany companyId company' $ C.mkCoordinates `onJust` coordinates
+
+  saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates ->
+    updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
+      BR.refresh 
+
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
+
   machineBox (machineId', machine', _, _, machineType, contactPerson) =
     B.col (B.mkColProps 4) $
       B.panel [
