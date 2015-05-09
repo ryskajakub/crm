@@ -308,7 +308,7 @@ startRouter appVar = let
           in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
             fetchEmployees (\employees ->
               modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), "")
+                (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
                 employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound
   ),(

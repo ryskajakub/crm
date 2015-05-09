@@ -256,8 +256,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     setDate date = case date of
       Right date' -> setUpkeepFull (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
       Left text' -> setUpkeepFull (upkeep, upkeepMachines) text'
-    in DP.datePicker True upkeepDatePicker' modifyDatepickerDate 
-      setPickerOpenness (Left rawUpkeepDate) setDate
+    dateValue = if (displayDate $ U.upkeepDate upkeep) == rawUpkeepDate
+      then Right $ U.upkeepDate upkeep
+      else Left rawUpkeepDate
+    in DP.datePicker True upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
   dateRow = formRow "Datum" datePicker
   employeeSelectRow = formRow "Servisman" (let
     noEmployeeLabel = "---"
