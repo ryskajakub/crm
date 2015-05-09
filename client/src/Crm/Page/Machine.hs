@@ -308,21 +308,23 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                       Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
                     editing)) ,
                 (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
-                (div' (class' "col-md-3") 
-                  (let 
-                    upkeepPerMileage = minimum repetitions where
-                      nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
-                      repetitions = map US.repetition nonOneTimeSequences
-                    operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
-                    buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
-                      operationTypeTuples
-                    buttonLabel = maybe "Jiný" snd buttonLabelMaybe
-                    selectElements = map (\(value, selectLabel) -> let
-                      selectAction = setMachineFull (machine' { M.mileagePerYear = value }, initialMileageRaw, 
-                        showInt value, datePickerText)
-                      in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
-                    buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-                    in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
+                (let
+                  upkeepPerMileage = minimum repetitions where
+                    nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
+                    repetitions = map US.repetition nonOneTimeSequences
+                  operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+                  buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
+                    operationTypeTuples
+                  buttonLabel = maybe "Jiný" snd buttonLabelMaybe
+                  selectElements = map (\(value, selectLabel) -> let
+                    selectAction = setMachineFull (machine' { M.mileagePerYear = value }, initialMileageRaw, 
+                      showInt value, datePickerText)
+                    in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
+                  buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
+                  dropdown = BD.buttonDropdown' editing buttonLabel' selectElements
+                  in if editing
+                    then div' (class' "col-md-3") dropdown
+                    else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]) ++ [
         formRow
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
