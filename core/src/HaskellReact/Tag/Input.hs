@@ -143,5 +143,5 @@ input' = constructDOMElement "input"
 input :: Attributes -> InputAttributes -> DOMElement
 input a i = input' a i ([]::[DOMElement])
 
-textarea :: Attributes -> InputAttributes -> Text -> DOMElement
-textarea aAttrs iAttrs text' = constructDOMElement "textarea" aAttrs iAttrs text'
+textarea :: Attributes -> InputAttributes -> DOMElement
+textarea aAttrs iAttrs = constructDOMElement "textarea" aAttrs iAttrs (Null :: Nullable DOMElement)

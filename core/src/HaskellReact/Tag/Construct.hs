@@ -5,7 +5,7 @@
 
 module HaskellReact.Tag.Construct where
 
-import "fay-base" FFI (Defined(Defined, Undefined), ffi, Automatic)
+import "fay-base" FFI (Defined(Defined, Undefined), ffi, Automatic, Nullable)
 import "fay-base" Data.Text 
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
 import "fay-base" Prelude hiding (id, intercalate)
@@ -19,6 +19,7 @@ data DOMElement
 class Renderable a
 
 instance Renderable a => Renderable [a]
+instance Renderable a => Renderable (Nullable a)
 instance Renderable Text
 instance Renderable DOMElement
 
@@ -85,6 +86,7 @@ constructDOMElement = ffi "\
   \ };\
   \ addAttributes(attributes);\
   \ addAttributes(moreAttributes);\
-  \ return React.DOM[elementName](obj, children);\
+  \ childrenNullable = children['instance'] != null && children['instance'] == 'Null' ? null : children;\
+  \ return React.DOM[elementName](obj, childrenNullable);\
 \ })(%1, %2, %4, %3)\
 \ "
