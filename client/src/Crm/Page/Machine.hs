@@ -39,8 +39,7 @@ import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
-import Crm.Component.Form (formRow, editingTextarea, editingInput,
-  formRowCol, saveButtonRow, editDisplayRow, row')
+import Crm.Component.Form
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
@@ -154,10 +153,9 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine machineSpecific (
-        setEditing False)
-      saveButtonRow' = saveButtonRow "Edituj" editMachineAction
-      button = if editing then saveButtonRow' else editButtonRow
+      editMachineAction = updateMachine machineId machine machineSpecific (setEditing False)
+      saveButtonRow'' = saveButtonRow "Edituj" editMachineAction
+      button = if editing then saveButtonRow'' else editButtonRow
 
 machineNew :: R.CrmRouter
            -> Var D.AppState
@@ -253,12 +251,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         row'
           False
           "Typ zařízení" 
-          (MT.machineTypeName machineType) 
+          (SetValue $ MT.machineTypeName machineType) 
           (const $ return ()) ,
         row'
           False
           "Výrobce"
-          (MT.machineTypeManufacturer machineType)
+          (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
         formRowCol "Kontaktní osoba" [let
           noContactPersonLabel = "---"
@@ -277,12 +275,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         row'
           editing
           "Výrobní číslo"
-          (M.serialNumber machine')
+          (SetValue $ M.serialNumber machine')
           (eventString >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
         row'
           editing
           "Rok výroby"
-          (M.yearOfManufacture machine')
+          (SetValue $ M.yearOfManufacture machine')
           (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         editDisplayRow
           editing
@@ -293,7 +291,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
               row'
                 editing
                 "Úvodní stav motohodin"
-                (unpack initialMileageRaw)
+                (SetValue $ unpack initialMileageRaw)
                 (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
                   Just int -> setMachineFull (machine' { M.initialMileage = int }, 
                     rawInitialMileage', mileagePerYearRaw, datePickerText)
@@ -302,7 +300,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
                   (editingInput 
-                    (unpack mileagePerYearRaw)
+                    (SetValue $ unpack mileagePerYearRaw)
                     (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
                       Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
                         initialMileageRaw, rawMileagePerYear', datePickerText)
@@ -325,7 +323,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
         formRow
           "Poznámka" 
-          (editingTextarea (M.note machine') ((\str -> setMachine $ machine' { 
+          (editingTextarea (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']

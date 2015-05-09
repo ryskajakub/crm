@@ -30,8 +30,7 @@ import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
-import Crm.Component.Form (saveButtonRow', editingCheckbox,
-  editingInput, editingInput', formRow, inputNormalAttrs)
+import Crm.Component.Form
 import Crm.Helpers (lmap, rmap, pageInfo, parseSafely, zipWithIndex)
 import Crm.Server (updateMachineType, fetchMachineType, 
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
@@ -78,7 +77,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
-    manufacturerField = editingInput' False (MT.machineTypeManufacturer machineType)
+    manufacturerField = editingInput' False (SetValue $ MT.machineTypeManufacturer machineType)
       (const $ return ()) False
     in case machineTypeId of
       Nothing -> Nothing  
@@ -169,12 +168,12 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
-      sequenceLabel
+      (SetValue sequenceLabel)
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
     mthField = editingInput
-      (unpack rawTextRepetition)
+      (SetValue $ unpack rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
           Just (int) -> modifyUpkeepSequence displayOrder
@@ -330,7 +329,7 @@ machineTypeForm :: Var D.AppState
 machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = editingInput
-    (MT.machineTypeName machineType)
+    (SetValue $ MT.machineTypeName machineType)
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
   submitButtonLabel = text2DOM "Uložit"

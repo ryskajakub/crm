@@ -15,7 +15,7 @@ import HaskellReact
 import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.Dryer as MD
 
-import Crm.Component.Form (row')
+import Crm.Component.Form
 
 compressorExtraRows :: Bool
                     -> MC.Compressor
@@ -25,7 +25,7 @@ compressorExtraRows editing compressor setCompressor = [
   row'
     editing
     "Poznámka ke kompresoru"
-    (MC.note compressor)
+    (SetValue $ MC.note compressor)
     (eventString >=> (\s -> setCompressor $ compressor { MC.note = s })) ]
 
 
@@ -37,5 +37,5 @@ dryerExtraRows editing dryer setDryer = [
   row'
     editing
     "Poznámka k sušičce"
-    (MD.note dryer)
+    (SetValue $ MD.note dryer)
     (eventString >=> (\s -> setDryer $ dryer { MD.note = s })) ]

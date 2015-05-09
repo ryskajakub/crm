@@ -90,29 +90,30 @@ editingCheckbox value setter editing = let
     else checkboxAttrs
   in I.input mkAttrs inputAttrs
 
-editingInput :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+data DisplayValue = DefaultValue String | SetValue String
+
+editingInput :: DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingInput = editingInput' False
 
-editingTextarea :: String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingTextarea :: DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingTextarea = editingInput' True
 
-editingInput' :: Bool -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-editingInput' textarea value' onChange' editing' = let
+editingInput' :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingInput' textarea displayValue onChange' editing' = let
   inputAttrs = let
-    commonInputAttrs = if textarea
-      then I.mkInputAttrs
-      else I.mkInputAttrs {
-        I.defaultValue = Defined $ pack value' }
+    commonInputAttrs = case displayValue of
+      DefaultValue string -> I.mkInputAttrs { I.defaultValue = Defined $ pack string }
+      SetValue string -> I.mkInputAttrs { I.value_ = Defined $ pack string }
     in if editing' 
       then commonInputAttrs {
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
   in if textarea 
-    then I.textarea inputNormalAttrs inputAttrs (pack value')
+    then I.textarea inputNormalAttrs inputAttrs
     else I.input inputNormalAttrs inputAttrs
 
-formRow' :: Text -> String -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+formRow' :: Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' = 
   formRow labelText $ editingInput value' onChange' editing' 
 
@@ -151,11 +152,7 @@ editDisplayRow editing labelText otherField = let
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
 
-row' :: Bool -> Text -> [Char] -> (SyntheticEvent -> Fay ()) -> DOMElement
+row' :: Bool -> Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
 row' editing' labelText value' onChange' = let
-  inputAttrs = I.mkInputAttrs {
-    I.defaultValue = Defined $ pack value' ,
-    I.onChange = Defined onChange' }
-  input = editableN inputAttrs inputNormalAttrs editing' (
-    span $ pack value')
+  input = editingInput value' onChange' editing'
   in editDisplayRow editing' labelText input

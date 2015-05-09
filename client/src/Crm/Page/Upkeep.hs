@@ -32,7 +32,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Component.DatePicker as DP
 import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Component.Form (editingInput, editingTextarea, editingCheckbox, formRow)
+import Crm.Component.Form
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt)
 
@@ -232,14 +232,14 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       (Nothing, Just(thatMachine)) ->
         (thatMachine, const $ return (), False)
 
-    recordedMileageField = B.col (B.mkColProps 2) $ editingInput (show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i
+    recordedMileageField = B.col (B.mkColProps 2) $ editingInput (SetValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i
       -> setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i }))) editing
 
     warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }) editing
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
-    noteField = B.col (B.mkColProps 5) $ editingInput (UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
+    noteField = B.col (B.mkColProps 5) $ editingInput (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
 
     rowItems = if closeUpkeep'
@@ -270,13 +270,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
   workHoursRow = formRow "Hodiny" $ 
-    editingInput (U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingInput (SetValue $ U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True
   workDescriptionRow = formRow "Popis práce" $
-    editingTextarea (U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingTextarea (SetValue $ U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True
   recommendationRow = formRow "Doporučení" $
-    editingTextarea (U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingTextarea (SetValue $ U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []

@@ -18,7 +18,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 
-import Crm.Component.Form (row', saveButtonRow')
+import Crm.Component.Form
 import Crm.Helpers (pageInfo, validationHtml)
 import Crm.Server (createContactPerson, updateContactPerson)
 import qualified Crm.Data.Data as D
@@ -65,17 +65,17 @@ contactPersonForm contactPerson identification appVar = let
       row'
         True 
         "Jméno" 
-        (CP.name contactPerson)
+        (SetValue $ CP.name contactPerson)
         (eventString >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
       row'
         True
         "Telefon"
-        (CP.phone contactPerson)
+        (SetValue $ CP.phone contactPerson)
         (eventString >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
       row'
         True
         "Pozice"
-        (CP.position contactPerson)
+        (SetValue $ CP.position contactPerson)
         (eventString >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
         (null validationMessages)

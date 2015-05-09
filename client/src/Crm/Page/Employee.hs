@@ -19,7 +19,7 @@ import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import Crm.Server (createEmployee, updateEmployee)
-import Crm.Component.Form (row', saveButtonRow')
+import Crm.Component.Form
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.EmployeeData as ED
 import qualified Crm.Shared.Employee as E
@@ -92,17 +92,17 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
       row'
         True 
         "Jméno" 
-        (E.name employee) 
+        (SetValue $ E.name employee) 
         (eventString >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
       row'
         True
         "Kontakt"
-        (E.contact employee)
+        (SetValue $ E.contact employee)
         (eventString >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
       row'
         True
         "Kvalifikace"
-        (E.capabilities employee)
+        (SetValue $ E.capabilities employee)
         (eventString >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
         (null validationMessages)
