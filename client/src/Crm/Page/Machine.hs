@@ -20,6 +20,7 @@ import qualified HaskellReact.Jasny as J
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Tag.Image as IMG
 import HaskellReact.Bootstrap.Carousel (carousel)
+import qualified HaskellReact.BackboneRouter as BR
 
 import qualified JQuery as JQ
 
@@ -112,8 +113,8 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
             file <- fileListElem 0 files
             type' <- fileType file
             name <- fileName file
-            uploadPhotoData file machineId (\photoId ->
-              uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId (return ()))
+            uploadPhotoData file machineId $ \photoId ->
+              uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId BR.refresh
           imageUploadLabel = "Přidej fotku"
           photoList = map (\(_, photoMeta) -> 
             li' (class' "list-unstyled") [pack $ PM.fileName photoMeta] ) photos

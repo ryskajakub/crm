@@ -14,6 +14,7 @@ import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.PhotoMeta as PM
+import qualified Crm.Shared.Photo as P
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers (withConnId, readMay')
@@ -31,7 +32,7 @@ addPhotoHandler = mkInputHandler (fileI . jsonO) (\photo -> withConnId (\connect
   newPhotoIds <- liftIO $ addMachinePhoto connection machineId photo
   newPhotoId <- singleRowOrColumn newPhotoIds
   _ <- liftIO $ runInsert connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineId) 
-  return newPhotoId))
+  return $ P.PhotoId newPhotoId))
 
 listPhotoHandler :: ListHandler IdDependencies
 listPhotoHandler = mkListing (jsonO) $ const $ withConnId (\conn machineId -> do 

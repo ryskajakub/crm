@@ -42,7 +42,7 @@ create table machines (
   year_of_manufacture varchar (500) not null );
 
 create table machine_photos (
-  photo_id integer references photos_meta (photo_id) ,
+  photo_id integer references photos (id) ,
   machine_id integer references machines (id) ,
   primary key (photo_id, machine_id) );
 
