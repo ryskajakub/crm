@@ -92,14 +92,19 @@ editingCheckbox value setter editing = let
 
 data DisplayValue = DefaultValue String | SetValue String
 
-editingInput :: DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+joinEither :: DisplayValue -> String
+joinEither dv = case dv of
+  DefaultValue x -> x
+  SetValue x -> x
+
+editingInput :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingInput = editingInput' False
 
-editingTextarea :: DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingTextarea :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 editingTextarea = editingInput' True
 
-editingInput' :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-editingInput' textarea displayValue onChange' editing' = let
+editingInput' :: Bool -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingInput' textarea displayPlain displayValue onChange' editing' = let
   inputAttrs = let
     commonInputAttrs = case displayValue of
       DefaultValue string -> I.mkInputAttrs { I.defaultValue = Defined $ pack string }
@@ -109,13 +114,15 @@ editingInput' textarea displayValue onChange' editing' = let
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
-  in if textarea 
-    then I.textarea inputNormalAttrs inputAttrs
-    else I.input inputNormalAttrs inputAttrs
+  in if displayPlain && not editing'
+    then text2DOM $ pack $ joinEither displayValue
+    else if textarea 
+      then I.textarea inputNormalAttrs inputAttrs
+      else I.input inputNormalAttrs inputAttrs
 
 formRow' :: Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' = 
-  formRow labelText $ editingInput value' onChange' editing' 
+  formRow labelText $ editingInput True value' onChange' editing' 
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -154,5 +161,5 @@ inputNormalAttrs = class' "form-control"
 
 row' :: Bool -> Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
 row' editing' labelText value' onChange' = let
-  input = editingInput value' onChange' editing'
+  input = editingInput True value' onChange' editing'
   in editDisplayRow editing' labelText input

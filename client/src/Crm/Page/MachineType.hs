@@ -79,7 +79,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
-    manufacturerField = editingInput' False (SetValue $ MT.machineTypeManufacturer machineType)
+    manufacturerField = editingInput True (SetValue $ MT.machineTypeManufacturer machineType)
       (const $ return ()) False
     in case machineTypeId of
       Nothing -> Nothing  
@@ -164,11 +164,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
+      True
       (SetValue sequenceLabel)
       (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
     mthField = editingInput
+      True
       (SetValue $ unpack rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
@@ -325,6 +327,7 @@ machineTypeForm :: Var D.AppState
 machineTypeForm appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = editingInput
+    True
     (SetValue $ MT.machineTypeName machineType)
     (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True

@@ -300,6 +300,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
                   (editingInput 
+                    True
                     (SetValue $ unpack mileagePerYearRaw)
                     (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
                       Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
@@ -324,7 +325,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     in BD.buttonDropdown' editing buttonLabel' selectElements))]]) ++ [
         formRow
           "Poznámka" 
-          (editingTextarea (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
+          (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
         div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
