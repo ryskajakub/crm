@@ -239,13 +239,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }) editing
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
-    noteField = B.col (B.mkColProps 5) $ editingInput (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
+    noteField = B.col (B.mkColProps 5) $ editingTextarea (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = unpack "'" ++ es }) editing
 
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
       else [machineToggleLink, noteField]
-    in B.row rowItems
+    in div' (class' "form-group") rowItems
   datePicker = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}) 
@@ -280,12 +280,12 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
-  header = B.row $ [
+  header = div' (class' "form-group") $ [
     B.col (B.mkColProps (if closeUpkeep' then 4 else 6)) $ div $ B.row [B.col (B.mkColProps 2) "", 
       B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
-    B.col (B.mkColProps 2) $ div' (class' "form-group") $ label "Motohodiny" ,
+    B.col (B.mkColProps 2) $ strong "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
-    B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ div' (class' "form-group") $ label "Poznámka" ]
+    B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ strong "Poznámka" ]
   companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
   validationMessages' = if (null upkeepMachines)
