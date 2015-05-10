@@ -25,7 +25,9 @@ new :: Validation
 new = Validation []
 
 add :: ValidationFail -> Validation -> Validation
-add fail (Validation v) = Validation $ fail : v
+add fail (Validation v) = case find (fail ==) v of
+  Just _ -> Validation v
+  Nothing -> Validation $ fail : v
 
 remove :: ValidationFail -> Validation -> Validation
 remove fail (Validation validations) = Validation $ filter (fail /=) validations

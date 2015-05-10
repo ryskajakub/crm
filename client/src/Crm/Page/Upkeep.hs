@@ -34,7 +34,7 @@ import Crm.Server (createUpkeep, updateUpkeep)
 import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
 import Crm.Component.Form
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt)
+import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt')
 import qualified Crm.Validation as V
 
 plannedUpkeeps :: CrmRouter
@@ -237,8 +237,12 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         (thatMachine, const $ return (), False)
 
     recordedMileageField = B.col (B.mkColProps 2) $ editingInput False
-      (DefaultValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i -> 
-        setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i }))) editing
+      (DefaultValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt' 
+        (\i -> do
+          let newValidation = V.remove (V.MthNumber machineId) validation
+          modify' $ \ud -> ud { UD.validation = newValidation }
+          setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i })) 
+        (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation })) editing
 
     warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }) editing

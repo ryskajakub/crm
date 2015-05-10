@@ -102,8 +102,11 @@ lmap f (a,b) = (f(a),b)
 rmap :: (b -> b') -> (a,b) -> (a,b')
 rmap f (a,b) = (a,f(b))
 
+eventInt' :: (Int -> Fay ()) -> (Text -> Fay ()) -> SyntheticEvent -> Fay ()
+eventInt' success errorFun = eventValue >=> (\text -> case parseSafely text of
+  Just(int) -> success int
+  Nothing | text == "" -> success 0
+  Nothing -> errorFun (text))
+
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
-eventInt fun = eventValue >=> (\text -> case parseSafely text of
-  Just(int) -> fun int
-  Nothing | text == "" -> fun 0
-  Nothing -> return () )
+eventInt fun = eventInt' fun (const $ return ())
