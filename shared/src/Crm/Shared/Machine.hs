@@ -20,7 +20,7 @@ newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
 data Machine = Machine {

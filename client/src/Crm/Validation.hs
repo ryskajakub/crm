@@ -1,8 +1,11 @@
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Validation where
 
+import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude hiding (fail)
 import qualified Crm.Shared.Machine as M
 
@@ -10,6 +13,13 @@ data Validation = Validation [ValidationFail]
 
 data ValidationFail = MthNumber M.MachineId
   deriving Eq
+
+message :: ValidationFail -> Text
+message validationFail = case validationFail of
+  MthNumber _ -> "Do motohodin se můžou vyplňovat pouze čísla"
+
+messages :: Validation -> [Text]
+messages (Validation validation) = map message validation
 
 new :: Validation
 new = Validation []

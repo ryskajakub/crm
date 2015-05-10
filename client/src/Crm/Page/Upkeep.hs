@@ -296,12 +296,14 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps (if closeUpkeep' then 5 else 6)) $ strong "Poznámka" ]
   companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
+  validationMessages'' = V.messages validation
   validationMessages' = if (null upkeepMachines)
     then ["V servisu musí figurovat alespoň jeden stroj."]
     else []
-  validationMessages = validationMessages' ++ (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
-    then []
-    else ["Musí být nastaveno správně datum."])
+  validationMessages = validationMessages'' ++ validationMessages' ++ 
+    (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
+      then []
+      else ["Musí být nastaveno správně datum."])
   submitButton = formRow "" (button $ null validationMessages)
   messagesPart = validationHtml validationMessages
 
