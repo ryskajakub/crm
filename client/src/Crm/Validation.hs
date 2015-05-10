@@ -5,7 +5,7 @@
 
 module Crm.Validation where
 
-import "fay-base" Data.Text (fromString, Text)
+import "fay-base" Data.Text (fromString, Text, showInt, (<>))
 import "fay-base" Prelude hiding (fail)
 import qualified Crm.Shared.Machine as M
 
@@ -16,7 +16,7 @@ data ValidationFail = MthNumber M.MachineId
 
 message :: ValidationFail -> Text
 message validationFail = case validationFail of
-  MthNumber _ -> "Do motohodin se můžou vyplňovat pouze čísla"
+  MthNumber companyId -> "Do motohodin se můžou vyplňovat pouze čísla (u stroje s id: " <> (showInt $ M.getMachineId companyId) <> ")"
 
 messages :: Validation -> [Text]
 messages (Validation validation) = map message validation

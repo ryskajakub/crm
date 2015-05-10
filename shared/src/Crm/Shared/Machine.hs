@@ -18,7 +18,7 @@ import "fay-base" Prelude
 
 newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
-  deriving Eq
+  deriving (Eq)
 #else
   deriving (Eq, Generic, Typeable, Data, Show)
 #endif
