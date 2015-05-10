@@ -62,6 +62,7 @@ import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchE
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
   fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
+import qualified Crm.Validation as V
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -230,7 +231,7 @@ startRouter appVar = let
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
-              Nothing (Right $ UD.UpkeepNew $ Left companyId)))
+              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)))
   ),(
     "companies/:id/contact-persons", \params ->
       case (parseSafely $ head params) of
@@ -284,7 +285,7 @@ startRouter appVar = let
               upkeepDate = U.upkeepDate upkeep
               in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-                selectedEmployee (Left $ UD.UpkeepClose upkeepId companyId)))
+                selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)))
         _ -> modify' D.NotFound 
   ),(
     "other/machine-types-list", const $
@@ -309,7 +310,7 @@ startRouter appVar = let
             fetchEmployees (\employees ->
               modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
-                employees employeeId (Right $ UD.UpkeepNew $ Right upkeepId)))
+                employees employeeId V.new (Right $ UD.UpkeepNew $ Right upkeepId)))
         _ -> modify' D.NotFound
   ),(
     "contact-persons/:id", \params -> let

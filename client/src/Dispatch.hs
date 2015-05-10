@@ -59,14 +59,14 @@ main' = do
             machineNew router appVar' operationStartCalendar machine machineSpecific
               companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
-        upkeepDatePicker employees selectedEmployee upkeepPageMode) ->
+        upkeepDatePicker employees selectedEmployee validation upkeepPageMode) ->
           emptyCallback $ case upkeepPageMode of
             Left (UD.UpkeepClose upkeepId companyId) ->
               upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
-                machines companyId employees selectedEmployee
+                machines companyId employees selectedEmployee validation
             Right (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
-                upkeepIdentification employees selectedEmployee
+                upkeepIdentification employees selectedEmployee validation
       D.UpkeepHistory upkeeps' companyId -> emptyCallback $ upkeepHistory upkeeps' companyId router
       D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
         (plannedUpkeeps router plannedUpkeeps')

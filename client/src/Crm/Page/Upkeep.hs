@@ -35,6 +35,7 @@ import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, mainte
 import Crm.Component.Form
 import qualified Crm.Router as R
 import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt)
+import qualified Crm.Validation as V
 
 plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -111,11 +112,12 @@ upkeepDetail :: CrmRouter
              -> C.CompanyId -- ^ company id
              -> [E.Employee']
              -> Maybe E.EmployeeId
+             -> V.Validation
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
-    machines companyId employees selectedEmployee =
+    machines companyId employees selectedEmployee v =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployee
+    machines submitButton True employees selectedEmployee v
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -136,9 +138,10 @@ upkeepNew :: CrmRouter
           -> Either C.CompanyId U.UpkeepId
           -> [E.Employee']
           -> Maybe E.EmployeeId
+          -> V.Validation
           -> DOMElement
-upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es mE = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE
+upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es mE v = 
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE v
     where
       (upkeepU, upkeepMachines) = upkeep
       (pageHeader, submitButton) = case upkeepIdentification of 
@@ -171,9 +174,10 @@ upkeepForm :: Var D.AppState
            -> Bool -- ^ display the mth input field
            -> [E.Employee']
            -> Maybe E.EmployeeId
+           -> V.Validation
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee = let
+    notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee validation = let
   modify' :: (UD.UpkeepData -> UD.UpkeepData) -> Fay ()
   modify' fun = modify appState (\appState' -> let
     newState = case D.navigation appState' of
@@ -233,7 +237,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         (thatMachine, const $ return (), False)
 
     recordedMileageField = B.col (B.mkColProps 2) $ editingInput False
-      (SetValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i -> 
+      (DefaultValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt (\i -> 
         setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i }))) editing
 
     warrantyUpkeep = editingCheckbox (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->

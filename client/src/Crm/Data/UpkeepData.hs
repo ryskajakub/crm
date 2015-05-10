@@ -13,6 +13,8 @@ import Crm.Shared.Employee
 
 import Crm.Component.DatePicker
 
+import qualified Crm.Validation as V
+
 data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,
   machines :: [(MachineId, Machine, CompanyId, MachineTypeId, MachineType)] ,
@@ -20,6 +22,7 @@ data UpkeepData = UpkeepData {
   upkeepDatePicker :: (DatePicker, Text) ,
   employees :: [Employee'] ,
   selectedEmployee :: Maybe EmployeeId ,
+  validation :: V.Validation ,
   upkeepPageMode :: Either UpkeepClose UpkeepNew }
 
 data UpkeepNew = UpkeepNew {
