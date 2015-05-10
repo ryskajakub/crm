@@ -28,9 +28,18 @@ contactPersonsList :: R.CrmRouter
                    -> [(CP.ContactPersonId, CP.ContactPerson)]
                    -> DOMElement
 contactPersonsList router contactPersons = let
-  displayContactPerson (cpId,contactPerson) = B.col (B.mkColProps 12) $ 
-    R.link (pack $ CP.name contactPerson) (R.contactPersonEdit cpId) router
-  in B.grid $ B.row $ map displayContactPerson contactPersons
+  displayContactPerson (cpId,contactPerson) = tr [
+    td $ R.link (pack $ CP.name contactPerson) (R.contactPersonEdit cpId) router ,
+    td $ pack $ CP.phone contactPerson ,
+    td $ pack $ CP.position contactPerson ]
+  head' = thead $ tr [
+    th $ "Jméno" ,
+    th $ "Telefon" ,
+    th $ "Pozice" ]
+  body = tbody $ map displayContactPerson contactPersons
+  in B.grid $ B.row [
+    B.col (B.mkColProps 12) $ h2 "Kontakní osoby" ,
+    B.col (B.mkColProps 12) $ B.table [head', body] ]
 
 contactPersonForm :: R.CrmRouter 
                   -> CP.ContactPerson
