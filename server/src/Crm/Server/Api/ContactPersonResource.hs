@@ -4,7 +4,7 @@ import Opaleye (runQuery, pgString)
 
 import Control.Monad.IO.Class (liftIO)
 
-import Data.Tuple.All (sel2, sel3)
+import Data.Tuple.All (sel1, sel2, sel3)
 
 import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
@@ -27,10 +27,10 @@ resource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just getHandler }
 
 getHandler :: Handler IdDependencies
-getHandler = mkConstHandler jsonO $ withConnId (\connection theId -> do
+getHandler = mkConstHandler jsonO $ withConnId $ \connection theId -> do
   rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
-  row <- singleRowOrColumn rows
-  return $ sel3 $ (convert row :: ContactPersonMapped))
+  (cp, company) <- singleRowOrColumn rows
+  return $ (sel3 $ (convert cp :: ContactPersonMapped), sel1 $ (convert company :: CompanyMapped))
 
 updateHandler :: Handler IdDependencies
 updateHandler = let

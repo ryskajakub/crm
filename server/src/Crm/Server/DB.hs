@@ -617,10 +617,11 @@ groupedPlannedUpkeepsQuery = let
     AGG.aggregate (p2 (p7(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min, AGG.min),
       p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) plannedUpkeepsQuery
 
-singleContactPersonQuery :: Int -> Query ContactPersonsTable
+singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompaniesTable)
 singleContactPersonQuery contactPersonId = proc () -> do
   contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
-  returnA -< contactPersonRow
+  companyRow <- join companiesQuery -< sel2 contactPersonRow
+  returnA -< (contactPersonRow, companyRow)
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
 singleMachineTypeQuery machineTypeSid = proc () -> do

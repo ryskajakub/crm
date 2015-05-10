@@ -43,15 +43,16 @@ contactPersonsList router contactPersons = let
 
 contactPersonForm :: R.CrmRouter 
                   -> CP.ContactPerson
-                  -> Either C.CompanyId CP.ContactPersonId
+                  -> Maybe CP.ContactPersonId
+                  -> C.CompanyId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm router contactPerson identification appVar = let
+contactPersonForm router contactPerson identification companyId appVar = let
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.ContactPersonPage _ identification' -> D.ContactPersonPage contactPerson' identification'
+      D.ContactPersonPage _ identification' c -> D.ContactPersonPage contactPerson' identification' c
       _ -> D.navigation appState })
 
   validationMessages = if (length $ CP.name contactPerson) > 0
@@ -59,14 +60,14 @@ contactPersonForm router contactPerson identification appVar = let
     else ["Jméno musí mít alespoň jeden znak."]
   
   (buttonLabel, header, buttonAction) = case identification of
-    Left companyId -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
+    Nothing -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
       companyId
       contactPerson
-      (R.navigate (R.companyDetail companyId) router ))
-    Right contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
+      (R.navigate (R.contactPersonList companyId) router ))
+    Just contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
       contactPersonId
       contactPerson
-      (return ()))
+      (R.navigate (R.contactPersonList companyId) router ))
 
   pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
 

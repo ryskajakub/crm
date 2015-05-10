@@ -195,7 +195,7 @@ startRouter appVar = let
     withCompany
       params
       (\companyId (_,_) ->
-        D.ContactPersonPage (CP.newContactPerson) (Left companyId))
+        D.ContactPersonPage CP.newContactPerson Nothing companyId)
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params
@@ -318,7 +318,7 @@ startRouter appVar = let
       in case maybeId of 
         Just (contactPersonId') -> let
           contactPersonId = CP.ContactPersonId contactPersonId'
-          in fetchContactPerson contactPersonId (\cp -> modify' $ D.ContactPersonPage cp (Right contactPersonId))
+          in fetchContactPerson contactPersonId (\(cp, companyId) -> modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId)
         _ -> modify' D.NotFound
   ),(
     "employees", const $
