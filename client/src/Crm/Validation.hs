@@ -11,12 +11,15 @@ import qualified Crm.Shared.Machine as M
 
 data Validation = Validation [ValidationFail]
 
-data ValidationFail = MthNumber M.MachineId
+data ValidationFail = 
+  MthNumber M.MachineId |
+  MachineUsageNumber
   deriving Eq
 
 message :: ValidationFail -> Text
 message validationFail = case validationFail of
   MthNumber companyId -> "Do motohodin se můžou vyplňovat pouze čísla (u stroje s id: " <> (showInt $ M.getMachineId companyId) <> ")"
+  MachineUsageNumber -> "Provoz musí být kladné číslo"
 
 messages :: Validation -> [Text]
 messages (Validation validation) = map message validation

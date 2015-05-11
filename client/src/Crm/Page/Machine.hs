@@ -42,8 +42,7 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Form
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine, deletePhoto)
-import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
-  getFileList, fileListElem, fileType, fileName)
+import Crm.Helpers 
 import qualified Crm.Router as R
 import Crm.Page.MachineKind (compressorExtraRows, dryerExtraRows)
 import qualified Crm.Validation as V
@@ -207,7 +206,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     initialMileageRaw, mileagePerYearRaw, datePickerText) machineKindSpecific (machineType, 
-    upkeepSequences) extraRows extraGrid contactPersonId contactPersons _ = let
+    upkeepSequences) extraRows extraGrid contactPersonId contactPersons validation = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -312,11 +311,17 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 (div' (class' "col-md-3") 
                   (editingInput 
                     True
-                    (SetValue $ unpack mileagePerYearRaw)
-                    (eventValue >=> (\rawMileagePerYear' -> case parseSafely rawMileagePerYear' of
-                      Just int -> setMachineFull (machine' { M.mileagePerYear = int }, 
-                        initialMileageRaw, rawMileagePerYear', datePickerText)
-                      Nothing -> setMachineFull (machine', initialMileageRaw, rawMileagePerYear', datePickerText)))
+                    (DefaultValue $ show $ M.mileagePerYear machine')
+                    (let 
+                      errorHandler = changeNavigationState (\md -> md { MD.validation = V.add V.MachineUsageNumber validation })
+                      in eventInt' 
+                        (\mileagePerYear -> if mileagePerYear > 0
+                          then changeNavigationState (\md -> md { 
+                            MD.validation = V.remove V.MachineUsageNumber validation , 
+                            MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, initialMileageRaw, 
+                              mileagePerYearRaw, datePickerText)})
+                          else errorHandler)
+                        (const errorHandler))
                     editing)) ,
                 (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
                 (let
