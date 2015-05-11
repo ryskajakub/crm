@@ -321,15 +321,15 @@ createMachine :: M.Machine
               -> C.CompanyId
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
+              -> Maybe M.MachineId
               -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId machineSpecific callback =
-  ajax
-    (machine, machineType, toMyMaybe contactPersonId, machineSpecific)
-    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
-    post
-    (const callback)
+createMachine machine companyId machineType contactPersonId linkedMachineId machineSpecific callback = ajax
+  (machine, machineType, toMyMaybe contactPersonId, linkedMachineId, machineSpecific)
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
+  post
+  (const callback)
 
 updateEmployee :: E.EmployeeId
                -> E.Employee
@@ -383,11 +383,12 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
+              -> Maybe M.MachineId -- ^ linked machine id
               -> MK.MachineKindData
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine machineSpecificData callback = ajax
-  (machine, machineSpecificData)
+updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax
+  (machine, toMyMaybe linkedMachineId, machineSpecificData)
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   put
   (const callback)

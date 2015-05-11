@@ -161,7 +161,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine machineSpecific (setEditing False)
+      editMachineAction = updateMachine machineId machine Nothing machineSpecific (setEditing False)
       saveButtonRow'' validationOk = saveButtonRow' validationOk "Edituj" editMachineAction
       button = if editing then saveButtonRow'' else (const editButtonRow)
 
@@ -186,7 +186,7 @@ machineNew router appState datePickerCalendar (machine',
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId machineSpecific
+      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId Nothing machineSpecific
         (R.navigate (R.companyDetail companyId) router)
       buttonRow validationOk = saveButtonRow' validationOk "Vytvoř" saveNewMachine
 
