@@ -119,7 +119,7 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
           photoList = map (\(_, photoMeta) -> 
             li' (class' "list-unstyled") [pack $ PM.fileName photoMeta] ) photos
           in div [(ul $ photoList) : [div [
-            J.fileUpload ,
+            J.fileUploadI18n "Vyber obrázek" "Změň" ,
             BTN.button'
               (BTN.buttonProps {
                 BTN.bsStyle = Defined "primary" ,
