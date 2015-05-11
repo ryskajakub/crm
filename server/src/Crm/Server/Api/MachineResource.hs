@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.Api.MachineResource where
 
@@ -35,6 +36,8 @@ import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate)
 
+import TupleTH
+
 machineResource :: Resource Dependencies IdDependencies UrlId () Void
 machineResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const machineListing ,
@@ -51,11 +54,12 @@ machineDelete = deleteRows' [
   createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', machineSpecificData) -> withConnId (\conn recordId -> do
+machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, machineSpecificData) -> withConnId (\conn recordId -> do
 
   let 
-    machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_) =
-      (Nothing, companyId, contactPersonId, machineTypeId,
+    machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_,_) =
+      (Nothing, companyId, contactPersonId, machineTypeId, 
+        maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
         pgString $ M.note machine', pgString $ M.serialNumber machine',
@@ -80,7 +84,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       m = convert $ sel1 row :: MachineMapped
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
-      in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
+      in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
   machineSpecificData <- case (machineSpecificQuery (MK.kindToDbRepr $ MT.kind machineType) (M.getMachineId machineId)) of
     Left compressorQuery -> do
       compressorRows <- liftIO $ runQuery conn compressorQuery
