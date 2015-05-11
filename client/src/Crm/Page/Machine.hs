@@ -254,6 +254,10 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     (MK.CompressorSpecific compressor, MK.CompressorSpecific _)  -> compressorExtraRows editing compressor setCompressor
     (MK.DryerSpecific dryer, MK.DryerSpecific _) -> dryerExtraRows editing dryer setDryer
 
+  validationErrorsGrid = case validation of
+    V.Validation [] -> []
+    validation' -> [validationHtml $ V.messages validation']
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -345,7 +349,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]]] ++ (case extraGrid of
+        div' (class' "form-group") buttonRow ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements
