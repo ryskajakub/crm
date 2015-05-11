@@ -211,7 +211,7 @@ startRouter appVar = let
             machine = case machineKind of
               MK.CompressorSpecific _ -> machine'
               MK.DryerSpecific _ -> machine' { M.mileagePerYear = 8760 }
-            machineQuadruple = (machine, "", "", "")
+            machineQuadruple = (machine, "")
             machineSpecific = case machineKind of
               MK.CompressorSpecific _ -> MK.newCompressorSpecific
               MK.DryerSpecific _ -> MK.newDryerSpecific
@@ -261,7 +261,7 @@ startRouter appVar = let
                 machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
               fetchMachinePhotos machineId (\photos ->
                 let 
-                  machineQuadruple = (machine, showInt $ M.initialMileage machine, showInt $ M.mileagePerYear machine, "")
+                  machineQuadruple = (machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
                   machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps V.new

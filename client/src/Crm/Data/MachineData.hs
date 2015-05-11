@@ -21,7 +21,7 @@ import Crm.Component.DatePicker
 import qualified Crm.Validation as V
 
 data MachineData = MachineData {
-  machine :: (Machine, Text, Text, Text) ,
+  machine :: (Machine, Text) ,
   machineKindSpecific :: MachineKindData ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,

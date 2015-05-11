@@ -52,7 +52,7 @@ machineDetail :: Bool
               -> R.CrmRouter
               -> C.CompanyId
               -> DP.DatePicker
-              -> (M.Machine, Text, Text, Text)
+              -> (M.Machine, Text)
               -> MK.MachineKindData
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
@@ -63,12 +63,12 @@ machineDetail :: Bool
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
               -> DOMElement
-machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
-    mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
+machineDetail editing appVar router companyId calendarOpen (machine, 
+    datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v =
 
-  machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
-      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v
+  machineDisplay editing pageHeader button appVar calendarOpen (machine, 
+      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -168,7 +168,7 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
 machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
-           -> (M.Machine, Text, Text, Text)
+           -> (M.Machine, Text)
            -> MK.MachineKindData
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
@@ -177,11 +177,11 @@ machineNew :: R.CrmRouter
            -> [(CP.ContactPersonId, CP.ContactPerson)]
            -> V.Validation
            -> DOMElement
-machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
+machineNew router appState datePickerCalendar (machine',
     datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
-      buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
-      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v
+      buttonRow appState datePickerCalendar (machine', datePickerText) 
+      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -195,7 +195,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> (Bool -> DOMElement)
                -> Var D.AppState
                -> DP.DatePicker
-               -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
+               -> (M.Machine, Text) -- ^ machine, text of the datepicker
                -> MK.MachineKindData
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
@@ -205,7 +205,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> V.Validation
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
-    initialMileageRaw, mileagePerYearRaw, datePickerText) machineKindSpecific (machineType, 
+    datePickerText) machineKindSpecific (machineType, 
     upkeepSequences) extraRows extraGrid contactPersonId contactPersons validation = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -216,11 +216,11 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
 
   setMachine :: M.Machine -> Fay ()
   setMachine machine = changeNavigationState 
-    (\md -> md { MD.machine = (machine, initialMileageRaw, mileagePerYearRaw, datePickerText) })
+    (\md -> md { MD.machine = (machine, datePickerText) })
   
-  setMachineFull :: (M.Machine, Text, Text, Text) -> Fay ()
-  setMachineFull quadruple = changeNavigationState
-    (\md -> md { MD.machine = quadruple })
+  setMachineFull :: (M.Machine, Text) -> Fay ()
+  setMachineFull tuple = changeNavigationState
+    (\md -> md { MD.machine = tuple })
 
   datePicker = let
     setDatePickerDate date = changeNavigationState (\state ->
@@ -238,7 +238,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         in setMachine newMachine
       Left text' -> let 
         newMachine = machine' { M.machineOperationStartDate = Nothing }
-        in setMachineFull (newMachine, initialMileageRaw, mileagePerYearRaw, text')
+        in setMachineFull (newMachine, text')
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
 
@@ -305,11 +305,13 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
               row'
                 editing
                 "Úvodní stav motohodin"
-                (SetValue $ unpack initialMileageRaw)
-                (eventValue >=> (\rawInitialMileage' -> case parseSafely rawInitialMileage' of
-                  Just int -> setMachineFull (machine' { M.initialMileage = int }, 
-                    rawInitialMileage', mileagePerYearRaw, datePickerText)
-                  Nothing -> setMachineFull (machine', rawInitialMileage', mileagePerYearRaw, datePickerText))) ,
+                (DefaultValue $ show $ M.initialMileage machine')
+                (eventInt' 
+                  (\im -> let
+                    newMachine = machine' { M.initialMileage = im }
+                    newValidation = V.remove V.MachineInitialMileageNumber validation
+                    in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
+                  (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
               formRowCol 
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
@@ -322,8 +324,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                         (\mileagePerYear -> if mileagePerYear > 0
                           then changeNavigationState (\md -> md { 
                             MD.validation = V.remove V.MachineUsageNumber validation , 
-                            MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, initialMileageRaw, 
-                              mileagePerYearRaw, datePickerText)})
+                            MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, datePickerText)})
                           else errorHandler)
                         (const errorHandler))
                     editing)) ,
@@ -337,8 +338,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     operationTypeTuples
                   buttonLabel = maybe "Jiný" snd buttonLabelMaybe
                   selectElements = map (\(value, selectLabel) -> let
-                    selectAction = setMachineFull (machine' { M.mileagePerYear = value }, initialMileageRaw, 
-                      showInt value, datePickerText)
+                    selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
                     in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
                   buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
                   dropdown = BD.buttonDropdown' editing buttonLabel' selectElements
