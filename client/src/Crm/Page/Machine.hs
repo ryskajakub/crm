@@ -41,7 +41,7 @@ import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Form
-import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine, deletePhoto)
 import Crm.Helpers (parseSafely, displayDate, lmap, rmap, 
   getFileList, fileListElem, fileType, fileName)
 import qualified Crm.Router as R
@@ -116,9 +116,15 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
             uploadPhotoData file machineId $ \photoId ->
               uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId BR.refresh
           imageUploadLabel = "Přidej fotku"
-          photoList = map (\(_, photoMeta) -> 
-            li' (class' "list-unstyled") [pack $ PM.fileName photoMeta] ) photos
-          in div [(ul $ photoList) : [div [
+          photoList = map (\(photoId, photoMeta) -> let
+            deletePhotoHandler = const $ deletePhoto photoId BR.refresh
+            deletePhotoButton = BTN.button' 
+              (BTN.buttonProps {
+                BTN.bsStyle = Defined "danger" ,
+                BTN.onClick = Defined deletePhotoHandler })
+              "Smaž fotku"
+            in li [text2DOM $ pack $ PM.fileName photoMeta, deletePhotoButton] ) photos
+          in div [(ul' (class' "list-unstyled") photoList) : [div [
             J.fileUploadI18n "Vyber obrázek" "Změň" ,
             BTN.button'
               (BTN.buttonProps {

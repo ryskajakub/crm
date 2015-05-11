@@ -39,6 +39,7 @@ module Crm.Server (
   deleteUpkeep ,
   deleteCompany ,
   deleteMachine ,
+  deletePhoto ,
 
   getPhoto ) where
 
@@ -133,6 +134,13 @@ deleteMachine :: M.MachineId
               -> Fay ()
 deleteMachine machineId callback = doDelete
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
+  callback
+
+deletePhoto :: P.PhotoId
+            -> Fay ()
+            -> Fay ()
+deletePhoto pId callback = doDelete
+  (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId pId))
   callback
 
 getPhoto :: P.PhotoId
