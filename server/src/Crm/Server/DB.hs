@@ -109,10 +109,10 @@ import Control.Arrow (returnA)
 import Control.Applicative ((<*>), pure)
 import Control.Monad.Trans.Except (ExceptT)
 
-import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p10)
+import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4, sel6)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4, sel6, upd6)
 import Data.ByteString.Lazy (ByteString)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
@@ -154,9 +154,8 @@ type CompressorsTable = (DBInt, DBText)
 
 type DryersTable = (DBInt, DBText)
 
-type MachinesTable = (DBInt, DBInt, Column (Nullable PGInt4) , DBInt, Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
-type MachinesWriteTable = (Maybe DBInt, DBInt, Column (Nullable PGInt4), DBInt, 
-  Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
+type MachinesTable = (DBInt, DBInt, Column (Nullable PGInt4), DBInt, Column (Nullable PGInt4), Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
+type MachinesWriteTable = (Maybe DBInt, DBInt, Column (Nullable PGInt4), DBInt, Column (Nullable PGInt4), Column (Nullable PGDate), DBInt, DBInt, DBText, DBText, DBText)
 
 type MachineTypesTable = (DBInt, DBInt, DBText, DBText)
 type MachineTypesWriteTable = (Maybe DBInt, DBInt, DBText, DBText)
@@ -215,11 +214,12 @@ dryersTable = Table "dryers" $ p2 (
   required "note" )
 
 machinesTable :: Table MachinesWriteTable MachinesTable
-machinesTable = Table "machines" $ p10 (
+machinesTable = Table "machines" $ p11 (
   optional "id" ,
   required "company_id" ,
   required "contact_person_id" ,
   required "machine_type_id" ,
+  required "linkage_id" ,
   required "operation_start" ,
   required "initial_mileage" ,
   required "mileage_per_year" ,
@@ -315,7 +315,7 @@ instance (ColumnToRecord c1 r1, ColumnToRecord c2 r2, ColumnToRecord c3 r3) =>
 class ColumnToRecord column record | record -> column where
   convert :: column -> record
 
-type MachineMapped = (M.MachineId, C.CompanyId, Maybe CP.ContactPersonId, MT.MachineTypeId, M.Machine)
+type MachineMapped = (M.MachineId, C.CompanyId, Maybe CP.ContactPersonId, MT.MachineTypeId, Maybe M.MachineId, M.Machine)
 type CompanyMapped = (C.CompanyId, C.Company, Maybe C.Coordinates)
 type MachineTypeMapped = (MT.MachineTypeId, MT.MachineType)
 type ContactPersonMapped = (CP.ContactPersonId, C.CompanyId, CP.ContactPerson)
@@ -335,12 +335,13 @@ instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double
     coordinates = pure C.Coordinates <*> sel5 tuple <*> sel6 tuple
     in (C.CompanyId $ sel1 tuple, company, coordinates)
 instance ColumnToRecord 
-    (Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String) 
+    (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
   convert tuple = let
-    machineTuple = upd5 (fmap dayToYmd $ sel5 tuple) tuple
+    machineTuple = upd6 (fmap dayToYmd $ sel6 tuple) tuple
     in (M.MachineId $ sel1 tuple, C.CompanyId $ sel2 tuple, CP.ContactPersonId `fmap` sel3 tuple, 
-      MT.MachineTypeId $ sel4 tuple, (uncurryN $ const $ const $ const $ const M.Machine) machineTuple)
+      MT.MachineTypeId $ sel4 tuple, M.MachineId `fmap` sel5 tuple, 
+      (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
   convert tuple = (MT.MachineTypeId $ sel1 tuple, (uncurryN $ const MT.MachineType) 
     (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
@@ -457,7 +458,7 @@ companyByIdQuery companyId = proc () -> do
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
   query' = proc () -> do
-    (machinePK,_,_,machineTypeFK,_,_,_,_,_,_) <- machinesQuery -< ()
+    (machinePK,_,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< (machineTypeFK)
     returnA -< (mt, machinePK)
   aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query'
@@ -467,7 +468,7 @@ machineTypesWithCountQuery = let
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
 machinesInCompanyQuery companyId = let
   machinesQ = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
-    m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_) <- machinesQuery -< ()
+    m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
     mt <- join machineTypesQuery -< machineTypeFK
     restrict -< (pgInt4 companyId .== companyFK)
     returnA -< (m, mt)
@@ -483,7 +484,7 @@ companyUpkeepsQuery :: Int -> Query (UpkeepsTable, EmployeeLeftJoinTable)
 companyUpkeepsQuery companyId = let 
   upkeepsQuery' = proc () -> do
     (upkeepFK,_,machineFK,_,_) <- upkeepMachinesQuery -< ()
-    (_,companyFK,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
+    (_,companyFK,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
     upkeep @ (_,_,closed,_,_,_,_) <- join upkeepsQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (companyFK .== pgInt4 companyId)
@@ -499,7 +500,7 @@ companyUpkeepsQuery companyId = let
 -- | query, that returns expanded machine type, not just the id
 expandedMachinesQuery :: Maybe Int -> Query (MachinesTable, MachineTypesTable)
 expandedMachinesQuery machineId = proc () -> do
-  machineRow @ (machineId',_,_,machineTypeId,_,_,_,_,_,_) <- machinesQuery -< ()
+  machineRow @ (machineId',_,_,machineTypeId,_,_,_,_,_,_,_) <- machinesQuery -< ()
   machineTypesRow <- join machineTypesQuery -< (machineTypeId)
   restrict -< (case machineId of
     Just(machineId'') -> (pgInt4 machineId'' .== machineId')
@@ -520,11 +521,11 @@ machinesInCompanyByUpkeepQuery :: Int -> Query (DBInt, MachinesTable, MachineTyp
 machinesInCompanyByUpkeepQuery upkeepId = let
   companyPKQuery = limit 1 $ proc () -> do
     (_,_,machineFK,_,_) <- join upkeepMachinesQuery -< pgInt4 upkeepId
-    (_,companyFK,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
+    (_,companyFK,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
     returnA -< companyFK
   in proc () -> do
     companyPK <- companyPKQuery -< ()
-    m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_) <- machinesQuery -< ()
+    m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
     restrict -< (companyFK .== companyPK)
     mt <- join machineTypesQuery -< machineTypeFK
     returnA -< (companyPK, m, mt)
@@ -611,7 +612,7 @@ groupedPlannedUpkeepsQuery = let
     upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_,_) <- upkeepsQuery -< ()
     restrict -< upkeepClosed .== pgBool False
     (_,_,machineFK,_,_) <- join upkeepMachinesQuery -< upkeepPK
-    (_,companyFK,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
+    (_,companyFK,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< machineFK
     companyRow <- join companiesQuery -< companyFK
     returnA -< (upkeepRow, companyRow)
   in orderBy (asc(\((_,date,_,_,_,_,_), _) -> date)) $ 
@@ -645,12 +646,12 @@ runMachinesInCompanyQuery companyId connection = do
     mapRow row = let
       (machine :: MachineMapped, machineType :: MachineTypeMapped, 
         contactPerson :: MaybeContactPersonMapped) = convertDeep row
-      in (sel1 machine, sel5 machine, sel2 machine, 
+      in (sel1 machine, sel6 machine, sel2 machine, 
         sel1 machineType, sel2 machineType, sel3 contactPerson)
   return $ fmap mapRow rows
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO[((Int, Int, Maybe Int, Int, Maybe Day, Int, Int, String, String, String), (Int, Int, String, String))]
+  -> IO[((Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String), (Int, Int, String, String))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
@@ -661,7 +662,7 @@ runCompanyUpkeepsQuery companyId connection =
 
 convertExpanded row = let 
   (m :: MachineMapped, mt :: MachineTypeMapped) = convertDeep row
-  in (sel1 m, sel5 m, sel2 m, sel1 mt, sel2 mt)
+  in (sel1 m, sel6 m, sel2 m, sel1 mt, sel2 mt)
 
 runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
