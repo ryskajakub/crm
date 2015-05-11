@@ -25,12 +25,15 @@ fut2 :: FileUploadTechnical2
 fut2 = FileUploadTechnical2 "fileinput"
 
 fileUpload :: DOMElement
-fileUpload = constructDOMElement "div" (class'' ["fileinput", "fileinput-new"]) fut1 [
+fileUpload = fileUploadI18n "Select image" "Change"
+
+fileUploadI18n :: Text -> Text -> DOMElement
+fileUploadI18n selectImage change = constructDOMElement "div" (class'' ["fileinput", "fileinput-new"]) fut1 [
   constructDOMElement "div" (class'' ["fileinput-preview", "thumbnail"]) fut2 ([] :: [DOMElement]) ,
   div [
     span' (class'' ["btn", "btn-default", "btn-file"]) [
-      span' (class' "fileinput-new") "Select image" ,
-      span' (class' "fileinput-exists") "Change" ,
+      span' (class' "fileinput-new") selectImage ,
+      span' (class' "fileinput-exists") change ,
       input (mkAttrs {
           id = Defined "file-upload"
         }) (mkInputAttrs { 
