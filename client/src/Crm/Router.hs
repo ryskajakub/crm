@@ -261,7 +261,7 @@ startRouter appVar = let
                 machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
               fetchMachinePhotos machineId (\photos ->
                 let 
-                  machineQuadruple = (machine, "", "", "")
+                  machineQuadruple = (machine, showInt $ M.initialMileage machine, showInt $ M.mileagePerYear machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
                   machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps
