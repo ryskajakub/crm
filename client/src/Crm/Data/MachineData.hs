@@ -18,6 +18,7 @@ import Crm.Shared.UpkeepMachine
 import Crm.Shared.Employee
 
 import Crm.Component.DatePicker
+import qualified Crm.Validation as V
 
 data MachineData = MachineData {
   machine :: (Machine, Text, Text, Text) ,
@@ -26,6 +27,7 @@ data MachineData = MachineData {
   operationStartCalendar :: DatePicker ,
   contactPersonId :: Maybe ContactPersonId ,
   contactPersons :: [(ContactPersonId, ContactPerson)] ,
+  validation :: V.Validation ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {

@@ -46,6 +46,7 @@ import Crm.Helpers (parseSafely, displayDate, lmap, rmap,
   getFileList, fileListElem, fileType, fileName)
 import qualified Crm.Router as R
 import Crm.Page.MachineKind (compressorExtraRows, dryerExtraRows)
+import qualified Crm.Validation as V
 
 machineDetail :: Bool
               -> Var D.AppState
@@ -61,13 +62,14 @@ machineDetail :: Bool
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
               -> Maybe CP.ContactPersonId
               -> [(CP.ContactPersonId, CP.ContactPerson)]
+              -> V.Validation
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, initialMileageRaw, 
     mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons =
+    contactPersonId contactPersons v =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, initialMileageRaw,
-      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons
+      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -152,8 +154,8 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a a1 b c c1 c2 (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a a1 b c c1 c2 (Left (MD.MachineDetail d e editing' f g i j)))
+          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -174,12 +176,13 @@ machineNew :: R.CrmRouter
            -> Maybe MT.MachineTypeId
            -> Maybe CP.ContactPersonId
            -> [(CP.ContactPersonId, CP.ContactPerson)]
+           -> V.Validation
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', initialMileageRaw, mileagePerYearRaw, 
-    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons = 
+    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', initialMileageRaw, 
-      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons
+      mileagePerYearRaw, datePickerText) machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -200,15 +203,16 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Maybe DOMElement
                -> Maybe (CP.ContactPersonId)
                -> [(CP.ContactPersonId, CP.ContactPerson)]
+               -> V.Validation
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     initialMileageRaw, mileagePerYearRaw, datePickerText) machineKindSpecific (machineType, 
-    upkeepSequences) extraRows extraGrid contactPersonId contactPersons = let
+    upkeepSequences) extraRows extraGrid contactPersonId contactPersons _ = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of 
-      (D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _))) -> D.MachineScreen $ fun md
+      D.MachineScreen md -> D.MachineScreen $ fun md
       _ -> D.navigation appState })
 
   setMachine :: M.Machine -> Fay ()

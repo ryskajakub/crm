@@ -217,7 +217,7 @@ startRouter appVar = let
               MK.DryerSpecific _ -> MK.newDryerSpecific
           fetchContactPersons companyId (\cps -> modify' $ 
             D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 
-              (nowYMD, False) Nothing cps (Right $ MachineNew companyId maybeMachineTypeId))
+              (nowYMD, False) Nothing cps V.new (Right $ MachineNew companyId maybeMachineTypeId))
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -264,7 +264,7 @@ startRouter appVar = let
                   machineQuadruple = (machine, showInt $ M.initialMileage machine, showInt $ M.mileagePerYear machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
-                  machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps
+                  machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps V.new
                     (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
         _ -> modify' D.NotFound
   ),(
