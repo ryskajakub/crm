@@ -140,7 +140,7 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
       extraRows = (case (editing, photos) of
         (True, _) -> [photoUploadRow]
         (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing && null upkeeps
+        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing && null upkeeps && null photos
           then [deleteMachineRow]
           else [])
       setEditing :: Bool -> Fay ()

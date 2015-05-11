@@ -45,7 +45,10 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineDelete :: Handler IdDependencies
-machineDelete = deleteRows' [createDeletion dryersTable, createDeletion compressorsTable, createDeletion machinesTable]
+machineDelete = deleteRows' [
+  createDeletion dryersTable , 
+  createDeletion compressorsTable , 
+  createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', machineSpecificData) -> withConnId (\conn recordId -> do
