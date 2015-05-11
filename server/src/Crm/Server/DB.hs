@@ -9,6 +9,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.DB (
   -- tables
@@ -135,6 +136,9 @@ import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
+
+import TupleTH
+import Crm.Server.Tuple
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8
@@ -332,44 +336,44 @@ type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
     company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
-    coordinates = pure C.Coordinates <*> sel5 tuple <*> sel6 tuple
-    in (C.CompanyId $ sel1 tuple, company, coordinates)
+    coordinates = pure C.Coordinates <*> $(proj 6 4) tuple <*> $(proj 6 5) tuple
+    in (C.CompanyId $ $(proj 6 0) tuple, company, coordinates)
 instance ColumnToRecord 
     (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
   convert tuple = let
-    machineTuple = upd6 (fmap dayToYmd $ sel6 tuple) tuple
-    in (M.MachineId $ sel1 tuple, C.CompanyId $ sel2 tuple, CP.ContactPersonId `fmap` sel3 tuple, 
-      MT.MachineTypeId $ sel4 tuple, M.MachineId `fmap` sel5 tuple, 
+    machineTuple = $(modT 11 5) (fmap dayToYmd) tuple
+    in (M.MachineId $ $(proj 11 0) tuple, C.CompanyId $ $(proj 11 1) tuple, CP.ContactPersonId `fmap` $(proj 11 2) tuple, 
+      MT.MachineTypeId $ $(proj 11 3) tuple, M.MachineId `fmap` $(proj 11 4) tuple,
       (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
-  convert tuple = (MT.MachineTypeId $ sel1 tuple, (uncurryN $ const MT.MachineType) 
-    (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
+  convert tuple = (MT.MachineTypeId $ $(proj 4 0) tuple, (uncurryN $ const MT.MachineType) 
+    (upd2 (MK.dbReprToKind $ $(proj 4 1) tuple) tuple))
 instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
-  convert tuple = (CP.ContactPersonId $ sel1 tuple, C.CompanyId $ sel2 tuple, 
+  convert tuple = (CP.ContactPersonId $ $(proj 5 0) tuple, C.CompanyId $ $(proj 5 1) tuple, 
     (uncurryN $ const $ const CP.ContactPerson) tuple)
 instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where
   convert tuple = let
-    maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
-    in (CP.ContactPersonId `fmap` sel1 tuple, C.CompanyId `fmap` sel2 tuple, maybeCp)
+    maybeCp = pure CP.ContactPerson <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
+    in (CP.ContactPersonId `fmap` $(proj 5 0) tuple, C.CompanyId `fmap` $(proj 5 1) tuple, maybeCp)
 instance ColumnToRecord (Maybe Int, Maybe String, Maybe String, Maybe String) MaybeEmployeeMapped where
   convert tuple = (E.EmployeeId `fmap` sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
 instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) UpkeepMapped where
   convert tuple = let
     (_,a,b,_,c,d,e) = tuple
-    in (U.UpkeepId $ sel1 tuple, E.EmployeeId `fmap` sel4 tuple, U.Upkeep (dayToYmd a) b c d e)
+    in (U.UpkeepId $ $(proj 7 0) tuple, E.EmployeeId `fmap` $(proj 7 3) tuple, U.Upkeep (dayToYmd a) b c d e)
 instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
-  convert tuple = (E.EmployeeId $ sel1 tuple, uncurryN (const E.Employee) $ tuple)
+  convert tuple = (E.EmployeeId $ $(proj 4 0) tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
 instance ColumnToRecord (Int, String) CompressorMapped where
-  convert tuple = (M.MachineId $ sel1 tuple, MC.Compressor $ sel2 tuple)
+  convert tuple = (M.MachineId $ $(proj 2 0) tuple, MC.Compressor $ $(proj 2 1) tuple)
 instance ColumnToRecord (Int, String) DryerMapped where
-  convert tuple = (M.MachineId $ sel1 tuple, MD.Dryer $ sel2 tuple)
+  convert tuple = (M.MachineId $ $(proj 2 0) tuple, MD.Dryer $ $(proj 2 1) tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
   convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
 instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
-  convert tuple = (P.PhotoId $ sel1 tuple, (uncurryN $ const PM.PhotoMeta) tuple)
+  convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
