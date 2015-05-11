@@ -9,6 +9,7 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.DB (
   -- tables
@@ -135,6 +136,8 @@ import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
+
+import TupleTH
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8

@@ -33,6 +33,7 @@ Library
     , Crm.Server.Helpers
     , Crm.Server.Types
     , Crm.Server.Core
+    , Crm.Server.Tuple
 
     , Crm.Shared.Direction
     , Crm.Shared.MyMaybe
@@ -55,6 +56,7 @@ Library
   Build-depends:
       base >= 4.6 && < 4.8
     , mtl >= 2.0 && < 2.3
+    , template-haskell
 
     , rest-core == 0.35.*
     , rest-types
@@ -62,6 +64,7 @@ Library
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , tuple-th >= 0.2.4
     , lens
     , text
     , regular
