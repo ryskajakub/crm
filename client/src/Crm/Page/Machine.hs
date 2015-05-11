@@ -162,8 +162,8 @@ machineDetail editing appVar router companyId calendarOpen (machine, initialMile
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
       editMachineAction = updateMachine machineId machine machineSpecific (setEditing False)
-      saveButtonRow'' = saveButtonRow "Edituj" editMachineAction
-      button = if editing then saveButtonRow'' else editButtonRow
+      saveButtonRow'' validationOk = saveButtonRow' validationOk "Edituj" editMachineAction
+      button = if editing then saveButtonRow'' else (const editButtonRow)
 
 machineNew :: R.CrmRouter
            -> Var D.AppState
@@ -188,11 +188,11 @@ machineNew router appState datePickerCalendar (machine', initialMileageRaw, mile
         Nothing -> MT.MyMachineType machineTypeTuple
       saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId machineSpecific
         (R.navigate (R.companyDetail companyId) router)
-      buttonRow = saveButtonRow "Vytvoř" saveNewMachine
+      buttonRow validationOk = saveButtonRow' validationOk "Vytvoř" saveNewMachine
 
 machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Text -- ^ header of the page
-               -> DOMElement
+               -> (Bool -> DOMElement)
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text, Text, Text) -- ^ machine, _, _, text of the datepicker
@@ -349,7 +349,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
             M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
-        div' (class' "form-group") buttonRow ]]] ++ validationErrorsGrid ++ (case extraGrid of
+        div' (class' "form-group") (buttonRow $ V.ok validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements

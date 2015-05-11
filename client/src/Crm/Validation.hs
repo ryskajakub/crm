@@ -34,3 +34,6 @@ add fail (Validation v) = case find (fail ==) v of
 
 remove :: ValidationFail -> Validation -> Validation
 remove fail (Validation validations) = Validation $ filter (fail /=) validations
+
+ok :: Validation -> Bool
+ok (Validation v) = null v
