@@ -9,6 +9,7 @@ import Opaleye.PGTypes (pgDay, pgBool)
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM_)
+import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Tuple.All (sel1)
 
@@ -16,6 +17,7 @@ import Rest.Resource (Resource, Void, schema, name, create, mkResourceId )
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (mkInputHandler, Handler)
+import Rest.Types.Error (Reason)
 
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineType as MT
@@ -37,7 +39,7 @@ createMachineHandler = mkInputHandler (jsonO . jsonI)
     (\(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
   contactPersonId' = toMaybe contactPersonId
   in withConnId (\connection companyId -> 
-    liftIO $ addMachine connection newMachine companyId machineType contactPersonId' linkedMachineId machineSpecificData))
+    addMachine connection newMachine companyId machineType contactPersonId' linkedMachineId machineSpecificData))
 
 addMachine :: Connection
            -> M.Machine
@@ -46,9 +48,9 @@ addMachine :: Connection
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
            -> MK.MachineKindData
-           -> IO Int -- ^ id of newly created machine
+           -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId machineSpecificData = do
-  machineTypeId <- case machineType of
+  machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
@@ -65,7 +67,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
   let
     M.Machine machineOperationStartDate' initialMileage mileagePerYear note 
       serialNumber yearOfManufacture = machine
-  machineIds <- runInsertReturning
+  machineIds <- liftIO $ runInsertReturning
     connection
     machinesTable 
     (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
@@ -75,7 +77,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       pgString serialNumber, pgString yearOfManufacture)
     sel1
   let machineId = head machineIds
-  _ <- case machineSpecificData of
+  _ <- liftIO $ case machineSpecificData of
     MK.CompressorSpecific compressor -> runInsert
       connection
       compressorsTable
