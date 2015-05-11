@@ -40,6 +40,7 @@ module Crm.Server.DB (
   dryersQuery ,
   -- manipulations
   addMachinePhoto ,
+  deletePhoto ,
   -- runs
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
@@ -90,7 +91,7 @@ module Crm.Server.DB (
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
-  Only(..), Binary(..))
+  Only(..), Binary(..), execute)
 
 import Opaleye.QueryArr (Query, QueryArr)
 import Opaleye.Table (Table(Table), required, queryTable, optional)
@@ -705,6 +706,14 @@ addMachinePhoto connection _ photo = do
   newIds <- query connection q (Only $ Binary photo)
   let ints = map (\(Only id') -> id') newIds
   return ints
+
+deletePhoto :: Connection
+            -> Int
+            -> IO ()
+deletePhoto connection photoId = do
+  let q = " delete from photos where id = ? "
+  execute connection q (Only photoId)
+  return ()
 
 singleRowOrColumn :: Monad m
                   => [a] 
