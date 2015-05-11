@@ -138,7 +138,6 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
 
 import TupleTH
-import Crm.Server.Tuple
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8
@@ -342,7 +341,7 @@ instance ColumnToRecord
     (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String) 
     MachineMapped where
   convert tuple = let
-    machineTuple = $(modT 11 5) (fmap dayToYmd) tuple
+    machineTuple = $(updateAtN 11 5) (fmap dayToYmd) tuple
     in (M.MachineId $ $(proj 11 0) tuple, C.CompanyId $ $(proj 11 1) tuple, CP.ContactPersonId `fmap` $(proj 11 2) tuple, 
       MT.MachineTypeId $ $(proj 11 3) tuple, M.MachineId `fmap` $(proj 11 4) tuple,
       (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
