@@ -33,19 +33,21 @@ import Crm.Server.Types
 import Crm.Server.DB
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI) (\(newMachine, machineType, contactPersonId, machineSpecificData) -> let
-  contactPersonId' = fmap CP.getContactPersonId (toMaybe contactPersonId)
+createMachineHandler = mkInputHandler (jsonO . jsonI) 
+    (\(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
+  contactPersonId' = toMaybe contactPersonId
   in withConnId (\connection companyId -> 
-    liftIO $ addMachine connection newMachine companyId machineType contactPersonId' machineSpecificData))
+    liftIO $ addMachine connection newMachine companyId machineType contactPersonId' linkedMachineId machineSpecificData))
 
 addMachine :: Connection
            -> M.Machine
            -> Int
            -> MT.MyEither
-           -> Maybe Int
+           -> Maybe CP.ContactPersonId
+           -> Maybe M.MachineId
            -> MK.MachineKindData
            -> IO Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType contactPersonId machineSpecificData = do
+addMachine connection machine companyId' machineType contactPersonId linkedMachineId machineSpecificData = do
   machineTypeId <- case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
@@ -66,8 +68,9 @@ addMachine connection machine companyId' machineType contactPersonId machineSpec
   machineIds <- runInsertReturning
     connection
     machinesTable 
-    (Nothing, pgInt4 companyId', maybeToNullable $ fmap pgInt4 contactPersonId, 
-      pgInt4 machineTypeId, maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
+    (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
+      pgInt4 machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId,
+      maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
       pgInt4 initialMileage, pgInt4 mileagePerYear, pgString note, 
       pgString serialNumber, pgString yearOfManufacture)
     sel1
