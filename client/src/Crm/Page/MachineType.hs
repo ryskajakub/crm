@@ -36,8 +36,6 @@ import Crm.Server (updateMachineType, fetchMachineType,
   fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
 import Crm.Component.Autocomplete (autocompleteInput)
 
-import Debug.Trace
-
 data MachineTypeForm = Phase1 | Edit
   deriving Eq
 
@@ -94,7 +92,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
           Just (machineTypeId', machineType', sequences) -> do
-            trace (show sequences) $ setMachineWhole (machineType', map (\x -> (x, showInt $ US.repetition x)) sequences)
+            setMachineWhole (machineType', map (\x -> (x, showInt $ US.repetition x)) sequences)
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ())
         else return ())
