@@ -232,7 +232,7 @@ fetchMachinesInCompany :: C.CompanyId
                        -> ([(M.MachineId, M.Machine)] -> Fay ())
                        -> Fay ()
 fetchMachinesInCompany companyId callback = JQ.ajax
-  (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ C.getCompanyId companyId)))
+  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines))
   (callback . items)
   noopOnError
 

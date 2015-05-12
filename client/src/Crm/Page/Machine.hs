@@ -66,10 +66,10 @@ machineDetail :: Bool
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, 
     datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v _ =
+    contactPersonId contactPersons v om =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v
+      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v Nothing om
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -180,10 +180,10 @@ machineNew :: R.CrmRouter
            -> [(M.MachineId, M.Machine)]
            -> DOMElement
 machineNew router appState datePickerCalendar (machine',
-    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v _ = 
+    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v om = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', datePickerText) 
-      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v
+      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v Nothing om
     where
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
@@ -205,10 +205,12 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Maybe (CP.ContactPersonId)
                -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> V.Validation
+               -> Maybe M.MachineId
+               -> [(M.MachineId, M.Machine)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine',
     datePickerText) machineKindSpecific (machineType, 
-    upkeepSequences) extraRows extraGrid contactPersonId contactPersons validation = let
+    upkeepSequences) extraRows extraGrid contactPersonId contactPersons validation otherMachineId otherMachines = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -277,6 +279,9 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         maybeSelectRow editing "Kontaktní osoba" contactPersons (pack . CP.name) contactPersonId 
           (\cpId -> changeNavigationState (\md -> md { MD.contactPersonId = cpId })) 
           (\emptyLabel -> CP.newContactPerson { CP.name = unpack emptyLabel }) ,
+        maybeSelectRow editing "Zapojení" otherMachines (pack . M.serialNumber) otherMachineId
+          (const $ return ())
+          (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = unpack emptyLabel }) ,
         row'
           editing
           "Výrobní číslo"
