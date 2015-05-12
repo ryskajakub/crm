@@ -335,7 +335,7 @@ createMachine :: M.Machine
               -> Fay ()
               -> Fay ()
 createMachine machine companyId machineType contactPersonId linkedMachineId machineSpecific callback = ajax
-  (machine, machineType, toMyMaybe contactPersonId, linkedMachineId, machineSpecific)
+  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, machineSpecific)
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
   post
   (const callback)

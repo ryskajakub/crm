@@ -43,7 +43,7 @@ createMachineHandler = mkInputHandler (jsonO . jsonI)
     (\(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
   contactPersonId' = toMaybe contactPersonId
   in withConnId (\connection companyId -> 
-    addMachine connection newMachine companyId machineType contactPersonId' linkedMachineId machineSpecificData))
+    addMachine connection newMachine companyId machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData))
 
 addMachine :: Connection
            -> M.Machine
