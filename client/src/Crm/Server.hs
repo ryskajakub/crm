@@ -239,11 +239,11 @@ fetchMachinesInCompany companyId callback = JQ.ajax
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], MK.MachineKindData) -> Fay()) -- ^ callback
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, MK.MachineKindData) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-  fun ((a,b,c,d),(e,e1,g,f)) = (a,b,c,d,e,toMaybe e1,map fun2 g,f)
+  fun ((a,b,c,d),(e,e1,g,g2,f)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f)
   in JQ.ajax
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     (callback . fun)

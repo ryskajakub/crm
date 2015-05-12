@@ -28,6 +28,7 @@ data MachineData = MachineData {
   contactPersonId :: Maybe ContactPersonId ,
   contactPersons :: [(ContactPersonId, ContactPerson)] ,
   validation :: V.Validation ,
+  otherMachineId :: Maybe MachineId ,
   otherMachines :: [(MachineId, Machine)] ,
   machinePageMode :: Either MachineDetail MachineNew }
 

@@ -80,11 +80,11 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
   rows <- liftIO $ runQuery conn (machineDetailQuery id'')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
-    (machineId, machine, companyId, machineTypeId, machineType, contactPersonId) = let
+    (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let
       m = convert $ sel1 row :: MachineMapped
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
-      in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp)
+      in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp, toMyMaybe $ $(proj 6 4) m)
   machineSpecificData <- case (machineSpecificQuery (MK.kindToDbRepr $ MT.kind machineType) (M.getMachineId machineId)) of
     Left compressorQuery -> do
       compressorRows <- liftIO $ runQuery conn compressorQuery
@@ -113,7 +113,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
     nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, machineSpecificData)))
+    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, machineSpecificData)))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO) (const $ do

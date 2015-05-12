@@ -217,7 +217,7 @@ startRouter appVar = let
               MK.DryerSpecific _ -> MK.newDryerSpecific
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> modify' $ 
             D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple
-              (nowYMD, False) Nothing cps V.new otherMachines (Right $ MachineNew companyId maybeMachineTypeId)
+              (nowYMD, False) Nothing cps V.new Nothing otherMachines (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -258,15 +258,16 @@ startRouter appVar = let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
             (\(companyId, machine, machineTypeId, machineTypeTuple, 
-                machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
+                machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData) ->
               fetchMachinePhotos machineId $ \photos ->
                 let 
                   machineQuadruple = (machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines ->
                   modify' $ D.MachineScreen $ MachineData
-                    machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps V.new otherMachines
-                      (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
+                    machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) 
+                      contactPersonId cps V.new otherMachineId otherMachines
+                        (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound
   ),(
     "planned", const $
