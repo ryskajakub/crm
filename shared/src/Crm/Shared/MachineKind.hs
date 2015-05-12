@@ -21,7 +21,7 @@ data MachineKindEnum = Compressor | Dryer
 #ifdef FAY
   deriving (Eq)
 #else
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Eq)
 #endif
 
 kindToDbRepr :: MachineKindEnum -> Int

@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
@@ -9,6 +10,7 @@ import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" Data.Maybe (fromJust)
+import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
@@ -22,9 +24,12 @@ import qualified Crm.Data.Data as D
 import Crm.Helpers
 import Crm.Component.Form
 
+data FieldPosition = First | Last | Single | Middle
+
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
   D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
+
 
 machineKindSettings :: Var D.AppState
                     -> MK.MachineKindEnum
@@ -32,9 +37,36 @@ machineKindSettings :: Var D.AppState
                     -> DOMElement
 machineKindSettings appVar editedEnum allSettings = let
 
-  select = maybeSelectRow' False True "Druh stroje" MK.machineKinds pack (Just editedEnum) 
+  select = maybeSelectRow' False True "Druh stroje" MK.machineKinds pack (Just editedEnum)
     (\selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = fromJust selectedKind })
     (const undefined)
 
+  theEditedMachineKind = fromJust $ lookup editedEnum allSettings
+
+  displayRow (index, _, (extraFieldIdentification, extraFieldData)) = let
+    fieldLabel = label' (class'' ["control-label", "col-md-1"]) ("Pole " <> showInt index)
+    controls = div ""
+    setFieldName string = let
+      (start, (fieldId,field):rest) = splitAt index theEditedMachineKind
+      modifiedX = (fieldId, field { MK.name = string })
+      newFields = start ++ [modifiedX] ++ rest
+      newAllSettings = (editedEnum, newFields) : filter (\(e,_) -> e /= editedEnum) allSettings
+      in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
+    theInput = editingInput True (SetValue $ MK.name extraFieldData) 
+      (eventString >=> setFieldName) True
+    in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
+      fieldLabel ,
+      controls ,
+      theInput ]
+
+  lastIndex = length theEditedMachineKind - 1
+  assignPosition (i, field) = if 
+    | i == 0 && i == lastIndex -> (i, Single, field)
+    | i == lastIndex -> (i, Last, field)
+    | i == 0 -> (i, First, field)
+    | True -> (i, Middle, field)
+  fieldsWithPositions = map assignPosition $ zipWithIndex theEditedMachineKind
+  inputFieldRows = map displayRow fieldsWithPositions
+
   header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
-  in div [B.grid header, B.grid select]
+  in div [B.grid header, B.grid $ select : inputFieldRows]
