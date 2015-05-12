@@ -48,13 +48,11 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing () (S.unnamedSingle readMay') }
     
 machineDelete :: Handler IdDependencies
-machineDelete = deleteRows' [
-  createDeletion dryersTable , 
-  createDeletion compressorsTable , 
-  createDeletion machinesTable]
+machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, machineSpecificData) -> withConnId (\conn recordId -> do
+machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, machineSpecificData :: MK.MachineKindEnum) -> 
+    withConnId (\conn recordId -> do
 
   let 
     machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_,_) =
@@ -66,13 +64,7 @@ machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, mac
         pgString $ M.yearOfManufacture machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
-    updateMachineSpecifictData = case machineSpecificData of
-      MK.CompressorSpecific compressor -> prepareUpdate compressorsTable compressorsReadToWrite where
-        compressorsReadToWrite = const (pgInt4 recordId, pgString $ MC.note compressor)
-      MK.DryerSpecific dryer -> prepareUpdate dryersTable dryersReadToWrite where
-        dryersReadToWrite = const (pgInt4 recordId, pgString $ MD.note dryer)
-
-  liftIO $ forM_ [updateMachine, updateMachineSpecifictData] (\updation -> updation recordId conn)
+  liftIO $ forM_ [updateMachine] (\updation -> updation recordId conn)
   return ()))
 
 machineSingle :: Handler IdDependencies
@@ -85,17 +77,6 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp, toMyMaybe $ $(proj 6 4) m)
-  machineSpecificData <- case (machineSpecificQuery (MK.kindToDbRepr $ MT.kind machineType) (M.getMachineId machineId)) of
-    Left compressorQuery -> do
-      compressorRows <- liftIO $ runQuery conn compressorQuery
-      compressorRow <- singleRowOrColumn compressorRows
-      let compressorMapped = convert compressorRow :: CompressorMapped
-      return $ MK.CompressorSpecific $ sel2 compressorMapped
-    Right dryerQuery -> do
-      dryerRows <- liftIO $ runQuery conn dryerQuery
-      dryerRow <- singleRowOrColumn dryerRows
-      let dryerMapped = convert dryerRow :: DryerMapped
-      return $ MK.DryerSpecific $ sel2 dryerMapped
   upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
   upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine $ M.getMachineId machineId)
   today' <- liftIO today
@@ -113,7 +94,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
     nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, machineSpecificData)))
+    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType)))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO) (const $ do

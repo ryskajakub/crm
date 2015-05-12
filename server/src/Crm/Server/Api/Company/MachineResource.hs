@@ -51,7 +51,7 @@ addMachine :: Connection
            -> MT.MyEither
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
-           -> MK.MachineKindData
+           -> MK.MachineKindEnum
            -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId machineSpecificData = do
   machineTypeId <- liftIO $ case machineType of
@@ -81,15 +81,6 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       pgString serialNumber, pgString yearOfManufacture)
     sel1
   let machineId = head machineIds
-  _ <- liftIO $ case machineSpecificData of
-    MK.CompressorSpecific compressor -> runInsert
-      connection
-      compressorsTable
-      (pgInt4 machineId, pgString $ MC.note compressor)
-    MK.DryerSpecific dryer -> runInsert
-      connection
-      dryersTable
-      (pgInt4 machineId, pgString $ MD.note dryer)
   return machineId -- todo safe
 
 listing :: ListHandler IdDependencies

@@ -15,8 +15,6 @@ import Data.Maybe (fromJust)
 import Data.JSON.Schema.Generic (gSchema)
 import Data.Data
 
-import qualified Crm.Shared.Compressor as MC
-import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
@@ -70,7 +68,7 @@ instance FromJSON E.Employee where
   parseJSON = fayInstance
 instance FromJSON CP.ContactPerson where
   parseJSON = fayInstance
-instance FromJSON MK.MachineKindData where
+instance FromJSON MK.MachineKindEnum where
   parseJSON = fayInstance
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
@@ -96,20 +94,12 @@ instance ToJSON PM.PhotoMeta where
   toJSON = fromJust . showToFay
 instance ToJSON CP.ContactPerson where
   toJSON = fromJust . showToFay
-instance ToJSON MK.MachineKindData where
+instance ToJSON MK.MachineKindEnum where
   toJSON = fromJust . showToFay
 instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
   toJSON = fromJust . showToFay
 
-instance JS.JSONSchema MK.MachineKindEnum where
-  schema = gSchema
 instance JS.JSONSchema CP.ContactPerson where
-  schema = gSchema
-instance JS.JSONSchema MD.Dryer where
-  schema = gSchema
-instance JS.JSONSchema MC.Compressor where
-  schema = gSchema
-instance JS.JSONSchema MK.MachineKindData where
   schema = gSchema
 instance JS.JSONSchema PM.PhotoMeta where
   schema = gSchema
@@ -134,6 +124,8 @@ instance JS.JSONSchema U.Upkeep where
 instance JS.JSONSchema UM.UpkeepMachine where
   schema = gSchema
 instance JS.JSONSchema US.UpkeepSequence where
+  schema = gSchema
+instance JS.JSONSchema MK.MachineKindEnum where
   schema = gSchema
 instance (JS.JSONSchema a) => JS.JSONSchema (MyMaybe a) where
   schema = gSchema

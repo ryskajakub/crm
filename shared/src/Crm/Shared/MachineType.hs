@@ -38,7 +38,7 @@ data MachineType = MachineType {
 #endif
 
 newMachineType :: MachineType
-newMachineType = MachineType MK.compressorValue "" ""
+newMachineType = MachineType MK.Compressor "" ""
 
 data MyEither = 
   MyMachineType (MachineType, [US.UpkeepSequence])

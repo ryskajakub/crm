@@ -23,8 +23,6 @@ module Crm.Server.DB (
   machinePhotosTable ,
   photosMetaTable ,
   contactPersonsTable ,
-  compressorsTable ,
-  dryersTable ,
   -- basic queries
   companiesQuery ,
   machinesQuery ,
@@ -37,8 +35,6 @@ module Crm.Server.DB (
   getMachinePhoto ,
   singleEmployeeQuery ,
   contactPersonsQuery ,
-  compressorsQuery ,
-  dryersQuery ,
   -- manipulations
   addMachinePhoto ,
   deletePhoto ,
@@ -50,7 +46,6 @@ module Crm.Server.DB (
   runCompanyUpkeepsQuery ,
   -- more complex query
   otherMachinesInCompanyQuery ,
-  machineSpecificQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
@@ -86,8 +81,6 @@ module Crm.Server.DB (
   MaybeEmployeeMapped ,
   EmployeeMapped ,
   UpkeepSequenceMapped ,
-  CompressorMapped ,
-  DryerMapped ,
   UpkeepMachineMapped ,
   PhotoMetaMapped ,
   MachineMapped ) where
@@ -207,16 +200,6 @@ contactPersonsTable = Table "contact_persons" $ p5 (
   required "phone" ,
   required "position" )
 
-compressorsTable :: Table CompressorsTable CompressorsTable
-compressorsTable = Table "compressors" $ p2 (
-  required "machine_id" ,
-  required "note" )
-
-dryersTable :: Table DryersTable DryersTable
-dryersTable = Table "dryers" $ p2 (
-  required "machine_id" ,
-  required "note" )
-
 machinesTable :: Table MachinesWriteTable MachinesTable
 machinesTable = Table "machines" $ p11 (
   optional "id" ,
@@ -271,12 +254,6 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "machine_type_id" ,
   required "one_time" )
 
-dryersQuery :: Query DryersTable
-dryersQuery = queryTable dryersTable
-
-compressorsQuery :: Query CompressorsTable
-compressorsQuery = queryTable compressorsTable
-
 contactPersonsQuery :: Query ContactPersonsTable
 contactPersonsQuery = queryTable contactPersonsTable
 
@@ -328,8 +305,6 @@ type MaybeEmployeeMapped = (Maybe E.EmployeeId, Maybe E.Employee)
 type UpkeepMapped = (U.UpkeepId, Maybe E.EmployeeId, U.Upkeep)
 type EmployeeMapped = (E.EmployeeId, E.Employee)
 type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
-type CompressorMapped = (M.MachineId, MC.Compressor)
-type DryerMapped = (M.MachineId, MD.Dryer)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 
@@ -366,10 +341,6 @@ instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
   convert tuple = (E.EmployeeId $ $(proj 4 0) tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
-instance ColumnToRecord (Int, String) CompressorMapped where
-  convert tuple = (M.MachineId $ $(proj 2 0) tuple, MC.Compressor $ $(proj 2 1) tuple)
-instance ColumnToRecord (Int, String) DryerMapped where
-  convert tuple = (M.MachineId $ $(proj 2 0) tuple, MD.Dryer $ $(proj 2 1) tuple)
 instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
   convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
 instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
@@ -416,18 +387,6 @@ machineManufacturersQuery str = distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
   restrict -< (lower manufacturer' `like` (lower $ pgString ("%" ++ (intersperse '%' str) ++ "%")))
   returnA -< manufacturer'
-
-type QEither a b = Either (Query a) (Query b)
-machineSpecificQuery :: Int -> Int -> QEither CompressorsTable DryersTable
-machineSpecificQuery machineKind machineId = if machineKind == 0
-  then Left $ proc () -> do
-    compressor <- join compressorsQuery -< pgInt4 machineId
-    returnA -< compressor
-  else if machineKind == 1
-  then Right $ proc () -> do
-    dryer <- join dryersQuery -< pgInt4 machineId
-    returnA -< dryer
-  else undefined
 
 otherMachinesInCompanyQuery :: Int -> Query MachinesTable
 otherMachinesInCompanyQuery companyId = proc () -> do
