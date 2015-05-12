@@ -168,16 +168,17 @@ row' editing' labelText value' onChange' = let
   input = editingInput True value' onChange' editing'
   in editDisplayRow editing' labelText input
 
-maybeSelectRow :: (Eq a) 
-               => Bool 
-               -> Text 
-               -> [(a, b)] 
-               -> (b -> Text) 
-               -> Maybe a 
-               -> (Maybe a -> Fay ()) 
-               -> (Text -> b) 
-               -> DOMElement
-maybeSelectRow editing rowLabel elements getLabel theId' setId emptyRecord =
+maybeSelectRow' :: (Eq a) 
+                => Bool
+                -> Bool 
+                -> Text 
+                -> [(a, b)] 
+                -> (b -> Text) 
+                -> Maybe a 
+                -> (Maybe a -> Fay ()) 
+                -> (Text -> b) 
+                -> DOMElement
+maybeSelectRow' displayNoElement editing rowLabel elements getLabel theId' setId emptyRecord =
   formRowCol rowLabel [let
     noElementSelectedLabel = "---"
     selectedLabel = maybe noElementSelectedLabel (\theId -> let
@@ -186,9 +187,21 @@ maybeSelectRow editing rowLabel elements getLabel theId' setId emptyRecord =
     selectLink theId record = let
       selectAction = setId theId
       in A.a''' (click selectAction) (getLabel record)
-    withEmptyRecord = (Nothing, emptyRecord noElementSelectedLabel) : (map (lmap Just) elements)
+    noElement = if displayNoElement then [(Nothing, emptyRecord noElementSelectedLabel)] else []
+    withEmptyRecord = noElement ++ (map (lmap Just) elements)
     elementsToBeSelected = map (\(theId, record) -> li $ selectLink theId record) withEmptyRecord
     buttonLabel = [ text2DOM $ selectedLabel <> " " , span' (class' "caret") "" ]
     in if editing
       then div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
       else span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedLabel ]
+
+maybeSelectRow :: (Eq a) 
+               => Bool
+               -> Text 
+               -> [(a, b)] 
+               -> (b -> Text) 
+               -> Maybe a 
+               -> (Maybe a -> Fay ()) 
+               -> (Text -> b) 
+               -> DOMElement
+maybeSelectRow = maybeSelectRow' True

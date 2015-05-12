@@ -35,8 +35,7 @@ dbReprToKind int = if int == 0
   else Dryer
 
 data MachineKindSpecific = MachineKindSpecific {
-  name :: String ,
-  order :: Int }
+  name :: String }
 #ifdef FAY
   deriving (Eq)
 #else

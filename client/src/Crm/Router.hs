@@ -32,7 +32,7 @@ module Crm.Router (
   extraFields ,
   editEmployee ) where
 
-import "fay-base" Data.Text (fromString, showInt, Text, (<>))
+import "fay-base" Data.Text (fromString, showInt, Text, (<>), unpack)
 import "fay-base" Prelude hiding (div, span) 
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
@@ -178,7 +178,7 @@ startRouter appVar = let
           D.FrontPage (order, direction) data' }))
   ),(
     "extra-fields", const $ let
-    in modify' $ D.ExtraFields MK.Compressor []
+    in modify' $ D.ExtraFields MK.Compressor [(MK.Compressor, [MK.MachineKindSpecific $ unpack "Barva", MK.MachineKindSpecific $ unpack "Oblíbenost"]), (MK.Dryer, [])]
   ),(
     "companies/:id", \params -> let
       cId = head params
