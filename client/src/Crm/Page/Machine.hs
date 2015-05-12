@@ -62,10 +62,11 @@ machineDetail :: Bool
               -> Maybe CP.ContactPersonId
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
+              -> [(M.MachineId, M.Machine)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, 
     datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v =
+    contactPersonId contactPersons v _ =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v
@@ -153,8 +154,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' (Left (MD.MachineDetail d e editing' f g i j)))
+          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -176,9 +177,10 @@ machineNew :: R.CrmRouter
            -> Maybe CP.ContactPersonId
            -> [(CP.ContactPersonId, CP.ContactPerson)]
            -> V.Validation
+           -> [(M.MachineId, M.Machine)]
            -> DOMElement
 machineNew router appState datePickerCalendar (machine',
-    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v = 
+    datePickerText) machineSpecific companyId machineTypeTuple machineTypeId contactPersonId contactPersons v _ = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', datePickerText) 
       machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v

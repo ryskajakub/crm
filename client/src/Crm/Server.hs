@@ -20,6 +20,7 @@ module Crm.Server (
 
   fetchMachine , 
   fetchMachinePhotos ,
+  fetchMachinesInCompany ,
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
@@ -226,6 +227,14 @@ fetchMachinePhotos machineId callback =
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos))
     (callback . items)
     noopOnError
+
+fetchMachinesInCompany :: C.CompanyId
+                       -> ([(M.MachineId, M.Machine)] -> Fay ())
+                       -> Fay ()
+fetchMachinesInCompany companyId callback = JQ.ajax
+  (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ C.getCompanyId companyId)))
+  (callback . items)
+  noopOnError
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,

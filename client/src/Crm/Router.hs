@@ -60,7 +60,7 @@ import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
-  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap)
+  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap, fetchMachinesInCompany)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Validation as V
 
@@ -215,9 +215,9 @@ startRouter appVar = let
             machineSpecific = case machineKind of
               MK.CompressorSpecific _ -> MK.newCompressorSpecific
               MK.DryerSpecific _ -> MK.newDryerSpecific
-          fetchContactPersons companyId (\cps -> modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple 
-              (nowYMD, False) Nothing cps V.new (Right $ MachineNew companyId maybeMachineTypeId))
+          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> modify' $ 
+            D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple
+              (nowYMD, False) Nothing cps V.new otherMachines (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -259,13 +259,14 @@ startRouter appVar = let
           in fetchMachine machineId
             (\(companyId, machine, machineTypeId, machineTypeTuple, 
                 machineNextService, contactPersonId, upkeeps, machineSpecificData) ->
-              fetchMachinePhotos machineId (\photos ->
+              fetchMachinePhotos machineId $ \photos ->
                 let 
                   machineQuadruple = (machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-                in fetchContactPersons companyId (\cps -> modify' $ D.MachineScreen $ MachineData
-                  machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps V.new
-                    (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))))
+                in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines ->
+                  modify' $ D.MachineScreen $ MachineData
+                    machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) contactPersonId cps V.new otherMachines
+                      (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound
   ),(
     "planned", const $
