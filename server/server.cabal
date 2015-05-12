@@ -49,8 +49,6 @@ Library
     , Crm.Shared.UpkeepSequence
     , Crm.Shared.PhotoMeta
     , Crm.Shared.Photo
-    , Crm.Shared.Compressor
-    , Crm.Shared.Dryer
 
   Build-depends:
       base >= 4.6 && < 4.8

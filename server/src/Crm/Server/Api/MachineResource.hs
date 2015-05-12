@@ -25,8 +25,6 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
-import qualified Crm.Shared.Compressor as MC
-import qualified Crm.Shared.Dryer as MD
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',

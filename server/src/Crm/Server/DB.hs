@@ -116,8 +116,6 @@ import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Dryer as MD
-import qualified Crm.Shared.Compressor as MC
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Upkeep as U

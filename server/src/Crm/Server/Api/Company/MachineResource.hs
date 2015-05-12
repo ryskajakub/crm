@@ -25,8 +25,6 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Compressor as MC
-import qualified Crm.Shared.Dryer as MD
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
