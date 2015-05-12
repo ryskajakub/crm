@@ -274,20 +274,9 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        formRowCol "Kontaktní osoba" [let
-          noContactPersonLabel = "---"
-          selectedEmployeeName = maybe noContactPersonLabel (\cpId -> let
-            contactPersonFoundInList = lookup cpId contactPersons
-            in maybe noContactPersonLabel (pack . CP.name) contactPersonFoundInList) contactPersonId
-          selectCpLink cpId c = let
-            selectCpAction = changeNavigationState (\md -> md { MD.contactPersonId = cpId })
-            in A.a''' (click selectCpAction) (pack $ CP.name c)
-          withNoCp = (Nothing, CP.newContactPerson { CP.name = unpack noContactPersonLabel }) : (map (lmap Just) contactPersons)
-          selectElements = map (\(cId,c) -> li $ selectCpLink cId c) withNoCp
-          buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
-          in if editing
-            then div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel selectElements
-            else span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedEmployeeName] ,
+        maybeSelectRow editing "Kontaktní osoba" contactPersons (pack . CP.name) contactPersonId 
+          (\cpId -> changeNavigationState (\md -> md { MD.contactPersonId = cpId })) 
+          (\emptyLabel -> CP.newContactPerson { CP.name = unpack emptyLabel }) ,
         row'
           editing
           "Výrobní číslo"
