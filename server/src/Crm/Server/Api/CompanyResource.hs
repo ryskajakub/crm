@@ -130,7 +130,7 @@ deleteCompany = deleteRows' [createDeletion' sel2 contactPersonsTable, createDel
 companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \type' -> case type' of
-    NextServiceListing -> listing 
+    NextServiceListing -> listing
     MapListing -> mapListing ,
   create = Just createCompanyHandler ,
   name = A.companies ,

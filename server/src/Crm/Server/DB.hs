@@ -49,6 +49,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  otherMachinesInCompanyQuery ,
   machineSpecificQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
@@ -427,6 +428,13 @@ machineSpecificQuery machineKind machineId = if machineKind == 0
     dryer <- join dryersQuery -< pgInt4 machineId
     returnA -< dryer
   else undefined
+
+otherMachinesInCompanyQuery :: Int -> Query MachinesTable
+otherMachinesInCompanyQuery companyId = proc () -> do
+  companyRow <- join companiesQuery -< pgInt4 companyId
+  machinesRow <- machinesQuery -< ()
+  restrict -< ($(proj 6 0) companyRow) .== ($(proj 11 1) machinesRow)
+  returnA -< machinesRow
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
 photoMetaQuery photoId = proc () -> do

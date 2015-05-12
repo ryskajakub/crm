@@ -1,11 +1,13 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Crm.Server.Api.Company.MachineResource ( 
   machineResource ) where
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.PGTypes (pgInt4, pgString)
+import Opaleye.PGTypes (pgInt4, pgString, pgDay, pgBool)
 import Opaleye.Manipulation (runInsert, runInsertReturning)
-import Opaleye.PGTypes (pgDay, pgBool)
+import Opaleye (runQuery)
 
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM_)
@@ -13,10 +15,10 @@ import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Tuple.All (sel1)
 
-import Rest.Resource (Resource, Void, schema, name, create, mkResourceId )
+import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (mkInputHandler, Handler)
+import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 import Rest.Types.Error (Reason)
 
 import qualified Crm.Shared.UpkeepSequence as US
@@ -33,6 +35,8 @@ import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+
+import TupleTH (proj)
 
 createMachineHandler :: Handler IdDependencies
 createMachineHandler = mkInputHandler (jsonO . jsonI) 
@@ -88,8 +92,17 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       (pgInt4 machineId, pgString $ MD.note dryer)
   return machineId -- todo safe
 
-machineResource :: Resource IdDependencies IdDependencies Void Void Void
+listing :: ListHandler IdDependencies
+listing = mkListing jsonO $ const $ withConnId $ \connection companyId -> do
+  otherMachines <- liftIO $ runQuery connection (otherMachinesInCompanyQuery companyId)
+  let 
+    machinesMapped = convert otherMachines :: [MachineMapped]
+    result = fmap (\mm -> ($(proj 6 0) mm,$(proj 6 5) mm)) machinesMapped
+  return result
+
+machineResource :: Resource IdDependencies IdDependencies Void () Void
 machineResource = mkResourceId {
   name = A.machines ,
-  schema = S.noListing $ S.named [] ,
+  schema = S.withListing () $ S.named [] ,
+  list = const listing ,
   create = Just createMachineHandler }
