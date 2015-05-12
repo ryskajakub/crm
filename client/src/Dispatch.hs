@@ -83,7 +83,7 @@ main' = do
       D.ContactPersonPage contactPerson identification companyId -> 
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList router contactPersons
-      D.ExtraFields -> emptyCallback $ machineKindSettings appVar' MK.Compressor []
+      D.ExtraFields editedKind allSettings -> emptyCallback $ machineKindSettings appVar' editedKind allSettings
     in Navigation.navigation' router newElementAndCallback )
   return ()
 

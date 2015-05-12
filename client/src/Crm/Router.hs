@@ -178,7 +178,7 @@ startRouter appVar = let
           D.FrontPage (order, direction) data' }))
   ),(
     "extra-fields", const $ let
-    in modify' D.ExtraFields
+    in modify' $ D.ExtraFields MK.Compressor []
   ),(
     "companies/:id", \params -> let
       cId = head params
