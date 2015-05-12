@@ -34,6 +34,7 @@ create table machines (
   company_id integer references companies (id) not null ,
   contact_person_id integer references contact_persons (id) ,
   machine_type_id integer references machine_types (id) not null ,
+  linkage_id integer references machines (id) ,
   operation_start date ,
   initial_mileage integer not null ,
   mileage_per_year integer not null ,
