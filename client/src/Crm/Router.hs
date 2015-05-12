@@ -29,6 +29,7 @@ module Crm.Router (
   newEmployee ,
   contactPersonList ,
   contactPersonEdit ,
+  extraFields ,
   editEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>))
@@ -134,6 +135,9 @@ contactPersonList companyId = CrmRoute $ "companies/" <> (showInt $ C.getCompany
 contactPersonEdit :: CP.ContactPersonId -> CrmRoute
 contactPersonEdit contactPersonId = CrmRoute $ "contact-persons/" <> (showInt $ CP.getContactPersonId contactPersonId)
 
+extraFields :: CrmRoute
+extraFields = CrmRoute $ "extra-fields"
+
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
@@ -172,6 +176,9 @@ startRouter appVar = let
       in fetchFrontPageData order direction (\data' ->
         modify appVar (\appState -> appState { D.navigation = 
           D.FrontPage (order, direction) data' }))
+  ),(
+    "extra-fields", const $ let
+    in modify' D.ExtraFields
   ),(
     "companies/:id", \params -> let
       cId = head params

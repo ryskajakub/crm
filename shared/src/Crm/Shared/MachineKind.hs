@@ -33,3 +33,12 @@ dbReprToKind :: Int -> MachineKindEnum
 dbReprToKind int = if int == 0
   then Compressor
   else Dryer
+
+data MachineKindSpecific = MachineKindSpecific {
+  name :: String ,
+  order :: Int }
+#ifdef FAY
+  deriving (Eq)
+#else
+  deriving (Generic, Typeable, Data, Show)
+#endif

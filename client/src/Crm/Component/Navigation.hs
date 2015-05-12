@@ -14,7 +14,7 @@ import HaskellReact.Bootstrap (navBar' , nav)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import Crm.Router (link, defaultFrontPage, CrmRouter, plannedUpkeeps, machineTypesList, 
-  employeePage, dashboard)
+  employeePage, dashboard, extraFields)
 
 navigation' :: CrmRouter 
             -> (DOMElement, Fay ())
@@ -26,7 +26,8 @@ navigation' router (body, callbacks) =
       li' (row "2") $ link [G.tasks, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
       li' (row "3") $ link [G.thList, text2DOM " Editace typů zařízení"] machineTypesList router ,
       li' (row "4") $ link [G.user, text2DOM " Servismani"] employeePage router ,
-      li' (row "5") $ link [G.dashboard, text2DOM " Nástěnka"] dashboard router ] ,
+      li' (row "5") $ link [G.dashboard, text2DOM " Nástěnka"] dashboard router ,
+      li' (row "6") $ link [G.asterisk, text2DOM " Speciální pole"] extraFields router ] ,
     div' (row "2") body ] ) callbacks 
 
 navigation :: CrmRouter

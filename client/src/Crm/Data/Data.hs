@@ -60,7 +60,8 @@ data NavigationState =
     identification :: Maybe CP.ContactPersonId ,
     companyId :: C.CompanyId } |
   ContactPersonList {
-    contactPersons :: [CP.ContactPerson'] }
+    contactPersons :: [CP.ContactPerson'] } |
+  ExtraFields 
 
 data AppState = AppState {
   navigation :: NavigationState ,

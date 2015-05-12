@@ -17,6 +17,7 @@ import qualified Crm.Component.Navigation as Navigation
 import Crm.Page.Company (companiesList, companyDetail, companyNew)
 import Crm.Page.ContactPerson (contactPersonForm, contactPersonsList)
 import Crm.Page.Machine (machineNew, machineDetail)
+import Crm.Page.MachineKind (machineKindSettings)
 import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
@@ -82,6 +83,7 @@ main' = do
       D.ContactPersonPage contactPerson identification companyId -> 
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList router contactPersons
+      D.ExtraFields -> emptyCallback $ machineKindSettings appVar' MK.Compressor []
     in Navigation.navigation' router newElementAndCallback )
   return ()
 
