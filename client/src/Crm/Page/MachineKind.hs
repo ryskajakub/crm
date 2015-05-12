@@ -15,6 +15,7 @@ import qualified HaskellReact.Bootstrap as B
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.ExtraField as EF
 
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
@@ -27,7 +28,7 @@ mkSetMachineType appVar modifiedMachineType =
 
 machineKindSettings :: Var D.AppState
                     -> MK.MachineKindEnum
-                    -> [(MK.MachineKindEnum, [MK.MachineKindSpecific])]
+                    -> [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
                     -> DOMElement
 machineKindSettings appVar editedEnum allSettings = let
 

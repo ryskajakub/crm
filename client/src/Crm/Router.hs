@@ -53,6 +53,7 @@ import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.ExtraField as EF
 
 import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
   , MachineDetail(MachineDetail))
@@ -178,7 +179,9 @@ startRouter appVar = let
           D.FrontPage (order, direction) data' }))
   ),(
     "extra-fields", const $ let
-    in modify' $ D.ExtraFields MK.Compressor [(MK.Compressor, [MK.MachineKindSpecific $ unpack "Barva", MK.MachineKindSpecific $ unpack "Oblíbenost"]), (MK.Dryer, [])]
+    in modify' $ D.ExtraFields MK.Compressor [(MK.Compressor, [
+      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Barva"), 
+      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Oblíbenost")]), (MK.Dryer, [])]
   ),(
     "companies/:id", \params -> let
       cId = head params

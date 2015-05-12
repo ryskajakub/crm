@@ -18,6 +18,7 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Direction as DIR
+import qualified Crm.Shared.ExtraField as EF
 
 import Crm.Data.MachineData
 import Crm.Data.UpkeepData
@@ -64,7 +65,7 @@ data NavigationState =
     contactPersons :: [CP.ContactPerson'] } |
   ExtraFields {
     editedKind :: MK.MachineKindEnum ,
-    allSettings :: [(MK.MachineKindEnum, [MK.MachineKindSpecific])] }
+    allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] }
 
 data AppState = AppState {
   navigation :: NavigationState ,
