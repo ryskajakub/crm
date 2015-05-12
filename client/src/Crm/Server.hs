@@ -239,7 +239,7 @@ fetchMachinesInCompany companyId callback = JQ.ajax
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, MK.MachineKindData) -> Fay()) -- ^ callback
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, MK.MachineKindEnum) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
@@ -331,7 +331,7 @@ createMachine :: M.Machine
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
               -> Maybe M.MachineId
-              -> MK.MachineKindData
+              -> MK.MachineKindEnum
               -> Fay ()
               -> Fay ()
 createMachine machine companyId machineType contactPersonId linkedMachineId machineSpecific callback = ajax
@@ -393,7 +393,7 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
               -> Maybe M.MachineId -- ^ linked machine id
-              -> MK.MachineKindData
+              -> MK.MachineKindEnum
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax

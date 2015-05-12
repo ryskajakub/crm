@@ -209,14 +209,11 @@ startRouter appVar = let
             companyId = C.CompanyId companyIdInt
             machine' = (M.newMachine nowYMD)
             machine = case machineKind of
-              MK.CompressorSpecific _ -> machine'
-              MK.DryerSpecific _ -> machine' { M.mileagePerYear = 8760 }
+              MK.Compressor -> machine'
+              MK.Dryer -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "")
-            machineSpecific = case machineKind of
-              MK.CompressorSpecific _ -> MK.newCompressorSpecific
-              MK.DryerSpecific _ -> MK.newDryerSpecific
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> modify' $ 
-            D.MachineScreen $ MachineData machineQuadruple machineSpecific machineTypeTuple
+            D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
               (nowYMD, False) Nothing cps V.new Nothing otherMachines (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(

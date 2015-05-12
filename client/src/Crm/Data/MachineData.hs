@@ -22,7 +22,7 @@ import qualified Crm.Validation as V
 
 data MachineData = MachineData {
   machine :: (Machine, Text) ,
-  machineKindSpecific :: MachineKindData ,
+  machineKindSpecific :: MachineKindEnum ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
   contactPersonId :: Maybe ContactPersonId ,

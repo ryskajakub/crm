@@ -44,7 +44,6 @@ import Crm.Component.Form
 import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine, deletePhoto)
 import Crm.Helpers 
 import qualified Crm.Router as R
-import Crm.Page.MachineKind (compressorExtraRows, dryerExtraRows)
 import qualified Crm.Validation as V
 
 machineDetail :: Bool
@@ -53,7 +52,7 @@ machineDetail :: Bool
               -> C.CompanyId
               -> DP.DatePicker
               -> (M.Machine, Text)
-              -> MK.MachineKindData
+              -> MK.MachineKindEnum
               -> (MT.MachineType, [US.UpkeepSequence])
               -> M.MachineId
               -> YMD.YearMonthDay
@@ -171,7 +170,7 @@ machineNew :: R.CrmRouter
            -> Var D.AppState
            -> DP.DatePicker
            -> (M.Machine, Text)
-           -> MK.MachineKindData
+           -> MK.MachineKindEnum
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
@@ -200,7 +199,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text) -- ^ machine, text of the datepicker
-               -> MK.MachineKindData
+               -> MK.MachineKindEnum
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
@@ -211,7 +210,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> [(M.MachineId, M.Machine)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine', datePickerText) 
-    machineKindSpecific (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
+    _ (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
     contactPersons validation otherMachineId otherMachines = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -247,18 +246,6 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         in setMachineFull (newMachine, text')
     in DP.datePicker editing operationStartCalendar setDatePickerDate 
       setPickerOpenness displayedDate setDate
-
-  mkSetMachineSpecificData :: MK.MachineKindData -> Fay ()
-  mkSetMachineSpecificData mks = changeNavigationState (\md -> md { MD.machineKindSpecific = mks } )
-
-  setCompressor c = mkSetMachineSpecificData $ MK.CompressorSpecific c
-  setDryer d = mkSetMachineSpecificData $ MK.DryerSpecific d
-
-  machineKind = MT.kind machineType
-  -- extra check that machine type kind matches with machine specific data
-  machineSpecificRows = case (machineKindSpecific, machineKind) of
-    (MK.CompressorSpecific compressor, MK.CompressorSpecific _)  -> compressorExtraRows editing compressor setCompressor
-    (MK.DryerSpecific dryer, MK.DryerSpecific _) -> dryerExtraRows editing dryer setDryer
 
   validationErrorsGrid = case validation of
     V.Validation [] -> []
@@ -298,8 +285,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           editing
           ("Datum uvedení do provozu") 
           datePicker ] ++ (case MT.kind machineType of
-            MK.DryerSpecific _ -> []
-            MK.CompressorSpecific _ -> [
+            MK.Dryer -> []
+            MK.Compressor -> [
               row'
                 editing
                 "Úvodní stav motohodin"
@@ -346,7 +333,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         formRow
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
-            M.note = str } ) <=< eventString) editing)] ++ machineSpecificRows ++ extraRows ++ [
+            M.note = str } ) <=< eventString) editing)] ++ extraRows ++ [
         div' (class' "form-group") (buttonRow $ V.ok validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
