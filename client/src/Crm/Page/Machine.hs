@@ -257,7 +257,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     validation' -> [validationHtml $ V.messages validation']
   
   mkInputRow (efId, efDescription, theValue) = let
-    setExtraField string = return ()
+    setExtraField string = changeNavigationState $ \machineData -> let
+      updateTheExtraField (theSame @ (efId', efDescription', _)) = if efId == efId'
+        then (efId', efDescription', string)
+        else theSame
+      newExtraFields = map updateTheExtraField extraFields
+      in machineData { MD.extraFields = newExtraFields }
     in row'
       editing
       (pack $ MK.name efDescription)

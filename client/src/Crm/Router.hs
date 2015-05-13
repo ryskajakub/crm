@@ -224,8 +224,8 @@ startRouter appVar = let
             machineQuadruple = (machine, "")
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
             fetchExtraFieldSettings $ \efSettings -> let
-              extraFields = fromJust $ lookup machineKind efSettings
-              extraFieldsAdapted = (\(a,b) -> (a,b,unpack "")) `map` extraFields
+              extraFields' = fromJust $ lookup machineKind efSettings
+              extraFieldsAdapted = (\(a,b) -> (a,b,unpack "")) `map` extraFields'
               in modify' $ D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
                 (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound

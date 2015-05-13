@@ -15,7 +15,9 @@ import "fay-base" Prelude
 #endif
 
 newtype ExtraFieldId = ExtraFieldId { getExtraFieldId :: Int }
-#ifndef FAY
+#ifdef FAY
+  deriving Eq
+#else
   deriving (Generic, Typeable, Data, Show)
 #endif
 
