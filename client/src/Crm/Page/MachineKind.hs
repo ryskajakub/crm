@@ -72,13 +72,26 @@ machineKindSettings appVar editedEnum allSettings = let
       modifiedX = (fieldId, field { MK.name = string })
       newFields = start ++ [modifiedX] ++ rest
       in setNewSettings (editedEnum, newFields)
-    theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData)
+    theInput = div' (class' "col-md-7") $ editingInput True (SetValue $ MK.name extraFieldData)
       (eventString >=> setFieldName) True
+
+    removeButton = let
+      removeField = let
+        (start, _:rest) = splitAt index theEditedMachineKind
+        newSettings = start ++ rest
+        in setNewSettings (editedEnum, newSettings)
+      props = BTN.buttonProps {
+        BTN.bsStyle = Defined "danger" ,
+        BTN.onClick = Defined $ const removeField }
+      buttonLabel = "Odeber"
+      button = BTN.button' props buttonLabel
+      in B.col (B.mkColProps 2) button
 
     in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
       controls ,
       fieldLabel ,
-      theInput ]
+      theInput ,
+      removeButton ]
 
   submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings (return ())
 
