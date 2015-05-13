@@ -180,7 +180,8 @@ startRouter appVar = let
   ),(
     "extra-fields", const $ let
     in modify' $ D.ExtraFields MK.Compressor [(MK.Compressor, [
-      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Barva"), 
+      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Barva") , 
+      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Výkon") , 
       (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Oblíbenost")]), (MK.Dryer, [])]
   ),(
     "companies/:id", \params -> let

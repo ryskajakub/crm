@@ -41,14 +41,23 @@ machineKindSettings appVar editedEnum allSettings = let
 
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
 
-  displayRow (index, positionInOrdering, (extraFieldIdentification, extraFieldData)) = let
+  setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()
+  setNewSettings (key, newFields) = let
+    newAllSettings = (key, newFields) : filter (\(e,_) -> e /= key) allSettings
+    in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
 
-    downArrowLink = A.a''' (click $ return ()) G.arrowDown
+  displayRow (index, positionInOrdering, (_, extraFieldData)) = let
+
+    changeOrder :: Bool -> [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]
+    changeOrder down = let
+      (start, (y:x:rest)) = splitAt (if down then index else index - 1) theEditedMachineKind
+      in start ++ (x:y:rest)
+    downArrowLink = A.a''' (click $ setNewSettings (editedEnum, changeOrder True)) G.arrowDown
     downArrow = case positionInOrdering of
       Middle -> [downArrowLink]
       First -> [downArrowLink]
       _ -> []
-    upArrowLink = A.a''' (click $ return ()) G.arrowUp 
+    upArrowLink = A.a''' (click $ setNewSettings (editedEnum, changeOrder False)) G.arrowUp 
     upArrow = case positionInOrdering of
       Middle -> [upArrowLink]
       Last -> [upArrowLink]
@@ -60,9 +69,8 @@ machineKindSettings appVar editedEnum allSettings = let
       (start, (fieldId,field):rest) = splitAt index theEditedMachineKind
       modifiedX = (fieldId, field { MK.name = string })
       newFields = start ++ [modifiedX] ++ rest
-      newAllSettings = (editedEnum, newFields) : filter (\(e,_) -> e /= editedEnum) allSettings
-      in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
-    theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData) 
+      in setNewSettings (editedEnum, newFields)
+    theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData)
       (eventString >=> setFieldName) True
     in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
       controls ,
