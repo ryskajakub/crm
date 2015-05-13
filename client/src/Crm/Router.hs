@@ -32,7 +32,7 @@ module Crm.Router (
   extraFields ,
   editEmployee ) where
 
-import "fay-base" Data.Text (fromString, showInt, Text, (<>), unpack)
+import "fay-base" Data.Text (fromString, showInt, Text, (<>))
 import "fay-base" Prelude hiding (div, span) 
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)

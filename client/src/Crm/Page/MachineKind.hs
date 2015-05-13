@@ -6,9 +6,9 @@
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
+import "fay-base" Data.Text (fromString, pack, showInt, (<>))
 import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
+import "fay-base" Data.Var (Var)
 import "fay-base" Data.Maybe (fromJust)
 import "fay-base" FFI (Defined(Defined))
 
@@ -19,11 +19,9 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.BackboneRouter as BR
 
-import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.ExtraField as EF
 
-import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Helpers
 import Crm.Server (saveExtraFieldSettings)
@@ -45,8 +43,8 @@ machineKindSettings appVar editedEnum allSettings = let
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
 
   setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()
-  setNewSettings (key, newFields) = let
-    newAllSettings = (key, newFields) : filter (\(e,_) -> e /= key) allSettings
+  setNewSettings (key', newFields) = let
+    newAllSettings = (key', newFields) : filter (\(e,_) -> e /= key') allSettings
     in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
 
   displayRow (index, positionInOrdering, (_, extraFieldData)) = let
