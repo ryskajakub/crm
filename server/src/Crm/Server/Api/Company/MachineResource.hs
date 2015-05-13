@@ -26,6 +26,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.ContactPerson as CP
+import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe (toMaybe)
 
@@ -49,9 +50,9 @@ addMachine :: Connection
            -> MT.MyEither
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
-           -> MK.MachineKindEnum
+           -> [(EF.ExtraFieldId, String)]
            -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType contactPersonId linkedMachineId _ = do
+addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
   machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
@@ -79,6 +80,9 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       pgString serialNumber, pgString yearOfManufacture)
     sel1
   let machineId = head machineIds
+  liftIO $ forM_ extraFields $ \(extraFieldId, extraFieldValue) ->
+    runInsert connection extraFieldsTable
+      (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 machineId, pgString extraFieldValue) >> return ()
   return machineId -- todo safe
 
 listing :: ListHandler IdDependencies

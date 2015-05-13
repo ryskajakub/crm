@@ -82,4 +82,9 @@ create table extra_field_settings (
   id serial primary key ,
   kind integer not null ,
   order_ integer not null ,
-  name varchar (500) not null ) 
+  name varchar (500) not null );
+
+create table extra_fields (
+  extra_field_id integer not null ,
+  machine_id integer not null ,
+  value varchar (5000) not null );
