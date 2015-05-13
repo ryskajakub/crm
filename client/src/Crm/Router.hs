@@ -268,7 +268,7 @@ startRouter appVar = let
           machineId = M.MachineId machineId'
           in fetchMachine machineId
             (\(companyId, machine, machineTypeId, machineTypeTuple, 
-                machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData) ->
+                machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields') ->
               fetchMachinePhotos machineId $ \photos ->
                 let 
                   machineQuadruple = (machine, "")
@@ -276,7 +276,7 @@ startRouter appVar = let
                 in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
                   modify' $ D.MachineScreen $ MachineData
                     machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
-                      contactPersonId cps V.new otherMachineId otherMachines []
+                      contactPersonId cps V.new otherMachineId otherMachines extraFields'
                         (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound
   ),(
