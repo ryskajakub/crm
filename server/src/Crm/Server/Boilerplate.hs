@@ -27,6 +27,7 @@ import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
+import qualified Crm.Shared.ExtraField as EF
 import Crm.Shared.MyMaybe
 
 deriveAll ''C.Company "PFCompany"
@@ -185,4 +186,25 @@ instance JS.JSONSchema C.Coordinates where
 instance ToJSON C.Coordinates where
   toJSON = fromJust . showToFay
 instance FromJSON C.Coordinates where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema EF.ExtraFieldIdentification where
+  schema = gSchema
+instance ToJSON EF.ExtraFieldIdentification where
+  toJSON = fromJust . showToFay
+instance FromJSON EF.ExtraFieldIdentification where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema EF.ExtraFieldId where
+  schema = gSchema
+instance ToJSON EF.ExtraFieldId where
+  toJSON = fromJust . showToFay
+instance FromJSON EF.ExtraFieldId where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema MK.MachineKindSpecific where
+  schema = gSchema
+instance ToJSON MK.MachineKindSpecific where
+  toJSON = fromJust . showToFay
+instance FromJSON MK.MachineKindSpecific where
   parseJSON = fayInstance

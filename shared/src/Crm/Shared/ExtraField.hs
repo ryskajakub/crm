@@ -23,3 +23,6 @@ data ExtraFieldIdentification =
   ToBeAssigned | 
   Assigned {
     extraFieldId :: ExtraFieldId }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+#endif

@@ -410,7 +410,7 @@ saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, M
                        -> Fay ()
 saveExtraFieldSettings data' callback = ajax
   data'
-  (pack $ A.machineKind)
+  (pack $ A.machineKind ++ "/()")
   put
   (const callback)
 

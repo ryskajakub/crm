@@ -27,6 +27,7 @@ Library
     , Crm.Server.Api.PhotoMetaResource
     , Crm.Server.Api.PhotoResource
     , Crm.Server.Api.ContactPersonResource
+    , Crm.Server.Api.MachineKindResource
     , Crm.Server.Base
     , Crm.Server.Boilerplate
     , Crm.Server.DB
@@ -49,6 +50,7 @@ Library
     , Crm.Shared.UpkeepSequence
     , Crm.Shared.PhotoMeta
     , Crm.Shared.Photo
+    , Crm.Shared.ExtraField
 
   Build-depends:
       base >= 4.6 && < 4.8
