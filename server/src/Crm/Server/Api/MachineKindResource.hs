@@ -12,7 +12,8 @@ import Data.List (zip)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Applicative (liftA3)
-import Control.Monad (forM_)
+import Control.Monad (forM_, forM)
+import Control.Arrow (arr, first)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceId, get, update, remove)
 import qualified Rest.Schema as S
@@ -32,12 +33,25 @@ import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Shared.Api as A
 
 import TupleTH
+import Data.Tagged
 
 resource :: Resource Dependencies Dependencies () Void Void
 resource = mkResourceId {
   schema = S.noListing (S.unnamedSingle $ const ()) ,
   name = A.machineKind ,
+  get = Just getter ,
   update = Just updation }
+
+getter :: Handler Dependencies
+getter = mkConstHandler jsonO $ do
+  connection <- ask
+  let 
+    machineKindsEnums = fst `fmap` MK.machineKinds
+    kindDbReprs = (first $ arr MK.kindToDbRepr) `fmap` (machineKindsEnums `zip` machineKindsEnums)
+  liftIO $ forM kindDbReprs $ \(kindDbRepr, kind) -> do
+    fieldsForKind <- runQuery connection (extraFieldsPerKindQuery kindDbRepr)
+    let fieldsMapped = unTagged (convert fieldsForKind :: ExtraFieldSettingsMapped)
+    return (kind, fieldsMapped)
 
 updation :: Handler Dependencies
 updation = mkInputHandler jsonI $ \allSettings -> do

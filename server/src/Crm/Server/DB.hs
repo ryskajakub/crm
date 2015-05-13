@@ -47,6 +47,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  extraFieldsPerKindQuery ,
   otherMachinesInCompanyQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
@@ -85,6 +86,7 @@ module Crm.Server.DB (
   UpkeepSequenceMapped ,
   UpkeepMachineMapped ,
   PhotoMetaMapped ,
+  ExtraFieldSettingsMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -108,7 +110,7 @@ import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
 import Data.Time.Calendar (Day)
-import Data.List (intersperse)
+import Data.List (intersperse, sortBy)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4, sel6, upd6)
 import Data.ByteString.Lazy (ByteString)
 
@@ -125,6 +127,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
+import qualified Crm.Shared.ExtraField as EF
 
 import Crm.Server.Helpers (dayToYmd, maybeToNullable)
 
@@ -132,6 +135,7 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
 
 import TupleTH
+import Data.Tagged (Tagged(Tagged))
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8
@@ -320,6 +324,7 @@ type EmployeeMapped = (E.EmployeeId, E.Employee)
 type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
+type ExtraFieldSettingsMapped = Tagged () [(EF.ExtraFieldId, MK.MachineKindSpecific)]
 
 instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
@@ -358,6 +363,11 @@ instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
   convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
 instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
   convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
+instance ColumnToRecord [(Int, Int, Int, String)] ExtraFieldSettingsMapped where
+  convert = let
+    orderedList = sortBy $ \a b -> $(proj 4 2) a `compare` $(proj 4 2) b
+    mappedList = fmap $ \row -> (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
+    in Tagged . mappedList . orderedList
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
@@ -619,7 +629,13 @@ singleMachineTypeQuery machineTypeSid = proc () -> do
 machinesInUpkeepQuery :: Int -> Query UpkeepMachinesTable
 machinesInUpkeepQuery upkeepId = proc () -> do
   upkeepMachine <- join upkeepMachinesQuery -< pgInt4 upkeepId
-  returnA -< (upkeepMachine)
+  returnA -< upkeepMachine
+
+extraFieldsPerKindQuery :: Int -> Query ExtraFieldSettingsTable
+extraFieldsPerKindQuery machineKind = proc () -> do
+  extraFieldRow <- extraFieldSettingsQuery -< ()
+  restrict -< pgInt4 machineKind .== $(proj 4 1) extraFieldRow
+  returnA -< extraFieldRow
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]
