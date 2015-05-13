@@ -6,11 +6,10 @@ module Crm.Server.Api.MachineResource where
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4, pgString, pgDay)
 
-import Data.Tuple.All (sel2, sel1, sel3, sel5)
+import Data.Tuple.All (sel2, sel1, sel3)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
-import Control.Applicative (liftA3)
 import Control.Monad (forM_)
 
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
@@ -19,9 +18,6 @@ import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
 
 import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
@@ -49,7 +45,7 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, machineSpecificData :: MK.MachineKindEnum) -> 
+machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, _ :: MK.MachineKindEnum) -> 
     withConnId (\conn recordId -> do
 
   let 

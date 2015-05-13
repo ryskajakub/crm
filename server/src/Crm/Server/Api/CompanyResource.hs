@@ -26,7 +26,6 @@ import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkC
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Direction as DIR
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
@@ -52,8 +51,8 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinate
     (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ C.companyAddress newCompany,
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
     sel1
-  id <- singleRowOrColumn ids
-  return $ C.CompanyId id
+  id' <- singleRowOrColumn ids
+  return $ C.CompanyId id'
 
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ do

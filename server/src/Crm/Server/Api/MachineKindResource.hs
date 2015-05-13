@@ -4,30 +4,25 @@
 module Crm.Server.Api.MachineKindResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, pgString, pgDay)
-import Opaleye (runInsertReturning, runUpdate, runDelete, (./=), (.&&), pgBool)
-
-import Data.List (zip)
+import Opaleye.PGTypes (pgInt4, pgString)
+import Opaleye (runInsertReturning, runDelete, (./=), (.&&), pgBool)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
-import Control.Applicative (liftA3)
-import Control.Monad (forM_, forM)
+import Control.Monad (forM)
 import Control.Arrow (arr, first)
 
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceId, get, update, remove)
+import Rest.Resource (Resource, Void, schema, name, mkResourceId, get, update)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
+import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
 
 import qualified Crm.Shared.MachineKind as MK
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  withConnId, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
+import Crm.Server.Helpers 
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Core (nextServiceDate)
 
 import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Shared.Api as A
@@ -74,7 +69,7 @@ updation = mkInputHandler jsonI $ \allSettings -> do
   let keepIds = concat keepIdsNested
 
   -- delete all fields that were not in the request
-  liftIO $ runDelete connection extraFieldSettingsTable $ \field -> let
+  _ <- liftIO $ runDelete connection extraFieldSettingsTable $ \field -> let
     keepFieldEquations = (($(proj 4 0) field ./=) . pgInt4) `fmap` keepIds
     in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
   return ()

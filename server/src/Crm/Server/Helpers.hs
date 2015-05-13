@@ -52,9 +52,6 @@ import Data.Aeson.Types (FromJSON)
 import Data.Typeable (Typeable)
 
 import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.MachineKind as MK
 
 import Crm.Server.Types (IdDependencies)
 

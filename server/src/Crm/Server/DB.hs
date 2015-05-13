@@ -98,7 +98,7 @@ import Opaleye.Column (Column, Nullable)
 import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators (restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool, PGFloat8, pgDouble)
+import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool, PGFloat8)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
@@ -111,7 +111,7 @@ import Control.Monad.Trans.Except (ExceptT)
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
 import Data.Time.Calendar (Day)
 import Data.List (intersperse, sortBy)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, sel5, upd5, upd2, upd4, sel6, upd6)
+import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
 import Data.ByteString.Lazy (ByteString)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
@@ -712,7 +712,7 @@ deletePhoto :: Connection
             -> IO ()
 deletePhoto connection photoId = do
   let q = " delete from photos where id = ? "
-  execute connection q (Only photoId)
+  _ <- execute connection q (Only photoId)
   return ()
 
 singleRowOrColumn :: Monad m

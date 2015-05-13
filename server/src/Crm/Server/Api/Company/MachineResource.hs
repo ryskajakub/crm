@@ -51,7 +51,7 @@ addMachine :: Connection
            -> Maybe M.MachineId
            -> MK.MachineKindEnum
            -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
-addMachine connection machine companyId' machineType contactPersonId linkedMachineId machineSpecificData = do
+addMachine connection machine companyId' machineType contactPersonId linkedMachineId _ = do
   machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do

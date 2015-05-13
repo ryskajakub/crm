@@ -13,7 +13,6 @@ import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
 import Control.Monad.IO.Class (liftIO)
 
 import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
 import Crm.Server.Types
 import Crm.Server.DB
