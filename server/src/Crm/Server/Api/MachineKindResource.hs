@@ -5,7 +5,7 @@ module Crm.Server.Api.MachineKindResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4, pgString, pgDay)
-import Opaleye (runInsert, runUpdate)
+import Opaleye (runInsertReturning, runUpdate, runDelete, (./=), (.&&), pgBool)
 
 import Data.List (zip)
 
@@ -63,9 +63,18 @@ updation = mkInputHandler jsonI $ \allSettings -> do
         allFields = (Nothing, pgInt4 $ MK.kindToDbRepr machineKindEnum, pgInt4 index, pgString $ MK.name field)
         in case fieldId of
           EF.ToBeAssigned -> do
-            runInsert connection extraFieldSettingsTable allFields
-            return ()
-          EF.Assigned assignedId ->
-            prepareUpdate extraFieldSettingsTable (const $ allFields) (EF.getExtraFieldId assignedId) connection
-      in forM_ ([0..] `zip` extraFields) insertField
-  forM_ allSettings insertSetting
+            newIds <- runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))
+            return $ (head newIds :: Int)
+          EF.Assigned assignedId -> do
+            let extraFieldId = EF.getExtraFieldId assignedId
+            prepareUpdate extraFieldSettingsTable (const $ allFields) extraFieldId connection
+            return extraFieldId
+      in forM ([0..] `zip` extraFields) insertField
+  keepIdsNested <- forM allSettings insertSetting
+  let keepIds = concat keepIdsNested
+
+  -- delete all fields that were not in the request
+  liftIO $ runDelete connection extraFieldSettingsTable $ \field -> let
+    keepFieldEquations = (($(proj 4 0) field ./=) . pgInt4) `fmap` keepIds
+    in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
+  return ()

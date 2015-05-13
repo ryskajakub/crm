@@ -17,6 +17,7 @@ import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Button as BTN
+import qualified HaskellReact.BackboneRouter as BR
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
@@ -93,7 +94,7 @@ machineKindSettings appVar editedEnum allSettings = let
       theInput ,
       removeButton ]
 
-  submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings (return ())
+  submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
 
   addAnotherFieldButton = let
     addField = let
