@@ -16,6 +16,7 @@ import Crm.Shared.PhotoMeta
 import Crm.Shared.Upkeep
 import Crm.Shared.UpkeepMachine
 import Crm.Shared.Employee
+import Crm.Shared.ExtraField
 
 import Crm.Component.DatePicker
 import qualified Crm.Validation as V
@@ -30,6 +31,7 @@ data MachineData = MachineData {
   validation :: V.Validation ,
   otherMachineId :: Maybe MachineId ,
   otherMachines :: [(MachineId, Machine)] ,
+  extraFields :: [(ExtraFieldId, MachineKindSpecific, String)] ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {

@@ -64,13 +64,15 @@ machineDetail :: Bool
               -> V.Validation
               -> Maybe M.MachineId
               -> [(M.MachineId, M.Machine)]
+              -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, 
     datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v otherMachineId om =
+    contactPersonId contactPersons v otherMachineId om extraFields =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v otherMachineId om []
+      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid 
+      contactPersonId contactPersons v otherMachineId om extraFields
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -155,8 +157,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       setEditing :: Bool -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 (Left (MD.MachineDetail d e editing' f g i j)))
+          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
+            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
           _ -> D.navigation appState })
       editButtonRow =
         div' (class' "col-md-3") $
@@ -180,16 +182,14 @@ machineNew :: R.CrmRouter
            -> V.Validation
            -> Maybe M.MachineId
            -> [(M.MachineId, M.Machine)]
+           -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific 
-    companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om = 
+    companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om extraFields = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', datePickerText) 
       machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
     where
-      extraFields = [
-        (EF.ExtraFieldId 1, MK.MachineKindSpecific $ unpack "Barva", unpack "červená") ,
-        (EF.ExtraFieldId 2, MK.MachineKindSpecific $ unpack "Velikost", unpack "5 kg") ]
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
