@@ -14,6 +14,8 @@ import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
+import qualified HaskellReact.Tag.Hyperlink as A
+import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
@@ -39,8 +41,20 @@ machineKindSettings appVar editedEnum allSettings = let
 
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
 
-  displayRow (index, _, (extraFieldIdentification, extraFieldData)) = let
-    controls = div' (class' "col-md-1") ""
+  displayRow (index, positionInOrdering, (extraFieldIdentification, extraFieldData)) = let
+
+    downArrowLink = A.a''' (click $ return ()) G.arrowDown
+    downArrow = case positionInOrdering of
+      Middle -> [downArrowLink]
+      First -> [downArrowLink]
+      _ -> []
+    upArrowLink = A.a''' (click $ return ()) G.arrowUp 
+    upArrow = case positionInOrdering of
+      Middle -> [upArrowLink]
+      Last -> [upArrowLink]
+      _ -> []
+
+    controls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow
     fieldLabel = label' (class'' ["control-label", "col-md-2"]) ("Pole " <> showInt index)
     setFieldName string = let
       (start, (fieldId,field):rest) = splitAt index theEditedMachineKind
@@ -51,8 +65,8 @@ machineKindSettings appVar editedEnum allSettings = let
     theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData) 
       (eventString >=> setFieldName) True
     in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
-      fieldLabel ,
       controls ,
+      fieldLabel ,
       theInput ]
 
   lastIndex = length theEditedMachineKind - 1
