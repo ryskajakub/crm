@@ -16,6 +16,7 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Tag.Hyperlink as A
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Button as BTN
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
@@ -81,6 +82,13 @@ machineKindSettings appVar editedEnum allSettings = let
 
   submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings (return ())
 
+  addAnotherFieldButton = let
+    addField = return ()
+    props =  BTN.buttonProps { BTN.onClick = Defined $ const addField }
+    buttonLabel = "Přidat políčko"
+    in BTN.button' props buttonLabel
+  addAnotherRow = formRow addAnotherFieldButton ""
+
   lastIndex = length theEditedMachineKind - 1
   assignPosition (i, field) = if 
     | i == 0 && i == lastIndex -> (i, Single, field)
@@ -91,4 +99,4 @@ machineKindSettings appVar editedEnum allSettings = let
   inputFieldRows = map displayRow fieldsWithPositions
 
   header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
-  in div [B.grid header, div' (class'' ["container", "form-horizontal"]) $ (select : inputFieldRows) ++ [B.row submitRow]]
+  in div [B.grid header, div' (class'' ["container", "form-horizontal"]) $ (select : inputFieldRows) ++ [B.row addAnotherRow ,B.row submitRow]]

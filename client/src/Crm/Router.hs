@@ -180,7 +180,7 @@ startRouter appVar = let
   ),(
     "extra-fields", const $ fetchExtraFieldSettings $ \list -> let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
-      withAssignedIds = map (\(enum,fields) -> (enum, makeIdsAssigned fields)) list
+      withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
       in modify' $ D.ExtraFields MK.Compressor withAssignedIds
   ),(
     "companies/:id", \params -> let
