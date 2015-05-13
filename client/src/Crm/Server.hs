@@ -342,11 +342,11 @@ createMachine :: M.Machine
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
               -> Maybe M.MachineId
-              -> MK.MachineKindEnum
+              -> [(EF.ExtraFieldId, String)]
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId linkedMachineId machineSpecific callback = ajax
-  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, machineSpecific)
+createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = ajax
+  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, (\(a,b) -> (a,pack b)) `map` extraFields)
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
   post
   (const callback)

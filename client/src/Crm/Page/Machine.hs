@@ -190,10 +190,11 @@ machineNew router appState datePickerCalendar (machine', datePickerText) machine
       buttonRow appState datePickerCalendar (machine', datePickerText) 
       machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
     where
+      extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId otherMachineId machineSpecific
+      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId otherMachineId extraFieldsForServer
         (R.navigate (R.companyDetail companyId) router)
       buttonRow validationOk = saveButtonRow' validationOk "Vytvoř" saveNewMachine
 
