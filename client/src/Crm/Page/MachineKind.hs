@@ -26,10 +26,6 @@ import Crm.Component.Form
 
 data FieldPosition = First | Last | Single | Middle
 
-mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
-mkSetMachineType appVar modifiedMachineType = 
-  D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
-
 
 machineKindSettings :: Var D.AppState
                     -> MK.MachineKindEnum
@@ -44,15 +40,15 @@ machineKindSettings appVar editedEnum allSettings = let
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
 
   displayRow (index, _, (extraFieldIdentification, extraFieldData)) = let
-    fieldLabel = label' (class'' ["control-label", "col-md-1"]) ("Pole " <> showInt index)
-    controls = div ""
+    controls = div' (class' "col-md-1") ""
+    fieldLabel = label' (class'' ["control-label", "col-md-2"]) ("Pole " <> showInt index)
     setFieldName string = let
       (start, (fieldId,field):rest) = splitAt index theEditedMachineKind
       modifiedX = (fieldId, field { MK.name = string })
       newFields = start ++ [modifiedX] ++ rest
       newAllSettings = (editedEnum, newFields) : filter (\(e,_) -> e /= editedEnum) allSettings
       in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
-    theInput = editingInput True (SetValue $ MK.name extraFieldData) 
+    theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData) 
       (eventString >=> setFieldName) True
     in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
       fieldLabel ,
@@ -69,4 +65,4 @@ machineKindSettings appVar editedEnum allSettings = let
   inputFieldRows = map displayRow fieldsWithPositions
 
   header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
-  in div [B.grid header, B.grid $ select : inputFieldRows]
+  in div [B.grid header, div' (class'' ["container", "form-horizontal"]) $ select : inputFieldRows]
