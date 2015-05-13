@@ -15,6 +15,8 @@ module Crm.Server (
   updateEmployee ,
   updateMachineType , 
 
+  saveExtraFieldSettings ,
+
   uploadPhotoData ,
   uploadPhotoMeta ,
 
@@ -64,6 +66,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.Direction as DIR
+import qualified Crm.Shared.ExtraField as EF
 import Crm.Shared.MyMaybe
 
 import Crm.Helpers (File, rmap)
@@ -399,6 +402,15 @@ updateMachine :: M.MachineId -- ^ machine id
 updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax
   (machine, toMyMaybe linkedMachineId, machineSpecificData)
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
+  put
+  (const callback)
+
+saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
+                       -> Fay ()
+                       -> Fay ()
+saveExtraFieldSettings data' callback = ajax
+  data'
+  (pack $ A.machineKind)
   put
   (const callback)
 

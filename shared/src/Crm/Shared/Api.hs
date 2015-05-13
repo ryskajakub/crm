@@ -16,6 +16,7 @@ module Crm.Shared.Api (
   autocompleteManufacturer ,
   byName, byId ,
   map' ,
+  machineKind ,
   employees ) where
 
 #ifndef FAY
@@ -55,6 +56,9 @@ planned = "planned"
 
 autocomplete :: String
 autocomplete = "autocomplete"
+
+machineKind :: String
+machineKind = "machine-kind"
 
 autocompleteManufacturer :: String
 autocompleteManufacturer = "autocomplete-manufacturer"

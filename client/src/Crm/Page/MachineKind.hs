@@ -24,6 +24,7 @@ import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Router as R
 import qualified Crm.Data.Data as D
 import Crm.Helpers
+import Crm.Server (saveExtraFieldSettings)
 import Crm.Component.Form
 
 data FieldPosition = First | Last | Single | Middle
@@ -72,10 +73,13 @@ machineKindSettings appVar editedEnum allSettings = let
       in setNewSettings (editedEnum, newFields)
     theInput = div' (class' "col-md-9") $ editingInput True (SetValue $ MK.name extraFieldData)
       (eventString >=> setFieldName) True
+
     in div' ((class' "form-group") { key = Defined $ "key-" <> showInt index }) [
       controls ,
       fieldLabel ,
       theInput ]
+
+  submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings (return ())
 
   lastIndex = length theEditedMachineKind - 1
   assignPosition (i, field) = if 
@@ -87,4 +91,4 @@ machineKindSettings appVar editedEnum allSettings = let
   inputFieldRows = map displayRow fieldsWithPositions
 
   header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
-  in div [B.grid header, div' (class'' ["container", "form-horizontal"]) $ select : inputFieldRows]
+  in div [B.grid header, div' (class'' ["container", "form-horizontal"]) $ (select : inputFieldRows) ++ [B.row submitRow]]
