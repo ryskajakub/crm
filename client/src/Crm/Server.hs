@@ -404,7 +404,7 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
               -> Maybe M.MachineId -- ^ linked machine id
-              -> MK.MachineKindEnum
+              -> [(EF.ExtraFieldId, String)]
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax

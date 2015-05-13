@@ -165,7 +165,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           BTN.button'
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
             "Jdi do editačního módu"
-      editMachineAction = updateMachine machineId machine otherMachineId machineSpecific (setEditing False)
+      extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
+      editMachineAction = updateMachine machineId machine otherMachineId extraFieldsForServer (setEditing False)
       saveButtonRow'' validationOk = saveButtonRow' validationOk "Edituj" editMachineAction
       button = if editing then saveButtonRow'' else (const editButtonRow)
 

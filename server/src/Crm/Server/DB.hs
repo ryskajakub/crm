@@ -70,6 +70,8 @@ module Crm.Server.DB (
   machinePhotosByMachineId ,
   photoMetaQuery ,
   machineManufacturersQuery ,
+  -- manipulations
+  insertExtraFields ,
   -- helpers
   withConnection ,
   singleRowOrColumn ,
@@ -104,11 +106,13 @@ import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
+import Opaleye (runInsert)
 
 import Control.Monad.Error.Class (throwError)
 import Control.Arrow (returnA)
 import Control.Applicative ((<*>), pure)
 import Control.Monad.Trans.Except (ExceptT)
+import Control.Monad (forM_)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
 import Data.Time.Calendar (Day)
@@ -701,6 +705,12 @@ withConnection runQ = do
   result <- runQ conn
   close conn
   return result
+
+insertExtraFields :: M.MachineId -> [(EF.ExtraFieldId, String)] -> Connection -> IO ()
+insertExtraFields machineId extraFields connection = 
+  forM_ extraFields $ \(extraFieldId, extraFieldValue) ->
+    runInsert connection extraFieldsTable
+      (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 $ M.getMachineId machineId, pgString extraFieldValue) >> return ()
 
 getMachinePhoto :: Connection
                 -> Int

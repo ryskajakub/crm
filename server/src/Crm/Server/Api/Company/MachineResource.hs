@@ -79,11 +79,9 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       pgInt4 initialMileage, pgInt4 mileagePerYear, pgString note, 
       pgString serialNumber, pgString yearOfManufacture)
     sel1
-  let machineId = head machineIds
-  liftIO $ forM_ extraFields $ \(extraFieldId, extraFieldValue) ->
-    runInsert connection extraFieldsTable
-      (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 machineId, pgString extraFieldValue) >> return ()
-  return machineId -- todo safe
+  let machineId = head machineIds -- todo safe
+  liftIO $ insertExtraFields (M.MachineId machineId) extraFields connection
+  return machineId 
 
 listing :: ListHandler IdDependencies
 listing = mkListing jsonO $ const $ withConnId $ \connection companyId -> do

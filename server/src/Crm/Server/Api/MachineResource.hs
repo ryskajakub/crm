@@ -23,8 +23,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, deleteRows',
-  withConnId, ymdToDay, maybeToNullable, createDeletion, prepareUpdate)
+import Crm.Server.Helpers 
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
@@ -45,8 +44,8 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, _ :: MK.MachineKindEnum) -> 
-    withConnId (\conn recordId -> do
+machineUpdate = mkInputHandler (jsonI . jsonO) $ \(machine', linkedMachineId, extraFields) -> 
+    withConnId $ \conn recordId -> do
 
   let 
     machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_,_) =
@@ -59,7 +58,10 @@ machineUpdate = mkInputHandler (jsonI . jsonO) (\(machine', linkedMachineId, _ :
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
   liftIO $ forM_ [updateMachine] (\updation -> updation recordId conn)
-  return ()))
+  liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable recordId conn
+  liftIO $ insertExtraFields (M.MachineId recordId) extraFields conn
+
+  return ()
 
 machineSingle :: Handler IdDependencies
 machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
