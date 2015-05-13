@@ -35,6 +35,7 @@ import qualified Crm.Shared.Photo as P
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Shared.MachineKind as MK
 
 import qualified Crm.Data.MachineData as MD
@@ -69,7 +70,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     contactPersonId contactPersons v otherMachineId om =
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v otherMachineId om
+      datePickerText) machineSpecific machineTypeTuple extraRows extraGrid contactPersonId contactPersons v otherMachineId om []
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
       extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
@@ -184,8 +185,11 @@ machineNew router appState datePickerCalendar (machine', datePickerText) machine
     companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om = 
   machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', datePickerText) 
-      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om
+      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
     where
+      extraFields = [
+        (EF.ExtraFieldId 1, MK.MachineKindSpecific $ unpack "Barva", unpack "červená") ,
+        (EF.ExtraFieldId 2, MK.MachineKindSpecific $ unpack "Velikost", unpack "5 kg") ]
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
@@ -208,10 +212,11 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> V.Validation
                -> Maybe M.MachineId
                -> [(M.MachineId, M.Machine)]
+               -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine', datePickerText) 
     _ (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
-    contactPersons validation otherMachineId otherMachines = let
+    contactPersons validation otherMachineId otherMachines extraFields = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -250,6 +255,15 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
   validationErrorsGrid = case validation of
     V.Validation [] -> []
     validation' -> [validationHtml $ V.messages validation']
+  
+  mkInputRow (efId, efDescription, theValue) = let
+    setExtraField string = return ()
+    in row'
+      editing
+      (pack $ MK.name efDescription)
+      (SetValue theValue)
+      (eventString >=> setExtraField)
+  kindSpecificRows = map mkInputRow extraFields
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -332,8 +346,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]) ++ [
         formRow
           "Poznámka" 
-          (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' { 
-            M.note = str } ) <=< eventString) editing)] ++ extraRows ++ [
+          (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
+            M.note = str } ) <=< eventString) editing)] ++ kindSpecificRows ++ extraRows ++ [
         div' (class' "form-group") (buttonRow $ V.ok validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
