@@ -20,7 +20,6 @@ module Crm.Server (
   uploadPhotoData ,
   uploadPhotoMeta ,
 
-  fetchExtraFields ,
   fetchExtraFieldSettings ,
   fetchMachine , 
   fetchMachinePhotos ,
@@ -240,14 +239,6 @@ fetchMachinesInCompany companyId callback = JQ.ajax
   (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines))
   (callback . items)
   noopOnError
-
-fetchExtraFields :: Either M.MachineId MK.MachineKindEnum
-                 -> ([(EF.ExtraFieldId, MK.MachineKindSpecific, String)] -> Fay ())
-                 -> Fay ()
-fetchExtraFields maybeMachineId callback =
-  callback [
-    (EF.ExtraFieldId 1, MK.MachineKindSpecific $ "Barva", "červená") ,
-    (EF.ExtraFieldId 2, MK.MachineKindSpecific $ "Velikost", "5 kg") ]
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
                         -> Fay ()

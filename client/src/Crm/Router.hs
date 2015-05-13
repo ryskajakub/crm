@@ -60,7 +60,7 @@ import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees, fetchExtraFields,
+import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
   fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById, fetchExtraFieldSettings,
   fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap, fetchMachinesInCompany)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
@@ -222,10 +222,9 @@ startRouter appVar = let
               MK.Compressor -> machine'
               MK.Dryer -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "")
-          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-            fetchExtraFields (Right machineKind) $ \extraFieldsData -> modify' $ 
-              D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
-                (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsData (Right $ MachineNew companyId maybeMachineTypeId)
+          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> modify' $
+            D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
+              (nowYMD, False) Nothing cps V.new Nothing otherMachines [] (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
@@ -272,11 +271,10 @@ startRouter appVar = let
                   machineQuadruple = (machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-                  fetchExtraFields (Left machineId) $ \extraFieldsData ->
-                    modify' $ D.MachineScreen $ MachineData
-                      machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False) 
-                        contactPersonId cps V.new otherMachineId otherMachines extraFieldsData
-                          (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
+                  modify' $ D.MachineScreen $ MachineData
+                    machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
+                      contactPersonId cps V.new otherMachineId otherMachines []
+                        (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound
   ),(
     "planned", const $
