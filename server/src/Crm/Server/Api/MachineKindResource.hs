@@ -5,6 +5,7 @@ module Crm.Server.Api.MachineKindResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4, pgString, pgDay)
+import Opaleye (runInsert, runUpdate)
 
 import Data.List (zip)
 
@@ -39,12 +40,18 @@ resource = mkResourceId {
   update = Just updation }
 
 updation :: Handler Dependencies
-updation = mkInputHandler jsonI $ \allSettings -> let 
-  s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
-  insertSetting (machineKindEnum, extraFields) = let
-    insertField (index, (fieldId, field)) =
-      case fieldId of
-        EF.ToBeAssigned -> return ()
-        EF.Assigned assignedId -> return ()
-    in forM_ ([0..] `zip` extraFields) insertField
-  in forM_ allSettings insertSetting
+updation = mkInputHandler jsonI $ \allSettings -> do
+  connection <- ask 
+  let
+    s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
+    insertSetting (machineKindEnum, extraFields) = let
+      insertField (index, (fieldId, field)) = liftIO $ let
+        allFields = (Nothing, pgInt4 $ MK.kindToDbRepr machineKindEnum, pgInt4 index, pgString $ MK.name field)
+        in case fieldId of
+          EF.ToBeAssigned -> do
+            runInsert connection extraFieldSettingsTable allFields
+            return ()
+          EF.Assigned assignedId ->
+            prepareUpdate extraFieldSettingsTable (const $ allFields) (EF.getExtraFieldId assignedId) connection
+      in forM_ ([0..] `zip` extraFields) insertField
+  forM_ allSettings insertSetting

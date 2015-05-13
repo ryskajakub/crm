@@ -23,7 +23,9 @@ module Crm.Server.DB (
   machinePhotosTable ,
   photosMetaTable ,
   contactPersonsTable ,
+  extraFieldSettingsTable ,
   -- basic queries
+  extraFieldSettingsQuery ,
   companiesQuery ,
   machinesQuery ,
   machineTypesQuery ,
@@ -170,6 +172,16 @@ type PhotosMetaTable = (DBInt, DBText, DBText)
 
 type MachinePhotosTable = (DBInt, DBInt)
 
+type ExtraFieldSettingsTable = (DBInt, DBInt, DBInt, DBText)
+type ExtraFieldSettingsWriteTable = (Maybe DBInt, DBInt, DBInt, DBText)
+
+extraFieldSettingsTable :: Table ExtraFieldSettingsWriteTable ExtraFieldSettingsTable
+extraFieldSettingsTable = Table "extra_field_settings" $ p4 (
+  optional "id" ,
+  required "kind" ,
+  required "order_" ,
+  required "name" )
+
 photosMetaTable :: Table PhotosMetaTable PhotosMetaTable
 photosMetaTable = Table "photos_meta" $ p3 (
   required "photo_id" ,
@@ -251,6 +263,9 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "repetition" ,
   required "machine_type_id" ,
   required "one_time" )
+
+extraFieldSettingsQuery :: Query ExtraFieldSettingsTable
+extraFieldSettingsQuery = queryTable extraFieldSettingsTable
 
 contactPersonsQuery :: Query ContactPersonsTable
 contactPersonsQuery = queryTable contactPersonsTable

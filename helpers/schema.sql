@@ -77,3 +77,9 @@ create table upkeep_sequences (
   machine_type_id integer references machine_types (id) ,
   one_time boolean not null ,
   primary key (display_ordering, machine_type_id) );
+
+create table extra_field_settings (
+  id serial primary key ,
+  kind integer not null ,
+  order_ integer not null ,
+  name varchar (500) not null ) 
