@@ -83,7 +83,9 @@ machineKindSettings appVar editedEnum allSettings = let
   submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings (return ())
 
   addAnotherFieldButton = let
-    addField = return ()
+    addField = let
+      newField = (EF.ToBeAssigned, MK.newMachineKindSpecific)
+      in setNewSettings (editedEnum, theEditedMachineKind ++ [newField])
     props =  BTN.buttonProps { BTN.onClick = Defined $ const addField }
     buttonLabel = "Přidat políčko"
     in BTN.button' props buttonLabel

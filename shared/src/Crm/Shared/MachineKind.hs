@@ -41,3 +41,6 @@ data MachineKindSpecific = MachineKindSpecific {
 #else
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+newMachineKindSpecific :: MachineKindSpecific
+newMachineKindSpecific = MachineKindSpecific ""
