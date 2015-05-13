@@ -61,7 +61,7 @@ import qualified Crm.Data.Data as D
 import qualified Crm.Data.UpkeepData as UD
 import qualified Crm.Data.EmployeeData as ED
 import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
-  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById,
+  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById, fetchExtraFieldSettings,
   fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap, fetchMachinesInCompany)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Validation as V
@@ -178,11 +178,10 @@ startRouter appVar = let
         modify appVar (\appState -> appState { D.navigation = 
           D.FrontPage (order, direction) data' }))
   ),(
-    "extra-fields", const $ let
-    in modify' $ D.ExtraFields MK.Compressor [(MK.Compressor, [
-      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Barva") , 
-      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Výkon") , 
-      (EF.ToBeAssigned, MK.MachineKindSpecific $ unpack "Oblíbenost")]), (MK.Dryer, [])]
+    "extra-fields", const $ fetchExtraFieldSettings $ \list -> let
+      makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
+      withAssignedIds = map (\(enum,fields) -> (enum, makeIdsAssigned fields)) list
+      in modify' $ D.ExtraFields MK.Compressor withAssignedIds
   ),(
     "companies/:id", \params -> let
       cId = head params
