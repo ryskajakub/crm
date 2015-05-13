@@ -32,7 +32,7 @@ module Crm.Router (
   extraFields ,
   editEmployee ) where
 
-import "fay-base" Data.Text (fromString, showInt, Text, (<>))
+import "fay-base" Data.Text (fromString, showInt, Text, (<>), unpack)
 import "fay-base" Prelude hiding (div, span) 
 import "fay-base" Data.Var (Var, modify, get)
 import "fay-base" Data.Function (fmap)
@@ -222,9 +222,12 @@ startRouter appVar = let
               MK.Compressor -> machine'
               MK.Dryer -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "")
-          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> modify' $
-            D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
-              (nowYMD, False) Nothing cps V.new Nothing otherMachines [] (Right $ MachineNew companyId maybeMachineTypeId)
+          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
+            fetchExtraFieldSettings $ \efSettings -> let
+              extraFields = fromJust $ lookup machineKind efSettings
+              extraFieldsAdapted = (\(a,b) -> (a,b,unpack "")) `map` extraFields
+              in modify' $ D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
+                (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound
   ),(
     "companies/:id/new-maintenance", \params ->
