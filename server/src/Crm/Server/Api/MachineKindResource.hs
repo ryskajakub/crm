@@ -45,7 +45,9 @@ getter = mkConstHandler jsonO $ do
     kindDbReprs = (first $ arr MK.kindToDbRepr) `fmap` (machineKindsEnums `zip` machineKindsEnums)
   liftIO $ forM kindDbReprs $ \(kindDbRepr, kind) -> do
     fieldsForKind <- runQuery connection (extraFieldsPerKindQuery kindDbRepr)
-    let fieldsMapped = unTagged (convert fieldsForKind :: ExtraFieldSettingsMapped)
+    let
+      convert' row = (convert row :: ExtraFieldSettingsMapped)
+      fieldsMapped = convert' `fmap` fieldsForKind
     return (kind, fieldsMapped)
 
 updation :: Handler Dependencies

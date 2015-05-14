@@ -49,6 +49,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  extraFieldsForMachineQuery ,
   machineIdsHavingKind ,
   extraFieldsPerKindQuery ,
   otherMachinesInCompanyQuery ,
@@ -92,6 +93,7 @@ module Crm.Server.DB (
   UpkeepMachineMapped ,
   PhotoMetaMapped ,
   ExtraFieldSettingsMapped ,
+  ExtraFieldMapped ,
   MachineMapped ) where
 
 import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
@@ -342,7 +344,8 @@ type EmployeeMapped = (E.EmployeeId, E.Employee)
 type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
-type ExtraFieldSettingsMapped = Tagged () [(EF.ExtraFieldId, MK.MachineKindSpecific)]
+type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
+type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, String)
 
 instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
@@ -381,11 +384,10 @@ instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
   convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
 instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
   convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
-instance ColumnToRecord [(Int, Int, Int, String)] ExtraFieldSettingsMapped where
-  convert = let
-    orderedList = sortBy $ \a b -> $(proj 4 2) a `compare` $(proj 4 2) b
-    mappedList = fmap $ \row -> (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
-    in Tagged . mappedList . orderedList
+instance ColumnToRecord (Int, Int, Int, String) ExtraFieldSettingsMapped where
+  convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
+instance ColumnToRecord (Int, Int, String) ExtraFieldMapped where
+  convert tuple = (EF.ExtraFieldId $ $(proj 3 0) tuple, M.MachineId $ $(proj 3 1) tuple, $(proj 3 2) tuple)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
@@ -662,6 +664,14 @@ machineIdsHavingKind machineTypeKind = proc () -> do
   machineRow <- machinesQuery -< ()
   restrict -< $(proj 4 0) machineTypeRow .== $(proj 11 3) machineRow
   returnA -< $(proj 11 0) machineRow
+
+extraFieldsForMachineQuery :: Int -> Query (ExtraFieldsTable, ExtraFieldSettingsTable)
+extraFieldsForMachineQuery machineId = proc () -> do
+  machineRow <- join machinesQuery -< pgInt4 machineId
+  extraFieldRow <- extraFieldsQuery -< ()
+  restrict -< $(proj 3 1) extraFieldRow .== $(proj 11 0) machineRow
+  extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
+  returnA -< (extraFieldRow, extraFieldSettingRow)
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]

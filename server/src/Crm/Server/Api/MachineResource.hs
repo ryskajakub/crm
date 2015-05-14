@@ -76,7 +76,13 @@ machineSingle = mkConstHandler jsonO $ withConnId $ \conn id'' -> do
   upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
   upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine $ M.getMachineId machineId)
   today' <- liftIO today
+  extraFields <- liftIO $ runQuery conn (extraFieldsForMachineQuery $ M.getMachineId machineId)
   let 
+    extraFieldsConvert (ef', efs') = let
+      ef = convert $ ef' :: ExtraFieldMapped
+      efs = convert $ efs' :: ExtraFieldSettingsMapped
+      in ($(proj 3 0) ef, snd efs, $(proj 3 2) ef)
+    extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepsData = fmap (\((upkeep', upkeepMachine'), maybeEmployee') -> let
       maybeEmployee = convert maybeEmployee' :: MaybeEmployeeMapped
@@ -90,7 +96,7 @@ machineSingle = mkConstHandler jsonO $ withConnId $ \conn id'' -> do
     nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, ([]::[Int])))
+    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO) (const $ do
