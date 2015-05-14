@@ -10,11 +10,17 @@ import Data.Time.Calendar (Day, addDays)
 
 import Safe.Foldable (minimumMay)
 
+-- | Signs, if the next service date is computed from the past upkeeps, or if the next planned service is taken.
+data Planned = 
+  Planned | -- ^ day taken from next planned service
+  Computed -- ^ day computed from the past upkeeps and into operation
+  deriving (Eq, Show)
+
 nextServiceDate :: M.Machine -- ^ machine for which the next service date is computed
                 -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
                 -> [U.Upkeep] -- ^ upkeeps belonging to this machine
                 -> Day -- ^ today
-                -> Day -- ^ computed next service date for this machine
+                -> (Day, Planned) -- ^ computed next service date for this machine
 nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
@@ -46,5 +52,5 @@ nextServiceDate machine sequences upkeeps today = let
     [] -> Nothing
     openUpkeeps -> fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps
   in case earliestPlannedUpkeep of
-    Just plannedUpkeepDay -> plannedUpkeepDay
-    Nothing -> computeFromSequence
+    Just plannedUpkeepDay -> (plannedUpkeepDay, Planned)
+    Nothing -> (computeFromSequence, Computed)

@@ -89,7 +89,20 @@ Test-Suite tests
   build-depends:
       base
     , mtl >= 2.0 && < 2.3
-    , rest-types == 1.11.1
+
+    , rest-types
+    , rest-core == 0.35.*
+    , rest-types
+    , rest-wai
+    , wai >= 2.1 && < 3.1
+    , warp >= 2.1 && < 3.1
+
+    , lens
+    , fay
+    , product-profunctors
+    , json-schema
+    , tuple
+    , tuple-th
     , transformers
     , opaleye == 0.3
     , tasty >= 0.7
@@ -104,6 +117,10 @@ Test-Suite tests
     , random-shuffle
     , safe
     , Unique
+    , postgresql-simple
+    , aeson
+    , text-icu
+    , bytestring
 
 Executable run-server
   default-language:  Haskell2010

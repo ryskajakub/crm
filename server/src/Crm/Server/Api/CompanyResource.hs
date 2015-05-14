@@ -91,7 +91,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)
-        nextServiceDay = nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
+        nextServiceDay = fst $ nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
       return $ dayToYmd nextServiceDay)
     return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
   return $ sortBy (\r1 r2 -> case order of

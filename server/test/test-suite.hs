@@ -3,7 +3,7 @@
 
 module Main where
 
-import Crm.Server.Core (nextServiceDate)
+import Crm.Server.Core (nextServiceDate, Planned(..))
 import Crm.Server.Helpers
 
 import qualified Crm.Shared.Upkeep as U
@@ -30,8 +30,6 @@ import System.Random.Shuffle (shuffle')
 import Control.Monad.Error.Class (Error)
 import Control.Monad (forM_)
 
-import Debug.Trace
-
 main :: IO ()
 main = defaultMain tests
 
@@ -44,7 +42,7 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
   testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
-  testCase "When the operation start date is not specified in upkeep, today is taken" missingOperationStartDate ]
+  testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -70,7 +68,7 @@ missingOperationStartDate = let
     M.machineOperationStartDate = Nothing }
   today = fromGregorian 2015 1 1
   result = nextServiceDate machine' (upkeepSequence, []) [] today
-  expectedResult = fromGregorian 2016 12 31
+  expectedResult = (fromGregorian 2016 12 31, Computed)
   in assertEqual "Date must be +2 years from today, that is: 2016 12 31"
     expectedResult result
 
@@ -82,7 +80,7 @@ firstUpkeep = let
   upkeepSequence2 = US.UpkeepSequence {
     US.repetition = 1000 }
   result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) [] undefined
-  expectedResult = fromGregorian 2000 12 31
+  expectedResult = (fromGregorian 2000 12 31, Computed)
   in assertEqual "Date must be +1 years, that is: 2000 12 31"
     expectedResult result
 
@@ -96,7 +94,7 @@ pickSmallestRepeatedSequence = let
     US.repetition = 1000 ,
     US.oneTime = True }
   result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [upkeep] undefined
-  expectedResult = fromGregorian 2000 7 1
+  expectedResult = (fromGregorian 2000 7 1, Computed)
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
 
@@ -115,14 +113,14 @@ planned = let
     U.upkeepClosed = True ,
     U.upkeepDate = dayToYmd $ fromGregorian 1999 1 1 }
   result = nextServiceDate undefined undefined [upkeep4, upkeep2, upkeep1, upkeep3] undefined
-  expectedResult = date
+  expectedResult = (date, Planned)
   in assertEqual "Date must be minimum from planned: 2000 1 1" 
     expectedResult result
 
 noUpkeeps :: Assertion
 noUpkeeps = let
   result = nextServiceDate machine (upkeepSequence, []) [] undefined
-  expectedResult = fromGregorian 2001 12 31
+  expectedResult = (fromGregorian 2001 12 31, Computed)
   in assertEqual "Date must be +2 years from into service: 2001 12 31"
     expectedResult result
 
@@ -134,7 +132,7 @@ closedUpkeeps = let
   upkeep2 = upkeep1 {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
   result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2] undefined
-  expectedResult = fromGregorian 2007 1 1
+  expectedResult = (fromGregorian 2007 1 1, Computed)
   in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
 
@@ -172,4 +170,4 @@ plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   upkeeps = (plannedUpkeeps ++ closedUpkeeps)
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
-  in nextServiceDate undefined undefined upkeepsShuffled undefined == earliestDay 
+  in nextServiceDate undefined undefined upkeepsShuffled undefined == (earliestDay, Planned)
