@@ -652,7 +652,7 @@ machinesInUpkeepQuery upkeepId = proc () -> do
   returnA -< upkeepMachine
 
 extraFieldsPerKindQuery :: Int -> Query ExtraFieldSettingsTable
-extraFieldsPerKindQuery machineKind = proc () -> do
+extraFieldsPerKindQuery machineKind = orderBy (asc $ $(proj 4 2)) $ proc () -> do
   extraFieldRow <- extraFieldSettingsQuery -< ()
   restrict -< pgInt4 machineKind .== $(proj 4 1) extraFieldRow
   returnA -< extraFieldRow
@@ -666,7 +666,7 @@ machineIdsHavingKind machineTypeKind = proc () -> do
   returnA -< $(proj 11 0) machineRow
 
 extraFieldsForMachineQuery :: Int -> Query (ExtraFieldsTable, ExtraFieldSettingsTable)
-extraFieldsForMachineQuery machineId = proc () -> do
+extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc () -> do
   machineRow <- join machinesQuery -< pgInt4 machineId
   extraFieldRow <- extraFieldsQuery -< ()
   restrict -< $(proj 3 1) extraFieldRow .== $(proj 11 0) machineRow
