@@ -85,6 +85,7 @@ create table extra_field_settings (
   name varchar (500) not null );
 
 create table extra_fields (
-  extra_field_id integer not null ,
-  machine_id integer not null ,
-  value varchar (5000) not null );
+  extra_field_id integer not null references extra_field_settings (id) ,
+  machine_id integer not null references machines (id) ,
+  value varchar (5000) not null ,
+  primary key (extra_field_id, machine_id) );
