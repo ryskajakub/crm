@@ -74,10 +74,12 @@ updation = mkInputHandler jsonI $ \allSettings -> do
             return extraFieldId
       in forM ([0..] `zip` extraFields) insertField
   keepIdsNested <- forM allSettings insertSetting
-  let keepIds = concat keepIdsNested
-
+  let 
+    keepIds = concat keepIdsNested
+    mkDeletion table locateExtraFieldId = liftIO $ runDelete connection table $ \field -> let
+      keepFieldEquations = ((locateExtraFieldId field ./=) . pgInt4) `fmap` keepIds
+      in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
   -- delete all fields that were not in the request
-  _ <- liftIO $ runDelete connection extraFieldSettingsTable $ \field -> let
-    keepFieldEquations = (($(proj 4 0) field ./=) . pgInt4) `fmap` keepIds
-    in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
+  _ <- mkDeletion extraFieldsTable ($(proj 3 0))
+  _ <- mkDeletion extraFieldSettingsTable ($(proj 4 0))
   return ()
