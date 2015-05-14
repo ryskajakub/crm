@@ -64,7 +64,7 @@ machineUpdate = mkInputHandler (jsonI . jsonO) $ \(machine', linkedMachineId, ex
   return ()
 
 machineSingle :: Handler IdDependencies
-machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
+machineSingle = mkConstHandler jsonO $ withConnId $ \conn id'' -> do
   rows <- liftIO $ runQuery conn (machineDetailQuery id'')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
@@ -90,7 +90,7 @@ machineSingle = mkConstHandler jsonO $ withConnId (\conn id'' -> do
     nextServiceYmd = nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType)))
+    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, ([]::[Int])))
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing (jsonO) (const $ do

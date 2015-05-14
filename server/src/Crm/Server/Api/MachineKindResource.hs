@@ -5,11 +5,11 @@ module Crm.Server.Api.MachineKindResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.PGTypes (pgInt4, pgString)
-import Opaleye (runInsertReturning, runDelete, (./=), (.&&), pgBool)
+import Opaleye (runInsertReturning, runDelete, (./=), (.&&), pgBool, runInsert)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad (forM)
+import Control.Monad (forM, forM_)
 import Control.Arrow (arr, first)
 
 import Rest.Resource (Resource, Void, schema, name, mkResourceId, get, update)
@@ -55,11 +55,17 @@ updation = mkInputHandler jsonI $ \allSettings -> do
     s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
     insertSetting (machineKindEnum, extraFields) = let
       insertField (index, (fieldId, field)) = liftIO $ let
-        allFields = (Nothing, pgInt4 $ MK.kindToDbRepr machineKindEnum, pgInt4 index, pgString $ MK.name field)
+        machineKindDbRepr = MK.kindToDbRepr machineKindEnum
+        allFields = (Nothing, pgInt4 $ machineKindDbRepr, pgInt4 index, pgString $ MK.name field)
         in case fieldId of
           EF.ToBeAssigned -> do
             newIds <- runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))
-            return $ (head newIds :: Int)
+            let newExtraFieldsSettingId = (head newIds :: Int)
+            machineIdsToAddEmptyFields <- runQuery connection (machineIdsHavingKind machineKindDbRepr)
+            forM_ machineIdsToAddEmptyFields $ \machineId ->
+              runInsert connection extraFieldsTable (pgInt4 newExtraFieldsSettingId, pgInt4 machineId, pgString "")
+              >> return ()
+            return newExtraFieldsSettingId
           EF.Assigned assignedId -> do
             let extraFieldId = EF.getExtraFieldId assignedId
             prepareUpdate extraFieldSettingsTable (const $ allFields) extraFieldId connection

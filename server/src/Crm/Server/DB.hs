@@ -49,6 +49,7 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  machineIdsHavingKind ,
   extraFieldsPerKindQuery ,
   otherMachinesInCompanyQuery ,
   expandedUpkeepsQuery2 ,
@@ -653,6 +654,14 @@ extraFieldsPerKindQuery machineKind = proc () -> do
   extraFieldRow <- extraFieldSettingsQuery -< ()
   restrict -< pgInt4 machineKind .== $(proj 4 1) extraFieldRow
   returnA -< extraFieldRow
+
+machineIdsHavingKind :: Int -> Query (DBInt)
+machineIdsHavingKind machineTypeKind = proc () -> do
+  machineTypeRow <- machineTypesQuery -< ()
+  restrict -< pgInt4 machineTypeKind .== $(proj 4 1) machineTypeRow
+  machineRow <- machinesQuery -< ()
+  restrict -< $(proj 4 0) machineTypeRow .== $(proj 11 3) machineRow
+  returnA -< $(proj 11 0) machineRow
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]
