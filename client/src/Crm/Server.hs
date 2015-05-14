@@ -410,7 +410,7 @@ updateMachine :: M.MachineId -- ^ machine id
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax
-  (machine, toMyMaybe linkedMachineId, machineSpecificData)
+  (machine, toMyMaybe linkedMachineId, (\(a,b) -> (a,pack b)) `map` machineSpecificData)
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   put
   (const callback)
