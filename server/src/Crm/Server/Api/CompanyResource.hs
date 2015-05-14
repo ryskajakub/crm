@@ -17,6 +17,7 @@ import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
+import Data.Maybe (mapMaybe)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
@@ -35,7 +36,7 @@ import Crm.Server.Helpers (prepareReaderTuple, readMay', dayToYmd, today, delete
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Core (nextServiceDate)
+import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
 
 import Safe (minimumMay, readMay)
 
@@ -78,10 +79,10 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         EQ -> EQ
   conn <- ask 
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
-  unsortedResult <- liftIO $ forM rows (\companyRow -> do
+  unsortedResult <- liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
     machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
-    nextDays <- forM machines (\(machineId, machine, _, _, _, _) -> do
+    nextDays' <- forM machines $ \(machineId, machine, _, _, _, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId machineId)
       today' <- today
@@ -91,9 +92,12 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         upkeepSequenceTuple = case upkeepSequences of
           [] -> undefined
           x : xs -> (x, xs)
-        nextServiceDay = fst $ nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
-      return $ dayToYmd nextServiceDay)
-    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays))
+        (nextServiceDay, computationMethod) = nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
+      return $ case computationMethod of
+        Planned -> Nothing
+        Computed -> Just $ dayToYmd nextServiceDay
+    let nextDays = mapMaybe id nextDays'
+    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays)
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
