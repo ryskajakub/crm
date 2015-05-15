@@ -9,6 +9,7 @@ import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text, showInt)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Var (Var, modify)
 import "fay-base" FFI (Defined(Defined))
+import "fay-base" Data.Maybe (onJust, mapMaybe)
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B
@@ -25,9 +26,11 @@ schema :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)]
        -> (DOMElement, Fay ())
 schema machines = let
   canvas = B.grid $ div' (mkAttrs { id = Defined "graph-canvas" }) ""
-  mkNodes = map $ \(machineId, machine, machineType, _) -> let
+  mkNodes = map $ \(machineId', machine, machineType, _) -> let
     labelForMachine = (pack $ MT.machineTypeName machineType) <> " " <> (pack $ M.serialNumber machine)
-    in MachineNode machineId (MT.kind machineType) labelForMachine 
-  graph = interpret $ MachineGraph (mkNodes machines) []
+    in MachineNode machineId' (MT.kind machineType) labelForMachine
+  mkEdges = mapMaybe $ \(fromMachineId, _, _, toMachineId) ->
+    (\toMachineId' -> MachineEdge fromMachineId toMachineId') `onJust` toMachineId
+  graph = interpret $ MachineGraph (mkNodes machines) (mkEdges machines)
   appendElement = JQ.select "#graph-canvas" >>= JQ.append graph >> return ()
   in (canvas, appendElement)
