@@ -212,7 +212,11 @@ startRouter appVar = let
         D.ContactPersonPage CP.newContactPerson Nothing companyId)
   ),(
     "companies/:id/schema", \params ->
-      modify appVar (\appState -> appState { D.navigation = D.MachinesSchema })
+      withCompany 
+        params
+        $ \_ (_, machines) -> let
+          pickMachines = map $ \(a,b,_,_,c,_) -> (a,b,c)
+          in D.MachinesSchema $ pickMachines machines
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params

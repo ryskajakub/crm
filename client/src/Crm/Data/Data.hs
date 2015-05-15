@@ -66,7 +66,8 @@ data NavigationState =
   ExtraFields {
     editedKind :: MK.MachineKindEnum ,
     allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] } |
-  MachinesSchema
+  MachinesSchema {
+    machines :: [(M.MachineId, M.Machine, MT.MachineType)] }
 
 data AppState = AppState {
   navigation :: NavigationState ,

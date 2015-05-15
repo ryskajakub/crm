@@ -19,13 +19,15 @@ import Crm.Component.Viz
 
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineType as MT
 
-schema :: (DOMElement, Fay ())
-schema = let
+schema :: [(M.MachineId, M.Machine, MT.MachineType)]
+       -> (DOMElement, Fay ())
+schema machines = let
   canvas = B.grid $ div' (mkAttrs { id = Defined "graph-canvas" }) ""
-  schema' = MachineGraph
-    [MachineNode (M.MachineId 1) MK.Compressor "K1", MachineNode (M.MachineId 2) MK.Compressor "K2"]
-    [MachineEdge (M.MachineId 1) (M.MachineId 2)]
-  graph = interpret schema'
+  mkNodes = map $ \(machineId, machine, machineType) -> let
+    labelForMachine = (pack $ MT.machineTypeName machineType) <> " " <> (pack $ M.serialNumber machine)
+    in MachineNode machineId (MT.kind machineType) labelForMachine 
+  graph = interpret $ MachineGraph (mkNodes machines) []
   appendElement = JQ.select "#graph-canvas" >>= JQ.append graph >> return ()
   in (canvas, appendElement)
