@@ -1,0 +1,4 @@
+digraph {
+  main -> parse -> execute;
+  main -> init;
+  main -> cleanup }
