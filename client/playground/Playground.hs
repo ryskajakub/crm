@@ -27,7 +27,7 @@ viz = ffi " Viz(%1, \"svg\", \"dot\") "
 
 
 sampleGraph :: Text
-sampleGraph = " digraph { main -> init } "
+sampleGraph = " digraph { 1 -> 2; 1 [URL=\"http://seznam.cz/\", label=\"Kompresor 123\"] } "
 
 
 developedElement :: State -> (State -> Fay()) -> DOMElement
