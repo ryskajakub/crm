@@ -674,7 +674,7 @@ extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc 
   returnA -< (extraFieldRow, extraFieldSettingRow)
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
-  IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)]
+  IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- (runQuery connection (machinesInCompanyQuery companyId))
   let 
@@ -682,7 +682,7 @@ runMachinesInCompanyQuery companyId connection = do
       (machine :: MachineMapped, machineType :: MachineTypeMapped, 
         contactPerson :: MaybeContactPersonMapped) = convertDeep row
       in (sel1 machine, sel6 machine, sel2 machine, 
-        sel1 machineType, sel2 machineType, sel3 contactPerson)
+        sel1 machineType, sel2 machineType, sel3 contactPerson, $(proj 6 4) machine)
   return $ fmap mapRow rows
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 

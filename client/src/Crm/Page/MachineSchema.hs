@@ -21,11 +21,11 @@ import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.MachineType as MT
 
-schema :: [(M.MachineId, M.Machine, MT.MachineType)]
+schema :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)]
        -> (DOMElement, Fay ())
 schema machines = let
   canvas = B.grid $ div' (mkAttrs { id = Defined "graph-canvas" }) ""
-  mkNodes = map $ \(machineId, machine, machineType) -> let
+  mkNodes = map $ \(machineId, machine, machineType, _) -> let
     labelForMachine = (pack $ MT.machineTypeName machineType) <> " " <> (pack $ M.serialNumber machine)
     in MachineNode machineId (MT.kind machineType) labelForMachine 
   graph = interpret $ MachineGraph (mkNodes machines) []

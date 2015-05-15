@@ -1,5 +1,6 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.Api.CompanyResource where
 
@@ -39,6 +40,8 @@ import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
 
 import Safe (minimumMay, readMay)
+
+import TupleTH (updateAtN)
 
 data MachineMid = NextServiceListing | MapListing
 
@@ -82,7 +85,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
   unsortedResult <- liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
     machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
-    nextDays' <- forM machines $ \(machineId, machine, _, _, _, _) -> do
+    nextDays' <- forM machines $ \(machineId, machine, _, _, _, _, _) -> do
       upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId machineId)
       upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId machineId)
       today' <- today
@@ -116,7 +119,7 @@ singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
   rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
   companyRow <- singleRowOrColumn rows
   machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-  let machinesMyMaybe = fmap (\m -> upd6 (toMyMaybe $ sel6 m) m) machines
+  let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
   return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe))
 
 updateCompany :: Handler IdDependencies
