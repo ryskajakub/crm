@@ -22,6 +22,7 @@ import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
 import Crm.Page.UpkeepHistory (upkeepHistory)
 import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import Crm.Page.Employee (employeePage, newEmployeeForm, employeeEdit)
+import Crm.Page.MachineSchema (schema)
 import Crm.Page.NotFound (notFound)
 import Crm.Page.Dashboard (dashboard)
 import qualified Crm.Data.Data as D
@@ -86,6 +87,7 @@ main' = do
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList router contactPersons
       D.ExtraFields editedKind allSettings -> emptyCallback $ machineKindSettings appVar' editedKind allSettings
+      D.MachinesSchema -> schema
     in Navigation.navigation' router newElementAndCallback )
   return ()
 

@@ -30,6 +30,7 @@ module Crm.Router (
   contactPersonList ,
   contactPersonEdit ,
   extraFields ,
+  machinesSchema ,
   editEmployee ) where
 
 import "fay-base" Data.Text (fromString, showInt, Text, (<>), unpack)
@@ -84,6 +85,9 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
 
 newCompany :: CrmRoute
 newCompany = CrmRoute "companies/new"
+
+machinesSchema :: C.CompanyId -> CrmRoute
+machinesSchema companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/schema"
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
@@ -206,6 +210,9 @@ startRouter appVar = let
       params
       (\companyId (_,_) ->
         D.ContactPersonPage CP.newContactPerson Nothing companyId)
+  ),(
+    "companies/:id/schema", \params ->
+      modify appVar (\appState -> appState { D.navigation = D.MachinesSchema })
   ),(
     "companies/:id/new-machine-phase2", \params -> let
       cId = head params

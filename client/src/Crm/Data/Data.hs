@@ -65,7 +65,8 @@ data NavigationState =
     contactPersons :: [CP.ContactPerson'] } |
   ExtraFields {
     editedKind :: MK.MachineKindEnum ,
-    allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] }
+    allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] } |
+  MachinesSchema
 
 data AppState = AppState {
   navigation :: NavigationState ,
