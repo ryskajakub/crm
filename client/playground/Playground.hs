@@ -3,6 +3,9 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Playground where
 
 import HaskellReact
@@ -11,10 +14,20 @@ import "fay-base" Data.Text (Text, fromString, showInt, (<>))
 import "fay-base" Prelude hiding (div)
 import "fay-base" Data.Var (Var, set, subscribeAndRead, newVar)
 
+import qualified JQuery as JQ
+
 import qualified HaskellReact.Tag.Input as I
 
 
 data State = State Int
+
+
+viz :: Text -> Text
+viz = ffi " Viz(%1, \"svg\", \"dot\") "
+
+
+sampleGraph :: Text
+sampleGraph = " digraph { main -> init } "
 
 
 developedElement :: State -> (State -> Fay()) -> DOMElement
@@ -31,6 +44,7 @@ renderLoop = do
   appState' <- newVar $ State 10
   _ <- subscribeAndRead appState' $ \appState -> let
     mod state = set appState' state
-    element1 = developedElement appState mod
-    in simpleReactBody' element1 (return ())
+    graph = viz sampleGraph
+    appendElement = JQ.select "body" >>= JQ.append graph >> return ()
+    in simpleReactBody' (div "") appendElement
   return ()
