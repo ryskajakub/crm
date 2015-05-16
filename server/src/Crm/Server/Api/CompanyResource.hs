@@ -9,6 +9,7 @@ import Opaleye.RunQuery (runQuery)
 import Opaleye (queryTable, pgDouble)
 import Opaleye.Manipulation (runInsertReturning)
 
+import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
@@ -19,16 +20,19 @@ import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
 import Data.Maybe (mapMaybe)
+import Data.Time.Calendar (Day)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
 import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler, mkListing)
+import Rest.Types.Error (Reason)
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.Direction as DIR
+import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Api as A
 import Crm.Shared.MyMaybe
 
@@ -66,23 +70,11 @@ mapListing = mkListing jsonO (const $ do
   let mappedCoords = over (mapped . _3) toMyMaybe convertedResults
   return mappedCoords)
 
-listing :: ListHandler Dependencies
-listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
-  let 
-    order = rawOrder >>= readMay
-    direction = rawDirection >>= readMay
-    -- "negate" the ordering when it is descending
-    orderingByDirection :: Ordering -> Ordering
-    orderingByDirection = case direction of
-      Nothing -> id
-      Just(DIR.Asc) -> id
-      Just(DIR.Desc) -> \ord -> case ord of
-        LT -> GT
-        GT -> LT
-        EQ -> EQ
-  conn <- ask 
+unsortedResult :: ExceptT (Reason a) Dependencies [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay)]
+unsortedResult = do 
+  conn <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
-  unsortedResult <- liftIO $ forM rows $ \companyRow -> do
+  liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
     machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
     nextDays' <- forM machines $ \(machineId, machine, _, _, _, _, _) -> do
@@ -101,6 +93,22 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         Computed -> Just $ dayToYmd nextServiceDay
     let nextDays = mapMaybe id nextDays'
     return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays)
+
+listing :: ListHandler Dependencies
+listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
+  let 
+    order = rawOrder >>= readMay
+    direction = rawDirection >>= readMay
+    -- "negate" the ordering when it is descending
+    orderingByDirection :: Ordering -> Ordering
+    orderingByDirection = case direction of
+      Nothing -> id
+      Just(DIR.Asc) -> id
+      Just(DIR.Desc) -> \ord -> case ord of
+        LT -> GT
+        GT -> LT
+        EQ -> EQ
+  unsortedResult' <- unsortedResult
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
@@ -112,7 +120,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         (MyNothing,MyNothing) -> EQ
         (MyNothing,_) -> GT
         _ -> LT
-      ) unsortedResult)
+      ) unsortedResult')
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
