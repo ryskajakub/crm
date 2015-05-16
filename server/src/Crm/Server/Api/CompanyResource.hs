@@ -45,7 +45,7 @@ import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
 
 import Safe (minimumMay, readMay)
 
-import TupleTH (updateAtN)
+import TupleTH (updateAtN, proj, takeTuple)
 
 data MachineMid = NextServiceListing | MapListing
 
@@ -63,14 +63,10 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinate
   return $ C.CompanyId id'
 
 mapListing :: ListHandler Dependencies
-mapListing = mkListing jsonO (const $ do
-  connection <- ask
-  results <- liftIO $ runQuery connection companiesQuery
-  let convertedResults = convert results :: [CompanyMapped]
-  let mappedCoords = over (mapped . _3) toMyMaybe convertedResults
-  return mappedCoords)
+mapListing = mkListing jsonO (const $ unsortedResult)
 
-unsortedResult :: ExceptT (Reason a) Dependencies [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay)]
+unsortedResult :: ExceptT (Reason a) Dependencies 
+                  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
   conn <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
@@ -92,7 +88,7 @@ unsortedResult = do
         Planned -> Nothing
         Computed -> Just $ dayToYmd nextServiceDay
     let nextDays = mapMaybe id nextDays'
-    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays)
+    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays, toMyMaybe $ $(proj 3 2) companyRecord)
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
@@ -108,7 +104,8 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         LT -> GT
         GT -> LT
         EQ -> EQ
-  unsortedResult' <- unsortedResult
+  unsortedResult'' <- unsortedResult
+  let unsortedResult' = ($(takeTuple 4 3)) `fmap` unsortedResult''
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->

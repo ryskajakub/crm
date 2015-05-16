@@ -25,7 +25,7 @@ import Crm.Data.UpkeepData
 import Crm.Data.EmployeeData
 
 data NavigationState =
-  Dashboard { companies :: [(C.CompanyId, C.Company, Maybe C.Coordinates)] } |
+  Dashboard { companies :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] } |
   FrontPage {
     ordering :: (C.OrderType, DIR.Direction) ,
     companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] } | 

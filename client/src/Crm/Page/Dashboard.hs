@@ -16,6 +16,7 @@ import qualified HaskellReact.Bootstrap as B
 import GoogleMaps
 
 import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (pageInfo)
 
 
@@ -25,17 +26,17 @@ collect f list = foldr (\e acc -> case f e of
   Nothing -> acc) [] list
 
 
-dashboard :: [(C.CompanyId, C.Company, Maybe C.Coordinates)] -> (DOMElement, Fay ())
+dashboard :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> (DOMElement, Fay ())
 dashboard companies = let
 
   constructMap = do
     let 
       czCenter = mkLatLng 49.7437400818 15.3386173248
       mapOptions = mkMapOptions 8 czCenter
-      companiesWithCoords = collect (\(a,b,coords) -> (\x -> (a,b,x)) `onJust` coords) companies
+      companiesWithCoords = collect (\(a,b,mbYmd,coords) -> (\x -> (a,b,mbYmd,x)) `onJust` coords) companies
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
-    mapM_ (\(_,_,C.Coordinates lat lng) -> addMarker lat lng googleMap) companiesWithCoords
+    mapM_ (\(_,_,_,C.Coordinates lat lng) -> addMarker lat lng googleMap) companiesWithCoords
     return ()
     
   info = pageInfo (pack "Nástěnka") $ Just $ pack "Mapa firem. Firma se na mapě zobrazí podle vyplněné adresy."

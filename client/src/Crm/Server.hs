@@ -320,12 +320,12 @@ fetchPlannedUpkeeps callback =
     (callback . items)
     noopOnError
 
-fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe C.Coordinates)] -> Fay ())
+fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ())
                      -> Fay ()
 fetchCompaniesForMap callback =
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ A.map'))
-    (callback . (map (\(a,b,c) -> (a,b,toMaybe c))) . items)
+    (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))) . items)
     noopOnError
 
 createCompany :: C.Company
