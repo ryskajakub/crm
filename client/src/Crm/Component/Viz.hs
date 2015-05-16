@@ -15,6 +15,7 @@ import "fay-base" Prelude hiding (intercalate)
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M
+import qualified Crm.Router as R
 
 data MachineNode = MachineNode {
   machineId :: M.MachineId ,
@@ -36,7 +37,7 @@ mkId = ("machine" <>) . showInt . M.getMachineId
 mkLabel :: MachineNode -> Text
 mkLabel (MachineNode mId m mT) = let
   innerText = (pack $ MT.machineTypeName mT) <> " " <> (pack $ M.serialNumber m)
-  url = "/#machines/" <> (showInt . M.getMachineId) mId
+  url = R.routeToText $ R.machineDetail mId
   in "[URL=\"" <> url <> "\", label=\"" <> innerText <> "\"]"
 
 -- | Create an svg element from a description of machines and the links between them.

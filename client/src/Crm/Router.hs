@@ -9,6 +9,7 @@ module Crm.Router (
   link ,
   CrmRouter ,
   CrmRoute ,
+  routeToText ,
   dashboard ,
   frontPage ,
   defaultFrontPage ,
@@ -69,6 +70,9 @@ import qualified Crm.Validation as V
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
+
+routeToText :: CrmRoute -> Text
+routeToText (CrmRoute r) = "/#" <> r
 
 dashboard :: CrmRoute
 dashboard = CrmRoute "dashboard"
