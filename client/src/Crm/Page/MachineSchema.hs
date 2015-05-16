@@ -26,9 +26,8 @@ schema :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)]
        -> (DOMElement, Fay ())
 schema machines = let
   canvas = B.grid $ div' (mkAttrs { id = Defined "graph-canvas" }) ""
-  mkNodes = map $ \(machineId', machine, machineType, _) -> let
-    labelForMachine = (pack $ MT.machineTypeName machineType) <> " " <> (pack $ M.serialNumber machine)
-    in MachineNode machineId' (MT.kind machineType) labelForMachine
+  mkNodes = map $ \(machineId', machine, machineType, _) ->
+    MachineNode machineId' machine machineType
   mkEdges = mapMaybe $ \(fromMachineId, _, _, toMachineId) ->
     (\toMachineId' -> MachineEdge fromMachineId toMachineId') `onJust` toMachineId
   graph = interpret $ MachineGraph (mkNodes machines) (mkEdges machines)

@@ -10,16 +10,16 @@ module Crm.Component.Viz (
   interpret ) where
 
 import FFI
-import "fay-base" Data.Text (fromString, Text, showInt, (<>), intercalate)
+import "fay-base" Data.Text (fromString, Text, showInt, (<>), intercalate, pack)
 import "fay-base" Prelude hiding (intercalate)
 
-import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M
 
 data MachineNode = MachineNode {
   machineId :: M.MachineId ,
-  machineKind :: MK.MachineKindEnum ,
-  label :: Text }
+  machine :: M.Machine ,
+  machineType :: MT.MachineType }
 
 data MachineEdge = MachineEdge {
   from :: M.MachineId ,
@@ -33,13 +33,17 @@ viz = ffi " Viz(%1,\"svg\",\"dot\", null) "
 mkId :: M.MachineId -> Text
 mkId = ("machine" <>) . showInt . M.getMachineId
 
-mkLabel :: Text -> Text
-mkLabel label' = "[label=\"" <> label' <> "\"]"
+mkLabel :: MachineNode -> Text
+mkLabel (MachineNode mId m mT) = let
+  innerText = (pack $ MT.machineTypeName mT) <> " " <> (pack $ M.serialNumber m)
+  url = "/#machines/" <> (showInt . M.getMachineId) mId
+  in "[URL=\"" <> url <> "\", label=\"" <> innerText <> "\"]"
 
 -- | Create an svg element from a description of machines and the links between them.
 interpret :: MachineGraph -> Text
 interpret (MachineGraph nodes edges) = let
-  interpretNode node = (mkId $ machineId node) <> " " <> (mkLabel $ label node) <> ";"
+  interpretNode (node @ (MachineNode mId _ _)) = let
+    in (mkId mId) <> " " <> (mkLabel node) <> ";"
   interpretedNodes = intercalate "" $ interpretNode `map` nodes
   interpretEdge edge = (mkId $ from edge) <> " -> " <> (mkId $ to edge) <> ";"
   interpretedEdges = intercalate "" $ interpretEdge `map` edges
