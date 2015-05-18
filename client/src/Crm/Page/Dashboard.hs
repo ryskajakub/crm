@@ -1,10 +1,12 @@
 {-# LANGUAGE PackageImports #-}
 {-# LANGUAGE NoImplicitPrelude #-}
 
+{-# LANGUAGE MultiWayIf #-}
+
 module Crm.Page.Dashboard (
   dashboard ) where
 
-import "fay-base" Data.Text (pack)
+import "fay-base" Data.Text (pack, (<>), Text)
 import "fay-base" Prelude hiding (div, span, id)
 import "fay-base" Data.Maybe (onJust, mapMaybe)
 import FFI
@@ -14,11 +16,35 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
 import GoogleMaps
+import qualified Moment as M
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (pageInfo)
 
+
+toHexa :: Int -> Text
+toHexa = ffi " (%1).toString(16) "
+
+
+computeColor :: YMD.YearMonthDay -> Fay Text
+computeColor (YMD.YearMonthDay y m d _) = do
+  let moment = M.requireMoment
+  let today = M.now moment
+  let 
+    theOtherDay = M.dayPrecision y m d moment
+    diff' = fromIntegral $ M.diff today theOtherDay M.Days
+    year = 366 :: Double
+    colorScaleSize = 256 :: Double
+    diff = if diff' > year then year else diff'
+    halfYear = year / 2 
+    unit = colorScaleSize / halfYear
+    firstPart = if diff > halfYear then halfYear else diff
+    secondPart = if diff - halfYear > 0 then diff - halfYear else 0
+    redPart = toHexa $ truncate $ colorScaleSize - secondPart * unit
+    greenPart = toHexa $ truncate $ unit * firstPart
+  return $ pack "#" <> redPart <> greenPart <> pack "00"
+  
 
 dashboard :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> (DOMElement, Fay ())
 dashboard companies = let
