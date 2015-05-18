@@ -9,11 +9,12 @@ module GoogleMaps (
   addMarker ,
   mkLatLng ,
   startMapOnLoad ,
+  addClickListener ,
   computeCoordinates ) where
 
 
 import FFI
-import "fay-base" Data.Text (Text)
+import "fay-base" Data.Text (Text, pack, (<>))
 import "fay-base" Prelude
 import DOM (Element)
 import Data.Nullable
@@ -22,6 +23,7 @@ import Data.Maybe
 
 data MapOptions
 data Map
+data MapMarker
 
 data LatLng
 
@@ -29,7 +31,6 @@ data Geocoder
 data GeocoderResults
 data GeocoderResult
 data GeocoderRequest 
-
 
 mkMapOptions :: Int -> LatLng -> MapOptions
 mkMapOptions = ffi " {zoom: %1, center: %2} "
@@ -44,13 +45,17 @@ startMapOnLoad :: Fay () -> Fay ()
 startMapOnLoad = ffi " google.maps.event.addDomListener(window, 'load', %1) "
 
 
-addMarker :: Double -> Double -> Map -> Fay ()
-addMarker lat lng map' = let
+addMarker :: Double -> Double -> Text -> Map -> Fay MapMarker
+addMarker lat lng color map' = let
   position = mkLatLng lat lng
-  in mkMarker' position map'
+  icon = pack "http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld=%E2%80%A2|" <> color
+  in mkMarker' position map' icon
 
-mkMarker' :: LatLng -> Map -> Fay ()
-mkMarker' = ffi " new google.maps.Marker({position: %1, map: %2})  "
+mkMarker' :: LatLng -> Map -> Text -> Fay MapMarker
+mkMarker' = ffi " new google.maps.Marker({position: %1, map: %2, icon: %3}) "
+
+addClickListener :: MapMarker -> Fay () -> Fay ()
+addClickListener = ffi " google.maps.event.addListener(%1, 'click', %2) "
 
 
 mkGeocoderRequest :: Text -> GeocoderRequest
