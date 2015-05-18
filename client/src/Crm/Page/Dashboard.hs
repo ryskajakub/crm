@@ -21,17 +21,16 @@ import qualified Moment as M
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (pageInfo)
+import qualified Crm.Router as R
 
 
 toHexa' :: Int -> Text
 toHexa' = ffi " (%1).toString(16) "
 
-
 toHexa :: Int -> Text
 toHexa int = let
   hexa = toHexa' int
   in if length hexa == 1 then pack "0" <> hexa else hexa
-
 
 computeColor :: YMD.YearMonthDay -> Text
 computeColor (YMD.YearMonthDay y m d _) = let
@@ -51,8 +50,10 @@ computeColor (YMD.YearMonthDay y m d _) = let
   in toHexa redPart <> toHexa greenPart <> pack "00"
   
 
-dashboard :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> (DOMElement, Fay ())
-dashboard companies = let
+dashboard :: R.CrmRouter
+          -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] 
+          -> (DOMElement, Fay ())
+dashboard router companies = let
 
   constructMap = do
     let 
@@ -61,9 +62,11 @@ dashboard companies = let
       companiesWithCoords = mapMaybe (\(a,b,mbYmd,coords) -> (\x -> (a,b,mbYmd,x)) `onJust` coords) companies
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
-    forM_ companiesWithCoords $ \(_,_,date,C.Coordinates lat lng) -> let
-      color = maybe (pack "777777") computeColor date 
-      in addMarker lat lng color googleMap
+    forM_ companiesWithCoords $ \(companyId,_,date,C.Coordinates lat lng) -> do
+      let color = maybe (pack "777777") computeColor date 
+      marker <- addMarker lat lng color googleMap
+      let handler = R.navigate (R.companyDetail companyId) router
+      addClickListener marker handler
     return ()
     
   info = pageInfo (pack "Nástěnka") $ Just $ pack "Mapa firem. Firma se na mapě zobrazí podle vyplněné adresy."
