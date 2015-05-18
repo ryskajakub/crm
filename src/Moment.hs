@@ -1,5 +1,6 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 module Moment (
   Moment, MomentObject ,
@@ -8,6 +9,8 @@ module Moment (
   dayPrecision ,
   day ,
   parse ,
+  diff ,
+  DiffType(..) ,
   format ) where
 
 import FFI
@@ -73,3 +76,15 @@ day momentObject = let
   month = get Month momentObject
   year = get Year momentObject
   in (year, month, day')
+
+data DiffType = Days | Years
+
+diff' :: MomentObject -> MomentObject -> Text -> Int
+diff' = ffi " %1.diff(%2, %3) "
+
+diff :: MomentObject -> MomentObject -> DiffType -> Int
+diff obj1 obj2 diffType = diff' obj1 obj2 diffTypeString where
+  diffTypeString = pack $
+    case diffType of
+      Days -> "days"
+      Years -> "years"
