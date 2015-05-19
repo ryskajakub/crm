@@ -47,7 +47,7 @@ plannedUpkeeps router upkeepCompanies = let
   body = tbody' (row "2") $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
       td' (row "1") $ link
-        (pack $ C.companyName company)
+        (C.companyName company)
         (companyDetail companyId)
         router ,
       td' (row "2") $ displayDate $ U.upkeepDate upkeep ,

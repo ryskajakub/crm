@@ -4,9 +4,8 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import Opaleye.PGTypes (pgString)
 import Opaleye.RunQuery (runQuery)
-import Opaleye (queryTable, pgDouble)
+import Opaleye (queryTable, pgDouble, pgStrictText)
 import Opaleye.Manipulation (runInsertReturning)
 
 import Control.Monad.Trans.Except (ExceptT)
@@ -56,7 +55,7 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinate
   ids <- liftIO $ runInsertReturning 
     connection 
     companiesTable
-    (Nothing, pgString $ C.companyName newCompany, pgString $ C.companyPlant newCompany, pgString $ C.companyAddress newCompany,
+    (Nothing, pgStrictText $ C.companyName newCompany, pgStrictText $ C.companyPlant newCompany, pgStrictText $ C.companyAddress newCompany,
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
     sel1
   id' <- singleRowOrColumn ids
@@ -109,7 +108,7 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
-      orderingByDirection $ I.compare [] (pack $ C.companyName $ sel2 r1) (pack $ C.companyName $ sel2 r2)
+      orderingByDirection $ I.compare [] (C.companyName $ sel2 r1) (C.companyName $ sel2 r2)
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (MyJust (date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
@@ -131,7 +130,7 @@ updateCompany :: Handler IdDependencies
 updateCompany = let
   readToWrite (company, coordinates') = let 
     coordinates = toMaybe coordinates'
-    in const (Nothing, pgString $ C.companyName company, pgString $ C.companyPlant company, pgString $ C.companyAddress company, 
+    in const (Nothing, pgStrictText $ C.companyName company, pgStrictText $ C.companyPlant company, pgStrictText $ C.companyAddress company, 
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
   in updateRows companiesTable readToWrite
 

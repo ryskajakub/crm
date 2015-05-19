@@ -6,8 +6,8 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import Data.Text (fromString, unpack, pack) 
-import Prelude hiding (div, span, id)
+import Data.Text (fromString, pack, length)
+import Prelude hiding (div, span, id, length)
 import Data.Var (Var, modify)
 import Data.Maybe (onJust)
 import FFI (Defined(Defined, Undefined))
@@ -69,10 +69,10 @@ companiesList router orderType direction companies' = let
     in tr [
       td $
         R.link
-          (pack $ C.companyName company')
+          (C.companyName company')
           (R.companyDetail id')
           router ,
-      td $ pack $ C.companyPlant company' , 
+      td $ C.companyPlant company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
   advice = [ 
@@ -100,7 +100,7 @@ companyNew :: R.CrmRouter
 companyNew router var company' = let
   editing' = True
   saveHandler =
-    computeCoordinates (pack $ C.companyAddress company') $ \coordinates ->
+    computeCoordinates (C.companyAddress company') $ \coordinates ->
       createCompany company' (C.mkCoordinates `onJust` coordinates) $ \companyId ->
         R.navigate (R.companyDetail companyId) router
   setCompany modifiedCompany = modify var (\appState -> appState {
@@ -120,7 +120,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
 
-  saveHandler = computeCoordinates (pack $ C.companyAddress company') $ \coordinates ->
+  saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
     updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
       BR.refresh 
 
@@ -207,15 +207,15 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
           _ -> D.navigation appState })
     editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
     in BTN.button' editButtonProps editButtonBody
-  headerDisplay = h1 $ pack $ C.companyName company'
+  headerDisplay = h1 $ C.companyName company'
   headerSet newHeader = let
     company'' = company' {
-      C.companyName = unpack $ newHeader }
+      C.companyName = newHeader }
     in setCompany company''
   inputWrapper input = dl [
     dt "Jméno firmy" ,
     dd input ]
-  header = editable' Nothing inputWrapper editing' headerDisplay (pack $ C.companyName company') headerSet
+  header = editable' Nothing inputWrapper editing' headerDisplay (C.companyName company') headerSet
 
   validationMessages = if (length $ C.companyName company') > 0
     then []
@@ -236,12 +236,12 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     dl $ [
       dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
       dd $ hereEditablePlain
-        (pack $ C.companyPlant company') 
-        (\text -> setCompany (company' { C.companyPlant = unpack text })) , 
+        (C.companyPlant company') 
+        (\text -> setCompany (company' { C.companyPlant = text })) , 
       dt "Adresa" , 
       dd $ hereEditablePlain
-        (pack $ C.companyAddress company')
-        (\text -> setCompany (company' { C.companyAddress = unpack text }))]
+        (C.companyAddress company')
+        (\text -> setCompany (company' { C.companyAddress = text }))]
       ++ [saveEditButton] ]
   companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
   in (B.grid $ B.row $ B.col (B.mkColProps 12) $ B.jumbotron companyBasicInfo') : validationHtml' : []

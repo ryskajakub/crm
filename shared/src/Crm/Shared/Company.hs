@@ -1,18 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Company where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 newtype CompanyId = CompanyId { getCompanyId :: Int }
 #ifndef FAY
@@ -26,19 +22,19 @@ data Coordinates = Coordinates {
   latitude :: Double ,
   longitude :: Double }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 data Company = Company {
-  companyName :: String , 
-  companyPlant :: String ,
-  companyAddress :: String }
+  companyName :: Text , 
+  companyPlant :: Text ,
+  companyAddress :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 mkCoordinates :: (Double, Double) -> Coordinates
 mkCoordinates (lat, lng) = Coordinates lat lng
 
 newCompany :: Company
-newCompany = Company "" "" ""
+newCompany = Company (pack "") (pack "") (pack "")

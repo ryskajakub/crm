@@ -122,6 +122,7 @@ import Data.Time.Calendar (Day)
 import Data.List (intersperse, sortBy)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
 import Data.ByteString.Lazy (ByteString)
+import Data.Text (Text)
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -347,7 +348,7 @@ type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
 type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, String)
 
-instance ColumnToRecord (Int, String, String, String, Maybe Double, Maybe Double) CompanyMapped where
+instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
     company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
     coordinates = pure C.Coordinates <*> $(proj 6 4) tuple <*> $(proj 6 5) tuple
