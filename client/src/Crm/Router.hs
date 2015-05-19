@@ -164,16 +164,14 @@ startRouter appVar = let
     _ -> modify' D.NotFound 
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
-  in fmap CrmRouter $ BR.startRouter [(
-    "dashboard", const $
+  in fmap CrmRouter $ BR.startRouter [
+    ("dashboard", const $
       fetchCompaniesForMap (\companiesTriple -> 
-        modify appVar (\appState -> appState { D.navigation = D.Dashboard companiesTriple }))
-  ),(
-    "", const $
+        modify appVar (\appState -> appState { D.navigation = D.Dashboard companiesTriple }))) ,
+    ("", const $
       fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
-        (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }))
-  ),(
-    "home/:order/:direction", \params -> let
+        (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }))) ,
+    ("home/:order/:direction", \params -> let
       firstParam = head params
       secondParam = head $ tail params
       order = if firstParam == "CompanyName"
@@ -184,14 +182,12 @@ startRouter appVar = let
         else DIR.Desc
       in fetchFrontPageData order direction (\data' ->
         modify appVar (\appState -> appState { D.navigation = 
-          D.FrontPage (order, direction) data' }))
-  ),(
-    "extra-fields", const $ fetchExtraFieldSettings $ \list -> let
+          D.FrontPage (order, direction) data' }))), 
+    ("extra-fields", const $ fetchExtraFieldSettings $ \list -> let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
       withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
-      in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds
-  ),(
-    "companies/:id", \params -> let
+      in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds), 
+    ("companies/:id", \params -> let
       cId = head params
       in case (parseSafely cId, cId) of
         (Just(cId''), _) -> let
@@ -202,28 +198,24 @@ startRouter appVar = let
               D.navigation = D.CompanyDetail companyId company False (ignoreLinkage machines) }))
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
           D.navigation = D.CompanyNew C.newCompany })
-        _ -> modify' D.NotFound
-  ),(
-    "companies/:id/new-machine-phase1", \params ->
-    withCompany
-      params
-      (\companyId (_,_) ->
-        D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)
-  ),(
-    "companies/:id/new-contact-person", \params ->
-    withCompany
-      params
-      (\companyId (_,_) ->
-        D.ContactPersonPage CP.newContactPerson Nothing companyId)
-  ),(
-    "companies/:id/schema", \params ->
+        _ -> modify' D.NotFound) ,
+    ("companies/:id/new-machine-phase1", \params ->
+      withCompany
+        params
+        (\companyId (_,_) ->
+          D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)) ,
+    ("companies/:id/new-contact-person", \params ->
+      withCompany
+        params
+        (\companyId (_,_) ->
+          D.ContactPersonPage CP.newContactPerson Nothing companyId)) ,
+    ("companies/:id/schema", \params ->
       withCompany 
         params
         $ \_ (_, machines) -> let
           pickMachines = map $ \(a,b,_,_,c,_,d) -> (a,b,c,d)
-          in D.MachinesSchema $ pickMachines machines
-  ),(
-    "companies/:id/new-machine-phase2", \params -> let
+          in D.MachinesSchema $ pickMachines machines), 
+    ("companies/:id/new-machine-phase2", \params -> let
       cId = head params
       in case (parseSafely cId) of
         Just companyIdInt -> do
@@ -244,9 +236,8 @@ startRouter appVar = let
               extraFieldsAdapted = (\(a,b) -> (a,b,unpack "")) `map` extraFields'
               in modify' $ D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
                 (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted (Right $ MachineNew companyId maybeMachineTypeId)
-        _ -> modify' D.NotFound
-  ),(
-    "companies/:id/new-maintenance", \params ->
+        _ -> modify' D.NotFound) ,
+    ("companies/:id/new-maintenance", \params ->
       fetchEmployees (\employees -> 
         withCompany
           params
@@ -257,27 +248,24 @@ startRouter appVar = let
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
-              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)))
-  ),(
-    "companies/:id/contact-persons", \params ->
+              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)))) ,
+    ("companies/:id/contact-persons", \params ->
       case (parseSafely $ head params) of
         Just(companyIdInt) -> 
           let companyId = C.CompanyId companyIdInt
           in fetchContactPersons companyId (\data' -> let
             ns = D.ContactPersonList data'
             in modify' ns)
-        _ -> modify' D.NotFound
-  ),(
-    "companies/:id/maintenances", \params ->
+        _ -> modify' D.NotFound) , 
+    ("companies/:id/maintenances", \params ->
       case (parseSafely $ head params) of
         Just(companyIdInt) -> 
           let companyId = C.CompanyId companyIdInt
           in fetchUpkeeps companyId (\data' -> let
             ns = D.UpkeepHistory data' companyId
             in modify' ns)
-        _ -> modify' D.NotFound
-  ),(
-    "machines/:id", \params -> let
+        _ -> modify' D.NotFound) ,
+    ("machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
         Just(machineId') -> let
@@ -294,15 +282,13 @@ startRouter appVar = let
                     machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
                       contactPersonId cps V.new otherMachineId otherMachines extraFields'
                         (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
-        _ -> modify' D.NotFound
-  ),(
-    "planned", const $
+        _ -> modify' D.NotFound) ,
+    ("planned", const $
       fetchPlannedUpkeeps (\plannedUpkeeps' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps'
         in modify appVar (\appState -> 
-          appState { D.navigation = newNavigation })) 
-  ),(
-    "upkeeps/:id", \params -> let
+          appState { D.navigation = newNavigation }))) ,
+    ("upkeeps/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
         Just(upkeepId') -> let 
@@ -314,12 +300,10 @@ startRouter appVar = let
               in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
                 selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)))
-        _ -> modify' D.NotFound 
-  ),(
-    "other/machine-types-list", const $
-      fetchMachineTypes (\result -> modify' $ D.MachineTypeList result )
-  ),(
-    "machine-types/:id", \params -> let
+        _ -> modify' D.NotFound) ,
+    ("other/machine-types-list", const $
+      fetchMachineTypes (\result -> modify' $ D.MachineTypeList result)) ,
+    ("machine-types/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
         Just (machineTypeIdInt) -> let
@@ -327,9 +311,8 @@ startRouter appVar = let
           in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
             let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
             in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)
-        _ -> modify' D.NotFound 
-  ),(
-    "upkeeps/:id/replan", \params -> let
+        _ -> modify' D.NotFound) ,
+    ("upkeeps/:id/replan", \params -> let
       upkeepId'' = parseSafely $ head params
       in case upkeepId'' of
         Just (upkeepId') -> let
@@ -339,20 +322,17 @@ startRouter appVar = let
               modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
                 (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
                 employees employeeId V.new (Right $ UD.UpkeepNew $ Right upkeepId)))
-        _ -> modify' D.NotFound
-  ),(
-    "contact-persons/:id", \params -> let
+        _ -> modify' D.NotFound) ,
+    ("contact-persons/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of 
         Just (contactPersonId') -> let
           contactPersonId = CP.ContactPersonId contactPersonId'
           in fetchContactPerson contactPersonId (\(cp, companyId) -> modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId)
-        _ -> modify' D.NotFound
-  ),(
-    "employees", const $
-      fetchEmployees (\employees -> modify' $ D.EmployeeList employees)
-  ),(
-    "employees/:id", \params -> let
+        _ -> modify' D.NotFound) ,
+    ("employees", const $
+      fetchEmployees (\employees -> modify' $ D.EmployeeList employees)) ,
+    ("employees/:id", \params -> let
       headParam = head params
       in case parseSafely headParam of
         Just employeeId' -> let
@@ -360,7 +340,7 @@ startRouter appVar = let
           in fetchEmployee employeeId (\employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId))
         Nothing | headParam == "new" -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
-        Nothing -> modify' D.NotFound )]
+        Nothing -> modify' D.NotFound)]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
