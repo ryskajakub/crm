@@ -15,9 +15,23 @@ import "fay-base" Prelude
 #endif
 
 machineKinds :: [(MachineKindEnum, String)]
-machineKinds = [(Compressor, "Kompresor"), (Dryer, "Sušička")]
+machineKinds = [
+  (RotaryScrewCompressor, "Šroubový kompresor") ,
+  (CondensationDryer, "Sušička") ,
+  (VacuumPump, "Vývěva") ,
+  (PistonCompressor, "Pístový kompresor") ,
+  (CoolingUnit, "Chladicí jednotka") ,
+  (NitrogenGenerator, "Generátor dusíku") ,
+  (AdsorptionDryer, "Adsorpční sušička") ]
 
-data MachineKindEnum = Compressor | Dryer
+data MachineKindEnum = 
+  RotaryScrewCompressor | 
+  CondensationDryer | 
+  VacuumPump | 
+  PistonCompressor | 
+  CoolingUnit |
+  NitrogenGenerator | 
+  AdsorptionDryer
 #ifdef FAY
   deriving (Eq)
 #else
@@ -25,14 +39,14 @@ data MachineKindEnum = Compressor | Dryer
 #endif
 
 kindToDbRepr :: MachineKindEnum -> Int
-kindToDbRepr kind = case kind of
-  Compressor -> 0
-  Dryer -> 1
+kindToDbRepr kind = kindToDbRepr' kind (map fst machineKinds)
+
+kindToDbRepr' :: MachineKindEnum -> [MachineKindEnum] -> Int
+kindToDbRepr' x' (x:_) | x == x' = 0
+kindToDbRepr' x' (_:xs) = 1 + kindToDbRepr' x' xs
 
 dbReprToKind :: Int -> MachineKindEnum
-dbReprToKind int = if int == 0
-  then Compressor
-  else Dryer
+dbReprToKind int = fst $ machineKinds !! int
 
 data MachineKindSpecific = MachineKindSpecific {
   name :: String }

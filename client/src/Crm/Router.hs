@@ -189,7 +189,7 @@ startRouter appVar = let
     "extra-fields", const $ fetchExtraFieldSettings $ \list -> let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
       withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
-      in modify' $ D.ExtraFields MK.Compressor withAssignedIds
+      in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds
   ),(
     "companies/:id", \params -> let
       cId = head params
@@ -235,8 +235,8 @@ startRouter appVar = let
             companyId = C.CompanyId companyIdInt
             machine' = (M.newMachine nowYMD)
             machine = case machineKind of
-              MK.Compressor -> machine'
-              MK.Dryer -> machine' { M.mileagePerYear = 8760 }
+              MK.RotaryScrewCompressor -> machine'
+              MK.CondensationDryer -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "")
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
             fetchExtraFieldSettings $ \efSettings -> let

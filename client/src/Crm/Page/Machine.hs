@@ -306,8 +306,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           editing
           ("Datum uvedení do provozu") 
           datePicker ] ++ (case MT.kind machineType of
-            MK.Dryer -> []
-            MK.Compressor -> [
+            MK.CondensationDryer -> []
+            MK.RotaryScrewCompressor -> [
               row'
                 editing
                 "Úvodní stav motohodin"
