@@ -265,15 +265,15 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         setMachineType (machineType { MT.kind = kindId })
         case kindId of
           MK.RotaryScrewCompressor -> return ()
-          MK.CondensationDryer -> set1YearUpkeepSequences
+          _ -> set1YearUpkeepSequences
       in li $ AA.a''' (click selectAction) (pack kindLabel)
     selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
 
   fixedUpkeepSequences = case MT.kind machineType of
-    MK.CondensationDryer -> True
     MK.RotaryScrewCompressor | (isJust machineTypeId && machineTypeFormType == Phase1) -> True
     MK.RotaryScrewCompressor -> False
+    _ -> True
 
   result =
     (B.grid $ B.row $

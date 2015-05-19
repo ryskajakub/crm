@@ -236,7 +236,7 @@ startRouter appVar = let
             machine' = (M.newMachine nowYMD)
             machine = case machineKind of
               MK.RotaryScrewCompressor -> machine'
-              MK.CondensationDryer -> machine' { M.mileagePerYear = 8760 }
+              _ -> machine' { M.mileagePerYear = 8760 }
             machineQuadruple = (machine, "")
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
             fetchExtraFieldSettings $ \efSettings -> let

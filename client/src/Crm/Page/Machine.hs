@@ -306,7 +306,6 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           editing
           ("Datum uvedení do provozu") 
           datePicker ] ++ (case MT.kind machineType of
-            MK.CondensationDryer -> []
             MK.RotaryScrewCompressor -> [
               row'
                 editing
@@ -350,7 +349,8 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                   dropdown = BD.buttonDropdown' editing buttonLabel' selectElements
                   in if editing
                     then div' (class' "col-md-3") dropdown
-                    else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]) ++ [
+                    else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
+            _ -> []) ++ [
         formRow
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
