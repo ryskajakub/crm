@@ -1,5 +1,3 @@
-{-# LANGUAGE PackageImports #-}
-
 module Crm.Data.EmployeeData where
 
 import Crm.Shared.Employee

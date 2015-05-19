@@ -1,16 +1,14 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.ContactPerson (
   contactPersonsList ,
   contactPersonForm ) where
 
-import "fay-base" Data.Text (fromString, pack)
-import "fay-base" Prelude hiding (div)
-import "fay-base" Data.Var (Var, modify)
-import "fay-base" FFI (Defined (Defined))
+import Data.Text (fromString, pack)
+import Prelude hiding (div)
+import Data.Var (Var, modify)
+import FFI (Defined (Defined))
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B

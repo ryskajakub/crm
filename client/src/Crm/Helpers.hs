@@ -1,12 +1,10 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Helpers where
 
-import "fay-base" Data.Text (Text, showInt, fromString)
-import "fay-base" Prelude hiding (div, span, id)
+import Data.Text (Text, showInt, fromString)
+import Prelude hiding (div, span, id)
 import FFI (Nullable, ffi)
 import Data.Nullable (fromNullable)
 

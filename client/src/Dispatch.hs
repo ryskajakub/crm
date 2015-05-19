@@ -1,16 +1,14 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
 
 module Dispatch where
 
-import "fay-base" Prelude hiding (span, div, elem)
-import "fay-base" Data.Var (Var, newVar, subscribeAndRead)
-import "fay-base" Data.LocalStorage
-import "fay-base" Data.Defined (fromDefined)
-import "fay-base" Data.Text (unpack, fromString, (<>), showInt)
-import "fay-base" Data.Maybe (onJust, joinMaybe)
+import Prelude hiding (span, div, elem)
+import Data.Var (Var, newVar, subscribeAndRead)
+import Data.LocalStorage
+import Data.Defined (fromDefined)
+import Data.Text (unpack, fromString, (<>), showInt)
+import Data.Maybe (onJust, joinMaybe)
 
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation

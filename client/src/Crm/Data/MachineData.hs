@@ -1,8 +1,6 @@
-{-# LANGUAGE PackageImports #-}
-
 module Crm.Data.MachineData where
 
-import "fay-base" Data.Text (Text)
+import Data.Text (Text)
 
 import Crm.Shared.Company
 import Crm.Shared.ContactPerson

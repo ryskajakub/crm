@@ -1,6 +1,3 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
 module Crm.Server (
   createCompany , 
   createMachine , 
@@ -48,8 +45,8 @@ module Crm.Server (
   getPhoto ) where
 
 import FFI (ffi, Automatic, Defined(Defined, Undefined))
-import "fay-base" Prelude hiding (putStrLn)
-import "fay-base" Data.Text (Text, (<>), unpack, pack)
+import Prelude hiding (putStrLn)
+import Data.Text (Text, (<>), unpack, pack)
 
 import qualified JQuery as JQ
 

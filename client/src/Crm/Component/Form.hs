@@ -1,13 +1,11 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Form where
 
-import "fay-base" Data.Text (fromString, pack, Text, (<>))
-import "fay-base" Prelude as P hiding (span, div, elem) 
-import "fay-base" FFI (Defined(Defined, Undefined))
+import Data.Text (fromString, pack, Text, (<>))
+import Prelude as P hiding (span, div, elem) 
+import FFI (Defined(Defined, Undefined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap.Button as BTN

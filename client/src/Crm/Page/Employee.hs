@@ -1,17 +1,15 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.Employee (
   employeeEdit ,
   employeePage ,
   newEmployeeForm ) where
 
-import "fay-base" Data.Text (fromString, pack, Text)
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" FFI (Defined (Defined))
-import "fay-base" Data.Var (Var, modify)
+import Data.Text (fromString, pack, Text)
+import Prelude hiding (div, span, id)
+import FFI (Defined (Defined))
+import Data.Var (Var, modify)
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B

@@ -1,16 +1,14 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.Upkeep (
   upkeepNew ,
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, Text, (<>))
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
+import Data.Text (fromString, unpack, pack, Text, (<>))
+import Prelude hiding (div, span, id)
+import Data.Var (Var, modify)
 import FFI (Defined(Defined))
 
 import HaskellReact as HR

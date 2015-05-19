@@ -1,7 +1,5 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Router (
   startRouter ,
@@ -34,11 +32,11 @@ module Crm.Router (
   machinesSchema ,
   editEmployee ) where
 
-import "fay-base" Data.Text (fromString, showInt, Text, (<>), unpack)
-import "fay-base" Prelude hiding (div, span) 
-import "fay-base" Data.Var (Var, modify, get)
-import "fay-base" Data.Function (fmap)
-import "fay-base" Data.Maybe (fromJust)
+import Data.Text (fromString, showInt, Text, (<>), unpack)
+import Prelude hiding (div, span) 
+import Data.Var (Var, modify, get)
+import Data.Function (fmap)
+import Data.Maybe (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import HaskellReact hiding (id)

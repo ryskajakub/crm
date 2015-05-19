@@ -1,7 +1,5 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Viz (
   MachineNode (..) ,
@@ -10,8 +8,8 @@ module Crm.Component.Viz (
   interpret ) where
 
 import FFI
-import "fay-base" Data.Text (fromString, Text, showInt, (<>), intercalate, pack)
-import "fay-base" Prelude hiding (intercalate)
+import Data.Text (fromString, Text, showInt, (<>), intercalate, pack)
+import Prelude hiding (intercalate)
 
 import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.Machine as M

@@ -1,14 +1,12 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.NotFound (
   notFound ) where
 
-import "fay-base" Data.Text (fromString)
-import "fay-base" Prelude
-import "fay-base" FFI (Defined(Defined))
+import Data.Text (fromString)
+import Prelude
+import FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B

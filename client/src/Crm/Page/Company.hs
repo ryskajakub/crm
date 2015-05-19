@@ -1,17 +1,15 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.Company (
   companiesList , 
   companyDetail , 
   companyNew ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack) 
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
-import "fay-base" Data.Maybe (onJust)
+import Data.Text (fromString, unpack, pack) 
+import Prelude hiding (div, span, id)
+import Data.Var (Var, modify)
+import Data.Maybe (onJust)
 import FFI (Defined(Defined, Undefined))
 
 import HaskellReact as HR

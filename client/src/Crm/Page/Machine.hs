@@ -1,16 +1,14 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import "fay-base" Data.Text (fromString, pack, (<>), unpack, Text, showInt)
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
-import "fay-base" FFI (Defined(Defined))
+import Data.Text (fromString, pack, (<>), unpack, Text, showInt)
+import Prelude hiding (div, span, id)
+import Data.Var (Var, modify)
+import FFI (Defined(Defined))
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B

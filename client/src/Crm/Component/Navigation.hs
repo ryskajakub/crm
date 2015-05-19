@@ -1,13 +1,11 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.Navigation where
 
-import "fay-base" Data.Text (fromString)
-import "fay-base" Prelude hiding (span, div, elem)
-import "fay-base" FFI (Defined(Defined))
+import Data.Text (fromString)
+import Prelude hiding (span, div, elem)
+import FFI (Defined(Defined))
 
 import HaskellReact
 import HaskellReact.Bootstrap (navBar' , nav)

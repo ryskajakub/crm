@@ -7,8 +7,8 @@ module Crm.Component.DatePicker (
   datePicker ,
   DatePicker ) where
 
-import "fay-base" Prelude hiding (putStrLn)
-import "fay-base" Data.Text (fromString, Text)
+import Prelude hiding (putStrLn)
+import Data.Text (fromString, Text)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import HaskellReact

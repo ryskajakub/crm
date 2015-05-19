@@ -1,14 +1,12 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.MachineSchema ( schema ) where
 
-import "fay-base" Data.Text (fromString)
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (onJust, mapMaybe)
+import Data.Text (fromString)
+import Prelude hiding (div, span, id)
+import FFI (Defined(Defined))
+import Data.Maybe (onJust, mapMaybe)
 
 import HaskellReact as HR
 import qualified HaskellReact.Bootstrap as B

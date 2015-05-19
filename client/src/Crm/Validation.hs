@@ -1,12 +1,10 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Validation where
 
-import "fay-base" Data.Text (fromString, Text, showInt, (<>))
-import "fay-base" Prelude hiding (fail)
+import Data.Text (fromString, Text, showInt, (<>))
+import Prelude hiding (fail)
 import qualified Crm.Shared.Machine as M
 
 data Validation = Validation [ValidationFail]

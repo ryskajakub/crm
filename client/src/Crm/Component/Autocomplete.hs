@@ -1,13 +1,10 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
 module Crm.Component.Autocomplete (
   autocompleteInput ) where
 
 import HaskellReact
 import FFI (ffi, Defined(Defined))
-import "fay-base" Data.Text (pack, Text, (<>))
-import "fay-base" Prelude hiding (id)
+import Data.Text (pack, Text, (<>))
+import Prelude hiding (id)
 
 import qualified HaskellReact.Tag.Input as I
 

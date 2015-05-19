@@ -1,16 +1,15 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE OverloadedStrings #-}
+
 {-# LANGUAGE MultiWayIf #-}
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
-import "fay-base" Data.Text (fromString, pack, showInt, (<>))
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var)
-import "fay-base" Data.Maybe (fromJust)
-import "fay-base" FFI (Defined(Defined))
+import Data.Text (fromString, pack, showInt, (<>))
+import Prelude hiding (div, span, id)
+import Data.Var (Var)
+import Data.Maybe (fromJust)
+import FFI (Defined(Defined))
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B

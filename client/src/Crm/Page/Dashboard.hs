@@ -1,14 +1,11 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
 {-# LANGUAGE MultiWayIf #-}
 
 module Crm.Page.Dashboard (
   dashboard ) where
 
-import "fay-base" Data.Text (pack, (<>), Text, length)
-import "fay-base" Prelude hiding (div, span, id, length)
-import "fay-base" Data.Maybe (onJust, mapMaybe)
+import Data.Text (pack, (<>), Text, length)
+import Prelude hiding (div, span, id, length)
+import Data.Maybe (onJust, mapMaybe)
 import FFI
 import DOM
 

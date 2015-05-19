@@ -1,11 +1,8 @@
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-
 module Crm.Data.Data where
 
-import "fay-base" Prelude
-import "fay-base" Data.Var (Var, modify)
-import "fay-base" Data.Text (Text)
+import Prelude
+import Data.Var (Var, modify)
+import Data.Text (Text)
 
 import qualified Crm.Shared.Employee as E
 import qualified Crm.Shared.Machine as M

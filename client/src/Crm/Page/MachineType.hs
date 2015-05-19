@@ -1,19 +1,17 @@
-{-# LANGUAGE PackageImports #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RebindableSyntax #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Page.MachineType (
   machineTypesList ,
   machineTypePhase1Form ,
   machineTypeForm ) where
 
-import "fay-base" Data.Text (fromString, unpack, pack, showInt, (<>), Text)
-import "fay-base" Prelude hiding (div, span, id)
-import "fay-base" Data.Var (Var, modify)
-import "fay-base" FFI (Defined(Defined))
-import "fay-base" Data.Maybe (isJust, fromJust)
-import "fay-base" Data.LocalStorage
+import Data.Text (fromString, unpack, pack, showInt, (<>), Text)
+import Prelude hiding (div, span, id)
+import Data.Var (Var, modify)
+import FFI (Defined(Defined))
+import Data.Maybe (isJust, fromJust)
+import Data.LocalStorage
 
 import HaskellReact
 import qualified HaskellReact.Bootstrap as B
