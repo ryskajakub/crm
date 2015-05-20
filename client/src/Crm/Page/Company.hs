@@ -115,7 +115,7 @@ companyDetail :: Bool -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
               -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)] 
+              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] 
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
 companyDetail editing' router var (companyId, company') machines' = let
@@ -129,7 +129,7 @@ companyDetail editing' router var (companyId, company') machines' = let
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
 
-  machineBox (machineId', machine', _, _, machineType, contactPerson) =
+  machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) =
     B.col (B.mkColProps 4) $
       B.panel [
         h3 $ 
@@ -145,7 +145,9 @@ companyDetail editing' router var (companyId, company') machines' = let
           dt "Rok výroby" ,
           dd $ M.yearOfManufacture machine' ,
           dt "Servisman" ,
-          dd $ maybe "" CP.name contactPerson ]]
+          dd $ maybe "" CP.name contactPerson , 
+          dt "Další servis" ,
+          dd $ displayDate nextService ]]
   machineBoxes = map machineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {

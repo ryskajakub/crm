@@ -283,13 +283,13 @@ fetchContactPersons companyId callback = JQ.ajax
   noopOnError
 
 fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, 
-               MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]) -> Fay ()) -- ^ callback
+             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
-    (callback . (rmap (map (\(a,b,c,d,e,f,g) -> (a,b,c,d,e,toMaybe f,toMaybe g)))))
+    (callback . (rmap (map (\(a,b,c,d,e,f,g,h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
     noopOnError
 
 fetchFrontPageData :: C.OrderType

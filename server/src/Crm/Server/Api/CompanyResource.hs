@@ -4,6 +4,8 @@
 
 module Crm.Server.Api.CompanyResource where
 
+import Database.PostgreSQL.Simple (Connection)
+
 import Opaleye.RunQuery (runQuery)
 import Opaleye (queryTable, pgDouble, pgStrictText)
 import Opaleye.Manipulation (runInsertReturning)
@@ -64,6 +66,26 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinate
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ unsortedResult)
 
+
+addNextDates :: (a -> M.MachineId)
+             -> (a -> M.Machine)
+             -> a
+             -> Connection
+             -> IO (Planned, YMD.YearMonthDay)
+addNextDates getMachineId getMachine a = \conn -> do
+  upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
+  upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId $ getMachineId a)
+  today' <- today
+  let
+    upkeeps = convert upkeepRows :: [UpkeepMapped] 
+    upkeepSequences = fmap (\r -> sel2 (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
+    upkeepSequenceTuple = case upkeepSequences of
+      [] -> undefined
+      x : xs -> (x, xs)
+    (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap sel3 upkeeps) today'
+  return (computationMethod, dayToYmd nextServiceDay)
+
+
 unsortedResult :: ExceptT (Reason a) Dependencies 
                   [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
@@ -72,20 +94,11 @@ unsortedResult = do
   liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
     machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
-    nextDays' <- forM machines $ \(machineId, machine, _, _, _, _, _) -> do
-      upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId machineId)
-      upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId machineId)
-      today' <- today
-      let
-        upkeeps = convert upkeepRows :: [UpkeepMapped] 
-        upkeepSequences = fmap (\r -> sel2 (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
-        upkeepSequenceTuple = case upkeepSequences of
-          [] -> undefined
-          x : xs -> (x, xs)
-        (nextServiceDay, computationMethod) = nextServiceDate machine upkeepSequenceTuple (fmap sel3 upkeeps) today'
+    nextDays' <- forM machines $ \machine -> do
+      (computationMethod, nextServiceDay) <- addNextDates $(proj 7 0) $(proj 7 1) machine conn
       return $ case computationMethod of
         Planned -> Nothing
-        Computed -> Just $ dayToYmd nextServiceDay
+        Computed -> Just nextServiceDay
     let nextDays = mapMaybe id nextDays'
     return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays, toMyMaybe $ $(proj 3 2) companyRecord)
 
@@ -124,7 +137,7 @@ singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
   companyRow <- singleRowOrColumn rows
   machines <- liftIO $ runMachinesInCompanyQuery companyId conn
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  return (sel2 $ (convert companyRow :: CompanyMapped) , machinesMyMaybe))
+  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe))
 
 updateCompany :: Handler IdDependencies
 updateCompany = let
