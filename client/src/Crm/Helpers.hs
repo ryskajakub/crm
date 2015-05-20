@@ -3,8 +3,8 @@
 
 module Crm.Helpers where
 
-import Data.Text (Text, showInt, fromString)
-import Prelude hiding (div, span, id)
+import Data.Text as T (Text, showInt, fromString, (<>), length)
+import Prelude as P hiding (div, span, id)
 import FFI (Nullable, ffi)
 import Data.Nullable (fromNullable)
 
@@ -16,7 +16,7 @@ import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Alert as A
 
-import Moment
+import Moment as M
 
 import qualified JQuery as JQ
 
@@ -33,7 +33,7 @@ validationHtml validationMessages = let
 
 zipWithIndex :: [a] -> [(Int, a)] 
 zipWithIndex sequences = let
-  lastIndex = length sequences - 1
+  lastIndex = P.length sequences - 1
   indices = [0..lastIndex]
   in zip indices sequences
 
@@ -108,3 +108,29 @@ eventInt' success errorFun = eventValue >=> (\text -> case parseSafely text of
 
 eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
 eventInt fun = eventInt' fun (const $ return ())
+
+
+toHexa' :: Int -> Text
+toHexa' = ffi " (%1).toString(16) "
+
+toHexa :: Int -> Text
+toHexa int = let
+  hexa = toHexa' int
+  in if T.length hexa == 1 then "0" <> hexa else hexa
+
+computeColor :: YMD.YearMonthDay -> Text
+computeColor (YMD.YearMonthDay y m d _) = let
+  moment = M.requireMoment
+  today = M.now moment
+  theOtherDay = M.dayPrecision y m d moment
+  diff' = abs $ fromIntegral $ M.diff today theOtherDay M.Days
+  year = 366 :: Double
+  colorScaleSize = 255 :: Double
+  diff = if diff' > year then year else diff'
+  halfYear = year / 2 
+  unit = colorScaleSize / halfYear
+  firstPart = if diff > halfYear then halfYear else diff
+  secondPartDiff = if diff - halfYear > 0 then diff - halfYear else 0
+  redPart = truncate $ colorScaleSize - (secondPartDiff * unit)
+  greenPart = truncate $ unit * firstPart
+  in toHexa redPart <> toHexa greenPart <> "00"

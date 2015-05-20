@@ -137,7 +137,7 @@ companyDetail editing' router var (companyId, company') machines' = let
             (MT.machineTypeName machineType)
             (R.machineDetail machineId')
             router ,
-          span' (class' "health") "•" ] , 
+          span' (class' "health") "•" ] ,
         dl [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
