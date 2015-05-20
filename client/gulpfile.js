@@ -2,8 +2,8 @@ var gulp = require("gulp");
 var shell = require("gulp-shell");
 var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
-var _ = require('underscore');
 var sass = require('gulp-sass');
+var _ = require('underscore');
 
 var commonSources = [
   '../../fay-react/core/src/' ,

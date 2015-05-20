@@ -17,5 +17,20 @@
     "gulp-clean": "~0.3.1",
     "gulp-webpack": "~1.0.0",
     "underscore": "~1.7.0"
+  },
+  "name": "crm-client",
+  "version": "0.0.0",
+  "description": "Client for the 2e.cz crm application.",
+  "main": "gulpfile.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:coubeatczech/crm.git"
+  },
+  "author": "ryskajakub@seznam.cz",
+  "bugs": {
+    "url": "https://github.com/coubeatczech/crm/issues"
   }
 }
