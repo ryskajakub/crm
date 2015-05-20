@@ -27,6 +27,9 @@ instance Renderable DOMElement
 text2DOM :: Text -> DOMElement
 text2DOM = unsafeCoerce
 
+data Style = Style {
+  color :: Text }
+
 data NoAttributes = NoAttributes {}
 
 -- | attributes, that can be given to any tag
@@ -34,6 +37,7 @@ data Attributes = Attributes {
   className :: Defined Text , -- ^ html class names, must be separated by spaces
   onClick :: Defined ( SyntheticMouseEvent -> Fay() ) , -- ^ click handler
   id :: Defined Text ,
+  style :: Defined Style ,
   key :: Defined Text } -- ^ html unique id of the element
 
 defaultAttributes :: Attributes
@@ -41,6 +45,7 @@ defaultAttributes = Attributes {
   className = Undefined ,
   onClick = Undefined ,
   id = Undefined ,
+  style = Undefined ,
   key = Undefined }
 
 click :: Fay () -> Attributes

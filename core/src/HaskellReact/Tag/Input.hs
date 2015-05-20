@@ -12,7 +12,7 @@ module HaskellReact.Tag.Input (
   InputType ,
   button ,
   checkbox ,
-  color ,
+  color' ,
   date ,
   datetime ,
   datetimeLocal ,
@@ -49,8 +49,8 @@ button = "button"
 checkbox :: InputType
 checkbox = "checkbox"
 
-color :: InputType
-color = "color"
+color' :: InputType
+color' = "color"
 
 date :: InputType
 date = "date"
