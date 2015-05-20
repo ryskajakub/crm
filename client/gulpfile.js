@@ -3,6 +3,7 @@ var shell = require("gulp-shell");
 var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
 var _ = require('underscore');
+var sass = require('gulp-sass');
 
 var commonSources = [
   '../../fay-react/core/src/' ,
@@ -33,6 +34,11 @@ var playgroundSourcesAsGlob = mkSourcesAsGlob(playgroundSources);
 var playgroundSourcesCommaDelimited = mkSourcesCommaDelimited(playgroundSources);
 
 // main
+gulp.task('compile-sass', function () {
+  gulp.src('./scss/*.scss')
+    .pipe(sass({errLogToConsole: true}))
+    .pipe(gulp.dest('build/'));
+});
 
 gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery'], function() {
   return gulp.src(['files/*'])
@@ -72,6 +78,7 @@ gulp.task('webpack', ['compile', 'copy-resources'], function () {
 });
 gulp.task('watch', function() {
   gulp.watch(['files/*'], ['copy-resources']);
+  gulp.watch(['scss/*'], ['compile-sass']);
   gulp.watch(sourcesAsGlob, ['webpack']);
 });
 
