@@ -144,7 +144,7 @@ companyDetail editing' router var (companyId, company') machines' = let
           dd $ M.serialNumber machine' ,
           dt "Rok výroby" ,
           dd $ M.yearOfManufacture machine' ,
-          dt "Servisman" ,
+          dt "Kontaktní osoba" ,
           dd $ maybe "" CP.name contactPerson , 
           dt "Další servis" ,
           dd $ displayDate nextService ]]

@@ -289,7 +289,7 @@ fetchCompany :: C.CompanyId -- ^ company id
 fetchCompany companyId callback =
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
-    (callback . (rmap (map (\(a,b,c,d,e,f,g,h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
+    (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
     noopOnError
 
 fetchFrontPageData :: C.OrderType

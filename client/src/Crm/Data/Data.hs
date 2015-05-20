@@ -29,7 +29,8 @@ data NavigationState =
     companyId :: C.CompanyId , 
     company :: C.Company , 
     editing :: Bool , 
-    companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson)] } | 
+    companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+      MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 

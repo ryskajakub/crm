@@ -46,7 +46,7 @@ import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
 
 import Safe (minimumMay, readMay)
 
-import TupleTH (updateAtN, proj, takeTuple)
+import TupleTH (updateAtN, proj, takeTuple, catTuples)
 
 data MachineMid = NextServiceListing | MapListing
 
@@ -137,7 +137,8 @@ singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
   companyRow <- singleRowOrColumn rows
   machines <- liftIO $ runMachinesInCompanyQuery companyId conn
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe))
+  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
+  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` (fmap $(proj 2 1) nextServiceDates)))
 
 updateCompany :: Handler IdDependencies
 updateCompany = let

@@ -149,9 +149,8 @@ startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany :: [Text]
-              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine,
-                   C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]) 
-                 -> D.NavigationState)
+              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
+                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
               -> Fay ()
   withCompany params newStateFun = case parseSafely $ head params of
     Just(companyId') -> let
@@ -191,7 +190,7 @@ startRouter appVar = let
         (Just(cId''), _) -> let
           companyId = C.CompanyId cId''
           in fetchCompany companyId (\(company,machines) -> let
-            ignoreLinkage = map $ \(a,b,c,d,e,f,_) -> (a,b,c,d,e,f)
+            ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
             in modify appVar (\appState -> appState {
               D.navigation = D.CompanyDetail companyId company False (ignoreLinkage machines) }))
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
@@ -211,7 +210,7 @@ startRouter appVar = let
       withCompany 
         params
         $ \_ (_, machines) -> let
-          pickMachines = map $ \(a,b,_,_,c,_,d) -> (a,b,c,d)
+          pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
           in D.MachinesSchema $ pickMachines machines), 
     ("companies/:id/new-machine-phase2", \params -> let
       cId = head params
@@ -240,7 +239,7 @@ startRouter appVar = let
         withCompany
           params
           (\companyId (_, machines') -> let
-            machines = map (\(a,b,c,d,e,_,_) -> (a,b,c,d,e)) machines'
+            machines = map (\(a,b,c,d,e,_,_,_) -> (a,b,c,d,e)) machines'
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
