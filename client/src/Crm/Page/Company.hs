@@ -132,11 +132,12 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) =
     B.col (B.mkColProps 4) $
       B.panel [
-        h3 $ 
+        h3 [
           R.link
             (MT.machineTypeName machineType)
             (R.machineDetail machineId')
-            router , 
+            router ,
+          span' (class' "health") "•" ] , 
         dl [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,

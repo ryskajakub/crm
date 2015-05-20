@@ -3,6 +3,15 @@ html {
   overflow-y: scroll;
 }
 
+div.panel-body h3 {
+  position:relative; }
+
+.health {
+  font-size: 3em;
+  position: absolute;
+  right: 0px;
+  top: -26px; }
+
 .my-text-left {
   text-align: left !important; }
 
