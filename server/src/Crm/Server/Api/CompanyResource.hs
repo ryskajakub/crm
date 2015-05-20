@@ -162,5 +162,5 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   update = Just updateCompany ,
   remove = Just deleteCompany ,
   schema = S.withListing NextServiceListing $ S.named [
-    ("single", S.singleBy readMay') ,
-    ("map", S.listing MapListing) ] }
+    (A.single, S.singleBy readMay') ,
+    (A.map', S.listing MapListing) ] }
