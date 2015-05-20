@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Machine where
 
@@ -10,11 +8,10 @@ import Crm.Shared.YearMonthDay (YearMonthDay)
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
+import Prelude
 #endif
+import Data.Text (Text, pack)
 
 newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
@@ -27,18 +24,18 @@ data Machine = Machine {
   machineOperationStartDate :: Maybe YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int ,
-  note :: String ,
-  serialNumber :: String ,
-  yearOfManufacture :: String }
+  note :: Text ,
+  serialNumber :: Text ,
+  yearOfManufacture :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = Machine {
   machineOperationStartDate = Just ymd ,
   initialMileage = 0 ,
-  note = "" ,
+  note = (pack "") ,
   mileagePerYear = 365 * 24 ,
-  serialNumber = "" ,
-  yearOfManufacture = "" }
+  serialNumber = (pack "") ,
+  yearOfManufacture = (pack "") }

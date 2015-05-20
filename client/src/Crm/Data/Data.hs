@@ -1,6 +1,5 @@
 module Crm.Data.Data where
 
-import Prelude
 import Data.Var (Var, modify)
 import Data.Text (Text)
 

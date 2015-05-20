@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.UpkeepMachine where
 
@@ -10,21 +8,19 @@ import qualified Crm.Shared.Machine as M
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 type UpkeepMachine' = (UpkeepMachine, M.MachineId)
 
 data UpkeepMachine = UpkeepMachine {
-  upkeepMachineNote :: String , 
+  upkeepMachineNote :: Text , 
   recordedMileage :: Int ,
   warrantyUpkeep :: Bool }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newUpkeepMachine :: UpkeepMachine
-newUpkeepMachine = UpkeepMachine "" 0 False
+newUpkeepMachine = UpkeepMachine (pack "") 0 False

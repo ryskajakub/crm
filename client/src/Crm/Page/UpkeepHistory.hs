@@ -4,7 +4,7 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import Data.Text (fromString, pack, showInt, (<>))
+import Data.Text (fromString, showInt, (<>))
 import Prelude hiding (div, span, id)
 import FFI (Defined(Defined))
 
@@ -32,7 +32,7 @@ upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.M
 upkeepHistory upkeepsInfo companyId router = let
 
   upkeepHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = let
-    employeeText = maybe ("---") (pack . E.name . snd) maybeEmployee
+    employeeText = maybe ("---") (E.name . snd) maybeEmployee
     (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
       then ("label-success", "Uzavřený", text2DOM "")
       else ("label-warning", "Naplánovaný", link "Uzavřít" (closeUpkeep upkeepId) router)
@@ -58,12 +58,12 @@ upkeepHistory upkeepsInfo companyId router = let
         B.col (B.mkColProps 2) $ deleteButton ] ,
       B.row $ map (\(upkeepMachine, machineType, machineId) ->
         B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
-          (pack $ MT.machineTypeName machineType)
+          (MT.machineTypeName machineType)
           (machineDetail machineId)
           router ,
           dl [[
             dt "Poznámka" ,
-            dd $ pack $ UM.upkeepMachineNote upkeepMachine ] ++ 
+            dd $ UM.upkeepMachineNote upkeepMachine ] ++ 
             (if U.upkeepClosed upkeep then [
             dt "Naměřené motohodiny" ,
             dd $ showInt $ UM.recordedMileage upkeepMachine ,

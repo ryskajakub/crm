@@ -3,7 +3,7 @@
 
 module Crm.Component.Form where
 
-import Data.Text (fromString, pack, Text, (<>))
+import Data.Text (fromString, Text, (<>))
 import Prelude as P hiding (span, div, elem) 
 import FFI (Defined(Defined, Undefined))
 
@@ -92,9 +92,9 @@ editingCheckbox value setter editing = let
     else checkboxAttrs
   in I.input mkAttrs inputAttrs
 
-data DisplayValue = DefaultValue String | SetValue String
+data DisplayValue = DefaultValue Text | SetValue Text
 
-joinEither :: DisplayValue -> String
+joinEither :: DisplayValue -> Text
 joinEither dv = case dv of
   DefaultValue x -> x
   SetValue x -> x
@@ -109,15 +109,15 @@ editingInput' :: Bool -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> B
 editingInput' textarea displayPlain displayValue onChange' editing' = let
   inputAttrs = let
     commonInputAttrs = case displayValue of
-      DefaultValue string -> I.mkInputAttrs { I.defaultValue = Defined $ pack string }
-      SetValue string -> I.mkInputAttrs { I.value_ = Defined $ pack string }
+      DefaultValue t -> I.mkInputAttrs { I.defaultValue = Defined t }
+      SetValue t -> I.mkInputAttrs { I.value_ = Defined t }
     in if editing' 
       then commonInputAttrs {
         I.onChange = Defined onChange' }
       else commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
   in if displayPlain && not editing'
-    then text2DOM $ pack $ joinEither displayValue
+    then text2DOM $ joinEither displayValue
     else if textarea 
       then I.textarea inputNormalAttrs inputAttrs
       else I.input inputNormalAttrs inputAttrs

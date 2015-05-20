@@ -5,7 +5,7 @@
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
-import Data.Text (fromString, pack, showInt, (<>))
+import Data.Text (fromString, showInt, (<>))
 import Prelude hiding (div, span, id)
 import Data.Var (Var)
 import Data.Maybe (fromJust)
@@ -35,7 +35,7 @@ machineKindSettings :: Var D.AppState
                     -> DOMElement
 machineKindSettings appVar editedEnum allSettings = let
 
-  select = maybeSelectRow' False True "Druh stroje" MK.machineKinds pack (Just editedEnum)
+  select = maybeSelectRow' False True "Druh stroje" MK.machineKinds (\x -> x) (Just editedEnum)
     (\selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = fromJust selectedKind })
     (const undefined)
 
@@ -71,7 +71,7 @@ machineKindSettings appVar editedEnum allSettings = let
       newFields = start ++ [modifiedX] ++ rest
       in setNewSettings (editedEnum, newFields)
     theInput = div' (class' "col-md-7") $ editingInput True (SetValue $ MK.name extraFieldData)
-      (eventString >=> setFieldName) True
+      (eventValue >=> setFieldName) True
 
     removeButton = let
       removeField = let

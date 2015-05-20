@@ -6,8 +6,8 @@ module Crm.Page.Employee (
   employeePage ,
   newEmployeeForm ) where
 
-import Data.Text (fromString, pack, Text)
-import Prelude hiding (div, span, id)
+import Data.Text (fromString, Text, length)
+import Prelude hiding (div, span, id, length)
 import FFI (Defined (Defined))
 import Data.Var (Var, modify)
 
@@ -30,9 +30,9 @@ employeePage :: CrmRouter
              -> DOMElement
 employeePage router employees = let 
   rowEmployee (employeeId, employee) = tr [ 
-    td $ R.link (pack $ E.name employee) (R.editEmployee employeeId) router ,
-    td $ pack $ E.contact employee ,
-    td $ pack $ E.capabilities employee ]
+    td $ R.link (E.name employee) (R.editEmployee employeeId) router ,
+    td $ E.contact employee ,
+    td $ E.capabilities employee ]
   goToAddEmployee = navigate newEmployee router
   addEmployeeButton = BTN.button'
     (BTN.buttonProps {
@@ -91,17 +91,17 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
         True 
         "Jméno" 
         (SetValue $ E.name employee) 
-        (eventString >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
+        (eventValue >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
       row'
         True
         "Kontakt"
         (SetValue $ E.contact employee)
-        (eventString >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
+        (eventValue >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
       row'
         True
         "Kvalifikace"
         (SetValue $ E.capabilities employee)
-        (eventString >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
+        (eventValue >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
         (null validationMessages)
         buttonLabel

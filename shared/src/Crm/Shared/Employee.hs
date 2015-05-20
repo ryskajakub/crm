@@ -1,18 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Employee where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
 #ifdef FAY
@@ -24,12 +20,12 @@ newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
 type Employee' = (EmployeeId, Employee)
 
 data Employee = Employee {
-  name :: String ,
-  contact :: String ,
-  capabilities :: String }
+  name :: Text ,
+  contact :: Text ,
+  capabilities :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newEmployee :: Employee
-newEmployee = Employee "" "" ""
+newEmployee = Employee (pack "") (pack "") (pack "")

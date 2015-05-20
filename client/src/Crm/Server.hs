@@ -248,12 +248,11 @@ fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
                 [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, 
-                MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]) -> Fay()) -- ^ callback
+                MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-  toStr (a,b,c) = (a,b,unpack c) 
-  fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,toStr `map` l)
+  fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,l)
   in JQ.ajax
     (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
     (callback . fun)
@@ -341,11 +340,11 @@ createMachine :: M.Machine
               -> MT.MyEither
               -> Maybe CP.ContactPersonId
               -> Maybe M.MachineId
-              -> [(EF.ExtraFieldId, String)]
+              -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
 createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = ajax
-  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, (\(a,b) -> (a,pack b)) `map` extraFields)
+  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
   post
   (const callback)
@@ -403,11 +402,11 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
               -> Maybe M.MachineId -- ^ linked machine id
-              -> [(EF.ExtraFieldId, String)]
+              -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
 updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax
-  (machine, toMyMaybe linkedMachineId, (\(a,b) -> (a,pack b)) `map` machineSpecificData)
+  (machine, toMyMaybe linkedMachineId, machineSpecificData)
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   put
   (const callback)

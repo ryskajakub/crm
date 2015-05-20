@@ -1,28 +1,24 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.MachineKind where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
-machineKinds :: [(MachineKindEnum, String)]
+machineKinds :: [(MachineKindEnum, Text)]
 machineKinds = [
-  (RotaryScrewCompressor, "Šroubový kompresor") ,
-  (CondensationDryer, "Sušička") ,
-  (VacuumPump, "Vývěva") ,
-  (PistonCompressor, "Pístový kompresor") ,
-  (CoolingUnit, "Chladicí jednotka") ,
-  (NitrogenGenerator, "Generátor dusíku") ,
-  (AdsorptionDryer, "Adsorpční sušička") ]
+  (RotaryScrewCompressor, pack "Šroubový kompresor") ,
+  (CondensationDryer, pack "Sušička") ,
+  (VacuumPump, pack "Vývěva") ,
+  (PistonCompressor, pack "Pístový kompresor") ,
+  (CoolingUnit, pack "Chladicí jednotka") ,
+  (NitrogenGenerator, pack "Generátor dusíku") ,
+  (AdsorptionDryer, pack "Adsorpční sušička") ]
 
 data MachineKindEnum = 
   RotaryScrewCompressor | 
@@ -49,12 +45,12 @@ dbReprToKind :: Int -> MachineKindEnum
 dbReprToKind int = fst $ machineKinds !! int
 
 data MachineKindSpecific = MachineKindSpecific {
-  name :: String }
+  name :: Text }
 #ifdef FAY
   deriving (Eq)
 #else
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newMachineKindSpecific :: MachineKindSpecific
-newMachineKindSpecific = MachineKindSpecific ""
+newMachineKindSpecific = MachineKindSpecific (pack "")

@@ -8,7 +8,7 @@ module Crm.Component.Viz (
   interpret ) where
 
 import FFI
-import Data.Text (fromString, Text, showInt, (<>), intercalate, pack)
+import Data.Text (fromString, Text, showInt, (<>), intercalate)
 import Prelude hiding (intercalate)
 
 import qualified Crm.Shared.MachineType as MT
@@ -34,7 +34,7 @@ mkId = ("machine" <>) . showInt . M.getMachineId
 
 mkLabel :: MachineNode -> Text
 mkLabel (MachineNode mId m mT) = let
-  innerText = (pack $ MT.machineTypeName mT) <> " " <> (pack $ M.serialNumber m)
+  innerText = (MT.machineTypeName mT) <> " " <> (M.serialNumber m)
   url = R.routeToText $ R.machineDetail mId
   in "[URL=\"" <> url <> "\", label=\"" <> innerText <> "\"]"
 

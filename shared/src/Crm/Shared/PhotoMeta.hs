@@ -8,15 +8,13 @@ module Crm.Shared.PhotoMeta where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text)
 
 data PhotoMeta = PhotoMeta {
-  mimeType :: String ,
-  fileName :: String }
+  mimeType :: Text ,
+  fileName :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif

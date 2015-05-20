@@ -5,8 +5,8 @@ module Crm.Page.ContactPerson (
   contactPersonsList ,
   contactPersonForm ) where
 
-import Data.Text (fromString, pack)
-import Prelude hiding (div)
+import Data.Text (fromString, length)
+import Prelude hiding (div, length)
 import Data.Var (Var, modify)
 import FFI (Defined (Defined))
 
@@ -27,9 +27,9 @@ contactPersonsList :: R.CrmRouter
                    -> DOMElement
 contactPersonsList router contactPersons = let
   displayContactPerson (cpId,contactPerson) = tr [
-    td $ R.link (pack $ CP.name contactPerson) (R.contactPersonEdit cpId) router ,
-    td $ pack $ CP.phone contactPerson ,
-    td $ pack $ CP.position contactPerson ]
+    td $ R.link (CP.name contactPerson) (R.contactPersonEdit cpId) router ,
+    td $ CP.phone contactPerson ,
+    td $ CP.position contactPerson ]
   head' = thead $ tr [
     th $ "Jméno" ,
     th $ "Telefon" ,
@@ -75,17 +75,17 @@ contactPersonForm router contactPerson identification companyId appVar = let
         True 
         "Jméno" 
         (SetValue $ CP.name contactPerson)
-        (eventString >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
+        (eventValue >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
       row'
         True
         "Telefon"
         (SetValue $ CP.phone contactPerson)
-        (eventString >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
+        (eventValue >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
       row'
         True
         "Pozice"
         (SetValue $ CP.position contactPerson)
-        (eventString >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
+        (eventValue >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
         (null validationMessages)
         buttonLabel

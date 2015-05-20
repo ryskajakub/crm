@@ -1,27 +1,23 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.UpkeepSequence where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 data UpkeepSequence = UpkeepSequence {
   displayOrdering :: Int , 
-  label_ :: String ,
+  label_ :: Text ,
   repetition :: Int ,
   oneTime :: Bool }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newUpkeepSequence :: UpkeepSequence
-newUpkeepSequence = UpkeepSequence 0 "" 0 False
+newUpkeepSequence = UpkeepSequence 0 (pack "") 0 False

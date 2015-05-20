@@ -32,7 +32,7 @@ module Crm.Router (
   machinesSchema ,
   editEmployee ) where
 
-import Data.Text (fromString, showInt, Text, (<>), unpack)
+import Data.Text (fromString, showInt, Text, (<>))
 import Prelude hiding (div, span) 
 import Data.Var (Var, modify, get)
 import Data.Function (fmap)
@@ -231,7 +231,7 @@ startRouter appVar = let
           fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
             fetchExtraFieldSettings $ \efSettings -> let
               extraFields' = fromJust $ lookup machineKind efSettings
-              extraFieldsAdapted = (\(a,b) -> (a,b,unpack "")) `map` extraFields'
+              extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields'
               in modify' $ D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
                 (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted (Right $ MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound) ,

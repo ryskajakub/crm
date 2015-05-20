@@ -6,7 +6,7 @@ module Crm.Page.MachineType (
   machineTypePhase1Form ,
   machineTypeForm ) where
 
-import Data.Text (fromString, unpack, pack, showInt, (<>), Text)
+import Data.Text (fromString, showInt, (<>), Text)
 import Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -62,9 +62,9 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   storeMachineTypeIntoLocalStorage machineType' = if hasLocalStorage
     then do
       let MT.MachineType kind name manufacturer = machineType'
-      setLocalStorage "mt.name" (pack name)
+      setLocalStorage "mt.name" name
       setLocalStorage "mt.kind" (showInt $ MK.kindToDbRepr kind)
-      setLocalStorage "mt.manufacturer" (pack manufacturer)
+      setLocalStorage "mt.manufacturer" manufacturer
     else return ()
 
   setMachineType machineType' = setMachineWhole (machineType', upkeepSequences)
@@ -85,7 +85,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     autocompleteInput 
       inputNormalAttrs
       (\text -> do
-        setMachineType (machineType { MT.machineTypeName = unpack text })
+        setMachineType (machineType { MT.machineTypeName = text })
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
@@ -97,7 +97,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       fetchMachineTypesAutocomplete
       "machine-type-autocomplete"
       (II.mkInputAttrs {
-        II.defaultValue = Defined $ pack $ MT.machineTypeName machineType })
+        II.defaultValue = Defined $ MT.machineTypeName machineType })
 
   storeUpkeepSequencesIntoLS :: [US.UpkeepSequence] -> Fay ()
   storeUpkeepSequencesIntoLS sequences = let
@@ -108,7 +108,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
       let index = showInt i
       putStrLn $ show us
       setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering us)
-      setLocalStorage ("us." <> index <> ".label") (pack $ US.label_ us)
+      setLocalStorage ("us." <> index <> ".label") (US.label_ us)
       setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition us)
       putStrLn $ show $ "setting repetition" <> (showInt $ US.repetition us)
       setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime us)
@@ -162,12 +162,12 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     labelField = editingInput 
       True
       (SetValue sequenceLabel)
-      (eventString >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
+      (eventValue >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
       True
     mthField = editingInput
       True
-      (SetValue $ unpack rawTextRepetition)
+      (SetValue rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
           Just (int) -> modifyUpkeepSequence displayOrder
@@ -246,16 +246,16 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     Nothing -> (autocompleteInput
       inputNormalAttrs
       (\text ->
-        setMachineType (machineType { MT.machineTypeManufacturer = unpack text }))
+        setMachineType (machineType { MT.machineTypeManufacturer = text }))
       (const $ return ())
       fetchMachineTypesManufacturer 
       "machine-type-manufacturer-autocomplete"
       (II.mkInputAttrs {
-        II.defaultValue = Defined $ pack $ MT.machineTypeManufacturer machineType }))
+        II.defaultValue = Defined $ MT.machineTypeManufacturer machineType }))
 
   kindSelect = let
     buttonLabel = [
-      text2DOM $ pack $ fromJust $ lookup (MT.kind machineType) MK.machineKinds, 
+      text2DOM $ fromJust $ lookup (MT.kind machineType) MK.machineKinds, 
       text2DOM " ", 
       span' (class' "caret") "" ]
     mkLink (kindId, kindLabel) = let
@@ -264,7 +264,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         case kindId of
           MK.RotaryScrewCompressor -> return ()
           _ -> set1YearUpkeepSequences
-      in li $ AA.a''' (click selectAction) (pack kindLabel)
+      in li $ AA.a''' (click selectAction) kindLabel
     selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
 
@@ -295,7 +295,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
               (let 
                 addUpkeepSequenceRow = let
                   newUpkeepSequence = US.newUpkeepSequence {
-                    US.label_ = if (null upkeepSequenceRows) then unpack "běžný" else unpack "" ,
+                    US.label_ = if (null upkeepSequenceRows) then "běžný" else "" ,
                     US.displayOrdering = length upkeepSequences + 1 }
                   newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
                   in D.modifyState appVar (\navig -> 
@@ -326,7 +326,7 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   machineTypeInput = editingInput
     True
     (SetValue $ MT.machineTypeName machineType)
-    (eventString >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
+    (eventValue >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
     True
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = 
@@ -346,8 +346,8 @@ machineTypesList router machineTypes = let
       th "Počet zařízení v systému" ]
   body = tbody $ map (\((machineTypeId,(MT.MachineType _ name manufacturer)), count) ->
     tr [
-      td $ R.link (pack name) (R.machineTypeEdit machineTypeId) router ,
-      td $ pack manufacturer , 
+      td $ R.link name (R.machineTypeEdit machineTypeId) router ,
+      td manufacturer , 
       td $ showInt count]) machineTypes
   alertInfo = text2DOM "Tady edituješ typ stroje - který je společný pro více strojů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech strojů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u strojů a zařízení, tak se ty díly budou přidávat tady." : []
   in B.grid $ B.row $ 

@@ -6,7 +6,7 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import Data.Text (fromString, pack, length)
+import Data.Text (fromString, length)
 import Prelude hiding (div, span, id, length)
 import Data.Var (Var, modify)
 import Data.Maybe (onJust)
@@ -134,18 +134,18 @@ companyDetail editing' router var (companyId, company') machines' = let
       B.panel [
         h3 $ 
           R.link
-            (pack $ MT.machineTypeName machineType)
+            (MT.machineTypeName machineType)
             (R.machineDetail machineId')
             router , 
         dl [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
           dt "Výrobní číslo" ,
-          dd $ pack $ M.serialNumber machine' ,
+          dd $ M.serialNumber machine' ,
           dt "Rok výroby" ,
-          dd $ pack $ M.yearOfManufacture machine' ,
+          dd $ M.yearOfManufacture machine' ,
           dt "Servisman" ,
-          dd $ maybe "" (pack . CP.name) contactPerson ]]
+          dd $ maybe "" CP.name contactPerson ]]
   machineBoxes = map machineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {

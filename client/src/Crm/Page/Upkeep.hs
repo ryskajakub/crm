@@ -6,7 +6,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import Data.Text (fromString, unpack, pack, Text, (<>))
+import Data.Text (fromString, Text, (<>), showInt)
 import Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -204,7 +204,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     thatUpkeepMachine = find findMachineById notCheckedMachines''
     checkedMachineIds = map snd upkeepMachines
     machineToggleLink = let
-      content = pack $ MT.machineTypeName machineType
+      content = MT.machineTypeName machineType
       clickHandler = let
         (newCheckedMachines, newNotCheckedMachines) = toggle (
           upkeepMachines ,
@@ -235,7 +235,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         (thatMachine, const $ return (), False)
 
     recordedMileageField = B.col (B.mkColProps 2) $ editingInput False
-      (DefaultValue $ show $ UM.recordedMileage $ fst machineToDisplay) (eventInt' 
+      (DefaultValue $ showInt $ UM.recordedMileage $ fst machineToDisplay) (eventInt' 
         (\i -> do
           let newValidation = V.remove (V.MthNumber machineId) validation
           modify' $ \ud -> ud { UD.validation = newValidation }
@@ -247,7 +247,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
     noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
-      editingTextarea False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventString >=> \es ->
+      editingTextarea False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventValue >=> \es ->
         setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }) editing
 
     rowItems = if closeUpkeep'
@@ -271,22 +271,22 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
       employeeFoundInList = lookup employeeId employees
-      in maybe noEmployeeLabel (pack . E.name) employeeFoundInList) selectedEmployee
+      in maybe noEmployeeLabel E.name employeeFoundInList) selectedEmployee
     selectEmployeeLink eId e = let
       selectEmployeeAction = modify' (\s -> s { UD.selectedEmployee = eId })
-      in A.a''' (click selectEmployeeAction) (pack $ E.name e)
-    withNoEmployee = (Nothing, E.newEmployee { E.name = unpack noEmployeeLabel }) : (map (lmap Just) employees)
+      in A.a''' (click selectEmployeeAction) (E.name e)
+    withNoEmployee = (Nothing, E.newEmployee { E.name = noEmployeeLabel }) : (map (lmap Just) employees)
     elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
   workHoursRow = formRow "Hodiny" $ 
-    editingInput True (SetValue $ U.workHours upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingInput True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True
   workDescriptionRow = formRow "Popis práce" $
-    editingTextarea True (SetValue $ U.workDescription upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingTextarea True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True
   recommendationRow = formRow "Doporučení" $
-    editingTextarea True (SetValue $ U.recommendation upkeep) (eventString >=> \es -> modify' (\ud ->
+    editingTextarea True (SetValue $ U.recommendation upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []

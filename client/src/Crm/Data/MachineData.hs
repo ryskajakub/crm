@@ -29,7 +29,7 @@ data MachineData = MachineData {
   validation :: V.Validation ,
   otherMachineId :: Maybe MachineId ,
   otherMachines :: [(MachineId, Machine)] ,
-  extraFields :: [(ExtraFieldId, MachineKindSpecific, String)] ,
+  extraFields :: [(ExtraFieldId, MachineKindSpecific, Text)] ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {

@@ -1,8 +1,6 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Upkeep where
 
@@ -11,11 +9,9 @@ import Crm.Shared.UpkeepMachine as UM
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 #ifdef FAY
@@ -30,12 +26,12 @@ type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 data Upkeep = Upkeep {
   upkeepDate :: D.YearMonthDay ,
   upkeepClosed :: Bool ,
-  workHours :: String ,
-  workDescription :: String ,
-  recommendation :: String }
+  workHours :: Text ,
+  workDescription :: Text ,
+  recommendation :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newUpkeep :: D.YearMonthDay -> Upkeep
-newUpkeep ymd = Upkeep ymd False "0" "" ""
+newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")

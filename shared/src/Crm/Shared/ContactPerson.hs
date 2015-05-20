@@ -1,18 +1,14 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.ContactPerson where
 
 #ifndef FAY
 import GHC.Generics
-import "base" Data.Data
-import "base" Prelude
-#else
-import "fay-base" Prelude
+import Data.Data
 #endif
+import Data.Text (Text, pack)
 
 newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
 #ifdef FAY
@@ -24,12 +20,12 @@ newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
 type ContactPerson' = (ContactPersonId, ContactPerson)
 
 data ContactPerson = ContactPerson {
-  name :: String , 
-  phone :: String ,
-  position :: String }
+  name :: Text , 
+  phone :: Text ,
+  position :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data)
 #endif
 
 newContactPerson :: ContactPerson
-newContactPerson = ContactPerson "" "" ""
+newContactPerson = ContactPerson (pack "") (pack "") (pack "")

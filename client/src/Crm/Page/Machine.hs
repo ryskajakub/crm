@@ -5,7 +5,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import Data.Text (fromString, pack, (<>), unpack, Text, showInt)
+import Data.Text (fromString, (<>), Text, showInt)
 import Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
@@ -62,7 +62,7 @@ machineDetail :: Bool
               -> V.Validation
               -> Maybe M.MachineId
               -> [(M.MachineId, M.Machine)]
-              -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
+              -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
               -> DOMElement
 machineDetail editing appVar router companyId calendarOpen (machine, 
     datePickerText) machineSpecific machineTypeTuple machineId nextService photos upkeeps
@@ -88,12 +88,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
           employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
           employee = B.col (B.mkColProps 2) $ case maybeEmployee of
-            Just employee' -> [text2DOM $ pack $ E.name employee']
+            Just employee' -> [text2DOM $ E.name employee']
             Nothing -> []
           descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
-          description = B.col (B.mkColProps 4) $ pack $ U.workDescription upkeep
+          description = B.col (B.mkColProps 4) $ U.workDescription upkeep
           noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
-          note = B.col (B.mkColProps 4) $ pack $ UM.upkeepMachineNote upkeepMachine
+          note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
           in [
             B.row [stateLabel, date, mthHeader, mth, 
               warrantyHeader, warranty, employeeHeader, employee] ,
@@ -117,7 +117,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             type' <- fileType file
             name <- fileName file
             uploadPhotoData file machineId $ \photoId ->
-              uploadPhotoMeta (PM.PhotoMeta (unpack type') (unpack name)) photoId BR.refresh
+              uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh
           imageUploadLabel = "Přidej fotku"
           photoList = map (\(photoId, photoMeta) -> let
             deletePhotoHandler = const $ deletePhoto photoId BR.refresh
@@ -126,7 +126,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
                 BTN.bsStyle = Defined "danger" ,
                 BTN.onClick = Defined deletePhotoHandler })
               "Smaž fotku"
-            in li [text2DOM $ pack $ PM.fileName photoMeta, deletePhotoButton] ) photos
+            in li [text2DOM $ PM.fileName photoMeta, deletePhotoButton] ) photos
           in div [(ul' (class' "list-unstyled") photoList) : [div [
             J.fileUploadI18n "Vyber obrázek" "Změň" ,
             BTN.button'
@@ -181,7 +181,7 @@ machineNew :: R.CrmRouter
            -> V.Validation
            -> Maybe M.MachineId
            -> [(M.MachineId, M.Machine)]
-           -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
+           -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific 
     companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om extraFields = 
@@ -212,7 +212,7 @@ machineDisplay :: Bool -- ^ true editing mode false display mode
                -> V.Validation
                -> Maybe M.MachineId
                -> [(M.MachineId, M.Machine)]
-               -> [(EF.ExtraFieldId, MK.MachineKindSpecific, String)]
+               -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine', datePickerText) 
     _ (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
@@ -265,9 +265,9 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
       in machineData { MD.extraFields = newExtraFields }
     in row'
       editing
-      (pack $ MK.name efDescription)
+      (MK.name efDescription)
       (SetValue theValue)
-      (eventString >=> setExtraField)
+      (eventValue >=> setExtraField)
   kindSpecificRows = map mkInputRow extraFields
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
@@ -284,22 +284,22 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        maybeSelectRow editing "Kontaktní osoba" contactPersons (pack . CP.name) contactPersonId 
+        maybeSelectRow editing "Kontaktní osoba" contactPersons (CP.name) contactPersonId 
           (\cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId }) 
-          (\emptyLabel -> CP.newContactPerson { CP.name = unpack emptyLabel }) ,
-        maybeSelectRow editing "Zapojení" otherMachines (pack . M.serialNumber) otherMachineId
+          (\emptyLabel -> CP.newContactPerson { CP.name = emptyLabel }) ,
+        maybeSelectRow editing "Zapojení" otherMachines (M.serialNumber) otherMachineId
           (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId })
-          (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = unpack emptyLabel }) ,
+          (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = emptyLabel }) ,
         row'
           editing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
-          (eventString >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
+          (eventValue >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
         row'
           editing
           "Rok výroby"
           (SetValue $ M.yearOfManufacture machine')
-          (eventString >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
+          (eventValue >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
         editDisplayRow
           editing
           ("Datum uvedení do provozu") 
@@ -308,7 +308,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
               row'
                 editing
                 "Úvodní stav motohodin"
-                (DefaultValue $ show $ M.initialMileage machine')
+                (DefaultValue $ showInt $ M.initialMileage machine')
                 (eventInt' 
                   (\im -> let
                     newMachine = machine' { M.initialMileage = im }
@@ -320,7 +320,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 (div' (class' "col-md-3") 
                   (editingInput 
                     True
-                    (DefaultValue $ show $ M.mileagePerYear machine')
+                    (DefaultValue $ showInt $ M.mileagePerYear machine')
                     (let 
                       errorHandler = changeNavigationState (\md -> md { MD.validation = V.add V.MachineUsageNumber validation })
                       in eventInt' 
@@ -352,7 +352,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         formRow
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
-            M.note = str } ) <=< eventString) editing)] ++ kindSpecificRows ++ extraRows ++ [
+            M.note = str } ) <=< eventValue) editing)] ++ kindSpecificRows ++ extraRows ++ [
         div' (class' "form-group") (buttonRow $ V.ok validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])

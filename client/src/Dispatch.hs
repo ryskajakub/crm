@@ -7,7 +7,7 @@ import Prelude hiding (span, div, elem)
 import Data.Var (Var, newVar, subscribeAndRead)
 import Data.LocalStorage
 import Data.Defined (fromDefined)
-import Data.Text (unpack, fromString, (<>), showInt)
+import Data.Text (fromString, (<>), showInt)
 import Data.Maybe (onJust, joinMaybe)
 
 import Crm.Router (startRouter)
@@ -100,7 +100,7 @@ loadFromLocalStorage = do
     (Just name', Just kind', Just manufacturer', Just upkeepSequencesCount) -> do
       mtId <- getLocalStorage "mt.id"
       let mtId' = MT.MachineTypeId `onJust` (joinMaybe $ parseSafely `onJust` fromDefined mtId)
-      let machineType = MT.MachineType kind' (unpack name') (unpack manufacturer')
+      let machineType = MT.MachineType kind' name' manufacturer'
       seqs <- case upkeepSequencesCount of
         Just count -> do
           let 
@@ -117,7 +117,7 @@ loadFromLocalStorage = do
               oneTime <- getLocalStorage ("us." <> index <> ".oneTime") 
               return $ case (joinMaybe $ parseSafely `onJust` fromDefined displayOrdering, fromDefined label, joinMaybe $ 
                   parseSafely `onJust` fromDefined repetition, joinMaybe $ parseBool `onJust` fromDefined oneTime) of
-                (Just d, Just l, Just r, Just o) -> Just $ US.UpkeepSequence d (unpack l) r o
+                (Just d, Just l, Just r, Just o) -> Just $ US.UpkeepSequence d l r o
                 _ -> Nothing
           maybeBrokenUSs <- forM [0..(count - 1)] loadUpkeepSequence
           let 
