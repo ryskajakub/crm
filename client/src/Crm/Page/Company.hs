@@ -6,7 +6,7 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import Data.Text (fromString, length)
+import Data.Text (fromString, length, (<>))
 import Prelude hiding (div, span, id, length)
 import Data.Var (Var, modify)
 import Data.Maybe (onJust)
@@ -32,7 +32,7 @@ import qualified Crm.Data.Data as D
 import Crm.Component.Form (editablePlain, editable')
 import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
-import Crm.Helpers (displayDate, pageInfo, validationHtml, zipWithIndex)
+import Crm.Helpers
 
 companiesList :: R.CrmRouter
               -> C.OrderType
@@ -129,15 +129,16 @@ companyDetail editing' router var (companyId, company') machines' = let
       cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
 
-  machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) =
-    B.col (B.mkColProps 4) $
+  machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) = let 
+    healthColor = "#" <> computeColor nextService
+    in B.col (B.mkColProps 4) $
       B.panel [
         h3 [
           R.link
             (MT.machineTypeName machineType)
             (R.machineDetail machineId')
             router ,
-          span' (class' "health") "•" ] ,
+          span' ((class' "health") {style = Defined $ Style healthColor}) "•" ] ,
         dl [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
