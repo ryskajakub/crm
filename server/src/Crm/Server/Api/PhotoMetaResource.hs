@@ -2,7 +2,7 @@ module Crm.Server.Api.PhotoMetaResource (
   photoMetaResource ) where
 
 import Opaleye.Manipulation (runInsert)
-import Opaleye.PGTypes (pgInt4, pgString)
+import Opaleye.PGTypes (pgInt4, pgStrictText)
 
 import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, update)
 import qualified Rest.Schema as S
@@ -27,5 +27,5 @@ photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {
 setPhotoMetaDataHandler :: Handler IdDependencies
 setPhotoMetaDataHandler = mkInputHandler (jsonI) (\photoMeta -> withConnId (\conn photoId -> do
   _ <- liftIO $ runInsert conn photosMetaTable 
-    (pgInt4 photoId, pgString $ PM.mimeType photoMeta, pgString $ PM.fileName photoMeta)
+    (pgInt4 photoId, pgStrictText $ PM.mimeType photoMeta, pgStrictText $ PM.fileName photoMeta)
   return ()))

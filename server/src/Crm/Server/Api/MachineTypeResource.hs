@@ -5,7 +5,7 @@ module Crm.Server.Api.MachineTypeResource (
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators ((.==))
-import Opaleye.PGTypes (pgInt4, pgString, pgBool)
+import Opaleye.PGTypes (pgInt4, pgStrictText, pgBool)
 import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
 
 import Control.Monad.Reader (ask)
@@ -15,6 +15,7 @@ import Control.Monad (forM_)
 
 import Data.Tuple.All (sel1, sel2, sel4)
 import Data.Int (Int64)
+import Data.Text (Text)
 
 import Rest.Types.Error (Reason(NotFound, UnsupportedRoute))
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update)
@@ -48,7 +49,7 @@ machineTypesListing (AutocompleteManufacturer mid) = mkListing jsonO (const $
 machineTypesListing CountListing = mkListing jsonO (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
-    mapRow :: ((Int,Int,String,String),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
+    mapRow :: ((Int,Int,Text,Text),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
     mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
     mappedRows = map mapRow rows
   return mappedRows )
@@ -59,14 +60,14 @@ updateMachineType = mkInputHandler (jsonO . jsonI) (\(machineType, upkeepSequenc
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
       let 
-        readToWrite row = (Nothing, sel2 row, pgString $ MT.machineTypeName machineType, 
-          pgString $ MT.machineTypeManufacturer machineType)
+        readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
+          pgStrictText $ MT.machineTypeManufacturer machineType)
         condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
       _ <- runUpdate conn machineTypesTable readToWrite condition
       _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
       forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
-          pgString label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
+          pgStrictText label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler jsonO (do

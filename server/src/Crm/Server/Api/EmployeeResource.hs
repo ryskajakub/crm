@@ -2,7 +2,7 @@ module Crm.Server.Api.EmployeeResource where
 
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Manipulation (runInsert)
-import Opaleye.PGTypes (pgString)
+import Opaleye.PGTypes (pgStrictText)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
@@ -39,15 +39,15 @@ getEmployeeHandler = mkConstHandler (jsonO) $ withConnId (\connection theId -> d
 
 updateEmployeeHandler :: Handler IdDependencies
 updateEmployeeHandler = let
-  readToWrite employee = const (Nothing, pgString $ E.name employee, 
-    pgString $ E.contact employee, pgString $ E.capabilities employee)
+  readToWrite employee = const (Nothing, pgStrictText $ E.name employee, 
+    pgStrictText $ E.contact employee, pgStrictText $ E.capabilities employee)
   in updateRows employeesTable readToWrite
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler (jsonO . jsonI) (\newEmployee -> do
   conn <- ask 
-  _ <- liftIO $ runInsert conn employeesTable (Nothing, pgString $ E.name newEmployee,
-    pgString $ E.contact newEmployee, pgString $ E.capabilities newEmployee)
+  _ <- liftIO $ runInsert conn employeesTable (Nothing, pgStrictText $ E.name newEmployee,
+    pgStrictText $ E.contact newEmployee, pgStrictText $ E.capabilities newEmployee)
   return () )
 
 employeesListing :: ListHandler Dependencies 

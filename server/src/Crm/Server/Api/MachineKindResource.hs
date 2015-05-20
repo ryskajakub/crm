@@ -4,7 +4,7 @@
 module Crm.Server.Api.MachineKindResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, pgString)
+import Opaleye.PGTypes (pgInt4, pgStrictText, pgString)
 import Opaleye (runInsertReturning, runDelete, (./=), (.&&), pgBool, runInsert)
 
 import Control.Monad.Reader (ask)
@@ -58,7 +58,7 @@ updation = mkInputHandler jsonI $ \allSettings -> do
     insertSetting (machineKindEnum, extraFields) = let
       insertField (index, (fieldId, field)) = liftIO $ let
         machineKindDbRepr = MK.kindToDbRepr machineKindEnum
-        allFields = (Nothing, pgInt4 $ machineKindDbRepr, pgInt4 index, pgString $ MK.name field)
+        allFields = (Nothing, pgInt4 $ machineKindDbRepr, pgInt4 index, pgStrictText $ MK.name field)
         in case fieldId of
           EF.ToBeAssigned -> do
             newIds <- runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))

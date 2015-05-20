@@ -4,7 +4,7 @@
 module Crm.Server.Api.MachineResource where
 
 import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, pgString, pgDay)
+import Opaleye.PGTypes (pgInt4, pgStrictText, pgDay)
 
 import Data.Tuple.All (sel2, sel1, sel3)
 
@@ -53,8 +53,8 @@ machineUpdate = mkInputHandler (jsonI . jsonO) $ \(machine', linkedMachineId, ex
         maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
-        pgString $ M.note machine', pgString $ M.serialNumber machine',
-        pgString $ M.yearOfManufacture machine')
+        pgStrictText $ M.note machine', pgStrictText $ M.serialNumber machine',
+        pgStrictText $ M.yearOfManufacture machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
   liftIO $ forM_ [updateMachine] (\updation -> updation recordId conn)

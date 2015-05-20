@@ -105,7 +105,7 @@ import Opaleye.Column (Column, Nullable)
 import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators (restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgString, pgBool, PGFloat8)
+import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgStrictText, pgBool, PGFloat8, pgString)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
@@ -122,7 +122,8 @@ import Data.Time.Calendar (Day)
 import Data.List (intersperse, sortBy)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
 import Data.ByteString.Lazy (ByteString)
-import Data.Text (Text)
+import Data.Text (Text, pack)
+import Data.Monoid ((<>))
 
 import Rest.Types.Error (DataError(ParseError), Reason(InputError))
 
@@ -346,7 +347,7 @@ type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
-type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, String)
+type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, Text)
 
 instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
@@ -354,47 +355,47 @@ instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) Comp
     coordinates = pure C.Coordinates <*> $(proj 6 4) tuple <*> $(proj 6 5) tuple
     in (C.CompanyId $ $(proj 6 0) tuple, company, coordinates)
 instance ColumnToRecord 
-    (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String) 
+    (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, Text, Text, Text) 
     MachineMapped where
   convert tuple = let
     machineTuple = $(updateAtN 11 5) (fmap dayToYmd) tuple
     in (M.MachineId $ $(proj 11 0) tuple, C.CompanyId $ $(proj 11 1) tuple, CP.ContactPersonId `fmap` $(proj 11 2) tuple, 
       MT.MachineTypeId $ $(proj 11 3) tuple, M.MachineId `fmap` $(proj 11 4) tuple,
       (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
-instance ColumnToRecord (Int, Int, String, String) MachineTypeMapped where
+instance ColumnToRecord (Int, Int, Text, Text) MachineTypeMapped where
   convert tuple = (MT.MachineTypeId $ $(proj 4 0) tuple, (uncurryN $ const MT.MachineType) 
     (upd2 (MK.dbReprToKind $ $(proj 4 1) tuple) tuple))
-instance ColumnToRecord (Int, Int, String, String, String) ContactPersonMapped where
+instance ColumnToRecord (Int, Int, Text, Text, Text) ContactPersonMapped where
   convert tuple = (CP.ContactPersonId $ $(proj 5 0) tuple, C.CompanyId $ $(proj 5 1) tuple, 
     (uncurryN $ const $ const CP.ContactPerson) tuple)
-instance ColumnToRecord (Maybe Int, Maybe Int, Maybe String, Maybe String, Maybe String) MaybeContactPersonMapped where
+instance ColumnToRecord (Maybe Int, Maybe Int, Maybe Text, Maybe Text, Maybe Text) MaybeContactPersonMapped where
   convert tuple = let
     maybeCp = pure CP.ContactPerson <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
     in (CP.ContactPersonId `fmap` $(proj 5 0) tuple, C.CompanyId `fmap` $(proj 5 1) tuple, maybeCp)
-instance ColumnToRecord (Maybe Int, Maybe String, Maybe String, Maybe String) MaybeEmployeeMapped where
+instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
   convert tuple = (E.EmployeeId `fmap` sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
-instance ColumnToRecord (Int, Day, Bool, Maybe Int, String, String, String) UpkeepMapped where
+instance ColumnToRecord (Int, Day, Bool, Maybe Int, Text, Text, Text) UpkeepMapped where
   convert tuple = let
     (_,a,b,_,c,d,e) = tuple
     in (U.UpkeepId $ $(proj 7 0) tuple, E.EmployeeId `fmap` $(proj 7 3) tuple, U.Upkeep (dayToYmd a) b c d e)
-instance ColumnToRecord (Int, String, String, String) EmployeeMapped where
+instance ColumnToRecord (Int, Text, Text, Text) EmployeeMapped where
   convert tuple = (E.EmployeeId $ $(proj 4 0) tuple, uncurryN (const E.Employee) $ tuple)
-instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepSequenceMapped where
+instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
-instance ColumnToRecord (Int, String, Int, Int, Bool) UpkeepMachineMapped where
+instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepMachineMapped where
   convert (a,b,c,d,e) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e)
-instance ColumnToRecord (Int, String, String) PhotoMetaMapped where
+instance ColumnToRecord (Int, Text, Text) PhotoMetaMapped where
   convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
-instance ColumnToRecord (Int, Int, Int, String) ExtraFieldSettingsMapped where
+instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
   convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
-instance ColumnToRecord (Int, Int, String) ExtraFieldMapped where
+instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
   convert tuple = (EF.ExtraFieldId $ $(proj 3 0) tuple, M.MachineId $ $(proj 3 1) tuple, $(proj 3 2) tuple)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
 -- todo rather do two queries
-mapUpkeeps :: [((Int, Day, Bool, Maybe Int, String, String, String), (Int, String, Int, Int, Bool))] 
+mapUpkeeps :: [((Int, Day, Bool, Maybe Int, Text, Text, Text), (Int, Text, Int, Int, Bool))] 
            -> [(U.UpkeepId, U.Upkeep, Maybe E.EmployeeId, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
@@ -429,7 +430,7 @@ machinePhotosByMachineId machineId = proc () -> do
 machineManufacturersQuery :: String -> Query DBText
 machineManufacturersQuery str = distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
-  restrict -< (lower manufacturer' `like` (lower $ pgString ("%" ++ (intersperse '%' str) ++ "%")))
+  restrict -< (lower manufacturer' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' str) <> "%")))
   returnA -< manufacturer'
 
 otherMachinesInCompanyQuery :: Int -> Query MachinesTable
@@ -461,7 +462,7 @@ like = C.binOp HPQ.OpLike
 machineTypesQuery' :: String -> Query DBText
 machineTypesQuery' mid = proc () -> do
   (_,_,name',_) <- machineTypesQuery -< ()
-  restrict -< (lower name' `like` (lower $ pgString ("%" ++ (intersperse '%' mid) ++ "%")))
+  restrict -< (lower name' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' mid) <> "%")))
   returnA -< name'
 
 companyByIdQuery :: Int -> Query (CompaniesTable)
@@ -687,12 +688,12 @@ runMachinesInCompanyQuery companyId connection = do
   return $ fmap mapRow rows
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO[((Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, String, String, String), (Int, Int, String, String))]
+  -> IO[((Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, Text, Text, Text), (Int, Int, Text, Text))]
 runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
 runCompanyUpkeepsQuery :: Int -> Connection -> 
-  IO[((Int, Day, Bool, Maybe Int, String, String, String), (Maybe Int, Maybe String, Maybe String, Maybe String))]
+  IO[((Int, Day, Bool, Maybe Int, Text, Text, Text), (Maybe Int, Maybe Text, Maybe Text, Maybe Text))]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
@@ -705,7 +706,7 @@ runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ fmap convertExpanded rows
 
-runMachineTypesQuery' :: String -> Connection -> IO[String]
+runMachineTypesQuery' :: String -> Connection -> IO[Text]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
 runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> 
@@ -726,11 +727,11 @@ withConnection runQ = do
   close conn
   return result
 
-insertExtraFields :: M.MachineId -> [(EF.ExtraFieldId, String)] -> Connection -> IO ()
+insertExtraFields :: M.MachineId -> [(EF.ExtraFieldId, Text)] -> Connection -> IO ()
 insertExtraFields machineId extraFields connection = 
   forM_ extraFields $ \(extraFieldId, extraFieldValue) ->
     runInsert connection extraFieldsTable
-      (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 $ M.getMachineId machineId, pgString extraFieldValue) >> return ()
+      (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 $ M.getMachineId machineId, pgStrictText extraFieldValue) >> return ()
 
 getMachinePhoto :: Connection
                 -> Int

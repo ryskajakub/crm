@@ -1,6 +1,6 @@
 module Crm.Server.Api.ContactPersonResource (resource) where
 
-import Opaleye (runQuery, pgString)
+import Opaleye (runQuery, pgStrictText)
 
 import Control.Monad.IO.Class (liftIO)
 
@@ -34,6 +34,6 @@ getHandler = mkConstHandler jsonO $ withConnId $ \connection theId -> do
 
 updateHandler :: Handler IdDependencies
 updateHandler = let
-  readToWrite contactPerson row = (Nothing, sel2 row, pgString $ CP.name contactPerson ,
-    pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
+  readToWrite contactPerson row = (Nothing, sel2 row, pgStrictText $ CP.name contactPerson ,
+    pgStrictText $ CP.phone contactPerson, pgStrictText $ CP.position contactPerson)
   in updateRows contactPersonsTable readToWrite

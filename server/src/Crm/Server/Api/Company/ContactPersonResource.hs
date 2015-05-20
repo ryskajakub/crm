@@ -3,7 +3,7 @@
 module Crm.Server.Api.Company.ContactPersonResource ( 
   contactPersonResource ) where
 
-import Opaleye.PGTypes (pgString, pgInt4)
+import Opaleye.PGTypes (pgInt4, pgStrictText)
 import Opaleye.Manipulation (runInsert)
 import Opaleye.RunQuery (runQuery)
 
@@ -30,8 +30,8 @@ createContactPersonHandler = mkInputHandler (jsonO . jsonI) (\contactPerson ->
   _ <- runInsert
     connection
     contactPersonsTable
-    (Nothing, pgInt4 companyId, pgString $ CP.name contactPerson,
-      pgString $ CP.phone contactPerson, pgString $ CP.position contactPerson)
+    (Nothing, pgInt4 companyId, pgStrictText $ CP.name contactPerson,
+      pgStrictText $ CP.phone contactPerson, pgStrictText $ CP.position contactPerson)
   return ()))
 
 contactPersonResource :: Resource IdDependencies IdDependencies Void () Void

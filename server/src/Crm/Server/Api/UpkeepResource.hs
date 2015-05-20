@@ -4,7 +4,7 @@ module Crm.Server.Api.UpkeepResource (
 
 import Opaleye.Operators ((.==))
 import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
-import Opaleye.PGTypes (pgDay, pgBool, pgInt4, pgString)
+import Opaleye.PGTypes (pgDay, pgBool, pgInt4, pgStrictText)
 import Opaleye (runQuery)
 
 import Database.PostgreSQL.Simple (Connection)
@@ -44,7 +44,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
       connection
       upkeepMachinesTable (
         pgInt4 $ U.getUpkeepId upkeepId ,
-        pgString $ UM.upkeepMachineNote upkeepMachine' ,
+        pgStrictText $ UM.upkeepMachineNote upkeepMachine' ,
         pgInt4 $ M.getMachineId upkeepMachineId ,
         pgInt4 $ UM.recordedMileage upkeepMachine' , 
         pgBool $ UM.warrantyUpkeep upkeepMachine' )
@@ -80,8 +80,8 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
     condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 (U.getUpkeepId upkeepId)
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, pgString $ U.workHours upkeep, 
-        pgString $ U.workDescription upkeep, pgString $ U.recommendation upkeep)
+        maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, pgStrictText $ U.workHours upkeep, 
+        pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== (pgInt4 $ U.getUpkeepId upkeepId))
   insertUpkeepMachines conn upkeepId upkeepMachines

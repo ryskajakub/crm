@@ -5,7 +5,7 @@ module Crm.Server.Api.Company.MachineResource (
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.PGTypes (pgInt4, pgString, pgDay, pgBool)
+import Opaleye.PGTypes (pgInt4, pgStrictText, pgDay, pgBool)
 import Opaleye.Manipulation (runInsert, runInsertReturning)
 import Opaleye (runQuery)
 
@@ -14,6 +14,7 @@ import Control.Monad (forM_)
 import Control.Monad.Trans.Except (ExceptT)
 
 import Data.Tuple.All (sel1)
+import Data.Text (Text)
 
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
@@ -50,7 +51,7 @@ addMachine :: Connection
            -> MT.MyEither
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
-           -> [(EF.ExtraFieldId, String)]
+           -> [(EF.ExtraFieldId, Text)]
            -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
   machineTypeId <- liftIO $ case machineType of
@@ -58,13 +59,13 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
       newMachineTypeId <- runInsertReturning
         connection
-        machineTypesTable (Nothing, pgInt4 $ MK.kindToDbRepr kind, pgString name', pgString manufacturer)
+        machineTypesTable (Nothing, pgInt4 $ MK.kindToDbRepr kind, pgStrictText name', pgStrictText manufacturer)
         sel1
       let machineTypeId = head newMachineTypeId -- todo safe
       forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
         connection
         upkeepSequencesTable 
-        (pgInt4 displayOrdering, pgString label, 
+        (pgInt4 displayOrdering, pgStrictText label, 
           pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
       return machineTypeId
   let
@@ -76,8 +77,8 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
     (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
       pgInt4 machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId,
       maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear, pgString note, 
-      pgString serialNumber, pgString yearOfManufacture)
+      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText note, 
+      pgStrictText serialNumber, pgStrictText yearOfManufacture)
     sel1
   let machineId = head machineIds -- todo safe
   liftIO $ insertExtraFields (M.MachineId machineId) extraFields connection

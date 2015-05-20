@@ -5,7 +5,7 @@ module Crm.Server.Api.Company.UpkeepResource (
 
 import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.PGTypes (pgInt4, pgDay, pgBool, pgString)
+import Opaleye.PGTypes (pgInt4, pgDay, pgBool, pgStrictText)
 import Opaleye.Manipulation (runInsertReturning)
 import Opaleye.RunQuery (runQuery)
 
@@ -67,8 +67,8 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
     connection
     upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
       pgBool $ U.upkeepClosed upkeep, maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, 
-      pgString $ U.workHours upkeep, pgString $ U.workDescription upkeep, 
-      pgString $ U.recommendation upkeep)
+      pgStrictText $ U.workHours upkeep, pgStrictText $ U.workDescription upkeep, 
+      pgStrictText $ U.recommendation upkeep)
     sel1
   let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
