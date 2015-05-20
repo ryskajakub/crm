@@ -126,11 +126,11 @@ computeColor (YMD.YearMonthDay y m d _) = let
   diff' = abs $ fromIntegral $ M.diff today theOtherDay M.Days
   year = 366 :: Double
   colorScaleSize = 255 :: Double
-  diff = if diff' > year then year else diff'
+  daysDiff = if diff' > year then year else diff'
   halfYear = year / 2 
   unit = colorScaleSize / halfYear
-  firstPart = if diff > halfYear then halfYear else diff
-  secondPartDiff = if diff - halfYear > 0 then diff - halfYear else 0
+  firstPart = if daysDiff > halfYear then halfYear else daysDiff
+  secondPartDiff = if daysDiff - halfYear > 0 then daysDiff - halfYear else 0
   redPart = truncate $ colorScaleSize - (secondPartDiff * unit)
   greenPart = truncate $ unit * firstPart
   in toHexa redPart <> toHexa greenPart <> "00"

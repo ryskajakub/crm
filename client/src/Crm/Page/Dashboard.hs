@@ -3,7 +3,7 @@
 module Crm.Page.Dashboard (
   dashboard ) where
 
-import Data.Text (pack, (<>), Text, length)
+import Data.Text (pack)
 import Prelude hiding (div, span, id, length)
 import Data.Maybe (onJust, mapMaybe)
 import FFI
@@ -13,7 +13,6 @@ import HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
 import GoogleMaps
-import qualified Moment as M
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.YearMonthDay as YMD
@@ -34,8 +33,8 @@ dashboard router companies = let
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
     forM_ companiesWithCoords $ \(companyId,_,date,C.Coordinates lat lng) -> do
-      let color = maybe (pack "777777") computeColor date 
-      marker <- addMarker lat lng color googleMap
+      let color' = maybe (pack "777777") computeColor date 
+      marker <- addMarker lat lng color' googleMap
       let handler = R.navigate (R.companyDetail companyId) router
       addClickListener marker handler
     return ()
