@@ -317,7 +317,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
               row 
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
-                  (editingInput 
+                  (input 
                     editing
                     True
                     (DefaultValue $ showInt $ M.mileagePerYear machine')
@@ -350,7 +350,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
             _ -> []) ++ [
         rowOneElement
           "Poznámka" 
-          (editingTextarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
+          (textarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
             M.note = str } ) <=< eventValue))] ++ kindSpecificRows ++ extraRows ++ [
         div' (class' "form-group") (buttonRow $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']

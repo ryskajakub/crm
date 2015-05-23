@@ -70,7 +70,7 @@ machineKindSettings appVar editedEnum allSettings = let
       modifiedX = (fieldId, field { MK.name = string })
       newFields = start ++ [modifiedX] ++ rest
       in setNewSettings (editedEnum, newFields)
-    theInput = div' (class' "col-md-7") $ editingInput
+    theInput = div' (class' "col-md-7") $ input
       Editing
       True 
       (SetValue $ MK.name extraFieldData)

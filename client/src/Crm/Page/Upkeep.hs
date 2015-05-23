@@ -234,7 +234,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       (Nothing, Just(thatMachine)) ->
         (thatMachine, const $ return (), Display)
 
-    recordedMileageField = B.col (B.mkColProps 2) $ editingInput editing False
+    recordedMileageField = B.col (B.mkColProps 2) $ input editing False
       (DefaultValue $ showInt $ UM.recordedMileage $ fst machineToDisplay) (eventInt' 
         (\i -> do
           let newValidation = V.remove (V.MthNumber machineId) validation
@@ -242,12 +242,12 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i })) 
         (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation }))
 
-    warrantyUpkeep = editingCheckbox editing (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
+    warrantyUpkeep = checkbox editing (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
       setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' })
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
     noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
-      editingTextarea editing False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventValue >=> \es ->
+      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventValue >=> \es ->
         setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es })
 
     rowItems = if closeUpkeep'
@@ -280,10 +280,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
 
-  editingTextarea' = editingTextarea Editing
+  editingTextarea' = textarea Editing
 
   workHoursRow = rowOneElement "Hodiny" $ 
-    editingInput Editing True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
+    input Editing True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) 
   workDescriptionRow = rowOneElement "Popis práce" $
     editingTextarea' True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->

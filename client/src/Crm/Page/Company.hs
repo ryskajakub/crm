@@ -29,7 +29,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Direction as DIR
 
 import qualified Crm.Data.Data as D
-import Crm.Component.Form
+import Crm.Component.Form as F
 import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
 import Crm.Helpers
@@ -210,21 +210,20 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
           _ -> D.navigation appState })
     editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
     in BTN.button' editButtonProps editButtonBody
-  headerDisplay = h1 $ C.companyName company'
   headerSet newHeader = let
     company'' = company' {
       C.companyName = newHeader }
     in setCompany company''
 
-  hereEditablePlain = editingInput editing' True
+  appliedInput = F.input editing' True
 
   header = let
-    input = hereEditablePlain (SetValue $ C.companyName company') (eventValue >=> headerSet)
+    input' = appliedInput (SetValue $ C.companyName company') (eventValue >=> headerSet)
     in case editing' of
       Editing -> dl [
         dt "Jméno firmy" ,
-        dd input ]
-      Display -> input
+        dd input' ]
+      Display -> h1 $ C.companyName company'
 
   validationMessages = if (length $ C.companyName company') > 0
     then []
@@ -243,11 +242,11 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     header , 
     dl $ [
       dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
-      dd $ hereEditablePlain
+      dd $ appliedInput
         (SetValue $ C.companyPlant company') 
         (eventValue >=> \text -> setCompany (company' { C.companyPlant = text })) , 
       dt "Adresa" , 
-      dd $ hereEditablePlain
+      dd $ appliedInput
         (SetValue $ C.companyAddress company')
         (eventValue >=> \text -> setCompany (company' { C.companyAddress = text }))]
       ++ [saveEditButton] ]

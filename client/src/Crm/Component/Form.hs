@@ -11,10 +11,10 @@ module Crm.Component.Form (
   inputStateToBool ,
   inputNormalAttrs ,
 
-  editingCheckbox ,
-  editingInput ,
-  editingTextarea ,
-  editingInput' ,
+  checkbox ,
+  input ,
+  textarea ,
+  textInput ,
 
   row' ,
   row ,
@@ -34,7 +34,6 @@ import           FFI                                        (Defined(Defined, Un
 import           HaskellReact                               hiding (row)
 import qualified HaskellReact.Bootstrap.Button         as BTN
 import qualified HaskellReact.Tag.Input                as I
-import qualified HaskellReact.Bootstrap.Input          as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Tag.Hyperlink            as A
 
@@ -75,8 +74,8 @@ inputNormalAttrs = class' "form-control"
 
 -- form elements
 
-editingCheckbox :: InputState -> Bool -> (Bool -> Fay ()) -> DOMElement
-editingCheckbox editing value setter = let
+checkbox :: InputState -> Bool -> (Bool -> Fay ()) -> DOMElement
+checkbox editing value setter = let
   disabledAttrs = case editing of
     Editing -> I.mkInputAttrs
     _ -> I.mkInputAttrs { I.disabled_ = Defined "disabled" }
@@ -88,14 +87,19 @@ editingCheckbox editing value setter = let
     else checkboxAttrs
   in I.input mkAttrs inputAttrs
 
-editingInput :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
-editingInput = editingInput' False
+input :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
+input = textInput I.input
 
-editingTextarea :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
-editingTextarea = editingInput' True
+textarea :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
+textarea = textInput I.textarea
 
-editingInput' :: Bool -> InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
-editingInput' textarea editing' displayPlain displayValue onChange' = let
+textInput :: (Attributes -> I.InputAttributes -> DOMElement) 
+          -> InputState 
+          -> Bool 
+          -> DisplayValue 
+          -> (SyntheticEvent -> Fay ()) 
+          -> DOMElement
+textInput mkInput editing' displayPlain displayValue onChange' = let
   inputAttrs = let
     commonInputAttrs = case displayValue of
       DefaultValue t -> I.mkInputAttrs { I.defaultValue = Defined t }
@@ -107,9 +111,7 @@ editingInput' textarea editing' displayPlain displayValue onChange' = let
         I.disabled_ = Defined "disabled" }
   in if displayPlain && (editing' == Display)
     then text2DOM $ joinEither displayValue
-    else if textarea 
-      then I.textarea inputNormalAttrs inputAttrs
-      else I.input inputNormalAttrs inputAttrs
+    else mkInput inputNormalAttrs inputAttrs
 
 
 -- row elements
@@ -178,8 +180,8 @@ inputRow :: InputState -- ^ editing/display mode
          -> (SyntheticEvent -> Fay ()) -- ^ event to handle on input change
          -> DOMElement -- ^ rendered element
 inputRow editing' labelText value' onChange' = let
-  input = editingInput editing' True value' onChange'
-  in editableRow editing' labelText input
+  input' = input editing' True value' onChange'
+  in editableRow editing' labelText input'
 
 maybeSelectRow' :: (Eq a) 
                 => Bool

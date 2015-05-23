@@ -75,7 +75,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
-    manufacturerField = editingInput Editing False (SetValue $ MT.machineTypeManufacturer machineType)
+    manufacturerField = input Editing False (SetValue $ MT.machineTypeManufacturer machineType)
       (const $ return ())
     in case machineTypeId of
       Nothing -> Nothing  
@@ -159,13 +159,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = (machineType, modifiedUpkeepSequences)})
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
-    labelField = editingInput 
+    labelField = input
       Editing
       True
       (SetValue sequenceLabel)
       (eventValue >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
-    mthField = editingInput
+    mthField = input
       Editing
       True
       (SetValue rawTextRepetition)
@@ -175,7 +175,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             (\(us,_) -> (us {US.repetition = int },modifiedRepetition))
           Nothing -> modifyUpkeepSequence displayOrder
             (\(us,_) -> (us, modifiedRepetition))))
-    firstServiceField = editingCheckbox
+    firstServiceField = checkbox
       Editing
       oneTime
       (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> ((fst us) { US.oneTime = oneTimeSequence }, snd us)))
@@ -323,7 +323,7 @@ machineTypeForm :: R.CrmRouter
                 -> (DOMElement, Fay ())
 machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
-  machineTypeInput = editingInput
+  machineTypeInput = input
     Editing
     True
     (SetValue $ MT.machineTypeName machineType)
