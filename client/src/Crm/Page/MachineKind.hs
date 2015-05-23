@@ -35,9 +35,10 @@ machineKindSettings :: Var D.AppState
                     -> DOMElement
 machineKindSettings appVar editedEnum allSettings = let
 
-  select = maybeSelectRow' False Editing "Druh stroje" MK.machineKinds (\x -> x) (Just editedEnum)
-    (\selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = fromJust selectedKind })
-    (const undefined)
+  machineKindName = fromJust $ lookup editedEnum MK.machineKinds
+
+  select = dropdownRow Editing "Druh stroje" MK.machineKinds (\x -> x) machineKindName
+    $ \selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = selectedKind }
 
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
 

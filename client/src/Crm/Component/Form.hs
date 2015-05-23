@@ -10,6 +10,7 @@ module Crm.Component.Form (
   inputStateFromBool ,
   inputStateToBool ,
   inputNormalAttrs ,
+  findInList ,
 
   checkbox ,
   input ,
@@ -23,21 +24,18 @@ module Crm.Component.Form (
   saveButtonRow ,
   editableRow ,
   inputRow ,
-  maybeSelectRow' ,
-  maybeSelectRow 
-  ) where
+  dropdownRow ,
+  nullDropdownRow ) where
 
 import           Prelude                               as P hiding (span, div, elem) 
 import           Data.Text                                  (fromString, Text, (<>))
 import           FFI                                        (Defined(Defined, Undefined))
 
-import           HaskellReact                               hiding (row)
+import           HaskellReact                               hiding (row, label)
 import qualified HaskellReact.Bootstrap.Button         as BTN
 import qualified HaskellReact.Tag.Input                as I
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Tag.Hyperlink            as A
-
-import Crm.Helpers (lmap)
 
 data InputState = Editing | Display
   deriving Eq
@@ -70,6 +68,11 @@ joinEither dv = case dv of
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
+
+findInList :: (Eq a) => Maybe a -> [(a, b)] -> Maybe b
+findInList maybeKey list = value where
+  lookup' key' = lookup key' list
+  value = maybe Nothing lookup' maybeKey
 
 
 -- form elements
@@ -183,40 +186,37 @@ inputRow editing' labelText value' onChange' = let
   input' = input editing' True value' onChange'
   in editableRow editing' labelText input'
 
-maybeSelectRow' :: (Eq a) 
-                => Bool
-                -> InputState 
-                -> Text 
-                -> [(a, b)] 
-                -> (b -> Text) 
-                -> Maybe a 
-                -> (Maybe a -> Fay ()) 
-                -> (Text -> b) 
-                -> DOMElement
-maybeSelectRow' displayNoElement editing rowLabel elements getLabel theId' setId emptyRecord =
-  row rowLabel [let
-    noElementSelectedLabel = "---"
-    selectedLabel = maybe noElementSelectedLabel (\theId -> let
-      elementFound = lookup theId elements
-      in maybe noElementSelectedLabel getLabel elementFound) theId'
-    selectLink theId record = let
-      selectAction = setId theId
-      in A.a''' (click selectAction) (getLabel record)
-    noElement = if displayNoElement then [(Nothing, emptyRecord noElementSelectedLabel)] else []
-    withEmptyRecord = noElement ++ (map (lmap Just) elements)
-    elementsToBeSelected = map (\(theId, record) -> li $ selectLink theId record) withEmptyRecord
-    buttonLabel = [ text2DOM $ selectedLabel <> " " , span' (class' "caret") "" ]
-    in case editing of
-      Editing -> div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
-      Display -> span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedLabel ]
+-- | Dropdown component
+dropdownRow :: InputState 
+            -> Text -- label for the row
+            -> [(a, b)] -- key value list
+            -> (b -> Text) -- format the b value for the user to see
+            -> b -- the displayed element in the closed dropdown
+            -> (a -> Fay ()) -- selection handler
+            -> DOMElement
+dropdownRow editing rowLabel elements display currentElement setId = row rowLabel [element] where
+  element = case editing of
+    Editing -> div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
+    Display -> span' (class'' ["control-label", "col-md-9", "my-text-left"]) $ display currentElement
+  selectLink theId label = let
+    selectAction = setId theId
+    in A.a''' (click selectAction) (display label)
+  elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
+  buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
 
-maybeSelectRow :: (Eq a) 
-               => InputState
-               -> Text 
-               -> [(a, b)] 
-               -> (b -> Text) 
-               -> Maybe a 
-               -> (Maybe a -> Fay ()) 
-               -> (Text -> b) 
-               -> DOMElement
-maybeSelectRow = maybeSelectRow' True
+-- | Dropdown component with a null value
+nullDropdownRow :: InputState
+                -> Text 
+                -> [(a, b)]
+                -> (b -> Text)
+                -> Maybe b
+                -> (Maybe a -> Fay ())
+                -> DOMElement
+nullDropdownRow editing rowLabel elements display currentElement setId = 
+  dropdownRow editing rowLabel elements' display' currentElement setId where
+    elements' = let
+      notNullElements = map (\(a,b) -> (Just a, Just b)) elements
+      nullElement = (Nothing, Nothing)
+      in nullElement : notNullElements
+    display' (Just element) = display element
+    display' Nothing = "---"

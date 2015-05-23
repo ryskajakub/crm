@@ -285,12 +285,10 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        maybeSelectRow editing "Kontaktní osoba" contactPersons (CP.name) contactPersonId 
-          (\cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId }) 
-          (\emptyLabel -> CP.newContactPerson { CP.name = emptyLabel }) ,
-        maybeSelectRow editing "Zapojení" otherMachines (M.serialNumber) otherMachineId
-          (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId })
-          (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = emptyLabel }) ,
+        nullDropdownRow editing "Kontaktní osoba" contactPersons (CP.name) (findInList contactPersonId contactPersons)
+          (\cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId }) ,
+        nullDropdownRow editing "Zapojení" otherMachines (M.serialNumber) (findInList otherMachineId otherMachines)
+          (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId }) ,
         inputRowEditing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
