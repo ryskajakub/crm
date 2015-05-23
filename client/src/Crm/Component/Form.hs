@@ -16,14 +16,32 @@ import qualified HaskellReact.Tag.Hyperlink as A
 
 import Crm.Helpers (lmap)
 
-editablePlain :: Bool
+data InputState = Editing | Display
+  deriving Eq
+
+data ButtonState = Enabled | Disabled
+  deriving Eq
+
+buttonStateFromBool :: Bool -> ButtonState
+buttonStateFromBool True = Enabled
+buttonStateFromBool False = Disabled
+
+inputStateFromBool :: Bool -> InputState
+inputStateFromBool True = Editing
+inputStateFromBool False = Display
+
+inputStateToBool :: InputState -> Bool
+inputStateToBool Editing = True
+inputStateToBool Display = False
+
+editablePlain :: InputState
               -> Text
               -> (Text -> Fay())
               -> DOMElement
 editablePlain editState displayValue =
   editable editState (text2DOM displayValue) displayValue
 
-editable :: Bool -- ^ edit state
+editable :: InputState -- ^ edit state
          -> DOMElement -- ^ display value
          -> Text -- ^ initial value to display in the input
          -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
@@ -32,30 +50,30 @@ editable = editable' Nothing P.id
 
 editable' :: Maybe II.InputProps -- ^ provide the base input props
           -> (DOMElement -> DOMElement) -- ^ wrapper of the input field in the edit mode
-          -> Bool -- ^ edit state
+          -> InputState -- ^ edit state
           -> DOMElement -- ^ display value
           -> Text -- ^ initial value to display in the input
           -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
           -> DOMElement -- ^ either input field or displayed value depending on editing parameter
-editable' inputProps inputWrapper edit display initial setValue = if edit
-  then let
+editable' inputProps inputWrapper edit display initial setValue = case edit of
+  Editing -> let
     changeHandler event = do
       value <- eventValue event
       setValue value
     in inputWrapper $ II.input ((maybe (II.mkInputProps) (P.id) (inputProps)) {
       II.onChange = Defined changeHandler , 
       II.defaultValue = Defined initial })
-  else display
+  _ -> display
 
 editableN :: I.InputAttributes -- ^ element to display in edit mode
           -> Attributes
-          -> Bool -- ^ editing mode
+          -> InputState -- ^ editing mode
           -> DOMElement -- ^ element to display in non-edit mode
           -> DOMElement
 editableN inputProps attributes editing display = 
-  if editing
-  then I.input attributes inputProps
-  else display
+  case editing of
+  Editing -> I.input attributes inputProps
+  _ -> display
 
 row' :: Renderable a
      => Defined Text -- ^ key of the element
@@ -80,11 +98,11 @@ rowOneElement :: (Renderable a, Renderable b)
 rowOneElement formFieldLabel col2 = 
   row formFieldLabel [div' (class' "col-md-9") col2]
 
-editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
-editingCheckbox value setter editing = let
-  disabledAttrs = if editing
-    then I.mkInputAttrs
-    else I.mkInputAttrs { I.disabled_ = Defined "disabled" }
+editingCheckbox :: InputState -> Bool -> (Bool -> Fay ()) -> DOMElement
+editingCheckbox editing value setter = let
+  disabledAttrs = case editing of
+    Editing -> I.mkInputAttrs
+    _ -> I.mkInputAttrs { I.disabled_ = Defined "disabled" }
   checkboxAttrs = disabledAttrs { 
     I.type_ = I.checkbox ,
     I.onChange = Defined $ (eventValue >=> (const $ setter $ not value )) }
@@ -100,24 +118,24 @@ joinEither dv = case dv of
   DefaultValue x -> x
   SetValue x -> x
 
-editingInput :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingInput :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
 editingInput = editingInput' False
 
-editingTextarea :: Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
+editingTextarea :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
 editingTextarea = editingInput' True
 
-editingInput' :: Bool -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-editingInput' textarea displayPlain displayValue onChange' editing' = let
+editingInput' :: Bool -> InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
+editingInput' textarea editing' displayPlain displayValue onChange' = let
   inputAttrs = let
     commonInputAttrs = case displayValue of
       DefaultValue t -> I.mkInputAttrs { I.defaultValue = Defined t }
       SetValue t -> I.mkInputAttrs { I.value_ = Defined t }
-    in if editing' 
-      then commonInputAttrs {
+    in case editing' of
+      Editing -> commonInputAttrs {
         I.onChange = Defined onChange' }
-      else commonInputAttrs { 
+      _ -> commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
-  in if displayPlain && not editing'
+  in if displayPlain && (editing' == Display)
     then text2DOM $ joinEither displayValue
     else if textarea 
       then I.textarea inputNormalAttrs inputAttrs
@@ -127,10 +145,10 @@ saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
               -> DOMElement
-saveButtonRow = saveButtonRow' True
+saveButtonRow = saveButtonRow' Enabled
 
 saveButtonRow' :: Renderable a
-               => Bool
+               => ButtonState
                -> a -- ^ label of the button
                -> Fay () -- ^ button on click handler
                -> DOMElement
@@ -140,38 +158,39 @@ saveButtonRow' enabled buttonLabel clickHandler =
       buttonProps = (BTN.buttonProps {
         BTN.bsStyle = Defined "primary" ,
         BTN.onClick = Defined $ const clickHandler })
-      in if enabled then buttonProps else buttonProps {
-        BTN.disabled = Defined True })
+      in case enabled of
+        Enabled -> buttonProps 
+        _ -> buttonProps { BTN.disabled = Defined True })
       buttonLabel
 
 -- | Row that has two modes, editing and display each having different css classes for different display
 editableRow :: (Renderable a, Renderable b)
-            => Bool -- ^ editing
+            => InputState -- ^ editing
             -> a -- ^ label of field
             -> b -- ^ the other field
             -> DOMElement
 editableRow editing labelText otherField = let
-  classes = "col-md-9" : if editing
-    then []
-    else ["control-label", "my-text-left"]
+  classes = "col-md-9" : case editing of
+    Editing -> []
+    Display -> ["control-label", "my-text-left"]
   in row labelText [div' (class'' classes) otherField]
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
 
 -- | Row having an input field in editing mode, just display in the display mode
-inputRow :: Bool -- ^ editing/display mode
+inputRow :: InputState -- ^ editing/display mode
          -> Text -- ^ label to display on the left of the input
          -> DisplayValue -- ^ value to display or to set in the form
          -> (SyntheticEvent -> Fay ()) -- ^ event to handle on input change
          -> DOMElement -- ^ rendered element
 inputRow editing' labelText value' onChange' = let
-  input = editingInput True value' onChange' editing'
+  input = editingInput editing' True value' onChange'
   in editableRow editing' labelText input
 
 maybeSelectRow' :: (Eq a) 
                 => Bool
-                -> Bool 
+                -> InputState 
                 -> Text 
                 -> [(a, b)] 
                 -> (b -> Text) 
@@ -192,12 +211,12 @@ maybeSelectRow' displayNoElement editing rowLabel elements getLabel theId' setId
     withEmptyRecord = noElement ++ (map (lmap Just) elements)
     elementsToBeSelected = map (\(theId, record) -> li $ selectLink theId record) withEmptyRecord
     buttonLabel = [ text2DOM $ selectedLabel <> " " , span' (class' "caret") "" ]
-    in if editing
-      then div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
-      else span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedLabel ]
+    in case editing of
+      Editing -> div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
+      Display -> span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedLabel ]
 
 maybeSelectRow :: (Eq a) 
-               => Bool
+               => InputState
                -> Text 
                -> [(a, b)] 
                -> (b -> Text) 

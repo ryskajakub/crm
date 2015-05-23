@@ -15,10 +15,11 @@ import HaskellReact
 
 import qualified Crm.Shared.YearMonthDay as YMD
 import Crm.Helpers (displayPrecision)
+import Crm.Component.Form
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 
-datePicker :: Bool -- ^ editing
+datePicker :: InputState -- ^ editing
            -> DatePicker
            -> (YMD.YearMonthDay -> Fay ()) -- ^ set date picker date
            -> (Bool -> Fay ()) -- ^ set date picker openness
@@ -56,5 +57,5 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     anyDay = 1
     newDate = YMD.YearMonthDay newYear newMonth anyDay YMD.DayPrecision
     in setDatePickerDate newDate
-  in (CI.dayInput editing displayedDateOrText' (pickerYear, pickerMonth) dayPickHandler 
+  in (CI.dayInput (inputStateToBool editing) displayedDateOrText' (pickerYear, pickerMonth) dayPickHandler 
     userTypingHandler (pickerStateOpen) setDatePickerOpenness changeViewHandler)

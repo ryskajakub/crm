@@ -29,7 +29,7 @@ import qualified Crm.Shared.YearMonthDay as YMD
 import qualified Crm.Shared.Direction as DIR
 
 import qualified Crm.Data.Data as D
-import Crm.Component.Form (editablePlain, editable')
+import Crm.Component.Form
 import Crm.Server (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router as R
 import Crm.Helpers
@@ -98,7 +98,6 @@ companyNew :: R.CrmRouter
            -> C.Company
            -> DOMElement
 companyNew router var company' = let
-  editing' = True
   saveHandler =
     computeCoordinates (C.companyAddress company') $ \coordinates ->
       createCompany company' (C.mkCoordinates `onJust` coordinates) $ \companyId ->
@@ -109,9 +108,9 @@ companyNew router var company' = let
       _ -> D.navigation appState })
   in section $
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 "Nová firma") :
-    companyForm editing' var setCompany company' saveHandler []
+    companyForm Editing var setCompany company' saveHandler []
 
-companyDetail :: Bool -- ^ is the page editing mode
+companyDetail :: InputState -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
               -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
@@ -177,7 +176,7 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBoxItemsHtml = map B.row machineBoxItems'
 
   in section $ (
-    (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (if editing' then "Editace firmy" else "Firma")) :
+    (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma")) :
     companyFormSection) ++ [
       B.grid [
         (B.row $ B.col (B.mkColProps 12) $ BN.nav [
@@ -194,7 +193,7 @@ companyDetail editing' router var (companyId, company') machines' = let
           R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
           R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) : machineBoxItemsHtml ]]
 
-companyForm :: Bool -- ^ is the page editing mode
+companyForm :: InputState -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
             -> (C.Company -> Fay ()) -- ^ modify the edited company data
             -> C.Company -- ^ company, whose data are displayed on this screen
@@ -207,7 +206,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     editButtonHandler _ = modify var (\appState ->
       appState {
         D.navigation = case D.navigation appState of
-          cd @ (D.CompanyDetail _ _ _ _) -> cd { D.editing = True }
+          cd @ (D.CompanyDetail _ _ _ _) -> cd { D.editing = Editing }
           _ -> D.navigation appState })
     editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
     in BTN.button' editButtonProps editButtonBody
@@ -230,9 +229,9 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     BTN.onClick = Defined $ const saveHandler' , 
     BTN.disabled = if null validationMessages then Undefined else Defined True ,
     BTN.bsStyle = Defined "primary" }) "Uložit"
-  saveEditButton = if editing'
-    then div' (class' "company") $ saveEditButton' : deleteButton
-    else text2DOM ""
+  saveEditButton = case editing' of
+    Editing -> div' (class' "company") $ saveEditButton' : deleteButton
+    Display -> text2DOM ""
 
   hereEditablePlain = editablePlain editing'
   companyBasicInfo = [
@@ -247,5 +246,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
         (C.companyAddress company')
         (\text -> setCompany (company' { C.companyAddress = text }))]
       ++ [saveEditButton] ]
-  companyBasicInfo' = if editing' then companyBasicInfo else editButton:companyBasicInfo
+  companyBasicInfo' = case editing' of 
+    Editing -> companyBasicInfo 
+    Display -> editButton:companyBasicInfo
   in (B.grid $ B.row $ B.col (B.mkColProps 12) $ B.jumbotron companyBasicInfo') : validationHtml' : []

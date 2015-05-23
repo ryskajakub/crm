@@ -85,25 +85,23 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
   validationMessages = if (length $ E.name employee) > 0
     then []
     else ["Jméno musí mít alespoň jeden znak."]
+  inputRowEditing = inputRow Editing
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
-      inputRow
-        True 
+      inputRowEditing
         "Jméno" 
         (SetValue $ E.name employee) 
         (eventValue >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
-      inputRow
-        True
+      inputRowEditing
         "Kontakt"
         (SetValue $ E.contact employee)
         (eventValue >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
-      inputRow
-        True
+      inputRowEditing
         "Kvalifikace"
         (SetValue $ E.capabilities employee)
         (eventValue >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
-        (null validationMessages)
+        (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []

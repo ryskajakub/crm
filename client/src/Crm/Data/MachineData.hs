@@ -19,6 +19,8 @@ import Crm.Shared.ExtraField
 import Crm.Component.DatePicker
 import qualified Crm.Validation as V
 
+import Crm.Component.Form (InputState)
+
 data MachineData = MachineData {
   machine :: (Machine, Text) ,
   machineKindSpecific :: MachineKindEnum ,
@@ -35,7 +37,7 @@ data MachineData = MachineData {
 data MachineDetail = MachineDetail {
   machineId :: MachineId ,
   machineNextService :: YearMonthDay ,
-  formState :: Bool ,
+  formState :: InputState ,
   machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,
   upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, Maybe Employee)] ,

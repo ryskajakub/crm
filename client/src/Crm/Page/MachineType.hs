@@ -75,8 +75,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     D.modifyState appVar (\navig -> navig { D.machineTypeTuple = machineTypeTuple })
 
   displayManufacturer = let
-    manufacturerField = editingInput False (SetValue $ MT.machineTypeManufacturer machineType)
-      (const $ return ()) False
+    manufacturerField = editingInput Editing False (SetValue $ MT.machineTypeManufacturer machineType)
+      (const $ return ())
     in case machineTypeId of
       Nothing -> Nothing  
       _ -> Just manufacturerField
@@ -160,12 +160,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   upkeepSequenceRows = map (\((US.UpkeepSequence displayOrder sequenceLabel _ oneTime, rawTextRepetition)) -> let
     labelField = editingInput 
+      Editing
       True
       (SetValue sequenceLabel)
       (eventValue >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
         (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
-      True
     mthField = editingInput
+      Editing
       True
       (SetValue rawTextRepetition)
       (eventValue >=> (\modifiedRepetition ->
@@ -174,11 +175,10 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
             (\(us,_) -> (us {US.repetition = int },modifiedRepetition))
           Nothing -> modifyUpkeepSequence displayOrder
             (\(us,_) -> (us, modifiedRepetition))))
-      True
     firstServiceField = editingCheckbox
-      (oneTime)
+      Editing
+      oneTime
       (\oneTimeSequence -> modifyUpkeepSequence displayOrder (\us -> ((fst us) { US.oneTime = oneTimeSequence }, snd us)))
-      True
     inputColumns = [
       (label' (class'' ["control-label", "col-md-1"]) "Označení") ,
       (div' (class' "col-md-2") labelField) ,
@@ -307,7 +307,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                   BTN.onClick = Defined $ const addUpkeepSequenceRow }
                 in BTN.button' buttonProps "Přidat servisní řadu")
                (text2DOM "") ,
-            div' (class' "form-group") (saveButtonRow' (null validationMessages)
+            div' (class' "form-group") (saveButtonRow' (buttonStateFromBool . null $ validationMessages)
               submitButtonLabel submitButtonHandler)])) : (
     if null validationMessages
     then []
@@ -324,10 +324,10 @@ machineTypeForm :: R.CrmRouter
 machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = editingInput
+    Editing
     True
     (SetValue $ MT.machineTypeName machineType)
     (eventValue >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
-    True
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = 
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 

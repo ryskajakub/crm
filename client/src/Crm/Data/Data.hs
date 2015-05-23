@@ -20,6 +20,8 @@ import Crm.Data.MachineData
 import Crm.Data.UpkeepData
 import Crm.Data.EmployeeData
 
+import Crm.Component.Form (InputState)
+
 data NavigationState =
   Dashboard { companies :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] } |
   FrontPage {
@@ -28,7 +30,7 @@ data NavigationState =
   CompanyDetail {
     companyId :: C.CompanyId , 
     company :: C.Company , 
-    editing :: Bool , 
+    editing :: InputState , 
     companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
       MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] } | 
   CompanyNew {

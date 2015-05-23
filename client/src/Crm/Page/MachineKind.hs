@@ -35,7 +35,7 @@ machineKindSettings :: Var D.AppState
                     -> DOMElement
 machineKindSettings appVar editedEnum allSettings = let
 
-  select = maybeSelectRow' False True "Druh stroje" MK.machineKinds (\x -> x) (Just editedEnum)
+  select = maybeSelectRow' False Editing "Druh stroje" MK.machineKinds (\x -> x) (Just editedEnum)
     (\selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = fromJust selectedKind })
     (const undefined)
 
@@ -70,8 +70,11 @@ machineKindSettings appVar editedEnum allSettings = let
       modifiedX = (fieldId, field { MK.name = string })
       newFields = start ++ [modifiedX] ++ rest
       in setNewSettings (editedEnum, newFields)
-    theInput = div' (class' "col-md-7") $ editingInput True (SetValue $ MK.name extraFieldData)
-      (eventValue >=> setFieldName) True
+    theInput = div' (class' "col-md-7") $ editingInput
+      Editing
+      True 
+      (SetValue $ MK.name extraFieldData)
+      (eventValue >=> setFieldName)
 
     removeButton = let
       removeField = let

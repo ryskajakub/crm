@@ -45,7 +45,7 @@ import Crm.Helpers
 import qualified Crm.Router as R
 import qualified Crm.Validation as V
 
-machineDetail :: Bool
+machineDetail :: InputState
               -> Var D.AppState
               -> R.CrmRouter
               -> C.CompanyId
@@ -72,8 +72,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       datePickerText) machineSpecific machineTypeTuple extraRows extraGrid 
       contactPersonId contactPersons v otherMachineId om extraFields
     where
-      pageHeader = if editing then "Editace stroje" else "Stroj"
-      extraRow = [editableRow False "Další servis" (displayDate nextService)]
+      pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
+      extraRow = [editableRow Display "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
         mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
         mkUpkeepRows (_, upkeep, upkeepMachine, maybeEmployee) = let
@@ -103,11 +103,13 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         in if null flattenedRows
           then []
           else (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
-      extraGrid = (if editing && (not $ null upkeeps) 
+      extraGrid = (if editing == Editing && (not $ null upkeeps) 
         then Nothing 
         else (Just $ B.grid upkeepHistoryHtml))
-      photoUploadRow = editableRow
-        True
+      
+      editableRowEditing = editableRow editing
+    
+      photoUploadRow = editableRowEditing
         "Fotka" 
         (let 
           imageUploadHandler = const $ do
@@ -135,8 +137,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
       mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
-      photoCarouselRow = editableRow
-        True
+      photoCarouselRow = editableRowEditing
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
 
@@ -147,12 +148,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         "Smazat"
 
       extraRows = (case (editing, photos) of
-        (True, _) -> [photoUploadRow]
+        (Editing, _) -> [photoUploadRow]
         (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing && null upkeeps && null photos
+        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing == Editing && null upkeeps && null photos
           then [deleteMachineRow]
           else [])
-      setEditing :: Bool -> Fay ()
+      setEditing :: InputState -> Fay ()
       setEditing editing' = modify appVar (\appState -> appState {
         D.navigation = case D.navigation appState of
           D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
@@ -161,12 +162,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       editButtonRow =
         div' (class' "col-md-3") $
           BTN.button'
-            (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing True })
+            (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
             "Jdi do editačního módu"
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-      editMachineAction = updateMachine machineId machine otherMachineId extraFieldsForServer (setEditing False)
+      editMachineAction = updateMachine machineId machine otherMachineId extraFieldsForServer (setEditing Display)
       saveButtonRow'' validationOk = saveButtonRow' validationOk "Edituj" editMachineAction
-      button = if editing then saveButtonRow'' else (const editButtonRow)
+      button = case editing of Editing -> saveButtonRow'' ; _ -> (const editButtonRow)
 
 machineNew :: R.CrmRouter
            -> Var D.AppState
@@ -185,7 +186,7 @@ machineNew :: R.CrmRouter
            -> DOMElement
 machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific 
     companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om extraFields = 
-  machineDisplay True "Nový stroj - fáze 2 - specifické údaje o stroji"
+  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow appState datePickerCalendar (machine', datePickerText) 
       machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
     where
@@ -197,9 +198,9 @@ machineNew router appState datePickerCalendar (machine', datePickerText) machine
         (R.navigate (R.companyDetail companyId) router)
       buttonRow validationOk = saveButtonRow' validationOk "Vytvoř" saveNewMachine
 
-machineDisplay :: Bool -- ^ true editing mode false display mode
+machineDisplay :: InputState -- ^ true editing mode false display mode
                -> Text -- ^ header of the page
-               -> (Bool -> DOMElement)
+               -> (ButtonState -> DOMElement)
                -> Var D.AppState
                -> DP.DatePicker
                -> (M.Machine, Text) -- ^ machine, text of the datepicker
@@ -275,12 +276,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
       B.row $ [
         inputRow
-          False
+          Display
           "Typ zařízení" 
           (SetValue $ MT.machineTypeName machineType) 
           (const $ return ()) ,
         inputRow
-          False
+          Display
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
@@ -317,6 +318,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
                   (editingInput 
+                    editing
                     True
                     (DefaultValue $ showInt $ M.mileagePerYear machine')
                     (let 
@@ -327,8 +329,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                             MD.validation = V.remove V.MachineUsageNumber validation , 
                             MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, datePickerText)})
                           else errorHandler)
-                        (const errorHandler))
-                    editing)) ,
+                        (const errorHandler)))) ,
                 (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
                 (let
                   upkeepPerMileage = minimum repetitions where
@@ -342,16 +343,16 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
                     in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
                   buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-                  dropdown = BD.buttonDropdown' editing buttonLabel' selectElements
-                  in if editing
-                    then div' (class' "col-md-3") dropdown
-                    else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
+                  dropdown = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
+                  in case editing of
+                    Editing -> div' (class' "col-md-3") dropdown
+                    Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
             _ -> []) ++ [
         rowOneElement
           "Poznámka" 
-          (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
-            M.note = str } ) <=< eventValue) editing)] ++ kindSpecificRows ++ extraRows ++ [
-        div' (class' "form-group") (buttonRow $ V.ok validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
+          (editingTextarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
+            M.note = str } ) <=< eventValue))] ++ kindSpecificRows ++ extraRows ++ [
+        div' (class' "form-group") (buttonRow $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements

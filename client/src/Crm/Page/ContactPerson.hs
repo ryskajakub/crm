@@ -72,22 +72,22 @@ contactPersonForm router contactPerson identification companyId appVar = let
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
       inputRow
-        True 
+        Editing
         "Jméno" 
         (SetValue $ CP.name contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
       inputRow
-        True
+        Editing
         "Telefon"
         (SetValue $ CP.phone contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
       inputRow
-        True
+        Editing
         "Pozice"
         (SetValue $ CP.position contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
-        (null validationMessages)
+        (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []

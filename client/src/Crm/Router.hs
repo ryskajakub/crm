@@ -65,6 +65,7 @@ import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchE
   fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap, fetchMachinesInCompany)
 import Crm.Helpers (parseSafely, showCompanyId, displayDate)
 import qualified Crm.Validation as V
+import Crm.Component.Form
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -192,7 +193,7 @@ startRouter appVar = let
           in fetchCompany companyId (\(company,machines) -> let
             ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
             in modify appVar (\appState -> appState {
-              D.navigation = D.CompanyDetail companyId company False (ignoreLinkage machines) }))
+              D.navigation = D.CompanyDetail companyId company Display (ignoreLinkage machines) }))
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
           D.navigation = D.CompanyNew C.newCompany })
         _ -> modify' D.NotFound) ,
@@ -278,7 +279,7 @@ startRouter appVar = let
                   modify' $ D.MachineScreen $ MachineData
                     machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
                       contactPersonId cps V.new otherMachineId otherMachines extraFields'
-                        (Left $ MachineDetail machineId machineNextService False machineTypeId photos upkeeps companyId))
+                        (Left $ MachineDetail machineId machineNextService Display machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound) ,
     ("planned", const $
       fetchPlannedUpkeeps (\plannedUpkeeps' -> let
