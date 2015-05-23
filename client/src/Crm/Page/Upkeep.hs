@@ -6,30 +6,30 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import           Data.Text                             (fromString, Text, showInt)
-import           Prelude                               hiding (div, span, id)
+import           Data.Text                        (fromString, Text, showInt)
+import           Prelude                          hiding (div, span, id)
 import           Data.Var (Var, modify)
 import           FFI (Defined(Defined))
 
-import           HaskellReact                          as HR
-import qualified HaskellReact.Bootstrap                as B
-import qualified HaskellReact.Bootstrap.Button         as BTN
-import qualified HaskellReact.Bootstrap.Glyphicon      as G
-import qualified HaskellReact.Tag.Hyperlink            as A
+import           HaskellReact                     as HR
+import qualified HaskellReact.Bootstrap           as B
+import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Tag.Hyperlink       as A
 
-import qualified Crm.Shared.Company                    as C
-import qualified Crm.Shared.Machine                    as M
-import qualified Crm.Shared.MachineType                as MT
-import qualified Crm.Shared.Upkeep                     as U
-import qualified Crm.Shared.Employee                   as E
-import qualified Crm.Shared.UpkeepMachine              as UM
+import qualified Crm.Shared.Company               as C
+import qualified Crm.Shared.Machine               as M
+import qualified Crm.Shared.MachineType           as MT
+import qualified Crm.Shared.Upkeep                as U
+import qualified Crm.Shared.Employee              as E
+import qualified Crm.Shared.UpkeepMachine         as UM
 
-import qualified Crm.Data.Data                         as D
-import qualified Crm.Data.UpkeepData                   as UD
-import qualified Crm.Component.DatePicker              as DP
-import qualified Crm.Validation                        as V
-import qualified Crm.Router                            as R
-import           Crm.Server                            (createUpkeep, updateUpkeep)
+import qualified Crm.Data.Data                    as D
+import qualified Crm.Data.UpkeepData              as UD
+import qualified Crm.Component.DatePicker         as DP
+import qualified Crm.Validation                   as V
+import qualified Crm.Router                       as R
+import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
 import           Crm.Helpers
 
@@ -184,16 +184,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       D.UpkeepScreen ud -> D.UpkeepScreen $ fun ud
     in appState' { D.navigation = newState }
 
-  setUpkeepFull :: (U.Upkeep, [UM.UpkeepMachine']) -> Text -> Fay ()
-  setUpkeepFull modifiedUpkeep upkeepDateText = modify' $ \upkeepData ->
+  setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Text -> Fay ()
+  setUpkeep modifiedUpkeep upkeepDateText = modify' $ \upkeepData ->
     let dp = fst $ UD.upkeepDatePicker upkeepData
     in upkeepData { 
       UD.upkeep = modifiedUpkeep ,
       UD.upkeepDatePicker = (dp, upkeepDateText) }
   
-  setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Fay ()
-  setUpkeep modifiedUpkeep = setUpkeepFull modifiedUpkeep rawUpkeepDate
-
   setNotCheckedMachines :: [UM.UpkeepMachine'] -> [UM.UpkeepMachine'] -> Fay ()
   setNotCheckedMachines checkedMachines notCheckedMachines' = modify' $ 
     \upkeepData -> upkeepData { 
@@ -231,7 +228,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
             then (upkeepMachine, machineId')
             else um) upkeepMachines 
-          in setUpkeep (upkeep, ums)
+          in setUpkeep (upkeep, ums) rawUpkeepDate
         in (thisMachine, setter, Editing)
       (Nothing, Just(thatMachine)) ->
         (thatMachine, const $ return (), Display)
@@ -262,8 +259,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     setPickerOpenness open = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> rmap (const open) t) (UD.upkeepDatePicker upkeepData)})
     setDate date = case date of
-      Right date' -> setUpkeepFull (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
-      Left text' -> setUpkeepFull (upkeep, upkeepMachines) text'
+      Right date' -> setUpkeep (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
+      Left text' -> setUpkeep (upkeep, upkeepMachines) text'
     dateValue = if (displayDate $ U.upkeepDate upkeep) == rawUpkeepDate
       then Right $ U.upkeepDate upkeep
       else Left rawUpkeepDate
