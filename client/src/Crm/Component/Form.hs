@@ -11,18 +11,14 @@ module Crm.Component.Form (
   inputStateToBool ,
   inputNormalAttrs ,
 
-  editablePlain ,
-  editable ,
-  editable' ,
-  editableN ,
-  
-  row' ,
-  row ,
-  rowOneElement ,
   editingCheckbox ,
   editingInput ,
   editingTextarea ,
   editingInput' ,
+
+  row' ,
+  row ,
+  rowOneElement ,
   saveButtonRow' ,
   saveButtonRow ,
   editableRow ,
@@ -78,47 +74,6 @@ inputNormalAttrs = class' "form-control"
 
 
 -- form elements
-
-editablePlain :: InputState
-              -> Text
-              -> (Text -> Fay())
-              -> DOMElement
-editablePlain editState displayValue =
-  editable editState (text2DOM displayValue) displayValue
-
-editable :: InputState -- ^ edit state
-         -> DOMElement -- ^ display value
-         -> Text -- ^ initial value to display in the input
-         -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
-         -> DOMElement -- ^ either input field or displayed value depending on editing parameter
-editable = editable' Nothing P.id
-
-editable' :: Maybe II.InputProps -- ^ provide the base input props
-          -> (DOMElement -> DOMElement) -- ^ wrapper of the input field in the edit mode
-          -> InputState -- ^ edit state
-          -> DOMElement -- ^ display value
-          -> Text -- ^ initial value to display in the input
-          -> (Text -> Fay ()) -- ^ callback to call when the input field is changed due to user typing
-          -> DOMElement -- ^ either input field or displayed value depending on editing parameter
-editable' inputProps inputWrapper edit display initial setValue = case edit of
-  Editing -> let
-    changeHandler event = do
-      value <- eventValue event
-      setValue value
-    in inputWrapper $ II.input ((maybe (II.mkInputProps) (P.id) (inputProps)) {
-      II.onChange = Defined changeHandler , 
-      II.defaultValue = Defined initial })
-  _ -> display
-
-editableN :: I.InputAttributes -- ^ element to display in edit mode
-          -> Attributes
-          -> InputState -- ^ editing mode
-          -> DOMElement -- ^ element to display in non-edit mode
-          -> DOMElement
-editableN inputProps attributes editing display = 
-  case editing of
-  Editing -> I.input attributes inputProps
-  _ -> display
 
 editingCheckbox :: InputState -> Bool -> (Bool -> Fay ()) -> DOMElement
 editingCheckbox editing value setter = let

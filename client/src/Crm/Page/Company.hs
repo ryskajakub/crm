@@ -215,10 +215,16 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     company'' = company' {
       C.companyName = newHeader }
     in setCompany company''
-  inputWrapper input = dl [
-    dt "Jméno firmy" ,
-    dd input ]
-  header = editable' Nothing inputWrapper editing' headerDisplay (C.companyName company') headerSet
+
+  hereEditablePlain = editingInput editing' True
+
+  header = let
+    input = hereEditablePlain (SetValue $ C.companyName company') (eventValue >=> headerSet)
+    in case editing' of
+      Editing -> dl [
+        dt "Jméno firmy" ,
+        dd input ]
+      Display -> input
 
   validationMessages = if (length $ C.companyName company') > 0
     then []
@@ -233,18 +239,17 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     Editing -> div' (class' "company") $ saveEditButton' : deleteButton
     Display -> text2DOM ""
 
-  hereEditablePlain = editablePlain editing'
   companyBasicInfo = [
     header , 
     dl $ [
       dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
       dd $ hereEditablePlain
-        (C.companyPlant company') 
-        (\text -> setCompany (company' { C.companyPlant = text })) , 
+        (SetValue $ C.companyPlant company') 
+        (eventValue >=> \text -> setCompany (company' { C.companyPlant = text })) , 
       dt "Adresa" , 
       dd $ hereEditablePlain
-        (C.companyAddress company')
-        (\text -> setCompany (company' { C.companyAddress = text }))]
+        (SetValue $ C.companyAddress company')
+        (eventValue >=> \text -> setCompany (company' { C.companyAddress = text }))]
       ++ [saveEditButton] ]
   companyBasicInfo' = case editing' of 
     Editing -> companyBasicInfo 
