@@ -256,6 +256,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     V.Validation [] -> []
     validation' -> [validationHtml $ V.messages validation']
   
+  inputRowEditing = inputRow editing
   mkInputRow (efId, efDescription, theValue) = let
     setExtraField string = changeNavigationState $ \machineData -> let
       updateTheExtraField (theSame @ (efId', efDescription', _)) = if efId == efId'
@@ -263,8 +264,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         else theSame
       newExtraFields = map updateTheExtraField extraFields
       in machineData { MD.extraFields = newExtraFields }
-    in inputRow
-      editing
+    in inputRowEditing
       (MK.name efDescription)
       (SetValue theValue)
       (eventValue >=> setExtraField)
@@ -290,13 +290,11 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         maybeSelectRow editing "Zapojení" otherMachines (M.serialNumber) otherMachineId
           (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId })
           (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = emptyLabel }) ,
-        inputRow
-          editing
+        inputRowEditing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
           (eventValue >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
-        inputRow
-          editing
+        inputRowEditing
           "Rok výroby"
           (SetValue $ M.yearOfManufacture machine')
           (eventValue >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
