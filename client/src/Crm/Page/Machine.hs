@@ -141,7 +141,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
 
-      deleteMachineRow = rowOneElement "Smazat" $ BTN.button'
+      deleteMachineRow = oneElementRow "Smazat" $ BTN.button'
         (BTN.buttonProps { 
           BTN.bsStyle = Defined "danger" ,
           BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
@@ -346,7 +346,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     Editing -> div' (class' "col-md-3") dropdown
                     Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
             _ -> []) ++ [
-        rowOneElement
+        oneElementRow
           "Poznámka" 
           (textarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
             M.note = str } ) <=< eventValue))] ++ kindSpecificRows ++ extraRows ++ [

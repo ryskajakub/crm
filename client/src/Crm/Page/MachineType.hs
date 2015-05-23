@@ -279,19 +279,19 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         Edit -> editInfo
         Phase1 -> phase1PageInfo) :
     (form' (class'' ["form-horizontal", "upkeep-sequence-form", "container"]) ([
-      rowOneElement
+      oneElementRow
         "Druh"
         kindSelect ,
-      rowOneElement
+      oneElementRow
         "Typ zařízení"
         typeInputField ,
-      rowOneElement
+      oneElementRow
         "Výrobce"
         autocompleteManufacturerField] ++ 
         (if fixedUpkeepSequences
           then []
           else upkeepSequenceRows) ++ [
-            rowOneElement
+            oneElementRow
               (let 
                 addUpkeepSequenceRow = let
                   newUpkeepSequence = US.newUpkeepSequence {

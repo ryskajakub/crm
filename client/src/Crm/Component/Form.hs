@@ -19,7 +19,7 @@ module Crm.Component.Form (
 
   row' ,
   row ,
-  rowOneElement ,
+  oneElementRow ,
   saveButtonRow' ,
   saveButtonRow ,
   editableRow ,
@@ -135,11 +135,11 @@ row :: Renderable a
 row formFieldLabel otherColumns = row' Undefined formFieldLabel otherColumns
 
 -- | Row containing a label and another element in ratio of size 1:3
-rowOneElement :: (Renderable a, Renderable b)
+oneElementRow :: (Renderable a, Renderable b)
               => a -- ^ label of field
               -> b -- ^ the other field
               -> DOMElement
-rowOneElement formFieldLabel col2 = 
+oneElementRow formFieldLabel col2 = 
   row formFieldLabel [div' (class' "col-md-9") col2]
 
 saveButtonRow :: Renderable a

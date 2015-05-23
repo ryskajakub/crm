@@ -266,8 +266,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       then Right $ U.upkeepDate upkeep
       else Left rawUpkeepDate
     in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
-  dateRow = rowOneElement "Datum" datePicker
-  employeeSelectRow = rowOneElement "Servisman" (let
+  dateRow = oneElementRow "Datum" datePicker
+  employeeSelectRow = oneElementRow "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
       employeeFoundInList = lookup employeeId employees
@@ -282,13 +282,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   editingTextarea' = textarea Editing
 
-  workHoursRow = rowOneElement "Hodiny" $ 
+  workHoursRow = oneElementRow "Hodiny" $ 
     input Editing True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) 
-  workDescriptionRow = rowOneElement "Popis práce" $
+  workDescriptionRow = oneElementRow "Popis práce" $
     editingTextarea' True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) 
-  recommendationRow = rowOneElement "Doporučení" $
+  recommendationRow = oneElementRow "Doporučení" $
     editingTextarea' True (SetValue $ U.recommendation upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) 
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
@@ -309,7 +309,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
       then []
       else ["Musí být nastaveno správně datum."])
-  submitButton = rowOneElement "" (button $ null validationMessages)
+  submitButton = oneElementRow "" (button $ null validationMessages)
   messagesPart = validationHtml validationMessages
 
   in div $ (form' (class' "form-horizontal") $ B.grid $
