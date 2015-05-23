@@ -28,10 +28,10 @@ module Crm.Component.Form (
   nullDropdownRow ) where
 
 import           Prelude                               as P hiding (span, div, elem) 
-import           Data.Text                                  (fromString, Text, (<>))
-import           FFI                                        (Defined(Defined, Undefined))
+import           Data.Text                             (fromString, Text, (<>))
+import           FFI                                   (Defined(Defined, Undefined))
 
-import           HaskellReact                               hiding (row, label)
+import           HaskellReact                          hiding (row, label)
 import qualified HaskellReact.Bootstrap.Button         as BTN
 import qualified HaskellReact.Tag.Input                as I
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD

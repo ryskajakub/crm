@@ -6,36 +6,35 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import Data.Text (fromString, Text, (<>), showInt)
-import Prelude hiding (div, span, id)
-import Data.Var (Var, modify)
-import FFI (Defined(Defined))
+import           Data.Text                             (fromString, Text, (<>), showInt)
+import           Prelude                               hiding (div, span, id)
+import           Data.Var (Var, modify)
+import           FFI (Defined(Defined))
 
-import HaskellReact as HR
-import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Button as BTN
-import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Tag.Hyperlink as A
+import           HaskellReact                          as HR
+import qualified HaskellReact.Bootstrap                as B
+import qualified HaskellReact.Bootstrap.Button         as BTN
+import qualified HaskellReact.Bootstrap.Glyphicon      as G
+import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Company                    as C
+import qualified Crm.Shared.Machine                    as M
+import qualified Crm.Shared.MachineType                as MT
+import qualified Crm.Shared.Upkeep                     as U
+import qualified Crm.Shared.Employee                   as E
+import qualified Crm.Shared.UpkeepMachine              as UM
 
-import qualified Crm.Data.Data as D
-import qualified Crm.Data.UpkeepData as UD
-import qualified Crm.Component.DatePicker as DP
-import Crm.Server (createUpkeep, updateUpkeep)
-import Crm.Router (CrmRouter, link, companyDetail, closeUpkeep, navigate, maintenances)
-import Crm.Component.Form
-import qualified Crm.Router as R
-import Crm.Helpers (displayDate, lmap, rmap, pageInfo, validationHtml, eventInt')
-import qualified Crm.Validation as V
+import qualified Crm.Data.Data                         as D
+import qualified Crm.Data.UpkeepData                   as UD
+import qualified Crm.Component.DatePicker              as DP
+import qualified Crm.Validation                        as V
+import qualified Crm.Router                            as R
+import           Crm.Server                            (createUpkeep, updateUpkeep)
+import           Crm.Component.Form
+import           Crm.Helpers
 
-plannedUpkeeps :: CrmRouter
+plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
@@ -46,18 +45,18 @@ plannedUpkeeps router upkeepCompanies = let
     th "Uzavřít" ]
   body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
-      td $ link
+      td $ R.link
         (C.companyName company)
-        (companyDetail companyId)
+        (R.companyDetail companyId)
         router ,
       td $ displayDate $ U.upkeepDate upkeep ,
-      td $ link
+      td $ R.link
         "Přeplánovat"
         (R.replanUpkeep upkeepId)
         router,
-      td $ link
+      td $ R.link
         "Uzavřít"
-        (closeUpkeep upkeepId)
+        (R.closeUpkeep upkeepId)
         router ]) upkeepCompanies
 
   advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
@@ -101,7 +100,7 @@ mkSubmitButton buttonLabel handler enabled = let
     else basicButtonProps { BTN.disabled = Defined True }
   in BTN.button' buttonProps buttonLabel
 
-upkeepDetail :: CrmRouter
+upkeepDetail :: R.CrmRouter
              -> Var D.AppState
              -> U.Upkeep'
              -> (DP.DatePicker, Text)
@@ -122,12 +121,12 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
         submitButton = let
           closeUpkeepHandler = updateUpkeep
             (upkeep3, selectedEmployee)
-            (navigate (maintenances companyId) router)
+            (R.navigate (R.maintenances companyId) router)
           in mkSubmitButton 
             [span G.plus , span " Uzavřít"]
             closeUpkeepHandler
 
-upkeepNew :: CrmRouter
+upkeepNew :: R.CrmRouter
           -> Var D.AppState
           -> (U.Upkeep, [UM.UpkeepMachine'])
           -> (DP.DatePicker, Text)
@@ -147,7 +146,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
           newUpkeepHandler = createUpkeep
             (upkeepU, upkeepMachines, mE)
             companyId
-            (navigate R.plannedUpkeeps router)
+            (R.navigate R.plannedUpkeeps router)
           button = mkSubmitButton
             [G.plus , text2DOM " Naplánovat"]
             newUpkeepHandler
@@ -155,7 +154,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         Right (upkeepId) -> let
           replanUpkeepHandler = updateUpkeep
             ((upkeepId, upkeepU, upkeepMachines), mE)
-            (navigate R.plannedUpkeeps router)
+            (R.navigate R.plannedUpkeeps router)
           button = mkSubmitButton
             [text2DOM "Přeplánovat"]
             replanUpkeepHandler
