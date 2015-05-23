@@ -126,7 +126,6 @@ loadFromLocalStorage = do
               _ -> Nothing) (Just []) maybeBrokenUSs
           return $ maybe [] id verifiedUSs
         Nothing -> return []
-
       return $ Just (machineType, seqs, mtId')
     _ -> return Nothing
 
