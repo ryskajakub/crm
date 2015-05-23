@@ -71,17 +71,17 @@ contactPersonForm router contactPerson identification companyId appVar = let
 
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
-      row'
+      inputRow
         True 
         "Jméno" 
         (SetValue $ CP.name contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
-      row'
+      inputRow
         True
         "Telefon"
         (SetValue $ CP.phone contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
-      row'
+      inputRow
         True
         "Pozice"
         (SetValue $ CP.position contactPerson)

@@ -7,7 +7,7 @@ import Data.Text (fromString, Text, (<>))
 import Prelude as P hiding (span, div, elem) 
 import FFI (Defined(Defined, Undefined))
 
-import HaskellReact
+import HaskellReact hiding (row)
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Tag.Input as I
 import qualified HaskellReact.Bootstrap.Input as II
@@ -57,28 +57,28 @@ editableN inputProps attributes editing display =
   then I.input attributes inputProps
   else display
 
-labeledRow' :: Renderable a
-                 => Defined Text -- ^ key of the element
-                 -> a -- ^ label of the label field
-                 -> [DOMElement] -- ^ other columns
-                 -> DOMElement
-labeledRow' key' formFieldLabel otherColumns =
+row' :: Renderable a
+     => Defined Text -- ^ key of the element
+     -> a -- ^ label of the label field
+     -> [DOMElement] -- ^ other columns
+     -> DOMElement
+row' key' formFieldLabel otherColumns =
   div' ((class' "form-group") { key = key' }) [
     (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
 
-labeledRow :: Renderable a
-                => a -- ^ label of the label field
-                -> [DOMElement] -- ^ other columns
-                -> DOMElement
-labeledRow formFieldLabel otherColumns = labeledRow' Undefined formFieldLabel otherColumns
+row :: Renderable a
+    => a -- ^ label of the label field
+    -> [DOMElement] -- ^ other columns
+    -> DOMElement
+row formFieldLabel otherColumns = row' Undefined formFieldLabel otherColumns
 
 -- | Row containing a label and another element in ratio of size 1:3
-labeledRowOneElement :: (Renderable a, Renderable b)
-                     => a -- ^ label of field
-                     -> b -- ^ the other field
-                     -> DOMElement
-labeledRowOneElement formFieldLabel col2 = 
-  labeledRow formFieldLabel [div' (class' "col-md-9") col2]
+rowOneElement :: (Renderable a, Renderable b)
+              => a -- ^ label of field
+              -> b -- ^ the other field
+              -> DOMElement
+rowOneElement formFieldLabel col2 = 
+  row formFieldLabel [div' (class' "col-md-9") col2]
 
 editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
 editingCheckbox value setter editing = let
@@ -144,24 +144,30 @@ saveButtonRow' enabled buttonLabel clickHandler =
         BTN.disabled = Defined True })
       buttonLabel
 
-editDisplayRow :: Renderable a
-               => Bool -- ^ editing
-               -> Text -- ^ label of field
-               -> a -- ^ the other field
-               -> DOMElement
-editDisplayRow editing labelText otherField = let
-  classes = ["col-md-9", "my-text-left"] ++ (if editing
+-- | Row that has two modes, editing and display each having different css classes for different display
+editableRow :: (Renderable a, Renderable b)
+            => Bool -- ^ editing
+            -> a -- ^ label of field
+            -> b -- ^ the other field
+            -> DOMElement
+editableRow editing labelText otherField = let
+  classes = "col-md-9" : if editing
     then []
-    else ["control-label"])
-  in labeledRow labelText [div' (class'' classes) otherField]
+    else ["control-label", "my-text-left"]
+  in row labelText [div' (class'' classes) otherField]
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
 
-row' :: Bool -> Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
-row' editing' labelText value' onChange' = let
+-- | Row having an input field in editing mode, just display in the display mode
+inputRow :: Bool -- ^ editing/display mode
+         -> Text -- ^ label to display on the left of the input
+         -> DisplayValue -- ^ value to display or to set in the form
+         -> (SyntheticEvent -> Fay ()) -- ^ event to handle on input change
+         -> DOMElement -- ^ rendered element
+inputRow editing' labelText value' onChange' = let
   input = editingInput True value' onChange' editing'
-  in editDisplayRow editing' labelText input
+  in editableRow editing' labelText input
 
 maybeSelectRow' :: (Eq a) 
                 => Bool
@@ -174,7 +180,7 @@ maybeSelectRow' :: (Eq a)
                 -> (Text -> b) 
                 -> DOMElement
 maybeSelectRow' displayNoElement editing rowLabel elements getLabel theId' setId emptyRecord =
-  labeledRow rowLabel [let
+  row rowLabel [let
     noElementSelectedLabel = "---"
     selectedLabel = maybe noElementSelectedLabel (\theId -> let
       elementFound = lookup theId elements

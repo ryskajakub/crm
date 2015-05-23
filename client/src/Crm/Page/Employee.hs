@@ -87,17 +87,17 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
     else ["Jméno musí mít alespoň jeden znak."]
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
-      row'
+      inputRow
         True 
         "Jméno" 
         (SetValue $ E.name employee) 
         (eventValue >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
-      row'
+      inputRow
         True
         "Kontakt"
         (SetValue $ E.contact employee)
         (eventValue >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
-      row'
+      inputRow
         True
         "Kvalifikace"
         (SetValue $ E.capabilities employee)

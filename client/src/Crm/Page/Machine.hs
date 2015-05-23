@@ -10,7 +10,7 @@ import Prelude hiding (div, span, id)
 import Data.Var (Var, modify)
 import FFI (Defined(Defined))
 
-import HaskellReact as HR
+import HaskellReact hiding (row)
 import qualified HaskellReact.Bootstrap as B
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
@@ -73,7 +73,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       contactPersonId contactPersons v otherMachineId om extraFields
     where
       pageHeader = if editing then "Editace stroje" else "Stroj"
-      extraRow = [editDisplayRow False "Další servis" (displayDate nextService)]
+      extraRow = [editableRow False "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
         mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
         mkUpkeepRows (_, upkeep, upkeepMachine, maybeEmployee) = let
@@ -106,7 +106,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       extraGrid = (if editing && (not $ null upkeeps) 
         then Nothing 
         else (Just $ B.grid upkeepHistoryHtml))
-      photoUploadRow = editDisplayRow
+      photoUploadRow = editableRow
         True
         "Fotka" 
         (let 
@@ -135,12 +135,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
       mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
-      photoCarouselRow = editDisplayRow
+      photoCarouselRow = editableRow
         True
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
 
-      deleteMachineRow = labeledRowOneElement "Smazat" $ BTN.button'
+      deleteMachineRow = rowOneElement "Smazat" $ BTN.button'
         (BTN.buttonProps { 
           BTN.bsStyle = Defined "danger" ,
           BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
@@ -263,7 +263,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         else theSame
       newExtraFields = map updateTheExtraField extraFields
       in machineData { MD.extraFields = newExtraFields }
-    in row'
+    in inputRow
       editing
       (MK.name efDescription)
       (SetValue theValue)
@@ -274,12 +274,12 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
       B.row $ [
-        row'
+        inputRow
           False
           "Typ zařízení" 
           (SetValue $ MT.machineTypeName machineType) 
           (const $ return ()) ,
-        row'
+        inputRow
           False
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
@@ -290,22 +290,22 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
         maybeSelectRow editing "Zapojení" otherMachines (M.serialNumber) otherMachineId
           (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId })
           (\emptyLabel -> (M.newMachine $ YMD.YearMonthDay 0 0 0 YMD.DayPrecision) { M.serialNumber = emptyLabel }) ,
-        row'
+        inputRow
           editing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
           (eventValue >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
-        row'
+        inputRow
           editing
           "Rok výroby"
           (SetValue $ M.yearOfManufacture machine')
           (eventValue >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
-        editDisplayRow
+        editableRow
           editing
           ("Datum uvedení do provozu") 
           datePicker ] ++ (case MT.kind machineType of
             MK.RotaryScrewCompressor -> [
-              row'
+              inputRow
                 editing
                 "Úvodní stav motohodin"
                 (DefaultValue $ showInt $ M.initialMileage machine')
@@ -315,7 +315,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     newValidation = V.remove V.MachineInitialMileageNumber validation
                     in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
                   (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
-              labeledRow 
+              row 
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
                   (editingInput 
@@ -349,7 +349,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     then div' (class' "col-md-3") dropdown
                     else div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
             _ -> []) ++ [
-        labeledRowOneElement
+        rowOneElement
           "Poznámka" 
           (editingTextarea True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
             M.note = str } ) <=< eventValue) editing)] ++ kindSpecificRows ++ extraRows ++ [

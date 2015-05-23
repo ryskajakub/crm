@@ -100,7 +100,7 @@ machineKindSettings appVar editedEnum allSettings = let
     props =  BTN.buttonProps { BTN.onClick = Defined $ const addField }
     buttonLabel = "Přidat políčko"
     in BTN.button' props buttonLabel
-  addAnotherRow = labeledRowOneElement addAnotherFieldButton ""
+  addAnotherRow = rowOneElement addAnotherFieldButton ""
 
   lastIndex = length theEditedMachineKind - 1
   assignPosition (i, field) = if 

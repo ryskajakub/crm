@@ -39,23 +39,23 @@ plannedUpkeeps :: CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
-  head' = thead' (row "1") $ tr [
-    th' (row "1") "Název firmy" ,
-    th' (row "2") "Datum" ,
-    th' (row "3") "Přeplánovat" ,
-    th' (row "4") "Uzavřít" ]
-  body = tbody' (row "2") $ map (\(upkeepId, upkeep, companyId, company) ->
+  head' = thead $ tr [
+    th "Název firmy" ,
+    th "Datum" ,
+    th "Přeplánovat" ,
+    th "Uzavřít" ]
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
     tr [
-      td' (row "1") $ link
+      td $ link
         (C.companyName company)
         (companyDetail companyId)
         router ,
-      td' (row "2") $ displayDate $ U.upkeepDate upkeep ,
-      td' (row "3") $ link
+      td $ displayDate $ U.upkeepDate upkeep ,
+      td $ link
         "Přeplánovat"
         (R.replanUpkeep upkeepId)
         router,
-      td' (row "4") $ link
+      td $ link
         "Uzavřít"
         (closeUpkeep upkeepId)
         router ]) upkeepCompanies
@@ -124,7 +124,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
             (upkeep3, selectedEmployee)
             (navigate (maintenances companyId) router)
           in mkSubmitButton 
-            [span' (row "1") G.plus , span' (row "2") " Uzavřít"]
+            [span G.plus , span " Uzavřít"]
             closeUpkeepHandler
 
 upkeepNew :: CrmRouter
@@ -266,8 +266,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       then Right $ U.upkeepDate upkeep
       else Left rawUpkeepDate
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
-  dateRow = labeledRowOneElement "Datum" datePicker
-  employeeSelectRow = labeledRowOneElement "Servisman" (let
+  dateRow = rowOneElement "Datum" datePicker
+  employeeSelectRow = rowOneElement "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
       employeeFoundInList = lookup employeeId employees
@@ -279,13 +279,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
-  workHoursRow = labeledRowOneElement "Hodiny" $ 
+  workHoursRow = rowOneElement "Hodiny" $ 
     editingInput True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True
-  workDescriptionRow = labeledRowOneElement "Popis práce" $
+  workDescriptionRow = rowOneElement "Popis práce" $
     editingTextarea True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True
-  recommendationRow = labeledRowOneElement "Doporučení" $
+  recommendationRow = rowOneElement "Doporučení" $
     editingTextarea True (SetValue $ U.recommendation upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
@@ -306,7 +306,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
       then []
       else ["Musí být nastaveno správně datum."])
-  submitButton = labeledRowOneElement "" (button $ null validationMessages)
+  submitButton = rowOneElement "" (button $ null validationMessages)
   messagesPart = validationHtml validationMessages
 
   in div $ (form' (class' "form-horizontal") $ B.grid $
