@@ -20,8 +20,8 @@ module Crm.Component.Form (
   row' ,
   row ,
   oneElementRow ,
-  saveButtonRow' ,
-  saveButtonRow ,
+  buttonRow' ,
+  buttonRow ,
   editableRow ,
   inputRow ,
   dropdownRow ,
@@ -142,18 +142,18 @@ oneElementRow :: (Renderable a, Renderable b)
 oneElementRow formFieldLabel col2 = 
   row formFieldLabel [div' (class' "col-md-9") col2]
 
-saveButtonRow :: Renderable a
-              => a -- ^ label of the button
-              -> Fay () -- ^ button on click handler
-              -> DOMElement
-saveButtonRow = saveButtonRow' Enabled
+buttonRow :: Renderable a
+          => a -- ^ label of the button
+          -> Fay () -- ^ button on click handler
+          -> DOMElement
+buttonRow = buttonRow' Enabled
 
-saveButtonRow' :: Renderable a
-               => ButtonState
-               -> a -- ^ label of the button
-               -> Fay () -- ^ button on click handler
-               -> DOMElement
-saveButtonRow' enabled buttonLabel clickHandler = 
+buttonRow' :: Renderable a
+           => ButtonState
+           -> a -- ^ label of the button
+           -> Fay () -- ^ button on click handler
+           -> DOMElement
+buttonRow' enabled buttonLabel clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
     BTN.button' (let
       buttonProps = (BTN.buttonProps {

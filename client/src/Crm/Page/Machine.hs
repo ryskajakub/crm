@@ -166,8 +166,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             "Jdi do editačního módu"
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
       editMachineAction = updateMachine machineId machine otherMachineId extraFieldsForServer (setEditing Display)
-      saveButtonRow'' validationOk = saveButtonRow' validationOk "Edituj" editMachineAction
-      button = case editing of Editing -> saveButtonRow'' ; _ -> (const editButtonRow)
+      buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
+      button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
 
 machineNew :: R.CrmRouter
            -> Var D.AppState
@@ -187,7 +187,7 @@ machineNew :: R.CrmRouter
 machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific 
     companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om extraFields = 
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
-      buttonRow appState datePickerCalendar (machine', datePickerText) 
+      buttonRow'' appState datePickerCalendar (machine', datePickerText) 
       machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
     where
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
@@ -196,7 +196,7 @@ machineNew router appState datePickerCalendar (machine', datePickerText) machine
         Nothing -> MT.MyMachineType machineTypeTuple
       saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId otherMachineId extraFieldsForServer
         (R.navigate (R.companyDetail companyId) router)
-      buttonRow validationOk = saveButtonRow' validationOk "Vytvoř" saveNewMachine
+      buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
 
 machineDisplay :: InputState -- ^ true editing mode false display mode
                -> Text -- ^ header of the page
@@ -215,7 +215,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> [(M.MachineId, M.Machine)]
                -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
-machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machine', datePickerText) 
+machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText) 
     _ (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
     contactPersons validation otherMachineId otherMachines extraFields = let
 
@@ -350,7 +350,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
           "Poznámka" 
           (textarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
             M.note = str } ) <=< eventValue))] ++ kindSpecificRows ++ extraRows ++ [
-        div' (class' "form-group") (buttonRow $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
+        div' (class' "form-group") (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements

@@ -100,7 +100,7 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
         "Kvalifikace"
         (SetValue $ E.capabilities employee)
         (eventValue >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
-      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
+      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :

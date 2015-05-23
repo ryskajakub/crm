@@ -86,7 +86,7 @@ contactPersonForm router contactPerson identification companyId appVar = let
         "Pozice"
         (SetValue $ CP.position contactPerson)
         (eventValue >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
-      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ saveButtonRow'
+      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :

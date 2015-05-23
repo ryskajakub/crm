@@ -95,7 +95,7 @@ machineKindSettings appVar editedEnum allSettings = let
       theInput ,
       removeButton ]
 
-  submitRow = saveButtonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
+  submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
 
   addAnotherFieldButton = let
     addField = let
