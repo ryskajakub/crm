@@ -1,18 +1,46 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Crm.Component.Form where
+module Crm.Component.Form (
+  InputState (..) ,
+  ButtonState (..) ,
+  DisplayValue (..) ,
 
-import Data.Text (fromString, Text, (<>))
-import Prelude as P hiding (span, div, elem) 
-import FFI (Defined(Defined, Undefined))
+  buttonStateFromBool ,
+  inputStateFromBool ,
+  inputStateToBool ,
+  inputNormalAttrs ,
 
-import HaskellReact hiding (row)
-import qualified HaskellReact.Bootstrap.Button as BTN
-import qualified HaskellReact.Tag.Input as I
-import qualified HaskellReact.Bootstrap.Input as II
+  editablePlain ,
+  editable ,
+  editable' ,
+  editableN ,
+  
+  row' ,
+  row ,
+  rowOneElement ,
+  editingCheckbox ,
+  editingInput ,
+  editingTextarea ,
+  editingInput' ,
+  saveButtonRow' ,
+  saveButtonRow ,
+  editableRow ,
+  inputRow ,
+  maybeSelectRow' ,
+  maybeSelectRow 
+  ) where
+
+import           Prelude                               as P hiding (span, div, elem) 
+import           Data.Text                                  (fromString, Text, (<>))
+import           FFI                                        (Defined(Defined, Undefined))
+
+import           HaskellReact                               hiding (row)
+import qualified HaskellReact.Bootstrap.Button         as BTN
+import qualified HaskellReact.Tag.Input                as I
+import qualified HaskellReact.Bootstrap.Input          as II
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
-import qualified HaskellReact.Tag.Hyperlink as A
+import qualified HaskellReact.Tag.Hyperlink            as A
 
 import Crm.Helpers (lmap)
 
@@ -21,6 +49,12 @@ data InputState = Editing | Display
 
 data ButtonState = Enabled | Disabled
   deriving Eq
+
+data DisplayValue = DefaultValue Text | SetValue Text
+  deriving Eq
+
+
+-- utilities
 
 buttonStateFromBool :: Bool -> ButtonState
 buttonStateFromBool True = Enabled
@@ -33,6 +67,17 @@ inputStateFromBool False = Display
 inputStateToBool :: InputState -> Bool
 inputStateToBool Editing = True
 inputStateToBool Display = False
+
+joinEither :: DisplayValue -> Text
+joinEither dv = case dv of
+  DefaultValue x -> x
+  SetValue x -> x
+
+inputNormalAttrs :: Attributes
+inputNormalAttrs = class' "form-control"
+
+
+-- form elements
 
 editablePlain :: InputState
               -> Text
@@ -75,29 +120,6 @@ editableN inputProps attributes editing display =
   Editing -> I.input attributes inputProps
   _ -> display
 
-row' :: Renderable a
-     => Defined Text -- ^ key of the element
-     -> a -- ^ label of the label field
-     -> [DOMElement] -- ^ other columns
-     -> DOMElement
-row' key' formFieldLabel otherColumns =
-  div' ((class' "form-group") { key = key' }) [
-    (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
-
-row :: Renderable a
-    => a -- ^ label of the label field
-    -> [DOMElement] -- ^ other columns
-    -> DOMElement
-row formFieldLabel otherColumns = row' Undefined formFieldLabel otherColumns
-
--- | Row containing a label and another element in ratio of size 1:3
-rowOneElement :: (Renderable a, Renderable b)
-              => a -- ^ label of field
-              -> b -- ^ the other field
-              -> DOMElement
-rowOneElement formFieldLabel col2 = 
-  row formFieldLabel [div' (class' "col-md-9") col2]
-
 editingCheckbox :: InputState -> Bool -> (Bool -> Fay ()) -> DOMElement
 editingCheckbox editing value setter = let
   disabledAttrs = case editing of
@@ -110,13 +132,6 @@ editingCheckbox editing value setter = let
     then checkboxAttrs { I.checked = Defined "checked" }
     else checkboxAttrs
   in I.input mkAttrs inputAttrs
-
-data DisplayValue = DefaultValue Text | SetValue Text
-
-joinEither :: DisplayValue -> Text
-joinEither dv = case dv of
-  DefaultValue x -> x
-  SetValue x -> x
 
 editingInput :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
 editingInput = editingInput' False
@@ -140,6 +155,32 @@ editingInput' textarea editing' displayPlain displayValue onChange' = let
     else if textarea 
       then I.textarea inputNormalAttrs inputAttrs
       else I.input inputNormalAttrs inputAttrs
+
+
+-- row elements
+
+row' :: Renderable a
+     => Defined Text -- ^ key of the element
+     -> a -- ^ label of the label field
+     -> [DOMElement] -- ^ other columns
+     -> DOMElement
+row' key' formFieldLabel otherColumns =
+  div' ((class' "form-group") { key = key' }) [
+    (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
+
+row :: Renderable a
+    => a -- ^ label of the label field
+    -> [DOMElement] -- ^ other columns
+    -> DOMElement
+row formFieldLabel otherColumns = row' Undefined formFieldLabel otherColumns
+
+-- | Row containing a label and another element in ratio of size 1:3
+rowOneElement :: (Renderable a, Renderable b)
+              => a -- ^ label of field
+              -> b -- ^ the other field
+              -> DOMElement
+rowOneElement formFieldLabel col2 = 
+  row formFieldLabel [div' (class' "col-md-9") col2]
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
@@ -174,9 +215,6 @@ editableRow editing labelText otherField = let
     Editing -> []
     Display -> ["control-label", "my-text-left"]
   in row labelText [div' (class'' classes) otherField]
-
-inputNormalAttrs :: Attributes
-inputNormalAttrs = class' "form-control"
 
 -- | Row having an input field in editing mode, just display in the display mode
 inputRow :: InputState -- ^ editing/display mode
