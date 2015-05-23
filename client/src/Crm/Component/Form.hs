@@ -24,6 +24,7 @@ module Crm.Component.Form (
   buttonRow ,
   editableRow ,
   inputRow ,
+  textareaRow ,
   dropdownRow ,
   nullDropdownRow ) where
 
@@ -185,6 +186,15 @@ inputRow :: InputState -- ^ editing/display mode
 inputRow editing' labelText value' onChange' = let
   input' = input editing' True value' onChange'
   in editableRow editing' labelText input'
+
+-- | Similar to inputRow, only renders textarea
+textareaRow :: InputState
+            -> Text
+            -> DisplayValue
+            -> (SyntheticEvent -> Fay ())
+            -> DOMElement
+textareaRow editing label value onChange = editableRow editing label textarea' where
+  textarea' = textarea editing True value onChange
 
 -- | Dropdown component
 dropdownRow :: InputState 

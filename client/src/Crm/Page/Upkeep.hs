@@ -6,7 +6,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import           Data.Text                             (fromString, Text, (<>), showInt)
+import           Data.Text                             (fromString, Text, showInt)
 import           Prelude                               hiding (div, span, id)
 import           Data.Var (Var, modify)
 import           FFI (Defined(Defined))
@@ -16,7 +16,6 @@ import qualified HaskellReact.Bootstrap                as B
 import qualified HaskellReact.Bootstrap.Button         as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon      as G
 import qualified HaskellReact.Tag.Hyperlink            as A
-import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
 import qualified Crm.Shared.Company                    as C
 import qualified Crm.Shared.Machine                    as M
@@ -64,14 +63,15 @@ plannedUpkeeps router upkeepCompanies = let
 
   in B.grid $ B.row $
     pageInfo' ++
-    [ B.col (B.mkColProps 12) $ main $ B.table [ head', body ]]
+    [B.col (B.mkColProps 12) $ main $ B.table [head', body]]
+
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
 
-{- | if the element is in the first list, put it in the other one, if the element
- - is in the other, put in the first list
- -}
+
+-- | if the element is in the first list, put it in the other one, if the element
+-- is in the other, put in the first list
 toggle :: ([a],[a]) -> (a -> Bool) -> ([a],[a])
 toggle lists findElem = let
   toggleInternal (list1, list2) runMore = let
@@ -87,6 +87,7 @@ toggle lists findElem = let
         else lists
   in toggleInternal lists True
 
+
 mkSubmitButton :: Renderable a
                => a
                -> Fay ()
@@ -99,6 +100,7 @@ mkSubmitButton buttonLabel handler enabled = let
     then basicButtonProps { BTN.onClick = Defined $ const handler }
     else basicButtonProps { BTN.disabled = Defined True }
   in BTN.button' buttonProps buttonLabel
+
 
 upkeepDetail :: R.CrmRouter
              -> Var D.AppState
@@ -126,6 +128,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
             [span G.plus , span " Uzavřít"]
             closeUpkeepHandler
 
+
 upkeepNew :: R.CrmRouter
           -> Var D.AppState
           -> (U.Upkeep, [UM.UpkeepMachine'])
@@ -138,27 +141,27 @@ upkeepNew :: R.CrmRouter
           -> V.Validation
           -> DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es mE v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE v
-    where
-      (upkeepU, upkeepMachines) = upkeep
-      (pageHeader, submitButton) = case upkeepIdentification of 
-        Left (companyId) -> let
-          newUpkeepHandler = createUpkeep
-            (upkeepU, upkeepMachines, mE)
-            companyId
-            (R.navigate R.plannedUpkeeps router)
-          button = mkSubmitButton
-            [G.plus , text2DOM " Naplánovat"]
-            newUpkeepHandler
-          in ("Naplánovat servis", button)
-        Right (upkeepId) -> let
-          replanUpkeepHandler = updateUpkeep
-            ((upkeepId, upkeepU, upkeepMachines), mE)
-            (R.navigate R.plannedUpkeeps router)
-          button = mkSubmitButton
-            [text2DOM "Přeplánovat"]
-            replanUpkeepHandler
-          in ("Přeplánovat servis", button)
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE v where
+    (upkeepU, upkeepMachines) = upkeep
+    (pageHeader, submitButton) = case upkeepIdentification of 
+      Left (companyId) -> let
+        newUpkeepHandler = createUpkeep
+          (upkeepU, upkeepMachines, mE)
+          companyId
+          (R.navigate R.plannedUpkeeps router)
+        button = mkSubmitButton
+          [G.plus , text2DOM " Naplánovat"]
+          newUpkeepHandler
+        in ("Naplánovat servis", button)
+      Right (upkeepId) -> let
+        replanUpkeepHandler = updateUpkeep
+          ((upkeepId, upkeepU, upkeepMachines), mE)
+          (R.navigate R.plannedUpkeeps router)
+        button = mkSubmitButton
+          [text2DOM "Přeplánovat"]
+          replanUpkeepHandler
+        in ("Přeplánovat servis", button)
+
 
 upkeepForm :: Var D.AppState
            -> Text -- ^ page header
@@ -176,26 +179,26 @@ upkeepForm :: Var D.AppState
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
     notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee validation = let
   modify' :: (UD.UpkeepData -> UD.UpkeepData) -> Fay ()
-  modify' fun = modify appState (\appState' -> let
+  modify' fun = modify appState $ \appState' -> let
     newState = case D.navigation appState' of
       D.UpkeepScreen ud -> D.UpkeepScreen $ fun ud
-    in appState' { D.navigation = newState } )
+    in appState' { D.navigation = newState }
 
   setUpkeepFull :: (U.Upkeep, [UM.UpkeepMachine']) -> Text -> Fay ()
-  setUpkeepFull modifiedUpkeep upkeepDateText = modify' (\upkeepData ->
+  setUpkeepFull modifiedUpkeep upkeepDateText = modify' $ \upkeepData ->
     let dp = fst $ UD.upkeepDatePicker upkeepData
     in upkeepData { 
       UD.upkeep = modifiedUpkeep ,
-      UD.upkeepDatePicker = (dp, upkeepDateText) })
+      UD.upkeepDatePicker = (dp, upkeepDateText) }
   
   setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Fay ()
   setUpkeep modifiedUpkeep = setUpkeepFull modifiedUpkeep rawUpkeepDate
 
   setNotCheckedMachines :: [UM.UpkeepMachine'] -> [UM.UpkeepMachine'] -> Fay ()
-  setNotCheckedMachines checkedMachines notCheckedMachines' = modify' 
-    (\upkeepData -> upkeepData { 
+  setNotCheckedMachines checkedMachines notCheckedMachines' = modify' $ 
+    \upkeepData -> upkeepData { 
       UD.upkeep = (upkeep, checkedMachines) ,
-      UD.notCheckedMachines = notCheckedMachines' })
+      UD.notCheckedMachines = notCheckedMachines' }
     
   machineRow (machineId,_,_,_,machineType) = let
     findMachineById (_,id') = machineId == id'
@@ -241,13 +244,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i })) 
         (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation }))
 
-    warrantyUpkeep = checkbox editing (UM.warrantyUpkeep $ fst machineToDisplay) (\warrantyUpkeep' ->
-      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' })
+    warrantyUpkeep = checkbox editing (UM.warrantyUpkeep $ fst machineToDisplay) $ \warrantyUpkeep' ->
+      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }
     warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
 
     noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
-      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) (eventValue >=> \es ->
-        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es })
+      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) $ eventValue >=> \es ->
+        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }
 
     rowItems = if closeUpkeep'
       then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
@@ -265,31 +268,23 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       then Right $ U.upkeepDate upkeep
       else Left rawUpkeepDate
     in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
+
   dateRow = oneElementRow "Datum" datePicker
-  employeeSelectRow = oneElementRow "Servisman" (let
-    noEmployeeLabel = "---"
-    selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
-      employeeFoundInList = lookup employeeId employees
-      in maybe noEmployeeLabel E.name employeeFoundInList) selectedEmployee
-    selectEmployeeLink eId e = let
-      selectEmployeeAction = modify' (\s -> s { UD.selectedEmployee = eId })
-      in A.a''' (click selectEmployeeAction) (E.name e)
-    withNoEmployee = (Nothing, E.newEmployee { E.name = noEmployeeLabel }) : (map (lmap Just) employees)
-    elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
-    buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
-    in BD.buttonDropdown buttonLabel elements )
+  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name (findInList selectedEmployee employees)
+    $ \eId -> modify' $ \s -> s { UD.selectedEmployee = eId }
+    
+  textareaRowEditing = textareaRow Editing
+  inputRowEditing = inputRow Editing
 
-  editingTextarea' = textarea Editing
-
-  workHoursRow = oneElementRow "Hodiny" $ 
-    input Editing True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) 
-  workDescriptionRow = oneElementRow "Popis práce" $
-    editingTextarea' True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) 
-  recommendationRow = oneElementRow "Doporučení" $
-    editingTextarea' True (SetValue $ U.recommendation upkeep) (eventValue >=> \es -> modify' (\ud ->
-      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) 
+  workHoursRow = inputRowEditing "Hodiny"
+    (SetValue $ U.workHours upkeep) $ eventValue >=> \es -> modify' $ \ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) }
+  workDescriptionRow = textareaRowEditing "Popis práce" (SetValue $ U.workDescription upkeep) $ 
+    eventValue >=> \es -> modify' $ \ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) }
+  recommendationRow = textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
+    eventValue >=> \es -> modify' $ \ud ->
+      ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) }
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
   additionalRows = if closeUpkeep' then closeUpkeepRows else []
   header = div' (class' "form-group") $ [
