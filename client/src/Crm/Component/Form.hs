@@ -123,10 +123,6 @@ editingInput' textarea displayPlain displayValue onChange' editing' = let
       then I.textarea inputNormalAttrs inputAttrs
       else I.input inputNormalAttrs inputAttrs
 
-formRow' :: Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
-formRow' labelText value' onChange' editing' = 
-  labeledRowOneElement labelText $ editingInput True value' onChange' editing' 
-
 saveButtonRow :: Renderable a
               => a -- ^ label of the button
               -> Fay () -- ^ button on click handler
