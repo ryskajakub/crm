@@ -72,11 +72,12 @@ labeledRow :: Renderable a
                 -> DOMElement
 labeledRow formFieldLabel otherColumns = labeledRow' Undefined formFieldLabel otherColumns
 
-formRow :: (Renderable a, Renderable b)
-        => a -- ^ label of field
-        -> b -- ^ the other field
-        -> DOMElement
-formRow formFieldLabel col2 = 
+-- | Row containing a label and another element in ratio of size 1:3
+labeledRowOneElement :: (Renderable a, Renderable b)
+                     => a -- ^ label of field
+                     -> b -- ^ the other field
+                     -> DOMElement
+labeledRowOneElement formFieldLabel col2 = 
   labeledRow formFieldLabel [div' (class' "col-md-9") col2]
 
 editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
@@ -124,7 +125,7 @@ editingInput' textarea displayPlain displayValue onChange' editing' = let
 
 formRow' :: Text -> DisplayValue -> (SyntheticEvent -> Fay ()) -> Bool -> DOMElement
 formRow' labelText value' onChange' editing' = 
-  formRow labelText $ editingInput True value' onChange' editing' 
+  labeledRowOneElement labelText $ editingInput True value' onChange' editing' 
 
 saveButtonRow :: Renderable a
               => a -- ^ label of the button

@@ -266,8 +266,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       then Right $ U.upkeepDate upkeep
       else Left rawUpkeepDate
     in DP.datePicker True upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
-  dateRow = formRow "Datum" datePicker
-  employeeSelectRow = formRow "Servisman" (let
+  dateRow = labeledRowOneElement "Datum" datePicker
+  employeeSelectRow = labeledRowOneElement "Servisman" (let
     noEmployeeLabel = "---"
     selectedEmployeeName = maybe noEmployeeLabel (\employeeId -> let
       employeeFoundInList = lookup employeeId employees
@@ -279,13 +279,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     elements = map (\(eId,e) -> li $ selectEmployeeLink eId e ) withNoEmployee
     buttonLabel = [ text2DOM $ selectedEmployeeName <> " " , span' (class' "caret") "" ]
     in BD.buttonDropdown buttonLabel elements )
-  workHoursRow = formRow "Hodiny" $ 
+  workHoursRow = labeledRowOneElement "Hodiny" $ 
     editingInput True (SetValue $ U.workHours upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } )) True
-  workDescriptionRow = formRow "Popis práce" $
+  workDescriptionRow = labeledRowOneElement "Popis práce" $
     editingTextarea True (SetValue $ U.workDescription upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) })) True
-  recommendationRow = formRow "Doporučení" $
+  recommendationRow = labeledRowOneElement "Doporučení" $
     editingTextarea True (SetValue $ U.recommendation upkeep) (eventValue >=> \es -> modify' (\ud ->
       ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) })) True
   closeUpkeepRows = [workHoursRow, workDescriptionRow, recommendationRow]
@@ -306,7 +306,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
       then []
       else ["Musí být nastaveno správně datum."])
-  submitButton = formRow "" (button $ null validationMessages)
+  submitButton = labeledRowOneElement "" (button $ null validationMessages)
   messagesPart = validationHtml validationMessages
 
   in div $ (form' (class' "form-horizontal") $ B.grid $
