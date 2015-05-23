@@ -315,7 +315,7 @@ machineDisplay editing pageHeader buttonRow appVar operationStartCalendar (machi
                     newValidation = V.remove V.MachineInitialMileageNumber validation
                     in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
                   (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
-              formRowCol 
+              labeledRow 
                 "Provoz mth/rok (Rok má 8760 mth)" [
                 (div' (class' "col-md-3") 
                   (editingInput 

@@ -57,27 +57,27 @@ editableN inputProps attributes editing display =
   then I.input attributes inputProps
   else display
 
-formRowCol' :: Renderable a
-            => Defined Text -- ^ key of the element
-            -> a -- ^ label of the label field
-            -> [DOMElement] -- ^ other columns
-            -> DOMElement
-formRowCol' key' formFieldLabel otherColumns =
+labeledRow' :: Renderable a
+                 => Defined Text -- ^ key of the element
+                 -> a -- ^ label of the label field
+                 -> [DOMElement] -- ^ other columns
+                 -> DOMElement
+labeledRow' key' formFieldLabel otherColumns =
   div' ((class' "form-group") { key = key' }) [
     (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
 
-formRowCol :: Renderable a
-           => a -- ^ label of the label field
-           -> [DOMElement] -- ^ other columns
-           -> DOMElement
-formRowCol formFieldLabel otherColumns = formRowCol' Undefined formFieldLabel otherColumns
+labeledRow :: Renderable a
+                => a -- ^ label of the label field
+                -> [DOMElement] -- ^ other columns
+                -> DOMElement
+labeledRow formFieldLabel otherColumns = labeledRow' Undefined formFieldLabel otherColumns
 
 formRow :: (Renderable a, Renderable b)
         => a -- ^ label of field
         -> b -- ^ the other field
         -> DOMElement
 formRow formFieldLabel col2 = 
-  formRowCol formFieldLabel [div' (class' "col-md-9") col2]
+  labeledRow formFieldLabel [div' (class' "col-md-9") col2]
 
 editingCheckbox :: Bool -> (Bool -> Fay ()) -> Bool -> DOMElement
 editingCheckbox value setter editing = let
@@ -156,7 +156,7 @@ editDisplayRow editing labelText otherField = let
   classes = ["col-md-9", "my-text-left"] ++ (if editing
     then []
     else ["control-label"])
-  in formRowCol labelText [div' (class'' classes) otherField]
+  in labeledRow labelText [div' (class'' classes) otherField]
 
 inputNormalAttrs :: Attributes
 inputNormalAttrs = class' "form-control"
@@ -177,7 +177,7 @@ maybeSelectRow' :: (Eq a)
                 -> (Text -> b) 
                 -> DOMElement
 maybeSelectRow' displayNoElement editing rowLabel elements getLabel theId' setId emptyRecord =
-  formRowCol rowLabel [let
+  labeledRow rowLabel [let
     noElementSelectedLabel = "---"
     selectedLabel = maybe noElementSelectedLabel (\theId -> let
       elementFound = lookup theId elements
