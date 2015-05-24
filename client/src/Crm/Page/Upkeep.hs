@@ -282,10 +282,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
 
   datePicker = let
-    modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
-      UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}) 
-    setPickerOpenness open = modify' (\upkeepData -> upkeepData {
-      UD.upkeepDatePicker = lmap (\t -> rmap (const open) t) (UD.upkeepDatePicker upkeepData)})
+    modifyDatepickerDate newDate = modify' $ \upkeepData -> upkeepData {
+      UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}
+    setPickerOpenness open = modify' $ \upkeepData -> upkeepData {
+      UD.upkeepDatePicker = lmap (\t -> rmap (const open) t) (UD.upkeepDatePicker upkeepData)}
     setDate date = case date of
       Right date' -> setUpkeep (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
       Left text' -> setUpkeep (upkeep, upkeepMachines) text'
