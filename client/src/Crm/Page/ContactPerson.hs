@@ -10,7 +10,7 @@ import           Prelude                  hiding (div, length)
 import           Data.Var                 (Var, modify)
 import           FFI                      (Defined (Defined))
 
-import           HaskellReact             as HR
+import           HaskellReact             hiding (form)
 import qualified HaskellReact.Bootstrap   as B
 
 import qualified Crm.Shared.Company       as C
@@ -75,15 +75,15 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
     inputRow'
       "Jméno" 
       (SetValue $ CP.name contactPerson)
-      (eventValue >=> \t -> modify' $ contactPerson { CP.name = t }) ,
+      (\t -> modify' $ contactPerson { CP.name = t }) ,
     inputRow'
       "Telefon"
       (SetValue $ CP.phone contactPerson)
-      (eventValue >=> \t -> modify' $ contactPerson { CP.phone = t }) ,
+      (\t -> modify' $ contactPerson { CP.phone = t }) ,
     inputRow'
       "Pozice"
       (SetValue $ CP.position contactPerson)
-      (eventValue >=> \t -> modify' $ contactPerson { CP.position = t }) ,
+      (\t -> modify' $ contactPerson { CP.position = t }) ,
     B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
       (buttonStateFromBool . null $ validationMessages)
       buttonLabel

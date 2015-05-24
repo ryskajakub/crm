@@ -98,16 +98,16 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
     (B.grid $ (B.row $ pageInfo') : [
       inputRowEditing
         "Jméno" 
-        (SetValue $ E.name employee) 
-        (eventValue >=> (\employeeName -> modify' $ employee { E.name = employeeName })) ,
+        (SetValue $ E.name employee) $ 
+        \employeeName -> modify' $ employee { E.name = employeeName } ,
       inputRowEditing
         "Kontakt"
-        (SetValue $ E.contact employee)
-        (eventValue >=> (\employeeName -> modify' $ employee { E.contact = employeeName })) ,
+        (SetValue $ E.contact employee) $ 
+        \employeeName -> modify' $ employee { E.contact = employeeName } ,
       inputRowEditing
         "Kvalifikace"
-        (SetValue $ E.capabilities employee)
-        (eventValue >=> (\employeeName -> modify' $ employee { E.capabilities = employeeName })) ,
+        (SetValue $ E.capabilities employee) $ 
+        \employeeName -> modify' $ employee { E.capabilities = employeeName } ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel

@@ -163,18 +163,18 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       Editing
       True
       (SetValue sequenceLabel)
-      (eventValue >=> (\modifiedLabel -> modifyUpkeepSequence displayOrder
-        (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us))))
+      (\modifiedLabel -> modifyUpkeepSequence displayOrder
+        (\us -> ((fst us) { US.label_ = modifiedLabel }, snd us)))
     mthField = input
       Editing
       True
       (SetValue rawTextRepetition)
-      (eventValue >=> (\modifiedRepetition ->
+      (\modifiedRepetition ->
         case parseSafely modifiedRepetition of
           Just (int) -> modifyUpkeepSequence displayOrder
             (\(us,_) -> (us {US.repetition = int },modifiedRepetition))
           Nothing -> modifyUpkeepSequence displayOrder
-            (\(us,_) -> (us, modifiedRepetition))))
+            (\(us,_) -> (us, modifiedRepetition)))
     firstServiceField = checkbox
       Editing
       oneTime
@@ -327,7 +327,7 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
     Editing
     True
     (SetValue $ MT.machineTypeName machineType)
-    (eventValue >=> (\str -> setMachineType (machineType { MT.machineTypeName = str })))
+    (\str -> setMachineType (machineType { MT.machineTypeName = str }))
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = 
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 

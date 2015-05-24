@@ -75,7 +75,7 @@ machineKindSettings appVar editedEnum allSettings = let
       Editing
       True 
       (SetValue $ MK.name extraFieldData)
-      (eventValue >=> setFieldName)
+      (setFieldName)
 
     removeButton = let
       removeField = let

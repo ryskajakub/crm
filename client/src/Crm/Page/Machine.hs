@@ -268,7 +268,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
     in inputRowEditing
       (MK.name efDescription)
       (SetValue theValue)
-      (eventValue >=> setExtraField)
+      setExtraField
   kindSpecificRows = map mkInputRow extraFields
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
@@ -292,11 +292,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
         inputRowEditing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
-          (eventValue >=> (\s -> setMachine $ machine' { M.serialNumber = s })) ,
+          (\s -> setMachine $ machine' { M.serialNumber = s }) ,
         inputRowEditing
           "Rok výroby"
           (SetValue $ M.yearOfManufacture machine')
-          (eventValue >=> (\s -> setMachine $ machine' { M.yearOfManufacture = s })) ,
+          (\s -> setMachine $ machine' { M.yearOfManufacture = s }) ,
         editableRow
           editing
           ("Datum uvedení do provozu") 
@@ -348,8 +348,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             _ -> []) ++ [
         oneElementRow
           "Poznámka" 
-          (textarea editing True (SetValue $ M.note machine') ((\str -> setMachine $ machine' {
-            M.note = str } ) <=< eventValue))] ++ kindSpecificRows ++ extraRows ++ [
+          (textarea editing True (SetValue $ M.note machine') (\str -> setMachine $ machine' {
+            M.note = str } ))] ++ kindSpecificRows ++ extraRows ++ [
         div' (class' "form-group") (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])

@@ -100,13 +100,13 @@ lmap f (a,b) = (f(a),b)
 rmap :: (b -> b') -> (a,b) -> (a,b')
 rmap f (a,b) = (a,f(b))
 
-eventInt' :: (Int -> Fay ()) -> (Text -> Fay ()) -> SyntheticEvent -> Fay ()
-eventInt' success errorFun = eventValue >=> (\text -> case parseSafely text of
+eventInt' :: (Int -> Fay ()) -> (Text -> Fay ()) -> Text -> Fay ()
+eventInt' success errorFun text = case parseSafely text of
   Just(int) -> success int
   Nothing | text == "" -> success 0
-  Nothing -> errorFun (text))
+  Nothing -> errorFun text
 
-eventInt :: (Int -> Fay ()) -> SyntheticEvent -> Fay ()
+eventInt :: (Int -> Fay ()) -> Text -> Fay ()
 eventInt fun = eventInt' fun (const $ return ())
 
 

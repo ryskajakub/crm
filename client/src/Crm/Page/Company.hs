@@ -218,7 +218,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
   appliedInput = F.input editing' True
 
   header = let
-    input' = appliedInput (SetValue $ C.companyName company') (eventValue >=> headerSet)
+    input' = appliedInput (SetValue $ C.companyName company') headerSet
     in case editing' of
       Editing -> dl [
         dt "Jméno firmy" ,
@@ -244,11 +244,11 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
       dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
       dd $ appliedInput
         (SetValue $ C.companyPlant company') 
-        (eventValue >=> \text -> setCompany (company' { C.companyPlant = text })) , 
+        (\text -> setCompany (company' { C.companyPlant = text })) , 
       dt "Adresa" , 
       dd $ appliedInput
         (SetValue $ C.companyAddress company')
-        (eventValue >=> \text -> setCompany (company' { C.companyAddress = text }))]
+        (\text -> setCompany (company' { C.companyAddress = text }))]
       ++ [saveEditButton] ]
   companyBasicInfo' = case editing' of 
     Editing -> companyBasicInfo 

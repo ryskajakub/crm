@@ -213,13 +213,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     else ([], 6, 6)
       where
       workHoursRow = inputRowEditing "Hodiny"
-        (SetValue $ U.workHours upkeep) $ eventValue >=> \es -> modify' $ \ud ->
+        (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) }
       workDescriptionRow = textareaRowEditing "Popis práce" (SetValue $ U.workDescription upkeep) $ 
-        eventValue >=> \es -> modify' $ \ud ->
+        \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) }
       recommendationRow = textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
-        eventValue >=> \es -> modify' $ \ud ->
+        \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) }
     
   upkeepMachineRow :: (M.MachineId, a0, a1, a2, MT.MachineType) -> DOMElement
@@ -278,7 +278,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
-      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ eventValue >=> \es ->
+      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ \es ->
         updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
 
   datePicker = let

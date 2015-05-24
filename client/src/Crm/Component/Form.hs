@@ -91,17 +91,17 @@ checkbox editing value setter = let
     else checkboxAttrs
   in I.input mkAttrs inputAttrs
 
-input :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
+input :: InputState -> Bool -> DisplayValue -> (Text -> Fay ()) -> DOMElement
 input = textInput I.input
 
-textarea :: InputState -> Bool -> DisplayValue -> (SyntheticEvent -> Fay ()) -> DOMElement
+textarea :: InputState -> Bool -> DisplayValue -> (Text -> Fay ()) -> DOMElement
 textarea = textInput I.textarea
 
 textInput :: (Attributes -> I.InputAttributes -> DOMElement) 
           -> InputState 
           -> Bool 
           -> DisplayValue 
-          -> (SyntheticEvent -> Fay ()) 
+          -> (Text -> Fay ()) 
           -> DOMElement
 textInput mkInput editing' displayPlain displayValue onChange' = let
   inputAttrs = let
@@ -110,7 +110,7 @@ textInput mkInput editing' displayPlain displayValue onChange' = let
       SetValue t -> I.mkInputAttrs { I.value_ = Defined t }
     in case editing' of
       Editing -> commonInputAttrs {
-        I.onChange = Defined onChange' }
+        I.onChange = Defined $ eventValue >=> onChange' }
       _ -> commonInputAttrs { 
         I.disabled_ = Defined "disabled" }
   in if displayPlain && (editing' == Display)
@@ -181,7 +181,7 @@ editableRow editing labelText otherField = let
 inputRow :: InputState -- ^ editing/display mode
          -> Text -- ^ label to display on the left of the input
          -> DisplayValue -- ^ value to display or to set in the form
-         -> (SyntheticEvent -> Fay ()) -- ^ event to handle on input change
+         -> (Text -> Fay ()) -- ^ event to handle on input change
          -> DOMElement -- ^ rendered element
 inputRow editing' labelText value' onChange' = let
   input' = input editing' True value' onChange'
@@ -191,7 +191,7 @@ inputRow editing' labelText value' onChange' = let
 textareaRow :: InputState
             -> Text
             -> DisplayValue
-            -> (SyntheticEvent -> Fay ())
+            -> (Text -> Fay ())
             -> DOMElement
 textareaRow editing label value onChange = editableRow editing label textarea' where
   textarea' = textarea editing True value onChange
