@@ -119,6 +119,7 @@ Test-Suite tests
     , Unique
     , postgresql-simple
     , aeson
+    , text
     , text-icu
     , bytestring
 

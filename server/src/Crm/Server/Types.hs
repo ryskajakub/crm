@@ -2,7 +2,7 @@
 
 module Crm.Server.Types where
 
-import Control.Monad.Reader (ReaderT)
+import Control.Monad.Reader       (ReaderT)
 import Database.PostgreSQL.Simple (Connection)
 
 data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing

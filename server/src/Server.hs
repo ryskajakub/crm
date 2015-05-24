@@ -5,10 +5,10 @@ import Crm.Server.Base
 import Crm.Server.Types
 import Crm.Server.DB
 
-import Control.Monad.Reader (ReaderT, runReaderT)
+import Control.Monad.Reader     (ReaderT, runReaderT)
 
 import Network.Wai.Handler.Warp (run)
-import Rest.Driver.Wai (apiToApplication)
+import Rest.Driver.Wai          (apiToApplication)
 
 main :: IO ()
 main = do

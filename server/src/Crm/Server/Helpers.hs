@@ -22,40 +22,37 @@ module Crm.Server.Helpers (
   prepareReaderIdentity ,
   prepareReaderTuple ) where
 
-import Database.PostgreSQL.Simple (Connection)
 
-import Opaleye.Column (Column, toNullable, Nullable)
-import qualified Opaleye.Column as COL
-import Opaleye.Manipulation (runDelete, runUpdate)
-import Opaleye.Operators ((.==))
-import Opaleye.PGTypes (pgInt4, PGInt4)
-import Opaleye.Table (Table)
+import Control.Monad                         (forM_)
+import Data.Functor.Identity                 (runIdentity)
+import Data.Typeable                         (Typeable)
 
-import Control.Monad.Reader (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
-import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Except (ExceptT)
-import Control.Monad.IO.Class (liftIO, MonadIO)
-import Control.Monad (forM_)
+import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
+import           Control.Monad.Trans.Class   (lift)
+import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Monad.IO.Class      (liftIO, MonadIO)
+import           Control.Monad.Error.Class   (throwError)
+import           Data.JSON.Schema.Types      (JSONSchema)
+import           Data.Time.Calendar          (fromGregorian, Day, toGregorian)
+import           Data.Time.Clock             (utctDay, UTCTime, getCurrentTime)
+import           Data.Tuple.All              (sel1, Sel1)
+import           Data.Aeson.Types            (FromJSON)
+import           Database.PostgreSQL.Simple  (Connection)
+import           Opaleye.Column              (Column, toNullable, Nullable)
+import qualified Opaleye.Column              as COL
+import           Opaleye.Manipulation        (runDelete, runUpdate)
+import           Opaleye.Operators           ((.==))
+import           Opaleye.PGTypes             (pgInt4, PGInt4)
+import           Opaleye.Table               (Table)
+import           Rest.Types.Error            (DataError(ParseError), Reason(IdentError))
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (Handler, mkConstHandler, mkInputHandler)
+import           Safe                        (readMay)
 
-import Rest.Types.Error (DataError(ParseError), Reason(IdentError))
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
+import qualified Crm.Shared.YearMonthDay     as YMD
 
-import Control.Monad.Error.Class (throwError)
+import           Crm.Server.Types            (IdDependencies)
 
-import Data.JSON.Schema.Types (JSONSchema)
-import Data.Functor.Identity (runIdentity)
-import Data.Time.Calendar (fromGregorian, Day, toGregorian)
-import Data.Time.Clock (utctDay, UTCTime, getCurrentTime)
-import Data.Tuple.All (sel1, Sel1)
-import Data.Aeson.Types (FromJSON)
-import Data.Typeable (Typeable)
-
-import qualified Crm.Shared.YearMonthDay as YMD
-
-import Crm.Server.Types (IdDependencies)
-
-import Safe (readMay)
 
 updateRows :: forall record m columnsW columnsR.
               (MonadIO m, MonadReader (Connection, Either String Int) m, 
@@ -181,7 +178,7 @@ mapResultsToList :: Eq bId
                  -> (a -> c)
                  -> [a]
                  -> [(b, [c])]
-mapResultsToList rowIdentification mapSingle mapMultiple rows = 
+mapResultsToList rowIdentification mapSingle mapMultiple rows =
   foldl (\bcElements aElement -> 
     case bcElements of
       -- first element

@@ -1,14 +1,16 @@
 module Crm.Server.Core where
 
-import qualified Crm.Shared.Machine as M
+import           Data.List                 (partition)
+
+import           Data.Time.Calendar        (Day, addDays)
+import           Safe.Foldable             (minimumMay)
+
+import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.Upkeep as U
+import qualified Crm.Shared.Upkeep         as U
 
-import Crm.Server.Helpers (ymdToDay)
+import           Crm.Server.Helpers        (ymdToDay)
 
-import Data.Time.Calendar (Day, addDays)
-
-import Safe.Foldable (minimumMay)
 
 -- | Signs, if the next service date is computed from the past upkeeps, or if the next planned service is taken.
 data Planned = 
@@ -25,32 +27,32 @@ nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = let
-    upkeepRepetition = minimum $ fmap US.repetition filteredSequences
-    mileagePerYear = M.mileagePerYear machine
+    upkeepRepetition   = minimum $ fmap US.repetition filteredSequences
+    mileagePerYear     = M.mileagePerYear machine
     yearsToNextService = (fromIntegral upkeepRepetition / fromIntegral mileagePerYear) :: Double
-    daysToNextService = truncate $ yearsToNextService * 365
-    nextServiceDay = addDays daysToNextService referenceDay
+    daysToNextService  = truncate $ yearsToNextService * 365
+    nextServiceDay     = addDays daysToNextService referenceDay
     in nextServiceDay
-    
-  nonEmptySequences = fst sequences : snd sequences
 
-  computeFromSequence = case upkeeps of
+  computedUpkeep = case upkeeps of
     [] -> let 
-      operationStartDate = case M.machineOperationStartDate machine of 
+      intoOperationDate = case M.machineOperationStartDate machine of 
         Just operationStartDate' -> ymdToDay operationStartDate'
-        Nothing -> today
-      filteredSequences = case filter US.oneTime nonEmptySequences of
+        Nothing                  -> today
+      filteredSequences = case oneTimeSequences of
         x : _ -> [x]
-        [] -> nonEmptySequences
-      in computeBasedOnPrevious operationStartDate filteredSequences
-    xs -> let
-      lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) xs
-      repeatedSequences = filter (not . US.oneTime) nonEmptySequences
+        []    -> nonEmptySequences
+      in computeBasedOnPrevious intoOperationDate filteredSequences
+    nonEmptyUpkeeps -> let
+      lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
+    where
+    (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
+    nonEmptySequences = fst sequences : snd sequences
 
-  earliestPlannedUpkeep = case filter (not . U.upkeepClosed) upkeeps of
-    [] -> Nothing
-    openUpkeeps -> fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps
-  in case earliestPlannedUpkeep of
-    Just plannedUpkeepDay -> (plannedUpkeepDay, Planned)
-    Nothing -> (computeFromSequence, Computed)
+  openUpkeeps = filter (not . U.upkeepClosed) upkeeps
+  in case openUpkeeps of
+    openUpkeeps' | 
+      let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
+      Just nextOpenUpkeep <- nextOpenUpkeep' -> (nextOpenUpkeep, Planned)
+    _ -> (computedUpkeep, Computed)
