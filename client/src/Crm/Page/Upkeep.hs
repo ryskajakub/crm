@@ -177,7 +177,8 @@ upkeepForm :: Var D.AppState
            -> V.Validation
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    notCheckedMachines'' machines button closeUpkeep' employees selectedEmployee validation = let
+    uncheckedMachines machines button closeUpkeep' employees selectedEmployee validation = let
+
   modify' :: (UD.UpkeepData -> UD.UpkeepData) -> Fay ()
   modify' fun = modify appState $ \appState' -> let
     newState = case D.navigation appState' of
@@ -197,62 +198,68 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       UD.upkeep = (upkeep, checkedMachines) ,
       UD.notCheckedMachines = notCheckedMachines' }
     
-  machineRow (machineId,_,_,_,machineType) = let
-    findMachineById (_,id') = machineId == id'
-    thisUpkeepMachine = find findMachineById upkeepMachines
-    thatUpkeepMachine = find findMachineById notCheckedMachines''
-    checkedMachineIds = map snd upkeepMachines
-    machineToggleLink = let
-      content = MT.machineTypeName machineType
-      clickHandler = let
-        (newCheckedMachines, newNotCheckedMachines) = toggle (
-          upkeepMachines ,
-          notCheckedMachines'' )
-          (\(_,machineId') -> machineId' == machineId)
-        in setNotCheckedMachines newCheckedMachines newNotCheckedMachines
-      link' = A.a''
-        (mkAttrs {onClick = Defined $ const clickHandler} )
-        (A.mkAAttrs)
-        content
-      icon = if elem machineId checkedMachineIds
-        then G.okCircle
-        else span ([]::[DOMElement])
-      innerRow = B.row [B.col' (B.mkColProps 2) (Defined "1") icon, 
-        B.col' (B.mkColProps 10) (Defined "2") link']
-      in B.col' (B.mkColProps (if closeUpkeep' then 4 else 6)) (Defined "1") innerRow
+  machineRow :: (M.MachineId, a0, a1, a2, MT.MachineType) -> DOMElement
+  machineRow (machineId,_,_,_,machineType) = mkRow $ if closeUpkeep'
+    then [machineToggleCheckedLink, recordedMileage, warranty, note]
+    else [machineToggleCheckedLink, note]
+    where
 
-    (machineToDisplay, setUpkeepMachine, editing) = case (thisUpkeepMachine, thatUpkeepMachine) of
-      (Just(thisMachine), Nothing) -> let
+    mkRow columns = div' (class' "form-group") columns
+    findMachineById (_,id') = machineId == id'
+    checkedUpkeepMachine = find findMachineById upkeepMachines
+    uncheckedUpkeepMachine = find findMachineById uncheckedMachines
+    checkedMachineIds = map snd upkeepMachines
+    (machineToggledColumnsSize, noteColumnsSize) = if closeUpkeep'
+      then (4, 5)
+      else (6, 6)
+
+    (machine, updateUpkeepMachine, editing) = case (checkedUpkeepMachine, uncheckedUpkeepMachine) of
+      (Just(checkedMachine), Nothing) -> let 
         setter :: UM.UpkeepMachine -> Fay ()
         setter upkeepMachine = let
           ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
             then (upkeepMachine, machineId')
             else um) upkeepMachines 
           in setUpkeep (upkeep, ums) rawUpkeepDate
-        in (thisMachine, setter, Editing)
-      (Nothing, Just(thatMachine)) ->
-        (thatMachine, const $ return (), Display)
+        in (checkedMachine, setter, Editing) 
+      (Nothing, Just(uncheckedMachine)) ->
+        (uncheckedMachine, const $ return (), Display)
 
-    recordedMileageField = B.col (B.mkColProps 2) $ input editing False
-      (DefaultValue $ showInt $ UM.recordedMileage $ fst machineToDisplay) (eventInt' 
+    machineToggleCheckedLink = let
+      linkText = MT.machineTypeName machineType
+      clickHandler = let
+        (newCheckedMachines, newUncheckedMachines) = toggle (
+          upkeepMachines ,
+          uncheckedMachines )
+          (\(_,machineId') -> machineId' == machineId)
+        in setNotCheckedMachines newCheckedMachines newUncheckedMachines
+      link = A.a''
+        (mkAttrs {onClick = Defined $ const clickHandler} )
+        (A.mkAAttrs)
+        linkText
+      icon = if elem machineId checkedMachineIds
+        then G.okCircle
+        else span ([]::[DOMElement])
+      innerRow = B.row [
+        B.col (B.mkColProps 2) icon, 
+        B.col (B.mkColProps 10) link]
+      in B.col (B.mkColProps machineToggledColumnsSize) innerRow
+
+    recordedMileage = B.col (B.mkColProps 2) $ input editing False
+      (DefaultValue $ showInt $ UM.recordedMileage $ fst machine) $ eventInt' 
         (\i -> do
           let newValidation = V.remove (V.MthNumber machineId) validation
           modify' $ \ud -> ud { UD.validation = newValidation }
-          setUpkeepMachine $ ((fst machineToDisplay) { UM.recordedMileage = i })) 
-        (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation }))
+          updateUpkeepMachine $ ((fst machine) { UM.recordedMileage = i })) 
+        (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation })
 
-    warrantyUpkeep = checkbox editing (UM.warrantyUpkeep $ fst machineToDisplay) $ \warrantyUpkeep' ->
-      setUpkeepMachine $ (fst machineToDisplay) { UM.warrantyUpkeep = warrantyUpkeep' }
-    warrantyUpkeepRow = B.col' (B.mkColProps 1) (Defined "3") warrantyUpkeep
+    warranty = B.col (B.mkColProps 1) $ checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
+      updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
-    noteField = B.col (B.mkColProps $ if closeUpkeep' then 5 else 6) $ 
-      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machineToDisplay) $ eventValue >=> \es ->
-        setUpkeepMachine $ (fst machineToDisplay) { UM.upkeepMachineNote = es }
+    note = B.col (B.mkColProps noteColumnsSize) $ 
+      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ eventValue >=> \es ->
+        updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
 
-    rowItems = if closeUpkeep'
-      then [machineToggleLink, recordedMileageField, warrantyUpkeepRow, noteField]
-      else [machineToggleLink, noteField]
-    in div' (class' "form-group") rowItems
   datePicker = let
     modifyDatepickerDate newDate = modify' (\upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}) 
