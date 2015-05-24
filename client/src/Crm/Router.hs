@@ -98,8 +98,12 @@ data Route a = Route {
   postfix :: Maybe Text }
 
 data URLEncodable a = URLEncodable {
+  onIntParseFail :: Maybe (Text -> Maybe a) ,
   toURL :: a -> Text ,
   fromURL :: Int -> a }
+
+mkSimpleURLEncodable :: (a -> Text) -> (Int -> a) -> URLEncodable a
+mkSimpleURLEncodable = URLEncodable Nothing
 
 prepareRouteAndMkHandler :: Route a 
                   -> URLEncodable a 
@@ -108,18 +112,32 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
   mkHandler appState appStateModifier urlVariables = 
-    case fromURL urlEncodable `onJust` (parseSafely $ head urlVariables) of
+    case parsedInt of
       Just a -> appStateModifier a
+      Nothing | 
+        Just onIntParseFail' <- onIntParseFail urlEncodable ,
+        Just routeId <- onIntParseFail' headVariable
+          -> appStateModifier routeId
       Nothing -> D.modifyState appState (const D.NotFound)
+      where
+        headVariable = head urlVariables
+        parsedInt = fromURL urlEncodable `onJust` (parseSafely headVariable)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
 newMachinePhase1' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-machine-phase1")
-  (URLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
+  (mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
 
 upkeepDetail' = prepareRouteAndMkHandler
   (Route "upkeeps" $ Nothing)
-  (URLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId))
+  (mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId))
+
+companyDetail' = prepareRouteAndMkHandler
+  (Route "companies" $ Nothing)
+  (URLEncodable 
+    (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
+    (\a -> case a of Left t -> t; Right cId -> showInt . C.getCompanyId $ cId)
+    (Right . C.CompanyId))
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
@@ -222,6 +240,7 @@ startRouter appVar = let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
       withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
       in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds), 
+{-
     ("companies/:id", \params -> let
       cId = head params
       in case (parseSafely cId, cId) of
@@ -234,6 +253,7 @@ startRouter appVar = let
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
           D.navigation = D.CompanyNew C.newCompany })
         _ -> modify' D.NotFound) ,
+-}
     (useHandler newMachinePhase1' $ \mkHandler -> mkHandler appVar $ \companyId ->
       withCompany'
         companyId
