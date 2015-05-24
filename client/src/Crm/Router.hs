@@ -125,7 +125,7 @@ companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
 
 newMachinePhase1 :: C.CompanyId -> CrmRoute
-newMachinePhase1 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase1"
+newMachinePhase1 = fst newMachinePhase1'
 
 newMachinePhase2 :: C.CompanyId -> CrmRoute
 newMachinePhase2 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase2"
@@ -189,6 +189,14 @@ startRouter appVar = let
         newState = newStateFun companyId data'
         in modify' newState )
     _ -> modify' D.NotFound 
+  withCompany' :: C.CompanyId
+               -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
+                  MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
+               -> Fay ()
+  withCompany' companyId newStateFun = 
+    fetchCompany companyId (\data' -> let
+      newState = newStateFun data'
+      in modify' newState )
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [
@@ -226,10 +234,10 @@ startRouter appVar = let
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
           D.navigation = D.CompanyNew C.newCompany })
         _ -> modify' D.NotFound) ,
-    ("companies/:id/new-machine-phase1", \params ->
-      withCompany
-        params
-        (\companyId (_,_) ->
+    (useHandler newMachinePhase1' $ \mkHandler -> mkHandler appVar $ \companyId ->
+      withCompany'
+        companyId
+        (\_ ->
           D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)) ,
     ("companies/:id/new-contact-person", \params ->
       withCompany
