@@ -3,27 +3,27 @@
 module Crm.Page.Dashboard (
   dashboard ) where
 
-import Data.Text (pack)
-import Prelude hiding (div, span, id, length)
-import Data.Maybe (onJust, mapMaybe)
-import FFI
-import DOM
+import           Data.Text               (pack)
+import           Prelude                 hiding (div, span, id, length)
+import           Data.Maybe              (onJust, mapMaybe)
+import           FFI
+import           DOM
 
-import HaskellReact
-import qualified HaskellReact.Bootstrap as B
+import           HaskellReact
+import qualified HaskellReact.Bootstrap  as B
 
-import GoogleMaps
+import           GoogleMaps
 
-import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Company      as C
 import qualified Crm.Shared.YearMonthDay as YMD
-import Crm.Helpers
-import qualified Crm.Router as R
+import           Crm.Helpers
+import qualified Crm.Router              as R
 
 
 dashboard :: R.CrmRouter
           -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] 
           -> (DOMElement, Fay ())
-dashboard router companies = let
+dashboard router companies = (element, constructMap) where
 
   constructMap = do
     let 
@@ -39,10 +39,9 @@ dashboard router companies = let
       addClickListener marker handler
     return ()
     
-  info = pageInfo (pack "Nástěnka") $ Just $ pack "Mapa firem. Firma se na mapě zobrazí podle vyplněné adresy."
   element = B.grid $ B.row $
     info ++ [B.col (B.mkColProps 12) $ 
       div' (mkAttrs { id = Defined $ pack "half-container" }) $ 
         div' (mkAttrs { id = Defined $ pack "dashboard-map" }) (pack "") ]
-
-  in (element, constructMap)
+    where
+    info = pageInfo (pack "Nástěnka") $ Just $ pack "Mapa firem. Firma se na mapě zobrazí podle vyplněné adresy."

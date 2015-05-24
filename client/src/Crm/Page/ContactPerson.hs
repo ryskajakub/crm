@@ -47,7 +47,9 @@ contactPersonForm :: R.CrmRouter
                   -> C.CompanyId
                   -> Var D.AppState
                   -> DOMElement
-contactPersonForm router contactPerson identification companyId appVar = let
+contactPersonForm router contactPerson identification companyId appVar = mkForm where
+
+  mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ form : validations
 
   modify' :: CP.ContactPerson -> Fay ()
   modify' contactPerson' = modify appVar (\appState -> appState {
@@ -69,25 +71,25 @@ contactPersonForm router contactPerson identification companyId appVar = let
       contactPerson
       (R.navigate (R.contactPersonList companyId) router ))
 
-  pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
-  inputRow' = inputRow Editing
+  form = B.grid $ (B.row $ pageInfo') : [
+    inputRow'
+      "Jméno" 
+      (SetValue $ CP.name contactPerson)
+      (eventValue >=> \t -> modify' $ contactPerson { CP.name = t }) ,
+    inputRow'
+      "Telefon"
+      (SetValue $ CP.phone contactPerson)
+      (eventValue >=> \t -> modify' $ contactPerson { CP.phone = t }) ,
+    inputRow'
+      "Pozice"
+      (SetValue $ CP.position contactPerson)
+      (eventValue >=> \t -> modify' $ contactPerson { CP.position = t }) ,
+    B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
+      (buttonStateFromBool . null $ validationMessages)
+      buttonLabel
+      buttonAction] 
+    where
+    pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
+    inputRow' = inputRow Editing
 
-  in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    (B.grid $ (B.row $ pageInfo') : [
-      inputRow'
-        "Jméno" 
-        (SetValue $ CP.name contactPerson)
-        (eventValue >=> \t -> modify' $ contactPerson { CP.name = t }) ,
-      inputRow'
-        "Telefon"
-        (SetValue $ CP.phone contactPerson)
-        (eventValue >=> \t -> modify' $ contactPerson { CP.phone = t }) ,
-      inputRow'
-        "Pozice"
-        (SetValue $ CP.position contactPerson)
-        (eventValue >=> \t -> modify' $ contactPerson { CP.position = t }) ,
-      B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
-        (buttonStateFromBool . null $ validationMessages)
-        buttonLabel
-        buttonAction]) :
-    (validationHtml validationMessages) : []
+  validations = [validationHtml validationMessages]
