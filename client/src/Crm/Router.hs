@@ -68,6 +68,8 @@ import           Crm.Component.Form
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
 
+useHandler :: (a, (b, c)) -> (c -> c') -> (b, c')
+useHandler t f = (rmap f) (snd t)
 
 routeToText :: CrmRoute -> Text
 routeToText (CrmRoute r) = "/#" <> r
@@ -99,23 +101,23 @@ data URLEncodable a = URLEncodable {
   toURL :: a -> Text ,
   fromURL :: Int -> a }
 
-mkRouteAndHandler :: Route a 
+prepareRouteAndMkHandler :: Route a 
                   -> URLEncodable a 
-                  -> (a -> CrmRoute, (Text, [Text] -> Var D.AppState -> (a -> Fay ()) -> Fay () ))
-mkRouteAndHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
+                  -> (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay () ))
+prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
-  mkHandler urlVariables appState appStateModifier = 
+  mkHandler appState appStateModifier urlVariables = 
     case fromURL urlEncodable `onJust` (parseSafely $ head urlVariables) of
       Just a -> appStateModifier a
       Nothing -> D.modifyState appState (const D.NotFound)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
-newMachinePhase1' = mkRouteAndHandler
+newMachinePhase1' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-machine-phase1")
   (URLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
 
-upkeepDetail' = mkRouteAndHandler
+upkeepDetail' = prepareRouteAndMkHandler
   (Route "upkeeps" $ Nothing)
   (URLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId))
 
@@ -314,15 +316,14 @@ startRouter appVar = let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps'
         in modify appVar (\appState -> 
           appState { D.navigation = newNavigation }))) ,
-    (rmap (\f -> \urlVariables -> f urlVariables appVar (\upkeepId -> 
-      fetchUpkeep upkeepId (\(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
-        fetchEmployees (\employees -> let
+    (useHandler upkeepDetail' $ \mkHandler -> mkHandler appVar $ \upkeepId -> 
+      fetchUpkeep upkeepId $ \(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
+        fetchEmployees $ \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-            selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)))
-    )) (snd upkeepDetail')) ,
+            selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)) ,
     ("other/machine-types-list", const $
       fetchMachineTypes (\result -> modify' $ D.MachineTypeList result)) ,
     ("machine-types/:id", \params -> let
