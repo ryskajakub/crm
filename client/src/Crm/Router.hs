@@ -32,43 +32,42 @@ module Crm.Router (
   machinesSchema ,
   editEmployee ) where
 
-import Data.Text (fromString, showInt, Text, (<>))
-import Prelude hiding (div, span) 
-import Data.Var (Var, modify, get)
-import Data.Function (fmap)
-import Data.Maybe (fromJust)
+import           Data.Text                   (fromString, showInt, Text, (<>))
+import           Prelude                     hiding (div, span) 
+import           Data.Var                    (Var, modify, get)
+import           Data.Function               (fmap)
+import           Data.Maybe                  (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
-import HaskellReact hiding (id)
-import Moment (now, requireMoment, day)
+import           HaskellReact                hiding (id)
+import           Moment                      (now, requireMoment, day)
 
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.Direction as DIR
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.ExtraField as EF
+import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.MachineType      as MT
+import qualified Crm.Shared.MachineKind      as MK
+import qualified Crm.Shared.UpkeepMachine    as UM
+import qualified Crm.Shared.Upkeep           as U
+import qualified Crm.Shared.UpkeepSequence   as US
+import qualified Crm.Shared.Company          as C
+import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.YearMonthDay     as YMD
+import qualified Crm.Shared.Direction        as DIR
+import qualified Crm.Shared.Employee         as E
+import qualified Crm.Shared.ExtraField       as EF
 
-import Crm.Data.MachineData (MachineData(MachineData), MachineNew(MachineNew)
-  , MachineDetail(MachineDetail))
-import qualified Crm.Data.Data as D
-import qualified Crm.Data.UpkeepData as UD
-import qualified Crm.Data.EmployeeData as ED
-import Crm.Server (fetchMachine, fetchPlannedUpkeeps, fetchFrontPageData, fetchEmployees,
-  fetchCompany, fetchUpkeeps, fetchUpkeep, fetchMachineTypes, fetchMachineTypeById, fetchExtraFieldSettings,
-  fetchMachinePhotos, fetchEmployee, fetchContactPersons, fetchContactPerson, fetchCompaniesForMap, fetchMachinesInCompany)
-import Crm.Helpers (parseSafely, showCompanyId, displayDate)
-import qualified Crm.Validation as V
-import Crm.Component.Form
+import qualified Crm.Data.MachineData        as MD
+import qualified Crm.Data.Data               as D
+import qualified Crm.Data.UpkeepData         as UD
+import qualified Crm.Data.EmployeeData       as ED
+import           Crm.Server 
+import           Crm.Helpers                 (parseSafely, showCompanyId, displayDate)
+import qualified Crm.Validation              as V
+import           Crm.Component.Form
+
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
+
 
 routeToText :: CrmRoute -> Text
 routeToText (CrmRoute r) = "/#" <> r
@@ -232,8 +231,9 @@ startRouter appVar = let
             fetchExtraFieldSettings $ \efSettings -> let
               extraFields' = fromJust $ lookup machineKind efSettings
               extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields'
-              in modify' $ D.MachineScreen $ MachineData machineQuadruple machineKind machineTypeTuple
-                (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted (Right $ MachineNew companyId maybeMachineTypeId)
+              in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
+                (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
+                  (Right $ MD.MachineNew companyId maybeMachineTypeId)
         _ -> modify' D.NotFound) ,
     ("companies/:id/new-maintenance", \params ->
       fetchEmployees (\employees -> 
@@ -276,10 +276,10 @@ startRouter appVar = let
                   machineQuadruple = (machine, "")
                   startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
                 in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-                  modify' $ D.MachineScreen $ MachineData
+                  modify' $ D.MachineScreen $ MD.MachineData
                     machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
                       contactPersonId cps V.new otherMachineId otherMachines extraFields'
-                        (Left $ MachineDetail machineId machineNextService Display machineTypeId photos upkeeps companyId))
+                        (Left $ MD.MachineDetail machineId machineNextService Display machineTypeId photos upkeeps companyId))
         _ -> modify' D.NotFound) ,
     ("planned", const $
       fetchPlannedUpkeeps (\plannedUpkeeps' -> let

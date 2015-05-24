@@ -3,9 +3,10 @@
 
 module Crm.Validation where
 
-import Data.Text (fromString, Text, showInt, (<>))
-import Prelude hiding (fail)
+import           Data.Text          (fromString, Text, showInt, (<>))
+import           Prelude            hiding (fail)
 import qualified Crm.Shared.Machine as M
+
 
 data Validation = Validation [ValidationFail]
 
@@ -14,6 +15,7 @@ data ValidationFail =
   MachineUsageNumber |
   MachineInitialMileageNumber
   deriving Eq
+
 
 message :: ValidationFail -> Text
 message validationFail = case validationFail of

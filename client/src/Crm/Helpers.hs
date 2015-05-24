@@ -3,26 +3,27 @@
 
 module Crm.Helpers where
 
-import Data.Text as T (Text, showInt, fromString, (<>), length)
-import Prelude as P hiding (div, span, id)
-import FFI (Nullable, ffi)
-import Data.Nullable (fromNullable)
+import           Data.Text                            as T (Text, showInt, fromString, (<>), length)
+import           Prelude                              as P hiding (div, span, id)
+import           FFI                                  (Nullable, ffi)
+import           Data.Nullable                        (fromNullable)
 
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.YearMonthDay              as YMD
+import qualified Crm.Shared.Company                   as C
 
-import HaskellReact
+import           HaskellReact
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
-import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Alert as A
+import qualified HaskellReact.Bootstrap               as B
+import qualified HaskellReact.Bootstrap.Alert         as A
+import           Moment                               as M
 
-import Moment as M
+import qualified JQuery                               as JQ
 
-import qualified JQuery as JQ
 
 data FileList
 data File
 data FileContents
+
 
 validationHtml :: (Renderable a) => [a] -> DOMElement
 validationHtml validationMessages = let
@@ -118,6 +119,7 @@ toHexa int = let
   hexa = toHexa' int
   in if T.length hexa == 1 then "0" <> hexa else hexa
 
+-- | Express the difference between now and the date in colour
 computeColor :: YMD.YearMonthDay -> Text
 computeColor (YMD.YearMonthDay y m d _) = let
   moment = M.requireMoment
