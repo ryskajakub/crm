@@ -6,40 +6,42 @@ module Crm.Page.MachineType (
   machineTypePhase1Form ,
   machineTypeForm ) where
 
-import Data.Text (fromString, showInt, (<>), Text)
-import Prelude hiding (div, span, id)
-import Data.Var (Var, modify)
-import FFI (Defined(Defined))
-import Data.Maybe (isJust, fromJust)
-import Data.LocalStorage
+import           Data.Text                             (fromString, showInt, (<>), Text)
+import           Prelude                               hiding (div, span, id)
+import           Data.Var                              (Var, modify)
+import           FFI                                   (Defined(Defined))
+import           Data.Maybe                            (isJust, fromJust)
+import           Data.LocalStorage
 
-import HaskellReact
-import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Button as BTN
-import qualified HaskellReact.Tag.Input as II
-import qualified HaskellReact.Bootstrap.Alert as A
-import qualified HaskellReact.Tag.Hyperlink as AA
+import           HaskellReact
+import qualified HaskellReact.Bootstrap                as B
+import qualified HaskellReact.Bootstrap.Button         as BTN
+import qualified HaskellReact.Tag.Input                as II
+import qualified HaskellReact.Bootstrap.Alert          as A
+import qualified HaskellReact.Tag.Hyperlink            as AA
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineType                as MT
+import qualified Crm.Shared.UpkeepSequence             as US
+import qualified Crm.Shared.Company                    as C
+import qualified Crm.Shared.MachineKind                as MK
 
-import qualified Crm.Router as R
-import qualified Crm.Data.Data as D
-import Crm.Component.Form
-import Crm.Helpers (lmap, rmap, pageInfo, parseSafely, zipWithIndex)
-import Crm.Server (updateMachineType, fetchMachineType, 
-  fetchMachineTypesAutocomplete, fetchMachineTypesManufacturer)
-import Crm.Component.Autocomplete (autocompleteInput)
+import qualified Crm.Router                            as R
+import qualified Crm.Data.Data                         as D
+import           Crm.Component.Form
+import           Crm.Helpers
+import           Crm.Server 
+import           Crm.Component.Autocomplete            (autocompleteInput)
+
 
 data MachineTypeForm = Phase1 | Edit
   deriving Eq
 
+
 mkSetMachineType :: Var D.AppState -> MT.MachineType -> Fay ()
 mkSetMachineType appVar modifiedMachineType = 
-  D.modifyState appVar (\navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) })
+  D.modifyState appVar $
+    \navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) }
 
 machineTypePhase1Form :: Maybe MT.MachineTypeId
                       -> (MT.MachineType, [(US.UpkeepSequence, Text)])
