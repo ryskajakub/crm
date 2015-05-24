@@ -36,7 +36,7 @@ import           Data.Text                   (fromString, showInt, Text, (<>))
 import           Prelude                     hiding (div, span) 
 import           Data.Var                    (Var, modify, get)
 import           Data.Function               (fmap)
-import           Data.Maybe                  (fromJust)
+import           Data.Maybe                  (fromJust, onJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import           HaskellReact                hiding (id)
@@ -90,6 +90,31 @@ newCompany = CrmRoute "companies/new"
 
 machinesSchema :: C.CompanyId -> CrmRoute
 machinesSchema companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/schema"
+
+data Route a = Route {
+  prefix :: Text ,
+  postfix :: Maybe Text }
+
+data URLEncodable a = URLEncodable {
+  toURL :: a -> Text ,
+  fromURL :: Int -> a }
+
+mkRouteAndHandler :: Route a 
+                  -> URLEncodable a 
+                  -> (a -> CrmRoute, (Text, Var D.AppState -> 
+                     (a -> D.NavigationState -> D.NavigationState) -> [Text] -> Fay ()))
+mkRouteAndHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
+  mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
+  handlerPattern = prefix route <> "/:id/" <> postfix'
+  mkHandler appState modifyState urlVariables = 
+    case fromURL urlEncodable `onJust` (parseSafely $ head urlVariables) of
+      Just a  -> D.modifyState appState (modifyState a)
+      Nothing -> D.modifyState appState (const D.NotFound)
+  postfix' = maybe "" (\p -> "/" <> p) (postfix route)
+
+newMachinePhase1' = mkRouteAndHandler
+  (Route "companies" $ Just "new-machine-phase1")
+  (URLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
