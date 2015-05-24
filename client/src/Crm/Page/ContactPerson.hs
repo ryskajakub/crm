@@ -5,39 +5,41 @@ module Crm.Page.ContactPerson (
   contactPersonsList ,
   contactPersonForm ) where
 
-import Data.Text (fromString, length)
-import Prelude hiding (div, length)
-import Data.Var (Var, modify)
-import FFI (Defined (Defined))
+import           Data.Text                (fromString, length)
+import           Prelude                  hiding (div, length)
+import           Data.Var                 (Var, modify)
+import           FFI                      (Defined (Defined))
 
-import HaskellReact as HR
-import qualified HaskellReact.Bootstrap as B
+import           HaskellReact             as HR
+import qualified HaskellReact.Bootstrap   as B
 
-import qualified Crm.Shared.Company as C
+import qualified Crm.Shared.Company       as C
 import qualified Crm.Shared.ContactPerson as CP
 
-import Crm.Component.Form
-import Crm.Helpers (pageInfo, validationHtml)
-import Crm.Server (createContactPerson, updateContactPerson)
-import qualified Crm.Data.Data as D
-import qualified Crm.Router as R
+import           Crm.Component.Form
+import           Crm.Helpers              (pageInfo, validationHtml)
+import           Crm.Server               (createContactPerson, updateContactPerson)
+import qualified Crm.Data.Data            as D
+import qualified Crm.Router               as R
+
 
 contactPersonsList :: R.CrmRouter
                    -> [(CP.ContactPersonId, CP.ContactPerson)]
                    -> DOMElement
-contactPersonsList router contactPersons = let
+contactPersonsList router contactPersons = mkTable where
+  mkTable = B.grid $ B.row [
+    B.col (B.mkColProps 12) $ h2 "Kontakní osoby" ,
+    B.col (B.mkColProps 12) $ B.table [head', body]] where
+      head' = thead $ tr [
+        th $ "Jméno" ,
+        th $ "Telefon" ,
+        th $ "Pozice" ]
+      body = tbody $ map displayContactPerson contactPersons
   displayContactPerson (cpId,contactPerson) = tr [
     td $ R.link (CP.name contactPerson) (R.contactPersonEdit cpId) router ,
     td $ CP.phone contactPerson ,
     td $ CP.position contactPerson ]
-  head' = thead $ tr [
-    th $ "Jméno" ,
-    th $ "Telefon" ,
-    th $ "Pozice" ]
-  body = tbody $ map displayContactPerson contactPersons
-  in B.grid $ B.row [
-    B.col (B.mkColProps 12) $ h2 "Kontakní osoby" ,
-    B.col (B.mkColProps 12) $ B.table [head', body] ]
+
 
 contactPersonForm :: R.CrmRouter 
                   -> CP.ContactPerson
@@ -68,24 +70,22 @@ contactPersonForm router contactPerson identification companyId appVar = let
       (R.navigate (R.contactPersonList companyId) router ))
 
   pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
+  inputRow' = inputRow Editing
 
   in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
-      inputRow
-        Editing
+      inputRow'
         "Jméno" 
         (SetValue $ CP.name contactPerson)
-        (eventValue >=> (\t -> modify' $ contactPerson { CP.name = t })) ,
-      inputRow
-        Editing
+        (eventValue >=> \t -> modify' $ contactPerson { CP.name = t }) ,
+      inputRow'
         "Telefon"
         (SetValue $ CP.phone contactPerson)
-        (eventValue >=> (\t -> modify' $ contactPerson { CP.phone = t })) ,
-      inputRow
-        Editing
+        (eventValue >=> \t -> modify' $ contactPerson { CP.phone = t }) ,
+      inputRow'
         "Pozice"
         (SetValue $ CP.position contactPerson)
-        (eventValue >=> (\t -> modify' $ contactPerson { CP.position = t })) ,
+        (eventValue >=> \t -> modify' $ contactPerson { CP.position = t }) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel
