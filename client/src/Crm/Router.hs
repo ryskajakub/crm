@@ -60,7 +60,7 @@ import qualified Crm.Data.Data               as D
 import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
 import           Crm.Server 
-import           Crm.Helpers                 (parseSafely, showCompanyId, displayDate)
+import           Crm.Helpers                 (parseSafely, showCompanyId, displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 
@@ -101,20 +101,23 @@ data URLEncodable a = URLEncodable {
 
 mkRouteAndHandler :: Route a 
                   -> URLEncodable a 
-                  -> (a -> CrmRoute, (Text, Var D.AppState -> 
-                     (a -> D.NavigationState -> D.NavigationState) -> [Text] -> Fay ()))
+                  -> (a -> CrmRoute, (Text, [Text] -> Var D.AppState -> (a -> Fay ()) -> Fay () ))
 mkRouteAndHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
-  mkHandler appState modifyState urlVariables = 
+  mkHandler urlVariables appState appStateModifier = 
     case fromURL urlEncodable `onJust` (parseSafely $ head urlVariables) of
-      Just a  -> D.modifyState appState (modifyState a)
+      Just a -> appStateModifier a
       Nothing -> D.modifyState appState (const D.NotFound)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
 newMachinePhase1' = mkRouteAndHandler
   (Route "companies" $ Just "new-machine-phase1")
   (URLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
+
+upkeepDetail' = mkRouteAndHandler
+  (Route "upkeeps" $ Nothing)
+  (URLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId))
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
@@ -311,19 +314,15 @@ startRouter appVar = let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps'
         in modify appVar (\appState -> 
           appState { D.navigation = newNavigation }))) ,
-    ("upkeeps/:id", \params -> let
-      maybeId = parseSafely $ head params
-      in case maybeId of
-        Just(upkeepId') -> let 
-          upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
-            fetchEmployees (\employees -> let
-              upkeep' = upkeep { U.upkeepClosed = True }
-              upkeepDate = U.upkeepDate upkeep
-              in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-                selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)))
-        _ -> modify' D.NotFound) ,
+    (rmap (\f -> \urlVariables -> f urlVariables appVar (\upkeepId -> 
+      fetchUpkeep upkeepId (\(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
+        fetchEmployees (\employees -> let
+          upkeep' = upkeep { U.upkeepClosed = True }
+          upkeepDate = U.upkeepDate upkeep
+          in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
+            (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
+            selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)))
+    )) (snd upkeepDetail')) ,
     ("other/machine-types-list", const $
       fetchMachineTypes (\result -> modify' $ D.MachineTypeList result)) ,
     ("machine-types/:id", \params -> let
