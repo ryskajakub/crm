@@ -20,7 +20,6 @@ import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHan
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
 import Crm.Shared.MyMaybe
 
 import Crm.Server.Helpers 

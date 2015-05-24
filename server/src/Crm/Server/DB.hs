@@ -119,7 +119,7 @@ import Control.Monad (forM_)
 
 import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
 import Data.Time.Calendar (Day)
-import Data.List (intersperse, sortBy)
+import Data.List (intersperse)
 import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
 import Data.ByteString.Lazy (ByteString)
 import Data.Text (Text, pack)
@@ -146,7 +146,6 @@ import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column as C
 
 import TupleTH
-import Data.Tagged (Tagged(Tagged))
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8

@@ -14,14 +14,12 @@ import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad (forM)
-import Control.Lens (_3, over, mapped)
 
 import Data.List (sortBy)
-import Data.Tuple.All (sel1, sel2, sel3, sel6, upd6)
+import Data.Tuple.All (sel1, sel2, sel3)
 import qualified Data.Text.ICU as I
 import Data.Text (pack)
 import Data.Maybe (mapMaybe)
-import Data.Time.Calendar (Day)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )

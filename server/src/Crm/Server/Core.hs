@@ -26,13 +26,12 @@ nextServiceDate :: M.Machine -- ^ machine for which the next service date is com
 nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
-  computeBasedOnPrevious referenceDay filteredSequences = let
+  computeBasedOnPrevious referenceDay filteredSequences = nextServiceDay where
     upkeepRepetition   = minimum $ fmap US.repetition filteredSequences
     mileagePerYear     = M.mileagePerYear machine
     yearsToNextService = (fromIntegral upkeepRepetition / fromIntegral mileagePerYear) :: Double
     daysToNextService  = truncate $ yearsToNextService * 365
     nextServiceDay     = addDays daysToNextService referenceDay
-    in nextServiceDay
 
   computedUpkeep = case upkeeps of
     [] -> let 
@@ -52,7 +51,7 @@ nextServiceDate machine sequences upkeeps today = let
 
   openUpkeeps = filter (not . U.upkeepClosed) upkeeps
   in case openUpkeeps of
-    openUpkeeps' | 
+    (_:_) | 
       let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> (nextOpenUpkeep, Planned)
     _ -> (computedUpkeep, Computed)
