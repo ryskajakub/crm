@@ -29,26 +29,31 @@ import           Crm.Helpers                      (pageInfo, validationHtml)
 employeePage :: CrmRouter
              -> [(E.EmployeeId, E.Employee)]
              -> DOMElement
-employeePage router employees = let 
-  rowEmployee (employeeId, employee) = tr [ 
+employeePage router employees = mkGrid where
+
+  mkEmployeeRow (employeeId, employee) = tr [ 
     td $ R.link (E.name employee) (R.editEmployee employeeId) router ,
     td $ E.contact employee ,
     td $ E.capabilities employee ]
-  goToAddEmployee = navigate newEmployee router
+
   addEmployeeButton = BTN.button'
     (BTN.buttonProps {
       BTN.onClick = Defined $ const goToAddEmployee })
     [G.plus, text2DOM " Přidat servismana"]
-  head' =
-    thead $ tr [
-      th $ "Jméno" ,
-      th $ "Kontakt" ,
-      th $ "Kvalifikace" ]
-  body = tbody $ map rowEmployee employees
-  in B.grid [
+    where
+    goToAddEmployee = navigate newEmployee router
+
+  mkGrid = B.grid [
     B.row $ B.col (B.mkColProps 12) $ h2 "Servismani" ,
     B.row $ B.col (B.mkColProps 12) $ addEmployeeButton ,
     B.row $ B.col (B.mkColProps 12) $ B.table [ head' , body ]]
+    where
+    head' =
+      thead $ tr [
+        th $ "Jméno" ,
+        th $ "Kontakt" ,
+        th $ "Kvalifikace" ]
+    body = tbody $ map mkEmployeeRow employees
 
 
 newEmployeeForm :: CrmRouter
@@ -77,7 +82,7 @@ employeeForm :: (Renderable a)
              -> E.Employee
              -> Var D.AppState
              -> DOMElement
-employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let 
+employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm where
 
   modify' :: E.Employee -> Fay ()
   modify' employee' = modify appVar (\appState -> appState {
@@ -88,8 +93,8 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
   validationMessages = if (length $ E.name employee) > 0
     then []
     else ["Jméno musí mít alespoň jeden znak."]
-  inputRowEditing = inputRow Editing
-  in form' (mkAttrs { className = Defined "form-horizontal" }) $ 
+
+  mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     (B.grid $ (B.row $ pageInfo') : [
       inputRowEditing
         "Jméno" 
@@ -108,3 +113,5 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = let
         buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []
+    where
+    inputRowEditing = inputRow Editing
