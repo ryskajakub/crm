@@ -124,13 +124,20 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
         parsedInt = fromURL urlEncodable `onJust` (parseSafely headVariable)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
+companyIdEncodable :: URLEncodable C.CompanyId
+companyIdEncodable = mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId)
+
+upkeepIdEncodable :: URLEncodable U.UpkeepId
+upkeepIdEncodable = mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId)
+
 newMachinePhase1' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "new-machine-phase1")
-  (mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId))
+  (Route "companies" $ Just "new-machine-phase1") companyIdEncodable
+
+newMachinePhase2' = prepareRouteAndMkHandler
+  (Route "companies" $ Just "new-machine-phase2") companyIdEncodable
 
 upkeepDetail' = prepareRouteAndMkHandler
-  (Route "upkeeps" $ Nothing)
-  (mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId))
+  (Route "upkeeps" $ Nothing) upkeepIdEncodable 
 
 companyDetail' = prepareRouteAndMkHandler
   (Route "companies" $ Nothing)
@@ -139,23 +146,32 @@ companyDetail' = prepareRouteAndMkHandler
     (\a -> case a of Left t -> t; Right cId -> showInt . C.getCompanyId $ cId)
     (Right . C.CompanyId))
 
+newMaintenance' = prepareRouteAndMkHandler
+  (Route "companies" $ Just "new-maintenance") companyIdEncodable
+
+newContactPerson' = prepareRouteAndMkHandler
+  (Route "companies" $ Just "new-contact-person") companyIdEncodable
+
+maintenances' = prepareRouteAndMkHandler
+  (Route "companies" $ Just "maintenances") companyIdEncodable
+
 companyDetail :: C.CompanyId -> CrmRoute
-companyDetail companyId = CrmRoute $ "companies/" <> showCompanyId companyId
+companyDetail = fst companyDetail' . Right
 
 newMachinePhase1 :: C.CompanyId -> CrmRoute
 newMachinePhase1 = fst newMachinePhase1'
 
 newMachinePhase2 :: C.CompanyId -> CrmRoute
-newMachinePhase2 companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-machine-phase2"
+newMachinePhase2 = fst newMachinePhase2'
 
 newMaintenance :: C.CompanyId -> CrmRoute
-newMaintenance companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-maintenance"
+newMaintenance = fst newMaintenance'
 
 newContactPerson :: C.CompanyId -> CrmRoute
-newContactPerson companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/new-contact-person"
+newContactPerson = fst newContactPerson'
 
 maintenances :: C.CompanyId -> CrmRoute
-maintenances companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/maintenances"
+maintenances = fst maintenances'
 
 machineDetail :: M.MachineId -> CrmRoute
 machineDetail machineId = CrmRoute $ "machines/" <> (showInt $ M.getMachineId machineId)
@@ -240,7 +256,6 @@ startRouter appVar = let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
       withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
       in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds), 
-{-
     ("companies/:id", \params -> let
       cId = head params
       in case (parseSafely cId, cId) of
@@ -253,17 +268,15 @@ startRouter appVar = let
         (_, new) | new == "new" -> modify appVar (\appState -> appState {
           D.navigation = D.CompanyNew C.newCompany })
         _ -> modify' D.NotFound) ,
--}
     (useHandler newMachinePhase1' $ \mkHandler -> mkHandler appVar $ \companyId ->
       withCompany'
         companyId
         (\_ ->
           D.MachineNewPhase1 Nothing (MT.newMachineType,[]) companyId)) ,
-    ("companies/:id/new-contact-person", \params ->
-      withCompany
-        params
-        (\companyId (_,_) ->
-          D.ContactPersonPage CP.newContactPerson Nothing companyId)) ,
+    (useHandler newContactPerson' $ \mkHandler -> mkHandler appVar $ \companyId ->
+      withCompany'
+        companyId
+        (\_ -> D.ContactPersonPage CP.newContactPerson Nothing companyId)) ,
     ("companies/:id/schema", \params ->
       withCompany 
         params
