@@ -105,9 +105,10 @@ data URLEncodable a = URLEncodable {
 mkSimpleURLEncodable :: (a -> Text) -> (Int -> a) -> URLEncodable a
 mkSimpleURLEncodable = URLEncodable Nothing
 
+type RouteAndMkHandler a = (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay ()))
 prepareRouteAndMkHandler :: Route a 
                   -> URLEncodable a 
-                  -> (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay () ))
+                  -> RouteAndMkHandler a
 prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
@@ -130,15 +131,19 @@ companyIdEncodable = mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId)
 upkeepIdEncodable :: URLEncodable U.UpkeepId
 upkeepIdEncodable = mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId)
 
+newMachinePhase1' :: RouteAndMkHandler C.CompanyId
 newMachinePhase1' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-machine-phase1") companyIdEncodable
 
+newMachinePhase2' :: RouteAndMkHandler C.CompanyId
 newMachinePhase2' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-machine-phase2") companyIdEncodable
 
+upkeepDetail' :: RouteAndMkHandler U.UpkeepId
 upkeepDetail' = prepareRouteAndMkHandler
   (Route "upkeeps" $ Nothing) upkeepIdEncodable 
 
+companyDetail' :: RouteAndMkHandler (Either Text C.CompanyId)
 companyDetail' = prepareRouteAndMkHandler
   (Route "companies" $ Nothing)
   (URLEncodable 
@@ -146,12 +151,15 @@ companyDetail' = prepareRouteAndMkHandler
     (\a -> case a of Left t -> t; Right cId -> showInt . C.getCompanyId $ cId)
     (Right . C.CompanyId))
 
+newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-maintenance") companyIdEncodable
 
+newContactPerson' :: RouteAndMkHandler C.CompanyId
 newContactPerson' = prepareRouteAndMkHandler
   (Route "companies" $ Just "new-contact-person") companyIdEncodable
 
+maintenances' :: RouteAndMkHandler C.CompanyId
 maintenances' = prepareRouteAndMkHandler
   (Route "companies" $ Just "maintenances") companyIdEncodable
 
