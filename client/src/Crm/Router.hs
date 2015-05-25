@@ -198,8 +198,15 @@ machineDetail' = prepareRouteAndMkHandler (Route "machines" $ Nothing) machineId
 machineTypeEdit' :: RouteAndMkHandler MT.MachineTypeId
 machineTypeEdit' = prepareRouteAndMkHandler (Route "machine-types" $ Nothing) machineTypeIdEncodable
 
-editEmployee' :: RouteAndMkHandler E.EmployeeId
-editEmployee' = prepareRouteAndMkHandler (Route "employees" $ Nothing) employeeIdEncodable
+editEmployee' :: RouteAndMkHandler (Either Text E.EmployeeId)
+editEmployee' = 
+  prepareRouteAndMkHandler 
+  (Route "employees" $ Nothing)
+  (URLEncodable 
+    (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
+    (\a -> case a of Left t -> t; Right eId -> showInt . E.getEmployeeId $ eId)
+    (Right . E.EmployeeId))
+
 
 contactPersonList' :: RouteAndMkHandler C.CompanyId
 contactPersonList' = prepareRouteAndMkHandler 
@@ -276,7 +283,7 @@ newEmployee :: CrmRoute
 newEmployee = CrmRoute "employees/new"
 
 editEmployee :: E.EmployeeId -> CrmRoute
-editEmployee = fst editEmployee'
+editEmployee = fst editEmployee' . Right
 
 contactPersonList :: C.CompanyId -> CrmRoute
 contactPersonList = fst contactPersonList'
@@ -432,35 +439,25 @@ startRouter appVar = let
       fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
         let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
         in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)) ,
-    ("upkeeps/:id/replan", \params -> let
-      upkeepId'' = parseSafely $ head params
-      in case upkeepId'' of
-        Just (upkeepId') -> let
-          upkeepId = U.UpkeepId upkeepId'
-          in fetchUpkeep upkeepId (\(_, (upkeep, employeeId, upkeepMachines), machines) ->
-            fetchEmployees (\employees ->
-              modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
-                (notCheckedMachines' machines upkeepMachines) ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
-                employees employeeId V.new (Right $ UD.UpkeepNew $ Right upkeepId)))
-        _ -> modify' D.NotFound) ,
-    ("contact-persons/:id", \params -> let
-      maybeId = parseSafely $ head params
-      in case maybeId of 
-        Just (contactPersonId') -> let
-          contactPersonId = CP.ContactPersonId contactPersonId'
-          in fetchContactPerson contactPersonId (\(cp, companyId) -> modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId)
-        _ -> modify' D.NotFound) ,
+    (useHandler replanUpkeep' $ \mkHandler -> mkHandler appVar $ \upkeepId ->
+      fetchUpkeep upkeepId $ \(_, (upkeep, employeeId, upkeepMachines), machines) ->
+        fetchEmployees $ \employees ->
+          modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
+            (notCheckedMachines' machines upkeepMachines) 
+            ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
+            employees employeeId V.new (Right $ UD.UpkeepNew $ Right upkeepId)) ,
+    (useHandler contactPersonEdit' $ \mkHandler -> mkHandler appVar $ \contactPersonId ->
+      fetchContactPerson contactPersonId $ \(cp, companyId) -> 
+        modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId) ,
     ("employees", const $
       fetchEmployees (\employees -> modify' $ D.EmployeeList employees)) ,
-    ("employees/:id", \params -> let
-      headParam = head params
-      in case parseSafely headParam of
-        Just employeeId' -> let
-          employeeId = E.EmployeeId employeeId'
-          in fetchEmployee employeeId (\employee ->
-            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId))
-        Nothing | headParam == "new" -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
-        Nothing -> modify' D.NotFound)]
+    (useHandler editEmployee' $ \mkHandler -> mkHandler appVar $ \employeeId' ->
+      case employeeId' of
+        Left _ -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
+        Right employeeId -> 
+          fetchEmployee employeeId $ \employee ->
+            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId))]
+
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
