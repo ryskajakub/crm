@@ -4,11 +4,11 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import                                         Data.Text (fromString, showInt, (<>))
-import                                         Prelude hiding (div, span, id)
-import                                         FFI (Defined(Defined))
+import           Data.Text                     (fromString, showInt, (<>))
+import           Prelude                       hiding (div, span, id)
+import           FFI                           (Defined(Defined))
 
-import                                         HaskellReact
+import           HaskellReact
 import qualified HaskellReact.Bootstrap        as B
 import qualified HaskellReact.Bootstrap.Nav    as BN
 import qualified HaskellReact.Bootstrap.Button as BTN
@@ -20,9 +20,10 @@ import qualified Crm.Shared.Machine            as M
 import qualified Crm.Shared.MachineType        as MT
 import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
-import Crm.Helpers                             (displayDate)
-import Crm.Router
-import Crm.Server                              (deleteUpkeep)
+import           Crm.Helpers                   (displayDate)
+import           Crm.Router
+import           Crm.Server                    (deleteUpkeep)
+
 
 upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
                  Maybe E.Employee')]
