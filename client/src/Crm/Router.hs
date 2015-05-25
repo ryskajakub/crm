@@ -147,6 +147,12 @@ employeeIdEncodable = mkSimpleURLEncodable E.getEmployeeId E.EmployeeId
 contactPersonIdEncodable :: URLEncodable CP.ContactPersonId
 contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.ContactPersonId
 
+newOrEditEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable (Either Text a)
+newOrEditEncodable toInt fromInt = URLEncodable
+  (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
+  (\a -> case a of Left t -> t; Right cId -> showInt . toInt $ cId)
+  (Right . fromInt)
+
 
 -- routes and mk handlers
 
@@ -165,10 +171,7 @@ upkeepDetail' = prepareRouteAndMkHandler
 companyDetail' :: RouteAndMkHandler (Either Text C.CompanyId)
 companyDetail' = prepareRouteAndMkHandler
   (Route "companies" $ Nothing)
-  (URLEncodable 
-    (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
-    (\a -> case a of Left t -> t; Right cId -> showInt . C.getCompanyId $ cId)
-    (Right . C.CompanyId))
+  (newOrEditEncodable C.getCompanyId C.CompanyId)
 
 newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
@@ -202,11 +205,7 @@ editEmployee' :: RouteAndMkHandler (Either Text E.EmployeeId)
 editEmployee' = 
   prepareRouteAndMkHandler 
   (Route "employees" $ Nothing)
-  (URLEncodable 
-    (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
-    (\a -> case a of Left t -> t; Right eId -> showInt . E.getEmployeeId $ eId)
-    (Right . E.EmployeeId))
-
+  (newOrEditEncodable E.getEmployeeId E.EmployeeId)
 
 contactPersonList' :: RouteAndMkHandler C.CompanyId
 contactPersonList' = prepareRouteAndMkHandler 
