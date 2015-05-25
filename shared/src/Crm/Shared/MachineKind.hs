@@ -12,6 +12,10 @@ import Data.Data
 #endif
 import Data.Text (Text, pack)
 
+-- | For the machines, that need to be serviced 1/year, set this repetition and usage
+hoursInYear :: Int
+hoursInYear = 8760
+
 machineKinds :: [(MachineKindEnum, Text)]
 machineKinds = [
   (RotaryScrewCompressor, pack "Šroubový kompresor") ,

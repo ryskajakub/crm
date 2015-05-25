@@ -283,29 +283,24 @@ startRouter appVar = let
         $ \_ (_, machines) -> let
           pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
           in D.MachinesSchema $ pickMachines machines), 
-    ("companies/:id/new-machine-phase2", \params -> let
-      cId = head params
-      in case (parseSafely cId) of
-        Just companyIdInt -> do
-          appState <- get appVar
-          let
-            machineTypeTuple = D.machineTypeFromPhase1 appState
-            machineKind = MT.kind $ fst machineTypeTuple
-            maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
-            companyId = C.CompanyId companyIdInt
-            machine' = (M.newMachine nowYMD)
-            machine = case machineKind of
-              MK.RotaryScrewCompressor -> machine'
-              _ -> machine' { M.mileagePerYear = 8760 }
-            machineQuadruple = (machine, "")
-          fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-            fetchExtraFieldSettings $ \efSettings -> let
-              extraFields' = fromJust $ lookup machineKind efSettings
-              extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields'
-              in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
-                (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
-                  (Right $ MD.MachineNew companyId maybeMachineTypeId)
-        _ -> modify' D.NotFound) ,
+    (useHandler newMachinePhase2' $ \mkHandler -> mkHandler appVar $ \companyId -> do
+      appState <- get appVar
+      let
+        machineTypeTuple = D.machineTypeFromPhase1 appState
+        machineKind = MT.kind $ fst machineTypeTuple
+        maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
+        machine' = (M.newMachine nowYMD)
+        machine = case machineKind of
+          MK.RotaryScrewCompressor -> machine'
+          _ -> machine' { M.mileagePerYear = MK.hoursInYear }
+        machineQuadruple = (machine, "")
+      fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
+        fetchExtraFieldSettings $ \efSettings -> let
+          extraFields' = fromJust $ lookup machineKind efSettings
+          extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields'
+          in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
+            (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
+              (Right $ MD.MachineNew companyId maybeMachineTypeId)) ,
     ("companies/:id/new-maintenance", \params ->
       fetchEmployees (\employees -> 
         withCompany
