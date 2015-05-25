@@ -88,6 +88,15 @@ link children (CrmRoute route) (CrmRouter router) =
   BR.link children route router
 
 
+-- internal helpers
+
+new :: Text
+new = "new"
+
+leftNew :: Either Text a
+leftNew = Left "new"
+
+
 -- route and mk handlers orchestration
 
 data Route a = Route {
@@ -155,7 +164,7 @@ contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.Contact
 
 newOrEditEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable (Either Text a)
 newOrEditEncodable toInt fromInt = URLEncodable
-  (Just $ \t -> if t == "new" then Just $ Left "new" else Nothing)
+  (Just $ \t -> if t == new then Just $ Left new else Nothing)
   (\a -> case a of Left t -> t; Right cId -> showInt . toInt $ cId)
   (Right . fromInt)
 
@@ -258,7 +267,7 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
   DIR.Desc -> "Desc")
 
 newCompany :: CrmRoute
-newCompany = CrmRoute "companies/new"
+newCompany = fst companyDetail' leftNew
 
 machinesSchema :: C.CompanyId -> CrmRoute
 machinesSchema = fst machinesSchema'
@@ -303,7 +312,7 @@ employeePage :: CrmRoute
 employeePage = fst employees' ()
 
 newEmployee :: CrmRoute
-newEmployee = CrmRoute "employees/new"
+newEmployee = fst editEmployee' leftNew
 
 editEmployee :: E.EmployeeId -> CrmRoute
 editEmployee = fst editEmployee' . Right
