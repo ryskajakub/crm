@@ -101,8 +101,8 @@ data URLEncodable a = URLEncodable {
 
 type RouteAndMkHandler a = (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay ()))
 
-mkSimpleURLEncodable :: (a -> Text) -> (Int -> a) -> URLEncodable a
-mkSimpleURLEncodable = URLEncodable Nothing
+mkSimpleURLEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable a
+mkSimpleURLEncodable toInt = URLEncodable Nothing (showInt . toInt)
 
 useHandler :: (a, (b, c)) -> (c -> c') -> (b, c')
 useHandler t f = (rmap f) (snd t)
@@ -130,13 +130,22 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
 -- url encodables for id newtypes over int
 
 companyIdEncodable :: URLEncodable C.CompanyId
-companyIdEncodable = mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId)
+companyIdEncodable = mkSimpleURLEncodable C.getCompanyId C.CompanyId
 
 upkeepIdEncodable :: URLEncodable U.UpkeepId
-upkeepIdEncodable = mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) U.UpkeepId
+upkeepIdEncodable = mkSimpleURLEncodable U.getUpkeepId U.UpkeepId
 
 machineIdEncodable :: URLEncodable M.MachineId
-machineIdEncodable = mkSimpleURLEncodable (\mId -> showInt $ M.getMachineId mId) M.MachineId
+machineIdEncodable = mkSimpleURLEncodable M.getMachineId M.MachineId
+
+machineTypeIdEncodable :: URLEncodable MT.MachineTypeId
+machineTypeIdEncodable = mkSimpleURLEncodable MT.getMachineTypeId MT.MachineTypeId
+
+employeeIdEncodable :: URLEncodable E.EmployeeId
+employeeIdEncodable = mkSimpleURLEncodable E.getEmployeeId E.EmployeeId
+
+contactPersonIdEncodable :: URLEncodable CP.ContactPersonId
+contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.ContactPersonId
 
 
 -- routes and mk handlers
@@ -186,6 +195,22 @@ replanUpkeep' = prepareRouteAndMkHandler (Route "upkeeps" $ Just "replan") upkee
 machineDetail' :: RouteAndMkHandler M.MachineId
 machineDetail' = prepareRouteAndMkHandler (Route "machines" $ Nothing) machineIdEncodable 
 
+machineTypeEdit' :: RouteAndMkHandler MT.MachineTypeId
+machineTypeEdit' = prepareRouteAndMkHandler (Route "machine-types" $ Nothing) machineTypeIdEncodable
+
+editEmployee' :: RouteAndMkHandler E.EmployeeId
+editEmployee' = prepareRouteAndMkHandler (Route "employees" $ Nothing) employeeIdEncodable
+
+contactPersonList' :: RouteAndMkHandler C.CompanyId
+contactPersonList' = prepareRouteAndMkHandler 
+  (Route "companies" $ Just "contact-persons")
+  companyIdEncodable
+
+contactPersonEdit' :: RouteAndMkHandler CP.ContactPersonId
+contactPersonEdit' = prepareRouteAndMkHandler
+  (Route "contact-persons" $ Nothing)
+  contactPersonIdEncodable
+
 
 -- routes
 
@@ -227,7 +252,7 @@ maintenances :: C.CompanyId -> CrmRoute
 maintenances = fst maintenances'
 
 machineDetail :: M.MachineId -> CrmRoute
-machineDetail machineId = CrmRoute $ "machines/" <> (showInt $ M.getMachineId machineId)
+machineDetail = fst machineDetail'
 
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute "planned"
@@ -242,7 +267,7 @@ machineTypesList :: CrmRoute
 machineTypesList = CrmRoute "other/machine-types-list" 
 
 machineTypeEdit :: MT.MachineTypeId -> CrmRoute
-machineTypeEdit machineTypeId = CrmRoute $ "machine-types/"  <> (showInt $ MT.getMachineTypeId machineTypeId)
+machineTypeEdit = fst machineTypeEdit'
 
 employeePage :: CrmRoute
 employeePage = CrmRoute "employees"
@@ -251,13 +276,13 @@ newEmployee :: CrmRoute
 newEmployee = CrmRoute "employees/new"
 
 editEmployee :: E.EmployeeId -> CrmRoute
-editEmployee employeeId = CrmRoute $ "employees/" <> (showInt $ E.getEmployeeId employeeId)
+editEmployee = fst editEmployee'
 
 contactPersonList :: C.CompanyId -> CrmRoute
-contactPersonList companyId = CrmRoute $ "companies/" <> (showInt $ C.getCompanyId companyId) <> "/contact-persons"
+contactPersonList = fst contactPersonList'
 
 contactPersonEdit :: CP.ContactPersonId -> CrmRoute
-contactPersonEdit contactPersonId = CrmRoute $ "contact-persons/" <> (showInt $ CP.getContactPersonId contactPersonId)
+contactPersonEdit = fst contactPersonEdit'
 
 extraFields :: CrmRoute
 extraFields = CrmRoute $ "extra-fields"
