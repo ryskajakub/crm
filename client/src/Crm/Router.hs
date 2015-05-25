@@ -355,12 +355,12 @@ startRouter appVar = let
       withCompany'
         companyId
         (\_ -> D.ContactPersonPage CP.newContactPerson Nothing companyId)) ,
-    ("companies/:id/schema", \params ->
-      withCompany 
-        params
-        $ \_ (_, machines) -> let
+    (useHandler machinesSchema' $ \mkHandler -> mkHandler appVar $ \companyId -> 
+      withCompany'
+        companyId $
+        \(_, machines) -> let
           pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
-          in D.MachinesSchema $ pickMachines machines), 
+          in D.MachinesSchema $ pickMachines machines) ,
     (useHandler newMachinePhase2' $ \mkHandler -> mkHandler appVar $ \companyId -> do
       appState <- get appVar
       let
@@ -391,36 +391,28 @@ startRouter appVar = let
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
               Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)) ,
-    ("companies/:id/contact-persons", \params ->
-      case (parseSafely $ head params) of
-        Just(companyIdInt) -> 
-          let companyId = C.CompanyId companyIdInt
-          in fetchContactPersons companyId (\data' -> let
-            ns = D.ContactPersonList data'
-            in modify' ns)
-        _ -> modify' D.NotFound) , 
+    (useHandler newContactPerson' $ \mkHandler -> mkHandler appVar $ \companyId ->
+      fetchContactPersons companyId $ \data' -> let
+        ns = D.ContactPersonList data'
+        in modify' ns) ,
     (useHandler maintenances' $ \mkHandler -> mkHandler appVar $ \companyId ->
       fetchUpkeeps companyId $ \upkeepsData -> let
         ns = D.UpkeepHistory upkeepsData companyId
         in modify' ns) ,
-    ("machines/:id", \params -> let
-      maybeId = parseSafely $ head params
-      in case maybeId of
-        Just(machineId') -> let
-          machineId = M.MachineId machineId'
-          in fetchMachine machineId
-            (\(companyId, machine, machineTypeId, machineTypeTuple, 
-                machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields') ->
-              fetchMachinePhotos machineId $ \photos ->
-                let 
-                  machineQuadruple = (machine, "")
-                  startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-                in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-                  modify' $ D.MachineScreen $ MD.MachineData
-                    machineQuadruple machineSpecificData machineTypeTuple (startDateInCalendar, False)
-                      contactPersonId cps V.new otherMachineId otherMachines extraFields'
-                        (Left $ MD.MachineDetail machineId machineNextService Display machineTypeId photos upkeeps companyId))
-        _ -> modify' D.NotFound) ,
+    (useHandler machineDetail' $ \mkHandler -> mkHandler appVar $ \machineId ->
+      fetchMachine machineId
+        $ \(companyId, machine, machineTypeId, machineTypeTuple, 
+            machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields') ->
+          fetchMachinePhotos machineId $ \photos ->
+            let 
+              machineDouble = (machine, "")
+              startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
+            in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
+              modify' $ D.MachineScreen $ MD.MachineData
+                machineDouble machineSpecificData machineTypeTuple (startDateInCalendar, False)
+                  contactPersonId cps V.new otherMachineId otherMachines extraFields'
+                    (Left $ MD.MachineDetail machineId machineNextService 
+                      Display machineTypeId photos upkeeps companyId)) ,
     ("planned", const $
       fetchPlannedUpkeeps (\plannedUpkeeps' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps'
@@ -436,15 +428,10 @@ startRouter appVar = let
             selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId)) ,
     ("other/machine-types-list", const $
       fetchMachineTypes (\result -> modify' $ D.MachineTypeList result)) ,
-    ("machine-types/:id", \params -> let
-      maybeId = parseSafely $ head params
-      in case maybeId of
-        Just (machineTypeIdInt) -> let
-          machineTypeId = (MT.MachineTypeId machineTypeIdInt)
-          in fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
-            let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
-            in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)
-        _ -> modify' D.NotFound) ,
+    (useHandler machineTypeEdit' $ \mkHandler -> mkHandler appVar $ \machineTypeId ->
+      fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
+        let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
+        in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust)) ,
     ("upkeeps/:id/replan", \params -> let
       upkeepId'' = parseSafely $ head params
       in case upkeepId'' of
