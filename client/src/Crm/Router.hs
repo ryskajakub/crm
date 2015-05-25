@@ -108,8 +108,8 @@ useHandler :: (a, (b, c)) -> (c -> c') -> (b, c')
 useHandler t f = (rmap f) (snd t)
 
 prepareRouteAndMkHandler :: Route a 
-                  -> URLEncodable a 
-                  -> RouteAndMkHandler a
+                         -> URLEncodable a 
+                         -> RouteAndMkHandler a
 prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
@@ -126,6 +126,12 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
         parsedInt = fromURL urlEncodable `onJust` (parseSafely headVariable)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
+prepareUnitRouteAndMkHandler :: Text
+                             -> RouteAndMkHandler ()
+prepareUnitRouteAndMkHandler t = (const . CrmRoute $ t, (t, mkHandler)) where
+  mkHandler appState appStateModifier _ = 
+    appStateModifier ()
+  
 
 -- url encodables for id newtypes over int
 
@@ -154,7 +160,13 @@ newOrEditEncodable toInt fromInt = URLEncodable
   (Right . fromInt)
 
 
--- routes and mk handlers
+-- routes and mk handlers without parameters
+
+dashboard' :: RouteAndMkHandler ()
+dashboard' = prepareUnitRouteAndMkHandler "dashboard"
+
+
+-- routes and mk handlers with one parameter
 
 newMachinePhase1' :: RouteAndMkHandler C.CompanyId
 newMachinePhase1' = prepareRouteAndMkHandler
@@ -221,7 +233,7 @@ contactPersonEdit' = prepareRouteAndMkHandler
 -- routes
 
 dashboard :: CrmRoute
-dashboard = CrmRoute "dashboard"
+dashboard = fst dashboard' ()
 
 defaultFrontPage :: CrmRoute
 defaultFrontPage = frontPage C.NextService DIR.Asc
@@ -321,9 +333,9 @@ startRouter appVar = let
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
   in fmap CrmRouter $ BR.startRouter [
-    ("dashboard", const $
-      fetchCompaniesForMap (\companiesTriple -> 
-        modify appVar (\appState -> appState { D.navigation = D.Dashboard companiesTriple }))) ,
+    (useHandler dashboard' $ \mkHandler -> mkHandler appVar $ const $
+      fetchCompaniesForMap $ \companiesTriple -> 
+        modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple }) ,
     ("", const $
       fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
         (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }))) ,
