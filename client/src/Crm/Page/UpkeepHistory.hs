@@ -43,7 +43,7 @@ upkeepHistory upkeepsInfo companyId router = let
         employeeText = maybe ("---") (E.name . snd) maybeEmployee
         (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
           then ("label-success", "Uzavřený", text2DOM "")
-          else ("label-warning", "Naplánovaný", link "Uzavřít" (closeUpkeep upkeepId) router)
+          else ("label-warning", "Naplánovaný", link "Uzavřít" (upkeepDetail upkeepId) router)
         marginTop attributes = let
           previousClassname = className attributes
           newClassname = case previousClassname of

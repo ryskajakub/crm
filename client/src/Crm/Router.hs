@@ -16,7 +16,6 @@ module Crm.Router (
   newMachinePhase2 ,
   newMachinePhase1 ,
   newMaintenance ,
-  closeUpkeep ,
   replanUpkeep ,
   maintenances ,
   newContactPerson ,
@@ -30,6 +29,7 @@ module Crm.Router (
   contactPersonEdit ,
   extraFields ,
   machinesSchema ,
+  upkeepDetail ,
   editEmployee ) where
 
 import           Data.Text                   (fromString, showInt, Text, (<>))
@@ -87,16 +87,6 @@ link :: Renderable a
 link children (CrmRoute route) (CrmRouter router) = 
   BR.link children route router
 
-
--- internal helpers
-
-new :: Text
-new = "new"
-
-leftNew :: Either Text a
-leftNew = Left "new"
-
-
 -- route and mk handlers orchestration
 
 data Route a = Route {
@@ -140,7 +130,21 @@ prepareUnitRouteAndMkHandler :: Text
 prepareUnitRouteAndMkHandler t = (const . CrmRoute $ t, (t, mkHandler)) where
   mkHandler appState appStateModifier _ = 
     appStateModifier ()
+
+
+-- internal helpers
+
+new :: Text
+new = "new"
+
+leftNew :: Either Text a
+leftNew = Left "new"
+
+mkCompaniesRoute :: Route a
+mkCompaniesRoute = Route "companies" Nothing
   
+mkUpkeepsRoute :: Route a
+mkUpkeepsRoute = Route "upkeeps" Nothing
 
 -- url encodables for id newtypes over int
 
@@ -191,42 +195,46 @@ employees' = prepareUnitRouteAndMkHandler "employees"
 
 newMachinePhase1' :: RouteAndMkHandler C.CompanyId
 newMachinePhase1' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "new-machine-phase1") companyIdEncodable
+  (mkCompaniesRoute { postfix = Just "new-machine-phase1" }) companyIdEncodable
 
 newMachinePhase2' :: RouteAndMkHandler C.CompanyId
 newMachinePhase2' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "new-machine-phase2") companyIdEncodable
+  (mkCompaniesRoute { postfix = Just "new-machine-phase2" }) companyIdEncodable
 
 upkeepDetail' :: RouteAndMkHandler U.UpkeepId
 upkeepDetail' = prepareRouteAndMkHandler
-  (Route "upkeeps" $ Nothing) upkeepIdEncodable 
+  mkUpkeepsRoute 
+  upkeepIdEncodable 
 
 companyDetail' :: RouteAndMkHandler (Either Text C.CompanyId)
 companyDetail' = prepareRouteAndMkHandler
-  (Route "companies" $ Nothing)
+  mkCompaniesRoute
   (newOrEditEncodable C.getCompanyId C.CompanyId)
 
 newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "new-maintenance") companyIdEncodable
+  (mkCompaniesRoute { postfix = Just "new-maintenance" })
+  companyIdEncodable
 
 newContactPerson' :: RouteAndMkHandler C.CompanyId
 newContactPerson' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "new-contact-person") companyIdEncodable
+  (mkCompaniesRoute { postfix = Just "new-contact-person" })
+   companyIdEncodable
 
 maintenances' :: RouteAndMkHandler C.CompanyId
 maintenances' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "maintenances") companyIdEncodable
+  (mkCompaniesRoute { postfix = Just "maintenances" })
+  companyIdEncodable
 
 machinesSchema' :: RouteAndMkHandler C.CompanyId
 machinesSchema' = prepareRouteAndMkHandler
-  (Route "companies" $ Just "schema") companyIdEncodable
-
-closeUpkeep' :: RouteAndMkHandler U.UpkeepId
-closeUpkeep' = prepareRouteAndMkHandler (Route "upkeeps" $ Nothing) upkeepIdEncodable
+  (mkCompaniesRoute { postfix = Just "schema" })
+  companyIdEncodable
 
 replanUpkeep' :: RouteAndMkHandler U.UpkeepId
-replanUpkeep' = prepareRouteAndMkHandler (Route "upkeeps" $ Just "replan") upkeepIdEncodable
+replanUpkeep' = prepareRouteAndMkHandler 
+  (mkUpkeepsRoute { postfix = Just "replan" })
+  upkeepIdEncodable
 
 machineDetail' :: RouteAndMkHandler M.MachineId
 machineDetail' = prepareRouteAndMkHandler (Route "machines" $ Nothing) machineIdEncodable 
@@ -242,7 +250,7 @@ editEmployee' =
 
 contactPersonList' :: RouteAndMkHandler C.CompanyId
 contactPersonList' = prepareRouteAndMkHandler 
-  (Route "companies" $ Just "contact-persons")
+  (mkCompaniesRoute { postfix = Just "contact-persons" })
   companyIdEncodable
 
 contactPersonEdit' :: RouteAndMkHandler CP.ContactPersonId
@@ -296,11 +304,11 @@ machineDetail = fst machineDetail'
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = fst plannedUpkeeps' ()
 
-closeUpkeep :: U.UpkeepId -> CrmRoute
-closeUpkeep = fst closeUpkeep'
-
 replanUpkeep :: U.UpkeepId -> CrmRoute
 replanUpkeep = fst replanUpkeep'
+
+upkeepDetail :: U.UpkeepId -> CrmRoute
+upkeepDetail = fst upkeepDetail'
 
 machineTypesList :: CrmRoute
 machineTypesList = fst machineTypesList' ()

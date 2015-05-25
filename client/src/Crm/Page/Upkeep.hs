@@ -55,7 +55,7 @@ plannedUpkeeps router upkeepCompanies = let
         router,
       td $ R.link
         "Uzavřít"
-        (R.closeUpkeep upkeepId)
+        (R.upkeepDetail upkeepId)
         router ]) upkeepCompanies
 
   advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
