@@ -68,30 +68,27 @@ import           Crm.Component.Form
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
 
-useHandler :: (a, (b, c)) -> (c -> c') -> (b, c')
-useHandler t f = (rmap f) (snd t)
+
+-- helpers
 
 routeToText :: CrmRoute -> Text
 routeToText (CrmRoute r) = "/#" <> r
 
-dashboard :: CrmRoute
-dashboard = CrmRoute "dashboard"
+navigate :: CrmRoute
+         -> CrmRouter
+         -> Fay ()
+navigate (CrmRoute route) (CrmRouter router) = BR.navigate route router
 
-defaultFrontPage :: CrmRoute
-defaultFrontPage = frontPage C.NextService DIR.Asc
+link :: Renderable a
+     => a
+     -> CrmRoute
+     -> CrmRouter
+     -> DOMElement
+link children (CrmRoute route) (CrmRouter router) = 
+  BR.link children route router
 
-frontPage :: C.OrderType -> DIR.Direction -> CrmRoute
-frontPage order direction = CrmRoute $ "home/" <> (case order of
-  C.CompanyName -> "CompanyName"
-  _ -> "NextService") <> "/" <> (case direction of
-  DIR.Asc -> "Asc"
-  DIR.Desc -> "Desc")
 
-newCompany :: CrmRoute
-newCompany = CrmRoute "companies/new"
-
-machinesSchema :: C.CompanyId -> CrmRoute
-machinesSchema companyId = CrmRoute $ "companies/" <> showCompanyId companyId <> "/schema"
+-- route and mk handlers orchestration
 
 data Route a = Route {
   prefix :: Text ,
@@ -102,10 +99,14 @@ data URLEncodable a = URLEncodable {
   toURL :: a -> Text ,
   fromURL :: Int -> a }
 
+type RouteAndMkHandler a = (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay ()))
+
 mkSimpleURLEncodable :: (a -> Text) -> (Int -> a) -> URLEncodable a
 mkSimpleURLEncodable = URLEncodable Nothing
 
-type RouteAndMkHandler a = (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay ()))
+useHandler :: (a, (b, c)) -> (c -> c') -> (b, c')
+useHandler t f = (rmap f) (snd t)
+
 prepareRouteAndMkHandler :: Route a 
                   -> URLEncodable a 
                   -> RouteAndMkHandler a
@@ -125,11 +126,20 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
         parsedInt = fromURL urlEncodable `onJust` (parseSafely headVariable)
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
+
+-- url encodables for id newtypes over int
+
 companyIdEncodable :: URLEncodable C.CompanyId
 companyIdEncodable = mkSimpleURLEncodable (\cId -> showInt $ C.getCompanyId cId) (C.CompanyId)
 
 upkeepIdEncodable :: URLEncodable U.UpkeepId
-upkeepIdEncodable = mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) (U.UpkeepId)
+upkeepIdEncodable = mkSimpleURLEncodable (\uId -> showInt $ U.getUpkeepId uId) U.UpkeepId
+
+machineIdEncodable :: URLEncodable M.MachineId
+machineIdEncodable = mkSimpleURLEncodable (\mId -> showInt $ M.getMachineId mId) M.MachineId
+
+
+-- routes and mk handlers
 
 newMachinePhase1' :: RouteAndMkHandler C.CompanyId
 newMachinePhase1' = prepareRouteAndMkHandler
@@ -163,6 +173,41 @@ maintenances' :: RouteAndMkHandler C.CompanyId
 maintenances' = prepareRouteAndMkHandler
   (Route "companies" $ Just "maintenances") companyIdEncodable
 
+machinesSchema' :: RouteAndMkHandler C.CompanyId
+machinesSchema' = prepareRouteAndMkHandler
+  (Route "companies" $ Just "schema") companyIdEncodable
+
+closeUpkeep' :: RouteAndMkHandler U.UpkeepId
+closeUpkeep' = prepareRouteAndMkHandler (Route "upkeeps" $ Nothing) upkeepIdEncodable
+
+replanUpkeep' :: RouteAndMkHandler U.UpkeepId
+replanUpkeep' = prepareRouteAndMkHandler (Route "upkeeps" $ Just "replan") upkeepIdEncodable
+
+machineDetail' :: RouteAndMkHandler M.MachineId
+machineDetail' = prepareRouteAndMkHandler (Route "machines" $ Nothing) machineIdEncodable 
+
+
+-- routes
+
+dashboard :: CrmRoute
+dashboard = CrmRoute "dashboard"
+
+defaultFrontPage :: CrmRoute
+defaultFrontPage = frontPage C.NextService DIR.Asc
+
+frontPage :: C.OrderType -> DIR.Direction -> CrmRoute
+frontPage order direction = CrmRoute $ "home/" <> (case order of
+  C.CompanyName -> "CompanyName"
+  _ -> "NextService") <> "/" <> (case direction of
+  DIR.Asc -> "Asc"
+  DIR.Desc -> "Desc")
+
+newCompany :: CrmRoute
+newCompany = CrmRoute "companies/new"
+
+machinesSchema :: C.CompanyId -> CrmRoute
+machinesSchema = fst machinesSchema'
+
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail = fst companyDetail' . Right
 
@@ -188,10 +233,10 @@ plannedUpkeeps :: CrmRoute
 plannedUpkeeps = CrmRoute "planned"
 
 closeUpkeep :: U.UpkeepId -> CrmRoute
-closeUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId)
+closeUpkeep = fst closeUpkeep'
 
 replanUpkeep :: U.UpkeepId -> CrmRoute
-replanUpkeep upkeepId = CrmRoute $ "upkeeps/" <> (showInt $ U.getUpkeepId upkeepId) <> "/replan"
+replanUpkeep = fst replanUpkeep'
 
 machineTypesList :: CrmRoute
 machineTypesList = CrmRoute "other/machine-types-list" 
@@ -216,6 +261,9 @@ contactPersonEdit contactPersonId = CrmRoute $ "contact-persons/" <> (showInt $ 
 
 extraFields :: CrmRoute
 extraFields = CrmRoute $ "extra-fields"
+
+
+-- handler
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
@@ -412,16 +460,3 @@ notCheckedMachines' machines upkeepMachines = let
       Nothing -> (UM.newUpkeepMachine,machineId) : acc
       _ -> acc
   in foldl addNotCheckedMachine [] machines
-
-navigate :: CrmRoute
-         -> CrmRouter
-         -> Fay ()
-navigate (CrmRoute route) (CrmRouter router) = BR.navigate route router
-
-link :: Renderable a
-     => a
-     -> CrmRoute
-     -> CrmRouter
-     -> DOMElement
-link children (CrmRoute route) (CrmRouter router) = 
-  BR.link children route router
