@@ -146,6 +146,17 @@ mkCompaniesRoute = Route "companies" Nothing
 mkUpkeepsRoute :: Route a
 mkUpkeepsRoute = Route "upkeeps" Nothing
 
+notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
+notCheckedMachines' machines upkeepMachines = let 
+  addNotCheckedMachine acc element = let 
+    (machineId,_,_,_,_) = element
+    machineChecked = find (\(_,machineId') -> 
+      machineId == machineId') upkeepMachines
+    in case machineChecked of
+      Nothing -> (UM.newUpkeepMachine,machineId) : acc
+      _ -> acc
+  in foldl addNotCheckedMachine [] machines
+
 -- url encodables for id newtypes over int
 
 companyIdEncodable :: URLEncodable C.CompanyId
@@ -340,17 +351,6 @@ extraFields = fst extraFields' ()
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = let
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
-  withCompany :: [Text]
-              -> (C.CompanyId -> (C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
-                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
-              -> Fay ()
-  withCompany params newStateFun = case parseSafely $ head params of
-    Just(companyId') -> let
-      companyId = C.CompanyId companyId'
-      in fetchCompany companyId (\data' -> let
-        newState = newStateFun companyId data'
-        in modify' newState )
-    _ -> modify' D.NotFound 
   withCompany' :: C.CompanyId
                -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
                   MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
@@ -498,15 +498,3 @@ startRouter appVar = let
         Right employeeId -> 
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId))]
-
-
-notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
-notCheckedMachines' machines upkeepMachines = let 
-  addNotCheckedMachine acc element = let 
-    (machineId,_,_,_,_) = element
-    machineChecked = find (\(_,machineId') -> 
-      machineId == machineId') upkeepMachines
-    in case machineChecked of
-      Nothing -> (UM.newUpkeepMachine,machineId) : acc
-      _ -> acc
-  in foldl addNotCheckedMachine [] machines
