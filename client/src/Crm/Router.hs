@@ -264,18 +264,15 @@ startRouter appVar = let
       makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
       withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
       in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds), 
-    ("companies/:id", \params -> let
-      cId = head params
-      in case (parseSafely cId, cId) of
-        (Just(cId''), _) -> let
-          companyId = C.CompanyId cId''
-          in fetchCompany companyId (\(company,machines) -> let
+    (useHandler companyDetail' $ \mkHandler -> mkHandler appVar $ \companyId' ->
+      case companyId' of
+        Left _ -> modify appVar $ \appState -> appState {
+          D.navigation = D.CompanyNew C.newCompany }
+        Right companyId ->
+          fetchCompany companyId $ \(company,machines) -> let
             ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
-            in modify appVar (\appState -> appState {
-              D.navigation = D.CompanyDetail companyId company Display (ignoreLinkage machines) }))
-        (_, new) | new == "new" -> modify appVar (\appState -> appState {
-          D.navigation = D.CompanyNew C.newCompany })
-        _ -> modify' D.NotFound) ,
+            in modify appVar $ \appState -> appState {
+              D.navigation = D.CompanyDetail companyId company Display (ignoreLinkage machines)}) ,
     (useHandler newMachinePhase1' $ \mkHandler -> mkHandler appVar $ \companyId ->
       withCompany'
         companyId
