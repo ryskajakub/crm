@@ -306,18 +306,18 @@ startRouter appVar = let
           in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId)) ,
-    ("companies/:id/new-maintenance", \params ->
-      fetchEmployees (\employees -> 
-        withCompany
-          params
-          (\companyId (_, machines') -> let
+    (useHandler newMaintenance' $ \mkHandler -> mkHandler appVar $ \companyId -> 
+      fetchEmployees $ \employees -> 
+        withCompany'
+          companyId $
+          \(_, machines') -> let
             machines = map (\(a,b,c,d,e,_,_,_) -> (a,b,c,d,e)) machines'
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
-              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)))) ,
+              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId)) ,
     ("companies/:id/contact-persons", \params ->
       case (parseSafely $ head params) of
         Just(companyIdInt) -> 
@@ -326,14 +326,10 @@ startRouter appVar = let
             ns = D.ContactPersonList data'
             in modify' ns)
         _ -> modify' D.NotFound) , 
-    ("companies/:id/maintenances", \params ->
-      case (parseSafely $ head params) of
-        Just(companyIdInt) -> 
-          let companyId = C.CompanyId companyIdInt
-          in fetchUpkeeps companyId (\data' -> let
-            ns = D.UpkeepHistory data' companyId
-            in modify' ns)
-        _ -> modify' D.NotFound) ,
+    (useHandler maintenances' $ \mkHandler -> mkHandler appVar $ \companyId ->
+      fetchUpkeeps companyId $ \upkeepsData -> let
+        ns = D.UpkeepHistory upkeepsData companyId
+        in modify' ns) ,
     ("machines/:id", \params -> let
       maybeId = parseSafely $ head params
       in case maybeId of
