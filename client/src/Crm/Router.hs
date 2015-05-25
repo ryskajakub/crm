@@ -2,12 +2,14 @@
 {-# LANGUAGE RebindableSyntax #-}
 
 module Crm.Router (
+  CrmRouter ,
+  CrmRoute ,
+
   startRouter ,
   navigate ,
   link ,
-  CrmRouter ,
-  CrmRoute ,
   routeToText ,
+
   dashboard ,
   frontPage ,
   defaultFrontPage ,
@@ -98,7 +100,6 @@ data URLEncodable a = URLEncodable {
   toURL :: a -> Text ,
   fromURL :: Int -> a }
 
--- type RouteAndMkHandler a = (a -> CrmRoute, (Text, Var D.AppState -> (a -> Fay ()) -> [Text] -> Fay ()))
 type RouteAndMkHandler a = (a -> CrmRoute, (Text, (a -> Fay ()) -> Var D.AppState -> [Text] -> Fay ()))
 
 mkSimpleURLEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable a
