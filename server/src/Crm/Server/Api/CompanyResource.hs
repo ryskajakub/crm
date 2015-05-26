@@ -1,6 +1,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Server.Api.CompanyResource where
 
@@ -12,21 +13,23 @@ import Opaleye.Manipulation (runInsertReturning)
 
 import Control.Monad.Trans.Except (ExceptT)
 import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
+import Control.Monad.IO.Class (liftIO, MonadIO)
 import Control.Monad (forM)
 
 import Data.List (sortBy)
 import Data.Tuple.All (sel1, sel2, sel3)
 import qualified Data.Text.ICU as I
-import Data.Text (pack)
+import Data.Text (pack, Text)
 import Data.Maybe (mapMaybe)
 
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get ,
   update, remove )
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler, mkListing)
-import Rest.Types.Error (Reason)
+import Rest.Dictionary.Combinators (jsonO, jsonI, mkHeader, jsonE)
+import Rest.Dictionary.Types (Header(..))
+import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler, mkListing,
+  mkHandler, header)
+import Rest.Types.Error (Reason(..), DataError(..), DomainReason(..), ToResponseCode, toResponseCode)
 
 import qualified Crm.Shared.Company as C
 import qualified Crm.Shared.Machine as M
@@ -45,6 +48,14 @@ import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
 import Safe (minimumMay, readMay)
 
 import TupleTH (updateAtN, proj, takeTuple, catTuples)
+
+import Debug.Trace (trace)
+
+import qualified Crypto.Scrypt as CS
+import           Safe (headMay)
+import Data.Text.Encoding (encodeUtf8)
+import Rest.Types.Error (Reason(..), DomainReason(..))
+import Control.Monad.Error.Class (throwError)
 
 data MachineMid = NextServiceListing | MapListing
 
@@ -129,14 +140,44 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         _ -> LT
       ) unsortedResult')
 
+
+verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason String) m ()
+verifyPassword connection (Password inputPassword) = do
+  dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
+  let dbPassword' = headMay dbPasswords
+  case dbPassword' of
+    Just dbPassword -> 
+      if passwordVerified
+        then return ()
+        else throwPasswordError "wrong password"
+      where
+      passwordVerified = CS.verifyPass' passwordCandidate password
+      password = CS.EncryptedPass dbPassword
+      passwordCandidate = CS.Pass . encodeUtf8 $ inputPassword
+    Nothing -> throwPasswordError 
+      "password database in inconsistent state, there is either 0 or more than 1 passwords"
+    where throwPasswordError = throwError . CustomReason . DomainReason
+  
+
+
+data SessionId = Password {
+  password :: Text }
+
+cookieHeader = mkHeader $ Header ["Cookie"] $ \headers' -> case headers' of
+  [Just cookie] -> Right . Password . pack $ cookie
+  _ -> Left . ParseError $ "data not parsed correctly"
+  
+
 singleCompany :: Handler IdDependencies
-singleCompany = mkConstHandler jsonO $ withConnId (\conn companyId -> do
-  rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
-  companyRow <- singleRowOrColumn rows
-  machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-  let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
-  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` (fmap $(proj 2 1) nextServiceDates)))
+singleCompany = mkHandler (jsonE . cookieHeader . jsonO) $ \env ->
+  withConnId $ \conn companyId -> do
+    verifyPassword conn $ header env
+    rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
+    companyRow <- singleRowOrColumn rows
+    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+    let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
+    nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
+    return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates)
 
 updateCompany :: Handler IdDependencies
 updateCompany = let
@@ -162,3 +203,6 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing NextServiceListing $ S.named [
     (A.single, S.singleBy readMay') ,
     (A.map', S.listing MapListing) ] }
+
+instance ToResponseCode String where
+  toResponseCode = const 401
