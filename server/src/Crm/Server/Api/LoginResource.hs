@@ -1,5 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Server.Api.LoginResource where
 
@@ -9,10 +10,12 @@ import Opaleye (queryTable, runQuery)
 
 import Control.Monad.Reader (ask)
 import Control.Monad.IO.Class (liftIO)
+import Control.Monad.Error.Class (throwError)
 
+import Rest.Types.Error (Reason(..), DomainReason(..), ToResponseCode, toResponseCode)
 import Rest.Resource (Resource, Void, schema, name, mkResourceId, statics)
 import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
+import Rest.Dictionary.Combinators (jsonE, jsonI)
 import Rest.Handler (Handler, mkInputHandler)
 
 import Crm.Server.Helpers 
@@ -34,16 +37,22 @@ resource = mkResourceId {
   name = A.login } 
 
 login :: Handler Dependencies
-login = mkInputHandler (jsonO . jsonI) $ \login -> do
+login = mkInputHandler (jsonE . jsonI) $ \login -> do
   connection <- ask
-  dbPasswords <- liftIO $ runQuery connection (queryTable passwordTable)
-  let 
-    dbPassword' = headMay dbPasswords
-    passwordOK = case dbPassword' of
-      Just dbPassword -> 
-        CS.verifyPass' passwordCandidate password
-        where
-        password = CS.EncryptedPass dbPassword
-        passwordCandidate = CS.Pass . encodeUtf8 . L.password $ login
-      Nothing -> False
-  return ""
+  dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
+  let dbPassword' = headMay dbPasswords
+  case dbPassword' of
+    Just dbPassword -> 
+      if passwordVerified
+        then return ()
+        else throwPasswordError "wrong password"
+      where
+      passwordVerified = CS.verifyPass' passwordCandidate password
+      password = CS.EncryptedPass dbPassword
+      passwordCandidate = CS.Pass . encodeUtf8 . L.password $ login
+    Nothing -> throwPasswordError 
+      "password database in inconsistent state, there is either 0 or more than 1 passwords"
+    where throwPasswordError = throwError . CustomReason . DomainReason
+
+instance ToResponseCode String where
+  toResponseCode = const 401
