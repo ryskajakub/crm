@@ -25,6 +25,7 @@ module Crm.Server.DB (
   contactPersonsTable ,
   extraFieldSettingsTable ,
   extraFieldsTable ,
+  settingsTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -190,6 +191,13 @@ type ExtraFieldSettingsTable = (DBInt, DBInt, DBInt, DBText)
 type ExtraFieldSettingsWriteTable = (Maybe DBInt, DBInt, DBInt, DBText)
 
 type ExtraFieldsTable = (DBInt, DBInt, DBText)
+
+type SettingsTable = (DBText, DBText)
+
+settingsTable :: Table SettingsTable SettingsTable
+settingsTable = Table "settings" $ p2 (
+  required "key" ,
+  required "value" )
 
 extraFieldsTable :: Table ExtraFieldsTable ExtraFieldsTable
 extraFieldsTable = Table "extra_fields" $ p3 (
