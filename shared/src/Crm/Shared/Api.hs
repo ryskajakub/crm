@@ -3,6 +3,7 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.Api (
+  perform, login,
   companies, companiesClient ,
   machines, machinesClient ,
   upkeep, upkeepsClient ,
@@ -26,6 +27,12 @@ import "base" Prelude
 import "fay-base" Prelude
 import "fay-base" Data.Char
 #endif
+
+perform :: String
+perform = "perform"
+
+login :: String
+login = "login"
 
 companies :: String
 companies = "companies"

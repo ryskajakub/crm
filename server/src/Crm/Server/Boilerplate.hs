@@ -28,6 +28,7 @@ import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.PhotoMeta as PM
 import qualified Crm.Shared.Photo as P
 import qualified Crm.Shared.ExtraField as EF
+import qualified Crm.Shared.Login as L
 import Crm.Shared.MyMaybe
 
 deriveAll ''C.Company "PFCompany"
@@ -207,4 +208,11 @@ instance JS.JSONSchema MK.MachineKindSpecific where
 instance ToJSON MK.MachineKindSpecific where
   toJSON = fromJust . showToFay
 instance FromJSON MK.MachineKindSpecific where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema L.Login where
+  schema = gSchema
+instance ToJSON L.Login where
+  toJSON = fromJust . showToFay
+instance FromJSON L.Login where
   parseJSON = fayInstance
