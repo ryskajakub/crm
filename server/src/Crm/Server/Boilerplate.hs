@@ -1,4 +1,4 @@
--{-# OPTIONS -fno-warn-orphans #-}
+{-# OPTIONS -fno-warn-orphans #-}
 
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}

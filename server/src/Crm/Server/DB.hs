@@ -25,7 +25,7 @@ module Crm.Server.DB (
   contactPersonsTable ,
   extraFieldSettingsTable ,
   extraFieldsTable ,
-  settingsTable ,
+  passwordTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -106,7 +106,7 @@ import Opaleye.Column (Column, Nullable)
 import Opaleye.Order (orderBy, asc, limit)
 import Opaleye.RunQuery (runQuery)
 import Opaleye.Operators (restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgStrictText, pgBool, PGFloat8, pgString)
+import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgStrictText, pgBool, PGFloat8, pgString, PGBytea)
 import qualified Opaleye.Aggregate as AGG
 import Opaleye.Join (leftJoin)
 import Opaleye.Distinct (distinct)
@@ -192,12 +192,10 @@ type ExtraFieldSettingsWriteTable = (Maybe DBInt, DBInt, DBInt, DBText)
 
 type ExtraFieldsTable = (DBInt, DBInt, DBText)
 
-type SettingsTable = (DBText, DBText)
+type PasswordTable = (Column PGBytea)
 
-settingsTable :: Table SettingsTable SettingsTable
-settingsTable = Table "settings" $ p2 (
-  required "key" ,
-  required "value" )
+passwordTable :: Table PasswordTable PasswordTable
+passwordTable = Table "password" $ p1 ( required "password" )
 
 extraFieldsTable :: Table ExtraFieldsTable ExtraFieldsTable
 extraFieldsTable = Table "extra_fields" $ p3 (

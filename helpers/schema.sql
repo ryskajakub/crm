@@ -1,6 +1,5 @@
-create table settings (
-  key varchar (500) primary key not null ,
-  value varchar (5000) not null );
+create table password (
+  password bytea not null );
 
 create table photos (
   id serial primary key ,

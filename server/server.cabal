@@ -63,6 +63,8 @@ Library
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , opaleye >= 0.3.1.1
+    , scrypt
     , tagged
     , tuple-th >= 0.2.4
     , lens
@@ -72,7 +74,6 @@ Library
     , json-schema
     , aeson >= 0.8 && < 0.9
     , fay == 0.21.2.1
-    , opaleye == 0.3
     , product-profunctors
     , postgresql-simple
     , safe
@@ -97,6 +98,7 @@ Test-Suite tests
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , scrypt
     , lens
     , fay
     , product-profunctors
@@ -104,7 +106,7 @@ Test-Suite tests
     , tuple
     , tuple-th
     , transformers
-    , opaleye == 0.3
+    , opaleye >= 0.3.1.1
     , tasty >= 0.7
     , tasty-hunit
     , tasty-smallcheck
@@ -131,3 +133,17 @@ Executable run-server
   build-depends:
     base >= 4.6 && < 4.8
     , server
+
+Executable gen-pass
+  default-language:  Haskell2010
+  ghc-options:       -Wall
+  main-is:           Main.hs
+  hs-source-dirs:    gen-pass
+  build-depends:
+    base >= 4.6 && < 4.8 ,
+    haskeline ,
+    transformers ,
+    opaleye ,
+    scrypt ,
+    text , 
+    server
