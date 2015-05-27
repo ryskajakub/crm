@@ -21,6 +21,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
+import Crm.Server.Handler (mkConstHandler')
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -32,7 +33,7 @@ employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   create = Just createEmployeeHandler }
 
 getEmployeeHandler :: Handler IdDependencies
-getEmployeeHandler = mkConstHandler (jsonO) $ withConnId (\connection theId -> do
+getEmployeeHandler = mkConstHandler' jsonO $ withConnId (\connection theId -> do
   rows <- liftIO $ runQuery connection (singleEmployeeQuery theId)
   let rowsMapped = fmap (\row -> sel2 $ (convert row :: EmployeeMapped)) rows
   singleRowOrColumn rowsMapped)

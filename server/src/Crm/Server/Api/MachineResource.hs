@@ -15,7 +15,7 @@ import Control.Monad (forM_)
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
+import Rest.Handler (ListHandler, Handler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Machine as M
@@ -27,6 +27,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate)
+import Crm.Server.Handler (mkInputHandler', mkConstHandler', mkListing')
 
 import TupleTH
 
@@ -43,7 +44,7 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler (jsonI . jsonO) $ \(machine', linkedMachineId, extraFields) -> 
+machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, extraFields) -> 
     withConnId $ \conn recordId -> do
 
   let 
@@ -63,7 +64,7 @@ machineUpdate = mkInputHandler (jsonI . jsonO) $ \(machine', linkedMachineId, ex
   return ()
 
 machineSingle :: Handler IdDependencies
-machineSingle = mkConstHandler jsonO $ withConnId $ \conn id'' -> do
+machineSingle = mkConstHandler' jsonO $ withConnId $ \conn id'' -> do
   rows <- liftIO $ runQuery conn (machineDetailQuery id'')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
@@ -98,5 +99,5 @@ machineSingle = mkConstHandler jsonO $ withConnId $ \conn id'' -> do
     (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing (jsonO) (const $ do
+machineListing = mkListing' (jsonO) (const $ do
   ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)

@@ -15,7 +15,7 @@ import Control.Arrow (arr, first)
 import Rest.Resource (Resource, Void, schema, name, mkResourceId, get, update)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler, mkConstHandler, mkInputHandler)
+import Rest.Handler (Handler)
 
 import qualified Crm.Shared.MachineKind as MK
 
@@ -23,6 +23,7 @@ import Crm.Server.Helpers
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Handler (mkConstHandler', mkInputHandler')
 
 import qualified Crm.Shared.ExtraField as EF
 import qualified Crm.Shared.Api as A
@@ -38,7 +39,7 @@ resource = mkResourceId {
   update = Just updation }
 
 getter :: Handler Dependencies
-getter = mkConstHandler jsonO $ do
+getter = mkConstHandler' jsonO $ do
   connection <- ask
   let 
     machineKindsEnums = fst `fmap` MK.machineKinds
@@ -51,7 +52,7 @@ getter = mkConstHandler jsonO $ do
     return (kind, fieldsMapped)
 
 updation :: Handler Dependencies
-updation = mkInputHandler jsonI $ \allSettings -> do
+updation = mkInputHandler' jsonI $ \allSettings -> do
   connection <- ask 
   let
     s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]

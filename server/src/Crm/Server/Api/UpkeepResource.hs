@@ -20,7 +20,7 @@ import Rest.Types.Error (Reason(NotAllowed))
 import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkListing, Handler, mkConstHandler, mkInputHandler)
+import Rest.Handler (ListHandler, Handler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Upkeep as U
@@ -34,6 +34,7 @@ import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', createDelet
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Handler (mkInputHandler', mkConstHandler', mkListing')
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
@@ -66,7 +67,7 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just upkeepCompanyMachines }
 
 updateUpkeepHandler :: Handler IdDependencies
-updateUpkeepHandler = mkInputHandler (jsonO . jsonI) (\(upkeep,machines,employeeId) -> let 
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) (\(upkeep,machines,employeeId) -> let 
   upkeepTriple = (upkeep, machines, toMaybe employeeId)
   in withConnId (\connection upkeepId ->
     liftIO $ updateUpkeep connection (U.UpkeepId upkeepId) upkeepTriple))
@@ -88,12 +89,12 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   return ()
 
 upkeepListing :: ListHandler Dependencies
-upkeepListing = mkListing jsonO (const $ do
+upkeepListing = mkListing' jsonO (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn expandedUpkeepsQuery
   return $ mapUpkeeps rows) 
 
 upkeepsPlannedListing :: ListHandler Dependencies
-upkeepsPlannedListing = mkListing jsonO (const $ do
+upkeepsPlannedListing = mkListing' jsonO (const $ do
   conn <- ask
   rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
   return $ map (\row -> let
@@ -106,7 +107,7 @@ upkeepSchema = S.withListing UpkeepsAll (S.named [
   (A.single, S.singleBy readMay')])
     
 upkeepCompanyMachines :: Handler IdDependencies
-upkeepCompanyMachines = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
+upkeepCompanyMachines = mkConstHandler' jsonO $ withConnId (\conn upkeepId -> do
   upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepId)
   upkeep <- singleRowOrColumn upkeeps
   machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepId conn

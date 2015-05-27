@@ -35,11 +35,12 @@ import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Handler (mkInputHandler', mkListing')
 
 import TupleTH (proj)
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler (jsonO . jsonI) 
+createMachineHandler = mkInputHandler' (jsonO . jsonI) 
     (\(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
   contactPersonId' = toMaybe contactPersonId
   in withConnId (\connection companyId -> 
@@ -85,7 +86,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
   return machineId 
 
 listing :: ListHandler IdDependencies
-listing = mkListing jsonO $ const $ withConnId $ \connection companyId -> do
+listing = mkListing' jsonO $ const $ withConnId $ \connection companyId -> do
   otherMachines <- liftIO $ runQuery connection (otherMachinesInCompanyQuery companyId)
   let 
     machinesMapped = convert otherMachines :: [MachineMapped]

@@ -8,7 +8,7 @@ import Opaleye.PGTypes (pgInt4)
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (fileI, jsonO)
-import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
+import Rest.Handler (Handler, ListHandler)
 
 import Control.Monad.IO.Class (liftIO)
 
@@ -18,6 +18,7 @@ import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers (withConnId, readMay')
 import Crm.Server.Boilerplate ()
+import Crm.Server.Handler (mkInputHandler', mkListing')
 
 photoResource :: Resource IdDependencies IdDependencies UrlId () Void
 photoResource = mkResourceId {
@@ -27,13 +28,13 @@ photoResource = mkResourceId {
   list = const listPhotoHandler }
 
 addPhotoHandler :: Handler IdDependencies
-addPhotoHandler = mkInputHandler (fileI . jsonO) (\photo -> withConnId (\connection machineId -> do 
+addPhotoHandler = mkInputHandler' (fileI . jsonO) (\photo -> withConnId (\connection machineId -> do 
   newPhotoIds <- liftIO $ addMachinePhoto connection machineId photo
   newPhotoId <- singleRowOrColumn newPhotoIds
   _ <- liftIO $ runInsert connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineId) 
   return $ P.PhotoId newPhotoId))
 
 listPhotoHandler :: ListHandler IdDependencies
-listPhotoHandler = mkListing (jsonO) $ const $ withConnId (\conn machineId -> do 
+listPhotoHandler = mkListing' jsonO $ const $ withConnId (\conn machineId -> do 
   rows <- liftIO $ runQuery conn (machinePhotosByMachineId machineId)
   return $ (convert rows :: [PhotoMetaMapped]))

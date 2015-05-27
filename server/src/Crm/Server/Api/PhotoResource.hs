@@ -14,6 +14,7 @@ import qualified Crm.Shared.Api as A
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers
+import Crm.Server.Handler (mkConstHandler')
 
 photoResource :: Resource Dependencies IdDependencies UrlId Void Void
 photoResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -29,7 +30,7 @@ removeHandler = deleteRows' [
   flip deletePhoto ]
 
 getPhotoHandler :: Handler IdDependencies
-getPhotoHandler = mkConstHandler (fileO) $ withConnId (\conn photoId -> do
+getPhotoHandler = mkConstHandler' fileO $ withConnId (\conn photoId -> do
   photo <- liftIO $ getMachinePhoto conn photoId
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoId)
   photoMeta <- singleRowOrColumn photoMetas

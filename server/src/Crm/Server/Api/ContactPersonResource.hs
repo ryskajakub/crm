@@ -8,7 +8,7 @@ import Data.Tuple.All (sel1, sel2, sel3)
 
 import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
-import Rest.Handler (Handler, mkConstHandler)
+import Rest.Handler (Handler)
 import Rest.Dictionary.Combinators (jsonO)
 
 import qualified Crm.Shared.Api as A
@@ -18,6 +18,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
+import Crm.Server.Handler (mkConstHandler')
 
 resource :: Resource Dependencies IdDependencies UrlId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
@@ -27,7 +28,7 @@ resource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just getHandler }
 
 getHandler :: Handler IdDependencies
-getHandler = mkConstHandler jsonO $ withConnId $ \connection theId -> do
+getHandler = mkConstHandler' jsonO $ withConnId $ \connection theId -> do
   rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
   (cp, company) <- singleRowOrColumn rows
   return $ (sel3 $ (convert cp :: ContactPersonMapped), sel1 $ (convert company :: CompanyMapped))

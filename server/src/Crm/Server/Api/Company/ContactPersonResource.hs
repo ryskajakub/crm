@@ -23,9 +23,10 @@ import Crm.Server.Helpers (withConnId)
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Handler (mkInputHandler', mkListing')
 
 createContactPersonHandler :: Handler IdDependencies
-createContactPersonHandler = mkInputHandler (jsonO . jsonI) (\contactPerson -> 
+createContactPersonHandler = mkInputHandler' (jsonO . jsonI) (\contactPerson -> 
     withConnId (\connection companyId -> liftIO $ do
   _ <- runInsert
     connection
@@ -42,7 +43,7 @@ contactPersonResource = mkResourceId {
   create = Just createContactPersonHandler }
 
 listing :: ListHandler IdDependencies 
-listing = mkListing (jsonO) (const $ withConnId (\connection theId -> do
+listing = mkListing' jsonO (const $ withConnId (\connection theId -> do
   rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery theId)
   let rowsMapped = (\x -> (sel1 x, sel3 x)) `fmap` (convert rawRows :: [ContactPersonMapped])
   return rowsMapped))

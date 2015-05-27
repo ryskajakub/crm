@@ -44,7 +44,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
-import Crm.Server.Handler (mkConstHandler')
+import Crm.Server.Handler (mkConstHandler', mkInputHandler', mkOrderedListing')
 
 import Safe (minimumMay, readMay)
 
@@ -61,7 +61,7 @@ import Control.Monad.Error.Class (throwError)
 data MachineMid = NextServiceListing | MapListing
 
 createCompanyHandler :: Handler Dependencies
-createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinates') -> do
+createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinates') -> do
   let coordinates = toMaybe coordinates'
   connection <- ask  
   ids <- liftIO $ runInsertReturning 
@@ -112,7 +112,7 @@ unsortedResult = do
     return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays, toMyMaybe $ $(proj 3 2) companyRecord)
 
 listing :: ListHandler Dependencies
-listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
+listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
   let 
     order = rawOrder >>= readMay
     direction = rawDirection >>= readMay

@@ -31,9 +31,10 @@ import Crm.Server.Helpers
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
+import Crm.Server.Handler (mkInputHandler', mkListing', mkConstHandler')
 
 companyUpkeepsListing :: ListHandler IdDependencies
-companyUpkeepsListing = mkListing jsonO (const $ withConnId (\conn id'' -> do
+companyUpkeepsListing = mkListing' jsonO (const $ withConnId (\conn id'' -> do
   rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
   let 
     mappedResults = mapResultsToList 
@@ -54,7 +55,7 @@ companyUpkeepsListing = mkListing jsonO (const $ withConnId (\conn id'' -> do
     (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
 
 getUpkeep :: Handler IdDependencies
-getUpkeep = mkConstHandler jsonO $ withConnId (\conn upkeepId -> do
+getUpkeep = mkConstHandler' jsonO $ withConnId (\conn upkeepId -> do
   rows <- liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId
   let result = mapUpkeeps rows
   singleRowOrColumn (map (\x -> (sel2 x, sel3 x, sel4 x)) result))
@@ -75,7 +76,7 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   return upkeepId
 
 createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler (jsonO . jsonI) (\newUpkeep -> let 
+createUpkeepHandler = mkInputHandler' (jsonO . jsonI) (\newUpkeep -> let 
   (_,_,selectedEmployeeId) = newUpkeep
   newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
   in withConnId (\connection _ ->
