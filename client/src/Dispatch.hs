@@ -3,12 +3,15 @@
 
 module Dispatch where
 
-import Prelude hiding (span, div, elem)
+import Prelude hiding (span, div, elem, id)
+import qualified Prelude as P
 import Data.Var (Var, newVar, subscribeAndRead)
 import Data.LocalStorage
 import Data.Defined (fromDefined)
 import Data.Text (fromString, (<>), showInt)
 import Data.Maybe (onJust, joinMaybe)
+
+import HaskellReact
 
 import Crm.Router (startRouter)
 import qualified Crm.Component.Navigation as Navigation
@@ -23,6 +26,7 @@ import Crm.Page.Employee (employeePage, newEmployeeForm, employeeEdit)
 import Crm.Page.MachineSchema (schema)
 import Crm.Page.NotFound (notFound)
 import Crm.Page.Dashboard (dashboard)
+import Crm.Page.Login (login)
 import qualified Crm.Data.Data as D
 import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.UpkeepData as UD
@@ -33,6 +37,7 @@ import qualified Crm.Shared.MachineType as MT
 import qualified Crm.Shared.MachineKind as MK
 import qualified Crm.Shared.UpkeepSequence as US
 
+
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
 
@@ -40,28 +45,29 @@ main' :: Fay ()
 main' = do
   appVar' <- appVar
   router <- startRouter appVar'
-  _ <- subscribeAndRead appVar' (\appState -> let
-    newElementAndCallback = case D.navigation appState of
-      D.Dashboard companies -> dashboard router companies
-      D.FrontPage ordering data' -> emptyCallback 
+  _ <- subscribeAndRead appVar' $ \appState -> let
+    n = Navigation.navigation' router
+    in case D.navigation appState of
+      D.Dashboard companies -> n $ dashboard router companies
+      D.FrontPage ordering data' -> n $ emptyCallback 
         (companiesList router (fst ordering) (snd ordering) data')
-      D.NotFound -> emptyCallback $ notFound
-      D.CompanyDetail companyId' company' editing' machines' ->
+      D.NotFound -> n $ emptyCallback $ notFound
+      D.CompanyDetail companyId' company' editing' machines' -> n $
         emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
-      D.CompanyNew company' -> emptyCallback (companyNew router appVar' company')
+      D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')
       D.MachineScreen (MD.MachineData machine machineSpecific machineTypeTuple operationStartCalendar 
           companyPersonId companyPersons v otherMachineId otherMachines extraFields machinePageMode) ->
-        emptyCallback $ case machinePageMode of
+        n $ emptyCallback $ case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing _ photos upkeeps companyId) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine machineSpecific
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons v 
               otherMachineId otherMachines extraFields
-          Right (MD.MachineNew companyId maybeMachineTypeId) ->
+          Right (MD.MachineNew companyId maybeMachineTypeId) -> 
             machineNew router appVar' operationStartCalendar machine machineSpecific
               companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons v 
               otherMachineId otherMachines extraFields
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
-        upkeepDatePicker employees selectedEmployee validation upkeepPageMode) ->
+        upkeepDatePicker employees selectedEmployee validation upkeepPageMode) -> n $
           emptyCallback $ case upkeepPageMode of
             Left (UD.UpkeepClose upkeepId companyId) ->
               upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
@@ -69,24 +75,27 @@ main' = do
             Right (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
                 upkeepIdentification employees selectedEmployee validation
-      D.UpkeepHistory upkeeps' companyId -> emptyCallback $ upkeepHistory upkeeps' companyId router
-      D.PlannedUpkeeps plannedUpkeeps' -> emptyCallback
+      D.UpkeepHistory upkeeps' companyId -> n $ emptyCallback $ upkeepHistory upkeeps' companyId router
+      D.PlannedUpkeeps plannedUpkeeps' -> n $ emptyCallback
         (plannedUpkeeps router plannedUpkeeps')
-      D.MachineTypeList machineTypes -> emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineTypeId machineType -> 
+      D.MachineTypeList machineTypes -> n $ emptyCallback (machineTypesList router machineTypes)
+      D.MachineTypeEdit machineTypeId machineType -> n $
         machineTypeForm router appVar' machineTypeId machineType
-      D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> machineTypePhase1Form 
+      D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> n $ machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
-      D.EmployeeList employees -> emptyCallback $ employeePage router employees
-      D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> 
+      D.EmployeeList employees -> n $ emptyCallback $ employeePage router employees
+      D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> n $
         emptyCallback $ employeeEdit employeeId router employee appVar'
-      D.EmployeeManage (ED.EmployeeData employee _) -> emptyCallback $ newEmployeeForm router employee appVar'
-      D.ContactPersonPage contactPerson identification companyId -> 
+      D.EmployeeManage (ED.EmployeeData employee _) -> n $ 
+        emptyCallback $ newEmployeeForm router employee appVar'
+      D.ContactPersonPage contactPerson identification companyId -> n $
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
-      D.ContactPersonList contactPersons -> emptyCallback $ contactPersonsList router contactPersons
-      D.ExtraFields editedKind allSettings -> emptyCallback $ machineKindSettings appVar' editedKind allSettings
-      D.MachinesSchema machines -> schema machines
-    in Navigation.navigation' router newElementAndCallback )
+      D.ContactPersonList contactPersons -> n $ emptyCallback $ contactPersonsList router contactPersons
+      D.ExtraFields editedKind allSettings -> n $ 
+        emptyCallback $ machineKindSettings appVar' editedKind allSettings
+      D.MachinesSchema machines -> n $ schema machines
+      D.Login -> simpleReactBody' body callback where
+        (body, callback) = emptyCallback login
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))
@@ -124,7 +133,7 @@ loadFromLocalStorage = do
             verifiedUSs = foldl (\acc elem -> case (acc, elem) of
               (Just acc', Just e) -> Just $ acc' ++ [e]
               _ -> Nothing) (Just []) maybeBrokenUSs
-          return $ maybe [] id verifiedUSs
+          return $ maybe [] P.id verifiedUSs
         Nothing -> return []
       return $ Just (machineType, seqs, mtId')
     _ -> return Nothing
