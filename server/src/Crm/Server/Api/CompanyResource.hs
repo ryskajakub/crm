@@ -76,7 +76,6 @@ createCompanyHandler = mkInputHandler (jsonO . jsonI) $ \(newCompany, coordinate
 mapListing :: ListHandler Dependencies
 mapListing = mkListing jsonO (const $ unsortedResult)
 
-
 addNextDates :: (a -> M.MachineId)
              -> (a -> M.Machine)
              -> a

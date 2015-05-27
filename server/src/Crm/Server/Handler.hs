@@ -93,6 +93,7 @@ mkConstHandler' d a = mkGenHandler' d (const a)
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 mkInputHandler' d a = mkGenHandler' d (a . input)
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
+mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode String where
   toResponseCode = const 401
