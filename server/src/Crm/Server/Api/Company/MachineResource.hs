@@ -19,7 +19,7 @@ import Data.Text (Text)
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
+import Rest.Handler (Handler, ListHandler)
 import Rest.Types.Error (Reason)
 
 import qualified Crm.Shared.UpkeepSequence as US

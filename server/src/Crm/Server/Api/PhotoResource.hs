@@ -6,7 +6,7 @@ import Opaleye.RunQuery (runQuery)
 import Rest.Resource (Resource, Void, schema, name, get, mkResourceReaderWith, remove)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (fileO)
-import Rest.Handler (Handler, mkConstHandler)
+import Rest.Handler (Handler)
 
 import Control.Monad.IO.Class (liftIO)
 

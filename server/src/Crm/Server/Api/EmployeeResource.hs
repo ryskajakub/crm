@@ -12,7 +12,7 @@ import Data.Tuple.All (sel2)
 import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get, update)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, mkListing, mkInputHandler, Handler, mkConstHandler)
+import Rest.Handler (ListHandler, Handler)
 
 import qualified Crm.Shared.Api as A
 import qualified Crm.Shared.Employee as E
@@ -21,7 +21,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
-import Crm.Server.Handler (mkConstHandler')
+import Crm.Server.Handler (mkConstHandler', mkInputHandler', mkListing')
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -45,14 +45,14 @@ updateEmployeeHandler = let
   in updateRows employeesTable readToWrite
 
 createEmployeeHandler :: Handler Dependencies
-createEmployeeHandler = mkInputHandler (jsonO . jsonI) (\newEmployee -> do
+createEmployeeHandler = mkInputHandler' (jsonO . jsonI) (\newEmployee -> do
   conn <- ask 
   _ <- liftIO $ runInsert conn employeesTable (Nothing, pgStrictText $ E.name newEmployee,
     pgStrictText $ E.contact newEmployee, pgStrictText $ E.capabilities newEmployee)
   return () )
 
 employeesListing :: ListHandler Dependencies 
-employeesListing = mkListing (jsonO) (const $
+employeesListing = mkListing' (jsonO) (const $
   ask >>= \conn -> do 
     rawRows <- liftIO $ runQuery conn employeesQuery
     let rowsMapped = convert rawRows :: [EmployeeMapped]

@@ -27,8 +27,7 @@ import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceRead
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI, mkHeader, jsonE)
 import Rest.Dictionary.Types (Header(..))
-import Rest.Handler (ListHandler, mkOrderedListing, mkInputHandler, Handler, mkConstHandler, mkListing,
-  mkHandler, header)
+import Rest.Handler (ListHandler, Handler)
 import Rest.Types.Error (Reason(..), DataError(..), DomainReason(..), ToResponseCode, toResponseCode)
 
 import qualified Crm.Shared.Company as C
@@ -44,7 +43,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
-import Crm.Server.Handler (mkConstHandler', mkInputHandler', mkOrderedListing')
+import Crm.Server.Handler (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
 
 import Safe (minimumMay, readMay)
 
@@ -74,7 +73,7 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
   return $ C.CompanyId id'
 
 mapListing :: ListHandler Dependencies
-mapListing = mkListing jsonO (const $ unsortedResult)
+mapListing = mkListing' jsonO (const $ unsortedResult)
 
 addNextDates :: (a -> M.MachineId)
              -> (a -> M.Machine)

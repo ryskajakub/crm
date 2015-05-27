@@ -14,7 +14,7 @@ import Data.Tuple.All (sel1, sel3)
 import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (mkInputHandler, Handler, mkListing, ListHandler)
+import Rest.Handler (Handler, ListHandler)
 
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.Api as A

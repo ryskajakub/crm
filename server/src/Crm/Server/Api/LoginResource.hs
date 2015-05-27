@@ -16,13 +16,13 @@ import Rest.Types.Error (Reason(..), DomainReason(..), ToResponseCode, toRespons
 import Rest.Resource (Resource, Void, schema, name, mkResourceId, statics)
 import qualified Rest.Schema as S
 import Rest.Dictionary.Combinators (jsonE, jsonI)
-import Rest.Handler (Handler)
+import Rest.Handler (Handler, mkInputHandler)
 
 import Crm.Server.Helpers 
 import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
-import Crm.Server.Handler (mkInputHandler')
+import Crm.Server.Handler ()
 
 import Data.Text.Encoding (encodeUtf8)
 
@@ -38,7 +38,7 @@ resource = mkResourceId {
   name = A.login } 
 
 login :: Handler Dependencies
-login = mkInputHandler' (jsonE . jsonI) $ \login -> do
+login = mkInputHandler (jsonE . jsonI) $ \login -> do
   connection <- ask
   dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
   let dbPassword' = headMay dbPasswords
@@ -54,6 +54,3 @@ login = mkInputHandler' (jsonE . jsonI) $ \login -> do
     Nothing -> throwPasswordError 
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason
-
-instance ToResponseCode String where
-  toResponseCode = const 401
