@@ -140,28 +140,8 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         _ -> LT
       ) unsortedResult')
 
-
-verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason String) m ()
-verifyPassword connection (Password inputPassword) = do
-  dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
-  let dbPassword' = headMay dbPasswords
-  case dbPassword' of
-    Just dbPassword -> 
-      if passwordVerified
-        then return ()
-        else throwPasswordError "wrong password"
-      where
-      passwordVerified = CS.verifyPass' passwordCandidate password
-      password = CS.EncryptedPass dbPassword
-      passwordCandidate = CS.Pass . encodeUtf8 $ inputPassword
-    Nothing -> throwPasswordError 
-      "password database in inconsistent state, there is either 0 or more than 1 passwords"
-    where throwPasswordError = throwError . CustomReason . DomainReason
   
 
-
-data SessionId = Password {
-  password :: Text }
 
 cookieHeader = mkHeader $ Header ["Cookie"] $ \headers' -> case headers' of
   [Just cookie] -> Right . Password . pack $ cookie
