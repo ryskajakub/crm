@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 
-module Crm.Server.Api.Handler where
+module Crm.Server.Handler where
 
 import Database.PostgreSQL.Simple (Connection)
 
@@ -56,9 +56,16 @@ import Control.Monad.Error.Class (throwError)
 
 data SessionId = Password { password :: Text }
 
+class HasConnection a where
+  getConnection :: a -> Connection
+instance HasConnection (Connection, b) where
+  getConnection = fst
+instance HasConnection Connection where
+  getConnection = id
+
 mkGenHandler' d a = mkGenHandler (jsonE . cookieHeader . d) $ \env -> do
   connection <- ask
-  verifyPassword connection (header env)
+  verifyPassword (getConnection connection) (header env)
   a env
   where
   cookieHeader = mkHeader $ Header ["Cookie"] $ \headers' -> case headers' of

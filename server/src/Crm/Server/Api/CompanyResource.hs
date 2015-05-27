@@ -44,6 +44,7 @@ import Crm.Server.Boilerplate ()
 import Crm.Server.Types
 import Crm.Server.DB
 import Crm.Server.Core (nextServiceDate, Planned (Planned, Computed))
+import Crm.Server.Handler (mkConstHandler')
 
 import Safe (minimumMay, readMay)
 
@@ -140,24 +141,15 @@ listing = mkOrderedListing jsonO (\(_, rawOrder, rawDirection) -> do
         _ -> LT
       ) unsortedResult')
 
-  
-
-
-cookieHeader = mkHeader $ Header ["Cookie"] $ \headers' -> case headers' of
-  [Just cookie] -> Right . Password . pack $ cookie
-  _ -> Left . ParseError $ "data not parsed correctly"
-  
 
 singleCompany :: Handler IdDependencies
-singleCompany = mkHandler (jsonE . cookieHeader . jsonO) $ \env ->
-  withConnId $ \conn companyId -> do
-    verifyPassword conn $ header env
-    rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
-    companyRow <- singleRowOrColumn rows
-    machines <- liftIO $ runMachinesInCompanyQuery companyId conn
-    let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-    nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
-    return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates)
+singleCompany = mkConstHandler' jsonO $ withConnId $ \conn companyId -> do
+  rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
+  companyRow <- singleRowOrColumn rows
+  machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+  let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
+  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
+  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates)
 
 updateCompany :: Handler IdDependencies
 updateCompany = let
@@ -183,6 +175,3 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = S.withListing NextServiceListing $ S.named [
     (A.single, S.singleBy readMay') ,
     (A.map', S.listing MapListing) ] }
-
-instance ToResponseCode String where
-  toResponseCode = const 401
