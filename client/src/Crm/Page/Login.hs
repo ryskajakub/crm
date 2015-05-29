@@ -4,8 +4,8 @@
 module Crm.Page.Login (
   login ) where
 
-import Data.Text    (fromString, Text, length)
-import Prelude      hiding (div, span, id, length)
+import Data.Text (fromString)
+import Prelude   hiding (div, span, id, length)
 
 import HaskellReact
 

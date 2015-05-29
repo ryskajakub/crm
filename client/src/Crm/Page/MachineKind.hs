@@ -57,12 +57,12 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
     in D.modifyState appVar $ \navig -> navig { D.allSettings = newAllSettings }
 
   displayRow (index, positionInOrdering, (_, extraFieldData)) = mkRow where
-    mkRow = mkGrid [
+    mkRow = mkRowMarkup [
       orderingControls ,
       fieldLabel ,
       input' ,
       removeButton ]
-    mkGrid = div' ((class' "form-group") { key = Defined $ "key-" <> showInt index })
+    mkRowMarkup = div' ((class' "form-group") { key = Defined $ "key-" <> showInt index })
     orderingControls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow where
       changeOrder :: Bool -> [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]
       changeOrder down = let

@@ -10,6 +10,7 @@ module Crm.Router (
   link ,
   routeToText ,
 
+  login ,
   dashboard ,
   frontPage ,
   defaultFrontPage ,
@@ -41,7 +42,7 @@ import           Data.Function               (fmap)
 import           Data.Maybe                  (fromJust, onJust, joinMaybe)
 
 import qualified HaskellReact.BackboneRouter as BR
-import           HaskellReact                hiding (id)
+import           HaskellReact                hiding (id, p)
 import           Moment                      (now, requireMoment, day)
 
 import qualified Crm.Shared.Machine          as M
@@ -62,7 +63,7 @@ import qualified Crm.Data.Data               as D
 import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
 import           Crm.Server 
-import           Crm.Helpers                 (parseSafely, showCompanyId, displayDate, rmap)
+import           Crm.Helpers                 (parseSafely, displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 
@@ -128,8 +129,7 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
 prepareUnitRouteAndMkHandler :: Text
                              -> RouteAndMkHandler ()
 prepareUnitRouteAndMkHandler t = (const . CrmRoute $ t, (t, mkHandler)) where
-  mkHandler appStateModifier appState _ = 
-    appStateModifier ()
+  mkHandler appStateModifier = const $ const $ appStateModifier ()
 
 
 -- internal helpers
@@ -157,6 +157,7 @@ notCheckedMachines' machines upkeepMachines = let
       _ -> acc
   in foldl addNotCheckedMachine [] machines
 
+
 -- url encodables for id newtypes over int
 
 companyIdEncodable :: URLEncodable C.CompanyId
@@ -170,9 +171,6 @@ machineIdEncodable = mkSimpleURLEncodable M.getMachineId M.MachineId
 
 machineTypeIdEncodable :: URLEncodable MT.MachineTypeId
 machineTypeIdEncodable = mkSimpleURLEncodable MT.getMachineTypeId MT.MachineTypeId
-
-employeeIdEncodable :: URLEncodable E.EmployeeId
-employeeIdEncodable = mkSimpleURLEncodable E.getEmployeeId E.EmployeeId
 
 contactPersonIdEncodable :: URLEncodable CP.ContactPersonId
 contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.ContactPersonId
@@ -434,8 +432,8 @@ startRouter appVar = startedRouter where
         machineQuadruple = (machine, "")
       fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
         fetchExtraFieldSettings $ \efSettings -> let
-          extraFields' = fromJust $ lookup machineKind efSettings
-          extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields'
+          extraFields'' = fromJust $ lookup machineKind efSettings
+          extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
           in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId) ,
@@ -462,7 +460,7 @@ startRouter appVar = startedRouter where
     useHandler machineDetail' $ \machineId ->
       fetchMachine machineId
         $ \(companyId, machine, machineTypeId, machineTypeTuple, 
-            machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields') ->
+            machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields'') ->
           fetchMachinePhotos machineId $ \photos ->
             let 
               machineDouble = (machine, "")
@@ -470,12 +468,12 @@ startRouter appVar = startedRouter where
             in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
                 machineDouble machineSpecificData machineTypeTuple (startDateInCalendar, False)
-                  contactPersonId cps V.new otherMachineId otherMachines extraFields'
+                  contactPersonId cps V.new otherMachineId otherMachines extraFields''
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display machineTypeId photos upkeeps companyId) ,
     useHandler plannedUpkeeps' $ const $
-      fetchPlannedUpkeeps $ \plannedUpkeeps' -> let
-        newNavigation = D.PlannedUpkeeps plannedUpkeeps'
+      fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
+        newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation } ,
     useHandler upkeepDetail' $ \upkeepId -> 

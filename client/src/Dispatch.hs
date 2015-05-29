@@ -3,38 +3,38 @@
 
 module Dispatch where
 
-import Prelude hiding (span, div, elem, id)
-import qualified Prelude as P
-import Data.Var (Var, newVar, subscribeAndRead)
-import Data.LocalStorage
-import Data.Defined (fromDefined)
-import Data.Text (fromString, (<>), showInt)
-import Data.Maybe (onJust, joinMaybe)
+import           Prelude                   hiding (span, div, elem, id)
+import qualified Prelude                   as P
+import           Data.Var                  (Var, newVar, subscribeAndRead)
+import           Data.LocalStorage
+import           Data.Defined              (fromDefined)
+import           Data.Text                 (fromString, (<>), showInt)
+import           Data.Maybe                (onJust, joinMaybe)
 
-import HaskellReact
+import           HaskellReact              hiding (label)
 
-import Crm.Router (startRouter)
-import qualified Crm.Component.Navigation as Navigation
-import Crm.Page.Company (companiesList, companyDetail, companyNew)
-import Crm.Page.ContactPerson (contactPersonForm, contactPersonsList)
-import Crm.Page.Machine (machineNew, machineDetail)
-import Crm.Page.MachineKind (machineKindSettings)
-import Crm.Page.Upkeep (upkeepNew, plannedUpkeeps, upkeepDetail)
-import Crm.Page.UpkeepHistory (upkeepHistory)
-import Crm.Page.MachineType (machineTypesList, machineTypeForm, machineTypePhase1Form)
-import Crm.Page.Employee (employeePage, newEmployeeForm, employeeEdit)
-import Crm.Page.MachineSchema (schema)
-import Crm.Page.NotFound (notFound)
-import Crm.Page.Dashboard (dashboard)
-import Crm.Page.Login (login)
-import qualified Crm.Data.Data as D
-import qualified Crm.Data.MachineData as MD
-import qualified Crm.Data.UpkeepData as UD
-import qualified Crm.Data.EmployeeData as ED
-import Crm.Helpers (parseSafely)
+import           Crm.Router                (startRouter)
+import qualified Crm.Component.Navigation  as Navigation
+import           Crm.Page.Company          (companiesList, companyDetail, companyNew)
+import           Crm.Page.ContactPerson    (contactPersonForm, contactPersonsList)
+import           Crm.Page.Machine          (machineNew, machineDetail)
+import           Crm.Page.MachineKind      (machineKindSettings)
+import           Crm.Page.Upkeep           (upkeepNew, plannedUpkeeps, upkeepDetail)
+import           Crm.Page.UpkeepHistory    (upkeepHistory)
+import           Crm.Page.MachineType      (machineTypesList, machineTypeForm, machineTypePhase1Form)
+import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit)
+import           Crm.Page.MachineSchema    (schema)
+import           Crm.Page.NotFound         (notFound)
+import           Crm.Page.Dashboard        (dashboard)
+import           Crm.Page.Login            (login)
+import qualified Crm.Data.Data             as D
+import qualified Crm.Data.MachineData      as MD
+import qualified Crm.Data.UpkeepData       as UD
+import qualified Crm.Data.EmployeeData     as ED
+import           Crm.Helpers               (parseSafely)
 
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineType    as MT
+import qualified Crm.Shared.MachineKind    as MK
 import qualified Crm.Shared.UpkeepSequence as US
 
 

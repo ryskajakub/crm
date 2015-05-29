@@ -1,6 +1,6 @@
 module Crm.Data.Data where
 
-import Data.Var (Var, modify, modifyWith)
+import Data.Var (Var, modify)
 import Data.Text (Text)
 
 import qualified Crm.Shared.Employee as E
