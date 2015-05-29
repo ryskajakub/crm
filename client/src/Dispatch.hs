@@ -94,8 +94,9 @@ main' = do
       D.ExtraFields editedKind allSettings -> n $ 
         emptyCallback $ machineKindSettings appVar' editedKind allSettings
       D.MachinesSchema machines -> n $ schema machines
-      D.Login -> simpleReactBody' body callback where
+      D.Login -> let
         (body, callback) = emptyCallback login
+        in simpleReactBody' body callback
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

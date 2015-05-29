@@ -38,7 +38,7 @@ import           Data.Text                   (fromString, showInt, Text, (<>))
 import           Prelude                     hiding (div, span) 
 import           Data.Var                    (Var, modify, get)
 import           Data.Function               (fmap)
-import           Data.Maybe                  (fromJust, onJust)
+import           Data.Maybe                  (fromJust, onJust, joinMaybe)
 
 import qualified HaskellReact.BackboneRouter as BR
 import           HaskellReact                hiding (id)
@@ -114,17 +114,15 @@ prepareRouteAndMkHandler :: Route a
 prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id/" <> postfix'
-  mkHandler appStateModifier appState  urlVariables = 
-    case parsedInt of
-      Just a -> appStateModifier a
-      Nothing | 
-        Just onIntParseFail' <- onIntParseFail urlEncodable ,
-        Just routeId <- onIntParseFail' headVariable
-          -> appStateModifier routeId
-      Nothing -> D.modifyState appState (const D.NotFound)
+  mkHandler appStateModifier appState urlVariables = 
+    case (parsedInt, alternativeRoute) of
+      (Just a, _) -> appStateModifier a
+      (Nothing, Just alternativeRouteId)  -> appStateModifier alternativeRouteId
+      _ -> D.modifyState appState (const D.NotFound)
       where
         headVariable = head urlVariables
         parsedInt = fromURL urlEncodable `onJust` (parseSafely headVariable)
+        alternativeRoute = joinMaybe $ (\f -> f headVariable) `onJust` onIntParseFail urlEncodable
   postfix' = maybe "" (\p -> "/" <> p) (postfix route)
 
 prepareUnitRouteAndMkHandler :: Text
@@ -202,6 +200,9 @@ machineTypesList' = prepareUnitRouteAndMkHandler "other/machine-types-list"
 
 employees' :: RouteAndMkHandler ()
 employees' = prepareUnitRouteAndMkHandler "employees"
+
+login' :: RouteAndMkHandler ()
+login' = prepareUnitRouteAndMkHandler "login"
 
 
 -- routes and mk handlers with one parameter
@@ -286,6 +287,9 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
   _ -> "NextService") <> "/" <> (case direction of
   DIR.Asc -> "Asc"
   DIR.Desc -> "Desc")
+
+login :: CrmRoute
+login = fst login' ()
 
 newCompany :: CrmRoute
 newCompany = fst companyDetail' leftNew
@@ -383,6 +387,8 @@ startRouter appVar = startedRouter where
         modify appVar $ \appState -> appState { D.navigation = 
           D.FrontPage (order, direction) data' })]
   routes = [
+    useHandler login' $ const $ 
+      modify appVar $ \appState -> appState { D.navigation = D.Login } ,
     useHandler dashboard' $ const $
       fetchCompaniesForMap $ \companiesTriple -> 
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple } ,
@@ -503,4 +509,4 @@ startRouter appVar = startedRouter where
         Left _ -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
         Right employeeId -> 
           fetchEmployee employeeId $ \employee ->
-            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId)]
+            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ]
