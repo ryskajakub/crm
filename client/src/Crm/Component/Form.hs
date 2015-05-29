@@ -98,7 +98,7 @@ textarea :: InputState -> Bool -> DisplayValue -> (Text -> Fay ()) -> DOMElement
 textarea = textInput I.textarea
 
 textInput :: (Attributes -> I.InputAttributes -> DOMElement) 
-          -> InputState 
+          -> InputState
           -> Bool 
           -> DisplayValue 
           -> (Text -> Fay ()) 
