@@ -13,7 +13,7 @@ import           Data.Maybe                (onJust, joinMaybe)
 
 import           HaskellReact              hiding (label)
 
-import           Crm.Router                (startRouter)
+import           Crm.RoutesHandler         (startRouter)
 import qualified Crm.Component.Navigation  as Navigation
 import           Crm.Page.Company          (companiesList, companyDetail, companyNew)
 import           Crm.Page.ContactPerson    (contactPersonForm, contactPersonsList)
