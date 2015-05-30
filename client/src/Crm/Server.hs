@@ -146,9 +146,9 @@ postAjax t d c = inputAjax t c (InputRouteData d post)
 
 putAjax :: Text
         -> b
-        -> (a -> Fay ())
         -> Fay ()
-putAjax t d c = inputAjax t c (InputRouteData d put)
+        -> Fay ()
+putAjax t d c = inputAjax t (const c) (InputRouteData d put)
 
 getAjax :: Text
         -> (a -> Fay ())
@@ -165,53 +165,29 @@ deleteAjax :: Text
            -> Fay ()
 deleteAjax t c = passwordAjax t (const c) Nothing
 
-ajax' :: Defined a -- data to send
-      -> Text -- url
-      -> Text -- method PUT | POST
-      -> (b -> Fay ()) -- callback
-      -> Fay ()
-ajax' data' url method callback = undefined
-
-ajax :: a -- data to send
-     -> Text -- url
-     -> Text -- method PUT | POST
-     -> (b -> Fay ()) -- callback
-     -> Fay ()
-ajax data' = undefined
-
-doDelete :: Text
-         -> Fay ()
-         -> Fay ()
-doDelete url callback = ajax'
-  Undefined url delete (const callback)
-
 deleteCompany :: C.CompanyId
               -> Fay ()
               -> Fay ()
-deleteCompany companyId callback = doDelete
+deleteCompany companyId = deleteAjax
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
-  callback
 
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
              -> Fay ()
-deleteUpkeep upkeepId callback = doDelete
+deleteUpkeep upkeepId = deleteAjax
   (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
-  callback
 
 deleteMachine :: M.MachineId
               -> Fay ()
               -> Fay ()
-deleteMachine machineId callback = doDelete
+deleteMachine machineId = deleteAjax
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-  callback
 
 deletePhoto :: P.PhotoId
             -> Fay ()
             -> Fay ()
-deletePhoto pId callback = doDelete
+deletePhoto pId = deleteAjax
   (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId pId))
-  callback
 
 getPhoto :: P.PhotoId
          -> Text
@@ -380,51 +356,40 @@ updateEmployee :: E.EmployeeId
                -> E.Employee
                -> Fay ()
                -> Fay ()
-updateEmployee employeeId employee callback = ajax
-  employee
+updateEmployee employeeId employee = putAjax
   (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
-  put
-  (const callback)
+  employee
 
 updateContactPerson :: CP.ContactPersonId
                     -> CP.ContactPerson
                     -> Fay ()
                     -> Fay ()
-updateContactPerson cpId cp callback = ajax
-  cp
+updateContactPerson cpId cp = putAjax
   (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId cpId))
-  put
-  (const callback)
+  cp
 
 updateCompany :: C.CompanyId
               -> C.Company
               -> Maybe C.Coordinates
               -> Fay ()
               -> Fay ()
-updateCompany companyId company coordinates callback = ajax
-  (company, toMyMaybe coordinates)
+updateCompany companyId company coordinates = putAjax
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
-  put
-  (const $ callback)
+  (company, toMyMaybe coordinates)
 
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()
              -> Fay ()
-updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) callback = 
-  ajax
-    (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-    (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
-    put
-    (const callback)
+updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) = putAjax
+  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+  (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
 
 updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
                   -> Fay ()
                   -> Fay ()
-updateMachineType (machineTypeId, machineType, upkeepSequences) callback = ajax
-  (machineType, upkeepSequences)
+updateMachineType (machineTypeId, machineType, upkeepSequences) = putAjax
   (pack $ A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId machineTypeId))
-  put
-  (const callback)
+  (machineType, upkeepSequences)
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
@@ -432,50 +397,42 @@ updateMachine :: M.MachineId -- ^ machine id
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine linkedMachineId machineSpecificData callback = ajax
-  (machine, toMyMaybe linkedMachineId, machineSpecificData)
+updateMachine machineId machine linkedMachineId machineSpecificData = putAjax
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-  put
-  (const callback)
+  (machine, toMyMaybe linkedMachineId, machineSpecificData)
 
 saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
                        -> Fay ()
                        -> Fay ()
-saveExtraFieldSettings data' callback = ajax
-  data'
+saveExtraFieldSettings data' = putAjax
   (pack $ A.machineKind ++ "/()")
-  put
-  (const callback)
+  data'
 
 createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
              -> C.CompanyId -- ^ company id
              -> Fay ()
              -> Fay ()
-createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
-  ajax 
-    (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
-    post
-    (const callback)
+createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) companyId callback = postAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+  (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+  (const callback)
 
 createEmployee :: E.Employee
                -> Fay ()
                -> Fay ()
-createEmployee employee callback = passwordAjax
+createEmployee employee callback = postAjax
   (apiRoot <> (pack $ A.employees))
-  (const $ callback)
-  (Just $ InputRouteData employee post)
+  employee
+  (const callback)
 
 createContactPerson :: C.CompanyId
                     -> CP.ContactPerson
                     -> Fay ()
                     -> Fay ()
-createContactPerson companyId contactPerson callback =
-  ajax
-    contactPerson
-    (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
-    post
-    (const callback)
+createContactPerson companyId contactPerson callback = postAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
+  contactPerson
+  (const callback)
 
 uploadPhotoData :: File
                 -> M.MachineId
@@ -495,8 +452,6 @@ uploadPhotoMeta :: PM.PhotoMeta
                 -> P.PhotoId
                 -> Fay ()
                 -> Fay ()
-uploadPhotoMeta photoMeta photoId callback = ajax
-  photoMeta
+uploadPhotoMeta photoMeta photoId = putAjax
   (pack $ A.photoMeta ++ "/" ++ (show $ P.getPhotoId photoId))
-  put
-  (const callback)
+  photoMeta
