@@ -66,6 +66,7 @@ Library
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , base64-string
     , opaleye >= 0.3.1.1
     , scrypt
     , tagged
@@ -101,6 +102,7 @@ Test-Suite tests
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , base64-string
     , scrypt
     , lens
     , fay

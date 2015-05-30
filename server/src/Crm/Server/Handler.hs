@@ -54,6 +54,8 @@ import Data.Text.Encoding (encodeUtf8)
 import Rest.Types.Error (Reason(..), DomainReason(..))
 import Control.Monad.Error.Class (throwError)
 
+import qualified Codec.Binary.Base64.String as B64
+
 data SessionId = Password { password :: Text }
 
 class HasConnection a where
@@ -63,13 +65,13 @@ instance HasConnection (Connection, b) where
 instance HasConnection Connection where
   getConnection = id
 
-mkGenHandler' d a = mkGenHandler (jsonE . cookieHeader . d) $ \env -> do
+mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
   connection <- ask
   verifyPassword (getConnection connection) (header env)
   a env
   where
-  cookieHeader = mkHeader $ Header ["Cookie"] $ \headers' -> case headers' of
-    [Just cookie] -> Right . Password . pack $ cookie
+  authorizationHeader = mkHeader $ Header ["Authorization"] $ \headers' -> case headers' of
+    [Just authHeader] -> Right . Password . pack . B64.decode $ authHeader
     _ -> Left . ParseError $ "data not parsed correctly"
 
 verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason String) m ()
