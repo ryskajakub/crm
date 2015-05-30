@@ -388,7 +388,7 @@ startRouter appVar = startedRouter where
           D.FrontPage (order, direction) data' })]
   routes = [
     useHandler login' $ const $ 
-      modify appVar $ \appState -> appState { D.navigation = D.Login "" } ,
+      modify appVar $ \appState -> appState { D.navigation = D.Login "" False } ,
     useHandler dashboard' $ const $
       fetchCompaniesForMap $ \companiesTriple -> 
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple } ,

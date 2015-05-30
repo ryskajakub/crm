@@ -67,7 +67,9 @@ data NavigationState =
     allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] } |
   MachinesSchema {
     machines :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)] } |
-  Login { password :: Text }
+  Login { 
+    password :: Text ,
+    wrongPassword :: Bool }
 
 data AppState = AppState {
   navigation :: NavigationState ,

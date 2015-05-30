@@ -17,22 +17,34 @@ import qualified HaskellReact.Bootstrap as B
 import qualified Crm.Data.Data          as D
 import           Crm.Component.Form
 import           Crm.Router             (CrmRouter, navigate, defaultFrontPage)
+import           Crm.Server             (testEmployeesPage, status)
 
+import Debug.Trace
 
 login :: Var D.AppState
       -> CrmRouter
       -> Text 
+      -> Bool
       -> DOMElement
-login appVar router password = formWrapper $ B.grid [headerRow, passwordRow, submitRow] where
+login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, passwordRow, submitRow] ++ errorRow where
   modify' f = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
-      l @ (D.Login _) -> f l
+      l @ (D.Login _ _) -> f l
       _ -> D.navigation appState }
   pageHeader = "Přihlášení"
   headerRow = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
   formWrapper element = div $ form' (mkAttrs { className = Defined "form-horizontal" }) element
   passwordRow = oneElementRow "Heslo" passwordInput where
     passwordInput = textInput I.password Editing True (SetValue password) $ 
-      \password' -> modify' $ const $ D.Login password'
-  submitRow = buttonRow "Přihlásit se" $ storePassword >> navigate defaultFrontPage router
+      \password' -> modify' $ const $ D.Login password' False
+  submitRow = buttonRow "Přihlásit se" submitButtonHandler where
+    submitButtonHandler = testEmployeesPage
+      password
+      (storePassword >> navigate defaultFrontPage router)
+      (\e _ _ -> if status e == 401
+        then modify' $ \l -> l { D.wrongPassword = True }
+        else return ())
   storePassword = setLocalStorage "password" password
+  errorRow = if wrongPassword
+    then (B.row $ B.col (B.mkColProps 12) $ p "Špatné heslo") : []
+    else []

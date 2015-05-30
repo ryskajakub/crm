@@ -42,13 +42,16 @@ module Crm.Server (
   deleteMachine ,
   deletePhoto ,
 
+  testEmployeesPage ,
+  status ,
+
   getPhoto ) where
 
 import           FFI                       (ffi, Automatic, Defined(Defined, Undefined))
 import           Prelude                   hiding (putStrLn)
 import           Data.Text                 (Text, (<>), unpack, pack)
 import           Data.LocalStorage
-import           Data.Defined              (fromDefined)
+import           Data.Defined              (fromDefined, toDefined)
 
 import qualified JQuery                    as JQ
 
@@ -104,10 +107,13 @@ delete = pack "DELETE"
 
 -- helpers
 
-withPassword :: (JQ.AjaxSettings a b -> Fay ())
+withPassword :: Maybe Text
+             -> (JQ.AjaxSettings a b -> Fay ())
              -> Fay ()
-withPassword callback = do
-  password' <- getLocalStorage $ pack "password"
+withPassword maybePassword callback = do
+  password' <- case maybePassword of
+    Just password -> return $ Defined password
+    Nothing -> getLocalStorage $ pack "password"
   case fromDefined password' of
     Just password -> let
       passwordSettings = JQ.defaultAjaxSettings {
@@ -118,10 +124,13 @@ withPassword callback = do
 passwordAjax :: Text
              -> (Automatic a -> Fay ())
              -> Maybe (InputRouteData b)
+             -> (Maybe (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ()))
+             -> Maybe Text
              -> Fay ()
-passwordAjax url callback' specificSettings = withPassword $ \passwordSettings -> let
+passwordAjax url callback' specificSettings onError maybePassword = withPassword maybePassword $ \passwordSettings -> let
   commonSettings = passwordSettings {
     JQ.success = Defined callback' ,
+    JQ.error' = toDefined onError ,
     JQ.url = Defined $ apiRoot <> url }
   in case specificSettings of
     Nothing -> let
@@ -140,7 +149,7 @@ inputAjax :: Text
           -> (InputRouteData b)
           -> Fay ()
 inputAjax t c i = passwordAjax
-  t c (Just i)
+  t c (Just i) Nothing Nothing
 
 postAjax :: Text
          -> b
@@ -157,17 +166,32 @@ putAjax t d c = inputAjax t (const c) (InputRouteData d put)
 getAjax :: Text
         -> (a -> Fay ())
         -> Fay ()
-getAjax t c = passwordAjax t c Nothing
+getAjax t c = passwordAjax t c Nothing Nothing Nothing
 
 getManyAjax :: Text
             -> (a -> Fay ())
             -> Fay ()
-getManyAjax t c = passwordAjax t (c . items) Nothing
+getManyAjax t c = getAjax t (c . items)
 
 deleteAjax :: Text
            -> Fay ()
            -> Fay ()
-deleteAjax t c = passwordAjax t (const c) Nothing
+deleteAjax t c = passwordAjax t (const c) Nothing Nothing Nothing
+
+testRoute :: Text
+          -> Fay ()
+          -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
+          -> Text
+          -> Fay ()
+testRoute t success error password = passwordAjax
+  t
+  (const success)
+  Nothing
+  (Just error)
+  (Just password)
+
+
+-- deletions
 
 deleteCompany :: C.CompanyId
               -> Fay ()
@@ -444,7 +468,7 @@ uploadPhotoData :: File
                 -> M.MachineId
                 -> (P.PhotoId -> Fay ())
                 -> Fay ()
-uploadPhotoData fileContents machineId callback = withPassword $ \settings ->
+uploadPhotoData fileContents machineId callback = withPassword Nothing $ \settings ->
   JQ.ajax' $ settings {
     JQ.success = Defined callback ,
     JQ.data' = Defined fileContents ,
@@ -460,3 +484,20 @@ uploadPhotoMeta :: PM.PhotoMeta
 uploadPhotoMeta photoMeta photoId = putAjax
   (pack $ A.photoMeta ++ "/" ++ (show $ P.getPhotoId photoId))
   photoMeta
+
+
+-- just ping the server if it works
+
+testEmployeesPage :: Text
+                  -> Fay ()
+                  -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
+                  -> Fay ()
+testEmployeesPage password' success error = passwordAjax 
+  (pack A.employees)
+  (const success)
+  Nothing
+  (Just error)
+  (Just password')
+
+status :: JQ.JQXHR -> Int
+status = ffi " %1['status'] "

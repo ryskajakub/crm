@@ -94,8 +94,8 @@ main' = do
       D.ExtraFields editedKind allSettings -> n $ 
         emptyCallback $ machineKindSettings appVar' editedKind allSettings
       D.MachinesSchema machines -> n $ schema machines
-      D.Login password -> let
-        (body, callback) = emptyCallback $ login appVar' router password
+      D.Login password wrongPassword -> let
+        (body, callback) = emptyCallback $ login appVar' router password wrongPassword
         in simpleReactBody' body callback
   return ()
 
