@@ -195,7 +195,7 @@ deletePhoto pId = deleteAjax
 
 getPhoto :: P.PhotoId
          -> Text
-getPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId))
+getPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
 
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -282,6 +282,7 @@ fetchMachine machineId callback = let
   in getAjax
     (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
     (callback . fun)
+
 
 fetchEmployee :: E.EmployeeId
               -> (E.Employee -> Fay ())
@@ -426,7 +427,7 @@ createEmployee :: E.Employee
                -> Fay ()
                -> Fay ()
 createEmployee employee callback = postAjax
-  (apiRoot <> (pack $ A.employees))
+  (pack $ A.employees)
   employee
   (const callback)
 
@@ -447,8 +448,7 @@ uploadPhotoData fileContents machineId callback = withPassword $ \settings ->
   JQ.ajax' $ settings {
     JQ.success = Defined callback ,
     JQ.data' = Defined fileContents ,
-    JQ.url = Defined $ apiRoot <> pack (A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++
-      "/" ++ A.photos) ,
+    JQ.url = Defined $ pack (A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos) ,
     JQ.type' = Defined post ,
     JQ.processData = Defined False ,
     JQ.contentType = Defined $ pack "application/x-www-form-urlencoded" }
