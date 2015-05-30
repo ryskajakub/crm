@@ -104,32 +104,36 @@ delete = pack "DELETE"
 
 -- helpers
 
+withPassword :: (JQ.AjaxSettings a b -> Fay ())
+             -> Fay ()
+withPassword callback = do
+  password' <- getLocalStorage $ pack "password"
+  case fromDefined password' of
+    Just password -> let
+      passwordSettings = JQ.defaultAjaxSettings {
+        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
+      in callback passwordSettings
+    Nothing -> return ()
+
 passwordAjax :: Text
              -> (Automatic a -> Fay ())
              -> Maybe (InputRouteData b)
              -> Fay ()
-passwordAjax url callback' specificSettings = do
-  password' <- getLocalStorage $ pack "password"
-  case fromDefined password' of
-    Just password -> let
-      commonSettings = JQ.defaultAjaxSettings {
-        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
-        JQ.success = Defined callback' ,
-        JQ.url = Defined $ apiRoot <> url }
-      in case specificSettings of
-        Nothing -> let
-          fetchSettings = commonSettings {
-            JQ.data' = Undefined :: Defined Text }
-          in JQ.ajax' fetchSettings
-        Just (InputRouteData data' method') -> let
-          inputSettings = commonSettings {
-            JQ.data' = Defined data' ,
-            JQ.type' = Defined method' ,
-            JQ.processData = Defined False ,
-            JQ.contentType = Defined $ pack "application/json" ,
-            JQ.dataType = Defined $ pack "json" }
-          in JQ.ajax' inputSettings
-    Nothing -> return ()
+passwordAjax url callback' specificSettings = withPassword $ \passwordSettings -> let
+  commonSettings = passwordSettings {
+    JQ.success = Defined callback' ,
+    JQ.url = Defined $ apiRoot <> url }
+  in case specificSettings of
+    Nothing -> let
+      in JQ.ajax' commonSettings
+    Just (InputRouteData data' method') -> let
+      inputSettings = commonSettings {
+        JQ.data' = Defined data' ,
+        JQ.type' = Defined method' ,
+        JQ.processData = Defined False ,
+        JQ.contentType = Defined $ pack "application/json" ,
+        JQ.dataType = Defined $ pack "json" }
+      in JQ.ajax' inputSettings
 
 inputAjax :: Text
           -> (a -> Fay ())
@@ -438,8 +442,8 @@ uploadPhotoData :: File
                 -> M.MachineId
                 -> (P.PhotoId -> Fay ())
                 -> Fay ()
-uploadPhotoData fileContents machineId callback =
-  JQ.ajax' $ JQ.defaultAjaxSettings {
+uploadPhotoData fileContents machineId callback = withPassword $ \settings ->
+  JQ.ajax' $ settings {
     JQ.success = Defined callback ,
     JQ.data' = Defined fileContents ,
     JQ.url = Defined $ apiRoot <> pack (A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++

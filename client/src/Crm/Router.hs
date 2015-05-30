@@ -398,7 +398,7 @@ startRouter appVar = startedRouter where
         withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
         in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds ,
     useHandler companyDetail' $ \companyId' ->
-      trace (show companyId') $ case companyId' of
+      case companyId' of
         Left _ -> modify appVar $ \appState -> appState {
           D.navigation = D.CompanyNew C.newCompany }
         Right companyId ->
