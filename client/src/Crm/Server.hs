@@ -99,21 +99,46 @@ ajax' :: Defined a -- data to send
       -> Text -- method PUT | POST
       -> (b -> Fay ()) -- callback
       -> Fay ()
-ajax' data' url method callback = JQ.ajax' $ JQ.defaultAjaxSettings {
-  JQ.success = Defined callback ,
-  JQ.data' = data' ,
-  JQ.url = Defined $ apiRoot <> url ,
-  JQ.type' = Defined method ,
-  JQ.processData = Defined False ,
-  JQ.contentType = Defined $ pack "application/json" ,
-  JQ.dataType = Defined $ pack "json" }
+ajax' data' url method callback = undefined
+
+data InputRouteData a = InputRouteData {
+  data_ :: a ,
+  method :: Text ,
+  callback :: Fay () }
+
+passwordAjax :: Text
+             -> Either (Automatic a -> Fay ()) (InputRouteData b)
+             -> Fay ()
+passwordAjax url specificSettings = do
+  password' <- getLocalStorage $ pack "password"
+  case fromDefined password' of
+    Just password -> let
+      commonSettings = JQ.defaultAjaxSettings {
+        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
+        JQ.url = Defined url }
+      in case specificSettings of
+        Left callback' -> let
+          fetchSettings = commonSettings {
+            JQ.success = Defined callback' ,
+            JQ.data' = Undefined :: Defined Text }
+          in JQ.ajax' fetchSettings
+        Right (InputRouteData data' method' callback') -> let
+          inputSettings = commonSettings {
+            JQ.success = Defined $ const callback' ,
+            JQ.data' = Defined data' ,
+            JQ.type' = Defined method' ,
+            JQ.processData = Defined False ,
+            JQ.contentType = Defined $ pack "application/json" ,
+            JQ.dataType = Defined $ pack "json" }
+          in JQ.ajax' inputSettings
+    Nothing -> return ()
 
 ajax :: a -- data to send
      -> Text -- url
      -> Text -- method PUT | POST
      -> (b -> Fay ()) -- callback
      -> Fay ()
-ajax data' = ajax' (Defined data')
+ajax data' = undefined
 
 doDelete :: Text
          -> Fay ()
@@ -304,30 +329,13 @@ fetchFrontPageData order direction callback =
   let
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
-  in jqAjax
+  in passwordAjax
     (apiRoot <> (pack $ A.companies ++ "?order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
       DIR.Desc -> "Desc")))
-    (callback . lMb . items)
-    noopOnError
-
-jqAjax :: Text
-       -> (Automatic b -> Fay ())
-       -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
-       -> Fay ()
-jqAjax ur succ err = do
-  password' <- getLocalStorage $ pack "password"
-  case fromDefined password' of
-    Just password ->
-      JQ.ajax' $ JQ.defaultAjaxSettings {
-        JQ.success = Defined succ , 
-        JQ.data' = Undefined :: Defined Text , 
-        JQ.error' = Defined err , 
-        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
-        JQ.url = Defined ur }
-    Nothing -> return ()
+    (Left $ callback . lMb . items)
 
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
