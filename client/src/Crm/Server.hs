@@ -155,6 +155,11 @@ getAjax :: Text
         -> Fay ()
 getAjax t c = passwordAjax t c Nothing
 
+getManyAjax :: Text
+            -> (a -> Fay ())
+            -> Fay ()
+getManyAjax t c = passwordAjax t (c . items) Nothing
+
 deleteAjax :: Text
            -> Fay ()
            -> Fay ()
@@ -215,96 +220,75 @@ getPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId ph
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesManufacturer text callback = do
-  JQ.ajax
-    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack text))
-    (callback . items)
-    noopOnError
+fetchMachineTypesManufacturer text callback = getManyAjax
+  (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack text)
+  (callback)
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesAutocomplete text callback = do
-  JQ.ajax
-    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text))
-    (callback . items)
-    noopOnError
+fetchMachineTypesAutocomplete text callback = getManyAjax
+  (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text)
+  callback
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
-fetchMachineTypes callback =
-  JQ.ajax
-    (apiRoot <> (pack $ A.machineTypes))
-    (callback . items)
-    noopOnError
+fetchMachineTypes callback = getManyAjax
+  (pack $ A.machineTypes)
+  callback
 
 fetchMachineTypeById :: MT.MachineTypeId
                      -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ())
                      -> Fay ()
-fetchMachineTypeById mtId callback = 
-  JQ.ajax
-    (apiRoot <> (pack (A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId mtId))))
-    (callback . toMaybe)
-    noopOnError
+fetchMachineTypeById mtId callback = getAjax
+  (pack $ A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId mtId))
+  (callback . toMaybe)
 
 fetchMachineType :: Text -- ^ machine type exact match
                  -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
-fetchMachineType machineTypeName callback = 
-  JQ.ajax
-    (apiRoot <> (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName))
-    (callback . toMaybe)
-    noopOnError
+fetchMachineType machineTypeName callback = getAjax
+  (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName)
+  (callback . toMaybe)
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
                -> Fay ()
-fetchEmployees callback = passwordAjax
-  (apiRoot <> pack A.employees)
-  (callback . items)
-  Nothing
+fetchEmployees callback = getManyAjax
+  (pack A.employees)
+  callback
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, Maybe E.EmployeeId, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
                  C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
-fetchUpkeep upkeepId callback =
-  JQ.ajax
-    (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId) ++ "/"))
-    (\(a,(u,u2,u3),b) -> callback(a,(u,toMaybe u2,u3),b))
-    noopOnError
+fetchUpkeep upkeepId callback = getAjax
+  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+  (\(a,(u,u2,u3),b) -> callback(a,(u,toMaybe u2,u3),b))
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
                 Maybe E.Employee')] -> Fay ()) -- ^ callback
              -> Fay ()
-fetchUpkeeps companyId callback = 
-  JQ.ajax
-    (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep))
-    (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))) . items)
-    noopOnError
-
+fetchUpkeeps companyId callback = getManyAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+  (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))) . items)
+  
 fetchMachinePhotos :: M.MachineId
                    -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
                    -> Fay ()
-fetchMachinePhotos machineId callback =
-  JQ.ajax
-    (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos))
-    (callback . items)
-    noopOnError
+fetchMachinePhotos machineId callback = getManyAjax
+  (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos)
+  callback
 
 fetchMachinesInCompany :: C.CompanyId
                        -> ([(M.MachineId, M.Machine)] -> Fay ())
                        -> Fay ()
-fetchMachinesInCompany companyId callback = JQ.ajax
-  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines))
-  (callback . items)
-  noopOnError
+fetchMachinesInCompany companyId = getAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
                         -> Fay ()
-fetchExtraFieldSettings callback = JQ.ajax
-  (apiRoot <> (pack $ A.machineKind ++ "/()"))
-  callback
-  noopOnError
+fetchExtraFieldSettings = getAjax
+  (pack $ A.machineKind ++ "/()")
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
@@ -315,43 +299,34 @@ fetchMachine :: M.MachineId -- ^ machine id
 fetchMachine machineId callback = let
   fun2 (a,b,c,d) = (a,b,c,toMaybe d)
   fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,l)
-  in JQ.ajax
-    (apiRoot <> (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId)))
+  in getAjax
+    (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
     (callback . fun)
-    noopOnError
 
 fetchEmployee :: E.EmployeeId
               -> (E.Employee -> Fay ())
               -> Fay ()
-fetchEmployee employeeId callback = JQ.ajax
-  (apiRoot <> (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId)))
-  callback
-  noopOnError
+fetchEmployee employeeId = getAjax
+  (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
 
 fetchContactPerson :: CP.ContactPersonId
                    -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
                    -> Fay ()
-fetchContactPerson contactPersonId callback = JQ.ajax
-  (apiRoot <> (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId)))
-  callback
-  noopOnError
+fetchContactPerson contactPersonId = getAjax
+  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId))
 
 fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
                     -> Fay ()
-fetchContactPersons companyId callback = JQ.ajax
-  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons))
-  (callback . items)
-  noopOnError
+fetchContactPersons companyId = getManyAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
-fetchCompany companyId callback = passwordAjax
+fetchCompany companyId = getAjax
   (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
-  callback
-  Nothing
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
@@ -361,30 +336,24 @@ fetchFrontPageData order direction callback =
   let
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
-  in passwordAjax
-    (apiRoot <> (pack $ A.companies ++ "?order=" ++ (case order of
+  in getManyAjax
+    (pack $ A.companies ++ "?order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
-      DIR.Desc -> "Desc")))
-    (callback . lMb . items)
-    Nothing
+      DIR.Desc -> "Desc"))
+    (callback . lMb)
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
-fetchPlannedUpkeeps callback =
-  JQ.ajax
-    (apiRoot <> (pack $ A.upkeep ++ "/" ++ A.planned))
-    (callback . items)
-    noopOnError
+fetchPlannedUpkeeps = getManyAjax
+  (pack $ A.upkeep ++ "/" ++ A.planned)
 
 fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ())
                      -> Fay ()
-fetchCompaniesForMap callback =
-  JQ.ajax
-    (apiRoot <> (pack $ A.companies ++ "/" ++ A.map'))
-    (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))) . items)
-    noopOnError
+fetchCompaniesForMap callback = getManyAjax
+  (pack $ A.companies ++ "/" ++ A.map')
+  (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
 
 createCompany :: C.Company
               -> Maybe C.Coordinates
