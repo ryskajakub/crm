@@ -139,16 +139,16 @@ inputAjax t c i = passwordAjax
   t c (Just i)
 
 postAjax :: Text
-         -> (a -> Fay ())
          -> b
+         -> (a -> Fay ())
          -> Fay ()
-postAjax t c d = inputAjax t c $ InputRouteData d post
+postAjax t d c = inputAjax t c (InputRouteData d post)
 
 putAjax :: Text
-        -> (a -> Fay ())
         -> b
+        -> (a -> Fay ())
         -> Fay ()
-putAjax t c d = inputAjax t c $ InputRouteData d put
+putAjax t d c = inputAjax t c (InputRouteData d put)
 
 getAjax :: Text
         -> (a -> Fay ())
@@ -359,10 +359,9 @@ createCompany :: C.Company
               -> Maybe C.Coordinates
               -> (C.CompanyId -> Fay ())
               -> Fay ()
-createCompany company coordinates callback = passwordAjax
-  (apiRoot <> (pack $ A.companies))
-  callback
-  (Just $ InputRouteData (company, toMyMaybe coordinates) post)
+createCompany company coordinates = postAjax
+  (pack $ A.companies)
+  (company, toMyMaybe coordinates)
 
 createMachine :: M.Machine 
               -> C.CompanyId
@@ -372,10 +371,9 @@ createMachine :: M.Machine
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = ajax
-  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
+createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = postAjax
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
-  post
+  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
   (const callback)
 
 updateEmployee :: E.EmployeeId
