@@ -115,7 +115,7 @@ passwordAjax url callback' specificSettings = do
       commonSettings = JQ.defaultAjaxSettings {
         JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
         JQ.success = Defined callback' ,
-        JQ.url = Defined url }
+        JQ.url = Defined $ apiRoot <> url }
       in case specificSettings of
         Nothing -> let
           fetchSettings = commonSettings {
@@ -130,6 +130,30 @@ passwordAjax url callback' specificSettings = do
             JQ.dataType = Defined $ pack "json" }
           in JQ.ajax' inputSettings
     Nothing -> return ()
+
+inputAjax :: Text
+          -> (a -> Fay ())
+          -> (InputRouteData b)
+          -> Fay ()
+inputAjax t c i = passwordAjax
+  t c (Just i)
+
+postAjax :: Text
+         -> (a -> Fay ())
+         -> b
+         -> Fay ()
+postAjax t c d = inputAjax t c $ InputRouteData d post
+
+putAjax :: Text
+        -> (a -> Fay ())
+        -> b
+        -> Fay ()
+putAjax t c d = inputAjax t c $ InputRouteData d put
+
+getAjax :: Text
+        -> (a -> Fay ())
+        -> Fay ()
+getAjax t c = passwordAjax t c Nothing
 
 ajax' :: Defined a -- data to send
       -> Text -- url
@@ -228,11 +252,10 @@ fetchMachineType machineTypeName callback =
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
                -> Fay ()
-fetchEmployees callback =
-  JQ.ajax
-    (apiRoot <> pack A.employees)
-    (callback . items)
-    noopOnError
+fetchEmployees callback = passwordAjax
+  (apiRoot <> pack A.employees)
+  (callback . items)
+  Nothing
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, Maybe E.EmployeeId, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
@@ -324,12 +347,6 @@ fetchCompany companyId callback = passwordAjax
   (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
   callback
   Nothing
-{-
-  JQ.ajax
-    (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
-    (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
-    noopOnError
--}
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction

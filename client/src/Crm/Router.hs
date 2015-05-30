@@ -370,7 +370,7 @@ startRouter appVar = startedRouter where
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
   appliedRoutes = map (\tuple -> rmap (\f -> f appVar) tuple) routes
-  otherRoutes = trace (show appliedRoutes) $ [
+  otherRoutes = [
     ("", const $
       fetchFrontPageData C.NextService DIR.Asc $ \data' -> modify appVar 
         (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' })) ,
