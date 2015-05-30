@@ -47,7 +47,7 @@ module Crm.Server (
 
   getPhoto ) where
 
-import           FFI                       (ffi, Automatic, Defined(Defined, Undefined))
+import           FFI                       (ffi, Automatic, Defined(Defined))
 import           Prelude                   hiding (putStrLn)
 import           Data.Text                 (Text, (<>), unpack, pack)
 import           Data.LocalStorage
@@ -77,17 +77,10 @@ import           Crm.Helpers               (File, rmap, encodeB64)
 
 data Items
 
-data InputRouteData a = InputRouteData {
-  data_ :: a ,
-  method :: Text }
-
 
 -- | Unwrap outermost layer of the fetched list in order to get to the data
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
-
-noopOnError :: a -> b -> c -> Fay ()
-noopOnError = (const $ const $ const $ return ())
 
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
@@ -103,6 +96,9 @@ put = pack "PUT"
 
 delete :: Text
 delete = pack "DELETE"
+
+get :: Text
+get = pack "GET"
 
 
 -- helpers
@@ -123,50 +119,53 @@ withPassword maybePassword callback = do
 
 passwordAjax :: Text
              -> (Automatic a -> Fay ())
-             -> Maybe (InputRouteData b)
+             -> Maybe b
+             -> Text
              -> (Maybe (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ()))
              -> Maybe Text
              -> Fay ()
-passwordAjax url callback' specificSettings onError maybePassword = withPassword maybePassword $ \passwordSettings -> let
-  commonSettings = passwordSettings {
-    JQ.success = Defined callback' ,
-    JQ.error' = toDefined onError ,
-    JQ.url = Defined $ apiRoot <> url }
-  in case specificSettings of
-    Nothing -> let
-      in JQ.ajax' commonSettings
-    Just (InputRouteData data' method') -> let
-      inputSettings = commonSettings {
-        JQ.data' = Defined data' ,
-        JQ.type' = Defined method' ,
-        JQ.processData = Defined False ,
-        JQ.contentType = Defined $ pack "application/json" ,
-        JQ.dataType = Defined $ pack "json" }
-      in JQ.ajax' inputSettings
+passwordAjax url callback' inputData method' onError maybePassword = 
+  withPassword maybePassword $ \passwordSettings -> let
+    commonSettings = passwordSettings {
+      JQ.success = Defined callback' ,
+      JQ.error' = toDefined onError ,
+      JQ.type' = Defined method' ,
+      JQ.url = Defined $ apiRoot <> url }
+    in case inputData of
+      Nothing -> let
+        in JQ.ajax' commonSettings
+      Just (data') -> let
+        inputSettings = commonSettings {
+          JQ.data' = Defined data' ,
+          JQ.processData = Defined False ,
+          JQ.contentType = Defined $ pack "application/json" ,
+          JQ.dataType = Defined $ pack "json" }
+        in JQ.ajax' inputSettings
 
 inputAjax :: Text
           -> (a -> Fay ())
-          -> (InputRouteData b)
+          -> b
+          -> Text
           -> Fay ()
-inputAjax t c i = passwordAjax
-  t c (Just i) Nothing Nothing
+inputAjax t c i m = passwordAjax
+  t c (Just i) m Nothing Nothing
 
 postAjax :: Text
          -> b
          -> (a -> Fay ())
          -> Fay ()
-postAjax t d c = inputAjax t c (InputRouteData d post)
+postAjax t d c = inputAjax t c d post
 
 putAjax :: Text
         -> b
         -> Fay ()
         -> Fay ()
-putAjax t d c = inputAjax t (const c) (InputRouteData d put)
+putAjax t d c = inputAjax t (const c) d put
 
 getAjax :: Text
         -> (a -> Fay ())
         -> Fay ()
-getAjax t c = passwordAjax t c Nothing Nothing Nothing
+getAjax t c = passwordAjax t c Nothing get Nothing Nothing
 
 getManyAjax :: Text
             -> (a -> Fay ())
@@ -176,19 +175,7 @@ getManyAjax t c = getAjax t (c . items)
 deleteAjax :: Text
            -> Fay ()
            -> Fay ()
-deleteAjax t c = passwordAjax t (const c) Nothing Nothing Nothing
-
-testRoute :: Text
-          -> Fay ()
-          -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
-          -> Text
-          -> Fay ()
-testRoute t success error password = passwordAjax
-  t
-  (const success)
-  Nothing
-  (Just error)
-  (Just password)
+deleteAjax t c = passwordAjax t (const c) Nothing delete Nothing Nothing
 
 
 -- deletions
@@ -492,11 +479,12 @@ testEmployeesPage :: Text
                   -> Fay ()
                   -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
                   -> Fay ()
-testEmployeesPage password' success error = passwordAjax 
+testEmployeesPage password' success error' = passwordAjax 
   (pack A.employees)
   (const success)
   Nothing
-  (Just error)
+  get
+  (Just error')
   (Just password')
 
 status :: JQ.JQXHR -> Int

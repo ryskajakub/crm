@@ -19,8 +19,6 @@ import           Crm.Component.Form
 import           Crm.Router             (CrmRouter, navigate, defaultFrontPage)
 import           Crm.Server             (testEmployeesPage, status)
 
-import Debug.Trace
-
 login :: Var D.AppState
       -> CrmRouter
       -> Text 

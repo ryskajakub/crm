@@ -67,8 +67,6 @@ import           Crm.Helpers                 (parseSafely, displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 
-import Debug.Trace
-
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
