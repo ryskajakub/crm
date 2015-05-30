@@ -155,6 +155,11 @@ getAjax :: Text
         -> Fay ()
 getAjax t c = passwordAjax t c Nothing
 
+deleteAjax :: Text
+           -> Fay ()
+           -> Fay ()
+deleteAjax t c = passwordAjax t (const c) Nothing
+
 ajax' :: Defined a -- data to send
       -> Text -- url
       -> Text -- method PUT | POST
