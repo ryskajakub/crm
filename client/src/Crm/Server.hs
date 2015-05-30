@@ -36,6 +36,7 @@ module Crm.Server (
   fetchContactPersons ,
   fetchContactPerson ,
   fetchCompaniesForMap ,
+  fetchPhoto ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -43,9 +44,7 @@ module Crm.Server (
   deletePhoto ,
 
   testEmployeesPage ,
-  status ,
-
-  getPhoto ) where
+  status ) where
 
 import           FFI                       (ffi, Automatic, Defined(Defined))
 import           Prelude                   hiding (putStrLn)
@@ -78,14 +77,6 @@ import           Crm.Helpers               (File, rmap, encodeB64)
 data Items
 
 
--- | Unwrap outermost layer of the fetched list in order to get to the data
-items :: Items -> Automatic a
-items = ffi " %1['items'] "
-
-apiRoot :: Text
-apiRoot = pack "/api/v1.0.0/"
-
-
 -- methods used
 
 post :: Text
@@ -102,6 +93,16 @@ get = pack "GET"
 
 
 -- helpers
+
+status :: JQ.JQXHR -> Int
+status = ffi " %1['status'] "
+
+-- | Unwrap outermost layer of the fetched list in order to get to the data
+items :: Items -> Automatic a
+items = ffi " %1['items'] "
+
+apiRoot :: Text
+apiRoot = pack "/api/v1.0.0/"
 
 withPassword :: Maybe Text
              -> (JQ.AjaxSettings a b -> Fay ())
@@ -204,9 +205,12 @@ deletePhoto :: P.PhotoId
 deletePhoto pId = deleteAjax
   (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId pId))
 
-getPhoto :: P.PhotoId
-         -> Text
-getPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
+
+-- fetching of data from server
+
+fetchPhoto :: P.PhotoId
+           -> Text
+fetchPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
 
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -348,6 +352,9 @@ fetchCompaniesForMap callback = getManyAjax
   (pack $ A.companies ++ "/" ++ A.map')
   (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
 
+
+-- creations
+
 createCompany :: C.Company
               -> Maybe C.Coordinates
               -> (C.CompanyId -> Fay ())
@@ -368,6 +375,35 @@ createMachine machine companyId machineType contactPersonId linkedMachineId extr
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
   (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
   (const callback)
+
+createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
+             -> C.CompanyId -- ^ company id
+             -> Fay ()
+             -> Fay ()
+createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) companyId callback = postAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+  (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+  (const callback)
+
+createEmployee :: E.Employee
+               -> Fay ()
+               -> Fay ()
+createEmployee employee callback = postAjax
+  (pack $ A.employees)
+  employee
+  (const callback)
+
+createContactPerson :: C.CompanyId
+                    -> CP.ContactPerson
+                    -> Fay ()
+                    -> Fay ()
+createContactPerson companyId contactPerson callback = postAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
+  contactPerson
+  (const callback)
+
+
+-- updations
 
 updateEmployee :: E.EmployeeId
                -> E.Employee
@@ -418,38 +454,15 @@ updateMachine machineId machine linkedMachineId machineSpecificData = putAjax
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
   (machine, toMyMaybe linkedMachineId, machineSpecificData)
 
+
+-- others
+
 saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
                        -> Fay ()
                        -> Fay ()
 saveExtraFieldSettings data' = putAjax
   (pack $ A.machineKind ++ "/()")
   data'
-
-createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
-             -> C.CompanyId -- ^ company id
-             -> Fay ()
-             -> Fay ()
-createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) companyId callback = postAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
-  (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-  (const callback)
-
-createEmployee :: E.Employee
-               -> Fay ()
-               -> Fay ()
-createEmployee employee callback = postAjax
-  (pack $ A.employees)
-  employee
-  (const callback)
-
-createContactPerson :: C.CompanyId
-                    -> CP.ContactPerson
-                    -> Fay ()
-                    -> Fay ()
-createContactPerson companyId contactPerson callback = postAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
-  contactPerson
-  (const callback)
 
 uploadPhotoData :: File
                 -> M.MachineId
@@ -472,9 +485,7 @@ uploadPhotoMeta photoMeta photoId = putAjax
   (pack $ A.photoMeta ++ "/" ++ (show $ P.getPhotoId photoId))
   photoMeta
 
-
--- just ping the server if it works
-
+-- | just ping the server if it works
 testEmployeesPage :: Text
                   -> Fay ()
                   -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
@@ -486,6 +497,3 @@ testEmployeesPage password' success error' = passwordAjax
   get
   (Just error')
   (Just password')
-
-status :: JQ.JQXHR -> Int
-status = ffi " %1['status'] "

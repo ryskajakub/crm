@@ -40,7 +40,7 @@ import qualified Crm.Data.MachineData as MD
 import qualified Crm.Data.Data as D
 import qualified Crm.Component.DatePicker as DP
 import Crm.Component.Form
-import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, getPhoto, deleteMachine, deletePhoto)
+import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, fetchPhoto, deleteMachine, deletePhoto)
 import Crm.Helpers 
 import qualified Crm.Router as R
 import qualified Crm.Validation as V
@@ -136,7 +136,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
                 BTN.bsStyle = Defined "primary" ,
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
-      mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ getPhoto photoId)
+      mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ fetchPhoto photoId)
       photoCarouselRow = editableRowEditing
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
