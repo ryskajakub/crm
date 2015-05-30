@@ -305,8 +305,9 @@ fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
-fetchCompany companyId = getAjax
-  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
+fetchCompany companyId callback = getAjax
+  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
+  (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
