@@ -74,8 +74,12 @@ import           Crm.Helpers               (File, rmap, encodeB64)
 
 data Items
 
+data InputRouteData a = InputRouteData {
+  data_ :: a ,
+  method :: Text }
 
--- | Unthe outermost layer of the fetched list in order to get to the data
+
+-- | Unwrap outermost layer of the fetched list in order to get to the data
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
@@ -84,6 +88,9 @@ noopOnError = (const $ const $ const $ return ())
 
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
+
+
+-- methods used
 
 post :: Text
 post = pack "POST"
@@ -94,37 +101,28 @@ put = pack "PUT"
 delete :: Text
 delete = pack "DELETE"
 
-ajax' :: Defined a -- data to send
-      -> Text -- url
-      -> Text -- method PUT | POST
-      -> (b -> Fay ()) -- callback
-      -> Fay ()
-ajax' data' url method callback = undefined
 
-data InputRouteData a = InputRouteData {
-  data_ :: a ,
-  method :: Text ,
-  callback :: Fay () }
+-- helpers
 
 passwordAjax :: Text
-             -> Either (Automatic a -> Fay ()) (InputRouteData b)
+             -> (Automatic a -> Fay ())
+             -> Maybe (InputRouteData b)
              -> Fay ()
-passwordAjax url specificSettings = do
+passwordAjax url callback' specificSettings = do
   password' <- getLocalStorage $ pack "password"
   case fromDefined password' of
     Just password -> let
       commonSettings = JQ.defaultAjaxSettings {
         JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
+        JQ.success = Defined callback' ,
         JQ.url = Defined url }
       in case specificSettings of
-        Left callback' -> let
+        Nothing -> let
           fetchSettings = commonSettings {
-            JQ.success = Defined callback' ,
             JQ.data' = Undefined :: Defined Text }
           in JQ.ajax' fetchSettings
-        Right (InputRouteData data' method' callback') -> let
+        Just (InputRouteData data' method') -> let
           inputSettings = commonSettings {
-            JQ.success = Defined $ const callback' ,
             JQ.data' = Defined data' ,
             JQ.type' = Defined method' ,
             JQ.processData = Defined False ,
@@ -132,6 +130,13 @@ passwordAjax url specificSettings = do
             JQ.dataType = Defined $ pack "json" }
           in JQ.ajax' inputSettings
     Nothing -> return ()
+
+ajax' :: Defined a -- data to send
+      -> Text -- url
+      -> Text -- method PUT | POST
+      -> (b -> Fay ()) -- callback
+      -> Fay ()
+ajax' data' url method callback = undefined
 
 ajax :: a -- data to send
      -> Text -- url
@@ -315,11 +320,16 @@ fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
-fetchCompany companyId callback =
+fetchCompany companyId callback = passwordAjax
+  (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
+  callback
+  Nothing
+{-
   JQ.ajax
     (apiRoot <> (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId)))
     (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
     noopOnError
+-}
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
@@ -335,8 +345,8 @@ fetchFrontPageData order direction callback =
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
       DIR.Desc -> "Desc")))
-    (Left $ callback . lMb . items)
-
+    (callback . lMb . items)
+    Nothing
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
@@ -357,13 +367,11 @@ fetchCompaniesForMap callback =
 createCompany :: C.Company
               -> Maybe C.Coordinates
               -> (C.CompanyId -> Fay ())
-
               -> Fay ()
-createCompany company coordinates callback = ajax
-  (company, toMyMaybe coordinates)
-  (pack A.companies)
-  post
+createCompany company coordinates callback = passwordAjax
+  (apiRoot <> (pack $ A.companies))
   callback
+  (Just $ InputRouteData (company, toMyMaybe coordinates) post)
 
 createMachine :: M.Machine 
               -> C.CompanyId
@@ -464,12 +472,10 @@ createUpkeep (newUpkeep,upkeepMachines,maybeEmployeeId) companyId callback =
 createEmployee :: E.Employee
                -> Fay ()
                -> Fay ()
-createEmployee employee callback =
-  ajax
-    employee
-    (pack $ A.employees)
-    post
-    (const callback)
+createEmployee employee callback = passwordAjax
+  (apiRoot <> (pack $ A.employees))
+  (const $ callback)
+  (Just $ InputRouteData employee post)
 
 createContactPerson :: C.CompanyId
                     -> CP.ContactPerson

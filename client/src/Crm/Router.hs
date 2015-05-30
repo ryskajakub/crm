@@ -67,6 +67,8 @@ import           Crm.Helpers                 (parseSafely, displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 
+import Debug.Trace
+
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
 newtype CrmRoute = CrmRoute Text
@@ -114,7 +116,7 @@ prepareRouteAndMkHandler :: Route a
                          -> RouteAndMkHandler a
 prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
-  handlerPattern = prefix route <> "/:id/" <> postfix'
+  handlerPattern = prefix route <> "/:id" <> postfix'
   mkHandler appStateModifier appState urlVariables = 
     case (parsedInt, alternativeRoute) of
       (Just a, _) -> appStateModifier a
@@ -368,7 +370,7 @@ startRouter appVar = startedRouter where
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
   appliedRoutes = map (\tuple -> rmap (\f -> f appVar) tuple) routes
-  otherRoutes = [
+  otherRoutes = trace (show appliedRoutes) $ [
     ("", const $
       fetchFrontPageData C.NextService DIR.Asc $ \data' -> modify appVar 
         (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' })) ,
@@ -396,7 +398,7 @@ startRouter appVar = startedRouter where
         withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
         in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds ,
     useHandler companyDetail' $ \companyId' ->
-      case companyId' of
+      trace (show companyId') $ case companyId' of
         Left _ -> modify appVar $ \appState -> appState {
           D.navigation = D.CompanyNew C.newCompany }
         Right companyId ->
