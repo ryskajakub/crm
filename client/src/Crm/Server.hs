@@ -47,6 +47,8 @@ module Crm.Server (
 import           FFI                       (ffi, Automatic, Defined(Defined, Undefined))
 import           Prelude                   hiding (putStrLn)
 import           Data.Text                 (Text, (<>), unpack, pack)
+import           Data.LocalStorage
+import           Data.Defined              (fromDefined)
 
 import qualified JQuery                    as JQ
 
@@ -67,7 +69,7 @@ import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
-import           Crm.Helpers               (File, rmap)
+import           Crm.Helpers               (File, rmap, encodeB64)
 
 
 data Items
@@ -298,10 +300,11 @@ fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
                    -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
-fetchFrontPageData order direction callback = let
-  lMb [] = []
-  lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
-  in JQ.ajax
+fetchFrontPageData order direction callback = 
+  let
+    lMb [] = []
+    lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
+  in jqAjax
     (apiRoot <> (pack $ A.companies ++ "?order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
@@ -309,6 +312,23 @@ fetchFrontPageData order direction callback = let
       DIR.Desc -> "Desc")))
     (callback . lMb . items)
     noopOnError
+
+jqAjax :: Text
+       -> (Automatic b -> Fay ())
+       -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
+       -> Fay ()
+jqAjax ur succ err = do
+  password' <- getLocalStorage $ pack "password"
+  case fromDefined password' of
+    Just password ->
+      JQ.ajax' $ JQ.defaultAjaxSettings {
+        JQ.success = Defined succ , 
+        JQ.data' = Undefined :: Defined Text , 
+        JQ.error' = Defined err , 
+        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) ,
+        JQ.url = Defined ur }
+    Nothing -> return ()
+
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()

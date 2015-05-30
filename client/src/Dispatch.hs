@@ -95,7 +95,7 @@ main' = do
         emptyCallback $ machineKindSettings appVar' editedKind allSettings
       D.MachinesSchema machines -> n $ schema machines
       D.Login password -> let
-        (body, callback) = emptyCallback $ login appVar' password
+        (body, callback) = emptyCallback $ login appVar' router password
         in simpleReactBody' body callback
   return ()
 

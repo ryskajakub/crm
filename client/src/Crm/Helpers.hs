@@ -25,6 +25,9 @@ data File
 data FileContents
 
 
+encodeB64 :: Text -> Text
+encodeB64 = ffi " btoa(%1) "
+
 validationHtml :: (Renderable a) => [a] -> DOMElement
 validationHtml validationMessages = let
   validationMessagesHtml = map (\message -> p message) validationMessages
