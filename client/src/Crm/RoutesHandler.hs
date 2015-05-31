@@ -41,7 +41,7 @@ import           Crm.Component.Form
 
 startRouter :: Var D.AppState -> Fay CrmRouter
 startRouter appVar = startedRouter where
-  startedRouter = fmap CrmRouter $ BR.startRouter $ appliedRoutes ++ otherRoutes
+  startedRouter = fmap CrmRouter $ BR.startRouter $ otherRoutes ++ appliedRoutes
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany' :: C.CompanyId
                -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
@@ -54,12 +54,12 @@ startRouter appVar = startedRouter where
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
-  appliedRoutes = map (\tuple -> rmap (\f -> f appVar) tuple) routes
+  appliedRoutes = map (\tuple -> rmap (\f -> const $ f appVar) tuple) routes
   otherRoutes = [
-    ("", const $
-      fetchFrontPageData C.NextService DIR.Asc $ \data' -> modify appVar 
-        (\appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' })) ,
-    ("home/:order/:direction", \params -> let
+    ("", \router _ -> 
+      fetchFrontPageData C.NextService DIR.Asc (CrmRouter router) $ \data' -> modify appVar 
+        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) ,
+    ("home/:order/:direction", \router params -> let
       firstParam = head params
       secondParam = head $ tail params
       order = if firstParam == "CompanyName"
@@ -68,7 +68,7 @@ startRouter appVar = startedRouter where
       direction = if secondParam == "Asc"
         then DIR.Asc
         else DIR.Desc
-      in fetchFrontPageData order direction $ \data' ->
+      in fetchFrontPageData order direction (CrmRouter router) $ \data' ->
         modify appVar $ \appState -> appState { D.navigation = 
           D.FrontPage (order, direction) data' })]
   routes = [

@@ -72,6 +72,7 @@ import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
 import           Crm.Helpers               (File, rmap, encodeB64)
+import           Crm.Router
 
 
 data Items
@@ -327,19 +328,26 @@ fetchCompany companyId callback = getAjax
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
+                   -> CrmRouter
                    -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
-fetchFrontPageData order direction callback = 
+fetchFrontPageData order direction router callback = 
   let
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
-  in getManyAjax
+  in passwordAjax
     (pack $ A.companies ++ "?order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
       DIR.Desc -> "Desc"))
-    (callback . lMb)
+    (callback . lMb . items)
+    Nothing
+    get
+    (Just $ \jqxhr _ _ -> if status jqxhr == 401
+      then navigate login router
+      else return ())
+    Nothing
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
