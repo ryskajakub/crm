@@ -35,7 +35,7 @@ login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, 
   passwordRow = oneElementRow "Heslo" passwordInput where
     passwordInput = textInput I.password Editing True (SetValue password) $ 
       \password' -> modify' $ const $ D.Login password' False
-  submitRow = buttonRow "Přihlásit se" submitButtonHandler where
+  submitRow = B.row $ buttonRow "Přihlásit se" submitButtonHandler where
     submitButtonHandler = testEmployeesPage
       password
       (storePassword >> navigate defaultFrontPage router)
