@@ -112,12 +112,15 @@ withPassword maybePassword callback = do
   password' <- case maybePassword of
     Just password -> return $ Defined password
     Nothing -> getLocalStorage $ pack "password"
-  case fromDefined password' of
-    Just password -> let
-      passwordSettings = JQ.defaultAjaxSettings {
-        JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
-      in callback passwordSettings
-    Nothing -> return ()
+  let 
+    password = case fromDefined password' of
+      Just passInLocalStorage -> passInLocalStorage
+      Nothing -> let
+        failingPassword = ""
+        in pack failingPassword 
+    passwordSettings = JQ.defaultAjaxSettings {
+    JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
+  callback passwordSettings
 
 passwordAjax :: Text
              -> (Automatic a -> Fay ())
