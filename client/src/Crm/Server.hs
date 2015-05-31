@@ -72,7 +72,7 @@ import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
 import           Crm.Helpers               (File, rmap, encodeB64)
-import           Crm.Router
+import qualified Crm.Router                as R
 
 
 data Items
@@ -328,7 +328,7 @@ fetchCompany companyId callback = getAjax
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
-                   -> CrmRouter
+                   -> R.CrmRouter
                    -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
                    -> Fay ()
 fetchFrontPageData order direction router callback = 
@@ -345,7 +345,7 @@ fetchFrontPageData order direction router callback =
     Nothing
     get
     (Just $ \jqxhr _ _ -> if status jqxhr == 401
-      then navigate login router
+      then R.navigate R.login router
       else return ())
     Nothing
 
