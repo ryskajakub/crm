@@ -76,10 +76,25 @@ verifyPassword connection (Password inputPassword) = do
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason
 
+mkConstHandler' :: (MonadReader a m, MonadIO m, HasConnection a) 
+                => Modifier () p Nothing o Nothing
+                -> ExceptT (Reason String) m (FromMaybe () o)
+                -> Handler m
 mkConstHandler' d a = mkGenHandler' d (const a)
-mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
+
+mkInputHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
+                => Modifier () p (Just i) o Nothing
+                -> (i -> ExceptT (Reason String) m (FromMaybe () o))
+                -> Handler m
 mkInputHandler' d a = mkGenHandler' d (a . input)
+
+mkIdHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
+             => Modifier () p (Just i) o Nothing
+             -> (i -> a -> ExceptT (Reason String) m (FromMaybe () o))
+             -> Handler m
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
+
+mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode String where
