@@ -3,35 +3,37 @@
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where
 
-import Database.PostgreSQL.Simple (Connection)
+import           Database.PostgreSQL.Simple    (Connection)
 
-import Opaleye.PGTypes (pgInt4, pgDay, pgBool, pgStrictText)
-import Opaleye.Manipulation (runInsertReturning)
-import Opaleye.RunQuery (runQuery)
+import           Opaleye.PGTypes               (pgInt4, pgDay, pgBool, pgStrictText)
+import           Opaleye.Manipulation          (runInsertReturning)
+import           Opaleye.RunQuery              (runQuery)
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Applicative (pure, (<*>))
+import           Control.Monad.IO.Class        (liftIO)
+import           Control.Applicative           (pure, (<*>))
 
-import Data.Tuple.All (sel1, sel2, sel3, sel4, upd3)
+import           Data.Tuple.All                (sel1, sel2, sel3, sel4, upd3)
 
-import Rest.Resource (Resource, Void, schema, name, create, list, get, mkResourceReaderWith)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler, ListHandler)
+import           Rest.Resource                 (Resource, Void, schema, name, create, 
+                                               list, get, mkResourceReaderWith)
+import qualified Rest.Schema                   as S
+import           Rest.Dictionary.Combinators   (jsonO, jsonI)
+import           Rest.Handler                  (Handler, ListHandler)
 
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.Employee as E
-import Crm.Shared.MyMaybe
-import Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
+import qualified Crm.Shared.UpkeepMachine      as UM
+import qualified Crm.Shared.Machine            as M
+import qualified Crm.Shared.Api                as A
+import qualified Crm.Shared.Upkeep             as U
+import qualified Crm.Shared.Employee           as E
+import           Crm.Shared.MyMaybe
+import           Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
-import Crm.Server.Helpers 
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Handler (mkInputHandler', mkListing', mkConstHandler')
+import           Crm.Server.Helpers 
+import           Crm.Server.Boilerplate        ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Handler            (mkInputHandler', mkListing', mkConstHandler')
+
 
 companyUpkeepsListing :: ListHandler IdDependencies
 companyUpkeepsListing = mkListing' jsonO (const $ withConnId (\conn id'' -> do

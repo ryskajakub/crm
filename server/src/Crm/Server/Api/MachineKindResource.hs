@@ -3,33 +3,32 @@
 
 module Crm.Server.Api.MachineKindResource where
 
-import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, pgStrictText, pgString)
-import Opaleye (runInsertReturning, runDelete, (./=), (.&&), pgBool, runInsert)
+import           Opaleye.RunQuery            (runQuery)
+import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgString)
+import           Opaleye                     (runInsertReturning, runDelete, (./=), (.&&), pgBool, runInsert)
 
-import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad (forM, forM_)
-import Control.Arrow (arr, first)
+import           Control.Monad.Reader        (ask)
+import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad               (forM, forM_)
+import           Control.Arrow               (arr, first)
 
-import Rest.Resource (Resource, Void, schema, name, mkResourceId, get, update)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler)
+import           Rest.Resource               (Resource, Void, schema, name, mkResourceId, get, update)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (Handler)
 
-import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineKind      as MK
 
-import Crm.Server.Helpers 
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Handler (mkConstHandler', mkInputHandler')
+import           Crm.Server.Helpers 
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler')
 
-import qualified Crm.Shared.ExtraField as EF
-import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.ExtraField       as EF
+import qualified Crm.Shared.Api              as A
 
-import TupleTH
-import Data.Tagged
+import           TupleTH
 
 resource :: Resource Dependencies Dependencies () Void Void
 resource = mkResourceId {

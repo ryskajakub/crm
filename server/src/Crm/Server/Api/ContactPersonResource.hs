@@ -1,24 +1,24 @@
 module Crm.Server.Api.ContactPersonResource (resource) where
 
-import Opaleye (runQuery, pgStrictText)
+import           Opaleye                     (runQuery, pgStrictText)
 
-import Control.Monad.IO.Class (liftIO)
+import           Control.Monad.IO.Class      (liftIO)
 
-import Data.Tuple.All (sel1, sel2, sel3)
+import           Data.Tuple.All              (sel1, sel2, sel3)
 
-import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, get, update)
-import qualified Rest.Schema as S
-import Rest.Handler (Handler)
-import Rest.Dictionary.Combinators (jsonO)
+import           Rest.Resource               (Resource, Void, schema, name, mkResourceReaderWith, get, update)
+import qualified Rest.Schema                 as S
+import           Rest.Handler                (Handler)
+import           Rest.Dictionary.Combinators (jsonO)
 
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.ContactPerson as CP
+import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.ContactPerson    as CP
 
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
-import Crm.Server.Handler (mkConstHandler')
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', updateRows)
+import           Crm.Server.Handler          (mkConstHandler')
 
 resource :: Resource Dependencies IdDependencies UrlId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {

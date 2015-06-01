@@ -2,39 +2,40 @@ module Crm.Server.Api.UpkeepResource (
   insertUpkeepMachines ,
   upkeepResource ) where
 
-import Opaleye.Operators ((.==))
-import Opaleye.Manipulation (runInsert, runUpdate, runDelete)
-import Opaleye.PGTypes (pgDay, pgBool, pgInt4, pgStrictText)
-import Opaleye (runQuery)
+import           Opaleye.Operators           ((.==))
+import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete)
+import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
+import           Opaleye                     (runQuery)
 
-import Database.PostgreSQL.Simple (Connection)
+import           Database.PostgreSQL.Simple  (Connection)
 
-import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Error.Class (throwError)
-import Control.Monad (forM_)
+import           Control.Monad.Reader        (ask)
+import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Error.Class   (throwError)
+import           Control.Monad               (forM_)
 
-import Data.Tuple.All (sel1, sel2, sel3, sel4)
+import           Data.Tuple.All              (sel1, sel2, sel3, sel4)
 
-import Rest.Types.Error (Reason(NotAllowed))
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, Handler)
+import           Rest.Types.Error            (Reason(NotAllowed))
+import           Rest.Resource               (Resource, Void, schema, list, name, 
+                                             mkResourceReaderWith, get, update, remove)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (ListHandler, Handler)
 
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.UpkeepMachine as UM
-import Crm.Shared.MyMaybe
+import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.Upkeep           as U
+import qualified Crm.Shared.Employee         as E
+import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.UpkeepMachine    as UM
+import           Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', createDeletion ,
-  ymdToDay, maybeToNullable, deleteRows')
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Handler (mkInputHandler', mkConstHandler', mkListing')
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', 
+                                             createDeletion, ymdToDay, maybeToNullable, deleteRows')
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 

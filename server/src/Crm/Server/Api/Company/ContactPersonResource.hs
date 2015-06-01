@@ -3,27 +3,28 @@
 module Crm.Server.Api.Company.ContactPersonResource ( 
   contactPersonResource ) where
 
-import Opaleye.PGTypes (pgInt4, pgStrictText)
-import Opaleye.Manipulation (runInsert)
-import Opaleye.RunQuery (runQuery)
+import           Opaleye.PGTypes             (pgInt4, pgStrictText)
+import           Opaleye.Manipulation        (runInsert)
+import           Opaleye.RunQuery            (runQuery)
 
-import Control.Monad.IO.Class (liftIO)
+import           Control.Monad.IO.Class      (liftIO)
 
-import Data.Tuple.All (sel1, sel3)
+import           Data.Tuple.All              (sel1, sel3)
 
-import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler, ListHandler)
+import           Rest.Resource               (Resource, Void, schema, name, 
+                                             create, mkResourceId, list)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (Handler, ListHandler)
 
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.Api as A
+import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.Api              as A
 
-import Crm.Server.Helpers (withConnId)
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Handler (mkInputHandler', mkListing')
+import           Crm.Server.Helpers          (withConnId)
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Handler          (mkInputHandler', mkListing')
 
 createContactPersonHandler :: Handler IdDependencies
 createContactPersonHandler = mkInputHandler' (jsonO . jsonI) (\contactPerson -> 

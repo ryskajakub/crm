@@ -1,23 +1,24 @@
 module Crm.Server.Api.PhotoMetaResource ( 
   photoMetaResource ) where
 
-import Opaleye.Manipulation (runInsert)
-import Opaleye.PGTypes (pgInt4, pgStrictText)
+import           Opaleye.Manipulation        (runInsert)
+import           Opaleye.PGTypes             (pgInt4, pgStrictText)
 
-import Rest.Resource (Resource, Void, schema, name, mkResourceReaderWith, update)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonI)
-import Rest.Handler (Handler)
+import           Rest.Resource               (Resource, Void, schema, name, 
+                                             mkResourceReaderWith, update)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonI)
+import           Rest.Handler                (Handler)
 
-import Control.Monad.IO.Class (liftIO)
+import           Control.Monad.IO.Class      (liftIO)
 
-import Crm.Server.Boilerplate ()
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.PhotoMeta as PM
-import Crm.Server.Types
-import Crm.Server.DB (photosMetaTable)
-import Crm.Server.Helpers (withConnId, readMay', prepareReaderTuple)
-import Crm.Server.Handler (mkInputHandler')
+import           Crm.Server.Boilerplate      ()
+import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.PhotoMeta        as PM
+import           Crm.Server.Types
+import           Crm.Server.DB               (photosMetaTable)
+import           Crm.Server.Helpers          (withConnId, readMay', prepareReaderTuple)
+import           Crm.Server.Handler          (mkInputHandler')
 
 photoMetaResource :: Resource Dependencies IdDependencies UrlId Void Void
 photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {

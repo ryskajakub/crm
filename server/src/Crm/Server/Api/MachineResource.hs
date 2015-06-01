@@ -3,33 +3,35 @@
 
 module Crm.Server.Api.MachineResource where
 
-import Opaleye.RunQuery (runQuery)
-import Opaleye.PGTypes (pgInt4, pgStrictText, pgDay)
+import           Opaleye.RunQuery            (runQuery)
+import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgDay)
 
-import Data.Tuple.All (sel2, sel1, sel3)
+import           Data.Tuple.All              (sel2, sel1, sel3)
 
-import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad (forM_)
+import           Control.Monad.Reader        (ask)
+import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad               (forM_)
 
-import Rest.Resource (Resource, Void, schema, list, name, mkResourceReaderWith, get, update, remove)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, Handler)
+import           Rest.Resource               (Resource, Void, schema, list, name, 
+                                             mkResourceReaderWith, get, update, remove)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (ListHandler, Handler)
 
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import Crm.Shared.MyMaybe
+import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.MachineType      as MT
+import           Crm.Shared.MyMaybe
 
-import Crm.Server.Helpers 
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Core (nextServiceDate)
-import Crm.Server.Handler (mkInputHandler', mkConstHandler', mkListing')
+import           Crm.Server.Helpers 
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Core             (nextServiceDate)
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 
-import TupleTH
+import           TupleTH
+
 
 machineResource :: Resource Dependencies IdDependencies UrlId () Void
 machineResource = (mkResourceReaderWith prepareReaderTuple) {

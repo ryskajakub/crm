@@ -1,27 +1,28 @@
 module Crm.Server.Api.EmployeeResource where
 
-import Opaleye.RunQuery (runQuery)
-import Opaleye.Manipulation (runInsert)
-import Opaleye.PGTypes (pgStrictText)
+import           Opaleye.RunQuery            (runQuery)
+import           Opaleye.Manipulation        (runInsert)
+import           Opaleye.PGTypes             (pgStrictText)
 
-import Control.Monad.Reader (ask)
-import Control.Monad.IO.Class (liftIO)
+import           Control.Monad.Reader        (ask)
+import           Control.Monad.IO.Class      (liftIO)
 
-import Data.Tuple.All (sel2)
+import           Data.Tuple.All              (sel2)
 
-import Rest.Resource (Resource, Void, schema, list, name, create, mkResourceReaderWith, get, update)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (ListHandler, Handler)
+import           Rest.Resource               (Resource, Void, schema, list, name, 
+                                             create, mkResourceReaderWith, get, update)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (ListHandler, Handler)
 
-import qualified Crm.Shared.Api as A
-import qualified Crm.Shared.Employee as E
+import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.Employee         as E
 
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Helpers (prepareReaderTuple, withConnId, readMay', updateRows)
-import Crm.Server.Handler (mkConstHandler', mkInputHandler', mkListing')
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', updateRows)
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing')
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {

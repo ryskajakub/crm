@@ -97,56 +97,55 @@ module Crm.Server.DB (
   ExtraFieldMapped ,
   MachineMapped ) where
 
-import Database.PostgreSQL.Simple (ConnectInfo(..), Connection, defaultConnectInfo, connect, close, query,
-  Only(..), Binary(..), execute)
+import           Control.Arrow                        (returnA)
+import           Control.Applicative                  ((<*>), pure)
+import           Control.Monad                        (forM_)
+import           Data.List                            (intersperse)
+import           Data.Monoid                          ((<>))
 
-import Opaleye.QueryArr (Query, QueryArr)
-import Opaleye.Table (Table(Table), required, queryTable, optional)
-import Opaleye.Column (Column, Nullable)
-import Opaleye.Order (orderBy, asc, limit)
-import Opaleye.RunQuery (runQuery)
-import Opaleye.Operators (restrict, lower, (.==))
-import Opaleye.PGTypes (pgInt4, PGDate, PGBool, PGInt4, PGInt8, PGText, pgStrictText, pgBool, PGFloat8, pgString, PGBytea)
-import qualified Opaleye.Aggregate as AGG
-import Opaleye.Join (leftJoin)
-import Opaleye.Distinct (distinct)
-import Opaleye (runInsert)
-
-import Control.Monad.Error.Class (throwError)
-import Control.Arrow (returnA)
-import Control.Applicative ((<*>), pure)
-import Control.Monad.Trans.Except (ExceptT)
-import Control.Monad (forM_)
-
-import Data.Profunctor.Product (p1, p2, p3, p4, p5, p6, p7, p11)
-import Data.Time.Calendar (Day)
-import Data.List (intersperse)
-import Data.Tuple.All (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
-import Data.ByteString.Lazy (ByteString)
-import Data.Text (Text, pack)
-import Data.Monoid ((<>))
-
-import Rest.Types.Error (DataError(ParseError), Reason(InputError))
-
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.PhotoMeta as PM
-import qualified Crm.Shared.Photo as P
-import qualified Crm.Shared.ExtraField as EF
-
-import Crm.Server.Helpers (dayToYmd, maybeToNullable)
-
+import           Control.Monad.Error.Class            (throwError)
+import           Control.Monad.Trans.Except           (ExceptT)
+import           Data.Profunctor.Product              (p1, p2, p3, p4, p5, p6, p7, p11)
+import           Data.Time.Calendar                   (Day)
+import           Data.Tuple.All                       (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
+import           Data.ByteString.Lazy                 (ByteString)
+import           Data.Text                            (Text, pack)
+import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connection, defaultConnectInfo, 
+                                                      connect, close, query, Only(..), Binary(..), execute)
+import           Opaleye.QueryArr                     (Query, QueryArr)
+import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
+import           Opaleye.Column                       (Column, Nullable)
+import           Opaleye.Order                        (orderBy, asc, limit)
+import           Opaleye.RunQuery                     (runQuery)
+import           Opaleye.Operators                    (restrict, lower, (.==))
+import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
+                                                      PGText, pgStrictText, pgBool, PGFloat8, 
+                                                      pgString, PGBytea)
+import qualified Opaleye.Aggregate                    as AGG
+import           Opaleye.Join                         (leftJoin)
+import           Opaleye.Distinct                     (distinct)
+import           Opaleye                              (runInsert)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
-import qualified Opaleye.Internal.Column as C
+import qualified Opaleye.Internal.Column              as C
 
-import TupleTH
+import           Rest.Types.Error                     (DataError(ParseError), Reason(InputError))
+import           TupleTH
+
+import qualified Crm.Shared.Company                   as C
+import qualified Crm.Shared.Employee                  as E
+import qualified Crm.Shared.ContactPerson             as CP
+import qualified Crm.Shared.Machine                   as M
+import qualified Crm.Shared.MachineType               as MT
+import qualified Crm.Shared.MachineKind               as MK
+import qualified Crm.Shared.Upkeep                    as U
+import qualified Crm.Shared.UpkeepSequence            as US
+import qualified Crm.Shared.UpkeepMachine             as UM
+import qualified Crm.Shared.PhotoMeta                 as PM
+import qualified Crm.Shared.Photo                     as P
+import qualified Crm.Shared.ExtraField                as EF
+
+import           Crm.Server.Helpers                   (dayToYmd, maybeToNullable)
+
 
 type DBInt = Column PGInt4
 type DBInt8 = Column PGInt8

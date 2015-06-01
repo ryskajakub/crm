@@ -3,39 +3,37 @@
 module Crm.Server.Api.Company.MachineResource ( 
   machineResource ) where
 
-import Database.PostgreSQL.Simple (Connection)
+import           Control.Monad               (forM_)
 
-import Opaleye.PGTypes (pgInt4, pgStrictText, pgDay, pgBool)
-import Opaleye.Manipulation (runInsert, runInsertReturning)
-import Opaleye (runQuery)
+import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Trans.Except  (ExceptT)
+import           Data.Tuple.All              (sel1)
+import           Data.Text                   (Text)
+import           Database.PostgreSQL.Simple  (Connection)
+import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgDay, pgBool)
+import           Opaleye.Manipulation        (runInsert, runInsertReturning)
+import           Opaleye                     (runQuery)
+import           Rest.Resource               (Resource, Void, schema, name, 
+                                             create, mkResourceId, list)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (Handler, ListHandler)
+import           Rest.Types.Error            (Reason)
 
-import Control.Monad.IO.Class (liftIO)
-import Control.Monad (forM_)
-import Control.Monad.Trans.Except (ExceptT)
+import qualified Crm.Shared.UpkeepSequence   as US
+import qualified Crm.Shared.MachineType      as MT
+import qualified Crm.Shared.MachineKind      as MK
+import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.ExtraField       as EF
+import qualified Crm.Shared.Api              as A
+import           Crm.Shared.MyMaybe          (toMaybe)
 
-import Data.Tuple.All (sel1)
-import Data.Text (Text)
-
-import Rest.Resource (Resource, Void, schema, name, create, mkResourceId, list)
-import qualified Rest.Schema as S
-import Rest.Dictionary.Combinators (jsonO, jsonI)
-import Rest.Handler (Handler, ListHandler)
-import Rest.Types.Error (Reason)
-
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.ExtraField as EF
-import qualified Crm.Shared.Api as A
-import Crm.Shared.MyMaybe (toMaybe)
-
-import Crm.Server.Helpers (withConnId, ymdToDay, maybeToNullable)
-import Crm.Server.Boilerplate ()
-import Crm.Server.Types
-import Crm.Server.DB
-import Crm.Server.Handler (mkInputHandler', mkListing')
+import           Crm.Server.Helpers          (withConnId, ymdToDay, maybeToNullable)
+import           Crm.Server.Boilerplate      ()
+import           Crm.Server.Types
+import           Crm.Server.DB
+import           Crm.Server.Handler          (mkInputHandler', mkListing')
 
 import TupleTH (proj)
 
