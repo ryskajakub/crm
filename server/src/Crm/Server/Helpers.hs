@@ -23,9 +23,9 @@ module Crm.Server.Helpers (
   prepareReaderTuple ) where
 
 
-import Control.Monad                         (forM_)
-import Data.Functor.Identity                 (runIdentity)
-import Data.Typeable                         (Typeable)
+import           Control.Monad               (forM_)
+import           Data.Functor.Identity       (runIdentity)
+import           Data.Typeable               (Typeable)
 
 import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import           Control.Monad.Trans.Class   (lift)
