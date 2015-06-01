@@ -1,25 +1,25 @@
 module Crm.Data.MachineData where
 
-import Data.Text (Text)
+import           Data.Text (Text)
 
-import Crm.Shared.Company
-import Crm.Shared.ContactPerson
-import Crm.Shared.Machine
-import Crm.Shared.MachineType
-import Crm.Shared.MachineKind
-import Crm.Shared.YearMonthDay
-import Crm.Shared.UpkeepSequence
-import Crm.Shared.Photo
-import Crm.Shared.PhotoMeta
-import Crm.Shared.Upkeep
-import Crm.Shared.UpkeepMachine
-import Crm.Shared.Employee
-import Crm.Shared.ExtraField
+import           Crm.Shared.Company
+import           Crm.Shared.ContactPerson
+import           Crm.Shared.Machine
+import           Crm.Shared.MachineType
+import           Crm.Shared.MachineKind
+import           Crm.Shared.YearMonthDay
+import           Crm.Shared.UpkeepSequence
+import           Crm.Shared.Photo
+import           Crm.Shared.PhotoMeta
+import           Crm.Shared.Upkeep
+import           Crm.Shared.UpkeepMachine
+import           Crm.Shared.Employee
+import           Crm.Shared.ExtraField
 
-import Crm.Component.DatePicker
-import qualified Crm.Validation as V
+import           Crm.Component.DatePicker
+import qualified Crm.Validation            as V
 
-import Crm.Component.Form (InputState)
+import           Crm.Component.Form        (InputState)
 
 data MachineData = MachineData {
   machine :: (Machine, Text) ,

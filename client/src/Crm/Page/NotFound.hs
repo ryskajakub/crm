@@ -4,11 +4,11 @@
 module Crm.Page.NotFound (
   notFound ) where
 
-import Data.Text (fromString)
-import Prelude
-import FFI (Defined(Defined))
+import           Data.Text              (fromString)
+import           Prelude
+import           FFI                    (Defined(Defined))
 
-import HaskellReact
+import           HaskellReact
 import qualified HaskellReact.Bootstrap as B
 
 notFound :: DOMElement

@@ -5,45 +5,44 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import Data.Text (fromString, (<>), Text, showInt)
-import Prelude hiding (div, span, id)
-import Data.Var (Var, modify)
-import FFI (Defined(Defined))
+import           Data.Text                             (fromString, (<>), Text, showInt)
+import           Prelude                               hiding (div, span, id)
+import           Data.Var                              (Var, modify)
+import           FFI                                   (Defined(Defined))
 
-import HaskellReact hiding (row)
-import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Button as BTN
+import           HaskellReact                          hiding (row)
+import qualified HaskellReact.Bootstrap                as B
+import qualified HaskellReact.Bootstrap.Button         as BTN
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
-import qualified HaskellReact.Jasny as J
-import qualified HaskellReact.Tag.Hyperlink as A
-import qualified HaskellReact.Tag.Image as IMG
-import HaskellReact.Bootstrap.Carousel (carousel)
-import qualified HaskellReact.BackboneRouter as BR
+import qualified HaskellReact.Jasny                    as J
+import qualified HaskellReact.Tag.Hyperlink            as A
+import qualified HaskellReact.Tag.Image                as IMG
+import           HaskellReact.Bootstrap.Carousel       (carousel)
+import qualified HaskellReact.BackboneRouter           as BR
+import qualified JQuery                                as JQ
 
-import qualified JQuery as JQ
+import qualified Crm.Shared.Machine                    as M
+import qualified Crm.Shared.YearMonthDay               as YMD
+import qualified Crm.Shared.MachineType                as MT
+import qualified Crm.Shared.Company                    as C
+import qualified Crm.Shared.ContactPerson              as CP
+import qualified Crm.Shared.UpkeepSequence             as US
+import qualified Crm.Shared.PhotoMeta                  as PM
+import qualified Crm.Shared.Photo                      as P
+import qualified Crm.Shared.Upkeep                     as U
+import qualified Crm.Shared.UpkeepMachine              as UM
+import qualified Crm.Shared.Employee                   as E
+import qualified Crm.Shared.ExtraField                 as EF
+import qualified Crm.Shared.MachineKind                as MK
 
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.PhotoMeta as PM
-import qualified Crm.Shared.Photo as P
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepMachine as UM
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.ExtraField as EF
-import qualified Crm.Shared.MachineKind as MK
-
-import qualified Crm.Data.MachineData as MD
-import qualified Crm.Data.Data as D
-import qualified Crm.Component.DatePicker as DP
-import Crm.Component.Form
-import Crm.Server (createMachine, updateMachine, uploadPhotoData, uploadPhotoMeta, fetchPhoto, deleteMachine, deletePhoto)
-import Crm.Helpers 
-import qualified Crm.Router as R
-import qualified Crm.Validation as V
+import qualified Crm.Data.MachineData                  as MD
+import qualified Crm.Data.Data                         as D
+import qualified Crm.Component.DatePicker              as DP
+import           Crm.Component.Form
+import           Crm.Server 
+import           Crm.Helpers 
+import qualified Crm.Router                            as R
+import qualified Crm.Validation                        as V
 
 machineDetail :: InputState
               -> Var D.AppState

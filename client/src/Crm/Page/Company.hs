@@ -6,33 +6,33 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import Data.Text (fromString, length, (<>))
-import Prelude hiding (div, span, id, length)
-import Data.Var (Var, modify)
-import Data.Maybe (onJust)
-import FFI (Defined(Defined, Undefined))
+import           Data.Text                        (fromString, length, (<>))
+import           Prelude                          hiding (div, span, id, length)
+import           Data.Var                         (Var, modify)
+import           Data.Maybe                       (onJust)
+import           FFI                              (Defined(Defined, Undefined))
 
-import HaskellReact as HR
-import qualified HaskellReact.Bootstrap as B
-import qualified HaskellReact.Bootstrap.Button as BTN
+import           HaskellReact                     as HR
+import qualified HaskellReact.Bootstrap           as B
+import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Bootstrap.Nav as BN
-import qualified HaskellReact.BackboneRouter as BR
+import qualified HaskellReact.Bootstrap.Nav       as BN
+import qualified HaskellReact.BackboneRouter      as BR
+import           GoogleMaps                       (computeCoordinates)
 
-import GoogleMaps (computeCoordinates)
+import qualified Crm.Shared.Company               as C
+import qualified Crm.Shared.ContactPerson         as CP
+import qualified Crm.Shared.Machine               as M
+import qualified Crm.Shared.MachineType           as MT
+import qualified Crm.Shared.YearMonthDay          as YMD
+import qualified Crm.Shared.Direction             as DIR
 
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.Direction as DIR
+import qualified Crm.Data.Data                    as D
+import           Crm.Component.Form               as F
+import           Crm.Server                       (createCompany, updateCompany, deleteCompany)
+import qualified Crm.Router                       as R
+import           Crm.Helpers
 
-import qualified Crm.Data.Data as D
-import Crm.Component.Form as F
-import Crm.Server (createCompany, updateCompany, deleteCompany)
-import qualified Crm.Router as R
-import Crm.Helpers
 
 companiesList :: R.CrmRouter
               -> C.OrderType

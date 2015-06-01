@@ -1,26 +1,28 @@
 module Crm.Data.Data where
 
-import Data.Var (Var, modify)
-import Data.Text (Text)
+import           Data.Var                  (Var, modify)
+import           Data.Text                 (Text)
 
-import qualified Crm.Shared.Employee as E
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.MachineKind as MK
-import qualified Crm.Shared.Company as C
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.UpkeepMachine as UM
+import qualified Crm.Shared.Company        as C
+import qualified Crm.Shared.Employee       as E
+import qualified Crm.Shared.ContactPerson  as CP
+import qualified Crm.Shared.Machine        as M
+import qualified Crm.Shared.MachineType    as MT
+import qualified Crm.Shared.MachineKind    as MK
+import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.YearMonthDay as YMD
-import qualified Crm.Shared.Direction as DIR
-import qualified Crm.Shared.ExtraField as EF
+import qualified Crm.Shared.UpkeepMachine  as UM
+import qualified Crm.Shared.PhotoMeta      as PM
+import qualified Crm.Shared.Photo          as P
+import qualified Crm.Shared.ExtraField     as EF
+import qualified Crm.Shared.Login          as L
+import qualified Crm.Shared.YearMonthDay   as YMD
 
-import Crm.Data.MachineData
-import Crm.Data.UpkeepData
-import Crm.Data.EmployeeData
+import           Crm.Data.MachineData
+import           Crm.Data.UpkeepData
+import           Crm.Data.EmployeeData
 
-import Crm.Component.Form (InputState)
+import           Crm.Component.Form        (InputState)
 
 data NavigationState =
   Dashboard { companies :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] } |
