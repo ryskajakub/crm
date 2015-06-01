@@ -19,7 +19,7 @@ main = H.runInputT H.defaultSettings $ do
       H.outputStrLn "Using UTF-8 encoding"
       CS.EncryptedPass byteStringPassword <- liftIO $ CS.encryptPassIO CS.defaultParams pass
       _ <- liftIO $ withConnection $ \connection -> do
-        runDelete connection passwordTable (const . pgBool $ True)
+        _ <- runDelete connection passwordTable (const . pgBool $ True)
         runInsert connection passwordTable $ pgStrictByteString byteStringPassword
       return "password saved into db"
     Nothing -> return "reading error"

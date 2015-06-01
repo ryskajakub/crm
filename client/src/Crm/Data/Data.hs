@@ -12,11 +12,9 @@ import qualified Crm.Shared.MachineKind    as MK
 import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine  as UM
-import qualified Crm.Shared.PhotoMeta      as PM
-import qualified Crm.Shared.Photo          as P
 import qualified Crm.Shared.ExtraField     as EF
-import qualified Crm.Shared.Login          as L
 import qualified Crm.Shared.YearMonthDay   as YMD
+import qualified Crm.Shared.Direction      as DIR
 
 import           Crm.Data.MachineData
 import           Crm.Data.UpkeepData
