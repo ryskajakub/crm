@@ -12,6 +12,7 @@ module HaskellReact.Tag.Input (
   InputType ,
   button ,
   checkbox ,
+  password' ,
   color' ,
   date ,
   datetime ,
@@ -79,8 +80,8 @@ month = "month"
 number :: InputType
 number = "number"
 
-password :: InputType
-password = "password"
+password' :: InputType
+password' = "password"
 
 radio :: InputType
 radio = "radio"
@@ -145,3 +146,7 @@ input a i = input' a i ([]::[DOMElement])
 
 textarea :: Attributes -> InputAttributes -> DOMElement
 textarea aAttrs iAttrs = constructDOMElement "textarea" aAttrs iAttrs (Null :: Nullable DOMElement)
+
+password :: Attributes -> InputAttributes -> DOMElement
+password attributes inputAttributes =
+  input attributes $ inputAttributes { type_ = password' }

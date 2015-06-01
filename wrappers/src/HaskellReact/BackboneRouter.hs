@@ -13,19 +13,17 @@ import HaskellReact.Tag.Hyperlink (mkAAttrs, href, a'')
 data BackboneRouter
 
 -- | Starts the Backbone router
-startRouter :: [(Text, [Text] -> Fay ())] -- ^ list of routes and callback handlers, the argument to the callback is the params of the route
+startRouter :: [(Text, BackboneRouter -> [Text] -> Fay ())] -- ^ list of routes and callback handlers, the argument to the callback is the params of the route and the router itself
             -> Fay BackboneRouter
 startRouter = ffi " \
 \ (function () {\
   \ var Backbone = require('backbone');\
   \ var routesFromFay = %1;\
-  \ var routes = {};\
+  \ var routes = {}; \
+  \ var router = new Backbone.Router(); \
   \ for (var i = 0; i < routesFromFay.length; i++){\
-    \ routes[routesFromFay[i][0]] = (function(i) { return function() { routesFromFay[i][1](arguments); }; })(i)\
+    \ router.route(routesFromFay[i][0], (function(i) { return function() { routesFromFay[i][1](router, arguments); }; })(i)); \
   \ }\
-  \ var router = new Backbone.Router({\
-    \ routes: routes\
-  \ });\
   \ Backbone.history.start();\
   \ return router;\
 \ })()\
@@ -46,9 +44,7 @@ link :: Renderable a
      -> DOMElement
 link children route router = let
   aAttr = mkAAttrs {
-    href = Defined $ pack "javascript://"
-  }
+    href = Defined $ pack "javascript://" }
   attr = mkAttrs {
-    onClick = Defined $ const $ navigate route router
-  }
+    onClick = Defined $ const $ navigate route router }
   in a'' attr aAttr children
