@@ -1,4 +1,7 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Crm.Server.Handler where
 
@@ -14,15 +17,18 @@ import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
 
+import           Control.Monad.Reader.Class  (MonadReader)
+
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
 
-import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar)
-import           Rest.Dictionary.Types       (Header(..))
+import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar, xmlE)
+import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
 import           Rest.Handler 
 import           Rest.Types.Error            (Reason(..), DataError(..), 
                                              DomainReason(..), ToResponseCode, 
                                              toResponseCode)
+import           Rest.Types.Void (Void)
 
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
@@ -40,6 +46,10 @@ instance HasConnection (Connection, b) where
 instance HasConnection Connection where
   getConnection = id
 
+mkGenHandler' :: (MonadReader a m, MonadIO m, HasConnection a) 
+              => Modifier () p i o Nothing
+              -> (Env SessionId p (FromMaybe () i) -> ExceptT (Reason String) m (Apply f (FromMaybe () o)))
+              -> GenHandler m f
 mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
   connection <- ask
   verifyPassword (getConnection connection) (header env)
