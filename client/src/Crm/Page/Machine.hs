@@ -270,6 +270,17 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       setExtraField
   kindSpecificRows = map mkInputRow extraFields
 
+  mkFormGroup = div' (class' "form-group")
+  
+  noteRow = 
+    oneElementRow
+      "Poznámka" $
+      textarea 
+        editing 
+        True 
+        (SetValue $ M.note machine') 
+        (\str -> setMachine $ machine' { M.note = str })
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -344,12 +355,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
                   in case editing of
                     Editing -> div' (class' "col-md-3") dropdown
                     Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
-            _ -> []) ++ [
-        oneElementRow
-          "Poznámka" 
-          (textarea editing True (SetValue $ M.note machine') (\str -> setMachine $ machine' {
-            M.note = str } ))] ++ kindSpecificRows ++ extraRows ++ [
-        div' (class' "form-group") (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
+            _ -> []) ++ [noteRow] ++ kindSpecificRows ++ extraRows ++ [
+          mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements
