@@ -228,7 +228,7 @@ newMaintenance' = prepareRouteAndMkHandler
 newContactPerson' :: RouteAndMkHandler C.CompanyId
 newContactPerson' = prepareRouteAndMkHandler
   (mkCompaniesRoute { postfix = Just "new-contact-person" })
-   companyIdEncodable
+  companyIdEncodable
 
 maintenances' :: RouteAndMkHandler C.CompanyId
 maintenances' = prepareRouteAndMkHandler

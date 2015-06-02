@@ -136,7 +136,7 @@ startRouter appVar = startedRouter where
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
               Nothing V.new (Right $ UD.UpkeepNew $ Left companyId) ,
-    useHandler newContactPerson' $ \companyId ->
+    useHandler contactPersonList' $ \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList data'
         in modify' ns ,
