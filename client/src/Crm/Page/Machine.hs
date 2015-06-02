@@ -330,7 +330,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           in case editing of
             Editing -> div' (class' "col-md-3") dropdown
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
-            _ -> []
+    _ -> []
+
+  nullDropdownRowEditing = nullDropdownRow editing
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -346,10 +348,18 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        nullDropdownRow editing "Kontaktní osoba" contactPersons (CP.name) (findInList contactPersonId contactPersons)
-          (\cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId }) ,
-        nullDropdownRow editing "Zapojení" otherMachines (M.serialNumber) (findInList otherMachineId otherMachines)
-          (\omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId }) ,
+        nullDropdownRowEditing 
+          "Kontaktní osoba" 
+          contactPersons 
+          CP.name 
+          (findInList contactPersonId contactPersons) $
+          \cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId } ,
+        nullDropdownRowEditing 
+          "Zapojení" 
+          otherMachines 
+          M.serialNumber 
+          (findInList otherMachineId otherMachines) $
+          \omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId } ,
         inputRowEditing
           "Výrobní číslo"
           (SetValue $ M.serialNumber machine')
