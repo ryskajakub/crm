@@ -282,7 +282,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
         (\str -> setMachine $ machine' { M.note = str })
 
   -- rows that ore used in the computation by mth
-  computationRows = (case MT.kind machineType of
+  computationRows = case MT.kind machineType of
     MK.RotaryScrewCompressor -> [
       inputRow
         editing
@@ -292,8 +292,10 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           (\im -> let
             newMachine = machine' { M.initialMileage = im }
             newValidation = V.remove V.MachineInitialMileageNumber validation
-            in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
-          (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
+            in changeNavigationState $ \md -> 
+              md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
+          (const $ changeNavigationState $ \md -> 
+            md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
       row 
         "Provoz mth/rok (Rok má 8760 mth)" [
         (div' (class' "col-md-3") 
@@ -302,7 +304,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             True
             (DefaultValue $ showInt $ M.mileagePerYear machine')
             (let 
-              errorHandler = changeNavigationState (\md -> md { MD.validation = V.add V.MachineUsageNumber validation })
+              errorHandler = changeNavigationState (\md -> 
+                md { MD.validation = V.add V.MachineUsageNumber validation })
               in eventInt' 
                 (\mileagePerYear -> if mileagePerYear > 0
                   then changeNavigationState (\md -> md { 
@@ -327,7 +330,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           in case editing of
             Editing -> div' (class' "col-md-3") dropdown
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
-            _ -> [])
+            _ -> []
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
