@@ -1,3 +1,5 @@
+{-# OPTIONS -fno-warn-orphans #-}
+
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DataKinds #-}
@@ -22,13 +24,12 @@ import           Control.Monad.Reader.Class  (MonadReader)
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
 
-import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar, xmlE)
+import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar)
 import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
 import           Rest.Handler 
 import           Rest.Types.Error            (Reason(..), DataError(..), 
                                              DomainReason(..), ToResponseCode, 
                                              toResponseCode)
-import           Rest.Types.Void (Void)
 
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
@@ -94,7 +95,17 @@ mkIdHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
              -> Handler m
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
 
+mkListing' :: (MonadReader a m, MonadIO m, HasConnection a)
+           => Modifier () () Nothing o Nothing
+           -> (Range -> ExceptT (Reason String) m [FromMaybe () o])
+           -> ListHandler m
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
+
+
+mkOrderedListing' :: (MonadReader a m, MonadIO m, HasConnection a)
+                  => Modifier () () Nothing o Nothing
+                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason String) m [FromMaybe () o])
+                  -> ListHandler m
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode String where
