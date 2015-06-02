@@ -281,6 +281,54 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
         (SetValue $ M.note machine') 
         (\str -> setMachine $ machine' { M.note = str })
 
+  -- rows that ore used in the computation by mth
+  computationRows = (case MT.kind machineType of
+    MK.RotaryScrewCompressor -> [
+      inputRow
+        editing
+        "Úvodní stav motohodin"
+        (DefaultValue $ showInt $ M.initialMileage machine')
+        (eventInt' 
+          (\im -> let
+            newMachine = machine' { M.initialMileage = im }
+            newValidation = V.remove V.MachineInitialMileageNumber validation
+            in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
+          (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
+      row 
+        "Provoz mth/rok (Rok má 8760 mth)" [
+        (div' (class' "col-md-3") 
+          (input 
+            editing
+            True
+            (DefaultValue $ showInt $ M.mileagePerYear machine')
+            (let 
+              errorHandler = changeNavigationState (\md -> md { MD.validation = V.add V.MachineUsageNumber validation })
+              in eventInt' 
+                (\mileagePerYear -> if mileagePerYear > 0
+                  then changeNavigationState (\md -> md { 
+                    MD.validation = V.remove V.MachineUsageNumber validation , 
+                    MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, datePickerText)})
+                  else errorHandler)
+                (const errorHandler)))) ,
+        (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
+        (let
+          upkeepPerMileage = minimum repetitions where
+            nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
+            repetitions = map US.repetition nonOneTimeSequences
+          operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+          buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
+            operationTypeTuples
+          buttonLabel = maybe "Jiný" snd buttonLabelMaybe
+          selectElements = map (\(value, selectLabel) -> let
+            selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
+            in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
+          buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
+          dropdown = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
+          in case editing of
+            Editing -> div' (class' "col-md-3") dropdown
+            Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
+            _ -> [])
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -310,53 +358,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
         editableRow
           editing
           ("Datum uvedení do provozu") 
-          datePicker ] ++ (case MT.kind machineType of
-            MK.RotaryScrewCompressor -> [
-              inputRow
-                editing
-                "Úvodní stav motohodin"
-                (DefaultValue $ showInt $ M.initialMileage machine')
-                (eventInt' 
-                  (\im -> let
-                    newMachine = machine' { M.initialMileage = im }
-                    newValidation = V.remove V.MachineInitialMileageNumber validation
-                    in changeNavigationState $ \md -> md { MD.machine = (newMachine, datePickerText) , MD.validation = newValidation })
-                  (const $ changeNavigationState $ \md -> md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
-              row 
-                "Provoz mth/rok (Rok má 8760 mth)" [
-                (div' (class' "col-md-3") 
-                  (input 
-                    editing
-                    True
-                    (DefaultValue $ showInt $ M.mileagePerYear machine')
-                    (let 
-                      errorHandler = changeNavigationState (\md -> md { MD.validation = V.add V.MachineUsageNumber validation })
-                      in eventInt' 
-                        (\mileagePerYear -> if mileagePerYear > 0
-                          then changeNavigationState (\md -> md { 
-                            MD.validation = V.remove V.MachineUsageNumber validation , 
-                            MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, datePickerText)})
-                          else errorHandler)
-                        (const errorHandler)))) ,
-                (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
-                (let
-                  upkeepPerMileage = minimum repetitions where
-                    nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
-                    repetitions = map US.repetition nonOneTimeSequences
-                  operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
-                  buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
-                    operationTypeTuples
-                  buttonLabel = maybe "Jiný" snd buttonLabelMaybe
-                  selectElements = map (\(value, selectLabel) -> let
-                    selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
-                    in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
-                  buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-                  dropdown = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
-                  in case editing of
-                    Editing -> div' (class' "col-md-3") dropdown
-                    Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
-            _ -> []) ++ [noteRow] ++ kindSpecificRows ++ extraRows ++ [
-          mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ validationErrorsGrid ++ (case extraGrid of
+          datePicker ] ++ computationRows ++ [noteRow] ++ kindSpecificRows ++ extraRows ++ [
+          mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]]] ++ 
+            validationErrorsGrid ++ (case extraGrid of
           Just extraGrid' -> [extraGrid']
           Nothing -> [])
   in elements
