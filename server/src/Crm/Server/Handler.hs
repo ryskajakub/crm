@@ -7,35 +7,28 @@
 
 module Crm.Server.Handler where
 
-import           Database.PostgreSQL.Simple  (Connection)
-
-import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (queryTable)
-
 import qualified Codec.Binary.Base64.String  as B64
-
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
-
 import           Control.Monad.Reader.Class  (MonadReader)
-
+import qualified Crypto.Scrypt               as CS
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
-
+import           Database.PostgreSQL.Simple  (Connection)
+import           Opaleye.RunQuery            (runQuery)
+import           Opaleye                     (queryTable)
 import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar)
 import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
 import           Rest.Handler 
 import           Rest.Types.Error            (Reason(..), DataError(..), 
                                              DomainReason(..), ToResponseCode, 
                                              toResponseCode)
+import           Safe                        (headMay)
 
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
-
-import qualified Crypto.Scrypt               as CS
-import           Safe (headMay)
 
 
 data SessionId = Password { password :: Text }
