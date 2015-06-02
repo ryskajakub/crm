@@ -235,7 +235,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     BTN.disabled = if null validationMessages then Undefined else Defined True ,
     BTN.bsStyle = Defined "primary" }) "Uložit"
   saveEditButton = case editing' of
-    Editing -> div' (class' "company") $ saveEditButton' : deleteButton
+    Editing -> div' (class'' ["company", "company-save"]) $ saveEditButton' : deleteButton
     Display -> text2DOM ""
 
   companyBasicInfo = [

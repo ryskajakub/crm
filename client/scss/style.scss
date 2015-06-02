@@ -56,6 +56,9 @@ form.upkeep-sequence-form input[type=checkbox] {
 .company {
   position: relative; }
 
+.company.company-save {
+  margin-top: 10px; }
+
 .company .btn-danger {
   right: 0px;
   position: absolute; }
