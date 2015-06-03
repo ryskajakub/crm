@@ -98,6 +98,9 @@ get = pack "GET"
 status :: JQ.JQXHR -> Int
 status = ffi " %1['status'] "
 
+count1000 :: String
+count1000 = "?count=1000"
+
 -- | Unwrap outermost layer of the fetched list in order to get to the data
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
@@ -175,7 +178,7 @@ getAjax t c = passwordAjax t c Nothing get Nothing Nothing
 getManyAjax :: Text
             -> (a -> Fay ())
             -> Fay ()
-getManyAjax t c = getAjax t (c . items)
+getManyAjax t c = getAjax (t <> pack count1000) (c . items)
 
 deleteAjax :: Text
            -> Fay ()
@@ -339,7 +342,7 @@ fetchFrontPageData order direction router callback =
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in passwordAjax
-    (pack $ A.companies ++ "?order=" ++ (case order of
+    (pack $ A.companies ++ count1000 ++ "&order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
