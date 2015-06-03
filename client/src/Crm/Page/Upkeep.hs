@@ -33,8 +33,6 @@ import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
 import           Crm.Helpers
 
-import Debug.Trace
-
 plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
@@ -179,17 +177,14 @@ upkeepForm :: Var D.AppState
            -> V.Validation
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    uncheckedMachines machines button closeUpkeep' employees selectedEmployee validation = 
-  mkGrid upkeepFormRows validationGrid
-  where
+    uncheckedMachines machines button closeUpkeep' employees selectedEmployee validation = let
   upkeepFormRows = 
-    [companyNameHeader] ++ 
+    [companyNameHeader] ++
     [formHeader] ++
     map upkeepMachineRow machines ++ 
     [dateRow, employeeSelectRow] ++ 
     closeUpkeepRows ++ 
     [submitButtonRow]
-
 
   modify' :: (UD.UpkeepData -> UD.UpkeepData) -> Fay ()
   modify' fun = modify appState $ \appState' -> let
@@ -210,25 +205,23 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       UD.upkeep = (upkeep, checkedMachines) ,
       UD.notCheckedMachines = notCheckedMachines' }
 
+  textareaRowEditing = textareaRow Editing
+  inputRowEditing = inputRow Editing
+
   (closeUpkeepRows, machineColsSize, noteColsSize) = if closeUpkeep' 
-    then ([workHoursRow, workDescriptionRow, recommendationRow], 4, 5)
-    else ([], 6, 6)
-      where
-      workHoursRow = inputRowEditing "Hodiny"
+    then ([inputRowEditing "Hodiny"
         (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) }
-      workDescriptionRow = textareaRowEditing "Popis práce" (SetValue $ U.workDescription upkeep) $ 
+          ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
+      textareaRowEditing "Popis práce" (SetValue $ U.workDescription upkeep) $ 
         \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) }
-      recommendationRow = textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
+          ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } ,
+      textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
         \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) }
+          ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
+    else ([], 6, 6)
     
   upkeepMachineRow :: (M.MachineId, a0, a1, a2, MT.MachineType) -> DOMElement
-  upkeepMachineRow (machineId,_,_,_,machineType) = mkRow $ if closeUpkeep'
-    then [machineToggleCheckedLink, recordedMileage, warranty, note]
-    else [machineToggleCheckedLink, note]
-    where
+  upkeepMachineRow (machineId,_,_,_,machineType) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -283,6 +276,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ \es ->
         updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
 
+    in mkRow $ if closeUpkeep'
+      then [machineToggleCheckedLink, recordedMileage, warranty, note]
+      else [machineToggleCheckedLink, note]
+
   datePicker = let
     modifyDatepickerDate newDate = modify' $ \upkeepData -> upkeepData {
       UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}
@@ -299,9 +296,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   dateRow = oneElementRow "Datum" datePicker
   employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name (findInList selectedEmployee employees)
     $ \eId -> modify' $ \s -> s { UD.selectedEmployee = eId }
-    
-  textareaRowEditing = textareaRow Editing
-  inputRowEditing = inputRow Editing
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
@@ -309,9 +303,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
     B.col (B.mkColProps noteColsSize) $ strong "Poznámka" ]
-  
-  companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
+  companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
   validationMessages'' = V.messages validation
   validationMessages' = if (null upkeepMachines)
     then ["V servisu musí figurovat alespoň jeden stroj."]
@@ -325,3 +318,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   mkGrid :: [DOMElement] -> DOMElement -> DOMElement
   mkGrid columns anotherGrid = div $ (form' (class' "form-horizontal") $ B.grid columns) : anotherGrid : []
+
+  in mkGrid upkeepFormRows validationGrid
+

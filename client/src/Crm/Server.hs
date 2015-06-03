@@ -264,7 +264,7 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> Fay ()
 fetchUpkeep upkeepId callback = getAjax
   (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
-  (\(a,(u,u2,u3),b) -> callback(a,(u,toMaybe u2,u3),b))
+  (callback . (\(a,(u,u2,u3),b) -> (a,(u,toMaybe u2,u3),b)))
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 

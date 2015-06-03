@@ -163,7 +163,7 @@ startRouter appVar = startedRouter where
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation } ,
-    useHandler upkeepDetail' $ \upkeepId -> 
+    useHandler upkeepDetail' $ \upkeepId ->
       fetchUpkeep upkeepId $ \(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
         fetchEmployees $ \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
