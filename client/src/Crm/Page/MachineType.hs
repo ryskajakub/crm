@@ -108,11 +108,9 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     showBool b = if b then "True" else "False"
     storeUpkeepSequence (i, us) = do
       let index = showInt i
-      putStrLn $ show us
       setLocalStorage ("us." <> index <> ".displayOrdering") (showInt $ US.displayOrdering us)
       setLocalStorage ("us." <> index <> ".label") (US.label_ us)
       setLocalStorage ("us." <> index <> ".repetition") (showInt $ US.repetition us)
-      putStrLn $ show $ "setting repetition" <> (showInt $ US.repetition us)
       setLocalStorage ("us." <> index <> ".oneTime") (showBool $ US.oneTime us)
     in do 
       forM_ seqsWithIndices storeUpkeepSequence

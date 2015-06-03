@@ -43,7 +43,7 @@ nextServiceDate machine sequences upkeeps today = let
         []    -> nonEmptySequences
       in computeBasedOnPrevious intoOperationDate filteredSequences
     nonEmptyUpkeeps -> let
-      lastServiceDate = ymdToDay $ maximum $ fmap (U.upkeepDate) nonEmptyUpkeeps
+      lastServiceDate = ymdToDay $ maximum $ fmap U.upkeepDate nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
     where
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
