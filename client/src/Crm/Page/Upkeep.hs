@@ -33,6 +33,8 @@ import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
 import           Crm.Helpers
 
+import Debug.Trace
+
 plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
                -> DOMElement
@@ -307,18 +309,19 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
     B.col (B.mkColProps noteColsSize) $ strong "Poznámka" ]
-  companyNameHeader = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
+  
+  companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
 
-  (validationGrid, submitButtonRow) = (validationHtml validationMessages, submitButtonRow') where
-    validationMessages'' = V.messages validation
-    validationMessages' = if (null upkeepMachines)
-      then ["V servisu musí figurovat alespoň jeden stroj."]
-      else []
-    validationMessages = validationMessages'' ++ validationMessages' ++ 
-      (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
-        then []
-        else ["Musí být nastaveno správně datum."])
-    submitButtonRow' = oneElementRow "" (button $ null validationMessages)
+  validationMessages'' = V.messages validation
+  validationMessages' = if (null upkeepMachines)
+    then ["V servisu musí figurovat alespoň jeden stroj."]
+    else []
+  validationMessages = validationMessages'' ++ validationMessages' ++ 
+    (if displayDate (U.upkeepDate upkeep) == rawUpkeepDate
+      then []
+      else ["Musí být nastaveno správně datum."])
+  validationGrid = validationHtml validationMessages
+  submitButtonRow = oneElementRow "" (button $ null validationMessages)
 
   mkGrid :: [DOMElement] -> DOMElement -> DOMElement
   mkGrid columns anotherGrid = div $ (form' (class' "form-horizontal") $ B.grid columns) : anotherGrid : []
