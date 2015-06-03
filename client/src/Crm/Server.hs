@@ -284,7 +284,7 @@ fetchMachinePhotos machineId callback = getManyAjax
 fetchMachinesInCompany :: C.CompanyId
                        -> ([(M.MachineId, M.Machine)] -> Fay ())
                        -> Fay ()
-fetchMachinesInCompany companyId = getAjax
+fetchMachinesInCompany companyId = getManyAjax
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
@@ -315,7 +315,7 @@ fetchEmployee employeeId = getAjax
 fetchContactPerson :: CP.ContactPersonId
                    -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
                    -> Fay ()
-fetchContactPerson contactPersonId = getAjax
+fetchContactPerson contactPersonId = getManyAjax
   (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId))
 
 fetchContactPersons :: C.CompanyId
