@@ -272,7 +272,7 @@ fetchUpkeeps :: C.CompanyId -- ^ company id
              -> Fay ()
 fetchUpkeeps companyId callback = getManyAjax
   (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
-  (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))) . items)
+  (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))))
   
 fetchMachinePhotos :: M.MachineId
                    -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
