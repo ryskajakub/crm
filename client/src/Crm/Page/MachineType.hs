@@ -33,6 +33,7 @@ import           Crm.Helpers
 import           Crm.Server 
 import           Crm.Component.Autocomplete            (autocompleteInput)
 
+import Debug.Trace
 
 data MachineTypeForm = Phase1 | Edit
   deriving Eq
@@ -243,15 +244,16 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   (autocompleteManufacturerField, autocompleteManufacturerCb) = case manufacturerAutocompleteSubstitution of
     Just substitution -> (substitution, return ())
-    Nothing -> (autocompleteInput
-      inputNormalAttrs
-      (\text ->
-        setMachineType (machineType { MT.machineTypeManufacturer = text }))
-      (const $ return ())
-      fetchMachineTypesManufacturer 
-      "machine-type-manufacturer-autocomplete"
-      (II.mkInputAttrs {
-        II.defaultValue = Defined $ MT.machineTypeManufacturer machineType }))
+    Nothing -> let 
+      onChange text = setMachineType (machineType { MT.machineTypeManufacturer = text })
+      in autocompleteInput
+        inputNormalAttrs
+        onChange
+        onChange
+        fetchMachineTypesManufacturer 
+        "machine-type-manufacturer-autocomplete"
+        (II.mkInputAttrs {
+          II.defaultValue = Defined $ MT.machineTypeManufacturer machineType })
 
   kindSelect = let
     buttonLabel = [
