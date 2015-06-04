@@ -120,6 +120,7 @@ data InputAttributes = InputAttributes {
   defaultValue :: Defined Text , 
   checked :: Defined Text , 
   onChange :: Defined (SyntheticEvent -> Fay ()) ,
+  onPaste :: Defined (SyntheticClipboardEvent -> Fay ()) ,
   disabled_ :: Defined Text ,
   name :: Defined Text ,
   onBlur :: Defined (SyntheticEvent -> Fay ()) }
@@ -136,6 +137,7 @@ defaultInputAttributes = InputAttributes {
   defaultValue = Undefined ,
   disabled_ = Undefined ,
   name = Undefined ,
+  onPaste = Undefined ,
   onBlur = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement

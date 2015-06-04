@@ -12,10 +12,12 @@ data DOMEventTarget
 
 data SyntheticEvent
 data SyntheticMouseEvent
+data SyntheticClipboardEvent
 
 class AnyEvent a
 instance AnyEvent SyntheticMouseEvent
 instance AnyEvent SyntheticEvent
+instance AnyEvent SyntheticClipboardEvent
 
 eventValue :: SyntheticEvent -> Fay Text
 eventValue = ffi " %1['target']['value'] "
@@ -36,3 +38,6 @@ eventString :: SyntheticEvent -> Fay String
 eventString event = do
   text <- eventValue event
   return $ unpack text
+
+clipboardData :: SyntheticClipboardEvent -> Fay Text
+clipboardData = ffi " %1['clipboardData'].getData('text/plain') "
