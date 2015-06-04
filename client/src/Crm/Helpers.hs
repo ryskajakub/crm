@@ -25,6 +25,9 @@ data File
 data FileContents
 
 
+encodeURIComponent :: Text -> Text
+encodeURIComponent = ffi " encodeURIComponent(%1) "
+
 encodeB64 :: Text -> Text
 encodeB64 = ffi " btoa(%1) "
 

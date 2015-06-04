@@ -71,7 +71,7 @@ import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
-import           Crm.Helpers               (File, rmap, encodeB64)
+import           Crm.Helpers               (File, rmap, encodeB64, encodeURIComponent)
 import qualified Crm.Router                as R
 
 
@@ -222,21 +222,20 @@ fetchPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesManufacturer text callback = getManyAjax
-  (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack text)
-  (callback)
+fetchMachineTypesManufacturer text = getManyAjax
+  (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack 
+    (encodeURIComponent . encodeURIComponent $ text))
 
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesAutocomplete text callback = getManyAjax
-  (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack text)
-  callback
+fetchMachineTypesAutocomplete text = getManyAjax
+  (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack 
+    (encodeURIComponent . encodeURIComponent $ text))
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
-fetchMachineTypes callback = getManyAjax
+fetchMachineTypes = getManyAjax
   (pack $ A.machineTypes)
-  callback
 
 fetchMachineTypeById :: MT.MachineTypeId
                      -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ())
@@ -249,7 +248,8 @@ fetchMachineType :: Text -- ^ machine type exact match
                  -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
 fetchMachineType machineTypeName callback = getAjax
-  (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack machineTypeName)
+  (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack (
+    encodeURIComponent . encodeURIComponent $ machineTypeName))
   (callback . toMaybe)
 
 fetchEmployees :: ([E.Employee'] -> Fay ())

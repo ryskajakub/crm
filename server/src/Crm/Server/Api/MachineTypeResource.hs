@@ -17,6 +17,8 @@ import           Data.Tuple.All              (sel1, sel2, sel4)
 import           Data.Int                    (Int64)
 import           Data.Text                   (Text)
 
+import           Network.HTTP.Base           (urlDecode)
+
 import           Rest.Types.Error            (Reason(NotFound, UnsupportedRoute))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update)
@@ -46,9 +48,9 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing' jsonO (const $ 
-  ask >>= \conn -> liftIO $ runMachineTypesQuery' mid conn)
+  ask >>= \conn -> liftIO $ runMachineTypesQuery' (decode mid) conn)
 machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO (const $
-  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [String]))
+  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [String]))
 machineTypesListing CountListing = mkListing' jsonO (const $ do
   rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
@@ -72,6 +74,9 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) (\(machineType, upkeepSequen
         runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
           pgStrictText label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
 
+decode :: String -> String
+decode = urlDecode
+
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler' jsonO (do
   (conn, machineTypeSid) <- ask
@@ -80,7 +85,7 @@ machineTypesSingle = mkConstHandler' jsonO (do
     (onEmptyResult, result) = case machineTypeSid of
       MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
       MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
-      MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left mtName)
+      MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left $ decode mtName)
   rows <- result
   case rows of
     x:xs | null xs -> do 
