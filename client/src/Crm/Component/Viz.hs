@@ -7,13 +7,13 @@ module Crm.Component.Viz (
   MachineGraph (..) ,
   interpret ) where
 
-import FFI
-import Data.Text (fromString, Text, showInt, (<>), intercalate)
-import Prelude hiding (intercalate)
+import           FFI
+import           Data.Text              (fromString, Text, showInt, (<>), intercalate)
+import           Prelude                hiding (intercalate)
 
 import qualified Crm.Shared.MachineType as MT
-import qualified Crm.Shared.Machine as M
-import qualified Crm.Router as R
+import qualified Crm.Shared.Machine     as M
+import qualified Crm.Router             as R
 
 data MachineNode = MachineNode {
   machineId :: M.MachineId ,

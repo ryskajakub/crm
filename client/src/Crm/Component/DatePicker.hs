@@ -7,15 +7,15 @@ module Crm.Component.DatePicker (
   datePicker ,
   DatePicker ) where
 
-import Prelude hiding (putStrLn)
-import Data.Text (fromString, Text)
+import           Prelude                              hiding (putStrLn)
+import           Data.Text                            (fromString, Text)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
-import HaskellReact
+import           HaskellReact
 
-import qualified Crm.Shared.YearMonthDay as YMD
-import Crm.Helpers (displayPrecision)
-import Crm.Component.Form
+import qualified Crm.Shared.YearMonthDay              as YMD
+import           Crm.Helpers                          (displayPrecision)
+import           Crm.Component.Form
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 

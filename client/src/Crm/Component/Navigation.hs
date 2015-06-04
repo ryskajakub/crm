@@ -3,11 +3,11 @@
 
 module Crm.Component.Navigation where
 
-import Data.Text (fromString)
-import Prelude hiding (span, div, elem)
+import           Data.Text                        (fromString)
+import           Prelude                          hiding (span, div, elem)
 
-import HaskellReact
-import HaskellReact.Bootstrap (navBar , nav)
+import           HaskellReact
+import           HaskellReact.Bootstrap           (navBar, nav)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import Crm.Router (link, defaultFrontPage, CrmRouter, plannedUpkeeps, machineTypesList, 

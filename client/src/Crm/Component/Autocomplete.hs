@@ -1,10 +1,10 @@
 module Crm.Component.Autocomplete (
   autocompleteInput ) where
 
-import HaskellReact
-import FFI (ffi, Defined(Defined))
-import Data.Text (pack, Text, (<>))
-import Prelude hiding (id)
+import           HaskellReact
+import           FFI                    (ffi, Defined(Defined))
+import           Data.Text              (pack, Text, (<>))
+import           Prelude                hiding (id)
 
 import qualified HaskellReact.Tag.Input as I
 
