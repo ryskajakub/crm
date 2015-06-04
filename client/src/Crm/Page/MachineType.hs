@@ -33,7 +33,6 @@ import           Crm.Helpers
 import           Crm.Server 
 import           Crm.Component.Autocomplete            (autocompleteInput)
 
-import Debug.Trace
 
 data MachineTypeForm = Phase1 | Edit
   deriving Eq
@@ -297,9 +296,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
               (let 
                 addUpkeepSequenceRow = let
                   newUpkeepSequence = US.newUpkeepSequence {
+                    US.repetition = 8760 ,
                     US.label_ = if (null upkeepSequenceRows) then "běžný" else "" ,
                     US.displayOrdering = length upkeepSequences + 1 }
-                  newUpkeepSequences = upkeepSequences ++ [(newUpkeepSequence, "0")]
+                  newUpkeepSequences = upkeepSequences ++ 
+                    [(newUpkeepSequence, showInt $ US.repetition newUpkeepSequence)]
                   in D.modifyState appVar (\navig -> 
                     navig { D.machineTypeTuple = (machineType, newUpkeepSequences)})
                 disabledProps = if (fixedUpkeepSequences)

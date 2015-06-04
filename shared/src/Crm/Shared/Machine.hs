@@ -31,11 +31,14 @@ data Machine = Machine {
   deriving (Generic, Typeable, Data)
 #endif
 
-newMachine :: YearMonthDay -> Machine
-newMachine ymd = Machine {
-  machineOperationStartDate = Just ymd ,
+newMachine' :: Maybe YearMonthDay -> Machine
+newMachine' ymd = Machine {
+  machineOperationStartDate = ymd ,
   initialMileage = 0 ,
   note = (pack "") ,
   mileagePerYear = 365 * 24 ,
   serialNumber = (pack "") ,
   yearOfManufacture = (pack "") }
+
+newMachine :: YearMonthDay -> Machine
+newMachine ymd = newMachine' $ Just ymd

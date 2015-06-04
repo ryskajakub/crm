@@ -112,16 +112,16 @@ startRouter appVar = startedRouter where
         machineTypeTuple = D.machineTypeFromPhase1 appState
         machineKind = MT.kind $ fst machineTypeTuple
         maybeMachineTypeId = D.maybeMachineIdFromPhase1 appState
-        machine' = (M.newMachine nowYMD)
+        machine' = M.newMachine' Nothing
         machine = case machineKind of
           MK.RotaryScrewCompressor -> machine'
           _ -> machine' { M.mileagePerYear = MK.hoursInYear }
-        machineQuadruple = (machine, "")
+        machineTuple = (machine, "")
       fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
         fetchExtraFieldSettings $ \efSettings -> let
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
-          in modify' $ D.MachineScreen $ MD.MachineData machineQuadruple machineKind machineTypeTuple
+          in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineKind machineTypeTuple
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId) ,
     useHandler newMaintenance' $ \companyId -> 
