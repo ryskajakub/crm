@@ -8,6 +8,7 @@ import Prelude hiding (id)
 
 import qualified HaskellReact.Tag.Input as I
 
+
 data JQueryUI
 
 data Request
@@ -47,6 +48,7 @@ autocompleteInput attrs onChange onSelect source' elementId inputAttrs = let
   element = I.input
     (attrs { id = Defined elementId })
     (inputAttrs {
+      I.onPaste = Defined $ clipboardData >=> onSelect ,
       I.onChange = Defined $ eventValue >=> onChange })
   autocomplete = jQueryUIAutocomplete 
     jQueryUI 
