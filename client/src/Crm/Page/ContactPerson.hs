@@ -5,22 +5,23 @@ module Crm.Page.ContactPerson (
   contactPersonsList ,
   contactPersonForm ) where
 
-import           Data.Text                (fromString, length)
-import           Prelude                  hiding (div, length)
-import           Data.Var                 (Var, modify)
-import           FFI                      (Defined (Defined))
+import           Data.Text                     (fromString, length)
+import           Prelude                       hiding (div, length)
+import           Data.Var                      (Var, modify)
+import           FFI                           (Defined (Defined))
 
-import           HaskellReact             hiding (form)
-import qualified HaskellReact.Bootstrap   as B
+import           HaskellReact                  hiding (form)
+import qualified HaskellReact.Bootstrap        as B
+import qualified HaskellReact.Bootstrap.Button as BTN
 
-import qualified Crm.Shared.Company       as C
-import qualified Crm.Shared.ContactPerson as CP
+import qualified Crm.Shared.Company            as C
+import qualified Crm.Shared.ContactPerson      as CP
 
 import           Crm.Component.Form
-import           Crm.Helpers              (pageInfo, validationHtml)
-import           Crm.Server               (createContactPerson, updateContactPerson)
-import qualified Crm.Data.Data            as D
-import qualified Crm.Router               as R
+import           Crm.Helpers                   (pageInfo, validationHtml)
+import           Crm.Server                    (createContactPerson, updateContactPerson)
+import qualified Crm.Data.Data                 as D
+import qualified Crm.Router                    as R
 
 
 contactPersonsList :: R.CrmRouter
@@ -61,17 +62,17 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
     then []
     else ["Jméno musí mít alespoň jeden znak."]
   
-  (buttonLabel, header, buttonAction) = case identification of
+  (buttonLabel, header, buttonAction, new) = case identification of
     Nothing -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
       companyId
       contactPerson
-      (R.navigate (R.contactPersonList companyId) router ))
+      (R.navigate (R.contactPersonList companyId) router ), True)
     Just contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
       contactPersonId
       contactPerson
-      (R.navigate (R.contactPersonList companyId) router ))
+      (R.navigate (R.contactPersonList companyId) router ), False)
 
-  form = B.grid $ (B.row $ pageInfo') : [
+  form = div' (class' "contact-person") $ B.grid $ (B.row $ pageInfo') : [
     inputRow'
       "Jméno" 
       (SetValue $ CP.name contactPerson)
@@ -84,12 +85,18 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
       "Pozice"
       (SetValue $ CP.position contactPerson)
       (\t -> modify' $ contactPerson { CP.position = t }) ,
-    B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
-      (buttonStateFromBool . null $ validationMessages)
-      buttonLabel
-      buttonAction] 
-    where
-    pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
-    inputRow' = inputRow Editing
+    editableRow Editing "" (saveButton : deleteButton')] where 
+      saveButton = BTN.button' buttonProps buttonLabel where
+        buttonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "primary" ,
+          BTN.onClick = Defined $ const buttonAction }
+      deleteButton' = if new then [] else deleteButton : []
+      deleteButton = BTN.button' buttonProps "Smazat" where
+        delete = return ()
+        buttonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const delete }
+      pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
+      inputRow' = inputRow Editing
 
   validations = [validationHtml validationMessages]
