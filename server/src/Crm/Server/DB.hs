@@ -432,7 +432,7 @@ machinePhotosByMachineId machineId = proc () -> do
   returnA -< (photoId, mimeType, fileName)
 
 machineManufacturersQuery :: String -> Query DBText
-machineManufacturersQuery str = limitAutocomplete $ distinct $ proc () -> do
+machineManufacturersQuery str = autocomplete $ distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
   restrict -< (lower manufacturer' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' str) <> "%")))
   returnA -< manufacturer'
@@ -463,11 +463,11 @@ upkeepSequencesByIdQuery machineTypeId = proc () -> do
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike
 
-limitAutocomplete :: Query (Column a) -> Query (Column a)
-limitAutocomplete = limit 10 . orderBy (asc id)
+autocomplete :: Query (Column a) -> Query (Column a)
+autocomplete = limit 10 . orderBy (asc id)
 
 machineTypesQuery' :: String -> Query DBText
-machineTypesQuery' mid = limitAutocomplete $ proc () -> do
+machineTypesQuery' mid = autocomplete $ proc () -> do
   (_,_,name',_) <- machineTypesQuery -< ()
   restrict -< (lower name' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' mid) <> "%")))
   returnA -< name'
