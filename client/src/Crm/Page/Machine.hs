@@ -282,8 +282,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
   -- rows that ore used in the computation by mth
   computationRows = case MT.kind machineType of
     MK.RotaryScrewCompressor -> [
-      inputRow
-        editing
+      inputRowEditing
         "Úvodní stav motohodin"
         (DefaultValue $ showInt $ M.initialMileage machine')
         (eventInt' 
