@@ -315,7 +315,7 @@ fetchEmployee employeeId = getAjax
 fetchContactPerson :: CP.ContactPersonId
                    -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
                    -> Fay ()
-fetchContactPerson contactPersonId = getManyAjax
+fetchContactPerson contactPersonId = getAjax
   (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId))
 
 fetchContactPersons :: C.CompanyId
