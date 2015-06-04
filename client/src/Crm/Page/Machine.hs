@@ -258,6 +258,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
     validation' -> [validationHtml $ V.messages validation']
   
   inputRowEditing = inputRow editing
+  textareaRowEditing = textareaRow editing
   mkInputRow (efId, efDescription, theValue) = let
     setExtraField string = changeNavigationState $ \machineData -> let
       updateTheExtraField (theSame @ (efId', efDescription', _)) = if efId == efId'
@@ -273,14 +274,10 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
 
   mkFormGroup = div' (class' "form-group")
   
-  noteRow = 
-    oneElementRow
-      "Poznámka" $
-      textarea 
-        editing 
-        True 
-        (SetValue $ M.note machine') 
-        (\str -> setMachine $ machine' { M.note = str })
+  noteRow = textareaRowEditing
+    "Poznámka"
+    (SetValue $ M.note machine') 
+    (\str -> setMachine $ machine' { M.note = str })
 
   -- rows that ore used in the computation by mth
   computationRows = case MT.kind machineType of
