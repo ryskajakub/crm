@@ -42,6 +42,7 @@ module Crm.Server (
   deleteCompany ,
   deleteMachine ,
   deletePhoto ,
+  deleteContactPerson ,
 
   testEmployeesPage ,
   status ) where
@@ -212,6 +213,11 @@ deletePhoto :: P.PhotoId
 deletePhoto pId = deleteAjax
   (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId pId))
 
+deleteContactPerson :: CP.ContactPersonId
+                    -> Fay ()
+                    -> Fay ()
+deleteContactPerson cpId = deleteAjax
+  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId cpId))
 
 -- fetching of data from server
 

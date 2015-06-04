@@ -19,7 +19,7 @@ import qualified Crm.Shared.ContactPerson      as CP
 
 import           Crm.Component.Form
 import           Crm.Helpers                   (pageInfo, validationHtml)
-import           Crm.Server                    (createContactPerson, updateContactPerson)
+import           Crm.Server                    (createContactPerson, updateContactPerson, deleteContactPerson)
 import qualified Crm.Data.Data                 as D
 import qualified Crm.Router                    as R
 
@@ -92,7 +92,9 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
           BTN.onClick = Defined $ const buttonAction }
       deleteButton' = if new then [] else deleteButton : []
       deleteButton = BTN.button' buttonProps "Smazat" where
-        delete = return ()
+        delete = case identification of
+          Nothing -> undefined
+          Just x -> deleteContactPerson x $ R.navigate (R.companyDetail companyId) router
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "danger" ,
           BTN.onClick = Defined $ const delete }
