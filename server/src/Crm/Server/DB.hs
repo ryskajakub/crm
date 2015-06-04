@@ -432,7 +432,7 @@ machinePhotosByMachineId machineId = proc () -> do
   returnA -< (photoId, mimeType, fileName)
 
 machineManufacturersQuery :: String -> Query DBText
-machineManufacturersQuery str = distinct $ orderBy (asc id) $ proc () -> do
+machineManufacturersQuery str = limit 10 $ orderBy (asc id) $ distinct $ proc () -> do
   (_,_,_,manufacturer') <- machineTypesQuery -< ()
   restrict -< (lower manufacturer' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' str) <> "%")))
   returnA -< manufacturer'
@@ -464,7 +464,7 @@ like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike
 
 machineTypesQuery' :: String -> Query DBText
-machineTypesQuery' mid = orderBy (asc id) $ proc () -> do
+machineTypesQuery' mid = limit 10 $ orderBy (asc id) $ proc () -> do
   (_,_,name',_) <- machineTypesQuery -< ()
   restrict -< (lower name' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' mid) <> "%")))
   returnA -< name'
