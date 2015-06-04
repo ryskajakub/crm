@@ -62,15 +62,21 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
     then []
     else ["Jméno musí mít alespoň jeden znak."]
   
-  (buttonLabel, header, buttonAction, new) = case identification of
+  (buttonLabel, header, buttonAction, deleteButton) = case identification of
     Nothing -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
       companyId
       contactPerson
-      (R.navigate (R.contactPersonList companyId) router ), True)
-    Just contactPersonId -> ("Edituj", "Kontaktní osoba", updateContactPerson
-      contactPersonId
-      contactPerson
-      (R.navigate (R.contactPersonList companyId) router ), False)
+      (R.navigate (R.contactPersonList companyId) router ), [])
+    Just contactPersonId -> let
+      deleteButton' = BTN.button' buttonProps "Smazat" where
+        delete = deleteContactPerson contactPersonId $ R.navigate (R.companyDetail companyId) router
+        buttonProps = BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const delete }
+      in ("Edituj", "Kontaktní osoba", updateContactPerson
+        contactPersonId
+        contactPerson
+        (R.navigate (R.contactPersonList companyId) router ), [deleteButton'])
 
   form = div' (class' "contact-person") $ B.grid $ (B.row $ pageInfo') : [
     inputRow'
@@ -85,19 +91,11 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
       "Pozice"
       (SetValue $ CP.position contactPerson)
       (\t -> modify' $ contactPerson { CP.position = t }) ,
-    editableRow Editing "" (saveButton : deleteButton')] where 
+    editableRow Editing "" (saveButton : deleteButton)] where 
       saveButton = BTN.button' buttonProps buttonLabel where
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "primary" ,
           BTN.onClick = Defined $ const buttonAction }
-      deleteButton' = if new then [] else deleteButton : []
-      deleteButton = BTN.button' buttonProps "Smazat" where
-        delete = case identification of
-          Nothing -> undefined
-          Just x -> deleteContactPerson x $ R.navigate (R.companyDetail companyId) router
-        buttonProps = BTN.buttonProps {
-          BTN.bsStyle = Defined "danger" ,
-          BTN.onClick = Defined $ const delete }
       pageInfo' = pageInfo header (Nothing :: Maybe DOMElement)
       inputRow' = inputRow Editing
 
