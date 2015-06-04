@@ -467,12 +467,13 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) = putAjax
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
               -> Maybe M.MachineId -- ^ linked machine id
+              -> Maybe CP.ContactPersonId
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine linkedMachineId machineSpecificData = putAjax
+updateMachine machineId machine linkedMachineId contactPersonId machineSpecificData = putAjax
   (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-  (machine, toMyMaybe linkedMachineId, machineSpecificData)
+  (machine, toMyMaybe linkedMachineId, toMyMaybe contactPersonId, machineSpecificData)
 
 
 -- others

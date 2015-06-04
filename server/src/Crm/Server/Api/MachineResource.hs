@@ -21,6 +21,7 @@ import           Rest.Handler                (ListHandler, Handler)
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
+import qualified Crm.Shared.ContactPerson    as CP
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers 
@@ -46,13 +47,13 @@ machineDelete :: Handler IdDependencies
 machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, extraFields) -> 
+machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> 
     withConnId $ \conn recordId -> do
 
   let 
-    machineReadToWrite (_,companyId,contactPersonId,machineTypeId,_,_,_,_,_,_,_) =
-      (Nothing, companyId, contactPersonId, machineTypeId, 
-        maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
+    machineReadToWrite (_,companyId,_,machineTypeId,_,_,_,_,_,_,_) =
+      (Nothing, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
+        machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
         pgStrictText $ M.note machine', pgStrictText $ M.serialNumber machine',
