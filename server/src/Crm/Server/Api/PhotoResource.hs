@@ -15,7 +15,7 @@ import qualified Crm.Shared.Api              as A
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Helpers
-import           Crm.Server.Handler          (mkConstHandler')
+import           Crm.Server.Handler          (mkConstHandler', deleteRows')
 
 photoResource :: Resource Dependencies IdDependencies UrlId Void Void
 photoResource = (mkResourceReaderWith prepareReaderTuple) {

@@ -4,8 +4,12 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Crm.Server.Handler where
+
+import           Control.Monad               (forM_)
 
 import qualified Codec.Binary.Base64.String  as B64
 import           Control.Monad.Error.Class   (throwError)
@@ -14,21 +18,27 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import           Control.Monad.Reader.Class  (MonadReader)
 import qualified Crypto.Scrypt               as CS
+import           Data.Aeson.Types            (FromJSON)
+import           Data.JSON.Schema.Types      (JSONSchema)
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
+import           Data.Tuple.All              (sel1, Sel1)
 import           Database.PostgreSQL.Simple  (Connection)
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (queryTable)
-import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar)
+import           Opaleye                     (queryTable, pgInt4, PGInt4, Table, Column, (.==), runUpdate)
+import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar, jsonO, jsonI)
 import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
 import           Rest.Handler 
-import           Rest.Types.Error            (Reason(..), DataError(..), 
-                                             DomainReason(..), ToResponseCode, 
-                                             toResponseCode)
+import           Rest.Types.Error            (Reason(..), DataError(..), DomainReason(..), 
+                                             ToResponseCode, toResponseCode)
+import           Rest.Types.Void             (Void) 
 import           Safe                        (headMay)
+import           Data.Typeable               (Typeable)
 
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
+import           Crm.Server.Types
+import           Crm.Server.Helpers
 
 
 data SessionId = Password { password :: Text }
@@ -107,3 +117,28 @@ mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode String where
   toResponseCode = const 401
+
+updateRows' :: forall record m columnsW columnsR.
+               (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
+                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+            => Table columnsW columnsR 
+            -> (record -> columnsR -> columnsW) 
+            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) m ())
+            -> Handler m
+updateRows' table readToWrite postUpdate = mkInputHandler (jsonI . jsonO) 
+    $ \(record :: record) -> withConnId' $ \conn cache recordId -> do
+  let condition row = pgInt4 recordId .== sel1 row
+  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
+  postUpdate recordId conn cache
+
+updateRows :: forall record m columnsW columnsR.
+              (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
+                Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+           => Table columnsW columnsR 
+           -> (record -> columnsR -> columnsW) 
+           -> Handler m
+updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
+
+deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
+deleteRows' deletions = mkConstHandler jsonO $ withConnId $ \connection theId ->
+  liftIO $ forM_ deletions $ \deletion -> deletion theId connection

@@ -18,9 +18,8 @@ import qualified Crm.Shared.ContactPerson    as CP
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', updateRows, 
-                                             createDeletion, deleteRows')
-import           Crm.Server.Handler          (mkConstHandler')
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', createDeletion)
+import           Crm.Server.Handler          (mkConstHandler', deleteRows', updateRows)
 
 
 resource :: Resource Dependencies IdDependencies UrlId Void Void

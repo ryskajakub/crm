@@ -21,8 +21,8 @@ import qualified Crm.Shared.Employee         as E
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', updateRows)
-import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing')
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay')
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing', updateRows)
 
 employeeResource :: Resource Dependencies IdDependencies UrlId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {

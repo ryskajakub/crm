@@ -27,24 +27,23 @@ import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
 import           Rest.Types.Error            (Reason(..))
 
+import           Safe                        (readMay)
+import           TupleTH                     (updateAtN, proj, takeTuple)
+
 import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, readMay', updateRows',
-                                             deleteRows', withConnId, createDeletion, 
+import           Crm.Server.Helpers          (prepareReaderTuple, readMay', withConnId, createDeletion, 
                                              createDeletion', maybeToNullable, withConnId')
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', 
+                                             mkListing', updateRows')
 import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle, recomputeWhole)
-
-import           Safe                        (readMay)
-
-import           TupleTH                     (updateAtN, proj, takeTuple)
 
 
 data MachineMid = NextServiceListing | MapListing

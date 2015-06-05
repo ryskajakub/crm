@@ -8,9 +8,6 @@ module Crm.Server.Helpers (
   createDeletion ,
   createDeletion' ,
   prepareUpdate ,
-  deleteRows' ,
-  updateRows ,
-  updateRows' ,
   today ,
   ymdToDay ,
   dayToYmd ,
@@ -25,20 +22,15 @@ module Crm.Server.Helpers (
   prepareReaderTuple ) where
 
 
-import           Control.Monad               (forM_)
 import           Data.Functor.Identity       (runIdentity)
-import           Data.Typeable               (Typeable)
 
 import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.Except  (ExceptT)
-import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import           Control.Monad.Error.Class   (throwError)
-import           Data.JSON.Schema.Types      (JSONSchema)
 import           Data.Time.Calendar          (fromGregorian, Day, toGregorian)
 import           Data.Time.Clock             (utctDay, UTCTime, getCurrentTime)
 import           Data.Tuple.All              (sel1, Sel1)
-import           Data.Aeson.Types            (FromJSON)
 import           Database.PostgreSQL.Simple  (Connection)
 import           Opaleye.Column              (Column, toNullable, Nullable)
 import qualified Opaleye.Column              as COL
@@ -47,36 +39,12 @@ import           Opaleye.Operators           ((.==))
 import           Opaleye.PGTypes             (pgInt4, PGInt4)
 import           Opaleye.Table               (Table)
 import           Rest.Types.Error            (DataError(ParseError), Reason(IdentError))
-import           Rest.Types.Void             (Void) 
-import           Rest.Dictionary.Combinators (jsonO, jsonI)
-import           Rest.Handler                (Handler, mkConstHandler, mkInputHandler)
 import           Safe                        (readMay)
 
 import qualified Crm.Shared.YearMonthDay     as YMD
 
-import           Crm.Server.Types            (IdDependencies, GlobalBindings, Cache)
+import           Crm.Server.Types            (GlobalBindings, Cache)
 
-
-updateRows' :: forall record m columnsW columnsR.
-               (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
-                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
-            => Table columnsW columnsR 
-            -> (record -> columnsR -> columnsW) 
-            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) m ())
-            -> Handler m
-updateRows' table readToWrite postUpdate = mkInputHandler (jsonI . jsonO) 
-    $ \(record :: record) -> withConnId' $ \conn cache recordId -> do
-  let condition row = pgInt4 recordId .== sel1 row
-  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
-  postUpdate recordId conn cache
-
-updateRows :: forall record m columnsW columnsR.
-              (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
-                Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
-           => Table columnsW columnsR 
-           -> (record -> columnsR -> columnsW) 
-           -> Handler m
-updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
 
 prepareUpdate :: (Sel1 columnsR (Column PGInt4))
               => Table columnsW columnsR
@@ -89,10 +57,6 @@ prepareUpdate table readToWrite theId connection = runUpdate
   table
   readToWrite
   (\row -> sel1 row .== pgInt4 theId) >> return ()
-
-deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
-deleteRows' deletions = mkConstHandler jsonO $ withConnId $ \connection theId ->
-  liftIO $ forM_ deletions $ \deletion -> deletion theId connection
 
 createDeletion' :: (read -> (Column PGInt4))
                 -> Table write read

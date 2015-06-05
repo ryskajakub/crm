@@ -31,11 +31,11 @@ import qualified Crm.Shared.UpkeepMachine    as UM
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, withConnId', readMay', 
-                                             createDeletion, ymdToDay, maybeToNullable, deleteRows')
+                                             createDeletion, ymdToDay, maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
