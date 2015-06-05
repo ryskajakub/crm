@@ -47,7 +47,7 @@ class HasConnection a where
   getConnection :: a -> Connection
 instance HasConnection (Connection, b) where
   getConnection = fst
-instance HasConnection ((c,Connection), b) where
+instance HasConnection ((c, Connection), b) where
   getConnection = snd . fst
 instance HasConnection (b, Connection) where
   getConnection = snd
@@ -107,7 +107,6 @@ mkListing' :: (MonadReader a m, MonadIO m, HasConnection a)
            -> (Range -> ExceptT (Reason String) m [FromMaybe () o])
            -> ListHandler m
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
-
 
 mkOrderedListing' :: (MonadReader a m, MonadIO m, HasConnection a)
                   => Modifier () () Nothing o Nothing

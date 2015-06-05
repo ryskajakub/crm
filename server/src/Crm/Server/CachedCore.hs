@@ -30,10 +30,11 @@ recomputeWhole :: (MonadIO m)
                => Connection 
                -> Cache 
                -> ExceptT (Reason r) m ()
-recomputeWhole connection cache = do
+recomputeWhole connection (cache @ (Cache c)) = do
   companyRows <- liftIO $ runQuery connection (queryTable companiesTable)
   let companies = convert companyRows :: [CompanyMapped]
   let companyIds = fmap $(proj 3 0) companies
+  _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
   forM_ companyIds $ \companyId -> recomputeSingle companyId connection cache
 
 
