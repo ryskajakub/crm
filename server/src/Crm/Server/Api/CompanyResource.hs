@@ -6,10 +6,11 @@
 module Crm.Server.Api.CompanyResource where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (queryTable, pgDouble, pgStrictText)
+import           Opaleye                     (pgDouble, pgStrictText)
 import           Opaleye.Manipulation        (runInsertReturning)
 
-import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Monad.Trans.Class   (lift)
+import           Control.Monad.Trans.Except  (ExceptT, mapExceptT)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import           Control.Monad               (forM)
@@ -17,7 +18,6 @@ import           Control.Monad               (forM)
 import           Data.List                   (sortBy)
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import qualified Data.Text.ICU               as I
-import           Data.Maybe                  (mapMaybe)
 import qualified Data.Map                    as M
 
 import           Rest.Resource               (Resource, Void, schema, list, name, create, 
@@ -39,13 +39,12 @@ import           Crm.Server.Helpers          (prepareReaderTuple, readMay',
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Core             (Planned (..))
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
-import           Crm.Server.CachedCore       (addNextDates, getCacheContent)
+import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle)
 
-import           Safe                        (minimumMay, readMay)
+import           Safe                        (readMay)
 
-import           TupleTH                     (updateAtN, proj, takeTuple, catTuples)
+import           TupleTH                     (updateAtN, proj, takeTuple)
 
 
 data MachineMid = NextServiceListing | MapListing
@@ -53,7 +52,7 @@ data MachineMid = NextServiceListing | MapListing
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinates') -> do
   let coordinates = toMaybe coordinates'
-  (_,connection) <- ask
+  (cache, connection) <- ask
   ids <- liftIO $ runInsertReturning 
     connection 
     companiesTable
@@ -61,7 +60,9 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
     sel1
   id' <- singleRowOrColumn ids
-  return $ C.CompanyId id'
+  let companyId = C.CompanyId id'
+  mapExceptT lift $ recomputeSingle companyId connection cache
+  return companyId
 
 mapListing :: ListHandler Dependencies
 mapListing = mkListing' jsonO (const $ unsortedResult)
