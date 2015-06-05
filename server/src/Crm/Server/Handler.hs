@@ -37,6 +37,10 @@ class HasConnection a where
   getConnection :: a -> Connection
 instance HasConnection (Connection, b) where
   getConnection = fst
+instance HasConnection ((c,Connection), b) where
+  getConnection = snd . fst
+instance HasConnection (b, Connection) where
+  getConnection = snd
 instance HasConnection Connection where
   getConnection = id
 

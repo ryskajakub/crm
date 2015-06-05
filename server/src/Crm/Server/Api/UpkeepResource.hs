@@ -91,12 +91,12 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO (const $ do
-  rows <- ask >>= \conn -> liftIO $ runQuery conn expandedUpkeepsQuery
+  rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn expandedUpkeepsQuery
   return $ mapUpkeeps rows) 
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO (const $ do
-  conn <- ask
+  (_,conn) <- ask
   rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
   return $ map (\row -> let
     (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)

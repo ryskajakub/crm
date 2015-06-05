@@ -1,19 +1,22 @@
 module Server (
   main, api) where
 
-import Crm.Server.Base
-import Crm.Server.Types
-import Crm.Server.DB
+import Data.IORef               (newIORef, IORef)
 
 import Control.Monad.Reader     (ReaderT, runReaderT)
 
 import Network.Wai.Handler.Warp (run)
 import Rest.Driver.Wai          (apiToApplication)
 
+import Crm.Server.Base
+import Crm.Server.Types
+import Crm.Server.DB
+
 main :: IO ()
 main = do
   putStrLn "Starting warp server on http://localhost:8000"
-  run 8000 $ apiToApplication runDependencies api
+  cache <- newIORef 0
+  run 8000 $ apiToApplication (runDependencies cache) api
 
-runDependencies :: Dependencies a -> IO a
-runDependencies deps = withConnection (\c -> runReaderT deps $ c)
+runDependencies :: IORef Int -> Dependencies a -> IO a
+runDependencies cache deps = withConnection $ \c -> runReaderT deps (cache, c)

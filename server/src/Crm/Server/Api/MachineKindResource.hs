@@ -39,7 +39,7 @@ resource = mkResourceId {
 
 getter :: Handler Dependencies
 getter = mkConstHandler' jsonO $ do
-  connection <- ask
+  (_,connection) <- ask
   let 
     machineKindsEnums = fst `fmap` MK.machineKinds
     kindDbReprs = (first $ arr MK.kindToDbRepr) `fmap` (machineKindsEnums `zip` machineKindsEnums)
@@ -52,7 +52,7 @@ getter = mkConstHandler' jsonO $ do
 
 updation :: Handler Dependencies
 updation = mkInputHandler' jsonI $ \allSettings -> do
-  connection <- ask 
+  (_,connection) <- ask 
   let
     s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
     insertSetting (machineKindEnum, extraFields) = let

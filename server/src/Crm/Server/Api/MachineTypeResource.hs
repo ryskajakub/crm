@@ -48,11 +48,11 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing' jsonO (const $ 
-  ask >>= \conn -> liftIO $ runMachineTypesQuery' (decode mid) conn)
+  ask >>= \(_,conn) -> liftIO $ runMachineTypesQuery' (decode mid) conn)
 machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO (const $
-  ask >>= \conn -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [String]))
+  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [String]))
 machineTypesListing CountListing = mkListing' jsonO (const $ do
-  rows <- ask >>= \conn -> liftIO $ runQuery conn machineTypesWithCountQuery 
+  rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
     mapRow :: ((Int,Int,Text,Text),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
     mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
@@ -61,7 +61,7 @@ machineTypesListing CountListing = mkListing' jsonO (const $ do
 
 updateMachineType :: Handler MachineTypeDependencies
 updateMachineType = mkInputHandler' (jsonO . jsonI) (\(machineType, upkeepSequences) ->
-  ask >>= \(conn, sid) -> case sid of
+  ask >>= \((_,conn), sid) -> case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
       let 
@@ -79,7 +79,7 @@ decode = urlDecode
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler' jsonO (do
-  (conn, machineTypeSid) <- ask
+  ((_,conn), machineTypeSid) <- ask
   let 
     performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of

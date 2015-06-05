@@ -103,4 +103,4 @@ machineSingle = mkConstHandler' jsonO $ withConnId $ \conn id'' -> do
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing' (jsonO) (const $ do
-  ask >>= \conn -> liftIO $ runExpandedMachinesQuery Nothing conn)
+  ask >>= \(_,conn) -> liftIO $ runExpandedMachinesQuery Nothing conn)

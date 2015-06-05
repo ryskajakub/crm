@@ -51,20 +51,20 @@ import           Safe                        (readMay)
 
 import qualified Crm.Shared.YearMonthDay     as YMD
 
-import           Crm.Server.Types            (IdDependencies)
+import           Crm.Server.Types            (IdDependencies, GlobalBindings)
 
 
 updateRows :: forall record m columnsW columnsR.
-              (MonadIO m, MonadReader (Connection, Either String Int) m, 
+              (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
            -> Handler m
 updateRows table readToWrite = mkInputHandler (jsonI . jsonO) 
-    (\(record :: record) -> withConnId (\conn recordId -> do
+    $ \(record :: record) -> withConnId $ \conn recordId -> do
   let condition row = pgInt4 recordId .== sel1 row
   _ <- liftIO $ runUpdate conn table (readToWrite record) condition
-  return ()))
+  return ()
 
 prepareUpdate :: (Sel1 columnsR (Column PGInt4))
               => Table columnsW columnsR
@@ -79,7 +79,7 @@ prepareUpdate table readToWrite theId connection = runUpdate
   (\row -> sel1 row .== pgInt4 theId) >> return ()
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
-deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId -> 
+deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId ->
   liftIO $ forM_ deletions (\deletion -> deletion theId connection))
 
 createDeletion' :: (read -> (Column PGInt4))
@@ -143,11 +143,11 @@ maybeId maybeInt onSuccess = case maybeInt of
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
 
-withConnId :: (MonadReader (Connection, Either String Int) m)
+withConnId :: (MonadReader (GlobalBindings, Either String Int) m)
            => (Connection -> Int -> ExceptT (Reason r) m a)
            -> ExceptT (Reason r) m a
 withConnId f = do 
-  (conn, id') <- ask
+  ((_, conn), id') <- ask
   maybeId id' (f conn)
 
 readMay' :: (Read a) => String -> Either String a

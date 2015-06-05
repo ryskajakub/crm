@@ -54,7 +54,7 @@ data MachineMid = NextServiceListing | MapListing
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinates') -> do
   let coordinates = toMaybe coordinates'
-  connection <- ask  
+  (_,connection) <- ask  
   ids <- liftIO $ runInsertReturning 
     connection 
     companiesTable
@@ -89,7 +89,7 @@ addNextDates getMachineId getMachine a = \conn -> do
 unsortedResult :: ExceptT (Reason a) Dependencies 
                   [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
-  conn <- ask
+  (_,conn) <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
   liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped

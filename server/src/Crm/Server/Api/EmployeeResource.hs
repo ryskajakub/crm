@@ -47,14 +47,14 @@ updateEmployeeHandler = let
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler' (jsonO . jsonI) (\newEmployee -> do
-  conn <- ask 
+  (_,conn) <- ask 
   _ <- liftIO $ runInsert conn employeesTable (Nothing, pgStrictText $ E.name newEmployee,
     pgStrictText $ E.contact newEmployee, pgStrictText $ E.capabilities newEmployee)
   return () )
 
 employeesListing :: ListHandler Dependencies 
 employeesListing = mkListing' (jsonO) (const $
-  ask >>= \conn -> do 
+  ask >>= \(_,conn) -> do 
     rawRows <- liftIO $ runQuery conn employeesQuery
     let rowsMapped = convert rawRows :: [EmployeeMapped]
     return rowsMapped )
