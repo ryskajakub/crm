@@ -5,8 +5,6 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import           Database.PostgreSQL.Simple  (Connection)
-
 import           Opaleye.RunQuery            (runQuery)
 import           Opaleye                     (queryTable, pgDouble, pgStrictText)
 import           Opaleye.Manipulation        (runInsertReturning)
@@ -29,19 +27,18 @@ import           Rest.Handler                (ListHandler, Handler)
 import           Rest.Types.Error            (Reason(..))
 
 import qualified Crm.Shared.Company          as C
-import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, readMay', dayToYmd, today, 
+import           Crm.Server.Helpers          (prepareReaderTuple, readMay',
                                              deleteRows', withConnId, updateRows, createDeletion, 
                                              createDeletion', maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Core             (nextServiceDate, Planned (Planned, Computed))
+import           Crm.Server.Core             (Planned (..))
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
 import           Crm.Server.CachedCore       (addNextDates)
 
@@ -69,7 +66,7 @@ mapListing :: ListHandler Dependencies
 mapListing = mkListing' jsonO (const $ unsortedResult)
 
 unsortedResult :: ExceptT (Reason a) Dependencies 
-                  [CoreData]
+                  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
   (_, conn) <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)

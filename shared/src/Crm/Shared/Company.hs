@@ -12,7 +12,7 @@ import Data.Text (Text, pack)
 
 newtype CompanyId = CompanyId { getCompanyId :: Int }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Ord, Eq)
 #endif
 
 data OrderType = CompanyName | NextService

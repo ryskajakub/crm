@@ -3,19 +3,18 @@
 module Crm.Server.Types where
 
 import           Data.IORef                 (IORef)
+import qualified Data.Map                   as M
 
 import           Control.Monad.Reader       (ReaderT)
 import           Database.PostgreSQL.Simple (Connection)
 
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.YearMonthDay    as YMD
-import           Crm.Shared.MyMaybe
 
 data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing
 data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
 
-type CoreData = (C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)
-newtype Cache = Cache (IORef [CoreData])
+newtype Cache = Cache (IORef (M.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)))
 type GlobalBindings = (Cache, Connection)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)
