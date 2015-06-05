@@ -86,13 +86,10 @@ addNextDates getMachineId getMachine a = \conn -> do
     (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap sel3 upkeeps) today'
   return (computationMethod, dayToYmd nextServiceDay)
 
-
 unsortedResult :: ExceptT (Reason a) Dependencies 
-                  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
+                  CoreData
 unsortedResult = do 
-  (cache, conn) <- ask
-  liftIO $ modifyIORef cache ((+) 1)
-  liftIO $ readIORef cache >>= putStrLn . show
+  (_, conn) <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
   liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
