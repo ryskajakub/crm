@@ -13,7 +13,7 @@ import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.Except  (ExceptT, mapExceptT)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
-import           Control.Monad               (forM)
+import           Control.Monad               (forM, forM_)
 
 import           Data.List                   (sortBy)
 import           Data.Tuple.All              (sel1, sel2, sel3)
@@ -35,12 +35,12 @@ import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple, readMay', updateRows',
                                              deleteRows', withConnId, createDeletion, 
-                                             createDeletion', maybeToNullable)
+                                             createDeletion', maybeToNullable, withConnId')
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
-import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle)
+import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle, recomputeWhole)
 
 import           Safe                        (readMay)
 
@@ -124,7 +124,9 @@ updateCompany = let
   in updateRows' companiesTable readToWrite recomputeCache
 
 deleteCompany :: Handler IdDependencies
-deleteCompany = deleteRows' [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable]
+deleteCompany = mkConstHandler' jsonO $ withConnId' $ \connection cache companyId -> do
+  liftIO $ forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f companyId connection
+  recomputeWhole connection cache
 
 companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
