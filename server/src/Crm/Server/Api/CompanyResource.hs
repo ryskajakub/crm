@@ -93,7 +93,7 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
-      orderingByDirection $ I.compare [] (C.companyName $ sel2 r1) (C.companyName $ sel2 r2)
+      orderingByDirection $ I.compare [I.CompareIgnoreCase] (C.companyName $ sel2 r1) (C.companyName $ sel2 r2)
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (MyJust (date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
