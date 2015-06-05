@@ -35,6 +35,7 @@ Library
     , Crm.Server.Helpers
     , Crm.Server.Types
     , Crm.Server.Core
+    , Crm.Server.CachedCore
 
     , Crm.Shared.Direction
     , Crm.Shared.MyMaybe
@@ -65,6 +66,7 @@ Library
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , containers
     , HTTP
     , base64-string
     , opaleye >= 0.3.1.1
@@ -102,6 +104,8 @@ Test-Suite tests
     , wai >= 2.1 && < 3.1
     , warp >= 2.1 && < 3.1
 
+    , containers
+    , HTTP
     , base64-string
     , scrypt
     , lens
