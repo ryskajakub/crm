@@ -2,13 +2,13 @@
 
 module Crm.Server.CachedCore where
 
-import           Control.Monad              (forM)
+import           Control.Monad              (forM, forM_)
 import           Data.Maybe                 (mapMaybe)
-import           Data.IORef                 (atomicModifyIORef')
+import           Data.IORef                 (atomicModifyIORef', readIORef)
 
 import qualified Data.Map                   as Map
 import           Database.PostgreSQL.Simple (Connection)
-import           Opaleye                    (runQuery)
+import           Opaleye                    (runQuery, queryTable)
 import           TupleTH                    (proj)
 import           Control.Monad.Trans.Except (ExceptT)
 import           Rest.Types.Error           (Reason)
@@ -23,6 +23,14 @@ import           Crm.Server.Core            (nextServiceDate, Planned(..))
 import           Crm.Server.DB
 import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
+
+
+recomputeWhole :: Connection -> Cache -> ExceptT (Reason r) IO ()
+recomputeWhole connection cache = do
+  companyRows <- liftIO $ runQuery connection (queryTable companiesTable)
+  let companies = convert companyRows :: [CompanyMapped]
+  let companyIds = fmap $(proj 3 0) companies
+  forM_ companyIds $ \companyId -> recomputeSingle companyId connection cache
 
 
 recomputeSingle :: C.CompanyId -> Connection -> Cache -> ExceptT (Reason r) IO ()
@@ -44,6 +52,10 @@ recomputeSingle companyId connection (Cache cache) = do
     modifiedA = modify a
     in (modifiedA, ())
   return ()
+
+
+getCacheContent :: Cache -> IO (Map.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates))
+getCacheContent (Cache cache) = readIORef cache
 
 
 addNextDates :: (a -> M.MachineId)
