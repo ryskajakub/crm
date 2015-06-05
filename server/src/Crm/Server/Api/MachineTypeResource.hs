@@ -29,13 +29,14 @@ import           Rest.Handler                (ListHandler, Handler)
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepSequence   as US
+import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple, maybeId, readMay')
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
-import           Crm.Shared.MyMaybe
+import           Crm.Server.CachedCore       (recomputeWhole)
 
 
 machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
@@ -60,19 +61,21 @@ machineTypesListing CountListing = mkListing' jsonO (const $ do
   return mappedRows )
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler' (jsonO . jsonI) (\(machineType, upkeepSequences) ->
-  ask >>= \((_,conn), sid) -> case sid of
+updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) ->
+  ask >>= \((cache, connection), sid) -> case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById machineTypeId' -> maybeId machineTypeId' (\machineTypeId -> liftIO $ do
-      let 
-        readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
-          pgStrictText $ MT.machineTypeManufacturer machineType)
-        condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
-      _ <- runUpdate conn machineTypesTable readToWrite condition
-      _ <- runDelete conn upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
-      forM_ upkeepSequences (\ (US.UpkeepSequence displayOrder label repetition oneTime) -> 
-        runInsert conn upkeepSequencesTable (pgInt4 displayOrder,
-          pgStrictText label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))))
+    MachineTypeById machineTypeId' -> maybeId machineTypeId' $ \machineTypeId -> do 
+      liftIO $ do
+        let 
+          readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
+            pgStrictText $ MT.machineTypeManufacturer machineType)
+          condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
+        _ <- runUpdate connection machineTypesTable readToWrite condition
+        _ <- runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
+        forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) -> 
+          runInsert connection upkeepSequencesTable (pgInt4 displayOrder,
+            pgStrictText label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime)
+      recomputeWhole connection cache
 
 decode :: String -> String
 decode = urlDecode
