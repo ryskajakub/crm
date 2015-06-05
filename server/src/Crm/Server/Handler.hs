@@ -28,7 +28,7 @@ import           Opaleye.RunQuery            (runQuery)
 import           Opaleye                     (queryTable, pgInt4, PGInt4, Table, Column, (.==), runUpdate)
 import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar, jsonO, jsonI)
 import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
-import           Rest.Handler 
+import           Rest.Handler                hiding (mkConstHandler, mkInputHandler, mkListing, mkOrderedListing, mkIdHandler)
 import           Rest.Types.Error            (Reason(..), DataError(..), DomainReason(..), 
                                              ToResponseCode, toResponseCode)
 import           Rest.Types.Void             (Void) 
@@ -141,5 +141,5 @@ updateRows :: forall record m columnsW columnsR.
 updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
-deleteRows' deletions = mkConstHandler jsonO $ withConnId $ \connection theId ->
+deleteRows' deletions = mkConstHandler' jsonO $ withConnId $ \connection theId ->
   liftIO $ forM_ deletions $ \deletion -> deletion theId connection
