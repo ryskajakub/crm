@@ -13,7 +13,7 @@ import           Control.Monad               (forM_)
 
 import qualified Codec.Binary.Base64.String  as B64
 import           Control.Monad.Error.Class   (throwError)
-import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Monad.Trans.Except  (ExceptT, withExceptT)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import           Control.Monad.Reader.Class  (MonadReader)
@@ -119,20 +119,21 @@ instance ToResponseCode String where
   toResponseCode = const 401
 
 updateRows' :: forall record m columnsW columnsR.
-               (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
+               (Functor m, MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
                  Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
             => Table columnsW columnsR 
             -> (record -> columnsR -> columnsW) 
             -> (Int -> Connection -> Cache -> ExceptT (Reason Void) m ())
             -> Handler m
-updateRows' table readToWrite postUpdate = mkInputHandler (jsonI . jsonO) 
-    $ \(record :: record) -> withConnId' $ \conn cache recordId -> do
-  let condition row = pgInt4 recordId .== sel1 row
-  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
-  postUpdate recordId conn cache
+updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> let
+  doUpdation = withConnId' $ \conn cache recordId -> do
+    let condition row = pgInt4 recordId .== sel1 row
+    _ <- liftIO $ runUpdate conn table (readToWrite record) condition
+    postUpdate recordId conn cache
+  in withExceptT (const $ CustomReason $ DomainReason "updation failed") doUpdation
 
 updateRows :: forall record m columnsW columnsR.
-              (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
+              (Functor m, MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
