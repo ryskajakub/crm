@@ -18,6 +18,7 @@ import           Data.List                   (sortBy)
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import qualified Data.Text.ICU               as I
 import           Data.Maybe                  (mapMaybe)
+import qualified Data.Map                    as M
 
 import           Rest.Resource               (Resource, Void, schema, list, name, create, 
                                              mkResourceReaderWith, get, update, remove)
@@ -40,11 +41,11 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Core             (Planned (..))
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
-import           Crm.Server.CachedCore       (addNextDates)
+import           Crm.Server.CachedCore       (addNextDates, getCacheContent)
 
 import           Safe                        (minimumMay, readMay)
 
-import           TupleTH                     (updateAtN, proj, takeTuple)
+import           TupleTH                     (updateAtN, proj, takeTuple, catTuples)
 
 
 data MachineMid = NextServiceListing | MapListing
@@ -68,18 +69,10 @@ mapListing = mkListing' jsonO (const $ unsortedResult)
 unsortedResult :: ExceptT (Reason a) Dependencies 
                   [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
-  (_, conn) <- ask
-  rows <- liftIO $ runQuery conn (queryTable companiesTable)
-  liftIO $ forM rows $ \companyRow -> do
-    let companyRecord = convert companyRow :: CompanyMapped
-    machines <- runMachinesInCompanyQuery (C.getCompanyId $ sel1 companyRecord) conn
-    nextDays' <- forM machines $ \machine -> do
-      (computationMethod, nextServiceDay) <- addNextDates $(proj 7 0) $(proj 7 1) machine conn
-      return $ case computationMethod of
-        Planned -> Nothing
-        Computed -> Just nextServiceDay
-    let nextDays = mapMaybe id nextDays'
-    return $ (sel1 companyRecord, sel2 companyRecord, toMyMaybe $ minimumMay nextDays, toMyMaybe $ $(proj 3 2) companyRecord)
+  (cache, _) <- ask
+  content <- liftIO $ getCacheContent cache
+  let asList = map (\(a,(b,c,d)) -> (a,b, toMyMaybe c, toMyMaybe d)) . M.toList
+  return $ asList content
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
@@ -109,7 +102,6 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
         (MyNothing,_) -> GT
         _ -> LT
       ) unsortedResult')
-
 
 singleCompany :: Handler IdDependencies
 singleCompany = mkConstHandler' jsonO $ withConnId $ \conn companyId -> do
