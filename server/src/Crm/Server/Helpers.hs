@@ -10,6 +10,7 @@ module Crm.Server.Helpers (
   prepareUpdate ,
   deleteRows' ,
   updateRows ,
+  updateRows' ,
   today ,
   ymdToDay ,
   dayToYmd ,
@@ -45,14 +46,28 @@ import           Opaleye.Operators           ((.==))
 import           Opaleye.PGTypes             (pgInt4, PGInt4)
 import           Opaleye.Table               (Table)
 import           Rest.Types.Error            (DataError(ParseError), Reason(IdentError))
+import           Rest.Types.Void             (Void) 
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (Handler, mkConstHandler, mkInputHandler)
 import           Safe                        (readMay)
 
 import qualified Crm.Shared.YearMonthDay     as YMD
 
-import           Crm.Server.Types            (IdDependencies, GlobalBindings)
+import           Crm.Server.Types            (IdDependencies, GlobalBindings, Cache)
 
+
+updateRows' :: forall record m columnsW columnsR.
+               (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
+                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+            => Table columnsW columnsR 
+            -> (record -> columnsR -> columnsW) 
+            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) m ())
+            -> Handler m
+updateRows' table readToWrite postUpdate = mkInputHandler (jsonI . jsonO) 
+    $ \(record :: record) -> withConnId' $ \conn cache recordId -> do
+  let condition row = pgInt4 recordId .== sel1 row
+  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
+  postUpdate recordId conn cache
 
 updateRows :: forall record m columnsW columnsR.
               (MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
@@ -60,11 +75,7 @@ updateRows :: forall record m columnsW columnsR.
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
            -> Handler m
-updateRows table readToWrite = mkInputHandler (jsonI . jsonO) 
-    $ \(record :: record) -> withConnId $ \conn recordId -> do
-  let condition row = pgInt4 recordId .== sel1 row
-  _ <- liftIO $ runUpdate conn table (readToWrite record) condition
-  return ()
+updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
 
 prepareUpdate :: (Sel1 columnsR (Column PGInt4))
               => Table columnsW columnsR
@@ -143,12 +154,17 @@ maybeId maybeInt onSuccess = case maybeInt of
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
 
+withConnId' :: (MonadReader (GlobalBindings, Either String Int) m)
+            => (Connection -> Cache -> Int -> ExceptT (Reason r) m a)
+            -> ExceptT (Reason r) m a
+withConnId' f = do 
+  ((cache, conn), id') <- ask
+  maybeId id' (f conn cache)
+
 withConnId :: (MonadReader (GlobalBindings, Either String Int) m)
            => (Connection -> Int -> ExceptT (Reason r) m a)
            -> ExceptT (Reason r) m a
-withConnId f = do 
-  ((_, conn), id') <- ask
-  maybeId id' (f conn)
+withConnId f = withConnId' $ \connection -> const $ f connection
 
 readMay' :: (Read a) => String -> Either String a
 readMay' string = passStringOnNoRead $ readMay string

@@ -33,8 +33,8 @@ import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, readMay',
-                                             deleteRows', withConnId, updateRows, createDeletion, 
+import           Crm.Server.Helpers          (prepareReaderTuple, readMay', updateRows',
+                                             deleteRows', withConnId, createDeletion, 
                                              createDeletion', maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
@@ -119,7 +119,9 @@ updateCompany = let
     coordinates = toMaybe coordinates'
     in const (Nothing, pgStrictText $ C.companyName company, pgStrictText $ C.companyPlant company, pgStrictText $ C.companyAddress company, 
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
-  in updateRows companiesTable readToWrite
+  recomputeCache int connection cache = 
+    mapExceptT lift $ recomputeSingle (C.CompanyId int) connection cache
+  in updateRows' companiesTable readToWrite recomputeCache
 
 deleteCompany :: Handler IdDependencies
 deleteCompany = deleteRows' [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable]
