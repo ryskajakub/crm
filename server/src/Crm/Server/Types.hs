@@ -14,8 +14,8 @@ import           Crm.Shared.MyMaybe
 data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing
 data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
 
-type CoreData = [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
-newtype Cache = Cache (IORef CoreData)
+type CoreData = (C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)
+newtype Cache = Cache (IORef [CoreData])
 type GlobalBindings = (Cache, Connection)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)

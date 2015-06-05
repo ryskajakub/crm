@@ -5,7 +5,6 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import           Data.IORef                  (modifyIORef, readIORef)
 import           Database.PostgreSQL.Simple  (Connection)
 
 import           Opaleye.RunQuery            (runQuery)
@@ -44,6 +43,7 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Core             (nextServiceDate, Planned (Planned, Computed))
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
+import           Crm.Server.CachedCore       (addNextDates)
 
 import           Safe                        (minimumMay, readMay)
 
@@ -68,26 +68,8 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
 mapListing :: ListHandler Dependencies
 mapListing = mkListing' jsonO (const $ unsortedResult)
 
-addNextDates :: (a -> M.MachineId)
-             -> (a -> M.Machine)
-             -> a
-             -> Connection
-             -> IO (Planned, YMD.YearMonthDay)
-addNextDates getMachineId getMachine a = \conn -> do
-  upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
-  upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId $ getMachineId a)
-  today' <- today
-  let
-    upkeeps = convert upkeepRows :: [UpkeepMapped] 
-    upkeepSequences = fmap (\r -> sel2 (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
-    upkeepSequenceTuple = case upkeepSequences of
-      [] -> undefined
-      x : xs -> (x, xs)
-    (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap sel3 upkeeps) today'
-  return (computationMethod, dayToYmd nextServiceDay)
-
 unsortedResult :: ExceptT (Reason a) Dependencies 
-                  CoreData
+                  [CoreData]
 unsortedResult = do 
   (_, conn) <- ask
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
