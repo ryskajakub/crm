@@ -3,11 +3,12 @@
 module Crm.Server.CachedCore where
 
 import           Control.Monad              (forM, forM_)
+import           Control.Concurrent         (forkIO)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
-import           Control.Monad.Trans.Except (mapExceptT)
+import           Control.Monad.Trans.Except (mapExceptT, runExceptT)
 import qualified Data.Map                   as Map
 import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye                    (runQuery, queryTable)
@@ -35,7 +36,10 @@ recomputeWhole connection (cache @ (Cache c)) = do
   let companies = convert companyRows :: [CompanyMapped]
   let companyIds = fmap $(proj 3 0) companies
   _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
-  forM_ companyIds $ \companyId -> recomputeSingle companyId connection cache
+  _ <- liftIO $ forkIO $ do
+    _ <- runExceptT $ withConnection $ \conn -> forM_ companyIds $ \companyId -> recomputeSingle companyId conn cache
+    return ()
+  return ()
 
 
 recomputeSingle :: (MonadIO m)

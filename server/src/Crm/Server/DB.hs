@@ -105,6 +105,7 @@ import           Data.Monoid                          ((<>))
 
 import           Control.Monad.Error.Class            (throwError)
 import           Control.Monad.Trans.Except           (ExceptT)
+import           Control.Monad.IO.Class               (MonadIO, liftIO)
 import           Data.Profunctor.Product              (p1, p2, p3, p4, p5, p6, p7, p11)
 import           Data.Time.Calendar                   (Day)
 import           Data.Tuple.All                       (Sel1, sel1, sel2, sel3, sel4, uncurryN, upd2, upd4, sel6)
@@ -722,16 +723,16 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (C.CompanyId companyId, convertExpanded (a,b))) rows
 
-withConnection :: (Connection -> IO a) -> IO a
+withConnection :: (MonadIO m) => (Connection -> m a) -> m a
 withConnection runQ = do
   let connectInfo = defaultConnectInfo {
     connectUser = "haskell" ,
     connectDatabase = "crm" ,
     connectPassword = "haskell" ,
     connectHost = "localhost" }
-  conn <- connect connectInfo
+  conn <- liftIO $ connect connectInfo
   result <- runQ conn
-  close conn
+  liftIO $ close conn
   return result
 
 insertExtraFields :: M.MachineId -> [(EF.ExtraFieldId, Text)] -> Connection -> IO ()
