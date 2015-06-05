@@ -30,12 +30,13 @@ import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.UpkeepMachine    as UM
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', 
+import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, withConnId', readMay', 
                                              createDeletion, ymdToDay, maybeToNullable, deleteRows')
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
+import           Crm.Server.CachedCore       (recomputeWhole)
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
@@ -68,10 +69,11 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   get = Just upkeepCompanyMachines }
 
 updateUpkeepHandler :: Handler IdDependencies
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) (\(upkeep,machines,employeeId) -> let 
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep,machines,employeeId) -> let 
   upkeepTriple = (upkeep, machines, toMaybe employeeId)
-  in withConnId (\connection upkeepId ->
-    liftIO $ updateUpkeep connection (U.UpkeepId upkeepId) upkeepTriple))
+  in withConnId' $ \connection cache upkeepId -> do
+    liftIO $ updateUpkeep connection (U.UpkeepId upkeepId) upkeepTriple
+    recomputeWhole connection cache
 
 updateUpkeep :: Connection
              -> U.UpkeepId

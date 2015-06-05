@@ -30,6 +30,7 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Core             (nextServiceDate)
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
+import           Crm.Server.CachedCore       (recomputeWhole)
 
 import           TupleTH
 
@@ -48,7 +49,7 @@ machineDelete = deleteRows' [createDeletion machinesTable]
 
 machineUpdate :: Handler IdDependencies
 machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> 
-    withConnId $ \conn recordId -> do
+    withConnId' $ \conn cache recordId -> do
 
   let 
     machineReadToWrite (_,companyId,_,machineTypeId,_,_,_,_,_,_,_) =
@@ -63,6 +64,8 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
   liftIO $ forM_ [updateMachine] (\updation -> updation recordId conn)
   liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable recordId conn
   liftIO $ insertExtraFields (M.MachineId recordId) extraFields conn
+
+  recomputeWhole conn cache
 
   return ()
 
