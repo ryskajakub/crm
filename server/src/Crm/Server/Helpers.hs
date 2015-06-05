@@ -16,6 +16,7 @@ module Crm.Server.Helpers (
   dayToYmd ,
   maybeId ,
   withConnId ,
+  withConnId' ,
   readMay' ,
   maybeToNullable ,
   mapResultsToList ,

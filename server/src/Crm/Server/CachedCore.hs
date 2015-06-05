@@ -6,13 +6,14 @@ import           Control.Monad              (forM, forM_)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 
+import           Control.Monad.IO.Class     (MonadIO, liftIO)
+import           Control.Monad.Trans.Except (mapExceptT)
 import qualified Data.Map                   as Map
 import           Database.PostgreSQL.Simple (Connection)
 import           Opaleye                    (runQuery, queryTable)
 import           TupleTH                    (proj)
 import           Control.Monad.Trans.Except (ExceptT)
 import           Rest.Types.Error           (Reason)
-import           Control.Monad.IO.Class     (liftIO)
 import           Safe                       (minimumMay)
 
 import qualified Crm.Shared.Company         as C
@@ -25,7 +26,10 @@ import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
 
 
-recomputeWhole :: Connection -> Cache -> ExceptT (Reason r) IO ()
+recomputeWhole :: (MonadIO m)
+               => Connection 
+               -> Cache 
+               -> ExceptT (Reason r) m ()
 recomputeWhole connection cache = do
   companyRows <- liftIO $ runQuery connection (queryTable companiesTable)
   let companies = convert companyRows :: [CompanyMapped]
@@ -33,8 +37,12 @@ recomputeWhole connection cache = do
   forM_ companyIds $ \companyId -> recomputeSingle companyId connection cache
 
 
-recomputeSingle :: C.CompanyId -> Connection -> Cache -> ExceptT (Reason r) IO ()
-recomputeSingle companyId connection (Cache cache) = do
+recomputeSingle :: (MonadIO m)
+                => C.CompanyId 
+                -> Connection 
+                -> Cache 
+                -> ExceptT (Reason r) m ()
+recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   companyRow' <- liftIO $ runQuery connection (companyByIdQuery $ C.getCompanyId companyId)
   companyRow <- singleRowOrColumn companyRow'
   let company = convert companyRow :: CompanyMapped

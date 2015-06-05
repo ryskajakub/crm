@@ -33,6 +33,7 @@ import           Crm.Server.Boilerplate        ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler            (mkInputHandler', mkListing', mkConstHandler')
+import           Crm.Server.CachedCore         (recomputeWhole)
 
 
 companyUpkeepsListing :: ListHandler IdDependencies
@@ -78,12 +79,14 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   return upkeepId
 
 createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler' (jsonO . jsonI) (\newUpkeep -> let 
+createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> let 
   (_,_,selectedEmployeeId) = newUpkeep
   newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
-  in withConnId (\connection _ ->
+  in withConnId' $ \connection cache _ -> do
     -- todo check that the machines are belonging to this company
-    liftIO $ addUpkeep connection newUpkeep'))
+    upkeepId <- liftIO $ addUpkeep connection newUpkeep'
+    recomputeWhole connection cache
+    return upkeepId
 
 upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
 upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {

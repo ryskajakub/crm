@@ -25,24 +25,29 @@ import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.MachineKind      as MK
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe          (toMaybe)
 
-import           Crm.Server.Helpers          (withConnId, ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (withConnId, withConnId', ymdToDay, maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkListing')
+import           Crm.Server.CachedCore       (recomputeSingle)
 
 import TupleTH (proj)
 
 createMachineHandler :: Handler IdDependencies
-createMachineHandler = mkInputHandler' (jsonO . jsonI) 
-    (\(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
+createMachineHandler = mkInputHandler' (jsonO . jsonI) $
+    \(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
   contactPersonId' = toMaybe contactPersonId
-  in withConnId (\connection companyId -> 
-    addMachine connection newMachine companyId machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData))
+  in withConnId' $ \connection cache companyId -> do
+    machineId <- addMachine connection newMachine companyId machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData
+    recomputeSingle (C.CompanyId companyId) connection cache
+    return $ M.MachineId machineId
+    
 
 addMachine :: Connection
            -> M.Machine
