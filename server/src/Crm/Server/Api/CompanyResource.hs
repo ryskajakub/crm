@@ -5,6 +5,7 @@
 
 module Crm.Server.Api.CompanyResource where
 
+import           Data.IORef                  (modifyIORef, readIORef)
 import           Database.PostgreSQL.Simple  (Connection)
 
 import           Opaleye.RunQuery            (runQuery)
@@ -54,7 +55,7 @@ data MachineMid = NextServiceListing | MapListing
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinates') -> do
   let coordinates = toMaybe coordinates'
-  (_,connection) <- ask  
+  (_,connection) <- ask
   ids <- liftIO $ runInsertReturning 
     connection 
     companiesTable
@@ -89,7 +90,9 @@ addNextDates getMachineId getMachine a = \conn -> do
 unsortedResult :: ExceptT (Reason a) Dependencies 
                   [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
-  (_,conn) <- ask
+  (cache, conn) <- ask
+  liftIO $ modifyIORef cache ((+) 1)
+  liftIO $ readIORef cache >>= putStrLn . show
   rows <- liftIO $ runQuery conn (queryTable companiesTable)
   liftIO $ forM rows $ \companyRow -> do
     let companyRecord = convert companyRow :: CompanyMapped
