@@ -15,7 +15,7 @@ data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | Co
 data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
 
 type CoreData = [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
-type Cache = IORef CoreData
+newtype Cache = Cache (IORef CoreData)
 type GlobalBindings = (Cache, Connection)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)

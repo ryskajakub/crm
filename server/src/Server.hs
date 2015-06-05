@@ -16,7 +16,7 @@ main :: IO ()
 main = do
   putStrLn "Starting warp server on http://localhost:8000"
   cache <- newIORef []
-  run 8000 $ apiToApplication (runDependencies cache) api
+  run 8000 $ apiToApplication (runDependencies $ Cache cache) api
 
 runDependencies :: Cache -> Dependencies a -> IO a
 runDependencies cache deps = withConnection $ \c -> runReaderT deps (cache, c)
