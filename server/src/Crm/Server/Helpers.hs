@@ -91,8 +91,8 @@ prepareUpdate table readToWrite theId connection = runUpdate
   (\row -> sel1 row .== pgInt4 theId) >> return ()
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
-deleteRows' deletions = mkConstHandler jsonO $ withConnId (\connection theId ->
-  liftIO $ forM_ deletions (\deletion -> deletion theId connection))
+deleteRows' deletions = mkConstHandler jsonO $ withConnId $ \connection theId ->
+  liftIO $ forM_ deletions $ \deletion -> deletion theId connection
 
 createDeletion' :: (read -> (Column PGInt4))
                 -> Table write read
