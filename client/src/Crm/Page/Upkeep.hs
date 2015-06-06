@@ -6,7 +6,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import           Data.Text                        (fromString, Text, showInt)
+import           Data.Text                        (fromString, Text, showInt, (<>))
 import           Prelude                          hiding (div, span, id)
 import           Data.Var (Var, modify)
 import           FFI (Defined(Defined))
@@ -220,8 +220,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
     else ([], 6, 6)
     
-  upkeepMachineRow :: (M.MachineId, a0, a1, a2, MT.MachineType) -> DOMElement
-  upkeepMachineRow (machineId,_,_,_,machineType) = let
+  upkeepMachineRow :: (M.MachineId, M.Machine, a1, a2, MT.MachineType) -> DOMElement
+  upkeepMachineRow (machineId,machine',_,_,machineType) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -242,7 +242,17 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         (uncheckedMachine, const $ return (), Display)
 
     machineToggleCheckedLink = let
-      linkText = MT.machineTypeName machineType
+      linkText = MT.machineTypeName machineType <> additionalText where
+        machinesWithSameType = filter 
+          (\(_,_,_,_,machineType') -> 
+            MT.machineTypeName machineType' == MT.machineTypeName machineType)
+          machines
+        machinesWithLabels = filter
+          (\(_,machine'',_,_,_) -> M.note machine'' /= "")
+          machinesWithSameType
+        useLabels = length machinesWithSameType == length machinesWithLabels
+        getAdditionalText = if useLabels then M.note else M.serialNumber 
+        additionalText = if null machinesWithSameType then "" else " - " <> getAdditionalText machine'
       clickHandler = let
         (newCheckedMachines, newUncheckedMachines) = toggle (
           upkeepMachines ,
