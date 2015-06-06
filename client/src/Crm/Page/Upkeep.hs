@@ -252,7 +252,9 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           machinesWithSameType
         useLabels = length machinesWithSameType == length machinesWithLabels
         getAdditionalText = if useLabels then M.note else M.serialNumber 
-        additionalText = if null machinesWithSameType then "" else " - " <> getAdditionalText machine'
+        additionalText = if length machinesWithSameType == 1 
+          then "" 
+          else " - " <> getAdditionalText machine'
       clickHandler = let
         (newCheckedMachines, newUncheckedMachines) = toggle (
           upkeepMachines ,
