@@ -295,7 +295,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             md { MD.validation = V.add V.MachineInitialMileageNumber validation })) ,
       row 
         "Provoz mth/rok (Rok má 8760 mth)" [
-        (div' (class' "col-md-3") 
+        (div' (class'' ["control-label", "my-text-left", "col-md-3"]) 
           (input 
             editing
             True
