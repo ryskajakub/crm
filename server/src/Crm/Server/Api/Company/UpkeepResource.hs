@@ -51,7 +51,7 @@ companyUpkeepsListing = mkListing' jsonO (const $ withConnId (\conn id'' -> do
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
-        machineId = sel1 upkeepMachineMapped
+        machineId = sel2 upkeepMachineMapped
         in (upkeepMachine, machineType, machineId))
       rows
   return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
