@@ -54,8 +54,7 @@ buildHaskellModule :: HaskellContext -> ApiResource ->
                       [H.ModulePragma] -> Maybe H.WarningText ->
                       H.Module
 buildHaskellModule ctx node pragmas warningText =
-  rewriteModuleNames (rewrites ctx) $
-     H.Module noLoc name pragmas warningText exportSpecs importDecls decls
+    H.Module noLoc name pragmas warningText exportSpecs importDecls decls
   where
     name = H.ModuleName $ qualModName $ namespace ctx ++ resId node
     exportSpecs = Nothing
@@ -76,9 +75,6 @@ buildHaskellModule ctx node pragmas warningText =
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
             importAs' = fmap (H.ModuleName . modName) . lastMay $ p
-
-rewriteModuleNames :: [(H.ModuleName, H.ModuleName)] -> H.Module -> H.Module
-rewriteModuleNames rews = U.transformBi $ \m -> lookupJustDef m m rews
 
 noBinds :: H.Binds
 noBinds = H.BDecls []
@@ -136,11 +132,6 @@ mkFunction ver res (ApiAction _ lnk ai) =
          where binds = H.BDecls [rHeadersBind, requestBind]
                rHeadersBind =
                  H.PatBind noLoc (H.PVar rHeaders)
-{-
-  #if !MIN_VERSION_haskell_src_exts(1,16,0)
-                      Nothing
-  #endif
--}
                     (H.UnGuardedRhs $ H.List [H.Tuple H.Boxed [use hAccept     , H.Lit $ H.String $ dataTypesToAcceptHeader JSON $ responseAcceptType responseType],
                                               H.Tuple H.Boxed [use hContentType, H.Lit $ H.String $ maybe "text/plain" inputContentType mInp]])
                               noBinds
@@ -152,11 +143,6 @@ mkFunction ver res (ApiAction _ lnk ai) =
 
                requestBind =
                  H.PatBind noLoc (H.PVar request)
-{-
-  #if !MIN_VERSION_haskell_src_exts(1,16,0)
-                      Nothing
-  #endif
--}
                     (H.UnGuardedRhs $
                       appLast
                         (H.App
@@ -218,13 +204,7 @@ idData node =
     ls ->
       let ctor (pth,mi) =
             H.QualConDecl noLoc [] [] (H.ConDecl (H.Ident (dataName pth)) $ maybe [] f mi)
--- #if MIN_VERSION_haskell_src_exts(1,16,0)
               where f ty = [Ident.haskellType ty]
-{-
-  #else
-                where f ty = [H.UnBangedTy $ Ident.haskellType ty]
-  #endif
--}
           fun (pth, mi) = [
                            H.FunBind [H.Match noLoc funName fparams Nothing rhs noBinds]]
             where (fparams, rhs) =

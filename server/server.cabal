@@ -192,7 +192,7 @@ Executable gen-api
       base >= 4.6 && < 4.8 ,
       server ,
       rest-core ,
-      haskell-src-exts ,
+      haskell-src-exts >= 1.16.0 ,
       safe ,
       fclabels ,
       semigroups ,
