@@ -191,6 +191,15 @@ Executable gen-api
     build-depends:
       base >= 4.6 && < 4.8 ,
       server ,
-      rest-gen == 0.17.0.5
+      rest-core ,
+      haskell-src-exts ,
+      safe ,
+      fclabels ,
+      semigroups ,
+      uniplate ,
+      filepath ,
+      directory ,
+      Cabal ,
+      rest-gen
   else
     buildable: False
