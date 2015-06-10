@@ -71,7 +71,7 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) $ resItems node
+    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) . (:[]) . head $ resItems node
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -105,7 +105,9 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
          where 
                fParams' = fTypify tyParts
                fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
-               callbackParams = responseHaskellType output
+               callbackParams = unList $ responseHaskellType output
+               unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = H.TyList elements
+               unList x = x
                callback = H.TyParen $ H.TyFun callbackParams fayUnit
                fTypify :: [H.Type] -> H.Type
                fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
