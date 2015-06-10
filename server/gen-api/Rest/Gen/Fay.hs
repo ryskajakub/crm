@@ -93,11 +93,12 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
     H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]],
     responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp)
      where
+       callbackIdent = H.Ident "callback"
        funName = mkHsName ai
        fParams = map H.PVar $ lPars
                            ++ maybe [] ((:[]) . hsName . cleanName . description) (ident ai)
                            ++ maybe [] (const [input]) mInp
-                           ++ (if null (params ai) then [] else [pList])
+                           ++ [callbackIdent]
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
        mInp    = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
@@ -127,41 +128,11 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                    , i' <- inputHaskellType i = [i']
                    | otherwise = []
        input = H.Ident "input"
-       pList = H.Ident "pList"
-       rhs = H.UnGuardedRhs $ H.Let binds expr
-         where binds = H.BDecls [rHeadersBind, requestBind]
-               rHeadersBind =
-                 H.PatBind noLoc (H.PVar rHeaders)
-                    (H.UnGuardedRhs $ H.List [H.Tuple H.Boxed [use hAccept     , H.Lit $ H.String $ dataTypesToAcceptHeader JSON $ responseAcceptType responseType],
-                                              H.Tuple H.Boxed [use hContentType, H.Lit $ H.String $ maybe "text/plain" inputContentType mInp]])
-                              noBinds
-
-               rHeaders     = H.Ident "rHeaders"
-               hAccept      = H.Ident "hAccept"
-               hContentType = H.Ident "hContentType"
-               doRequest    = H.Ident "doRequest"
-
-               requestBind =
-                 H.PatBind noLoc (H.PVar request)
-                    (H.UnGuardedRhs $
-                      appLast
-                        (H.App
-                          (H.App
-                            (H.App
-                              (H.App (H.App (use makeReq) (H.Lit $ H.String $ show $ method ai))
-                                     (H.Lit $ H.String ve))
-                              url)
-                            (if null (params ai) then (H.List []) else (use pList)))
-                          (use rHeaders))) noBinds
-               appLast e
-                 | Just i <- mInp = H.App e (H.App (use $ H.Ident $ inputFunc i) (use input))
-                 | otherwise = H.App e (H.Lit $ H.String "")
-               makeReq = H.Ident "makeReq"
-               request = H.Ident "request"
-
-               expr = H.App (H.App (H.App (use doRequest)
-                                          (use $ H.Ident $ responseFunc errorI))
-                                          (use $ H.Ident $ responseFunc output)) (use request)
+       ajax = H.Var $ H.UnQual $ H.Ident "passwordAjax"
+       nothing = H.Con $ H.UnQual $ H.Ident "Nothing"
+       callbackVar = H.Var $ H.UnQual callbackIdent
+       rhs = H.UnGuardedRhs exp'
+       exp' = ajax `H.App` callbackVar `H.App` nothing `H.App` url `H.App` nothing `H.App` nothing
 
        (ve, url) = ("v" ++ show ver, lUrl)
        errorI :: ResponseInfo
