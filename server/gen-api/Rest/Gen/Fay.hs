@@ -19,7 +19,6 @@ import Prelude hiding (id, (.))
 import Safe
 import System.Directory
 import System.FilePath
-import qualified Data.Generics.Uniplate.Data                 as U
 import qualified Data.Label.Total                            as L
 import qualified Data.List.NonEmpty                          as NList
 import qualified Language.Haskell.Exts.Pretty                as H
@@ -33,10 +32,12 @@ import Rest.Gen.Types
 import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 
+import Debug.Trace
+
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
-     mapM_ (writeRes ctx) $ allSubTrees tree
+     mapM_ (writeRes ctx) . (:[]) . head . tail $ allSubTrees tree
 
 writeRes :: HaskellContext -> ApiResource -> IO ()
 writeRes ctx node =
@@ -70,7 +71,7 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) $ resItems node
+    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) . (:[]) . head $ resItems node
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -87,7 +88,7 @@ useMQual Nothing = use
 useMQual (Just qual) = H.Var . (H.Qual $ qual)
 
 mkFunction :: Version -> String -> ApiAction -> ([H.Decl], [H.ModuleName])
-mkFunction ver res (ApiAction _ lnk ai) =
+mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
   ([H.TypeSig noLoc [funName] fType,
     H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]],
     responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp)
@@ -100,8 +101,12 @@ mkFunction ver res (ApiAction _ lnk ai) =
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
        mInp    = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
-       fType   = H.TyForall Nothing [H.ClassA (H.UnQual cls) [m]] $ fTypify tyParts
-         where cls = H.Ident "ApiStateC"
+       -- fType   = H.TyForall Nothing [H.ClassA (H.UnQual cls) [m]] $ fTypify tyParts
+       fType   = trace (show lnk) $ H.TyFun fParams' fOutput
+         where 
+               fParams' = H.TyVar $ H.Symbol "a"
+               fOutput = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
+               cls = H.Ident "ApiStateC"
                m = H.TyVar $ H.Ident "m"
                fTypify :: [H.Type] -> H.Type
                fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
