@@ -91,8 +91,9 @@ mkFunction :: Version -> String -> ApiAction -> ([H.Decl], [H.ModuleName])
 mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
   ([H.TypeSig noLoc [funName] fType,
     H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]],
-    responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp)
+    responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime])
      where
+       runtime = H.ModuleName "Crm.Server"
        callbackIdent = H.Ident "callback"
        funName = mkHsName ai
        fParams = map H.PVar $ lPars
@@ -128,7 +129,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                    , i' <- inputHaskellType i = [i']
                    | otherwise = []
        input = H.Ident "input"
-       ajax = H.Var $ H.UnQual $ H.Ident "passwordAjax"
+       ajax = H.Var $ H.Qual runtime $ H.Ident "passwordAjax"
        nothing = H.Con $ H.UnQual $ H.Ident "Nothing"
        callbackVar = H.Var $ H.UnQual callbackIdent
        rhs = H.UnGuardedRhs exp'
