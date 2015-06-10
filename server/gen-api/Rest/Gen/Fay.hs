@@ -117,9 +117,6 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                tyParts = map qualIdent lPars
                          ++ maybe [] (return . Ident.haskellType) (ident ai)
                          ++ inp
-                         ++ (if null (params ai) then []
-                             else [H.TyList (H.TyTuple H.Boxed [haskellStringType,
-                                                                haskellStringType])])
                          ++ [callback]
 
                qualIdent (H.Ident s)
