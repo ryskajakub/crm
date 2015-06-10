@@ -14,7 +14,7 @@ newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Read)
 #endif
 
 type Employee' = (EmployeeId, Employee)

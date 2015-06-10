@@ -14,6 +14,7 @@ import           Rest.Resource               (Resource, Void, schema, list, name
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
+import           Rest.Info                   (Info(..))
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Employee         as E
@@ -21,29 +22,33 @@ import qualified Crm.Shared.Employee         as E
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay')
-import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing', updateRows)
+import           Crm.Server.Helpers          (prepareReaderTuple)
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing', updateRows'')
 
-employeeResource :: Resource Dependencies IdDependencies UrlId () Void
+instance Info E.EmployeeId where
+  describe _ = "employeeId"
+
+employeeResource :: Resource Dependencies (IdDependencies' E.EmployeeId) E.EmployeeId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.employees ,
-  schema = S.withListing () $ S.unnamedSingle readMay' ,
+  schema = S.withListing () $ S.unnamedSingleRead id ,
   list = const employeesListing ,
   get = Just getEmployeeHandler ,
   update = Just updateEmployeeHandler ,
   create = Just createEmployeeHandler }
 
-getEmployeeHandler :: Handler IdDependencies
-getEmployeeHandler = mkConstHandler' jsonO $ withConnId (\connection theId -> do
-  rows <- liftIO $ runQuery connection (singleEmployeeQuery theId)
+getEmployeeHandler :: Handler (IdDependencies' E.EmployeeId)
+getEmployeeHandler = mkConstHandler' jsonO $ do
+  ((_, connection), theId) <- ask
+  rows <- liftIO $ runQuery connection (singleEmployeeQuery . E.getEmployeeId $ theId)
   let rowsMapped = fmap (\row -> sel2 $ (convert row :: EmployeeMapped)) rows
-  singleRowOrColumn rowsMapped)
+  singleRowOrColumn rowsMapped
 
-updateEmployeeHandler :: Handler IdDependencies
+updateEmployeeHandler :: Handler (IdDependencies' E.EmployeeId)
 updateEmployeeHandler = let
   readToWrite employee = const (Nothing, pgStrictText $ E.name employee, 
     pgStrictText $ E.contact employee, pgStrictText $ E.capabilities employee)
-  in updateRows employeesTable readToWrite
+  in (updateRows'' employeesTable readToWrite E.getEmployeeId (const $ const $ const $ return ()))
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler' (jsonO . jsonI) (\newEmployee -> do
@@ -53,8 +58,8 @@ createEmployeeHandler = mkInputHandler' (jsonO . jsonI) (\newEmployee -> do
   return () )
 
 employeesListing :: ListHandler Dependencies 
-employeesListing = mkListing' (jsonO) (const $
-  ask >>= \(_,conn) -> do 
-    rawRows <- liftIO $ runQuery conn employeesQuery
-    let rowsMapped = convert rawRows :: [EmployeeMapped]
-    return rowsMapped )
+employeesListing = mkListing' (jsonO) $ const $ do
+  (_,conn) <- ask
+  rawRows <- liftIO $ runQuery conn employeesQuery
+  let rowsMapped = convert rawRows :: [EmployeeMapped]
+  return rowsMapped

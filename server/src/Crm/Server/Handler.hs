@@ -14,7 +14,7 @@ import           Control.Monad               (forM_)
 import qualified Codec.Binary.Base64.String  as B64
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad.Trans.Except  (ExceptT, withExceptT)
-import           Control.Monad.Reader        (ask)
+import           Control.Monad.Reader        (ask, ReaderT)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import           Control.Monad.Reader.Class  (MonadReader)
 import qualified Crypto.Scrypt               as CS
@@ -47,10 +47,10 @@ class HasConnection a where
   getConnection :: a -> Connection
 instance HasConnection (Connection, b) where
   getConnection = fst
+instance HasConnection GlobalBindings where
+  getConnection = snd
 instance HasConnection ((c, Connection), b) where
   getConnection = snd . fst
-instance HasConnection (b, Connection) where
-  getConnection = snd
 instance HasConnection Connection where
   getConnection = id
 
@@ -142,3 +142,19 @@ updateRows table readToWrite = updateRows' table readToWrite (const . const . co
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
 deleteRows' deletions = mkConstHandler' jsonO $ withConnId $ \connection theId ->
   liftIO $ forM_ deletions $ \deletion -> deletion theId connection
+
+updateRows'' :: forall record m columnsW columnsR recordId.
+                (Functor m, MonadIO m, 
+                  Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+             => Table columnsW columnsR 
+             -> (record -> columnsR -> columnsW) 
+             -> (recordId -> Int)
+             -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, recordId) m) ())
+             -> Handler (ReaderT (GlobalBindings, recordId) m)
+updateRows'' table readToWrite showInt postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> do
+  ((cache, conn), recordId) <- ask
+  let doUpdation = do
+        let condition row = pgInt4 (showInt recordId) .== sel1 row
+        _ <- liftIO $ runUpdate conn table (readToWrite record) condition
+        postUpdate (showInt recordId) conn cache
+  withExceptT (const $ CustomReason $ DomainReason "updation failed") doUpdation

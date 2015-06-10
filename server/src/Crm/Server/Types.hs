@@ -19,6 +19,7 @@ type GlobalBindings = (Cache, Connection)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)
 type IdDependencies = (ReaderT (GlobalBindings, Either String Int) IO :: * -> *)
+type IdDependencies' a = (ReaderT (GlobalBindings, a) IO :: * -> *)
 type StringIdDependencies = (ReaderT (GlobalBindings, String) IO :: * -> *)
 type MachineTypeDependencies = (ReaderT (GlobalBindings, MachineTypeSid) IO :: * -> *)
 
