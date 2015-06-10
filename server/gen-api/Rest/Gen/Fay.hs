@@ -101,13 +101,12 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
        mInp    = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
-       -- fType   = H.TyForall Nothing [H.ClassA (H.UnQual cls) [m]] $ fTypify tyParts
-       fType   = trace (show lnk) $ H.TyFun fParams' fOutput
+       fType   = H.TyFun fParams' fayUnit
          where 
-               fParams' = H.TyVar $ H.Symbol "a"
-               fOutput = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
-               cls = H.Ident "ApiStateC"
-               m = H.TyVar $ H.Ident "m"
+               fParams' = fTypify tyParts
+               fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
+               callbackParams = responseHaskellType output
+               callback = H.TyParen $ H.TyFun callbackParams fayUnit
                fTypify :: [H.Type] -> H.Type
                fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
                fTypify [ty1] = ty1
@@ -119,11 +118,8 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                          ++ (if null (params ai) then []
                              else [H.TyList (H.TyTuple H.Boxed [haskellStringType,
                                                                 haskellStringType])])
-                         ++ [H.TyApp m (H.TyApp
-                                         (H.TyApp
-                                           (H.TyCon $ H.UnQual (H.Ident "ApiResponse"))
-                                           (responseHaskellType errorI))
-                                         (responseHaskellType output))]
+                         ++ [callback]
+
                qualIdent (H.Ident s)
                  | s == cleanHsName res = H.TyCon $ H.UnQual tyIdent
                  | otherwise = H.TyCon $ H.Qual (H.ModuleName $ modName s) tyIdent
