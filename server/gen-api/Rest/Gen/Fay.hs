@@ -106,14 +106,13 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
        mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
-       (isList, fType)   = (isList', H.TyFun fParams' fayUnit)
+       (isList, fType)   = (isList', fTypify tyParts)
          where 
-               fParams' = fTypify tyParts
                fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
                (callbackParams, isList') = unList $ responseHaskellType output
                unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
                unList x = (x, False)
-               callback = H.TyParen $ H.TyFun callbackParams fayUnit
+               callback = H.TyFun callbackParams fayUnit
                fTypify :: [H.Type] -> H.Type
                fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
                fTypify [ty1] = ty1
@@ -123,6 +122,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                          ++ maybe [] (return . Ident.haskellType) (ident ai)
                          ++ inp
                          ++ [callback]
+                         ++ [fayUnit]
 
                qualIdent (H.Ident s)
                  | s == cleanHsName res = H.TyCon $ H.UnQual tyIdent
