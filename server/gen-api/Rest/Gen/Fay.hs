@@ -58,23 +58,21 @@ buildHaskellModule ctx node pragmas warningText =
   where
     name = H.ModuleName $ qualModName $ namespace ctx ++ resId node
     exportSpecs = Nothing
-    importDecls = nub $ namedImport "Rest.Client.Internal"
-                      : extraImports
-                     ++ parentImports
+    importDecls = nub $ parentImports
                      ++ dataImports
                      ++ idImports
     decls = concat funcs
 
-    extraImports = imports ctx
     parentImports = map mkImport . tail . inits . resParents $ node
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
-      . filter onlySingle $ resItems node
-    onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
-      actionType' = actionType actionInfo
-      blacklistActions = [DeleteMany, UpdateMany]
+    (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
+      . filter onlySingle $ resItems node where
+      rest (H.ModuleName str) = take 4 str /= "Rest"
+      onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
+        actionType' = actionType actionInfo
+        blacklistActions = [DeleteMany, UpdateMany]
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
