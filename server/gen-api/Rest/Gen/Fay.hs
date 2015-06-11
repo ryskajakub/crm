@@ -38,16 +38,19 @@ mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
      mapM_ (writeRes ctx) . filter (("companies" ==) . resName) $ allSubTrees tree
 
+
 writeRes :: HaskellContext -> ApiResource -> IO ()
 writeRes ctx node =
   do createDirectoryIfMissing True (targetPath ctx </> "src" </> modPath (namespace ctx ++ resParents node))
      writeFile (targetPath ctx </> "src" </> modPath (namespace ctx ++ resId node) ++ ".hs") (mkRes ctx node)
+
 
 mkRes :: HaskellContext -> ApiResource -> String
 mkRes ctx node = H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
   where
     pragmas = [H.OptionsPragma noLoc (Just H.GHC) "-fno-warn-unused-imports"]
     _warningText = "Warning!! This is automatically generated code, do not modify!"
+
 
 buildHaskellModule :: HaskellContext -> ApiResource ->
                       [H.ModulePragma] -> Maybe H.WarningText ->
@@ -84,90 +87,96 @@ buildHaskellModule ctx node pragmas warningText =
 noBinds :: H.Binds
 noBinds = H.BDecls []
 
+
 use :: H.Name -> H.Exp
 use = H.Var . H.UnQual
 
+
 mkFunction :: String -> ApiAction -> ([H.Decl], [H.ModuleName])
-mkFunction res (ApiAction _ lnk ai) =
-  ([H.TypeSig noLoc [funName] fType,
-    H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]],
-    responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime])
-     where
-       runtime = H.ModuleName "Crm.Server"
-       callbackIdent = H.Ident "callback"
-       funName = mkHsName ai
-       fParams = map H.PVar $ lPars
-                           ++ maybe [] ((:[]) . hsName . cleanName . description) (ident ai)
-                           ++ maybe [] (const [input]) mInp
-                           ++ [callbackIdent]
-       (lUrl, lPars) = linkToURL res lnk
-       mInp :: Maybe InputInfo
-       mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
-       (isList, fType)   = (isList', fTypify tyParts)
-         where 
-               fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
-               (callbackParams, isList') = unList $ responseHaskellType output
-               unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
-               unList x = (x, False)
-               callback = H.TyFun callbackParams fayUnit
-               fTypify :: [H.Type] -> H.Type
-               fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
-               fTypify [ty1] = ty1
-               fTypify [ty1, ty2] = H.TyFun ty1 ty2
-               fTypify (ty1 : tys) = H.TyFun ty1 (fTypify tys)
-               tyParts = map qualIdent lPars
-                         ++ maybe [] (return . Ident.haskellType) (ident ai)
-                         ++ inp
-                         ++ [callback]
-                         ++ [fayUnit]
+mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImports) where
+  typeSignature = H.TypeSig noLoc [funName] fType
+  functionBinding = H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]
+  usedImports = responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime]
 
-               qualIdent (H.Ident s)
-                 | s == cleanHsName res = H.TyCon $ H.UnQual tyIdent
-                 | otherwise = H.TyCon $ H.Qual (H.ModuleName $ modName s) tyIdent
-               qualIdent H.Symbol{} = error "Rest.Gen.Haskell.mkFunction.qualIdent - not expecting a Symbol"
-               inp | Just i  <- mInp
-                   , i' <- inputHaskellType i = [i']
-                   | otherwise = []
-       input = H.Ident "input"
-       ajax = H.Var . H.Qual runtime . H.Ident $ "passwordAjax"
-       nothing = H.Con . H.UnQual . H.Ident $ "Nothing"
-       callbackVar = H.Var . H.UnQual $ callbackIdent
-       runtimeVar = H.Var . H.Qual runtime . H.Ident
-       itemsIdent = runtimeVar "items"
-       compose = H.QVarOp $ H.UnQual $ H.Symbol "."
-       rhs = H.UnGuardedRhs exp'
-       items 
-         | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
-         | otherwise = id
-       exp' = ajax `H.App` (mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
-           input' `H.App` method' `H.App` nothing `H.App` nothing where
-         method' = mkMethod ai
-         concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
-           addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
-           plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
-         concat' (exp1:[]) = exp1
-         mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
-         input' = maybe nothing (const $ (H.Con . H.UnQual . H.Ident $ "Just") `H.App` use input) mInp
+  runtime = H.ModuleName "Crm.Server"
+  callbackIdent = H.Ident "callback"
+  funName = mkHsName ai
+  fParams = map H.PVar $ lPars ++ 
+    maybe [] ((:[]) . hsName . cleanName . description) (ident ai) ++ 
+    maybe [] (const [input]) mInp ++ 
+    [callbackIdent]
+  (lUrl, lPars) = linkToURL res lnk
+  mInp :: Maybe InputInfo
+  mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
+  (isList, fType) = (isList', fTypify tyParts) where 
+    fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
+    (callbackParams, isList') = unList $ responseHaskellType output
+    unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
+    unList x = (x, False)
+    callback = H.TyFun callbackParams fayUnit
 
-       errorI :: ResponseInfo
-       errorI = errorInfo responseType
-       output :: ResponseInfo
-       output = outputInfo responseType
-       responseType = chooseResponseType ai
+    fTypify :: [H.Type] -> H.Type
+    fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
+    fTypify [ty1] = ty1
+    fTypify [ty1, ty2] = H.TyFun ty1 ty2
+    fTypify (ty1 : tys) = H.TyFun ty1 (fTypify tys)
+    tyParts = 
+      map qualIdent lPars ++ 
+      maybe [] (return . Ident.haskellType) (ident ai) ++ 
+      inp ++ 
+      [callback] ++ 
+      [fayUnit]
 
-       mkMethod :: ActionInfo -> H.Exp
-       mkMethod ai' = runtimeVar $ case actionType ai' of
-         Retrieve -> "get"
-         Create -> "post"
-         Delete -> "delete"
-         List -> "get"
-         Update -> "put"
+    qualIdent (H.Ident s)
+      | s == cleanHsName res = H.TyCon $ H.UnQual tyIdent
+      | otherwise = H.TyCon $ H.Qual (H.ModuleName $ modName s) tyIdent
+    qualIdent H.Symbol{} = error "Rest.Gen.Haskell.mkFunction.qualIdent - not expecting a Symbol"
+    inp | Just i  <- mInp
+        , i' <- inputHaskellType i = [i']
+        | otherwise = []
+  input = H.Ident "input"
+  ajax = H.Var . H.Qual runtime . H.Ident $ "passwordAjax"
+  nothing = H.Con . H.UnQual . H.Ident $ "Nothing"
+  callbackVar = H.Var . H.UnQual $ callbackIdent
+  runtimeVar = H.Var . H.Qual runtime . H.Ident
+  itemsIdent = runtimeVar "items"
+  compose = H.QVarOp $ H.UnQual $ H.Symbol "."
+  rhs = H.UnGuardedRhs exp'
+  items 
+    | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
+    | otherwise = id
+  exp' = ajax `H.App` (mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
+      input' `H.App` method' `H.App` nothing `H.App` nothing where
+    method' = mkMethod ai
+    concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
+      addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
+      plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
+    concat' (exp1:[]) = exp1
+    mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
+    input' = maybe nothing (const $ (H.Con . H.UnQual . H.Ident $ "Just") `H.App` use input) mInp
+
+  errorI :: ResponseInfo
+  errorI = errorInfo responseType
+  output :: ResponseInfo
+  output = outputInfo responseType
+  responseType = chooseResponseType ai
+
+  mkMethod :: ActionInfo -> H.Exp
+  mkMethod ai' = runtimeVar $ case actionType ai' of
+    Retrieve -> "get"
+    Create -> "post"
+    Delete -> "delete"
+    List -> "get"
+    Update -> "put"
+
 
 linkToURL :: String -> Link -> ([H.Exp], [H.Name])
 linkToURL res lnk = urlParts res lnk ([], [])
 
+
 var :: String -> H.Exp
 var = H.Var . H.UnQual . H.Ident
+
 
 urlParts :: String -> Link -> ([H.Exp], [H.Name]) -> ([H.Exp], [H.Name])
 urlParts res lnk ac@(rlnk, pars) =
@@ -181,8 +190,10 @@ urlParts res lnk ac@(rlnk, pars) =
     (LParam p : xs) -> urlParts res xs (rlnk ++ [var "show" `H.App` (use $ hsName (cleanName p))], pars)
     (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
 
+
 tyIdent :: H.Name
 tyIdent = H.Ident "Identifier"
+
 
 mkHsName :: ActionInfo -> H.Name
 mkHsName ai = hsName $ concatMap cleanName parts
@@ -207,6 +218,7 @@ hsName :: [String] -> H.Name
 hsName []       = H.Ident ""
 hsName (x : xs) = H.Ident $ cleanHsName $ downFirst x ++ concatMap upFirst xs
 
+
 cleanHsName :: String -> String
 cleanHsName s =
   if s `elem` reservedNames
@@ -218,14 +230,18 @@ cleanHsName s =
       ,"foreign","if","then","else","import","infix","infixl","infixr","let"
       ,"in","module","newtype","of","qualified","type","where"]
 
+
 qualModName :: ResourceId -> String
 qualModName = intercalate "." . map modName
+
 
 modPath :: ResourceId -> String
 modPath = intercalate "/" . map modName
 
+
 modName :: String -> String
 modName = concatMap upFirst . cleanName
+
 
 data InputInfo = InputInfo
   { inputModules     :: [H.ModuleName]
@@ -244,11 +260,13 @@ inputInfo dsc =
     File   -> InputInfo [] haskellByteStringType "application/octet-stream" "id"
     Other  -> InputInfo [] haskellByteStringType "text/plain" "id"
 
+
 data ResponseInfo = ResponseInfo
   { responseModules     :: [H.ModuleName]
   , responseHaskellType :: H.Type
   , responseFunc        :: String
   } deriving (Eq, Show)
+
 
 outputInfo :: ResponseType -> ResponseInfo
 outputInfo r =
@@ -260,6 +278,7 @@ outputInfo r =
       JSON   -> ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromJSON"
       File   -> ResponseInfo [] haskellByteStringType "id"
       Other  -> ResponseInfo [] haskellByteStringType "id"
+
 
 errorInfo :: ResponseType -> ResponseInfo
 errorInfo r =
@@ -285,6 +304,7 @@ errorInfo r =
       XML  -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromXML"
       JSON -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromJSON"
       _    -> Nothing
+
 
 defaultErrorDataDesc :: DataType -> DataDesc
 defaultErrorDataDesc dt =
