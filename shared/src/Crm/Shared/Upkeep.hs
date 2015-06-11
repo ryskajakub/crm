@@ -10,14 +10,20 @@ import Crm.Shared.UpkeepMachine as UM
 #ifndef FAY
 import GHC.Generics
 import Data.Data
+import Rest.Info    (Info(..))
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
+
+#ifndef FAY
+instance Info UpkeepId where
+  describe _ = "upkeepId"
+#endif
 
 newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Eq, Generic, Typeable, Data, Show)
+  deriving (Eq, Generic, Typeable, Data, Show, Read)
 #endif
 
 type Upkeep'' = (UpkeepId, Upkeep)
