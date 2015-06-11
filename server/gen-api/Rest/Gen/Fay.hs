@@ -71,7 +71,11 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) {- . (:[]) . head -} $ resItems node
+    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
+      . filter onlySingle $ resItems node
+    onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
+      actionType' = actionType actionInfo
+      blacklistActions = [DeleteMany, UpdateMany]
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -140,7 +144,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
          | otherwise = id
        exp' = ajax `H.App` (concat' url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
          concat' (exp1:exp2:exps) = H.InfixApp exp1 (H.QVarOp $ H.UnQual $ H.Symbol "++") $ concat' (exp2:exps)
-         concat' (exp:[]) = exp
+         concat' (exp1:[]) = exp1
          input' = maybe nothing (const $ use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
