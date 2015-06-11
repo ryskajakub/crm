@@ -64,7 +64,7 @@ buildHaskellModule ctx node pragmas warningText =
                      ++ parentImports
                      ++ dataImports
                      ++ idImports
-    decls = idData node ++ concat funcs
+    decls = concat funcs
 
     extraImports = imports ctx
     parentImports = map mkImport . tail . inits . resParents $ node
@@ -164,41 +164,6 @@ urlParts res lnk ac@(rlnk, pars) =
                  tailed = [var "show" `H.App` (use $ hsName (cleanName r))]
     (LParam p : xs) -> urlParts res xs (rlnk ++ [var "show" `H.App` (use $ hsName (cleanName p))], pars)
     (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
-
-idData :: ApiResource -> [H.Decl]
-idData node =
-  case resAccessors node of
-    [] -> []
-    [(_pth, Nothing)] -> []
-    [(pth, Just i)] ->
-      let pp xs | null pth = xs
-                | otherwise = H.Lit (H.String pth) : xs
-      in [ H.TypeDecl noLoc tyIdent [] (Ident.haskellType i),
-           H.TypeSig noLoc [funName] fType,
-           H.FunBind [ H.Match noLoc funName [H.PVar x] Nothing
-                       (H.UnGuardedRhs $ H.List $ pp [ showURLx ]) noBinds] ]
-    ls ->
-      let ctor (pth,mi) =
-            H.QualConDecl noLoc [] [] (H.ConDecl (H.Ident (dataName pth)) $ maybe [] f mi)
-              where f ty = [Ident.haskellType ty]
-          fun (pth, mi) = [
-                           H.FunBind [H.Match noLoc funName fparams Nothing rhs noBinds]]
-            where (fparams, rhs) =
-                    case mi of
-                      Nothing ->
-                        ([H.PVar $ H.Ident (dataName pth)],
-                         (H.UnGuardedRhs $ H.List [H.Lit (H.String pth)]))
-                      Just{}  ->  -- Pattern match with data constructor
-                        ([H.PParen $ H.PApp (H.UnQual $ H.Ident (dataName pth)) [H.PVar x]],
-                         (H.UnGuardedRhs $ H.List [H.Lit $ H.String pth, showURLx]))
-      in [ H.DataDecl noLoc H.DataType [] tyIdent [] (map ctor ls) []
-         , H.TypeSig noLoc [funName] fType
-         ] ++ concatMap fun ls
-    where
-      x        = H.Ident "x"
-      fType    = H.TyFun (H.TyCon $ H.UnQual tyIdent) (H.TyList haskellStringType)
-      funName  = H.Ident "readId"
-      showURLx = H.App (H.Var $ H.UnQual $ H.Ident "showUrl") (H.Var $ H.UnQual $ x)
 
 tyIdent :: H.Name
 tyIdent = H.Ident "Identifier"
