@@ -72,9 +72,9 @@ buildHaskellModule ctx node pragmas warningText =
     (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
       . filter onlySingle $ resItems node where
       rest (H.ModuleName str) = take 4 str /= "Rest"
-      onlySingle (ApiAction _ _ actionInfo) = elem actionType' blacklistActions where
+      onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
         actionType' = actionType actionInfo
-        blacklistActions = [Delete]
+        blacklistActions = [DeleteMany, UpdateMany]
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -150,7 +150,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
            plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
          concat' (exp1:[]) = exp1
          mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
-         input' = maybe nothing (const $ use input) mInp
+         input' = maybe nothing (const $ (H.Con . H.UnQual . H.Ident $ "Just") `H.App` use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
        errorI :: ResponseInfo
