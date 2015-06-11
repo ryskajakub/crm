@@ -7,12 +7,18 @@ module Crm.Shared.Employee where
 #ifndef FAY
 import GHC.Generics
 import Data.Data
+import Rest.Info    (Info(..))
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
+
+#ifndef FAY
+instance Info EmployeeId where
+  describe _ = "employeeId"
+#endif
 
 newtype EmployeeId = EmployeeId { getEmployeeId :: Int }
 #ifdef FAY
-  deriving Eq
+  deriving (Eq, Show)
 #else
   deriving (Generic, Typeable, Data, Show, Read)
 #endif

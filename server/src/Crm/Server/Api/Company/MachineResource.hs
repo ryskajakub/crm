@@ -7,6 +7,7 @@ import           Control.Monad               (forM_)
 
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Monad.Reader        (ask)
 import           Data.Tuple.All              (sel1)
 import           Data.Text                   (Text)
 import           Database.PostgreSQL.Simple  (Connection)
@@ -39,14 +40,15 @@ import           Crm.Server.CachedCore       (recomputeSingle)
 
 import TupleTH (proj)
 
-createMachineHandler :: Handler IdDependencies
+createMachineHandler :: Handler (IdDependencies' C.CompanyId)
 createMachineHandler = mkInputHandler' (jsonO . jsonI) $
-    \(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> let
-  contactPersonId' = toMaybe contactPersonId
-  in withConnId' $ \connection cache companyId -> do
-    machineId <- addMachine connection newMachine companyId machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData
-    recomputeSingle (C.CompanyId companyId) connection cache
-    return $ M.MachineId machineId
+    \(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> do
+  let contactPersonId' = toMaybe contactPersonId
+  ((cache, connection), companyId) <- ask
+  machineId <- addMachine connection newMachine (C.getCompanyId companyId) machineType 
+    contactPersonId' (toMaybe linkedMachineId) machineSpecificData
+  recomputeSingle companyId connection cache
+  return $ M.MachineId machineId
     
 
 addMachine :: Connection
@@ -56,7 +58,7 @@ addMachine :: Connection
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
            -> [(EF.ExtraFieldId, Text)]
-           -> ExceptT (Reason r) IdDependencies Int -- ^ id of newly created machine
+           -> ExceptT (Reason r) (IdDependencies' C.CompanyId) Int -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
   machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'
@@ -88,15 +90,16 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
   liftIO $ insertExtraFields (M.MachineId machineId) extraFields connection
   return machineId 
 
-listing :: ListHandler IdDependencies
-listing = mkListing' jsonO $ const $ withConnId $ \connection companyId -> do
-  otherMachines <- liftIO $ runQuery connection (otherMachinesInCompanyQuery companyId)
+listing :: ListHandler (IdDependencies' C.CompanyId)
+listing = mkListing' jsonO $ const $ do
+  ((_, connection), companyId) <- ask
+  otherMachines <- liftIO $ runQuery connection (otherMachinesInCompanyQuery $ C.getCompanyId companyId)
   let 
     machinesMapped = convert otherMachines :: [MachineMapped]
     result = fmap (\mm -> ($(proj 6 0) mm,$(proj 6 5) mm)) machinesMapped
   return result
 
-machineResource :: Resource IdDependencies IdDependencies Void () Void
+machineResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
 machineResource = mkResourceId {
   name = A.machines ,
   schema = S.withListing () $ S.named [] ,

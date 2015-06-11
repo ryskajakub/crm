@@ -7,12 +7,20 @@ module Crm.Shared.Company where
 #ifndef FAY
 import GHC.Generics
 import Data.Data
+import Rest.Info    (Info(..))
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
+
+#ifndef FAY
+instance Info CompanyId where
+  describe _ = "companyId"
+#endif
 
 newtype CompanyId = CompanyId { getCompanyId :: Int }
-#ifndef FAY
-  deriving (Generic, Typeable, Data, Show, Ord, Eq)
+#ifdef FAY
+  deriving (Show)
+#else
+  deriving (Generic, Typeable, Data, Show, Ord, Eq, Read)
 #endif
 
 data OrderType = CompanyName | NextService

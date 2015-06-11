@@ -14,7 +14,6 @@ import           Rest.Resource               (Resource, Void, schema, list, name
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
-import           Rest.Info                   (Info(..))
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Employee         as E
@@ -24,9 +23,6 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Helpers          (prepareReaderTuple)
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkListing', updateRows'')
-
-instance Info E.EmployeeId where
-  describe _ = "employeeId"
 
 employeeResource :: Resource Dependencies (IdDependencies' E.EmployeeId) E.EmployeeId () Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {

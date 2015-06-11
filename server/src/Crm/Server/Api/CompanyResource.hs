@@ -42,7 +42,7 @@ import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', 
-                                             mkListing', updateRows')
+                                             mkListing', updateRows'')
 import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle, recomputeWhole)
 
 
@@ -103,16 +103,18 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
         _ -> LT
       ) unsortedResult')
 
-singleCompany :: Handler IdDependencies
-singleCompany = mkConstHandler' jsonO $ withConnId $ \conn companyId -> do
-  rows <- liftIO $ runQuery conn (companyByIdQuery companyId)
+singleCompany :: Handler (IdDependencies' C.CompanyId)
+singleCompany = mkConstHandler' jsonO $ do
+  ((_, connection), companyId) <- ask
+  let theId = C.getCompanyId companyId
+  rows <- liftIO $ runQuery connection (companyByIdQuery theId)
   companyRow <- singleRowOrColumn rows
-  machines <- liftIO $ runMachinesInCompanyQuery companyId conn
+  machines <- liftIO $ runMachinesInCompanyQuery theId connection
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine conn
+  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
   return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates)
 
-updateCompany :: Handler IdDependencies
+updateCompany :: Handler (IdDependencies' C.CompanyId)
 updateCompany = let
   readToWrite (company, coordinates') = let 
     coordinates = toMaybe coordinates'
@@ -120,14 +122,16 @@ updateCompany = let
       maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
   recomputeCache int connection cache = 
     mapExceptT lift $ recomputeSingle (C.CompanyId int) connection cache
-  in updateRows' companiesTable readToWrite recomputeCache
+  in updateRows'' companiesTable readToWrite C.getCompanyId recomputeCache
 
-deleteCompany :: Handler IdDependencies
-deleteCompany = mkConstHandler' jsonO $ withConnId' $ \connection cache companyId -> do
-  liftIO $ forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f companyId connection
+deleteCompany :: Handler (IdDependencies' C.CompanyId)
+deleteCompany = mkConstHandler' jsonO $ do
+  ((cache, connection), companyId) <- ask
+  let theId = C.getCompanyId companyId
+  liftIO $ forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f theId connection
   recomputeWhole connection cache
 
-companyResource :: Resource Dependencies IdDependencies UrlId MachineMid Void
+companyResource :: Resource Dependencies (IdDependencies' C.CompanyId) C.CompanyId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \type' -> case type' of
     NextServiceListing -> listing
@@ -138,5 +142,5 @@ companyResource = (mkResourceReaderWith prepareReaderTuple) {
   update = Just updateCompany ,
   remove = Just deleteCompany ,
   schema = S.withListing NextServiceListing $ S.named [
-    (A.single, S.singleBy readMay') ,
+    (A.single, S.singleRead id) ,
     (A.map', S.listing MapListing) ] }
