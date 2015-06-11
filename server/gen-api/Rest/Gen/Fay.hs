@@ -144,7 +144,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
          | otherwise = id
        exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` 
            input' `H.App` method `H.App` nothing `H.App` nothing where
-         method = runtimeVar "delete"
+         method = mkMethod ai
          concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
            addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
            plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
@@ -158,6 +158,14 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        output :: ResponseInfo
        output = outputInfo responseType
        responseType = chooseResponseType ai
+
+       mkMethod :: ActionInfo -> H.Exp
+       mkMethod ai = runtimeVar $ case actionType ai of
+         Retrieve -> "get"
+         Create -> "post"
+         Delete -> "delete"
+         List -> "get"
+         Update -> "put"
 
 linkToURL :: String -> Link -> ([H.Exp], [H.Name])
 linkToURL res lnk = urlParts res lnk ([], [])
