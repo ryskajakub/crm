@@ -47,8 +47,7 @@ writeRes ctx node =
 mkRes :: HaskellContext -> ApiResource -> String
 mkRes ctx node = H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
   where
-    pragmas = [ H.LanguagePragma noLoc [H.Ident "OverloadedStrings"],
-                H.OptionsPragma noLoc (Just H.GHC) "-fno-warn-unused-imports"]
+    pragmas = [H.OptionsPragma noLoc (Just H.GHC) "-fno-warn-unused-imports"]
     _warningText = "Warning!! This is automatically generated code, do not modify!"
 
 buildHaskellModule :: HaskellContext -> ApiResource ->
