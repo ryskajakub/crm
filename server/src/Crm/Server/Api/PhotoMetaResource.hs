@@ -11,23 +11,26 @@ import           Rest.Dictionary.Combinators (jsonI)
 import           Rest.Handler                (Handler)
 
 import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Reader        (ask)
 
 import           Crm.Server.Boilerplate      ()
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.PhotoMeta        as PM
+import qualified Crm.Shared.Photo            as P
 import           Crm.Server.Types
 import           Crm.Server.DB               (photosMetaTable)
-import           Crm.Server.Helpers          (withConnId, readMay', prepareReaderTuple)
+import           Crm.Server.Helpers          (prepareReaderTuple)
 import           Crm.Server.Handler          (mkInputHandler')
 
-photoMetaResource :: Resource Dependencies IdDependencies UrlId Void Void
+photoMetaResource :: Resource Dependencies (IdDependencies' P.PhotoId) P.PhotoId Void Void
 photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.photoMeta ,
-  schema = S.noListing $ S.unnamedSingle readMay' ,
+  schema = S.noListing $ S.unnamedSingleRead id ,
   update = Just setPhotoMetaDataHandler }
 
-setPhotoMetaDataHandler :: Handler IdDependencies
-setPhotoMetaDataHandler = mkInputHandler' jsonI $ \photoMeta -> withConnId $ \conn photoId -> do
-  _ <- liftIO $ runInsert conn photosMetaTable 
-    (pgInt4 photoId, pgStrictText $ PM.mimeType photoMeta, pgStrictText $ PM.fileName photoMeta)
+setPhotoMetaDataHandler :: Handler (IdDependencies' P.PhotoId)
+setPhotoMetaDataHandler = mkInputHandler' jsonI $ \photoMeta -> do
+  ((_,connection), photoId) <- ask
+  _ <- liftIO $ runInsert connection photosMetaTable 
+    (pgInt4 $ P.getPhotoId photoId, pgStrictText $ PM.mimeType photoMeta, pgStrictText $ PM.fileName photoMeta)
   return ()
