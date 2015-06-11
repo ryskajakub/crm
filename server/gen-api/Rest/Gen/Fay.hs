@@ -132,16 +132,19 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                    , i' <- inputHaskellType i = [i']
                    | otherwise = []
        input = H.Ident "input"
-       ajax = H.Var $ H.Qual runtime $ H.Ident "passwordAjax"
-       nothing = H.Con $ H.UnQual $ H.Ident "Nothing"
-       callbackVar = H.Var $ H.UnQual callbackIdent
-       itemsIdent = H.Var $ H.Qual runtime $ H.Ident "items"
+       ajax = H.Var . H.Qual runtime . H.Ident $ "passwordAjax"
+       nothing = H.Con . H.UnQual . H.Ident $ "Nothing"
+       callbackVar = H.Var . H.UnQual $ callbackIdent
+       runtimeVar = H.Var . H.Qual runtime . H.Ident
+       itemsIdent = runtimeVar "items"
        compose = H.QVarOp $ H.UnQual $ H.Symbol "."
        rhs = H.UnGuardedRhs exp'
        items 
          | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
          | otherwise = id
-       exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
+       exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` 
+           input' `H.App` method `H.App` nothing `H.App` nothing where
+         method = runtimeVar "delete"
          concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
            addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
            plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
