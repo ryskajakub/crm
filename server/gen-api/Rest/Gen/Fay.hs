@@ -1,16 +1,16 @@
-{-# LANGUAGE
-    CPP
-  , DoAndIfThenElse
-  , LambdaCase
-  , PatternGuards
-  , TemplateHaskell
-  , ViewPatterns
-  #-}
+{-# OPTIONS -fno-warn-incomplete-patterns #-}
+
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DoAndIfThenElse #-}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE ViewPatterns #-}
+
 module Rest.Gen.Fay (
   mkFayApi
   ) where
 
-import Control.Arrow (first, second)
+import Control.Arrow (second)
 import Control.Category
 import Control.Monad
 import Data.List
@@ -19,10 +19,10 @@ import Prelude hiding (id, (.))
 import Safe
 import System.Directory
 import System.FilePath
-import qualified Data.Label.Total                            as L
-import qualified Data.List.NonEmpty                          as NList
-import qualified Language.Haskell.Exts.Pretty                as H
-import qualified Language.Haskell.Exts.Syntax                as H
+import qualified Data.Label.Total               as L
+import qualified Data.List.NonEmpty             as NList
+import qualified Language.Haskell.Exts.Pretty   as H
+import qualified Language.Haskell.Exts.Syntax   as H
 import Rest.Gen.Haskell (HaskellContext(..))
 
 import Rest.Api (Router, Version)
@@ -31,6 +31,7 @@ import Rest.Gen.Base
 import Rest.Gen.Types
 import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
+
 
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
@@ -69,7 +70,7 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
+    (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction . resName $ node) 
       . filter onlySingle $ resItems node where
       rest (H.ModuleName str) = take 4 str /= "Rest"
       onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
@@ -86,12 +87,8 @@ noBinds = H.BDecls []
 use :: H.Name -> H.Exp
 use = H.Var . H.UnQual
 
-useMQual :: (Maybe H.ModuleName) -> H.Name -> H.Exp
-useMQual Nothing = use
-useMQual (Just qual) = H.Var . (H.Qual $ qual)
-
-mkFunction :: Version -> String -> ApiAction -> ([H.Decl], [H.ModuleName])
-mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
+mkFunction :: String -> ApiAction -> ([H.Decl], [H.ModuleName])
+mkFunction res (ApiAction _ lnk ai) =
   ([H.TypeSig noLoc [funName] fType,
     H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]],
     responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime])
@@ -142,9 +139,9 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        items 
          | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
          | otherwise = id
-       exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` 
-           input' `H.App` method `H.App` nothing `H.App` nothing where
-         method = mkMethod ai
+       exp' = ajax `H.App` (mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
+           input' `H.App` method' `H.App` nothing `H.App` nothing where
+         method' = mkMethod ai
          concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
            addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
            plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
@@ -152,7 +149,6 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
          mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
          input' = maybe nothing (const $ (H.Con . H.UnQual . H.Ident $ "Just") `H.App` use input) mInp
 
-       (ve, url) = ("v" ++ show ver, lUrl)
        errorI :: ResponseInfo
        errorI = errorInfo responseType
        output :: ResponseInfo
@@ -160,7 +156,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        responseType = chooseResponseType ai
 
        mkMethod :: ActionInfo -> H.Exp
-       mkMethod ai = runtimeVar $ case actionType ai of
+       mkMethod ai' = runtimeVar $ case actionType ai' of
          Retrieve -> "get"
          Create -> "post"
          Delete -> "delete"
@@ -227,9 +223,6 @@ qualModName = intercalate "." . map modName
 
 modPath :: ResourceId -> String
 modPath = intercalate "/" . map modName
-
-dataName :: String -> String
-dataName = modName
 
 modName :: String -> String
 modName = concatMap upFirst . cleanName
