@@ -102,7 +102,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
                            ++ [callbackIdent]
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
-       mInp    = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
+       mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
        (isList, fType)   = (isList', H.TyFun fParams' fayUnit)
          where 
                fParams' = fTypify tyParts
@@ -138,7 +138,8 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        items 
          | isList = \cbackIdent -> H.Paren $ H.InfixApp cbackIdent compose itemsIdent
          | otherwise = id
-       exp' = ajax `H.App` (items callbackVar) `H.App` nothing `H.App` url `H.App` nothing `H.App` nothing
+       exp' = ajax `H.App` url `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
+         input' = maybe nothing (const $ use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
        errorI :: ResponseInfo
