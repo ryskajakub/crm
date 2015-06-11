@@ -3,42 +3,35 @@
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where
 
-import           Database.PostgreSQL.Simple    (Connection)
-
-import           Opaleye.PGTypes               (pgInt4, pgDay, pgBool, pgStrictText)
-import           Opaleye.Manipulation          (runInsertReturning)
 import           Opaleye.RunQuery              (runQuery)
 
 import           Control.Monad.IO.Class        (liftIO)
+import           Control.Monad.Reader          (ask)
 import           Control.Applicative           (pure, (<*>))
 
-import           Data.Tuple.All                (sel1, sel2, sel3, sel4, upd3)
+import           Data.Tuple.All                (sel1, sel2, sel3)
 
-import           Rest.Resource                 (Resource, Void, schema, name, create, 
-                                               list, get, mkResourceReaderWith)
+import           Rest.Resource                 (Resource, Void, schema, name,
+                                               list, mkResourceId)
 import qualified Rest.Schema                   as S
-import           Rest.Dictionary.Combinators   (jsonO, jsonI)
-import           Rest.Handler                  (Handler, ListHandler)
+import           Rest.Dictionary.Combinators   (jsonO)
+import           Rest.Handler                  (ListHandler)
 
-import qualified Crm.Shared.UpkeepMachine      as UM
-import qualified Crm.Shared.Machine            as M
 import qualified Crm.Shared.Api                as A
-import qualified Crm.Shared.Upkeep             as U
-import qualified Crm.Shared.Employee           as E
+import qualified Crm.Shared.Company            as C
 import           Crm.Shared.MyMaybe
-import           Crm.Server.Api.UpkeepResource (insertUpkeepMachines)
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler            (mkInputHandler', mkListing', mkConstHandler')
-import           Crm.Server.CachedCore         (recomputeWhole)
+import           Crm.Server.Handler            (mkListing')
 
 
-companyUpkeepsListing :: ListHandler IdDependencies
-companyUpkeepsListing = mkListing' jsonO (const $ withConnId (\conn id'' -> do
-  rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery id'')
+companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
+companyUpkeepsListing = mkListing' jsonO $ const $ do
+  ((_,conn), companyId) <- ask 
+  rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
   let 
     mappedResults = mapResultsToList 
       sel1
@@ -55,43 +48,10 @@ companyUpkeepsListing = mkListing' jsonO (const $ withConnId (\conn id'' -> do
         in (upkeepMachine, machineType, machineId))
       rows
   return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
-    (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults ))
+    (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults
 
-getUpkeep :: Handler IdDependencies
-getUpkeep = mkConstHandler' jsonO $ withConnId (\conn upkeepId -> do
-  rows <- liftIO $ runQuery conn $ expandedUpkeepsQuery2 upkeepId
-  let result = mapUpkeeps rows
-  singleRowOrColumn (map (\x -> (sel2 x, sel3 x, sel4 x)) result))
-
-addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
-          -> IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
-  upkeepIds <- runInsertReturning
-    connection
-    upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, 
-      pgStrictText $ U.workHours upkeep, pgStrictText $ U.workDescription upkeep, 
-      pgStrictText $ U.recommendation upkeep)
-    sel1
-  let upkeepId = U.UpkeepId $ head upkeepIds
-  insertUpkeepMachines connection upkeepId upkeepMachines
-  return upkeepId
-
-createUpkeepHandler :: Handler IdDependencies
-createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> let 
-  (_,_,selectedEmployeeId) = newUpkeep
-  newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
-  in withConnId' $ \connection cache _ -> do
-    -- todo check that the machines are belonging to this company
-    upkeepId <- liftIO $ addUpkeep connection newUpkeep'
-    recomputeWhole connection cache
-    return upkeepId
-
-upkeepResource :: Resource IdDependencies IdDependencies UrlId () Void
-upkeepResource = (mkResourceReaderWith prepareReaderIdentity) {
+upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
+upkeepResource = mkResourceId {
   name = A.upkeep ,
-  schema = S.withListing () $ S.unnamedSingle readMay' ,
-  list = const companyUpkeepsListing ,
-  get = Just getUpkeep ,
-  create = Just createUpkeepHandler }
+  schema = S.withListing () $ S.named [] ,
+  list = const companyUpkeepsListing }
