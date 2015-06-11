@@ -71,7 +71,7 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) . (:[]) . head $ resItems node
+    (funcs, datImp) = second (nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) {- . (:[]) . head -} $ resItems node
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -103,13 +103,13 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        (lUrl, lPars) = linkToURL res lnk
        mInp :: Maybe InputInfo
        mInp    = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
-       fType   = H.TyFun fParams' fayUnit
+       (isList, fType)   = (isList', H.TyFun fParams' fayUnit)
          where 
                fParams' = fTypify tyParts
                fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
-               callbackParams = unList $ responseHaskellType output
-               unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = H.TyList elements
-               unList x = x
+               (callbackParams, isList') = unList $ responseHaskellType output
+               unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
+               unList x = (x, False)
                callback = H.TyParen $ H.TyFun callbackParams fayUnit
                fTypify :: [H.Type] -> H.Type
                fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
@@ -132,8 +132,13 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        ajax = H.Var $ H.Qual runtime $ H.Ident "passwordAjax"
        nothing = H.Con $ H.UnQual $ H.Ident "Nothing"
        callbackVar = H.Var $ H.UnQual callbackIdent
+       itemsIdent = H.Var $ H.UnQual $ H.Ident "items"
+       compose = H.QVarOp $ H.UnQual $ H.Symbol "."
        rhs = H.UnGuardedRhs exp'
-       exp' = ajax `H.App` callbackVar `H.App` nothing `H.App` url `H.App` nothing `H.App` nothing
+       items 
+         | isList = \cbackIdent -> H.Paren $ H.InfixApp cbackIdent compose itemsIdent
+         | otherwise = id
+       exp' = ajax `H.App` (items callbackVar) `H.App` nothing `H.App` url `H.App` nothing `H.App` nothing
 
        (ve, url) = ("v" ++ show ver, lUrl)
        errorI :: ResponseInfo
@@ -145,21 +150,20 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
 linkToURL :: String -> Link -> (H.Exp, [H.Name])
 linkToURL res lnk = first H.List $ urlParts res lnk ([], [])
 
+var :: String -> H.Exp
+var = H.Var . H.UnQual . H.Ident
+
 urlParts :: String -> Link -> ([H.Exp], [H.Name]) -> ([H.Exp], [H.Name])
 urlParts res lnk ac@(rlnk, pars) =
   case lnk of
     [] -> ac
     (LResource r : a@(LAccess _) : xs)
-      | not (hasParam a) -> urlParts res xs (rlnk ++ [H.List [H.Lit $ H.String r]], pars)
+      | not (hasParam a) -> urlParts res xs (rlnk ++ [H.Lit $ H.String r], pars)
       | otherwise -> urlParts res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
            where rlnk' = rlnk ++ (H.List [H.Lit $ H.String $ r] : tailed)
-                 tailed = [H.App (useMQual qual $ H.Ident "readId")
-                                 (use $ hsName (cleanName r))]
-                   where qual | r == res = Nothing
-                              | otherwise = Just $ H.ModuleName $ modName r
-    (LParam p : xs) -> urlParts res xs (rlnk ++ [H.List [H.App (use $ H.Ident "showUrl")
-                                                          (use $ hsName (cleanName p))]], pars)
-    (i : xs) -> urlParts res xs (rlnk ++ [H.List [H.Lit $ H.String $ itemString i]], pars)
+                 tailed = [var "show" `H.App` (use $ hsName (cleanName r))]
+    (LParam p : xs) -> urlParts res xs (rlnk ++ [var "show" `H.App` (use $ hsName (cleanName p))], pars)
+    (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
 
 idData :: ApiResource -> [H.Decl]
 idData node =
