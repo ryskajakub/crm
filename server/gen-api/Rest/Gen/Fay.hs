@@ -136,9 +136,11 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        compose = H.QVarOp $ H.UnQual $ H.Symbol "."
        rhs = H.UnGuardedRhs exp'
        items 
-         | isList = \cbackIdent -> H.Paren $ H.InfixApp cbackIdent compose itemsIdent
+         | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
          | otherwise = id
-       exp' = ajax `H.App` url `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
+       exp' = ajax `H.App` (concat' url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
+         concat' (exp1:exp2:exps) = H.InfixApp exp1 (H.QVarOp $ H.UnQual $ H.Symbol "++") $ concat' (exp2:exps)
+         concat' (exp:[]) = exp
          input' = maybe nothing (const $ use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
@@ -148,8 +150,8 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        output = outputInfo responseType
        responseType = chooseResponseType ai
 
-linkToURL :: String -> Link -> (H.Exp, [H.Name])
-linkToURL res lnk = first H.List $ urlParts res lnk ([], [])
+linkToURL :: String -> Link -> ([H.Exp], [H.Name])
+linkToURL res lnk = urlParts res lnk ([], [])
 
 var :: String -> H.Exp
 var = H.Var . H.UnQual . H.Ident
