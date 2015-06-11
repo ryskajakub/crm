@@ -73,8 +73,11 @@ buildHaskellModule ctx node pragmas warningText =
     dataImports = map (qualImport . unModuleName) datImp
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
-    (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction . resName $ node) 
+    (funcs, datImp) = second (map textInternal . filter rest . nub . concat) . unzip . map (mkFunction . resName $ node) 
       . filter onlySingle $ resItems node where
+      textInternal (H.ModuleName str) = H.ModuleName $ if isInfixOf "Data.Text.Internal" str
+        then "Data.Text"
+        else str
       rest (H.ModuleName str) = take 4 str /= "Rest"
       onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
         actionType' = actionType actionInfo
