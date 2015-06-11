@@ -11,7 +11,7 @@ main :: IO ()
 main = let
   haskellContext = HaskellContext {
     apiVersion = Version 1 0 (Just 0) ,
-    targetPath = "api/" ,
+    targetPath = "../client/generated-api/" ,
     wrapperName = "crm-client" ,
     includePrivate = True ,
     sources = [] ,

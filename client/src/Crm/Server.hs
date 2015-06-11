@@ -1,4 +1,7 @@
 module Crm.Server (
+  items ,
+  passwordAjax ,
+
   createCompany , 
   createMachine , 
   createUpkeep , 

@@ -35,7 +35,7 @@ import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
-     mapM_ (writeRes ctx) . filter (("employees" ==) . resName) $ allSubTrees tree
+     mapM_ (writeRes ctx) . filter (("companies" ==) . resName) $ allSubTrees tree
 
 writeRes :: HaskellContext -> ApiResource -> IO ()
 writeRes ctx node =
@@ -72,9 +72,9 @@ buildHaskellModule ctx node pragmas warningText =
     (funcs, datImp) = second (filter rest . nub . concat) . unzip . map (mkFunction (apiVersion ctx) . resName $ node) 
       . filter onlySingle $ resItems node where
       rest (H.ModuleName str) = take 4 str /= "Rest"
-      onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
+      onlySingle (ApiAction _ _ actionInfo) = elem actionType' blacklistActions where
         actionType' = actionType actionInfo
-        blacklistActions = [DeleteMany, UpdateMany]
+        blacklistActions = [Delete]
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
@@ -135,7 +135,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        ajax = H.Var $ H.Qual runtime $ H.Ident "passwordAjax"
        nothing = H.Con $ H.UnQual $ H.Ident "Nothing"
        callbackVar = H.Var $ H.UnQual callbackIdent
-       itemsIdent = H.Var $ H.UnQual $ H.Ident "items"
+       itemsIdent = H.Var $ H.Qual runtime $ H.Ident "items"
        compose = H.QVarOp $ H.UnQual $ H.Symbol "."
        rhs = H.UnGuardedRhs exp'
        items 
