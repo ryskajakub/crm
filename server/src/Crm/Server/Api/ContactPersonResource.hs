@@ -3,6 +3,7 @@ module Crm.Server.Api.ContactPersonResource (resource) where
 import           Opaleye                     (runQuery, pgStrictText)
 
 import           Control.Monad.IO.Class      (liftIO)
+import           Control.Monad.Reader        (ask)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
 
@@ -18,29 +19,32 @@ import qualified Crm.Shared.ContactPerson    as CP
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, readMay', createDeletion)
-import           Crm.Server.Handler          (mkConstHandler', deleteRows', updateRows)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion)
+import           Crm.Server.Handler          (mkConstHandler', deleteRows'', updateRows'')
 
 
-resource :: Resource Dependencies IdDependencies UrlId Void Void
+resource :: Resource Dependencies (IdDependencies' CP.ContactPersonId) CP.ContactPersonId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.contactPersons ,
-  schema = S.noListing $ S.unnamedSingle readMay' ,
+  schema = S.noListing $ S.unnamedSingleRead id ,
   update = Just updateHandler ,
   remove = Just deleteHandler ,
   get = Just getHandler }
 
-deleteHandler :: Handler IdDependencies
-deleteHandler = deleteRows' [createDeletion contactPersonsTable]
+deleteHandler :: Handler (IdDependencies' CP.ContactPersonId)
+deleteHandler = mkConstHandler' jsonO $ do
+  ((_,connection), contactPersonId) <- ask
+  deleteRows'' [createDeletion contactPersonsTable] (CP.getContactPersonId contactPersonId) connection
 
-getHandler :: Handler IdDependencies
-getHandler = mkConstHandler' jsonO $ withConnId $ \connection theId -> do
-  rows <- liftIO $ runQuery connection (singleContactPersonQuery theId)
+getHandler :: Handler (IdDependencies' CP.ContactPersonId)
+getHandler = mkConstHandler' jsonO $ do
+  ((_, connection), contactPersonId) <- ask
+  rows <- liftIO $ runQuery connection (singleContactPersonQuery $ CP.getContactPersonId contactPersonId)
   (cp, company) <- singleRowOrColumn rows
   return $ (sel3 $ (convert cp :: ContactPersonMapped), sel1 $ (convert company :: CompanyMapped))
 
-updateHandler :: Handler IdDependencies
+updateHandler :: Handler (IdDependencies' CP.ContactPersonId)
 updateHandler = let
   readToWrite contactPerson row = (Nothing, sel2 row, pgStrictText $ CP.name contactPerson ,
     pgStrictText $ CP.phone contactPerson, pgStrictText $ CP.position contactPerson)
-  in updateRows contactPersonsTable readToWrite
+  in updateRows'' contactPersonsTable readToWrite CP.getContactPersonId (const . const . const . return $ ())

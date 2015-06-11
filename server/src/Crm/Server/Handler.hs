@@ -143,6 +143,10 @@ deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
 deleteRows' deletions = mkConstHandler' jsonO $ withConnId $ \connection theId ->
   liftIO $ forM_ deletions $ \deletion -> deletion theId connection
 
+deleteRows'' :: (MonadIO m) => [Int -> Connection -> IO ()] -> Int -> Connection -> m ()
+deleteRows'' deletions theId connection = 
+  liftIO $ forM_ deletions $ \deletion -> deletion theId connection
+
 updateRows'' :: forall record m columnsW columnsR recordId.
                 (Functor m, MonadIO m, 
                   Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
