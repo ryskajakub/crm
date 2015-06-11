@@ -35,25 +35,27 @@ import           Crm.Server.CachedCore       (recomputeWhole)
 import           TupleTH
 
 
-machineResource :: Resource Dependencies IdDependencies UrlId () Void
+machineResource :: Resource Dependencies (IdDependencies' M.MachineId) M.MachineId () Void
 machineResource = (mkResourceReaderWith prepareReaderTuple) {
   list = const machineListing ,
   get = Just machineSingle ,
   update = Just machineUpdate ,
   name = A.machines ,
   remove = Just machineDelete ,
-  schema = S.withListing () (S.unnamedSingle readMay') }
+  schema = S.withListing () $ S.unnamedSingleRead id }
     
-machineDelete :: Handler IdDependencies
-machineDelete = mkConstHandler' jsonO $ withConnId' $ \connection cache machineId -> do
-  liftIO $ createDeletion machinesTable machineId connection
+machineDelete :: Handler (IdDependencies' M.MachineId)
+machineDelete = mkConstHandler' jsonO $ do
+  ((cache, connection), machineId) <- ask
+  liftIO $ createDeletion machinesTable (M.getMachineId machineId) connection
   recomputeWhole connection cache
 
-machineUpdate :: Handler IdDependencies
-machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> 
-    withConnId' $ \conn cache recordId -> do
+machineUpdate :: Handler (IdDependencies' M.MachineId)
+machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> do
+  ((cache, connection), machineId) <- ask
 
   let 
+    unwrappedId = M.getMachineId machineId
     machineReadToWrite (_,companyId,_,machineTypeId,_,_,_,_,_,_,_) =
       (Nothing, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
         machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
@@ -63,17 +65,18 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
         pgStrictText $ M.yearOfManufacture machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
-  liftIO $ forM_ [updateMachine] (\updation -> updation recordId conn)
-  liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable recordId conn
-  liftIO $ insertExtraFields (M.MachineId recordId) extraFields conn
+  liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection
+  liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable unwrappedId connection
+  liftIO $ insertExtraFields machineId extraFields connection
 
-  recomputeWhole conn cache
+  recomputeWhole connection cache
 
   return ()
 
-machineSingle :: Handler IdDependencies
-machineSingle = mkConstHandler' jsonO $ withConnId $ \conn id'' -> do
-  rows <- liftIO $ runQuery conn (machineDetailQuery id'')
+machineSingle :: Handler (IdDependencies' M.MachineId)
+machineSingle = mkConstHandler' jsonO $ do
+  ((_,conn), machineId) <- ask 
+  rows <- liftIO $ runQuery conn (machineDetailQuery $ M.getMachineId machineId)
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
     (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let

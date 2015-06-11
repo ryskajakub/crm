@@ -10,14 +10,20 @@ import Crm.Shared.YearMonthDay (YearMonthDay)
 import GHC.Generics
 import Data.Data
 import Prelude
+import Rest.Info    (Info(..))
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
+
+#ifndef FAY
+instance Info MachineId where
+  describe _ = "machineId"
+#endif
 
 newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
   deriving (Eq)
 #else
-  deriving (Eq, Generic, Typeable, Data, Show)
+  deriving (Eq, Generic, Typeable, Data, Show, Read)
 #endif
 
 data Machine = Machine {
