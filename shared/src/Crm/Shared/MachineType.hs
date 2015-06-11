@@ -8,19 +8,25 @@ module Crm.Shared.MachineType where
 import GHC.Generics
 import Data.Data
 import Fay.FFI
+import Rest.Info    (Info(..))
 #else
 import FFI
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
 
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineKind as MK
+
+#ifndef FAY
+instance Info MachineTypeId where
+  describe _ = "machineTypeId"
+#endif
 
 newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Read)
 #endif
 
 type MachineType' = (MachineTypeId, MachineType)

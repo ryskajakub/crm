@@ -9,10 +9,11 @@ import           Control.Monad.Reader       (ReaderT)
 import           Database.PostgreSQL.Simple (Connection)
 
 import qualified Crm.Shared.Company         as C
+import qualified Crm.Shared.MachineType     as MT
 import qualified Crm.Shared.YearMonthDay    as YMD
 
 data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing
-data MachineTypeSid = MachineTypeByName String | MachineTypeById (Either String Int)
+data MachineTypeSid = MachineTypeByName String | MachineTypeById MT.MachineTypeId
 
 newtype Cache = Cache (IORef (M.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)))
 type GlobalBindings = (Cache, Connection)

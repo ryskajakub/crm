@@ -31,7 +31,7 @@ import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepSequence   as US
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, maybeId, readMay')
+import           Crm.Server.Helpers          (prepareReaderTuple, readMay')
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -64,17 +64,17 @@ updateMachineType :: Handler MachineTypeDependencies
 updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) ->
   ask >>= \((cache, connection), sid) -> case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById machineTypeId' -> maybeId machineTypeId' $ \machineTypeId -> do 
+    MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> do 
       liftIO $ do
         let 
           readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
             pgStrictText $ MT.machineTypeManufacturer machineType)
-          condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeId
+          condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeIdInt
         _ <- runUpdate connection machineTypesTable readToWrite condition
-        _ <- runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeId)
+        _ <- runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeIdInt)
         forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) -> 
           runInsert connection upkeepSequencesTable (pgInt4 displayOrder,
-            pgStrictText label, pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime)
+            pgStrictText label, pgInt4 repetition, pgInt4 machineTypeIdInt, pgBool oneTime)
       recomputeWhole connection cache
 
 decode :: String -> String
@@ -86,8 +86,7 @@ machineTypesSingle = mkConstHandler' jsonO (do
   let 
     performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
-      MachineTypeById(Right(mtId)) -> (throwError NotFound, performQuery $ Right mtId)
-      MachineTypeById(Left(_)) -> (undefined, throwError NotFound)
+      MachineTypeById(MT.MachineTypeId machineTypeIdInt) -> (throwError NotFound, performQuery $ Right machineTypeIdInt)
       MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left $ decode mtName)
   rows <- result
   case rows of
@@ -100,8 +99,8 @@ machineTypesSingle = mkConstHandler' jsonO (do
     _ -> throwError NotFound)
 
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
-autocompleteSchema = S.withListing CountListing $ S.named [(
-  A.autocompleteManufacturer, S.listingBy (\str -> AutocompleteManufacturer str)),(
-  A.autocomplete, S.listingBy (\str -> Autocomplete str)),(
-  A.byName, S.singleBy (\str -> MachineTypeByName str)),(
-  A.byId, S.singleBy (\mtId -> MachineTypeById $ readMay' mtId))]
+autocompleteSchema = S.withListing CountListing $ S.named [
+  (A.autocompleteManufacturer, S.listingBy AutocompleteManufacturer) ,
+  (A.autocomplete, S.listingBy Autocomplete) ,
+  (A.byName, S.singleBy MachineTypeByName) , 
+  (A.byId, S.singleRead MachineTypeById) ]
