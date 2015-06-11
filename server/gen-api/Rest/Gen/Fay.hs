@@ -144,7 +144,7 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
          concat' (exp1:exp2:exps) = H.InfixApp exp1 (H.QVarOp $ H.UnQual $ H.Symbol "++") $ concat' (exp2:exps)
          concat' (exp1:[]) = exp1
-         mkPack = H.App (var "pack")
+         mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
          input' = maybe nothing (const $ use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
