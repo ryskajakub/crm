@@ -32,8 +32,6 @@ import Rest.Gen.Types
 import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 
-import Debug.Trace
-
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
@@ -58,7 +56,11 @@ buildHaskellModule ctx node pragmas warningText =
   where
     name = H.ModuleName $ qualModName $ namespace ctx ++ resId node
     exportSpecs = Nothing
-    importDecls = nub $ parentImports
+    dataText = H.ImportDecl noLoc (H.ModuleName "Data.Text") False False False Nothing Nothing 
+      (Just (False, [H.IVar H.NoNamespace (H.Ident "pack")]))
+    runtimeImports = dataText : []
+    importDecls = nub $ runtimeImports 
+                     ++ parentImports
                      ++ dataImports
                      ++ idImports
     decls = concat funcs
@@ -139,9 +141,10 @@ mkFunction ver res (is @ ( ApiAction _ lnk ai)) =
        items 
          | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
          | otherwise = id
-       exp' = ajax `H.App` (concat' url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
+       exp' = ajax `H.App` (mkPack . concat' $ url) `H.App` (items callbackVar) `H.App` input' `H.App` nothing `H.App` nothing where
          concat' (exp1:exp2:exps) = H.InfixApp exp1 (H.QVarOp $ H.UnQual $ H.Symbol "++") $ concat' (exp2:exps)
          concat' (exp1:[]) = exp1
+         mkPack = H.App (var "pack")
          input' = maybe nothing (const $ use input) mInp
 
        (ve, url) = ("v" ++ show ver, lUrl)
