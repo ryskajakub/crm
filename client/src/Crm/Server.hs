@@ -136,8 +136,7 @@ deleteAjax t c = passwordAjax t (const c) Nothing delete Nothing Nothing
 deleteCompany :: C.CompanyId
               -> Fay ()
               -> Fay ()
-deleteCompany companyId = deleteAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
+deleteCompany ident cb = CC.removeBySingle ident $ const cb
 
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
