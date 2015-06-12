@@ -82,7 +82,7 @@ buildHaskellModule ctx node pragmas warningText =
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
     (funcs, datImp) = second (map textInternal . filter rest . nub . concat) . unzip . map (mkFunction . resName $ node) 
-      . filter onlySingle $ resItems node where
+      . filter onlySingle . filter noFileO $ resItems node where
       textInternal (H.ModuleName str) = H.ModuleName $ if isInfixOf "Data.Text.Internal" str
         then "Data.Text"
         else str
@@ -90,6 +90,9 @@ buildHaskellModule ctx node pragmas warningText =
       onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
         actionType' = actionType actionInfo
         blacklistActions = [DeleteMany, UpdateMany]
+      noFileO (ApiAction _ _ actionInfo) = any isFileO $ outputs actionInfo where
+        isFileO (DataDescription (DataDesc File _ _) _) = False
+        isFileO _                                       = True
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
