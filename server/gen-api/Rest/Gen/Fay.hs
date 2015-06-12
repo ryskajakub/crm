@@ -107,8 +107,6 @@ use = H.Var . H.UnQual
 idData :: ApiResource -> [H.Decl]
 idData node =
   case resAccessors node of
-    [] -> []
-    [(_, Nothing)] -> []
     [(_, Just i)] -> [ H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ]
     _ -> []
 
@@ -122,10 +120,13 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
   runtime = H.ModuleName "Crm.Runtime"
   callbackIdent = H.Ident "callback"
   funName = mkHsName ai
-  fParams = map H.PVar $ lPars ++ 
-    maybe [] ((:[]) . hsName . cleanName . description) (ident ai) ++ 
-    maybe [] (const [input]) mInp ++ 
-    [callbackIdent]
+  getQName type' = case type' of
+    H.TyCon q -> q
+  newtypeQName = fromMaybe undefined . fmap (getQName . Ident.haskellType) $ (ident ai)
+  fParams = (map H.PVar lPars) ++ 
+    maybe [] ((:[]) . H.PApp newtypeQName . (:[]) . H.PVar . hsName . cleanName . description) (ident ai) ++ 
+    (map H.PVar $ maybe [] (const [input]) mInp) ++ 
+    (map H.PVar [callbackIdent])
   (lUrl, lPars) = linkToURL res lnk
   mInp :: Maybe InputInfo
   mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
