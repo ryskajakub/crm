@@ -200,6 +200,7 @@ Executable gen-api
       filepath ,
       directory ,
       Cabal ,
+      regex-compat ,
       rest-gen
   else
     buildable: False

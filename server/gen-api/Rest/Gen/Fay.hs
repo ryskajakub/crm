@@ -15,6 +15,7 @@ import Control.Category
 import Control.Monad
 import Data.List
 import Data.Maybe
+import Text.Regex
 import Prelude hiding (id, (.))
 import Safe
 import System.Directory
@@ -45,8 +46,15 @@ writeRes ctx node =
      writeFile (targetPath ctx </> "src" </> modPath (namespace ctx ++ resId node) ++ ".hs") (mkRes ctx node)
 
 
+-- | change the Data.Text.Internal -> Data.Text so Fay can handle it
+hackTextInternal :: String -> String
+hackTextInternal prettyPrintedHaskellModule = result where
+  r = mkRegex "Data\\.Text\\.Internal"
+  result = subRegex r prettyPrintedHaskellModule "Data.Text"
+
+
 mkRes :: HaskellContext -> ApiResource -> String
-mkRes ctx node = H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
+mkRes ctx node = hackTextInternal . H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
   where
     pragmas = [H.OptionsPragma noLoc (Just H.GHC) "-fno-warn-unused-imports"]
     _warningText = "Warning!! This is automatically generated code, do not modify!"
