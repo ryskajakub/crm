@@ -1,8 +1,6 @@
 {-# OPTIONS -fno-warn-incomplete-patterns #-}
 
 {-# LANGUAGE CPP #-}
-{-# LANGUAGE DoAndIfThenElse #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE PatternGuards #-}
 {-# LANGUAGE ViewPatterns #-}
 
@@ -75,7 +73,7 @@ buildHaskellModule ctx node pragmas warningText =
                      ++ parentImports
                      ++ dataImports
                      ++ idImports
-    decls = concat funcs
+    decls = concat funcs ++ idData node
 
     parentImports = map mkImport . tail . inits . resParents $ node
     dataImports = map (qualImport . unModuleName) datImp
@@ -104,6 +102,15 @@ noBinds = H.BDecls []
 
 use :: H.Name -> H.Exp
 use = H.Var . H.UnQual
+
+
+idData :: ApiResource -> [H.Decl]
+idData node =
+  case resAccessors node of
+    [] -> []
+    [(_, Nothing)] -> []
+    [(_, Just i)] -> [ H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ]
+    _ -> []
 
 
 mkFunction :: String -> ApiAction -> ([H.Decl], [H.ModuleName])
