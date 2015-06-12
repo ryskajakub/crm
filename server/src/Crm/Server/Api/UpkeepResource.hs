@@ -13,6 +13,7 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_)
+import           Control.Lens                (over, mapped, _3)
 
 import           Data.Tuple.All              (sel1, sel2, sel3, sel4, upd3)
 
@@ -114,9 +115,9 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
   return ()
 
 upkeepListing :: ListHandler Dependencies
-upkeepListing = mkListing' jsonO (const $ do
+upkeepListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn expandedUpkeepsQuery
-  return $ mapUpkeeps rows) 
+  return $ over (mapped . _3) toMyMaybe $ mapUpkeeps rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO (const $ do
