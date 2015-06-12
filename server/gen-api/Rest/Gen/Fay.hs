@@ -199,7 +199,7 @@ urlParts res lnk ac@(rlnk, pars) =
     (LResource r : a@(LAccess _) : xs)
       | not (hasParam a) -> urlParts res xs (rlnk ++ [H.Lit $ H.String r], pars)
       | otherwise -> urlParts res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
-           where rlnk' = rlnk ++ (H.List [H.Lit $ H.String $ r] : tailed)
+           where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
                  tailed = [var "show" `H.App` (use $ hsName (cleanName r))]
     (LParam p : xs) -> urlParts res xs (rlnk ++ [var "show" `H.App` (use $ hsName (cleanName p))], pars)
     (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
