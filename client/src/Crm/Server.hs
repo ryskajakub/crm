@@ -77,6 +77,8 @@ import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
+import qualified Crm.Client.Companies      as CC
+
 import           Crm.Runtime
 import           Crm.Helpers               (File, rmap, encodeURIComponent)
 import qualified Crm.Router                as R

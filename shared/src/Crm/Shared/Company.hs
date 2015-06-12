@@ -11,16 +11,18 @@ import Rest.Info    (Info(..))
 #endif
 import Data.Text    (Text, pack)
 
-#ifndef FAY
-instance Info CompanyId where
-  describe _ = "companyId"
-#endif
-
 newtype CompanyId = CompanyId { getCompanyId :: Int }
 #ifdef FAY
   deriving (Show)
 #else
-  deriving (Generic, Typeable, Data, Show, Ord, Eq, Read)
+  deriving (Generic, Typeable, Data, Ord, Eq, Show)
+#endif
+
+#ifndef FAY
+instance Info CompanyId where
+  describe _ = "companyId"
+instance Read CompanyId where 
+  readsPrec i = fmap (\(a,b) -> (CompanyId a, b)) `fmap` readsPrec i
 #endif
 
 data OrderType = CompanyName | NextService

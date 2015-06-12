@@ -13,7 +13,7 @@ var commonSources = [
   '../../fay-moment/src/' ,
   '../../fay-googlemaps/src' ];
 var playgroundSources = commonSources.concat('playground/');
-var mainSources = commonSources.concat('src/');
+var mainSources = commonSources.concat('src/').concat('generated-api/src');
 
 var mkSourcesAsGlob = function(sources) {
   return _.map(sources, function(source) {
