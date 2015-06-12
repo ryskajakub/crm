@@ -119,7 +119,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
   functionBinding = H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]
   usedImports = responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime]
 
-  runtime = H.ModuleName "Crm.Server"
+  runtime = H.ModuleName "Crm.Runtime"
   callbackIdent = H.Ident "callback"
   funName = mkHsName ai
   fParams = map H.PVar $ lPars ++ 
