@@ -24,7 +24,7 @@ import qualified Language.Haskell.Exts.Pretty   as H
 import qualified Language.Haskell.Exts.Syntax   as H
 import Rest.Gen.Haskell (HaskellContext(..))
 
-import Rest.Api (Router, Version)
+import Rest.Api (Router)
 
 import Rest.Gen.Base
 import Rest.Gen.Types
@@ -35,7 +35,7 @@ import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
-     mapM_ (writeRes ctx) . filter (("companies" ==) . resName) $ allSubTrees tree
+     mapM_ (writeRes ctx) $ allSubTrees tree
 
 
 writeRes :: HaskellContext -> ApiResource -> IO ()
@@ -80,7 +80,7 @@ buildHaskellModule ctx node pragmas warningText =
     idImports = concat . mapMaybe (return . map (qualImport . unModuleName) . Ident.haskellModules <=< snd) . resAccessors $ node
 
     (funcs, datImp) = second (map textInternal . filter rest . nub . concat) . unzip . map (mkFunction . resName $ node) 
-      . filter onlySingle . filter noFileO $ resItems node where
+      . filter onlySingle . filter (not . isFile) $ resItems node where
       textInternal (H.ModuleName str) = H.ModuleName $ if isInfixOf "Data.Text.Internal" str
         then "Data.Text"
         else str
@@ -88,9 +88,9 @@ buildHaskellModule ctx node pragmas warningText =
       onlySingle (ApiAction _ _ actionInfo) = not $ elem actionType' blacklistActions where
         actionType' = actionType actionInfo
         blacklistActions = [DeleteMany, UpdateMany]
-      noFileO (ApiAction _ _ actionInfo) = any isFileO $ outputs actionInfo where
-        isFileO (DataDescription (DataDesc File _ _) _) = False
-        isFileO _                                       = True
+      isFile (ApiAction _ _ actionInfo) = any isFile' (outputs actionInfo) || any isFile' (inputs actionInfo) where
+        isFile' (DataDescription (DataDesc File _ _) _) = True
+        isFile' _                                       = False
     mkImport p = (namedImport importName) { H.importQualified = True,
                                             H.importAs = importAs' }
       where importName = qualModName $ namespace ctx ++ p
