@@ -1,5 +1,6 @@
 module Crm.Runtime (
   items ,
+  count1000 ,
   apiRoot ,
   withPassword ,
   passwordAjax ,
@@ -41,6 +42,9 @@ get = pack "GET"
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
+count1000 :: String
+count1000 = "?count=1000"
+
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
 
@@ -74,7 +78,7 @@ passwordAjax url callback' inputData method' onError maybePassword =
       JQ.success = Defined callback' ,
       JQ.error' = toDefined onError ,
       JQ.type' = Defined method' ,
-      JQ.url = Defined $ apiRoot <> url }
+      JQ.url = Defined $ apiRoot <> url <> pack count1000 }
     in case inputData of
       Nothing -> let
         in JQ.ajax' commonSettings

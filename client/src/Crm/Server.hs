@@ -101,9 +101,6 @@ import qualified Crm.Router                          as R
 status :: JQ.JQXHR -> Int
 status = ffi " %1['status'] "
 
-count1000 :: String
-count1000 = "?count=1000"
-
 
 -- deletions
 
@@ -253,7 +250,7 @@ fetchFrontPageData order direction router callback =
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in passwordAjax
-    (pack $ A.companies ++ count1000 ++ "&order=" ++ (case order of
+    (pack $ A.companies ++ "&order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
