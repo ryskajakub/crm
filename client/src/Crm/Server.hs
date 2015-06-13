@@ -112,12 +112,6 @@ inputAjax :: Text
 inputAjax t c i m = passwordAjax
   t c (Just i) m Nothing Nothing
 
-postAjax :: Text
-         -> b
-         -> (a -> Fay ())
-         -> Fay ()
-postAjax t d c = inputAjax t c d post
-
 putAjax :: Text
         -> b
         -> Fay ()
@@ -133,11 +127,6 @@ getManyAjax :: Text
             -> (a -> Fay ())
             -> Fay ()
 getManyAjax t c = getAjax (t <> pack count1000) (c . items)
-
-deleteAjax :: Text
-           -> Fay ()
-           -> Fay ()
-deleteAjax t c = passwordAjax t (const c) Nothing delete Nothing Nothing
 
 
 -- deletions
