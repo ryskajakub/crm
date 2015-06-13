@@ -109,12 +109,16 @@ idData node =
   case resAccessors node of
     [(_, Just i)] -> [ 
       H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ,
-      H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds] ] where 
+      H.TypeSig noLoc [H.Ident "getInt"] newtypeToString ,
+      H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds]] where
         pat = [H.PApp qName ((:[]) . H.PVar .  H.Ident $ "int")]
         rhs = H.UnGuardedRhs $ var "show" `H.App` var "int"
         qName = getQName . Ident.haskellType $ i
         getQName type' = case type' of
           H.TyCon q -> q
+        newtypeToString = newtype' `H.TyFun` string
+        newtype' = Ident.haskellType i
+        string = H.TyCon $ H.UnQual $ H.Ident "String"
     _ -> []
 
 
