@@ -32,6 +32,9 @@ import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 
 
+import Debug.Trace
+
+
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
@@ -106,20 +109,23 @@ use = H.Var . H.UnQual
 
 idData :: ApiResource -> [H.Decl]
 idData node =
-  case resAccessors node of
-    [(_, Just i)] -> [ 
-      H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ,
-      H.TypeSig noLoc [H.Ident "getInt"] newtypeToString ,
-      H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds]] where
-        pat = [H.PApp qName ((:[]) . H.PVar .  H.Ident $ "int")]
-        rhs = H.UnGuardedRhs $ var "show" `H.App` var "int"
-        qName = getQName . Ident.haskellType $ i
-        getQName type' = case type' of
-          H.TyCon q -> q
-        newtypeToString = newtype' `H.TyFun` string
-        newtype' = Ident.haskellType i
-        string = H.TyCon $ H.UnQual $ H.Ident "String"
-    _ -> []
+  go $ resAccessors node where
+  go ((_, Just i) : xs) =
+    case Ident.description i of
+      "string" -> go xs
+      _ -> go xs ++ [
+        H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ,
+        H.TypeSig noLoc [H.Ident "getInt"] newtypeToString ,
+        H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds]] where
+          pat = [H.PApp qName ((:[]) . H.PVar .  H.Ident $ "int")]
+          rhs = H.UnGuardedRhs $ var "show" `H.App` var "int"
+          qName = getQName . Ident.haskellType $ i
+          getQName type' = case type' of
+            H.TyCon q -> q
+          newtypeToString = newtype' `H.TyFun` string
+          newtype' = Ident.haskellType i
+          string = H.TyCon $ H.UnQual $ H.Ident "String"
+  go _ = []
 
 
 mkFunction :: String -> ApiAction -> ([H.Decl], [H.ModuleName])
@@ -135,7 +141,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     maybe [] ((:[]) . H.PVar . hsName . cleanName . description) (ident ai) ++ 
     (map H.PVar $ maybe [] (const [input]) mInp) ++ 
     (map H.PVar [callbackIdent])
-  (lUrl, lPars) = linkToURL res lnk
+  (lUrl, lPars) = linkToURL (ident ai) res lnk
   mInp :: Maybe InputInfo
   mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
   (isList, fType) = (isList', fTypify tyParts) where 
@@ -200,27 +206,32 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     Update -> "put"
 
 
-linkToURL :: String -> Link -> ([H.Exp], [H.Name])
-linkToURL res lnk = urlParts res lnk ([], [])
+linkToURL :: Maybe Ident -> String -> Link -> ([H.Exp], [H.Name])
+linkToURL mId' res lnk = urlParts mId' res lnk ([], [])
 
 
 var :: String -> H.Exp
 var = H.Var . H.UnQual . H.Ident
 
 
-urlParts :: String -> Link -> ([H.Exp], [H.Name]) -> ([H.Exp], [H.Name])
-urlParts res lnk ac@(rlnk, pars) =
+urlParts :: Maybe Ident -> String -> Link -> ([H.Exp], [H.Name]) -> ([H.Exp], [H.Name])
+urlParts mId' res lnk ac@(rlnk, pars) =
   case lnk of
     [] -> ac
     (LResource r : a@(LAccess _) : xs)
-      | not (hasParam a) -> urlParts res xs (rlnk ++ [H.Lit $ H.String r], pars)
-      | otherwise -> urlParts res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
+      | not (hasParam a) -> urlParts mId' res xs (rlnk ++ [H.Lit $ H.String r], pars)
+      | otherwise -> urlParts mId' res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
            where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
                  tailed = [funName `H.App` (use $ hsName (cleanName r))]
                  h = modName . cleanHsName $ r
                  funName = H.Var $ H.Qual (H.ModuleName h) (H.Ident "getInt")
-    (LParam p : xs) -> urlParts res xs (rlnk ++ [var "getInt" `H.App` (use $ hsName (cleanName p))], pars)
-    (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
+    (LParam p : xs) -> 
+      urlParts mId' res xs (rlnk ++ [(mkToString . use $ hsName (cleanName p))], pars) 
+        where
+        mkToString = case Ident.haskellType `fmap` mId' of
+          Just (H.TyCon (H.UnQual (H.Ident "String"))) -> id
+          _ -> \x -> var "getInt" `H.App` x
+    (i : xs) -> urlParts mId' res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
 
 
 tyIdent :: H.Name
