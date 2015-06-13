@@ -82,8 +82,10 @@ import qualified Crm.Client.Companies                as XC
 import qualified Crm.Client.Upkeeps                  as XU
 import qualified Crm.Client.Machines                 as XM
 import qualified Crm.Client.Photos                   as XP
+import qualified Crm.Client.PhotoMeta                as XPM
 import qualified Crm.Client.MachineTypes             as XMT
 import qualified Crm.Client.ContactPersons           as XCP
+import qualified Crm.Client.MachineKind              as XMK
 import qualified Crm.Client.Companies.Machines       as XCM
 import qualified Crm.Client.Companies.ContactPersons as XCCP
 import qualified Crm.Client.Companies.Upkeeps        as XCU
@@ -101,33 +103,6 @@ status = ffi " %1['status'] "
 
 count1000 :: String
 count1000 = "?count=1000"
-
-
--- client
-
-inputAjax :: Text
-          -> (a -> Fay ())
-          -> b
-          -> Text
-          -> Fay ()
-inputAjax t c i m = passwordAjax
-  t c (Just i) m Nothing Nothing
-
-putAjax :: Text
-        -> b
-        -> Fay ()
-        -> Fay ()
-putAjax t d c = inputAjax t (const c) d put
-
-getAjax :: Text
-        -> (a -> Fay ())
-        -> Fay ()
-getAjax t c = passwordAjax t c Nothing get Nothing Nothing
-
-getManyAjax :: Text
-            -> (a -> Fay ())
-            -> Fay ()
-getManyAjax t c = getAjax (t <> pack count1000) (c . items)
 
 
 -- deletions
@@ -228,8 +203,7 @@ fetchMachinesInCompany = XCM.list
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
                         -> Fay ()
-fetchExtraFieldSettings = getAjax
-  (pack $ A.machineKind ++ "/()")
+fetchExtraFieldSettings = XMK.byString "()"
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
@@ -397,9 +371,11 @@ updateUpkeep ((upkeepId, upkeep, upkeepMachines), maybeEmployeeId) cb =
 updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
                   -> Fay ()
                   -> Fay ()
-updateMachineType (machineTypeId, machineType, upkeepSequences) = putAjax
-  (pack $ A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId machineTypeId))
-  (machineType, upkeepSequences)
+updateMachineType (machineTypeId, machineType, upkeepSequences) cb = 
+  XMT.saveByById 
+    machineTypeId
+    (machineType, upkeepSequences)
+    (const cb)
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine
@@ -420,9 +396,8 @@ updateMachine machineId machine linkedMachineId contactPersonId machineSpecificD
 saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
                        -> Fay ()
                        -> Fay ()
-saveExtraFieldSettings data' = putAjax
-  (pack $ A.machineKind ++ "/()")
-  data'
+saveExtraFieldSettings data' cb = 
+  XMK.saveByString "()" data' (const cb)
 
 uploadPhotoData :: File
                 -> M.MachineId
@@ -441,9 +416,9 @@ uploadPhotoMeta :: PM.PhotoMeta
                 -> P.PhotoId
                 -> Fay ()
                 -> Fay ()
-uploadPhotoMeta photoMeta photoId = putAjax
-  (pack $ A.photoMeta ++ "/" ++ (show $ P.getPhotoId photoId))
-  photoMeta
+uploadPhotoMeta photoMeta photoId cb = 
+  XPM.saveByPhotoId photoId photoMeta (const cb)
+
 
 -- | just ping the server if it works
 testEmployeesPage :: Text
