@@ -107,7 +107,14 @@ use = H.Var . H.UnQual
 idData :: ApiResource -> [H.Decl]
 idData node =
   case resAccessors node of
-    [(_, Just i)] -> [ H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ]
+    [(_, Just i)] -> [ 
+      H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ,
+      H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds] ] where 
+        pat = [H.PApp qName ((:[]) . H.PVar .  H.Ident $ "int")]
+        rhs = H.UnGuardedRhs $ var "show" `H.App` var "int"
+        qName = getQName . Ident.haskellType $ i
+        getQName type' = case type' of
+          H.TyCon q -> q
     _ -> []
 
 
@@ -120,11 +127,8 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
   runtime = H.ModuleName "Crm.Runtime"
   callbackIdent = H.Ident "callback"
   funName = mkHsName ai
-  getQName type' = case type' of
-    H.TyCon q -> q
-  newtypeQName = fromMaybe undefined . fmap (getQName . Ident.haskellType) $ (ident ai)
   fParams = (map H.PVar lPars) ++ 
-    maybe [] ((:[]) . H.PApp newtypeQName . (:[]) . H.PVar . hsName . cleanName . description) (ident ai) ++ 
+    maybe [] ((:[]) . H.PVar . hsName . cleanName . description) (ident ai) ++ 
     (map H.PVar $ maybe [] (const [input]) mInp) ++ 
     (map H.PVar [callbackIdent])
   (lUrl, lPars) = linkToURL res lnk
@@ -208,8 +212,8 @@ urlParts res lnk ac@(rlnk, pars) =
       | not (hasParam a) -> urlParts res xs (rlnk ++ [H.Lit $ H.String r], pars)
       | otherwise -> urlParts res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
            where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
-                 tailed = [var "show" `H.App` (use $ hsName (cleanName r))]
-    (LParam p : xs) -> urlParts res xs (rlnk ++ [var "show" `H.App` (use $ hsName (cleanName p))], pars)
+                 tailed = [var "getInt" `H.App` (use $ hsName (cleanName r))]
+    (LParam p : xs) -> urlParts res xs (rlnk ++ [var "getInt" `H.App` (use $ hsName (cleanName p))], pars)
     (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
 
 
