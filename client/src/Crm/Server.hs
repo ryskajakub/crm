@@ -86,6 +86,7 @@ import qualified Crm.Client.ContactPersons           as XCP
 import qualified Crm.Client.Companies.Machines       as XCM
 import qualified Crm.Client.Companies.ContactPersons as XCCP
 import qualified Crm.Client.Companies.Upkeeps        as XCU
+import qualified Crm.Client.Machines.Photos          as XMP
 
 import           Crm.Runtime
 import           Crm.Helpers                         (File, rmap, encodeURIComponent)
@@ -208,38 +209,34 @@ fetchMachineType machineTypeName callback = getAjax
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
                -> Fay ()
-fetchEmployees callback = getManyAjax
-  (pack A.employees)
-  callback
+fetchEmployees = XE.list
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, Maybe E.EmployeeId, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
                  C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
-fetchUpkeep upkeepId callback = getAjax
-  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+fetchUpkeep upkeepId callback = 
+  XU.bySingle upkeepId 
   (callback . (\(a,(u,u2,u3),b) -> (a,(u,toMaybe u2,u3),b)))
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
                 Maybe E.Employee')] -> Fay ()) -- ^ callback
              -> Fay ()
-fetchUpkeeps companyId callback = getManyAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
-  (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))))
+fetchUpkeeps companyId callback = 
+  XCU.list
+    companyId
+    (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))))
   
 fetchMachinePhotos :: M.MachineId
                    -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
                    -> Fay ()
-fetchMachinePhotos machineId callback = getManyAjax
-  (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos)
-  callback
+fetchMachinePhotos = XMP.list
 
 fetchMachinesInCompany :: C.CompanyId
                        -> ([(M.MachineId, M.Machine)] -> Fay ())
                        -> Fay ()
-fetchMachinesInCompany companyId = getManyAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
+fetchMachinesInCompany = XCM.list 
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
                         -> Fay ()
@@ -252,39 +249,37 @@ fetchMachine :: M.MachineId -- ^ machine id
                 [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, 
                 MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
              -> Fay ()
-fetchMachine machineId callback = let
-  fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-  fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,l)
-  in getAjax
-    (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-    (callback . fun)
-
+fetchMachine machineId callback =  
+  XM.byMachineId 
+    machineId
+    (let
+      fun2 (a,b,c,d) = (a,b,c,toMaybe d)
+      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,l)
+      in callback . fun)
 
 fetchEmployee :: E.EmployeeId
               -> (E.Employee -> Fay ())
               -> Fay ()
-fetchEmployee employeeId = getAjax
-  (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
+fetchEmployee = XE.byEmployeeId
 
 fetchContactPerson :: CP.ContactPersonId
                    -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
                    -> Fay ()
-fetchContactPerson contactPersonId = getAjax
-  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId contactPersonId))
+fetchContactPerson = XCP.byContactPersonId
 
 fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
                     -> Fay ()
-fetchContactPersons companyId = getManyAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
+fetchContactPersons = XCCP.list
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
-fetchCompany companyId callback = getAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
-  (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
+fetchCompany companyId callback = 
+  XC.bySingle
+    companyId
+    (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
@@ -311,14 +306,13 @@ fetchFrontPageData order direction router callback =
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
                     -> Fay ()
-fetchPlannedUpkeeps = getManyAjax
-  (pack $ A.upkeep ++ "/" ++ A.planned)
+fetchPlannedUpkeeps = XU.listPlanned
 
 fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ())
                      -> Fay ()
-fetchCompaniesForMap callback = getManyAjax
-  (pack $ A.companies ++ "/" ++ A.map')
-  (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
+fetchCompaniesForMap callback = 
+  XC.listMap
+    (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
 
 
 -- creations
