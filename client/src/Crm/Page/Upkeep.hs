@@ -144,10 +144,9 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
   upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE v where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
-      Left (companyId) -> let
+      Left _ -> let
         newUpkeepHandler = createUpkeep
           (upkeepU, upkeepMachines, mE)
-          companyId
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [G.plus , text2DOM " Naplánovat"]

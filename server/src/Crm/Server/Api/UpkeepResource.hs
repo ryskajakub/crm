@@ -25,15 +25,13 @@ import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
 
 import qualified Crm.Shared.Api              as A
-import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.UpkeepMachine    as UM
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, withConnId, withConnId', readMay', 
-                                             createDeletion, ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay, maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB

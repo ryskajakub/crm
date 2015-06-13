@@ -78,6 +78,7 @@ import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
 import qualified Crm.Client.Companies      as CC
+import qualified Crm.Client.Upkeeps        as CU
 
 import           Crm.Runtime
 import           Crm.Helpers               (File, rmap, encodeURIComponent)
@@ -141,8 +142,7 @@ deleteCompany ident cb = CC.removeBySingle ident $ const cb
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
              -> Fay ()
-deleteUpkeep upkeepId = deleteAjax
-  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
+deleteUpkeep ident cb = CU.removeBySingle ident $ const cb
 
 deleteMachine :: M.MachineId
               -> Fay ()
@@ -340,11 +340,10 @@ createMachine machine companyId machineType contactPersonId linkedMachineId extr
   (const callback)
 
 createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
-             -> C.CompanyId -- ^ company id
              -> Fay ()
              -> Fay ()
-createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) companyId callback = postAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.upkeep)
+createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) callback = postAjax
+  (pack $ A.upkeep)
   (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
   (const callback)
 
