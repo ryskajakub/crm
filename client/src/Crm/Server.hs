@@ -54,38 +54,42 @@ module Crm.Server (
   testEmployeesPage ,
   status ) where
 
-import           FFI                       (ffi, Defined(Defined))
-import           Prelude                   hiding (putStrLn)
-import           Data.Text                 (Text, (<>), unpack, pack)
+import           FFI                                 (ffi, Defined(Defined))
+import           Prelude                             hiding (putStrLn)
+import           Data.Text                           (Text, (<>), unpack, pack)
 
-import qualified JQuery                    as JQ
+import qualified JQuery                              as JQ
 
-import qualified Crm.Shared.Company        as C
-import qualified Crm.Shared.ContactPerson  as CP
-import qualified Crm.Shared.Upkeep         as U
-import qualified Crm.Shared.Machine        as M
-import qualified Crm.Shared.MachineType    as MT
-import qualified Crm.Shared.MachineKind    as MK
-import qualified Crm.Shared.UpkeepMachine  as UM
-import qualified Crm.Shared.Api            as A
-import qualified Crm.Shared.Photo          as P
-import qualified Crm.Shared.PhotoMeta      as PM
-import qualified Crm.Shared.YearMonthDay   as YMD
-import qualified Crm.Shared.Employee       as E
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.Direction      as DIR
-import qualified Crm.Shared.ExtraField     as EF
+import qualified Crm.Shared.Company                  as C
+import qualified Crm.Shared.ContactPerson            as CP
+import qualified Crm.Shared.Upkeep                   as U
+import qualified Crm.Shared.Machine                  as M
+import qualified Crm.Shared.MachineType              as MT
+import qualified Crm.Shared.MachineKind              as MK
+import qualified Crm.Shared.UpkeepMachine            as UM
+import qualified Crm.Shared.Api                      as A
+import qualified Crm.Shared.Photo                    as P
+import qualified Crm.Shared.PhotoMeta                as PM
+import qualified Crm.Shared.YearMonthDay             as YMD
+import qualified Crm.Shared.Employee                 as E
+import qualified Crm.Shared.UpkeepSequence           as US
+import qualified Crm.Shared.Direction                as DIR
+import qualified Crm.Shared.ExtraField               as EF
 import           Crm.Shared.MyMaybe
 
-import qualified Crm.Client.Companies      as XC
-import qualified Crm.Client.Upkeeps        as XU
-import qualified Crm.Client.Machines       as XM
-import qualified Crm.Client.Photos         as XP
-import qualified Crm.Client.ContactPersons as XCP
+import qualified Crm.Client.Employees                as XE
+import qualified Crm.Client.Companies                as XC
+import qualified Crm.Client.Upkeeps                  as XU
+import qualified Crm.Client.Machines                 as XM
+import qualified Crm.Client.Photos                   as XP
+import qualified Crm.Client.ContactPersons           as XCP
+import qualified Crm.Client.Companies.Machines       as XCM
+import qualified Crm.Client.Companies.ContactPersons as XCCP
+import qualified Crm.Client.Companies.Upkeeps        as XCU
 
 import           Crm.Runtime
-import           Crm.Helpers               (File, rmap, encodeURIComponent)
-import qualified Crm.Router                as R
+import           Crm.Helpers                         (File, rmap, encodeURIComponent)
+import qualified Crm.Router                          as R
 
 
 -- helpers
@@ -161,6 +165,7 @@ deleteContactPerson :: CP.ContactPersonId
                     -> Fay ()
                     -> Fay ()
 deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
+
 
 -- fetching of data from server
 
@@ -322,9 +327,7 @@ createCompany :: C.Company
               -> Maybe C.Coordinates
               -> (C.CompanyId -> Fay ())
               -> Fay ()
-createCompany company coordinates = postAjax
-  (pack $ A.companies)
-  (company, toMyMaybe coordinates)
+createCompany company coordinates = XC.create (company, toMyMaybe coordinates) 
 
 createMachine :: M.Machine 
               -> C.CompanyId
@@ -334,35 +337,37 @@ createMachine :: M.Machine
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
-createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = postAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.machines)
-  (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
-  (const callback)
+createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = 
+  XCM.create 
+    companyId 
+    (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
+    (const callback)
 
 createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
              -> Fay ()
              -> Fay ()
-createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) callback = postAjax
-  (pack $ A.upkeep)
-  (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
-  (const callback)
-
+createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) callback = 
+  XU.create
+    (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+    (const callback)
+    
 createEmployee :: E.Employee
                -> Fay ()
                -> Fay ()
-createEmployee employee callback = postAjax
-  (pack $ A.employees)
-  employee
-  (const callback)
+createEmployee employee callback =
+  XE.create
+    employee
+    (const callback)
 
 createContactPerson :: C.CompanyId
                     -> CP.ContactPerson
                     -> Fay ()
                     -> Fay ()
-createContactPerson companyId contactPerson callback = postAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId) ++ "/" ++ A.contactPersons)
-  contactPerson
-  (const callback)
+createContactPerson companyId contactPerson callback = 
+  XCCP.create
+    companyId
+    contactPerson
+    (const callback)
 
 
 -- updations
