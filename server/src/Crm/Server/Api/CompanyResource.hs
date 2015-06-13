@@ -36,8 +36,8 @@ import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, readMay', withConnId, createDeletion, 
-                                             createDeletion', maybeToNullable, withConnId')
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, 
+                                             createDeletion', maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB

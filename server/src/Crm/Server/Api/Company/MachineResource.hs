@@ -31,7 +31,7 @@ import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe          (toMaybe)
 
-import           Crm.Server.Helpers          (withConnId, withConnId', ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (ymdToDay, maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB

@@ -75,8 +75,8 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
 
 machineSingle :: Handler (IdDependencies' M.MachineId)
 machineSingle = mkConstHandler' jsonO $ do
-  ((_,conn), machineId) <- ask 
-  rows <- liftIO $ runQuery conn (machineDetailQuery $ M.getMachineId machineId)
+  ((_,conn), machineId') <- ask 
+  rows <- liftIO $ runQuery conn (machineDetailQuery $ M.getMachineId machineId')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
     (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let

@@ -22,7 +22,6 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.Api              as A
 
-import           Crm.Server.Helpers          (withConnId)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB

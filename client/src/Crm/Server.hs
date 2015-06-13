@@ -56,7 +56,7 @@ module Crm.Server (
 
 import           FFI                                 (ffi, Defined(Defined))
 import           Prelude                             hiding (putStrLn)
-import           Data.Text                           (Text, (<>), unpack, pack)
+import           Data.Text                           (Text, unpack, pack)
 
 import qualified JQuery                              as JQ
 
