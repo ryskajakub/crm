@@ -20,13 +20,15 @@ import qualified Crm.Shared.MachineKind as MK
 #ifndef FAY
 instance Info MachineTypeId where
   describe _ = "machineTypeId"
+instance Read MachineTypeId where 
+  readsPrec i = fmap (\(a,b) -> (MachineTypeId a, b)) `fmap` readsPrec i
 #endif
 
 newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show, Read)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 
 type MachineType' = (MachineTypeId, MachineType)

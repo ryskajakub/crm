@@ -13,9 +13,11 @@ import Rest.Info    (Info(..))
 #ifndef FAY
 instance Info PhotoId where
   describe _ = "photoId"
+instance Read PhotoId where 
+  readsPrec i = fmap (\(a,b) -> (PhotoId a, b)) `fmap` readsPrec i
 #endif
 
 newtype PhotoId = PhotoId { getPhotoId :: Int }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show, Read)
+  deriving (Generic, Typeable, Data, Show)
 #endif

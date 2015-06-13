@@ -17,13 +17,15 @@ import Data.Text    (Text, pack)
 #ifndef FAY
 instance Info MachineId where
   describe _ = "machineId"
+instance Read MachineId where 
+  readsPrec i = fmap (\(a,b) -> (MachineId a, b)) `fmap` readsPrec i
 #endif
 
 newtype MachineId = MachineId { getMachineId :: Int }
 #ifdef FAY
   deriving (Eq)
 #else
-  deriving (Eq, Generic, Typeable, Data, Show, Read)
+  deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
 data Machine = Machine {

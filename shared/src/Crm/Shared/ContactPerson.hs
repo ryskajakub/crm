@@ -14,13 +14,15 @@ import Data.Text    (Text, pack)
 #ifndef FAY
 instance Info ContactPersonId where
   describe _ = "contactPersonId"
+instance Read ContactPersonId where 
+  readsPrec i = fmap (\(a,b) -> (ContactPersonId a, b)) `fmap` readsPrec i
 #endif
 
 newtype ContactPersonId = ContactPersonId { getContactPersonId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Generic, Typeable, Data, Show, Read)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 
 type ContactPerson' = (ContactPersonId, ContactPerson)

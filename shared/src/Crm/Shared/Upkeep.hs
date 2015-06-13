@@ -17,13 +17,15 @@ import Data.Text    (Text, pack)
 #ifndef FAY
 instance Info UpkeepId where
   describe _ = "upkeepId"
+instance Read UpkeepId where 
+  readsPrec i = fmap (\(a,b) -> (UpkeepId a, b)) `fmap` readsPrec i
 #endif
 
 newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 #ifdef FAY
   deriving Eq
 #else
-  deriving (Eq, Generic, Typeable, Data, Show, Read)
+  deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
 type Upkeep'' = (UpkeepId, Upkeep)
