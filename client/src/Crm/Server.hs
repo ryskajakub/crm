@@ -376,33 +376,41 @@ updateEmployee :: E.EmployeeId
                -> E.Employee
                -> Fay ()
                -> Fay ()
-updateEmployee employeeId employee = putAjax
-  (pack $ A.employees ++ "/" ++ (show $ E.getEmployeeId employeeId))
-  employee
+updateEmployee employeeId employee callback = 
+  XE.saveByEmployeeId
+    employeeId
+    employee
+    (const callback)
 
 updateContactPerson :: CP.ContactPersonId
                     -> CP.ContactPerson
                     -> Fay ()
                     -> Fay ()
-updateContactPerson cpId cp = putAjax
-  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId cpId))
-  cp
+updateContactPerson cpId cp callback =
+  XCP.saveByContactPersonId
+    cpId
+    cp
+    (const callback)
 
 updateCompany :: C.CompanyId
               -> C.Company
               -> Maybe C.Coordinates
               -> Fay ()
               -> Fay ()
-updateCompany companyId company coordinates = putAjax
-  (pack $ A.companies ++ "/" ++ A.single ++ "/" ++ (show $ C.getCompanyId companyId))
-  (company, toMyMaybe coordinates)
+updateCompany companyId company coordinates cb = 
+  XC.saveBySingle
+    companyId
+    (company, toMyMaybe coordinates)
+    (const cb)
 
 updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
              -> Fay ()
              -> Fay ()
-updateUpkeep ((upkeepId, upkeep, upkeepMachines),maybeEmployeeId) = putAjax
-  (pack $ A.upkeep ++ "/" ++ A.single ++ "/" ++ (show $ U.getUpkeepId upkeepId))
-  (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+updateUpkeep ((upkeepId, upkeep, upkeepMachines), maybeEmployeeId) cb = 
+  XU.saveBySingle
+    upkeepId
+    (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+    (const cb)
 
 updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
                   -> Fay ()
@@ -418,9 +426,11 @@ updateMachine :: M.MachineId -- ^ machine id
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
               -> Fay ()
-updateMachine machineId machine linkedMachineId contactPersonId machineSpecificData = putAjax
-  (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
-  (machine, toMyMaybe linkedMachineId, toMyMaybe contactPersonId, machineSpecificData)
+updateMachine machineId machine linkedMachineId contactPersonId machineSpecificData cb = 
+  XM.saveByMachineId
+    machineId
+    (machine, toMyMaybe linkedMachineId, toMyMaybe contactPersonId, machineSpecificData)
+    (const cb)
 
 
 -- others
