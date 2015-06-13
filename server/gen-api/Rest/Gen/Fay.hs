@@ -212,7 +212,9 @@ urlParts res lnk ac@(rlnk, pars) =
       | not (hasParam a) -> urlParts res xs (rlnk ++ [H.Lit $ H.String r], pars)
       | otherwise -> urlParts res xs (rlnk', pars ++ [H.Ident . cleanHsName $ r])
            where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
-                 tailed = [var "getInt" `H.App` (use $ hsName (cleanName r))]
+                 tailed = [funName `H.App` (use $ hsName (cleanName r))]
+                 h = modName . cleanHsName $ r
+                 funName = H.Var $ H.Qual (H.ModuleName h) (H.Ident "getInt")
     (LParam p : xs) -> urlParts res xs (rlnk ++ [var "getInt" `H.App` (use $ hsName (cleanName p))], pars)
     (i : xs) -> urlParts res xs (rlnk ++ [H.Lit $ H.String $ itemString i], pars)
 
