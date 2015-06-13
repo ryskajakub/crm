@@ -174,28 +174,26 @@ fetchMachineTypesManufacturer text =
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesAutocomplete text = getManyAjax
-  (pack $ A.machineTypes ++ "/" ++ A.autocomplete ++ "/" ++ unpack 
-    (encodeURIComponent . encodeURIComponent $ text))
+fetchMachineTypesAutocomplete text = 
+  XMT.listByAutocomplete 
+    (unpack . encodeURIComponent . encodeURIComponent $ text)
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
-fetchMachineTypes = getManyAjax
-  (pack $ A.machineTypes)
+fetchMachineTypes = XMT.list
 
 fetchMachineTypeById :: MT.MachineTypeId
                      -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ())
                      -> Fay ()
-fetchMachineTypeById mtId callback = getAjax
-  (pack $ A.machineTypes ++ "/" ++ A.byId ++ "/" ++ (show $ MT.getMachineTypeId mtId))
-  (callback . toMaybe)
+fetchMachineTypeById mtId callback = 
+  XMT.byById mtId (callback . toMaybe)
 
 fetchMachineType :: Text -- ^ machine type exact match
                  -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
                  -> Fay ()
-fetchMachineType machineTypeName callback = getAjax
-  (pack $ A.machineTypes ++ "/" ++ A.byName ++ "/" ++ unpack (
-    encodeURIComponent . encodeURIComponent $ machineTypeName))
-  (callback . toMaybe)
+fetchMachineType machineTypeName callback = 
+  XMT.byByName 
+    (unpack . encodeURIComponent . encodeURIComponent $ machineTypeName)
+    (callback . toMaybe)
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
                -> Fay ()
