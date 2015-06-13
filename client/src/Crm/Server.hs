@@ -77,8 +77,11 @@ import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ExtraField     as EF
 import           Crm.Shared.MyMaybe
 
-import qualified Crm.Client.Companies      as CC
-import qualified Crm.Client.Upkeeps        as CU
+import qualified Crm.Client.Companies      as XC
+import qualified Crm.Client.Upkeeps        as XU
+import qualified Crm.Client.Machines       as XM
+import qualified Crm.Client.Photos         as XP
+import qualified Crm.Client.ContactPersons as XCP
 
 import           Crm.Runtime
 import           Crm.Helpers               (File, rmap, encodeURIComponent)
@@ -137,30 +140,27 @@ deleteAjax t c = passwordAjax t (const c) Nothing delete Nothing Nothing
 deleteCompany :: C.CompanyId
               -> Fay ()
               -> Fay ()
-deleteCompany ident cb = CC.removeBySingle ident $ const cb
+deleteCompany ident cb = XC.removeBySingle ident $ const cb
 
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
              -> Fay ()
-deleteUpkeep ident cb = CU.removeBySingle ident $ const cb
+deleteUpkeep ident cb = XU.removeBySingle ident $ const cb
 
 deleteMachine :: M.MachineId
               -> Fay ()
               -> Fay ()
-deleteMachine machineId = deleteAjax
-  (pack $ A.machines ++ "/" ++ (show $ M.getMachineId machineId))
+deleteMachine ident cb = XM.removeByMachineId ident $ const cb
 
 deletePhoto :: P.PhotoId
             -> Fay ()
             -> Fay ()
-deletePhoto pId = deleteAjax
-  (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId pId))
+deletePhoto ident cb = XP.removeByPhotoId ident $ const cb
 
 deleteContactPerson :: CP.ContactPersonId
                     -> Fay ()
                     -> Fay ()
-deleteContactPerson cpId = deleteAjax
-  (pack $ A.contactPersons ++ "/" ++ (show $ CP.getContactPersonId cpId))
+deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 
 -- fetching of data from server
 
