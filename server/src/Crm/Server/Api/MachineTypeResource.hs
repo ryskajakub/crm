@@ -51,14 +51,14 @@ machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing' jsonO (const $ 
   ask >>= \(_,conn) -> liftIO $ runMachineTypesQuery' (decode mid) conn)
 machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO (const $
-  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [String]))
-machineTypesListing CountListing = mkListing' jsonO (const $ do
+  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [Text]))
+machineTypesListing CountListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
     mapRow :: ((Int,Int,Text,Text),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
     mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
     mappedRows = map mapRow rows
-  return mappedRows )
+  return mappedRows
 
 updateMachineType :: Handler MachineTypeDependencies
 updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) ->
@@ -81,13 +81,15 @@ decode :: String -> String
 decode = urlDecode
 
 machineTypesSingle :: Handler MachineTypeDependencies
-machineTypesSingle = mkConstHandler' jsonO (do
+machineTypesSingle = mkConstHandler' jsonO $ do
   ((_,conn), machineTypeSid) <- ask
   let 
     performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
-      MachineTypeById(MT.MachineTypeId machineTypeIdInt) -> (throwError NotFound, performQuery $ Right machineTypeIdInt)
-      MachineTypeByName(mtName) -> (return MyNothing, performQuery $ Left $ decode mtName)
+      MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> 
+        (throwError NotFound, performQuery $ Right machineTypeIdInt)
+      MachineTypeByName (mtName) -> 
+        (return MyNothing, performQuery $ Left $ decode mtName)
   rows <- result
   case rows of
     x:xs | null xs -> do 
@@ -96,7 +98,7 @@ machineTypesSingle = mkConstHandler' jsonO (do
       let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
       return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
     [] -> onEmptyResult
-    _ -> throwError NotFound)
+    _ -> throwError NotFound
 
 autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [

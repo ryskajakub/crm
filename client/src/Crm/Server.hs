@@ -82,6 +82,7 @@ import qualified Crm.Client.Companies                as XC
 import qualified Crm.Client.Upkeeps                  as XU
 import qualified Crm.Client.Machines                 as XM
 import qualified Crm.Client.Photos                   as XP
+import qualified Crm.Client.MachineTypes             as XMT
 import qualified Crm.Client.ContactPersons           as XCP
 import qualified Crm.Client.Companies.Machines       as XCM
 import qualified Crm.Client.Companies.ContactPersons as XCCP
@@ -166,10 +167,10 @@ fetchPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
-fetchMachineTypesManufacturer text = getManyAjax
-  (pack $ A.machineTypes ++ "/" ++ A.autocompleteManufacturer ++ "/" ++ unpack 
-    (encodeURIComponent . encodeURIComponent $ text))
-
+fetchMachineTypesManufacturer text = 
+  XMT.listByAutocompleteManufacturer
+    (unpack . encodeURIComponent . encodeURIComponent $ text)
+  
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
