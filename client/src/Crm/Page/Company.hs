@@ -32,6 +32,7 @@ import           Crm.Component.Form               as F
 import           Crm.Server                       (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router                       as R
 import           Crm.Helpers
+import           Crm.Page.ContactPerson           (contactPersonsList)
 
 
 companiesList :: R.CrmRouter
@@ -175,23 +176,27 @@ companyDetail editing' router var (companyId, company') machines' = let
   machineBoxItemsHtml :: [DOMElement]
   machineBoxItemsHtml = map B.row machineBoxItems'
 
+  contactPersons = []
+  contactPersonsHtml = contactPersonsList router contactPersons
+
   in section $ (
-    (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma")) :
-    companyFormSection) ++ [
-      B.grid [
-        (B.row $ B.col (B.mkColProps 12) $ BN.nav [
-          R.link "Historie servisů" (R.maintenances companyId) router ,
-          form' (class' "navbar-form") $
-            BTN.button' (BTN.buttonProps {
-              BTN.disabled = Defined $ if null machines' then True else False ,
-              BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
-              [G.plus, text2DOM "Naplánovat servis" ] ,
-          form' (class' "navbar-form") $
-            BTN.button' (BTN.buttonProps {
-              BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
-              [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
-          R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
-          R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) : machineBoxItemsHtml ]]
+    (B.grid $ B.row $ B.col (B.mkColProps 12) $ 
+      h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma")) :
+    companyFormSection) ++ [ B.grid [
+      (B.row $ B.col (B.mkColProps 12) $ BN.nav [
+        R.link "Historie servisů" (R.maintenances companyId) router ,
+        form' (class' "navbar-form") $
+          BTN.button' (BTN.buttonProps {
+            BTN.disabled = Defined $ if null machines' then True else False ,
+            BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
+            [G.plus, text2DOM "Naplánovat servis" ] ,
+        form' (class' "navbar-form") $
+          BTN.button' (BTN.buttonProps {
+            BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
+            [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
+        R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
+        R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
+          : contactPersonsHtml ++ machineBoxItemsHtml ]]
 
 companyForm :: InputState -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
