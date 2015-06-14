@@ -92,7 +92,7 @@ import qualified Crm.Client.Companies.Upkeeps        as XCU
 import qualified Crm.Client.Machines.Photos          as XMP
 
 import           Crm.Runtime
-import           Crm.Helpers                         (File, rmap, encodeURIComponent)
+import           Crm.Helpers                         (File, encodeURIComponent)
 import qualified Crm.Router                          as R
 
 
@@ -232,13 +232,14 @@ fetchContactPersons :: C.CompanyId
 fetchContactPersons = XCCP.list
 
 fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+             -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                 MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
              -> Fay ()
 fetchCompany companyId callback = 
   XC.bySingle
     companyId
-    (callback . (rmap (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h)))))
+    (callback . (\(a0, a1, a2) -> 
+      (a0, a1, (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h))) a2)))
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction

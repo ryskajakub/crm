@@ -3,6 +3,7 @@
 
 module Crm.Page.ContactPerson (
   contactPersonsList ,
+  contactPersonsList' ,
   contactPersonForm ) where
 
 import           Data.Text                     (fromString, length)
@@ -24,11 +25,11 @@ import qualified Crm.Data.Data                 as D
 import qualified Crm.Router                    as R
 
 
-contactPersonsList :: R.CrmRouter
-                   -> [(CP.ContactPersonId, CP.ContactPerson)]
-                   -> DOMElement
-contactPersonsList router contactPersons = mkTable where
-  mkTable = B.grid $ B.row [
+contactPersonsList' :: R.CrmRouter
+                    -> [(CP.ContactPersonId, CP.ContactPerson)]
+                    -> DOMElement
+contactPersonsList' router contactPersons = mkTable where
+  mkTable = B.row [
     B.col (B.mkColProps 12) $ h2 "Kontakní osoby" ,
     B.col (B.mkColProps 12) $ B.table [head', body]] where
       head' = thead $ tr [
@@ -41,6 +42,12 @@ contactPersonsList router contactPersons = mkTable where
     td $ CP.phone contactPerson ,
     td $ CP.position contactPerson ]
 
+
+contactPersonsList :: R.CrmRouter
+                   -> [(CP.ContactPersonId, CP.ContactPerson)]
+                   -> DOMElement
+contactPersonsList p1 p2 = B.grid $
+  contactPersonsList' p1 p2
 
 contactPersonForm :: R.CrmRouter 
                   -> CP.ContactPerson

@@ -32,7 +32,7 @@ import           Crm.Component.Form               as F
 import           Crm.Server                       (createCompany, updateCompany, deleteCompany)
 import qualified Crm.Router                       as R
 import           Crm.Helpers
-import           Crm.Page.ContactPerson           (contactPersonsList)
+import           Crm.Page.ContactPerson           (contactPersonsList')
 
 
 companiesList :: R.CrmRouter
@@ -114,11 +114,13 @@ companyNew router var company' = let
 companyDetail :: InputState -- ^ is the page editing mode
               -> R.CrmRouter -- ^ common read data
               -> Var D.AppState -- ^ app state var, where the editing result can be set
+              -> [CP.ContactPerson']
               -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] 
+              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+                   MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] 
                  -- ^ machines of the company
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing' router var (companyId, company') machines' = let
+companyDetail editing' router var contactPersons (companyId, company') machines' = let
 
   saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
     updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
@@ -126,7 +128,7 @@ companyDetail editing' router var (companyId, company') machines' = let
 
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
-      cd @ (D.CompanyDetail _ _ _ _) -> cd { D.company = modifiedCompany }
+      cd @ (D.CompanyDetail {}) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
 
   machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) = let 
@@ -173,11 +175,11 @@ companyDetail editing' router var (companyId, company') machines' = let
         appendedToLast = last acc ++ [e]
         in unmodifiedList ++ [appendedToLast]
     ) [] (zipWithIndex machineBoxItems)
+
   machineBoxItemsHtml :: [DOMElement]
   machineBoxItemsHtml = map B.row machineBoxItems'
 
-  contactPersons = []
-  contactPersonsHtml = contactPersonsList router contactPersons
+  contactPersonsHtml = contactPersonsList' router contactPersons
 
   in section $ (
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ 
@@ -196,7 +198,7 @@ companyDetail editing' router var (companyId, company') machines' = let
             [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
         R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
         R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
-          : contactPersonsHtml ++ machineBoxItemsHtml ]]
+          : contactPersonsHtml : machineBoxItemsHtml ]]
 
 companyForm :: InputState -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set
@@ -211,7 +213,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
     editButtonHandler _ = modify var (\appState ->
       appState {
         D.navigation = case D.navigation appState of
-          cd @ (D.CompanyDetail _ _ _ _) -> cd { D.editing = Editing }
+          cd @ (D.CompanyDetail {}) -> cd { D.editing = Editing }
           _ -> D.navigation appState })
     editButtonProps = BTN.buttonProps {BTN.onClick = Defined editButtonHandler}
     in BTN.button' editButtonProps editButtonBody

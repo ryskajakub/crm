@@ -44,13 +44,13 @@ startRouter appVar = startedRouter where
   startedRouter = fmap CrmRouter $ BR.startRouter $ otherRoutes ++ appliedRoutes
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany' :: C.CompanyId
-               -> ((C.Company, [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
+               -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
                   MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
                -> Fay ()
   withCompany' companyId newStateFun = 
-    fetchCompany companyId (\data' -> let
+    fetchCompany companyId $ \data' -> let
       newState = newStateFun data'
-      in modify' newState )
+      in modify' newState
   (nowYear, nowMonth, nowDay) = day $ now requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
@@ -87,10 +87,11 @@ startRouter appVar = startedRouter where
         Left _ -> modify appVar $ \appState -> appState {
           D.navigation = D.CompanyNew C.newCompany }
         Right companyId ->
-          fetchCompany companyId $ \(company,machines) -> let
+          fetchCompany companyId $ \(company, contactPersons, machines) -> let
             ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
             in modify appVar $ \appState -> appState {
-              D.navigation = D.CompanyDetail companyId company Display (ignoreLinkage machines)} ,
+              D.navigation = D.CompanyDetail 
+                companyId company contactPersons Display (ignoreLinkage machines)} ,
     useHandler newMachinePhase1' $ \companyId ->
       withCompany'
         companyId
@@ -103,7 +104,7 @@ startRouter appVar = startedRouter where
     useHandler machinesSchema' $ \companyId -> 
       withCompany'
         companyId $
-        \(_, machines) -> let
+        \(_, _, machines) -> let
           pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
           in D.MachinesSchema $ pickMachines machines ,
     useHandler newMachinePhase2' $ \companyId -> do
@@ -128,7 +129,7 @@ startRouter appVar = startedRouter where
       fetchEmployees $ \employees -> 
         withCompany'
           companyId $
-          \(_, machines') -> let
+          \(_, _, machines') -> let
             machines = map (\(a,b,c,d,e,_,_,_) -> (a,b,c,d,e)) machines'
             notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines

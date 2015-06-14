@@ -52,8 +52,8 @@ main' = do
       D.FrontPage ordering data' -> n $ emptyCallback 
         (companiesList router (fst ordering) (snd ordering) data')
       D.NotFound -> n $ emptyCallback $ notFound
-      D.CompanyDetail companyId' company' editing' machines' -> n $
-        emptyCallback (companyDetail editing' router appVar' (companyId', company') machines')
+      D.CompanyDetail companyId' company' contactPersons editing' machines' -> n $
+        emptyCallback (companyDetail editing' router appVar' contactPersons (companyId', company') machines')
       D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')
       D.MachineScreen (MD.MachineData machine machineSpecific machineTypeTuple operationStartCalendar 
           companyPersonId companyPersons v otherMachineId otherMachines extraFields machinePageMode) ->
