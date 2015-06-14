@@ -111,8 +111,13 @@ singleCompany = mkConstHandler' jsonO $ do
   companyRow <- singleRowOrColumn rows
   machines <- liftIO $ runMachinesInCompanyQuery theId connection
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  nextServiceDates <- liftIO $ forM machinesMyMaybe $ \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
-  return (sel2 $ (convert companyRow :: CompanyMapped), machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates)
+  nextServiceDates <- liftIO $ forM machinesMyMaybe $ 
+    \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
+  cpRows <- liftIO $ runQuery connection $ contactPersonsByIdQuery theId
+  return (
+    sel2 $ (convert companyRow :: CompanyMapped) ,
+    map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,
+    machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates )
 
 updateCompany :: Handler (IdDependencies' C.CompanyId)
 updateCompany = let
