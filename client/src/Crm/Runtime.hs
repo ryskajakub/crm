@@ -11,7 +11,7 @@ module Crm.Runtime (
 
 import           FFI                       (ffi, Automatic, Defined(Defined))
 import           Prelude                   hiding (putStrLn)
-import           Data.Text                 (Text, (<>), pack)
+import           Data.Text                 (Text, (<>), pack, unpack)
 import           Data.LocalStorage
 import           Data.Defined              (fromDefined, toDefined)
 
@@ -42,8 +42,11 @@ get = pack "GET"
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
+count1000' :: String
+count1000' = "count1000"
+
 count1000 :: String
-count1000 = "?count=1000"
+count1000 = "?" ++ count1000'
 
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
@@ -78,7 +81,9 @@ passwordAjax url callback' inputData method' onError maybePassword =
       JQ.success = Defined callback' ,
       JQ.error' = toDefined onError ,
       JQ.type' = Defined method' ,
-      JQ.url = Defined $ apiRoot <> url <> pack count1000 }
+      JQ.url = Defined $ apiRoot <> url <> if elem '&' (unpack url) 
+        then pack $ "&" ++ count1000' 
+        else pack $ "?" ++ count1000' }
     in case inputData of
       Nothing -> let
         in JQ.ajax' commonSettings
