@@ -32,9 +32,6 @@ import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 
 
-import Debug.Trace
-
-
 mkFayApi :: HaskellContext -> Router m s -> IO ()
 mkFayApi ctx r =
   do let tree = sortTree . (if includePrivate ctx then id else noPrivate) . apiSubtrees $ r
@@ -110,14 +107,20 @@ use = H.Var . H.UnQual
 idData :: ApiResource -> [H.Decl]
 idData node =
   go $ resAccessors node where
-  go ((_, Just i) : xs) =
+  go ((r@(pathName, Just i) : xs)) =
     case Ident.description i of
       "string" -> go xs
       _ -> go xs ++ [
         H.TypeDecl noLoc tyIdent [] (Ident.haskellType i) ,
+        H.TypeSig noLoc [H.Ident "getInt'"] newtypeToString ,
+        H.FunBind [H.Match noLoc (H.Ident "getInt'") pat Nothing rhs' noBinds] ,
         H.TypeSig noLoc [H.Ident "getInt"] newtypeToString ,
         H.FunBind [H.Match noLoc (H.Ident "getInt") pat Nothing rhs noBinds]] where
           pat = [H.PApp qName ((:[]) . H.PVar .  H.Ident $ "int")]
+          rhs' = H.UnGuardedRhs $ H.InfixApp
+            (H.Lit . H.String $ pathName ++ "/")
+            (H.QVarOp . H.UnQual . H.Symbol $ "++")
+            (var "show" `H.App` var "int")
           rhs = H.UnGuardedRhs $ var "show" `H.App` var "int"
           qName = getQName . Ident.haskellType $ i
           getQName type' = case type' of
@@ -224,7 +227,7 @@ urlParts mId' res lnk ac@(rlnk, pars) =
            where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
                  tailed = [funName `H.App` (use $ hsName (cleanName r))]
                  h = modName . cleanHsName $ r
-                 funName = H.Var $ H.Qual (H.ModuleName h) (H.Ident "getInt")
+                 funName = H.Var $ H.Qual (H.ModuleName h) (H.Ident "getInt'")
     (LParam p : xs) -> 
       urlParts mId' res xs (rlnk ++ [(mkToString . use $ hsName (cleanName p))], pars) 
         where
