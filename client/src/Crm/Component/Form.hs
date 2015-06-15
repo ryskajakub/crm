@@ -1,6 +1,7 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE MultiWayIf #-}
 
 module Crm.Component.Form (
   InputState (..) ,
@@ -29,11 +30,14 @@ module Crm.Component.Form (
   inputRow ,
   textareaRow ,
   dropdownRow ,
-  nullDropdownRow ) where
+  nullDropdownRow ,
+  multipleInputs ) where
 
 import           Prelude                               as P hiding (span, div, elem) 
 import           Data.Text                             (fromString, Text, (<>), showInt)
 import           FFI                                   (Defined(Defined, Undefined))
+
+import           Crm.Helpers                           (zipWithIndex)
 
 import           HaskellReact                          hiding (row, label)
 import qualified HaskellReact.Bootstrap.Button         as BTN
@@ -122,13 +126,12 @@ textInput mkInput editing' displayPlain displayValue onChange' = let
     then text2DOM $ joinEither displayValue
     else mkInput inputNormalAttrs inputAttrs
 
-dropdown :: Text -- label for the row
-         -> [(a, b)] -- key value list
+dropdown :: [(a, b)] -- key value list
          -> (b -> Text) -- format the b value for the user to see
          -> b -- the displayed element in the closed dropdown
          -> (a -> Fay ()) -- selection handler
          -> DOMElement
-dropdown rowLabel elements display currentElement setId = element where
+dropdown elements display currentElement setId = element where
   element = BD.buttonDropdown buttonLabel elementsToBeSelected
   selectLink theId label = let
     selectAction = setId theId
@@ -136,14 +139,13 @@ dropdown rowLabel elements display currentElement setId = element where
   elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
   buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
 
-nullDropdown :: Text 
-             -> [(a, b)]
+nullDropdown :: [(a, b)]
              -> (b -> Text)
              -> Maybe b
              -> (Maybe a -> Fay ())
              -> DOMElement
-nullDropdown rowLabel elements display currentElement setId = 
-  dropdown rowLabel elements' display' currentElement setId where
+nullDropdown elements display currentElement setId = 
+  dropdown elements' display' currentElement setId where
     elements' = let
       notNullElements = map (\(a,b) -> (Just a, Just b)) elements
       nullElement = (Nothing, Nothing)
@@ -274,10 +276,9 @@ multipleInputs :: forall a b.
                -> (a -> b -> a)
                -> ([a] -> Fay ())
                -> (b -> (b -> Fay ()) -> DOMElement) -- | the inputlike element
-               -> [(Int, FieldPosition, a)] 
+               -> [a] 
                -> [DOMElement]
-multipleInputs fieldLabel' get set setList inputControl elems = map displayRow elems where
-  mkJustElems = map $ \(_, _, elem) -> elem
+multipleInputs fieldLabel' get set setList inputControl elems = map (displayRow . assignPosition) (zipWithIndex elems) where
   displayRow (index, positionInOrdering, a) = mkRow where
     mkRow = mkRowMarkup [
       orderingControls ,
@@ -288,7 +289,7 @@ multipleInputs fieldLabel' get set setList inputControl elems = map displayRow e
     orderingControls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow where
       changeOrder :: Bool -> [a]
       changeOrder down = let
-        (start, (y:x:rest)) = splitAt (if down then index else index - 1) . mkJustElems $ elems
+        (start, (y:x:rest)) = splitAt (if down then index else index - 1) elems
         in start ++ (x:y:rest)
       downArrowLink = A.a''' (click . setList $ changeOrder True) G.arrowDown
       downArrow = case positionInOrdering of
@@ -302,7 +303,7 @@ multipleInputs fieldLabel' get set setList inputControl elems = map displayRow e
         _ -> []
     fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
     setFieldValue a = let
-      (start, field : rest) = splitAt index . mkJustElems $ elems
+      (start, field : rest) = splitAt index elems
       modifiedX = set field a
       in setList $ start ++ [modifiedX] ++ rest
     input' = inputControl (get a) (setFieldValue)
@@ -310,10 +311,18 @@ multipleInputs fieldLabel' get set setList inputControl elems = map displayRow e
       removeField = let
         (start, _:rest) = splitAt index elems
         newFields = start ++ rest
-        in setList . mkJustElems $ newFields
+        in setList newFields
       props = BTN.buttonProps {
         BTN.bsStyle = Defined "danger" ,
         BTN.onClick = Defined $ const removeField }
       buttonLabel = "Odeber"
       button = BTN.button' props buttonLabel
       in B.col (B.mkColProps 2) button
+
+  assignPosition (i, field) = if 
+    | i == 0 && i == lastIndex -> (i, Single, field)
+    | i == lastIndex -> (i, Last, field)
+    | i == 0 -> (i, First, field)
+    | True -> (i, Middle, field)
+    where
+    lastIndex = length elems - 1

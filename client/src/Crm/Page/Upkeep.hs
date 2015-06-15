@@ -309,13 +309,17 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   dateRow = oneElementRow "Datum" datePicker
 
   nowRows = [(1, "Pepa"), (2, "Karel")] :: [(Int, Text)]
-  mkInput element = nullDropdown
-    "Servisman"
-    nowRows
-    Prelude.id
-    (Just "Franta")
-    (const . return $ ())
-  employeeSelectRows = map mkInput nowRows
+  employeeSelectRows = 
+    multipleInputs "Servisman" get set setList inputControl elems where
+      get = Prelude.id
+      set = const . Prelude.id
+      setList = const . return $ ()
+      inputControl element setElement = nullDropdown
+        nowRows
+        Prelude.id
+        (Just "Franta")
+        (const . return $ ())
+      elems = [1, 2] :: [Int]
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
@@ -340,4 +344,3 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   mkGrid columns anotherGrid = div $ (form' (class' "form-horizontal") $ B.grid columns) : anotherGrid : []
 
   in mkGrid upkeepFormRows validationGrid
-
