@@ -353,7 +353,7 @@ type MachineTypeMapped = (MT.MachineTypeId, MT.MachineType)
 type ContactPersonMapped = (CP.ContactPersonId, C.CompanyId, CP.ContactPerson)
 type MaybeContactPersonMapped = (Maybe CP.ContactPersonId, Maybe C.CompanyId, Maybe CP.ContactPerson)
 type MaybeEmployeeMapped = (Maybe E.EmployeeId, Maybe E.Employee)
-type UpkeepMapped = (U.UpkeepId, Maybe E.EmployeeId, U.Upkeep)
+type UpkeepMapped = (U.UpkeepId, U.Upkeep)
 type EmployeeMapped = (E.EmployeeId, E.Employee)
 type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
@@ -386,10 +386,10 @@ instance ColumnToRecord (Maybe Int, Maybe Int, Maybe Text, Maybe Text, Maybe Tex
     in (CP.ContactPersonId `fmap` $(proj 5 0) tuple, C.CompanyId `fmap` $(proj 5 1) tuple, maybeCp)
 instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
   convert tuple = (E.EmployeeId `fmap` sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
-instance ColumnToRecord (Int, Day, Bool, Maybe Int, Text, Text, Text) UpkeepMapped where
+instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) UpkeepMapped where
   convert tuple = let
-    (_,a,b,_,c,d,e) = tuple
-    in (U.UpkeepId $ $(proj 7 0) tuple, E.EmployeeId `fmap` $(proj 7 3) tuple, U.Upkeep (dayToYmd a) b c d e)
+    (_,a,b,c,d,e) = tuple
+    in (U.UpkeepId $ $(proj 6 0) tuple, U.Upkeep (dayToYmd a) b c d e)
 instance ColumnToRecord (Int, Text, Text, Text) EmployeeMapped where
   convert tuple = (E.EmployeeId $ $(proj 4 0) tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
@@ -407,19 +407,18 @@ instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
 -- todo rather do two queries
-mapUpkeeps :: [((Int, Day, Bool, Maybe Int, Text, Text, Text), (Int, Text, Int, Int, Bool))] 
-           -> [(U.UpkeepId, U.Upkeep, Maybe E.EmployeeId, [(UM.UpkeepMachine, M.MachineId)])]
+mapUpkeeps :: [((Int, Day, Bool, Text, Text, Text), (Int, Text, Int, Int, Bool))] 
+           -> [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
     upkeepToAdd = convert upkeepCols :: UpkeepMapped
     upkeepMachineToAdd' = convert upkeepMachineCols :: UpkeepMachineMapped
     upkeepMachineToAdd = (sel3 upkeepMachineToAdd', sel2 upkeepMachineToAdd')
-    addUpkeep' = (sel1 upkeepToAdd, sel3 upkeepToAdd, sel2 upkeepToAdd, [upkeepMachineToAdd])
+    addUpkeep' = ($(proj 2 0) upkeepToAdd, $(proj 2 1) upkeepToAdd, [upkeepMachineToAdd])
     in case acc of
       [] -> [addUpkeep']
-      row : rest | sel1 row == sel1 upkeepToAdd -> let
-        modifiedUpkeepMachines = upkeepMachineToAdd : sel4 row
-        in upd4 modifiedUpkeepMachines row : rest
+      row : rest | sel1 row == sel1 upkeepToAdd -> 
+        $(updateAtN 3 2) (\ums -> upkeepMachineToAdd : ums) row : rest
       _ -> addUpkeep' : acc
   ) [] rows
 
@@ -700,7 +699,7 @@ runExpandedMachinesQuery' machineId connection =
   runQuery connection (expandedMachinesQuery machineId)
 
 runCompanyUpkeepsQuery :: Int -> Connection -> 
-  IO[(Int, Day, Bool, Text, Text, Text)]
+  IO [(Int, Day, Bool, Text, Text, Text)]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
 
