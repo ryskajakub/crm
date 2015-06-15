@@ -8,6 +8,7 @@ module Crm.Page.Upkeep (
 
 import           Data.Text                        (fromString, Text, showInt, (<>))
 import           Prelude                          hiding (div, span, id)
+import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
 import           FFI (Defined(Defined))
 
@@ -181,7 +182,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     [companyNameHeader] ++
     [formHeader] ++
     map upkeepMachineRow machines ++ 
-    [dateRow, employeeSelectRow] ++ 
+    [dateRow] ++ 
+    employeeSelectRows ++
     closeUpkeepRows ++ 
     [submitButtonRow]
 
@@ -306,8 +308,14 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   dateRow = oneElementRow "Datum" datePicker
 
-  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name Nothing
-    $ \eId -> return ()
+  nowRows = [(1, "Pepa"), (2, "Karel")] :: [(Int, Text)]
+  mkInput element = nullDropdown
+    "Servisman"
+    nowRows
+    Prelude.id
+    (Just "Franta")
+    (const . return $ ())
+  employeeSelectRows = map mkInput nowRows
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
