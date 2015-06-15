@@ -148,7 +148,7 @@ fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> Fay ()
 fetchMachineTypesAutocomplete text = 
   XMT.listByAutocomplete 
-    (unpack . encodeURIComponent . encodeURIComponent $ text)
+    (unpack . encodeURIComponent $ text)
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
 fetchMachineTypes = XMT.list

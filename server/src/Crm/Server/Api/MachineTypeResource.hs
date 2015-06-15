@@ -49,9 +49,9 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing' jsonO (const $ 
-  ask >>= \(_,conn) -> liftIO $ runMachineTypesQuery' (decode mid) conn)
+  ask >>= \(_,conn) -> liftIO $ runMachineTypesQuery' mid conn)
 machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO (const $
-  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery (decode mid))) :: IO [Text]))
+  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [Text]))
 machineTypesListing CountListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn machineTypesWithCountQuery 
   let 
@@ -77,9 +77,6 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSeque
             pgStrictText label, pgInt4 repetition, pgInt4 machineTypeIdInt, pgBool oneTime)
       recomputeWhole connection cache
 
-decode :: String -> String
-decode = urlDecode
-
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler' jsonO $ do
   ((_,conn), machineTypeSid) <- ask
@@ -89,7 +86,7 @@ machineTypesSingle = mkConstHandler' jsonO $ do
       MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> 
         (throwError NotFound, performQuery $ Right machineTypeIdInt)
       MachineTypeByName (mtName) -> 
-        (return MyNothing, performQuery $ Left $ decode mtName)
+        (return MyNothing, performQuery . Left $ mtName)
   rows <- result
   case rows of
     x:xs | null xs -> do 

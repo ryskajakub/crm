@@ -82,6 +82,7 @@ Library
     , warp >= 2.1 && < 3.1
 
     , containers
+    , profunctors
     , HTTP
     , base64-string
     , opaleye >= 0.3.1.1
