@@ -39,6 +39,7 @@ plannedUpkeeps :: R.CrmRouter
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
     th "Název firmy" ,
+    th "Město" ,
     th "Datum" ,
     th "Přeplánovat" ,
     th "Uzavřít" ]
@@ -48,6 +49,7 @@ plannedUpkeeps router upkeepCompanies = let
         (C.companyName company)
         (R.companyDetail companyId)
         router ,
+      td $ C.companyAddress company ,
       td $ displayDate $ U.upkeepDate upkeep ,
       td $ R.link
         "Přeplánovat"
