@@ -26,6 +26,7 @@ module Crm.Server.DB (
   extraFieldSettingsTable ,
   extraFieldsTable ,
   passwordTable ,
+  upkeepEmployeesTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -194,6 +195,8 @@ type ExtraFieldsTable = (DBInt, DBInt, DBText)
 
 type PasswordTable = (Column PGBytea)
 
+type UpkeepEmployeesTable = (DBInt, DBInt)
+
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )
 
@@ -291,6 +294,11 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "repetition" ,
   required "machine_type_id" ,
   required "one_time" )
+
+upkeepEmployeesTable :: Table UpkeepEmployeesTable UpkeepEmployeesTable
+upkeepEmployeesTable = Table "upkeep_employees" $ p2 (
+  required "upkeep_id" ,
+  required "employee_id" )
 
 extraFieldsQuery :: Query ExtraFieldsTable
 extraFieldsQuery = queryTable extraFieldsTable
