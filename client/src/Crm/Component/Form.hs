@@ -1,5 +1,6 @@
 {-# LANGUAGE RebindableSyntax #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Component.Form (
   InputState (..) ,
@@ -29,14 +30,16 @@ module Crm.Component.Form (
   nullDropdownRow ) where
 
 import           Prelude                               as P hiding (span, div, elem) 
-import           Data.Text                             (fromString, Text, (<>))
+import           Data.Text                             (fromString, Text, (<>), showInt)
 import           FFI                                   (Defined(Defined, Undefined))
 
 import           HaskellReact                          hiding (row, label)
 import qualified HaskellReact.Bootstrap.Button         as BTN
+import qualified HaskellReact.Bootstrap                as B
 import qualified HaskellReact.Tag.Input                as I
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Tag.Hyperlink            as A
+import qualified HaskellReact.Bootstrap.Glyphicon      as G
 
 data InputState = Editing | Display
   deriving Eq
@@ -230,3 +233,59 @@ nullDropdownRow editing rowLabel elements display currentElement setId =
       in nullElement : notNullElements
     display' (Just element) = display element
     display' Nothing = "---"
+
+
+data FieldPosition = First | Last | Single | Middle
+
+multipleInputs :: forall a.
+                  Text
+               -> (a -> Text)
+               -> (a -> Text -> a)
+               -> ([a] -> Fay ())
+               -> [(Int, FieldPosition, a)] 
+               -> [DOMElement]
+multipleInputs fieldLabel' get set setList elems = map displayRow elems where
+  mkJustElems = map $ \(_, _, elem) -> elem
+  displayRow (index, positionInOrdering, a) = mkRow where
+    mkRow = mkRowMarkup [
+      orderingControls ,
+      fieldLabel ,
+      input' ,
+      removeButton ]
+    mkRowMarkup = div' ((class' "form-group") { key = Defined $ "key-" <> showInt index })
+    orderingControls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow where
+      changeOrder :: Bool -> [a]
+      changeOrder down = let
+        (start, (y:x:rest)) = splitAt (if down then index else index - 1) . mkJustElems $ elems
+        in start ++ (x:y:rest)
+      downArrowLink = A.a''' (click . setList $ changeOrder True) G.arrowDown
+      downArrow = case positionInOrdering of
+        Middle -> [downArrowLink]
+        First -> [downArrowLink]
+        _ -> []
+      upArrowLink = A.a''' (click . setList $ changeOrder False) G.arrowUp 
+      upArrow = case positionInOrdering of
+        Middle -> [upArrowLink]
+        Last -> [upArrowLink]
+        _ -> []
+    fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
+    setFieldValue string = let
+      (start, field : rest) = splitAt index . mkJustElems $ elems
+      modifiedX = set field string
+      in setList $ start ++ [modifiedX] ++ rest
+    input' = div' (class' "col-md-7") $ input
+      Editing
+      True 
+      (SetValue . get $ a)
+      setFieldValue
+    removeButton = let
+      removeField = let
+        (start, _:rest) = splitAt index elems
+        newFields = start ++ rest
+        in setList . mkJustElems $ newFields
+      props = BTN.buttonProps {
+        BTN.bsStyle = Defined "danger" ,
+        BTN.onClick = Defined $ const removeField }
+      buttonLabel = "Odeber"
+      button = BTN.button' props buttonLabel
+      in B.col (B.mkColProps 2) button
