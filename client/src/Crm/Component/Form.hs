@@ -120,6 +120,35 @@ textInput mkInput editing' displayPlain displayValue onChange' = let
     then text2DOM $ joinEither displayValue
     else mkInput inputNormalAttrs inputAttrs
 
+dropdown :: Text -- label for the row
+         -> [(a, b)] -- key value list
+         -> (b -> Text) -- format the b value for the user to see
+         -> b -- the displayed element in the closed dropdown
+         -> (a -> Fay ()) -- selection handler
+         -> DOMElement
+dropdown rowLabel elements display currentElement setId = element where
+  element = BD.buttonDropdown buttonLabel elementsToBeSelected
+  selectLink theId label = let
+    selectAction = setId theId
+    in A.a''' (click selectAction) (display label)
+  elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
+  buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
+
+nullDropdown :: Text 
+             -> [(a, b)]
+             -> (b -> Text)
+             -> Maybe b
+             -> (Maybe a -> Fay ())
+             -> DOMElement
+nullDropdown rowLabel elements display currentElement setId = 
+  dropdown rowLabel elements' display' currentElement setId where
+    elements' = let
+      notNullElements = map (\(a,b) -> (Just a, Just b)) elements
+      nullElement = (Nothing, Nothing)
+      in nullElement : notNullElements
+    display' (Just element) = display element
+    display' Nothing = "---"
+
 
 -- row elements
 
