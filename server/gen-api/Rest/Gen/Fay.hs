@@ -30,6 +30,11 @@ import Rest.Gen.Base
 import Rest.Gen.Types
 import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
+import qualified Data.Generics.Uniplate.Data    as U
+
+
+rewriteModuleNames :: [(H.ModuleName, H.ModuleName)] -> H.Module -> H.Module
+rewriteModuleNames rews = U.transformBi $ \m -> lookupJustDef m m rews
 
 
 mkFayApi :: HaskellContext -> Router m s -> IO ()
@@ -44,15 +49,8 @@ writeRes ctx node =
      writeFile (targetPath ctx </> "src" </> modPath (namespace ctx ++ resId node) ++ ".hs") (mkRes ctx node)
 
 
--- | change the Data.Text.Internal -> Data.Text so Fay can handle it
-hackTextInternal :: String -> String
-hackTextInternal prettyPrintedHaskellModule = result where
-  r = mkRegex "Data\\.Text\\.Internal"
-  result = subRegex r prettyPrintedHaskellModule "Data.Text"
-
-
 mkRes :: HaskellContext -> ApiResource -> String
-mkRes ctx node = hackTextInternal . H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
+mkRes ctx node = H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
   where
     pragmas = [H.OptionsPragma noLoc (Just H.GHC) "-fno-warn-unused-imports"]
     _warningText = "Warning!! This is automatically generated code, do not modify!"
@@ -62,6 +60,7 @@ buildHaskellModule :: HaskellContext -> ApiResource ->
                       [H.ModulePragma] -> Maybe H.WarningText ->
                       H.Module
 buildHaskellModule ctx node pragmas warningText =
+  rewriteModuleNames (rewrites ctx) $
     H.Module noLoc name pragmas warningText exportSpecs importDecls decls
   where
     name = H.ModuleName $ qualModName $ namespace ctx ++ resId node

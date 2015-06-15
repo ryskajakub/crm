@@ -1,11 +1,12 @@
 module Main where
 
-import qualified Rest.Gen         as Gen
-import qualified Rest.Gen.Config  as Gen
-import           Crm.Server.Base  (router', api)
-import           Rest.Gen.Haskell (HaskellContext(..))
-import           Rest.Gen.Fay     (mkFayApi)
-import           Rest.Api         (Version(..))
+import qualified Rest.Gen                     as Gen
+import qualified Rest.Gen.Config              as Gen
+import           Crm.Server.Base              (router', api)
+import           Rest.Gen.Haskell             (HaskellContext(..))
+import           Rest.Gen.Fay                 (mkFayApi)
+import           Rest.Api                     (Version(..))
+import qualified Language.Haskell.Exts.Syntax as H
 
 main :: IO ()
 main = let
@@ -16,6 +17,6 @@ main = let
     includePrivate = True ,
     sources = [] ,
     imports = [] ,
-    rewrites = [] ,
+    rewrites = [(H.ModuleName "Data.Text.Internal", H.ModuleName "Data.Text")] ,
     namespace = ["Crm", "Client"] }
   in mkFayApi haskellContext router'
