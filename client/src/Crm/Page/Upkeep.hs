@@ -110,19 +110,19 @@ upkeepDetail :: R.CrmRouter
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
              -> [E.Employee']
-             -> Maybe E.EmployeeId
+             -> [E.EmployeeId]
              -> V.Validation
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
-    machines companyId employees selectedEmployee v =
+    machines companyId employees selectedEmployees v =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployee v
+    machines submitButton True employees selectedEmployees v
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
         submitButton = let
           closeUpkeepHandler = updateUpkeep
-            (upkeep3, selectedEmployee)
+            (upkeep3, selectedEmployees)
             (R.navigate (R.maintenances companyId) router)
           in mkSubmitButton 
             [span G.plus , span " Uzavřít"]
@@ -137,16 +137,16 @@ upkeepNew :: R.CrmRouter
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> Either C.CompanyId U.UpkeepId
           -> [E.Employee']
-          -> Maybe E.EmployeeId
+          -> [E.EmployeeId]
           -> V.Validation
           -> DOMElement
-upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es mE v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es mE v where
+upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Left _ -> let
         newUpkeepHandler = createUpkeep
-          (upkeepU, upkeepMachines, mE)
+          (upkeepU, upkeepMachines, se)
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [G.plus , text2DOM " Naplánovat"]
@@ -154,7 +154,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         in ("Naplánovat servis", button)
       Right (upkeepId) -> let
         replanUpkeepHandler = updateUpkeep
-          ((upkeepId, upkeepU, upkeepMachines), mE)
+          ((upkeepId, upkeepU, upkeepMachines), se)
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
@@ -172,11 +172,11 @@ upkeepForm :: Var D.AppState
            -> (Bool -> DOMElement) -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> [E.Employee']
-           -> Maybe E.EmployeeId
+           -> [E.EmployeeId]
            -> V.Validation
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    uncheckedMachines machines button closeUpkeep' employees selectedEmployee validation = let
+    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation = let
   upkeepFormRows = 
     [companyNameHeader] ++
     [formHeader] ++
@@ -305,7 +305,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
 
   dateRow = oneElementRow "Datum" datePicker
-  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name (findInList selectedEmployee employees)
+  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name (findInList (head selectedEmployees) employees)
     $ \eId -> modify' $ \s -> s { UD.selectedEmployee = eId }
 
   formHeader = div' (class' "form-group") $ [

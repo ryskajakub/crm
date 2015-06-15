@@ -43,15 +43,14 @@ data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
 
 addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
+          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
           -> IO U.UpkeepId -- ^ id of the upkeep
 addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, 
-      pgStrictText $ U.workHours upkeep, pgStrictText $ U.workDescription upkeep, 
-      pgStrictText $ U.recommendation upkeep)
+      pgBool $ U.upkeepClosed upkeep, pgStrictText $ U.workHours upkeep, 
+      pgStrictText $ U.workDescription upkeep , pgStrictText $ U.recommendation upkeep)
     sel1
   let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
@@ -59,12 +58,9 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
 
 createUpkeepHandler :: Handler Dependencies
 createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> do
-  let
-    (_,_,selectedEmployeeId) = newUpkeep
-    newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
   (cache, connection) <- ask
   -- todo check that the machines are belonging to this company
-  upkeepId <- liftIO $ addUpkeep connection newUpkeep'
+  upkeepId <- liftIO $ addUpkeep connection newUpkeep
   recomputeWhole connection cache
   return upkeepId
 
@@ -89,7 +85,7 @@ removeUpkeep = mkConstHandler' jsonO $ do
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep,machines,employeeId) -> let 
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeId) -> let 
   upkeepTriple = (upkeep, machines, toMaybe employeeId)
   in do 
     ((cache, connection), upkeepId) <- ask

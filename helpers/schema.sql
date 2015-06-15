@@ -60,7 +60,6 @@ create table upkeeps (
   id serial primary key ,
   date_ date not null , 
   closed boolean not null ,
-  employee_id integer references employees (id) ,
   work_hours varchar (500) not null ,
   work_description varchar (5000) not null ,
   recommendation varchar (5000) not null );
