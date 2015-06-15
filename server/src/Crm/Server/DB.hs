@@ -615,10 +615,6 @@ expandedUpkeepsByCompanyQuery companyId = let
     machine <- join machinesQuery -< machineFK
     machineType <- join machineTypesQuery -< (sel4 machine)
     restrict -< sel2 machine .== pgInt4 companyId
-{-
-    upkeepEmployeeRow <- join . queryTable $ employeesTable -< upkeepPK
-    employeeRow <- join employeesQuery -< $(proj 2 1) upkeepEmployeeRow
--}
     returnA -< (upkeepRow, upkeepMachineRow, machineType)
   in upkeepsWithMachines
 
