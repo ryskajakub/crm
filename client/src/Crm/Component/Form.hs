@@ -237,14 +237,15 @@ nullDropdownRow editing rowLabel elements display currentElement setId =
 
 data FieldPosition = First | Last | Single | Middle
 
-multipleInputs :: forall a.
+multipleInputs :: forall a b.
                   Text
-               -> (a -> Text)
-               -> (a -> Text -> a)
+               -> (a -> b)
+               -> (a -> b -> a)
                -> ([a] -> Fay ())
+               -> (b -> (b -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [(Int, FieldPosition, a)] 
                -> [DOMElement]
-multipleInputs fieldLabel' get set setList elems = map displayRow elems where
+multipleInputs fieldLabel' get set setList inputControl elems = map displayRow elems where
   mkJustElems = map $ \(_, _, elem) -> elem
   displayRow (index, positionInOrdering, a) = mkRow where
     mkRow = mkRowMarkup [
@@ -269,15 +270,11 @@ multipleInputs fieldLabel' get set setList elems = map displayRow elems where
         Last -> [upArrowLink]
         _ -> []
     fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
-    setFieldValue string = let
+    setFieldValue a = let
       (start, field : rest) = splitAt index . mkJustElems $ elems
-      modifiedX = set field string
+      modifiedX = set field a
       in setList $ start ++ [modifiedX] ++ rest
-    input' = div' (class' "col-md-7") $ input
-      Editing
-      True 
-      (SetValue . get $ a)
-      setFieldValue
+    input' = inputControl (get a) (setFieldValue)
     removeButton = let
       removeField = let
         (start, _:rest) = splitAt index elems

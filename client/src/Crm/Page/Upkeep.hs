@@ -305,6 +305,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
 
   dateRow = oneElementRow "Datum" datePicker
+
   employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name Nothing
     $ \eId -> return ()
 
