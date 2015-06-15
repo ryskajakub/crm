@@ -122,7 +122,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
         upkeep2 = (upkeep,upkeepMachines)
         submitButton = let
           closeUpkeepHandler = updateUpkeep
-            (upkeep3, selectedEmployees)
+            upkeep3
             (R.navigate (R.maintenances companyId) router)
           in mkSubmitButton 
             [span G.plus , span " Uzavřít"]
@@ -154,7 +154,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         in ("Naplánovat servis", button)
       Right (upkeepId) -> let
         replanUpkeepHandler = updateUpkeep
-          ((upkeepId, upkeepU, upkeepMachines), se)
+          (upkeepId, upkeepU, upkeepMachines)
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
@@ -305,7 +305,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
 
   dateRow = oneElementRow "Datum" datePicker
-  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name (findInList (head selectedEmployees) employees)
+  employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name Nothing
     $ \eId -> modify' $ \s -> s { UD.selectedEmployee = eId }
 
   formHeader = div' (class' "form-group") $ [

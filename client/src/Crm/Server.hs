@@ -290,12 +290,12 @@ createMachine machine companyId machineType contactPersonId linkedMachineId extr
     (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
     (const callback)
 
-createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
+createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId])
              -> Fay ()
              -> Fay ()
-createUpkeep (newUpkeep, upkeepMachines) callback = 
+createUpkeep (newUpkeep, upkeepMachines, se) callback = 
   XU.create
-    (newUpkeep, upkeepMachines, [])
+    (newUpkeep, upkeepMachines, se)
     (const callback)
     
 createEmployee :: E.Employee
