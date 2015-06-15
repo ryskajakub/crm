@@ -306,7 +306,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   dateRow = oneElementRow "Datum" datePicker
   employeeSelectRow = nullDropdownRow Editing "Servisman" employees E.name Nothing
-    $ \eId -> modify' $ \s -> s { UD.selectedEmployee = eId }
+    $ \eId -> return ()
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 

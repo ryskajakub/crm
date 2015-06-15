@@ -19,7 +19,7 @@ data UpkeepData = UpkeepData {
   notCheckedMachines :: [UpkeepMachine'] ,
   upkeepDatePicker :: (DatePicker, Text) ,
   employees :: [Employee'] ,
-  selectedEmployee :: Maybe EmployeeId ,
+  selectedEmployee :: [EmployeeId] ,
   validation :: V.Validation ,
   upkeepPageMode :: Either UpkeepClose UpkeepNew }
 

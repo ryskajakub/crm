@@ -26,13 +26,13 @@ import           Crm.Server                    (deleteUpkeep)
 
 
 upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
-                 Maybe E.Employee')]
+                 [E.Employee'])]
               -> C.CompanyId
               -> CrmRouter
               -> DOMElement
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, maybeEmployee) = [generalUpkeepInfo, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, _) = [generalUpkeepInfo, upkeepMachinesInfo] where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
@@ -41,7 +41,7 @@ upkeepHistory upkeepsInfo companyId router = let
       B.col (B.mkColProps 4) [ strong "Servisman: ", text2DOM employeeText ] ,
       B.col (B.mkColProps 2) $ formLink , 
       B.col (B.mkColProps 2) $ deleteButton ] where
-        employeeText = maybe ("---") (E.name . snd) maybeEmployee
+        employeeText = "tbd"
         (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
           then ("label-success", "Uzavřený", text2DOM "")
           else ("label-warning", "Naplánovaný", link "Uzavřít" (upkeepDetail upkeepId) router)
