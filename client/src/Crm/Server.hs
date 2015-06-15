@@ -141,14 +141,14 @@ fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> Fay ()
 fetchMachineTypesManufacturer text = 
   XMT.listByAutocompleteManufacturer
-    (unpack . encodeURIComponent . encodeURIComponent $ text)
+    (unpack . encodeURIComponent $ text)
   
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
                               -> Fay ()
 fetchMachineTypesAutocomplete text = 
   XMT.listByAutocomplete 
-    (unpack . encodeURIComponent . encodeURIComponent $ text)
+    (unpack . encodeURIComponent $ text)
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
 fetchMachineTypes = XMT.list
@@ -164,7 +164,7 @@ fetchMachineType :: Text -- ^ machine type exact match
                  -> Fay ()
 fetchMachineType machineTypeName callback = 
   XMT.byByName 
-    (unpack . encodeURIComponent . encodeURIComponent $ machineTypeName)
+    (unpack . encodeURIComponent $ machineTypeName)
     (callback . toMaybe)
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
