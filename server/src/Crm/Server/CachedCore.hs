@@ -86,5 +86,5 @@ addNextDates getMachineId getMachine a = \conn -> do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x, xs)
-    (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap $(proj 3 2) upkeeps) today'
+    (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap $(proj 2 1) upkeeps) today'
   return (computationMethod, dayToYmd nextServiceDay)

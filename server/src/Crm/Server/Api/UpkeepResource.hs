@@ -1,3 +1,5 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Crm.Server.Api.UpkeepResource (
   insertUpkeepMachines ,
   upkeepResource ) where
@@ -37,6 +39,8 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
 import           Crm.Server.CachedCore       (recomputeWhole)
+
+import           TupleTH                     (proj)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
@@ -85,23 +89,23 @@ removeUpkeep = mkConstHandler' jsonO $ do
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeId) -> let 
-  upkeepTriple = (upkeep, machines, toMaybe employeeId)
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines) -> let 
+  upkeepTuple = (upkeep, machines)
   in do 
     ((cache, connection), upkeepId) <- ask
-    liftIO $ updateUpkeep connection upkeepId upkeepTriple
+    liftIO $ updateUpkeep connection upkeepId upkeepTuple
     recomputeWhole connection cache
 
 updateUpkeep :: Connection
              -> U.UpkeepId
-             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
+             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])
              -> IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
+updateUpkeep conn upkeepId (upkeep, upkeepMachines) = do
   _ <- let
-    condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 (U.getUpkeepId upkeepId)
+    condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, pgStrictText $ U.workHours upkeep, 
+        pgStrictText $ U.workHours upkeep, 
         pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== (pgInt4 $ U.getUpkeepId upkeepId))
@@ -111,7 +115,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn expandedUpkeepsQuery
-  return $ over (mapped . _3) toMyMaybe $ mapUpkeeps rows
+  return . mapUpkeeps $ rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO (const $ do
@@ -119,7 +123,7 @@ upkeepsPlannedListing = mkListing' jsonO (const $ do
   rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
   return $ map (\row -> let
     (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
-    in (sel1 u, sel3 u, sel1 c, sel2 c)) rows)
+    in ($(proj 2 0) u, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c)) rows)
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
@@ -130,7 +134,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   companyId <- case machines of
     [] -> throwError NotAllowed
     (companyId',_) : _ -> return companyId'
-  return (companyId, (sel2 upkeep, toMyMaybe $ sel3 upkeep, sel4 upkeep), map snd machines)
+  return (companyId, (sel2 upkeep, sel3 upkeep), map snd machines)
 
 
 -- resource
