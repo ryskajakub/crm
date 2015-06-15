@@ -172,21 +172,15 @@ fetchEmployees :: ([E.Employee'] -> Fay ())
 fetchEmployees = XE.list
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, (U.Upkeep, Maybe E.EmployeeId, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
+            -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine']), [(M.MachineId, M.Machine, 
                  C.CompanyId, MT.MachineTypeId, MT.MachineType)]) -> Fay ()) 
             -> Fay ()
-fetchUpkeep upkeepId callback = 
-  XU.bySingle upkeepId 
-  (callback . (\(a,(u,u2,u3),b) -> (a,(u,toMaybe u2,u3),b)))
+fetchUpkeep = XU.bySingle 
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
-                Maybe E.Employee')] -> Fay ()) -- ^ callback
+             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)])] -> Fay ()) -- ^ callback
              -> Fay ()
-fetchUpkeeps companyId callback = 
-  XCU.list
-    companyId
-    (callback . (map (\(a,b,c,employee) -> (a,b,c,toMaybe employee))))
+fetchUpkeeps = XCU.list
   
 fetchMachinePhotos :: M.MachineId
                    -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
@@ -205,15 +199,14 @@ fetchExtraFieldSettings = XMK.byString "()"
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)], Maybe M.MachineId, 
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)], Maybe M.MachineId, 
                 MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
              -> Fay ()
 fetchMachine machineId callback =  
   XM.byMachineId 
     machineId
     (let
-      fun2 (a,b,c,d) = (a,b,c,toMaybe d)
-      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,map fun2 g,toMaybe g2,f,l)
+      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,g,toMaybe g2,f,l)
       in callback . fun)
 
 fetchEmployee :: E.EmployeeId
@@ -297,12 +290,12 @@ createMachine machine companyId machineType contactPersonId linkedMachineId extr
     (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
     (const callback)
 
-createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], Maybe E.EmployeeId)
+createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'])
              -> Fay ()
              -> Fay ()
-createUpkeep (newUpkeep, upkeepMachines, maybeEmployeeId) callback = 
+createUpkeep (newUpkeep, upkeepMachines) callback = 
   XU.create
-    (newUpkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+    (newUpkeep, upkeepMachines, [])
     (const callback)
     
 createEmployee :: E.Employee
@@ -357,13 +350,13 @@ updateCompany companyId company coordinates cb =
     (company, toMyMaybe coordinates)
     (const cb)
 
-updateUpkeep :: (U.Upkeep', Maybe E.EmployeeId)
+updateUpkeep :: U.Upkeep'
              -> Fay ()
              -> Fay ()
-updateUpkeep ((upkeepId, upkeep, upkeepMachines), maybeEmployeeId) cb = 
+updateUpkeep (upkeepId, upkeep, upkeepMachines) cb = 
   XU.saveBySingle
     upkeepId
-    (upkeep, upkeepMachines, toMyMaybe maybeEmployeeId)
+    (upkeep, upkeepMachines)
     (const cb)
 
 updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
