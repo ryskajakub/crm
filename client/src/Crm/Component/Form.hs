@@ -9,7 +9,6 @@ module Crm.Component.Form (
   DisplayValue (..) ,
   OrderingControls (..) ,
   
-
   buttonStateFromBool ,
   inputStateFromBool ,
   inputStateToBool ,

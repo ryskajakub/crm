@@ -218,7 +218,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText) 
-    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (_, cpId, _))
+    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (cp, cpId, _))
     contactPersons validation otherMachineId otherMachines extraFields = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -333,6 +333,25 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
 
   nullDropdownRowEditing = nullDropdownRow editing
 
+  cpPartInputs :: Text
+               -> (CP.ContactPerson -> Text)
+               -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
+               -> [DOMElement]
+  cpPartInputs partLabel get set = let
+    i = input
+      editing
+      True
+      (SetValue . get $ cp)
+      (setCP . set cp)
+    in [
+      B.col (B.mkColProps 1) partLabel ,
+      B.col (B.mkColProps 2) i ]
+
+  setCP :: CP.ContactPerson -> Fay ()
+  setCP contactPerson = changeNavigationState $ \md -> let
+    (_, a0, a1) = MD.contactPersonId md
+    in md { MD.contactPersonId = (contactPerson, a0, a1) }
+
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -348,13 +367,15 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
         nullDropdownRowEditing 
-          "Kontaktní osoba" 
+          "Kontaktní osoba - stávající" 
           contactPersons 
           CP.name 
           (findInList cpId contactPersons) $
           \cpId -> changeNavigationState $ \md -> let
             (a, b, c) = MD.contactPersonId md
             in md { MD.contactPersonId = (a, cpId, c) } ,
+        row "Kontaktní osoba - nová" (concat [
+          cpPartInputs "Jméno" CP.name (\cp t -> cp { CP.name = t }) ]) ,
         nullDropdownRowEditing 
           "Zapojení" 
           otherMachines 
