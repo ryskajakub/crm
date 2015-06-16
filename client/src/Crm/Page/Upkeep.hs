@@ -34,6 +34,7 @@ import qualified Crm.Router                       as R
 import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
 import           Crm.Helpers
+import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -114,11 +115,12 @@ upkeepDetail :: R.CrmRouter
              -> [E.Employee']
              -> [Maybe E.EmployeeId]
              -> V.Validation
+             -> DisplayedNote
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
-    machines companyId employees selectedEmployees v =
+    machines companyId employees selectedEmployees v dnf =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployees v
+    machines submitButton True employees selectedEmployees v dnf
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -144,7 +146,7 @@ upkeepNew :: R.CrmRouter
           -> V.Validation
           -> DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v where
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Left _ -> let
@@ -178,9 +180,10 @@ upkeepForm :: Var D.AppState
            -> [E.Employee']
            -> [Maybe E.EmployeeId]
            -> V.Validation
+           -> DisplayedNote
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation = let
+    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag = let
   upkeepFormRows = 
     [companyNameHeader] ++
     [formHeader] ++
@@ -288,9 +291,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     warranty = B.col (B.mkColProps 1) $ checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
       updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
+    (getNote, setNote) = case displayedNoteFlag of
+      Note    -> (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t })
+      EndNote -> (UM.endNote, \t um -> um { UM.endNote = t })
+
     note = B.col (B.mkColProps noteColsSize) $ 
-      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ \es ->
-        updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
+      textarea editing False (SetValue . getNote . fst $ machine) $ \es ->
+        updateUpkeepMachine $ setNote es (fst machine)
 
     in mkRow $ if closeUpkeep'
       then [machineToggleCheckedLink, recordedMileage, warranty, note]

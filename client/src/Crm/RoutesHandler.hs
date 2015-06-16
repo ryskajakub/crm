@@ -35,6 +35,7 @@ import           Crm.Router
 import           Crm.Helpers                 (displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
+import           Crm.Types                   (DisplayedNote (..))
 
 
 -- handler
@@ -171,7 +172,7 @@ startRouter appVar = startedRouter where
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId) ,
+            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId Note) ,
     useHandler machineTypesList' $ const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ,
     useHandler machineTypeEdit' $ \machineTypeId ->
