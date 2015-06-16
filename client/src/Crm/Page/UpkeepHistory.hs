@@ -4,8 +4,8 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import           Data.Text                     (fromString, showInt, (<>))
-import           Prelude                       hiding (div, span, id)
+import           Data.Text                     (fromString, showInt, (<>), intercalate)
+import           Prelude                       hiding (div, span, id, intercalate)
 import           FFI                           (Defined(Defined))
 
 import           HaskellReact
@@ -32,16 +32,18 @@ upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.M
               -> DOMElement
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, _) = [generalUpkeepInfo, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, upkeepMachinesInfo] where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
         text2DOM $ (<> " ") $ displayDate $ U.upkeepDate upkeep ,
         span' (class'' ["label", "upkeep-state" , labelClass]) labelText ] ,
-      B.col (B.mkColProps 4) [ strong "Servisman: ", text2DOM employeeText ] ,
+      let 
+        i = if length employees > 1 then "i" else ""
+        in B.col (B.mkColProps 4) [ strong $ "Servisman" <> i <> ": ", text2DOM employeeText ] ,
       B.col (B.mkColProps 2) $ formLink , 
       B.col (B.mkColProps 2) $ deleteButton ] where
-        employeeText = "tbd"
+        employeeText = intercalate " " . map (\(_, employee) -> E.name employee) $ employees
         (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
           then ("label-success", "Uzavřený", text2DOM "")
           else ("label-warning", "Naplánovaný", link "Uzavřít" (upkeepDetail upkeepId) router)
