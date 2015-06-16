@@ -67,7 +67,9 @@ upkeepHistory upkeepsInfo companyId router = let
         router ,
         dl [[
           dt "Poznámka" ,
-          dd $ UM.upkeepMachineNote upkeepMachine ] ++ 
+          dd $ UM.upkeepMachineNote upkeepMachine ,
+          dt "Koncová poznámka" ,
+          dd $ UM.endNote upkeepMachine ] ++ 
           (if U.upkeepClosed upkeep then [
           dt "Naměřené motohodiny" ,
           dd $ showInt $ UM.recordedMileage upkeepMachine ,

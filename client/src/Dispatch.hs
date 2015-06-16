@@ -69,9 +69,9 @@ main' = do
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
         upkeepDatePicker employees selectedEmployees validation upkeepPageMode) -> n $
           emptyCallback $ case upkeepPageMode of
-            Left (UD.UpkeepClose upkeepId companyId) ->
+            Left (UD.UpkeepClose upkeepId companyId displayedNote) ->
               upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
-                machines companyId employees selectedEmployees validation
+                machines companyId employees selectedEmployees validation displayedNote
             Right (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
                 upkeepIdentification employees selectedEmployees validation

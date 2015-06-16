@@ -34,6 +34,7 @@ import qualified Crm.Router                       as R
 import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
 import           Crm.Helpers
+import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
@@ -116,11 +117,12 @@ upkeepDetail :: R.CrmRouter
              -> [E.Employee']
              -> [Maybe E.EmployeeId]
              -> V.Validation
+             -> DisplayedNote
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
-    machines companyId employees selectedEmployees v =
+    machines companyId employees selectedEmployees v dnf =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployees v
+    machines submitButton True employees selectedEmployees v dnf
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -146,7 +148,7 @@ upkeepNew :: R.CrmRouter
           -> V.Validation
           -> DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v where
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Left _ -> let
@@ -168,6 +170,11 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         in ("Přeplánovat servis", button)
 
 
+mapEither :: (a -> a') -> Either a b -> Either a' b
+mapEither f (Left a) = Left . f $ a
+mapEither _ (Right b) = Right b
+
+
 upkeepForm :: Var D.AppState
            -> Text -- ^ page header
            -> (U.Upkeep, [(UM.UpkeepMachine')])
@@ -180,9 +187,10 @@ upkeepForm :: Var D.AppState
            -> [E.Employee']
            -> [Maybe E.EmployeeId]
            -> V.Validation
+           -> DisplayedNote
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation = let
+    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag = let
   upkeepFormRows = 
     [companyNameHeader] ++
     [formHeader] ++
@@ -225,9 +233,31 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
     else ([], 6, 6)
+
+  toggleNote = let
+    newClose uc = uc { UD.displayedNote = newDisplayedNote } where
+      newDisplayedNote = case UD.displayedNote uc of
+        Note -> EndNote
+        EndNote -> Note
+        x -> x
+    in modify' $ \ud -> ud { UD.upkeepPageMode = mapEither newClose (UD.upkeepPageMode ud) }
+  (getNote, setNote, noteHeaders) = case displayedNoteFlag of
+    Note -> let
+      noteActive = [ 
+        strong "Poznámka" ,
+        A.a''' ((class' "my-text-right") { onClick = Defined . const $ toggleNote } ) "Koncová poznámka" ]
+      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, noteActive)
+    EndNote -> let
+      endNoteActive = [
+        A.a''' (mkAttrs { onClick = Defined . const $ toggleNote }) "Poznámka" ,
+        strong' (class' "my-text-right") "Koncová poznámka" ]
+      in (UM.endNote, \t um -> um { UM.endNote = t }, endNoteActive)
+    NoChoice -> let
+      onlyNote = [strong "Poznámka"]
+      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
   upkeepMachineRow :: (M.MachineId, M.Machine, a1, a2, MT.MachineType) -> DOMElement
-  upkeepMachineRow (machineId,machine',_,_,machineType) = let
+  upkeepMachineRow (machineId, machine', _, _, machineType) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -291,8 +321,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
-      textarea editing False (SetValue $ UM.upkeepMachineNote $ fst machine) $ \es ->
-        updateUpkeepMachine $ (fst machine) { UM.upkeepMachineNote = es }
+      textarea editing False (SetValue . getNote . fst $ machine) $ \es ->
+        updateUpkeepMachine $ setNote es (fst machine)
 
     in mkRow $ if closeUpkeep'
       then [machineToggleCheckedLink, recordedMileage, warranty, note]
@@ -331,7 +361,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
-    B.col (B.mkColProps noteColsSize) $ strong "Poznámka" ]
+    B.col (B.mkColProps noteColsSize) noteHeaders]
 
   companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
   validationMessages'' = V.messages validation
