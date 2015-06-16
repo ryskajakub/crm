@@ -225,7 +225,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     else ([], 6, 6)
     
   upkeepMachineRow :: (M.MachineId, M.Machine, a1, a2, MT.MachineType) -> DOMElement
-  upkeepMachineRow (machineId,machine',_,_,machineType) = let
+  upkeepMachineRow (machineId, machine', _, _, machineType) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
