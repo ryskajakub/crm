@@ -274,14 +274,14 @@ data FieldPosition = First | Last | Single | Middle
 
 multipleInputs :: forall a b.
                   Text
+               -> Text
                -> (a -> b)
-               -> (a -> b -> a)
                -> ([a] -> Fay ())
                -> (b -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [a] 
                -> a
                -> [DOMElement]
-multipleInputs fieldLabel' get set setList inputControl elems newField = 
+multipleInputs fieldLabel' addNewButtonLabel get setList inputControl elems newField = 
   map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
 
     addAnotherFieldRow = oneElementRow addAnotherFieldButton ""
@@ -290,8 +290,7 @@ multipleInputs fieldLabel' get set setList inputControl elems newField =
         newList = elems ++ [newField]
         in setList newList
       props = BTN.buttonProps { BTN.onClick = Defined $ const addField }
-      buttonLabel = "Přidat políčko"
-      in BTN.button' props buttonLabel
+      in BTN.button' props addNewButtonLabel
 
     displayRow (index, positionInOrdering, a) = mkRow where
       mkRow = mkRowMarkup [
