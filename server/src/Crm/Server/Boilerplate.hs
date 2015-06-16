@@ -217,9 +217,9 @@ instance ToJSON L.Login where
 instance FromJSON L.Login where
   parseJSON = fayInstance
 
-instance JS.JSONSchema M.ContactPersonId where
+instance JS.JSONSchema M.ContactPersonForMachine where
   schema = gSchema
-instance ToJSON M.ContactPersonId where
+instance ToJSON M.ContactPersonForMachine where
   toJSON = fromJust . showToFay
-instance FromJSON M.ContactPersonId where
+instance FromJSON M.ContactPersonForMachine where
   parseJSON = fayInstance

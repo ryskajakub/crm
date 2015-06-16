@@ -23,9 +23,9 @@ instance Read MachineId where
   readsPrec i = fmap (\(a,b) -> (MachineId a, b)) `fmap` readsPrec i
 #endif
 
-data ContactPersonId = 
-  ContactPersonId CP.ContactPersonId | 
-  ContactPerson CP.ContactPerson
+data ContactPersonForMachine = 
+  ContactPersonIdForMachine CP.ContactPersonId | 
+  ContactPersonForMachine CP.ContactPerson
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif

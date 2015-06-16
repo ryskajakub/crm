@@ -47,8 +47,8 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
   ((cache, connection), companyId) <- ask
   let contactPersonIdentification = toMaybe contactPersonIdentification'
   contactPersonId' <- case contactPersonIdentification of
-    Just (M.ContactPersonId contactPersonId) -> return . Just $ contactPersonId
-    Just (M.ContactPerson contactPerson) -> do
+    Just (M.ContactPersonIdForMachine contactPersonId) -> return . Just $ contactPersonId
+    Just (M.ContactPersonForMachine contactPerson) -> do
       contactPersonNewIds <- liftIO $ runInsertReturning connection contactPersonsTable
         (Nothing, pgInt4 . C.getCompanyId $ companyId, pgStrictText . CP.name $ contactPerson,
           pgStrictText . CP.name $ contactPerson, pgStrictText . CP.name $ contactPerson)
