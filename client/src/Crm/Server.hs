@@ -257,7 +257,7 @@ fetchFrontPageData order direction router callback =
       else return ())
     Nothing
 
-fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)] -> Fay ())
+fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, Text)] -> Fay ())
                     -> Fay ()
 fetchPlannedUpkeeps = XU.listPlanned
 
