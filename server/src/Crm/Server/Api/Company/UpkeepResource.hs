@@ -8,6 +8,7 @@ import           Opaleye.RunQuery              (runQuery)
 
 import           Control.Monad.IO.Class        (liftIO)
 import           Control.Monad.Reader          (ask)
+import           Control.Monad                 (forM)
 
 import           Data.Tuple.All                (sel1, sel2, sel3)
 
@@ -19,6 +20,7 @@ import           Rest.Handler                  (ListHandler)
 
 import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Company            as C
+import qualified Crm.Shared.Upkeep             as U
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
@@ -26,7 +28,7 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler            (mkListing')
 
-import           TupleTH                       (proj)
+import           TupleTH                       (proj, catTuples)
 
 
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
@@ -46,8 +48,13 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
         machineId = sel2 upkeepMachineMapped
         in (upkeepMachine, machineType, machineId))
       rows
-  return $ map (\((upkeepId, upkeep), upkeepMachines) -> 
-    (upkeepId, upkeep, upkeepMachines)) mappedResults
+    flattened = fmap (\((upkeepId, upkeep), upkeepMachines) -> 
+      (upkeepId, upkeep, upkeepMachines)) mappedResults
+  withEmployees <- liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
+    results <- runQuery conn (employeesInUpkeep $ U.getUpkeepId upkeepId)
+    let mappedEmployees = fmap (\row -> convert row) results :: [EmployeeMapped]
+    return ( $(catTuples 3 1) r mappedEmployees )
+  return withEmployees
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
 upkeepResource = mkResourceId {

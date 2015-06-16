@@ -75,6 +75,7 @@ module Crm.Server.DB (
   photoMetaQuery ,
   machineManufacturersQuery ,
   employeesInUpkeep ,
+  employeeIdsInUpkeep ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -670,10 +671,16 @@ machineIdsHavingKind machineTypeKind = proc () -> do
   restrict -< $(proj 4 0) machineTypeRow .== $(proj 11 3) machineRow
   returnA -< $(proj 11 0) machineRow
 
-employeesInUpkeep :: Int -> Query (DBInt)
-employeesInUpkeep upkeepId = proc () -> do
+employeeIdsInUpkeep :: Int -> Query (DBInt)
+employeeIdsInUpkeep upkeepId = proc () -> do
   (_, employeeId) <- join . queryTable $ upkeepEmployeesTable -< pgInt4 upkeepId
   returnA -< employeeId
+
+employeesInUpkeep :: Int -> Query EmployeeTable
+employeesInUpkeep upkeepId = proc () -> do
+  employeeId <- employeeIdsInUpkeep upkeepId -< ()
+  employeeRow <- join employeesQuery -< employeeId
+  returnA -< employeeRow
 
 extraFieldsForMachineQuery :: Int -> Query (ExtraFieldsTable, ExtraFieldSettingsTable)
 extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc () -> do
