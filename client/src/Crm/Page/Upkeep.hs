@@ -310,7 +310,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   dateRow = oneElementRow "Datum" datePicker
 
   employeeSelectRows = 
-    multipleInputs "Servisman" get set setList inputControl elems where
+    multipleInputs "Servisman" get set setList inputControl elems newField where
       get :: Maybe (E.EmployeeId) -> Maybe (E.EmployeeId, E.Employee)
       get eId = joinMaybe $ (\eId' -> (\e -> (eId', e)) `onJust` lookup eId' employees) `onJust` eId
       set _ b = (fst `onJust` b)
@@ -321,6 +321,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         (snd `onJust` employee')
         (setEmployee')
       elems = selectedEmployees
+      newField = Nothing
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 

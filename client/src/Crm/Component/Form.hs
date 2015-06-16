@@ -277,51 +277,61 @@ multipleInputs :: forall a b.
                -> ([a] -> Fay ())
                -> (b -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [a] 
+               -> a
                -> [DOMElement]
-multipleInputs fieldLabel' get set setList inputControl elems = map (displayRow . assignPosition) (zipWithIndex elems) where
-  displayRow (index, positionInOrdering, a) = mkRow where
-    mkRow = mkRowMarkup [
-      orderingControls ,
-      fieldLabel ,
-      input' ,
-      removeButton ]
-    mkRowMarkup = div' ((class' "form-group") { key = Defined $ "key-" <> showInt index })
-    orderingControls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow where
-      changeOrder :: Bool -> [a]
-      changeOrder down = let
-        (start, (y:x:rest)) = splitAt (if down then index else index - 1) elems
-        in start ++ (x:y:rest)
-      downArrowLink = A.a''' (click . setList $ changeOrder True) G.arrowDown
-      downArrow = case positionInOrdering of
-        Middle -> [downArrowLink]
-        First -> [downArrowLink]
-        _ -> []
-      upArrowLink = A.a''' (click . setList $ changeOrder False) G.arrowUp 
-      upArrow = case positionInOrdering of
-        Middle -> [upArrowLink]
-        Last -> [upArrowLink]
-        _ -> []
-    fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
-    setFieldValue a = let
-      (start, _ : rest) = splitAt index elems
-      in setList $ start ++ [a] ++ rest
-    input' = inputControl (get a) (setFieldValue)
-    removeButton = let
-      removeField = let
-        (start, _:rest) = splitAt index elems
-        newFields = start ++ rest
-        in setList newFields
-      props = BTN.buttonProps {
-        BTN.bsStyle = Defined "danger" ,
-        BTN.onClick = Defined $ const removeField }
-      buttonLabel = "Odeber"
-      button = BTN.button' props buttonLabel
-      in B.col (B.mkColProps 2) button
+multipleInputs fieldLabel' get set setList inputControl elems newField = 
+  map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
 
-  assignPosition (i, field) = if 
-    | i == 0 && i == lastIndex -> (i, Single, field)
-    | i == lastIndex -> (i, Last, field)
-    | i == 0 -> (i, First, field)
-    | True -> (i, Middle, field)
-    where
-    lastIndex = length elems - 1
+    addAnotherFieldRow = oneElementRow addAnotherFieldButton ""
+    addAnotherFieldButton = let
+      addField = setList $ elems ++ [newField]
+      props =  BTN.buttonProps { BTN.onClick = Defined $ const addField }
+      buttonLabel = "Přidat políčko"
+      in BTN.button' props buttonLabel
+
+    displayRow (index, positionInOrdering, a) = mkRow where
+      mkRow = mkRowMarkup [
+        orderingControls ,
+        fieldLabel ,
+        input' ,
+        removeButton ]
+      mkRowMarkup = div' ((class' "form-group") { key = Defined $ "key-" <> showInt index })
+      orderingControls = div' (class'' ["col-md-1", "control-label"]) $ downArrow ++ upArrow where
+        changeOrder :: Bool -> [a]
+        changeOrder down = let
+          (start, (y:x:rest)) = splitAt (if down then index else index - 1) elems
+          in start ++ (x:y:rest)
+        downArrowLink = A.a''' (click . setList $ changeOrder True) G.arrowDown
+        downArrow = case positionInOrdering of
+          Middle -> [downArrowLink]
+          First -> [downArrowLink]
+          _ -> []
+        upArrowLink = A.a''' (click . setList $ changeOrder False) G.arrowUp 
+        upArrow = case positionInOrdering of
+          Middle -> [upArrowLink]
+          Last -> [upArrowLink]
+          _ -> []
+      fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
+      setFieldValue a = let
+        (start, _ : rest) = splitAt index elems
+        in setList $ start ++ [a] ++ rest
+      input' = inputControl (get a) (setFieldValue)
+      removeButton = let
+        removeField = let
+          (start, _:rest) = splitAt index elems
+          newFields = start ++ rest
+          in setList newFields
+        props = BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const removeField }
+        buttonLabel = "Odeber"
+        button = BTN.button' props buttonLabel
+        in B.col (B.mkColProps 2) button
+
+    assignPosition (i, field) = if 
+      | i == 0 && i == lastIndex -> (i, Single, field)
+      | i == lastIndex -> (i, Last, field)
+      | i == 0 -> (i, First, field)
+      | True -> (i, Middle, field)
+      where
+      lastIndex = length elems - 1
