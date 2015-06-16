@@ -13,7 +13,6 @@ import Control.Category
 import Control.Monad
 import Data.List
 import Data.Maybe
-import Text.Regex
 import Prelude hiding (id, (.))
 import Safe
 import System.Directory
@@ -106,7 +105,7 @@ use = H.Var . H.UnQual
 idData :: ApiResource -> [H.Decl]
 idData node =
   go $ resAccessors node where
-  go ((r@(pathName, Just i) : xs)) =
+  go ((pathName, Just i) : xs) =
     case Ident.description i of
       "string" -> go xs
       _ -> go xs ++ [
@@ -291,38 +290,35 @@ modName = concatMap upFirst . cleanName
 data InputInfo = InputInfo
   { inputModules     :: [H.ModuleName]
   , inputHaskellType :: H.Type
-  , inputContentType :: String
-  , inputFunc        :: String
   } deriving (Eq, Show)
 
 inputInfo :: DataDesc -> InputInfo
 inputInfo dsc =
   case L.get dataType dsc of
-    String -> InputInfo [] (haskellStringType) "text/plain" "fromString"
+    String -> InputInfo [] (haskellStringType)
     -- TODO fromJusts
-    XML    -> InputInfo (L.get haskellModules dsc) (L.get haskellType dsc) "text/xml" "toXML"
-    JSON   -> InputInfo (L.get haskellModules dsc) (L.get haskellType dsc) "text/json" "toJSON"
-    File   -> InputInfo [] haskellByteStringType "application/octet-stream" "id"
-    Other  -> InputInfo [] haskellByteStringType "text/plain" "id"
+    XML    -> InputInfo (L.get haskellModules dsc) (L.get haskellType dsc) 
+    JSON   -> InputInfo (L.get haskellModules dsc) (L.get haskellType dsc)
+    File   -> InputInfo [] haskellByteStringType 
+    Other  -> InputInfo [] haskellByteStringType 
 
 
 data ResponseInfo = ResponseInfo
   { responseModules     :: [H.ModuleName]
   , responseHaskellType :: H.Type
-  , responseFunc        :: String
   } deriving (Eq, Show)
 
 
 outputInfo :: ResponseType -> ResponseInfo
 outputInfo r =
   case outputType r of
-    Nothing -> ResponseInfo [] haskellUnitType "(const ())"
+    Nothing -> ResponseInfo [] haskellUnitType 
     Just t -> case L.get dataType t of
-      String -> ResponseInfo [] haskellStringType "toString"
-      XML    -> ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromXML"
-      JSON   -> ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromJSON"
-      File   -> ResponseInfo [] haskellByteStringType "id"
-      Other  -> ResponseInfo [] haskellByteStringType "id"
+      String -> ResponseInfo [] haskellStringType 
+      XML    -> ResponseInfo (L.get haskellModules t) (L.get haskellType t) 
+      JSON   -> ResponseInfo (L.get haskellModules t) (L.get haskellType t) 
+      File   -> ResponseInfo [] haskellByteStringType 
+      Other  -> ResponseInfo [] haskellByteStringType 
 
 
 errorInfo :: ResponseType -> ResponseInfo
@@ -346,8 +342,8 @@ errorInfo r =
       $ xs
     toResponseInfo' :: DataDesc -> Maybe ResponseInfo
     toResponseInfo' t = case L.get dataType t of
-      XML  -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromXML"
-      JSON -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) "fromJSON"
+      XML  -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) 
+      JSON -> Just $ ResponseInfo (L.get haskellModules t) (L.get haskellType t) 
       _    -> Nothing
 
 

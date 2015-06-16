@@ -15,9 +15,8 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_)
-import           Control.Lens                (over, mapped, _3)
 
-import           Data.Tuple.All              (sel1, sel2, sel3, sel4, upd3)
+import           Data.Tuple.All              (sel1, sel2, sel3)
 import           Data.List                   (nub)
 
 import           Rest.Types.Error            (Reason(NotAllowed))
@@ -32,9 +31,8 @@ import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.UpkeepMachine    as UM
-import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB

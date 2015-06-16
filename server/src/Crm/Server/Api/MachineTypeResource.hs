@@ -17,8 +17,6 @@ import           Data.Tuple.All              (sel1, sel2, sel4)
 import           Data.Int                    (Int64)
 import           Data.Text                   (Text)
 
-import           Network.HTTP.Base           (urlDecode)
-
 import           Rest.Types.Error            (Reason(NotFound, UnsupportedRoute))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update)
