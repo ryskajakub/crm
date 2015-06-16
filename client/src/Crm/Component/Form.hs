@@ -7,6 +7,8 @@ module Crm.Component.Form (
   InputState (..) ,
   ButtonState (..) ,
   DisplayValue (..) ,
+  OrderingControls (..) ,
+  
 
   buttonStateFromBool ,
   inputStateFromBool ,
@@ -57,6 +59,10 @@ data ButtonState = Enabled | Disabled
 
 data DisplayValue = DefaultValue Text | SetValue Text
   deriving Eq
+
+data FieldPosition = First | Last | Single | Middle
+
+data OrderingControls = OrderingVisible | OrderingInvisible
 
 
 -- utilities
@@ -270,19 +276,23 @@ nullDropdownRow editing rowLabel elements display currentElement setId =
     display' Nothing = "---"
 
 
-data FieldPosition = First | Last | Single | Middle
-
 multipleInputs :: forall a b.
                   Text
                -> Text
+               -> OrderingControls
                -> (a -> b)
                -> ([a] -> Fay ())
                -> (b -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [a] 
                -> a
                -> [DOMElement]
-multipleInputs fieldLabel' addNewButtonLabel get setList inputControl elems newField = 
+multipleInputs fieldLabel' addNewButtonLabel orderingControls get setList inputControl elems newField = 
+
   map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
+
+    (includeOrderingControls, labelFieldSize) = case orderingControls of
+      OrderingVisible   -> ((:[]), 2)
+      OrderingInvisible -> (const [], 3)
 
     addAnotherFieldRow = oneElementRow addAnotherFieldButton ""
     addAnotherFieldButton = let
@@ -293,8 +303,8 @@ multipleInputs fieldLabel' addNewButtonLabel get setList inputControl elems newF
       in BTN.button' props addNewButtonLabel
 
     displayRow (index, positionInOrdering, a) = mkRow where
-      mkRow = mkRowMarkup [
-        orderingControls ,
+      mkRow = mkRowMarkup $
+        includeOrderingControls orderingControls ++ [
         fieldLabel ,
         input' ,
         removeButton ]
@@ -314,7 +324,9 @@ multipleInputs fieldLabel' addNewButtonLabel get setList inputControl elems newF
           Middle -> [upArrowLink]
           Last -> [upArrowLink]
           _ -> []
-      fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
+      fieldLabel = label' 
+        (class'' ["control-label", "col-md-" <> showInt labelFieldSize])
+        (fieldLabel' <> " " <> showInt index)
       setFieldValue a = let
         (start, _ : rest) = splitAt index elems
         in setList $ start ++ [a] ++ rest
