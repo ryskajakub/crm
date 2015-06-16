@@ -194,8 +194,8 @@ machineNew router appState datePickerCalendar (machine', datePickerText) machine
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
       contactPersonId' = case contactPersonActive of
-        MD.New  -> Just . M.ContactPerson $ contactPerson     
-        MD.ById -> M.ContactPersonId `onJust` contactPersonId
+        MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
+        MD.ById -> M.ContactPersonIdForMachine `onJust` contactPersonId
       saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
         (R.navigate (R.companyDetail companyId) router)
       buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine

@@ -279,7 +279,7 @@ createCompany company coordinates = XC.create (company, toMyMaybe coordinates)
 createMachine :: M.Machine 
               -> C.CompanyId
               -> MT.MyEither
-              -> Maybe M.ContactPersonId
+              -> Maybe M.ContactPersonForMachine
               -> Maybe M.MachineId
               -> [(EF.ExtraFieldId, Text)]
               -> Fay ()
