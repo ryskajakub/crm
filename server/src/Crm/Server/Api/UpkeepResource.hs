@@ -144,7 +144,8 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   companyId <- case machines of
     [] -> throwError NotAllowed
     (companyId',_) : _ -> return companyId'
-  return (companyId, (sel2 upkeep, sel3 upkeep), map snd machines)
+  employeeIds <- liftIO $ runQuery conn (employeesInUpkeep upkeepIdInt)
+  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map snd machines)
 
 
 -- resource
