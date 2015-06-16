@@ -216,3 +216,10 @@ instance ToJSON L.Login where
   toJSON = fromJust . showToFay
 instance FromJSON L.Login where
   parseJSON = fayInstance
+
+instance JS.JSONSchema M.ContactPersonId where
+  schema = gSchema
+instance ToJSON M.ContactPersonId where
+  toJSON = fromJust . showToFay
+instance FromJSON M.ContactPersonId where
+  parseJSON = fayInstance

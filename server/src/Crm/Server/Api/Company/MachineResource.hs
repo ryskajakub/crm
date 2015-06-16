@@ -40,11 +40,22 @@ import           Crm.Server.CachedCore       (recomputeSingle)
 
 import TupleTH (proj)
 
+
 createMachineHandler :: Handler (IdDependencies' C.CompanyId)
 createMachineHandler = mkInputHandler' (jsonO . jsonI) $
-    \(newMachine, machineType, contactPersonId, linkedMachineId, machineSpecificData) -> do
-  let contactPersonId' = toMaybe contactPersonId
+    \(newMachine, machineType, contactPersonIdentification', linkedMachineId, machineSpecificData) -> do
   ((cache, connection), companyId) <- ask
+  let contactPersonIdentification = toMaybe contactPersonIdentification'
+  contactPersonId' <- case contactPersonIdentification of
+    Just (M.ContactPersonId contactPersonId) -> return . Just $ contactPersonId
+    Just (M.ContactPerson contactPerson) -> do
+      contactPersonNewIds <- liftIO $ runInsertReturning connection contactPersonsTable
+        (Nothing, pgInt4 . C.getCompanyId $ companyId, pgStrictText . CP.name $ contactPerson,
+          pgStrictText . CP.name $ contactPerson, pgStrictText . CP.name $ contactPerson)
+        $(proj 5 0)
+      contactPersonNewId <- singleRowOrColumn contactPersonNewIds
+      return . Just . CP.ContactPersonId $ contactPersonNewId
+    Nothing -> return Nothing
   machineId <- addMachine connection newMachine (C.getCompanyId companyId) machineType 
     contactPersonId' (toMaybe linkedMachineId) machineSpecificData
   recomputeSingle companyId connection cache

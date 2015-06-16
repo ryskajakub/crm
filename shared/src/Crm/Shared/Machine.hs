@@ -7,18 +7,27 @@ module Crm.Shared.Machine where
 import Crm.Shared.YearMonthDay (YearMonthDay)
 
 #ifndef FAY
-import GHC.Generics
-import Data.Data
-import Prelude
-import Rest.Info    (Info(..))
+import           GHC.Generics
+import           Data.Data
+import           Prelude
+import           Rest.Info                (Info(..))
 #endif
-import Data.Text    (Text, pack)
+import           Data.Text                (Text, pack)
+
+import qualified Crm.Shared.ContactPerson as CP
 
 #ifndef FAY
 instance Info MachineId where
   describe _ = "machineId"
 instance Read MachineId where 
   readsPrec i = fmap (\(a,b) -> (MachineId a, b)) `fmap` readsPrec i
+#endif
+
+data ContactPersonId = 
+  ContactPersonId CP.ContactPersonId | 
+  ContactPerson CP.ContactPerson
+#ifndef FAY
+  deriving (Generic, Typeable, Data)
 #endif
 
 newtype MachineId = MachineId { getMachineId :: Int }
