@@ -1,9 +1,11 @@
+{-# LANGUAGE TemplateHaskell #-}
+
 module Crm.Server.Api.UpkeepResource (
   insertUpkeepMachines ,
   upkeepResource ) where
 
 import           Opaleye.Operators           ((.==))
-import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning)
+import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning, runInsert)
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
 import           Opaleye                     (runQuery)
 
@@ -13,9 +15,9 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_)
-import           Control.Lens                (over, mapped, _3)
 
-import           Data.Tuple.All              (sel1, sel2, sel3, sel4, upd3)
+import           Data.Tuple.All              (sel1, sel2, sel3)
+import           Data.List                   (nub)
 
 import           Rest.Types.Error            (Reason(NotAllowed))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
@@ -29,42 +31,45 @@ import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.UpkeepMachine    as UM
-import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
+import           TupleTH                     (proj)
+
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 
 
 addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
+          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
           -> IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
+addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
-      pgBool $ U.upkeepClosed upkeep, maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, 
-      pgStrictText $ U.workHours upkeep, pgStrictText $ U.workDescription upkeep, 
-      pgStrictText $ U.recommendation upkeep)
+      pgBool $ U.upkeepClosed upkeep, pgStrictText $ U.workHours upkeep, 
+      pgStrictText $ U.workDescription upkeep , pgStrictText $ U.recommendation upkeep)
     sel1
   let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
+  insertEmployees connection upkeepId (nub employeeIds)
   return upkeepId
+
+insertEmployees :: Connection -> U.UpkeepId -> [E.EmployeeId] -> IO ()
+insertEmployees connection upkeepId employeeIds =
+  forM_ employeeIds $ \employeeId ->
+    runInsert connection upkeepEmployeesTable (pgInt4 . U.getUpkeepId $ upkeepId, pgInt4 . E.getEmployeeId $ employeeId)
 
 createUpkeepHandler :: Handler Dependencies
 createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> do
-  let
-    (_,_,selectedEmployeeId) = newUpkeep
-    newUpkeep' = upd3 (toMaybe selectedEmployeeId) newUpkeep
   (cache, connection) <- ask
   -- todo check that the machines are belonging to this company
-  upkeepId <- liftIO $ addUpkeep connection newUpkeep'
+  upkeepId <- liftIO $ addUpkeep connection newUpkeep
   recomputeWhole connection cache
   return upkeepId
 
@@ -89,33 +94,36 @@ removeUpkeep = mkConstHandler' jsonO $ do
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep,machines,employeeId) -> let 
-  upkeepTriple = (upkeep, machines, toMaybe employeeId)
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeIds) -> let 
+  upkeepTuple = (upkeep, machines)
   in do 
     ((cache, connection), upkeepId) <- ask
-    liftIO $ updateUpkeep connection upkeepId upkeepTriple
+    liftIO $ updateUpkeep connection upkeepId upkeepTuple employeeIds
     recomputeWhole connection cache
 
 updateUpkeep :: Connection
              -> U.UpkeepId
-             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], Maybe E.EmployeeId)
+             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])
+             -> [E.EmployeeId]
              -> IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines, employeeId) = do
+updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
   _ <- let
-    condition (upkeepId',_,_,_,_,_,_) = upkeepId' .== pgInt4 (U.getUpkeepId upkeepId)
+    condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
     readToWrite _ =
       (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        maybeToNullable $ (pgInt4 . E.getEmployeeId) `fmap` employeeId, pgStrictText $ U.workHours upkeep, 
+        pgStrictText $ U.workHours upkeep, 
         pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== (pgInt4 $ U.getUpkeepId upkeepId))
   insertUpkeepMachines conn upkeepId upkeepMachines
+  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 2 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  insertEmployees conn upkeepId employeeIds
   return ()
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn expandedUpkeepsQuery
-  return $ over (mapped . _3) toMyMaybe $ mapUpkeeps rows
+  return . mapUpkeeps $ rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO (const $ do
@@ -123,7 +131,7 @@ upkeepsPlannedListing = mkListing' jsonO (const $ do
   rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
   return $ map (\row -> let
     (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
-    in (sel1 u, sel3 u, sel1 c, sel2 c)) rows)
+    in ($(proj 2 0) u, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c)) rows)
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
@@ -134,7 +142,8 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   companyId <- case machines of
     [] -> throwError NotAllowed
     (companyId',_) : _ -> return companyId'
-  return (companyId, (sel2 upkeep, toMyMaybe $ sel3 upkeep, sel4 upkeep), map snd machines)
+  employeeIds <- liftIO $ runQuery conn (employeeIdsInUpkeep upkeepIdInt)
+  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map snd machines)
 
 
 -- resource

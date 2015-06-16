@@ -60,15 +60,14 @@ create table upkeeps (
   id serial primary key ,
   date_ date not null , 
   closed boolean not null ,
-  employee_id integer references employees (id) ,
   work_hours varchar (500) not null ,
   work_description varchar (5000) not null ,
   recommendation varchar (5000) not null );
 
 create table upkeep_machines (
-  upkeep_id integer references upkeeps (id) ,
+  upkeep_id integer not null references upkeeps (id) ,
   note varchar (5000) not null ,
-  machine_id integer references machines (id) ,
+  machine_id integer not null references machines (id) ,
   recorded_mileage integer not null ,
   warranty boolean not null ,
   primary key (upkeep_id, machine_id) );
@@ -92,3 +91,7 @@ create table extra_fields (
   machine_id integer not null references machines (id) ,
   value varchar (5000) not null ,
   primary key (extra_field_id, machine_id) );
+
+create table upkeep_employees (
+  upkeep_id integer not null references upkeeps (id) ,
+  employee_id integer not null references employees (id) );

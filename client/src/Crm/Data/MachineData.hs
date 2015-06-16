@@ -13,7 +13,6 @@ import           Crm.Shared.Photo
 import           Crm.Shared.PhotoMeta
 import           Crm.Shared.Upkeep
 import           Crm.Shared.UpkeepMachine
-import           Crm.Shared.Employee
 import           Crm.Shared.ExtraField
 
 import           Crm.Component.DatePicker
@@ -40,7 +39,7 @@ data MachineDetail = MachineDetail {
   formState :: InputState ,
   machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,
-  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, Maybe Employee)] ,
+  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine)] ,
   companyId' :: CompanyId }
 
 data MachineNew = MachineNew {

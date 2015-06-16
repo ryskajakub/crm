@@ -31,7 +31,6 @@ import qualified Crm.Shared.PhotoMeta                  as PM
 import qualified Crm.Shared.Photo                      as P
 import qualified Crm.Shared.Upkeep                     as U
 import qualified Crm.Shared.UpkeepMachine              as UM
-import qualified Crm.Shared.Employee                   as E
 import qualified Crm.Shared.ExtraField                 as EF
 import qualified Crm.Shared.MachineKind                as MK
 
@@ -55,7 +54,7 @@ machineDetail :: InputState
               -> M.MachineId
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
-              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee)]
+              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)]
               -> Maybe CP.ContactPersonId
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
@@ -74,8 +73,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
       extraRow = [editableRow Display "Další servis" (displayDate nextService)]
       upkeepHistoryHtml = let
-        mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee) -> [DOMElement]
-        mkUpkeepRows (_, upkeep, upkeepMachine, maybeEmployee) = let
+        mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine) -> [DOMElement]
+        mkUpkeepRows (_, upkeep, upkeepMachine) = let
           (labelClass, labelText) = if U.upkeepClosed upkeep
             then ("label-success", "Uzavřený")
             else ("label-warning", "Naplánovaný")
@@ -86,9 +85,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
           warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
           employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
-          employee = B.col (B.mkColProps 2) $ case maybeEmployee of
-            Just employee' -> [text2DOM $ E.name employee']
-            Nothing -> []
+          employee = B.col (B.mkColProps 2) $ "tbd"
           descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
           description = B.col (B.mkColProps 4) $ U.workDescription upkeep
           noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
@@ -323,9 +320,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
             in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
           buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-          dropdown = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
+          dropdown' = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
           in case editing of
-            Editing -> div' (class' "col-md-3") dropdown
+            Editing -> div' (class' "col-md-3") dropdown'
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
     _ -> []
 

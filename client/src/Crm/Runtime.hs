@@ -43,7 +43,7 @@ items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
 count1000' :: String
-count1000' = "count1000"
+count1000' = "count=1000"
 
 count1000 :: String
 count1000 = "?" ++ count1000'

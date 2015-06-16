@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where
@@ -7,7 +8,7 @@ import           Opaleye.RunQuery              (runQuery)
 
 import           Control.Monad.IO.Class        (liftIO)
 import           Control.Monad.Reader          (ask)
-import           Control.Applicative           (pure, (<*>))
+import           Control.Monad                 (forM)
 
 import           Data.Tuple.All                (sel1, sel2, sel3)
 
@@ -19,7 +20,7 @@ import           Rest.Handler                  (ListHandler)
 
 import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Company            as C
-import           Crm.Shared.MyMaybe
+import qualified Crm.Shared.Upkeep             as U
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
@@ -27,28 +28,33 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler            (mkListing')
 
+import           TupleTH                       (proj, catTuples)
+
 
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
-  ((_,conn), companyId) <- ask 
+  ((_,conn), companyId) <- ask
   rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
-  let 
-    mappedResults = mapResultsToList 
+  let
+    mappedResults = mapResultsToList
       sel1
-      (\(upkeepCols,_,_,employeeCols) -> let
+      (\(upkeepCols,_,_) -> let
         upkeep = convert upkeepCols :: UpkeepMapped
-        employee = convert employeeCols :: MaybeEmployeeMapped
-        employeeInsideMyMaybe = toMyMaybe $ pure (,) <*> sel1 employee <*> sel2 employee
-        in (sel1 upkeep, sel3 upkeep, employeeInsideMyMaybe))
-      (\(_,upkeepMachine',machineType',_) -> let
+        in ($(proj 2 0) upkeep, $(proj 2 1) upkeep))
+      (\(_, upkeepMachine', machineType') -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
         machineId = sel2 upkeepMachineMapped
         in (upkeepMachine, machineType, machineId))
       rows
-  return $ map (\((upkeepId, upkeep, maybeEmployee), upkeepMachines) -> 
-    (upkeepId, upkeep, upkeepMachines, maybeEmployee)) mappedResults
+    flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
+      (upkeepId, upkeep, upkeepMachines)) mappedResults
+  withEmployees <- liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
+    results <- runQuery conn (employeesInUpkeep $ U.getUpkeepId upkeepId)
+    let mappedEmployees = fmap (\row -> convert row) results :: [EmployeeMapped]
+    return ($(catTuples 3 1) r mappedEmployees)
+  return withEmployees
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
 upkeepResource = mkResourceId {

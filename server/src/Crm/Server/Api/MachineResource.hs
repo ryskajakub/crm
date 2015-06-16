@@ -95,11 +95,10 @@ machineSingle = mkConstHandler' jsonO $ do
       in ($(proj 3 0) ef, snd efs, $(proj 3 2) ef)
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
-    upkeepsData = fmap (\((upkeep', upkeepMachine'), maybeEmployee') -> let
-      maybeEmployee = convert maybeEmployee' :: MaybeEmployeeMapped
+    upkeepsData = fmap (\(upkeep', upkeepMachine') -> let
       upkeep = convert upkeep' :: UpkeepMapped
       upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
-      in (sel1 upkeep, sel3 upkeep, sel3 upkeepMachine, toMyMaybe $ sel2 maybeEmployee)) upkeepRows
+      in ($(proj 2 0) upkeep, $(proj 2 1) upkeep, sel3 upkeepMachine)) upkeepRows
     upkeeps = fmap sel2 upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined

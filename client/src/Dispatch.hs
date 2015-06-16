@@ -67,14 +67,14 @@ main' = do
               companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons v 
               otherMachineId otherMachines extraFields
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
-        upkeepDatePicker employees selectedEmployee validation upkeepPageMode) -> n $
+        upkeepDatePicker employees selectedEmployees validation upkeepPageMode) -> n $
           emptyCallback $ case upkeepPageMode of
             Left (UD.UpkeepClose upkeepId companyId) ->
               upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
-                machines companyId employees selectedEmployee validation
+                machines companyId employees selectedEmployees validation
             Right (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeep upkeepDatePicker notCheckedMachines machines
-                upkeepIdentification employees selectedEmployee validation
+                upkeepIdentification employees selectedEmployees validation
       D.UpkeepHistory upkeeps' companyId -> n $ emptyCallback $ upkeepHistory upkeeps' companyId router
       D.PlannedUpkeeps plannedUpkeeps' -> n $ emptyCallback
         (plannedUpkeeps router plannedUpkeeps')

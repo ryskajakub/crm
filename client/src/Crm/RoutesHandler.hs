@@ -136,7 +136,7 @@ startRouter appVar = startedRouter where
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
               ((nowYMD, False), displayDate nowYMD) employees 
-              Nothing V.new (Right $ UD.UpkeepNew $ Left companyId) ,
+              [] V.new (Right $ UD.UpkeepNew $ Left companyId) ,
     useHandler contactPersonList' $ \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList data'
@@ -165,13 +165,13 @@ startRouter appVar = startedRouter where
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation } ,
     useHandler upkeepDetail' $ \upkeepId ->
-      fetchUpkeep upkeepId $ \(companyId,(upkeep,selectedEmployee,upkeepMachines),machines) -> 
+      fetchUpkeep upkeepId $ \(companyId,(upkeep, upkeepMachines, employeeIds),machines) -> 
         fetchEmployees $ \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-            selectedEmployee V.new (Left $ UD.UpkeepClose upkeepId companyId) ,
+            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId) ,
     useHandler machineTypesList' $ const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ,
     useHandler machineTypeEdit' $ \machineTypeId ->
@@ -179,12 +179,12 @@ startRouter appVar = startedRouter where
         let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
         in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust) ,
     useHandler replanUpkeep' $ \upkeepId ->
-      fetchUpkeep upkeepId $ \(_, (upkeep, employeeId, upkeepMachines), machines) ->
+      fetchUpkeep upkeepId $ \(_, (upkeep, upkeepMachines, employeeIds), machines) ->
         fetchEmployees $ \employees ->
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) 
             ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
-            employees employeeId V.new (Right $ UD.UpkeepNew $ Right upkeepId) ,
+            employees (map Just employeeIds) V.new (Right $ UD.UpkeepNew $ Right upkeepId) ,
     useHandler contactPersonEdit' $ \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,

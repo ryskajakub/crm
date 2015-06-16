@@ -40,8 +40,7 @@ data NavigationState =
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {
-    companyUpkeeps :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)],
-      Maybe E.Employee')] ,
+    companyUpkeeps :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] ,
     companyId :: C.CompanyId } |
   PlannedUpkeeps { 
     plannedUpkeeps :: [(U.UpkeepId,U.Upkeep,C.CompanyId,C.Company)] } |

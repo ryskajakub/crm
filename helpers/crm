@@ -7,7 +7,6 @@ server {
   root /var/www/crm/client/build;
 
   location /api {
-    rewrite ^/api(.*)$ $1 break;
     proxy_pass http://localhost:8000;
   }
 
