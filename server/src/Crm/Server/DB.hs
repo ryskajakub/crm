@@ -76,6 +76,7 @@ module Crm.Server.DB (
   machineManufacturersQuery ,
   employeesInUpkeep ,
   employeeIdsInUpkeep ,
+  notesForUpkeep ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -690,6 +691,11 @@ extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc 
   restrict -< $(proj 3 1) extraFieldRow .== $(proj 11 0) machineRow
   extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
   returnA -< (extraFieldRow, extraFieldSettingRow)
+
+notesForUpkeep :: Int -> Query DBText
+notesForUpkeep upkeepId = proc () -> do
+  upkeepMachinesRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
+  returnA -< $(proj 6 1) upkeepMachinesRow
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]

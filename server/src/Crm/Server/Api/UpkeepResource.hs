@@ -14,10 +14,11 @@ import           Database.PostgreSQL.Simple  (Connection)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Error.Class   (throwError)
-import           Control.Monad               (forM_)
+import           Control.Monad               (forM_, forM)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import           Data.List                   (nub)
+import           Data.Text                   (intercalate, pack)
 
 import           Rest.Types.Error            (Reason(NotAllowed))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
@@ -127,12 +128,15 @@ upkeepListing = mkListing' jsonO $ const $ do
   return . mapUpkeeps $ rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
-upkeepsPlannedListing = mkListing' jsonO (const $ do
+upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,conn) <- ask
   rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
-  return $ map (\row -> let
-    (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
-    in ($(proj 2 0) u, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c)) rows)
+  liftIO $ forM rows $ \row -> do
+    let (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
+    let upkeepId = $(proj 2 0) u
+    notes <- runQuery conn (notesForUpkeep . U.getUpkeepId $ upkeepId)
+    let note = intercalate (pack " | ") notes
+    return (upkeepId, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c, note)
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do

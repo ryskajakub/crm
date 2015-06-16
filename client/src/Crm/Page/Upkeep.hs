@@ -37,16 +37,17 @@ import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: R.CrmRouter
-               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company)]
+               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, Text)]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
     th "Název firmy" ,
     th "Město" ,
+    th "Poznámky" ,
     th "Datum" ,
     th "Přeplánovat" ,
     th "Uzavřít" ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company) ->
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes) ->
     tr [
       td $ R.link
         (C.companyName company)
