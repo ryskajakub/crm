@@ -8,6 +8,7 @@ module Crm.Page.Machine (
 import           Data.Text                             (fromString, (<>), Text, showInt)
 import           Prelude                               hiding (div, span, id)
 import           Data.Var                              (Var, modify)
+import           Data.Maybe                            (onJust)
 import           FFI                                   (Defined(Defined))
 
 import           HaskellReact                          hiding (row)
@@ -55,7 +56,7 @@ machineDetail :: InputState
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)]
-              -> Maybe CP.ContactPersonId
+              -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
               -> Maybe M.MachineId
@@ -161,7 +162,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
             "Jdi do editačního módu"
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-      editMachineAction = updateMachine machineId machine otherMachineId contactPersonId 
+      (_, contactPersonId', _) = contactPersonId
+      editMachineAction = updateMachine machineId machine otherMachineId contactPersonId'
         extraFieldsForServer (setEditing Display)
       buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
       button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
@@ -174,24 +176,27 @@ machineNew :: R.CrmRouter
            -> C.CompanyId
            -> (MT.MachineType, [US.UpkeepSequence])
            -> Maybe MT.MachineTypeId
-           -> Maybe CP.ContactPersonId
+           -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
            -> [(CP.ContactPersonId, CP.ContactPerson)]
            -> V.Validation
            -> Maybe M.MachineId
            -> [(M.MachineId, M.Machine)]
            -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
            -> DOMElement
-machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific 
-    companyId machineTypeTuple machineTypeId contactPersonId contactPersons v otherMachineId om extraFields = 
+machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific companyId machineTypeTuple 
+    machineTypeId (cId @ (contactPerson, contactPersonId, contactPersonActive)) contactPersons v otherMachineId om extraFields = 
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow'' appState datePickerCalendar (machine', datePickerText) 
-      machineSpecific machineTypeTuple [] Nothing contactPersonId contactPersons v otherMachineId om extraFields
+      machineSpecific machineTypeTuple [] Nothing cId contactPersons v otherMachineId om extraFields
     where
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId otherMachineId extraFieldsForServer
+      contactPersonId' = case contactPersonActive of
+        MD.New  -> Just . M.ContactPerson $ contactPerson     
+        MD.ById -> M.ContactPersonId `onJust` contactPersonId
+      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
         (R.navigate (R.companyDetail companyId) router)
       buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
 
@@ -205,7 +210,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
-               -> Maybe (CP.ContactPersonId)
+               -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
                -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> V.Validation
                -> Maybe M.MachineId
@@ -213,7 +218,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText) 
-    _ (machineType, upkeepSequences) extraRows extraGrid contactPersonId 
+    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (_, cpId, _))
     contactPersons validation otherMachineId otherMachines extraFields = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -346,8 +351,10 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           "Kontaktní osoba" 
           contactPersons 
           CP.name 
-          (findInList contactPersonId contactPersons) $
-          \cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId } ,
+          (findInList cpId contactPersons) $
+          \cpId -> changeNavigationState $ \md -> let
+            (a, b, c) = MD.contactPersonId md
+            in md { MD.contactPersonId = (a, cpId, c) } ,
         nullDropdownRowEditing 
           "Zapojení" 
           otherMachines 

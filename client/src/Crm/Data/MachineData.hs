@@ -4,7 +4,7 @@ import           Data.Text (Text)
 
 import           Crm.Shared.Company
 import           Crm.Shared.ContactPerson
-import           Crm.Shared.Machine
+import           Crm.Shared.Machine        (Machine, MachineId)
 import           Crm.Shared.MachineType
 import           Crm.Shared.MachineKind
 import           Crm.Shared.YearMonthDay
@@ -20,12 +20,14 @@ import qualified Crm.Validation            as V
 
 import           Crm.Component.Form        (InputState)
 
+data ContactPersonInMachine = New | ById
+
 data MachineData = MachineData {
   machine :: (Machine, Text) ,
   machineKindSpecific :: MachineKindEnum ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
-  contactPersonId :: Maybe ContactPersonId ,
+  contactPersonId :: (ContactPerson, Maybe ContactPersonId, ContactPersonInMachine) ,
   contactPersons :: [(ContactPersonId, ContactPerson)] ,
   validation :: V.Validation ,
   otherMachineId :: Maybe MachineId ,
