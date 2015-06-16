@@ -73,10 +73,6 @@ plannedUpkeeps router upkeepCompanies = let
     [B.col (B.mkColProps 12) $ main $ B.table [head', body]]
 
 
-swap :: (a, b) -> (b, a)
-swap (x, y) = (y, x)
-
-
 -- | if the element is in the first list, put it in the other one, if the element
 -- is in the other, put in the first list
 toggle :: ([a],[a]) -> (a -> Bool) -> ([a],[a])

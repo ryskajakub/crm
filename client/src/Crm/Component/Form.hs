@@ -241,8 +241,9 @@ textareaRow editing label value onChange = editableRow editing label textarea' w
   textarea' = textarea editing True value onChange
 
 -- | Dropdown component
-dropdownRow :: InputState 
-            -> Text -- label for the row
+dropdownRow :: (Renderable label)
+            => InputState 
+            -> label -- label for the row
             -> [(a, b)] -- key value list
             -> (b -> Text) -- format the b value for the user to see
             -> b -- the displayed element in the closed dropdown
@@ -259,8 +260,9 @@ dropdownRow editing rowLabel elements display currentElement setId = row rowLabe
   buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
 
 -- | Dropdown component with a null value
-nullDropdownRow :: InputState
-                -> Text 
+nullDropdownRow :: (Renderable label)
+                => InputState
+                -> label
                 -> [(a, b)]
                 -> (b -> Text)
                 -> Maybe b

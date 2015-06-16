@@ -25,6 +25,9 @@ data File
 data FileContents
 
 
+swap :: (a, b) -> (b, a)
+swap (x, y) = (y, x)
+
 encodeURIComponent :: Text -> Text
 encodeURIComponent = ffi " encodeURIComponent(%1) "
 

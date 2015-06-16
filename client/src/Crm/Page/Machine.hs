@@ -7,6 +7,7 @@ module Crm.Page.Machine (
 
 import           Data.Text                             (fromString, (<>), Text, showInt)
 import           Prelude                               hiding (div, span, id)
+import qualified Prelude                 
 import           Data.Var                              (Var, modify)
 import           Data.Maybe                            (onJust)
 import           FFI                                   (Defined(Defined))
@@ -218,7 +219,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText) 
-    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (cp, cpId, _))
+    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (cp, cpId, contactPersonActive))
     contactPersons validation otherMachineId otherMachines extraFields = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -331,8 +332,6 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
     _ -> []
 
-  nullDropdownRowEditing = nullDropdownRow editing
-
   cpPartInputs :: Text
                -> (CP.ContactPerson -> Text)
                -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
@@ -350,7 +349,13 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
   setCP :: CP.ContactPerson -> Fay ()
   setCP contactPerson = changeNavigationState $ \md -> let
     (_, a0, a1) = MD.contactPersonId md
-    in md { MD.contactPersonId = (contactPerson, a0, a1) }
+    in md { MD.contactPersonId = (contactPerson, a0, MD.New) }
+
+  (newHighlight, byIdHighlight) = let
+    f = case contactPersonActive of
+      MD.ById -> Prelude.id
+      MD.New  -> swap
+    in f (span' (class' "underline"), Prelude.id)
 
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
@@ -366,19 +371,21 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           "Výrobce"
           (SetValue $ MT.machineTypeManufacturer machineType)
           (const $ return ()) ,
-        nullDropdownRowEditing 
-          "Kontaktní osoba - stávající" 
+        nullDropdownRow
+          editing
+          (newHighlight . text2DOM $ "Kontaktní osoba - stávající")
           contactPersons 
           CP.name 
           (findInList cpId contactPersons) $
           \cpId -> changeNavigationState $ \md -> let
-            (a, b, c) = MD.contactPersonId md
-            in md { MD.contactPersonId = (a, cpId, c) } ,
-        row "Kontaktní osoba - nová" $ concat [
+            (a, b, _) = MD.contactPersonId md
+            in md { MD.contactPersonId = (a, cpId, MD.ById) } ,
+        row (byIdHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
           cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
           cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
           cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t }] ,
-        nullDropdownRowEditing 
+        nullDropdownRow
+          editing 
           "Zapojení" 
           otherMachines 
           M.serialNumber 
