@@ -33,9 +33,9 @@ import           TupleTH                       (proj, catTuples)
 
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
-  ((_,conn), companyId) <- ask 
+  ((_,conn), companyId) <- ask
   rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
-  let 
+  let
     mappedResults = mapResultsToList
       sel1
       (\(upkeepCols,_,_) -> let
@@ -48,12 +48,12 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
         machineId = sel2 upkeepMachineMapped
         in (upkeepMachine, machineType, machineId))
       rows
-    flattened = fmap (\((upkeepId, upkeep), upkeepMachines) -> 
+    flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults
   withEmployees <- liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
     results <- runQuery conn (employeesInUpkeep $ U.getUpkeepId upkeepId)
     let mappedEmployees = fmap (\row -> convert row) results :: [EmployeeMapped]
-    return ( $(catTuples 3 1) r mappedEmployees )
+    return ($(catTuples 3 1) r mappedEmployees)
   return withEmployees
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void

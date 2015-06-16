@@ -143,7 +143,7 @@ startRouter appVar = startedRouter where
         in modify' ns ,
     useHandler maintenances' $ \companyId ->
       fetchUpkeeps companyId $ \upkeepsData -> let
-        ns = D.UpkeepHistory (map (\(a,b,c) -> (a,b,c,[])) upkeepsData) companyId
+        ns = D.UpkeepHistory upkeepsData companyId
         in modify' ns ,
     useHandler machineDetail' $ \machineId ->
       fetchMachine machineId

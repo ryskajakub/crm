@@ -178,7 +178,7 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
 fetchUpkeep = XU.bySingle 
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)])] -> Fay ()) -- ^ callback
+             -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> Fay ()) -- ^ callback
              -> Fay ()
 fetchUpkeeps = XCU.list
   
