@@ -31,7 +31,6 @@ import qualified Crm.Shared.PhotoMeta                  as PM
 import qualified Crm.Shared.Photo                      as P
 import qualified Crm.Shared.Upkeep                     as U
 import qualified Crm.Shared.UpkeepMachine              as UM
-import qualified Crm.Shared.Employee                   as E
 import qualified Crm.Shared.ExtraField                 as EF
 import qualified Crm.Shared.MachineKind                as MK
 
@@ -321,9 +320,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             selectAction = setMachineFull (machine' { M.mileagePerYear = value }, datePickerText)
             in li $ A.a''' (click selectAction) selectLabel) operationTypeTuples
           buttonLabel' = [text2DOM $ buttonLabel <> " " , span' (class' "caret") ""]
-          dropdown = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
+          dropdown' = BD.buttonDropdown' (inputStateToBool editing) buttonLabel' selectElements
           in case editing of
-            Editing -> div' (class' "col-md-3") dropdown
+            Editing -> div' (class' "col-md-3") dropdown'
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
     _ -> []
 

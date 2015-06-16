@@ -49,7 +49,8 @@ import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Bootstrap.Glyphicon      as G
 
-import Debug.Trace
+
+-- datas
 
 data InputState = Editing | Display
   deriving Eq
@@ -286,11 +287,11 @@ multipleInputs :: forall a b.
                -> [a] 
                -> a
                -> [DOMElement]
-multipleInputs fieldLabel' addNewButtonLabel orderingControls get setList inputControl elems newField = 
+multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag get setList inputControl elems newField = 
 
   map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
 
-    (includeOrderingControls, labelFieldSize) = case orderingControls of
+    (includeOrderingControls, labelFieldSize) = case orderingControlsFlag of
       OrderingVisible   -> ((:[]), 2)
       OrderingInvisible -> (const [], 3)
 
@@ -327,9 +328,9 @@ multipleInputs fieldLabel' addNewButtonLabel orderingControls get setList inputC
       fieldLabel = label' 
         (class'' ["control-label", "col-md-" <> showInt labelFieldSize])
         (fieldLabel' <> " " <> showInt index)
-      setFieldValue a = let
+      setFieldValue a' = let
         (start, _ : rest) = splitAt index elems
-        in setList $ start ++ [a] ++ rest
+        in setList $ start ++ [a'] ++ rest
       input' = div' (class' "col-md-7") $ inputControl (get a) (setFieldValue)
       removeButton = let
         removeField = let

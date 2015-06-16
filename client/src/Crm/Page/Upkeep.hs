@@ -315,7 +315,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     multipleInputs "Servisman" "Další servisman" OrderingInvisible get setList inputControl elems newField where
       get :: Maybe (E.EmployeeId) -> Maybe (E.EmployeeId, E.Employee)
       get eId = joinMaybe $ (\eId' -> (\e -> (eId', e)) `onJust` lookup eId' employees) `onJust` eId
-      setList elems = modify' $ \ud -> ud { UD.selectedEmployees = elems }
+      setList employeeIds = modify' $ \ud -> ud { UD.selectedEmployees = employeeIds }
       inputControl employee' setEmployee' = nullDropdown
         employees
         E.name

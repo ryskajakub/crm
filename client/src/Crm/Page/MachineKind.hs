@@ -5,18 +5,14 @@
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
-import           Data.Text                        (fromString, showInt, (<>))
+import           Data.Text                        (fromString)
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          
 import           Data.Var                         (Var)
 import           Data.Maybe                       (fromJust)
-import           FFI                              (Defined(Defined))
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap           as B
-import qualified HaskellReact.Tag.Hyperlink       as A
-import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.BackboneRouter      as BR
 
 import qualified Crm.Shared.MachineKind           as MK
@@ -52,10 +48,10 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
         newElem = (EF.ToBeAssigned, MK.newMachineKindSpecific)
         get = Prelude.id
         setList as = setNewSettings (editedEnum, as)
-        mkInput (row@(rowId, rowValue)) setRow = input
+        mkInput (rowId, rowValue) setRow = input
           Editing
           True 
-          (SetValue . MK.name . snd $ row)
+          (SetValue . MK.name $ rowValue)
           (\t -> setRow $ (rowId, rowValue { MK.name = t }))
       
     submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
