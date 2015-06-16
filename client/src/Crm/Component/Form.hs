@@ -47,6 +47,8 @@ import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Bootstrap.Glyphicon      as G
 
+import Debug.Trace
+
 data InputState = Editing | Display
   deriving Eq
 
@@ -284,8 +286,10 @@ multipleInputs fieldLabel' get set setList inputControl elems newField =
 
     addAnotherFieldRow = oneElementRow addAnotherFieldButton ""
     addAnotherFieldButton = let
-      addField = setList $ elems ++ [newField]
-      props =  BTN.buttonProps { BTN.onClick = Defined $ const addField }
+      addField = let
+        newList = elems ++ [newField]
+        in setList newList
+      props = BTN.buttonProps { BTN.onClick = Defined $ const addField }
       buttonLabel = "Přidat políčko"
       in BTN.button' props buttonLabel
 

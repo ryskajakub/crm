@@ -314,7 +314,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       get :: Maybe (E.EmployeeId) -> Maybe (E.EmployeeId, E.Employee)
       get eId = joinMaybe $ (\eId' -> (\e -> (eId', e)) `onJust` lookup eId' employees) `onJust` eId
       set _ b = (fst `onJust` b)
-      setList = const . return $ ()
+      setList elems = modify' $ \ud -> ud { UD.selectedEmployees = elems }
       inputControl employee' setEmployee' = nullDropdown
         employees
         E.name
