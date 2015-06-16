@@ -374,8 +374,10 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           \cpId -> changeNavigationState $ \md -> let
             (a, b, c) = MD.contactPersonId md
             in md { MD.contactPersonId = (a, cpId, c) } ,
-        row "Kontaktní osoba - nová" (concat [
-          cpPartInputs "Jméno" CP.name (\cp t -> cp { CP.name = t }) ]) ,
+        row "Kontaktní osoba - nová" $ concat [
+          cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
+          cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
+          cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t }] ,
         nullDropdownRowEditing 
           "Zapojení" 
           otherMachines 
