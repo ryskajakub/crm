@@ -10,7 +10,7 @@ import           Data.Text                        (fromString, Text, showInt, (<
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
-import           Data.Maybe                       (onJust, joinMaybe)
+import           Data.Maybe                       (onJust, joinMaybe, mapMaybe)
 import           FFI (Defined(Defined))
 
 import           HaskellReact                     as HR
@@ -112,13 +112,13 @@ upkeepDetail :: R.CrmRouter
              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
              -> [E.Employee']
-             -> [E.EmployeeId]
+             -> [Maybe E.EmployeeId]
              -> V.Validation
              -> DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees [] v
+    machines submitButton True employees selectedEmployees v
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -139,16 +139,16 @@ upkeepNew :: R.CrmRouter
           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
           -> Either C.CompanyId U.UpkeepId
           -> [E.Employee']
-          -> [E.EmployeeId]
+          -> [Maybe E.EmployeeId]
           -> V.Validation
           -> DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es [] v where
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Left _ -> let
         newUpkeepHandler = createUpkeep
-          (upkeepU, upkeepMachines, se)
+          (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [G.plus , text2DOM " Naplánovat"]
