@@ -168,6 +168,11 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         in ("Přeplánovat servis", button)
 
 
+mapEither :: (a -> a') -> Either a b -> Either a' b
+mapEither f (Left a) = Left . f $ a
+mapEither _ (Right b) = Right b
+
+
 upkeepForm :: Var D.AppState
            -> Text -- ^ page header
            -> (U.Upkeep, [(UM.UpkeepMachine')])
@@ -227,7 +232,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
     else ([], 6, 6)
 
-  toggleNote = return ()
+  toggleNote = let
+    newClose uc = uc { UD.displayedNote = newDisplayedNote } where
+      newDisplayedNote = case UD.displayedNote uc of
+        Note -> EndNote
+        EndNote -> Note
+        x -> x
+    in modify' $ \ud -> ud { UD.upkeepPageMode = mapEither newClose (UD.upkeepPageMode ud) }
   (getNote, setNote, noteHeaders) = case displayedNoteFlag of
     Note -> let
       noteActive = [ 
