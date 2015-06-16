@@ -277,17 +277,16 @@ nullDropdownRow editing rowLabel elements display currentElement setId =
     display' Nothing = "---"
 
 
-multipleInputs :: forall a b.
+multipleInputs :: forall a.
                   Text
                -> Text
                -> OrderingControls
-               -> (a -> b)
                -> ([a] -> Fay ())
-               -> (b -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
+               -> (a -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [a] 
                -> a
                -> [DOMElement]
-multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag get setList inputControl elems newField = 
+multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag setList inputControl elems newField = 
 
   map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
 
@@ -331,7 +330,7 @@ multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag get setList in
       setFieldValue a' = let
         (start, _ : rest) = splitAt index elems
         in setList $ start ++ [a'] ++ rest
-      input' = div' (class' "col-md-7") $ inputControl (get a) (setFieldValue)
+      input' = div' (class' "col-md-7") $ inputControl a (setFieldValue)
       removeButton = let
         removeField = let
           (start, _:rest) = splitAt index elems

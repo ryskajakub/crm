@@ -43,10 +43,9 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
     machineKindDropdown = dropdownRow Editing "Druh stroje" MK.machineKinds (\x -> x) machineKindName
       $ \selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = selectedKind }
     kindAttributeFields = multipleInputs
-      "Pole" "Přidat pole" OrderingVisible get setList mkInput elems newElem where
+      "Pole" "Přidat pole" OrderingVisible setList mkInput elems newElem where
         elems = theEditedMachineKind
         newElem = (EF.ToBeAssigned, MK.newMachineKindSpecific)
-        get = Prelude.id
         setList as = setNewSettings (editedEnum, as)
         mkInput (rowId, rowValue) setRow = input
           Editing
