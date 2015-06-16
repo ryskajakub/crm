@@ -330,7 +330,7 @@ multipleInputs fieldLabel' addNewButtonLabel orderingControls get setList inputC
       setFieldValue a = let
         (start, _ : rest) = splitAt index elems
         in setList $ start ++ [a] ++ rest
-      input' = inputControl (get a) (setFieldValue)
+      input' = div' (class' "col-md-7") $ inputControl (get a) (setFieldValue)
       removeButton = let
         removeField = let
           (start, _:rest) = splitAt index elems
