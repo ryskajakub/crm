@@ -1,7 +1,6 @@
 /* fix content jumping when scrollbar appears */
 html {
-  overflow-y: scroll;
-}
+  overflow-y: scroll; }
 
 div.panel-body h3 {
   position:relative; }
@@ -14,6 +13,10 @@ div.panel-body h3 {
 
 .my-text-left {
   text-align: left !important; }
+
+.my-text-right {
+  position: absolute;
+  right: 15px; }
 
 form.upkeep-sequence-form {
   margin-bottom: 20px; }

@@ -226,6 +226,22 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
     else ([], 6, 6)
+
+  toggleNote = return ()
+  (getNote, setNote, noteHeaders) = case displayedNoteFlag of
+    Note -> let
+      noteActive = [ 
+        strong "Poznámka" ,
+        A.a''' ((class' "my-text-right") { onClick = Defined . const $ toggleNote } ) "Koncová poznámka" ]
+      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, noteActive)
+    EndNote -> let
+      endNoteActive = [
+        A.a''' (mkAttrs { onClick = Defined . const $ toggleNote }) "Poznámka" ,
+        strong' (class' "my-text-right") "Koncová poznámka" ]
+      in (UM.endNote, \t um -> um { UM.endNote = t }, endNoteActive)
+    NoChoice -> let
+      onlyNote = [strong "Poznámka"]
+      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
   upkeepMachineRow :: (M.MachineId, M.Machine, a1, a2, MT.MachineType) -> DOMElement
   upkeepMachineRow (machineId, machine', _, _, machineType) = let
@@ -291,10 +307,6 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     warranty = B.col (B.mkColProps 1) $ checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
       updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
-    (getNote, setNote) = case displayedNoteFlag of
-      Note    -> (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t })
-      EndNote -> (UM.endNote, \t um -> um { UM.endNote = t })
-
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
@@ -336,7 +348,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
     B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
-    B.col (B.mkColProps noteColsSize) $ strong "Poznámka" ]
+    B.col (B.mkColProps noteColsSize) noteHeaders]
 
   companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
   validationMessages'' = V.messages validation
