@@ -10,6 +10,7 @@ import           Data.Text                        (fromString, Text, showInt, (<
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
+import           Data.Maybe                       (onJust, joinMaybe)
 import           FFI (Defined(Defined))
 
 import           HaskellReact                     as HR
@@ -117,7 +118,7 @@ upkeepDetail :: R.CrmRouter
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployees v
+    machines submitButton True employees [] v
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -142,7 +143,7 @@ upkeepNew :: R.CrmRouter
           -> V.Validation
           -> DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v where
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es [] v where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Left _ -> let
@@ -173,7 +174,7 @@ upkeepForm :: Var D.AppState
            -> (Bool -> DOMElement) -- ^ submit button
            -> Bool -- ^ display the mth input field
            -> [E.Employee']
-           -> [E.EmployeeId]
+           -> [Maybe E.EmployeeId]
            -> V.Validation
            -> DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
@@ -308,18 +309,18 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   dateRow = oneElementRow "Datum" datePicker
 
-  nowRows = [(1, "Pepa"), (2, "Karel")] :: [(Int, Text)]
   employeeSelectRows = 
     multipleInputs "Servisman" get set setList inputControl elems where
-      get = Prelude.id
-      set = const . Prelude.id
+      get :: Maybe (E.EmployeeId) -> Maybe (E.EmployeeId, E.Employee)
+      get eId = joinMaybe $ (\eId' -> (\e -> (eId', e)) `onJust` lookup eId' employees) `onJust` eId
+      set _ b = (fst `onJust` b)
       setList = const . return $ ()
-      inputControl element setElement = nullDropdown
-        nowRows
-        Prelude.id
-        (Just "Franta")
-        (const . return $ ())
-      elems = [1, 2] :: [Int]
+      inputControl employee' setEmployee' = nullDropdown
+        employees
+        E.name
+        (snd `onJust` employee')
+        (setEmployee')
+      elems = selectedEmployees
 
   formHeader = div' (class' "form-group") $ [
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 

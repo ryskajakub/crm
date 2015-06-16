@@ -275,7 +275,7 @@ multipleInputs :: forall a b.
                -> (a -> b)
                -> (a -> b -> a)
                -> ([a] -> Fay ())
-               -> (b -> (b -> Fay ()) -> DOMElement) -- | the inputlike element
+               -> (b -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
                -> [a] 
                -> [DOMElement]
 multipleInputs fieldLabel' get set setList inputControl elems = map (displayRow . assignPosition) (zipWithIndex elems) where
@@ -303,9 +303,8 @@ multipleInputs fieldLabel' get set setList inputControl elems = map (displayRow 
         _ -> []
     fieldLabel = label' (class'' ["control-label", "col-md-2"]) (fieldLabel' <> " " <> showInt index)
     setFieldValue a = let
-      (start, field : rest) = splitAt index elems
-      modifiedX = set field a
-      in setList $ start ++ [modifiedX] ++ rest
+      (start, _ : rest) = splitAt index elems
+      in setList $ start ++ [a] ++ rest
     input' = inputControl (get a) (setFieldValue)
     removeButton = let
       removeField = let
