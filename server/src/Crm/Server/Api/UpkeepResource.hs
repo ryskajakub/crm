@@ -5,7 +5,7 @@ module Crm.Server.Api.UpkeepResource (
   upkeepResource ) where
 
 import           Opaleye.Operators           ((.==))
-import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning)
+import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning, runInsert)
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
 import           Opaleye                     (runQuery)
 
@@ -49,7 +49,7 @@ data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
 addUpkeep :: Connection
           -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
           -> IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
+addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
@@ -58,7 +58,13 @@ addUpkeep connection (upkeep, upkeepMachines, employeeId) = do
     sel1
   let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
+  insertEmployees connection upkeepId employeeIds
   return upkeepId
+
+insertEmployees :: Connection -> U.UpkeepId -> [E.EmployeeId] -> IO ()
+insertEmployees connection upkeepId employeeIds =
+  forM_ employeeIds $ \employeeId ->
+    runInsert connection upkeepEmployeesTable (pgInt4 . U.getUpkeepId $ upkeepId, pgInt4 . E.getEmployeeId $ employeeId)
 
 createUpkeepHandler :: Handler Dependencies
 createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> do
