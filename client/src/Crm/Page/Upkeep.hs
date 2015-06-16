@@ -125,6 +125,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
         submitButton = let
           closeUpkeepHandler = updateUpkeep
             upkeep3
+            (mapMaybe Prelude.id selectedEmployees)
             (R.navigate (R.maintenances companyId) router)
           in mkSubmitButton 
             [span G.plus , span " Uzavřít"]
@@ -157,6 +158,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
       Right (upkeepId) -> let
         replanUpkeepHandler = updateUpkeep
           (upkeepId, upkeepU, upkeepMachines)
+          (mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]

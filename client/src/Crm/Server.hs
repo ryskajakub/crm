@@ -351,12 +351,13 @@ updateCompany companyId company coordinates cb =
     (const cb)
 
 updateUpkeep :: U.Upkeep'
+             -> [E.EmployeeId]
              -> Fay ()
              -> Fay ()
-updateUpkeep (upkeepId, upkeep, upkeepMachines) cb = 
+updateUpkeep (upkeepId, upkeep, upkeepMachines) employeeIds cb = 
   XU.saveBySingle
     upkeepId
-    (upkeep, upkeepMachines)
+    (upkeep, upkeepMachines, employeeIds)
     (const cb)
 
 updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])

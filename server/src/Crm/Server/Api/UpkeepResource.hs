@@ -96,18 +96,19 @@ removeUpkeep = mkConstHandler' jsonO $ do
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines) -> let 
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeIds) -> let 
   upkeepTuple = (upkeep, machines)
   in do 
     ((cache, connection), upkeepId) <- ask
-    liftIO $ updateUpkeep connection upkeepId upkeepTuple
+    liftIO $ updateUpkeep connection upkeepId upkeepTuple employeeIds
     recomputeWhole connection cache
 
 updateUpkeep :: Connection
              -> U.UpkeepId
              -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])
+             -> [E.EmployeeId]
              -> IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines) = do
+updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
   _ <- let
     condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
     readToWrite _ =
@@ -117,6 +118,8 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) = do
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\(upkeepId',_,_,_,_) -> upkeepId' .== (pgInt4 $ U.getUpkeepId upkeepId))
   insertUpkeepMachines conn upkeepId upkeepMachines
+  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 2 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  insertEmployees conn upkeepId employeeIds
   return ()
 
 upkeepListing :: ListHandler Dependencies
