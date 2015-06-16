@@ -18,6 +18,7 @@ import           Control.Monad               (forM_)
 import           Control.Lens                (over, mapped, _3)
 
 import           Data.Tuple.All              (sel1, sel2, sel3, sel4, upd3)
+import           Data.List                   (nub)
 
 import           Rest.Types.Error            (Reason(NotAllowed))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
@@ -58,7 +59,7 @@ addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
     sel1
   let upkeepId = U.UpkeepId $ head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
-  insertEmployees connection upkeepId employeeIds
+  insertEmployees connection upkeepId (nub employeeIds)
   return upkeepId
 
 insertEmployees :: Connection -> U.UpkeepId -> [E.EmployeeId] -> IO ()
