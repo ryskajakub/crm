@@ -343,7 +343,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       (SetValue . get $ cp)
       (setCP . set cp)
     in [
-      div' (class'' ["control-label", "my-text-left", "col-md-2"]) partLabel ,
+      div' (class'' ["control-label", "my-text-left", "col-md-1"]) partLabel ,
       B.col (B.mkColProps 2) i ]
 
   setCP :: CP.ContactPerson -> Fay ()

@@ -38,7 +38,7 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeSingle)
 
-import TupleTH (proj)
+import           TupleTH                     (proj)
 
 
 createMachineHandler :: Handler (IdDependencies' C.CompanyId)
