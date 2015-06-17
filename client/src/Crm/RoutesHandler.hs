@@ -30,7 +30,7 @@ import qualified Crm.Data.MachineData        as MD
 import qualified Crm.Data.Data               as D
 import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
-import           Crm.Server                  hiding (get)
+import           Crm.Server
 import           Crm.Router
 import           Crm.Helpers                 (displayDate, rmap)
 import qualified Crm.Validation              as V

@@ -9,7 +9,7 @@ import           Data.Text                             (fromString, (<>), Text, 
 import           Prelude                               hiding (div, span, id)
 import qualified Prelude                 
 import           Data.Var                              (Var, modify)
-import           Data.Maybe                            (onJust)
+import           Data.Maybe                            (onJust, maybeToList)
 import           FFI                                   (Defined(Defined))
 
 import           HaskellReact                          hiding (row)
@@ -189,7 +189,7 @@ machineNew router appVar datePickerCalendar (machine', datePickerText) machineSp
     machineTypeId (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow'' appVar datePickerCalendar (machine', datePickerText) machineSpecific machineTypeTuple 
-      [] Nothing (contactPersonId, Just newContactPersonRow, byIdHighlight) contactPersons v otherMachineId om extraFields
+      [] Nothing (contactPersonId, Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
     where
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
       machineTypeEither = case machineTypeId of
@@ -217,19 +217,22 @@ machineNew router appVar datePickerCalendar (machine', datePickerText) machineSp
           B.col (B.mkColProps 2) i ]
 
       setCP :: CP.ContactPerson -> Fay ()
-      setCP contactPerson = changeNavigationState $ \mn ->
-        mn { MD.contactPersonNew = (contactPerson, MD.New) }
+      setCP contactPerson' = changeNavigationState $ \mn ->
+        mn { MD.contactPersonNew = (contactPerson', MD.New) }
 
-      (newHighlight, byIdHighlight) = let
+      (byIdHighlight, newHighlight) = let
         f = case contactPersonActiveRow of
           MD.ById -> Prelude.id
           MD.New  -> swap
         in f (span' (class' "underline"), Prelude.id)
 
-      newContactPersonRow = row (byIdHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
+      newContactPersonRow = row (newHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
         cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
         cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
         cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t } ]
+
+      setById :: Fay ()
+      setById = changeNavigationState $ \mn -> mn { MD.contactPersonNew = (contactPerson, MD.ById) }
 
       changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
       changeNavigationState f = modify appVar $ \appState -> appState {
@@ -249,7 +252,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
-               -> (Maybe CP.ContactPersonId, Maybe DOMElement, DOMElement -> DOMElement)
+               -> (Maybe CP.ContactPersonId, Maybe (DOMElement, Fay ()), DOMElement -> DOMElement)
                -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> V.Validation
                -> Maybe M.MachineId
@@ -390,7 +393,12 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           contactPersons 
           CP.name 
           (findInList dropdownContactPersonId contactPersons) $
-          \cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId } ,
+          \cpId -> do
+            changeNavigationState $ \md -> md { MD.contactPersonId = cpId }
+            case newContactPersonRow of
+              Just (_, setById) -> setById
+              _                 -> return () ] ++
+        maybeToList (fst `onJust` newContactPersonRow) ++ [
         nullDropdownRow
           editing 
           "Zapojení" 
