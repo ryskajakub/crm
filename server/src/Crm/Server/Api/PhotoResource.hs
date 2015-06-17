@@ -22,6 +22,7 @@ import           Crm.Server.DB
 import           Crm.Server.Helpers
 import           Crm.Server.Handler          (mkConstHandler', deleteRows'')
 
+
 photoResource :: Resource Dependencies (IdDependencies' P.PhotoId) P.PhotoId Void Void
 photoResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.photos ,
@@ -45,5 +46,5 @@ getPhotoHandler = mkConstHandler' fileO $ do
   photo <- liftIO $ getMachinePhoto conn photoIdInt
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoIdInt)
   photoMeta <- singleRowOrColumn photoMetas
-  let (_, mimeType, _) = photoMeta :: (Int, String, String)
-  return (BB64.encode photo, mimeType)
+  let (_, _, fileName) = photoMeta :: (Int, String, String)
+  return (BB64.encode photo, fileName)

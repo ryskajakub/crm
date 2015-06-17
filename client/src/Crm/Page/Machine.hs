@@ -42,12 +42,10 @@ import qualified Crm.Data.Data                         as D
 import qualified Crm.Component.DatePicker              as DP
 import           Crm.Component.Form
 import           Crm.Server 
-import           Crm.Runtime                           (passwordAjax, get)
+import qualified Crm.Runtime                           as Runtime
 import           Crm.Helpers 
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
-
-import Debug.Trace
 
 
 machineDetail :: InputState
@@ -175,7 +173,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
       button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
   
-      fetchPhotos = forM_ photos $ \(photoId, _) -> passwordAjax
+      fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
         (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
         (\imageData -> do
           putStrLn imageData
@@ -184,7 +182,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
           return ())
         Nothing
-        get
+        Runtime.get
         Nothing
         Nothing
 
