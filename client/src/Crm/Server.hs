@@ -49,7 +49,7 @@ module Crm.Server (
 
 import           FFI                                 (ffi, Defined(Defined))
 import           Prelude                             hiding (putStrLn)
-import           Data.Text                           (Text, unpack, pack)
+import           Data.Text                           (Text, unpack, pack, (<>))
 
 import qualified JQuery                              as JQ
 
@@ -127,7 +127,7 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 
 fetchPhoto :: P.PhotoId
            -> Text
-fetchPhoto photoId = pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId)
+fetchPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId))
 
 fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
@@ -392,7 +392,7 @@ uploadPhotoData fileContents machineId callback = withPassword Nothing $ \settin
   JQ.ajax' $ settings {
     JQ.success = Defined callback ,
     JQ.data' = Defined fileContents ,
-    JQ.url = Defined $ pack (A.machines ++ "/" ++ (show $ M.getMachineId machineId) ++ "/" ++ A.photos) ,
+    JQ.url = Defined $ apiRoot <> (pack $ A.machines ++ "/" ++ (show . M.getMachineId $ machineId) ++ "/" ++ A.photos) ,
     JQ.type' = Defined post ,
     JQ.processData = Defined False ,
     JQ.contentType = Defined $ pack "application/x-www-form-urlencoded" }
