@@ -5,8 +5,8 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import           Data.Text                             (fromString, (<>), Text, showInt)
-import           Prelude                               hiding (div, span, id)
+import           Data.Text                             (fromString, (<>), Text, showInt, pack, putStrLn)
+import           Prelude                               hiding (div, span, id, putStrLn)
 import qualified Prelude                 
 import           Data.Var                              (Var, modify)
 import           Data.Maybe                            (onJust, maybeToList)
@@ -35,15 +35,19 @@ import qualified Crm.Shared.Upkeep                     as U
 import qualified Crm.Shared.UpkeepMachine              as UM
 import qualified Crm.Shared.ExtraField                 as EF
 import qualified Crm.Shared.MachineKind                as MK
+import qualified Crm.Shared.Api                        as A
 
 import qualified Crm.Data.MachineData                  as MD
 import qualified Crm.Data.Data                         as D
 import qualified Crm.Component.DatePicker              as DP
 import           Crm.Component.Form
 import           Crm.Server 
+import           Crm.Runtime                           (passwordAjax, get)
 import           Crm.Helpers 
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
+
+import Debug.Trace
 
 
 machineDetail :: InputState
@@ -64,14 +68,14 @@ machineDetail :: InputState
               -> Maybe M.MachineId
               -> [(M.MachineId, M.Machine)]
               -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
-              -> DOMElement
+              -> (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
     datePickerText, usageSetMode) machineSpecific machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields =
 
-  machineDisplay editing pageHeader button appVar calendarOpen (machine, 
+  (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       datePickerText, usageSetMode) machineSpecific machineTypeTuple extraRows extraGrid 
-      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
+      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
     where
       pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
       extraRow = [editableRow Display "Další servis" (displayDate nextService)]
@@ -135,7 +139,9 @@ machineDetail editing appVar router companyId calendarOpen (machine,
                 BTN.bsStyle = Defined "primary" ,
                 BTN.onClick = Defined imageUploadHandler })
               imageUploadLabel ]]]) 
-      mkPhoto (photoId,_) = IMG.image' mkAttrs (IMG.mkImageAttrs $ fetchPhoto photoId)
+      mkPhoto (photoId, _) = IMG.image' 
+        (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
+        (IMG.mkImageAttrs "")
       photoCarouselRow = editableRowEditing
         "Fotky"
         (carousel "my-carousel" (map mkPhoto photos))
@@ -168,6 +174,19 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         extraFieldsForServer (setEditing Display)
       buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
       button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
+  
+      fetchPhotos = forM_ photos $ \(photoId, _) -> passwordAjax
+        (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
+        (\imageData -> do
+          putStrLn imageData
+          let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
+          photoHtmlElement <- JQ.select photoHTMLId
+          _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
+          return ())
+        Nothing
+        get
+        Nothing
+        Nothing
 
 
 machineNew :: R.CrmRouter

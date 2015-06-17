@@ -57,13 +57,13 @@ main' = do
       D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')
       D.MachineScreen (MD.MachineData machine machineSpecific machineTypeTuple operationStartCalendar 
           companyPersonId companyPersons v otherMachineId otherMachines extraFields machinePageMode) ->
-        n $ emptyCallback $ case machinePageMode of
+        n $ case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing _ photos upkeeps companyId) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine machineSpecific
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons v 
               otherMachineId otherMachines extraFields
           Right (MD.MachineNew companyId maybeMachineTypeId (contactPerson, contactPersonActiveRow)) -> 
-            machineNew router appVar' operationStartCalendar machine machineSpecific
+            emptyCallback $ machineNew router appVar' operationStartCalendar machine machineSpecific
               companyId machineTypeTuple maybeMachineTypeId (contactPerson, companyPersonId, 
               contactPersonActiveRow) companyPersons v otherMachineId otherMachines extraFields
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
