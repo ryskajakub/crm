@@ -71,7 +71,7 @@ machineKindSettings appVar counter showSuccess editedEnum allSettings = mkGrid w
     submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings $ 
       (modify' $ \ef -> ef { D.series = D.series ef + 1 , D.showSuccess = True })
       (\s -> setTimeout 3000 (afterTimeout s))
-    saveSuccess = B.col (B.mkColProps 12) $ A.alert A.Success "Uloženo"
+    saveSuccess = div' (class'' ["col-md-12", "save-success"]) $ A.alert A.Success "Uloženo"
 
   setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()
   setNewSettings (key', newFields) = let
