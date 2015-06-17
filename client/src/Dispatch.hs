@@ -62,10 +62,10 @@ main' = do
             machineDetail editing appVar' router companyId operationStartCalendar machine machineSpecific
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons v 
               otherMachineId otherMachines extraFields
-          Right (MD.MachineNew companyId maybeMachineTypeId) -> 
+          Right (MD.MachineNew companyId maybeMachineTypeId (contactPerson, contactPersonActiveRow)) -> 
             machineNew router appVar' operationStartCalendar machine machineSpecific
-              companyId machineTypeTuple maybeMachineTypeId companyPersonId companyPersons v 
-              otherMachineId otherMachines extraFields
+              companyId machineTypeTuple maybeMachineTypeId (contactPerson, companyPersonId, 
+              contactPersonActiveRow) companyPersons v otherMachineId otherMachines extraFields
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
         upkeepDatePicker employees selectedEmployees validation upkeepPageMode) -> n $
           emptyCallback $ case upkeepPageMode of

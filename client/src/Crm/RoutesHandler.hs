@@ -124,8 +124,8 @@ startRouter appVar = startedRouter where
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
           in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineKind machineTypeTuple
-            (nowYMD, False) (CP.newContactPerson, Nothing, MD.ById) cps V.new Nothing otherMachines extraFieldsAdapted 
-              (Right $ MD.MachineNew companyId maybeMachineTypeId) ,
+            (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
+              (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById)) ,
     useHandler newMaintenance' $ \companyId -> 
       fetchEmployees $ \employees -> 
         withCompany'
@@ -157,7 +157,7 @@ startRouter appVar = startedRouter where
             in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
                 machineDouble machineSpecificData machineTypeTuple (startDateInCalendar, False)
-                  (CP.newContactPerson, contactPersonId, MD.ById) cps V.new otherMachineId otherMachines extraFields''
+                  contactPersonId cps V.new otherMachineId otherMachines extraFields''
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display machineTypeId photos upkeeps companyId) ,
     useHandler plannedUpkeeps' $ const $

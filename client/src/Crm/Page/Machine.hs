@@ -45,6 +45,7 @@ import           Crm.Helpers
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
 
+
 machineDetail :: InputState
               -> Var D.AppState
               -> R.CrmRouter
@@ -57,7 +58,7 @@ machineDetail :: InputState
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
               -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)]
-              -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
+              -> Maybe CP.ContactPersonId
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
               -> Maybe M.MachineId
@@ -70,7 +71,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
 
   machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       datePickerText) machineSpecific machineTypeTuple extraRows extraGrid 
-      contactPersonId contactPersons v otherMachineId om extraFields
+      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
     where
       pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
       extraRow = [editableRow Display "Další servis" (displayDate nextService)]
@@ -163,11 +164,11 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
             "Jdi do editačního módu"
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-      (_, contactPersonId', _) = contactPersonId
-      editMachineAction = updateMachine machineId machine otherMachineId contactPersonId'
+      editMachineAction = updateMachine machineId machine otherMachineId contactPersonId
         extraFieldsForServer (setEditing Display)
       buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
       button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
+
 
 machineNew :: R.CrmRouter
            -> Var D.AppState
@@ -184,22 +185,59 @@ machineNew :: R.CrmRouter
            -> [(M.MachineId, M.Machine)]
            -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
            -> DOMElement
-machineNew router appState datePickerCalendar (machine', datePickerText) machineSpecific companyId machineTypeTuple 
-    machineTypeId (cId @ (contactPerson, contactPersonId, contactPersonActive)) contactPersons v otherMachineId om extraFields = 
+machineNew router appVar datePickerCalendar (machine', datePickerText) machineSpecific companyId machineTypeTuple 
+    machineTypeId (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
-      buttonRow'' appState datePickerCalendar (machine', datePickerText) 
-      machineSpecific machineTypeTuple [] Nothing cId contactPersons v otherMachineId om extraFields
+      buttonRow'' appVar datePickerCalendar (machine', datePickerText) machineSpecific machineTypeTuple 
+      [] Nothing (contactPersonId, Just newContactPersonRow, byIdHighlight) contactPersons v otherMachineId om extraFields
     where
       extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
       machineTypeEither = case machineTypeId of
         Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
         Nothing -> MT.MyMachineType machineTypeTuple
-      contactPersonId' = case contactPersonActive of
+      contactPersonId' = case contactPersonActiveRow of
         MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
         MD.ById -> M.ContactPersonIdForMachine `onJust` contactPersonId
       saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
         (R.navigate (R.companyDetail companyId) router)
       buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
+
+      cpPartInputs :: Text
+                   -> (CP.ContactPerson -> Text)
+                   -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
+                   -> [DOMElement]
+      cpPartInputs partLabel get set = let
+        i = input
+          Editing
+          True
+          (SetValue . get $ contactPerson)
+          (setCP . set contactPerson)
+        in [
+          div' (class'' ["control-label", "my-text-left", "col-md-1"]) partLabel ,
+          B.col (B.mkColProps 2) i ]
+
+      setCP :: CP.ContactPerson -> Fay ()
+      setCP contactPerson = changeNavigationState $ \mn ->
+        mn { MD.contactPersonNew = (contactPerson, MD.New) }
+
+      (newHighlight, byIdHighlight) = let
+        f = case contactPersonActiveRow of
+          MD.ById -> Prelude.id
+          MD.New  -> swap
+        in f (span' (class' "underline"), Prelude.id)
+
+      newContactPersonRow = row (byIdHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
+        cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
+        cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
+        cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t } ]
+
+      changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
+      changeNavigationState f = modify appVar $ \appState -> appState {
+        D.navigation = case D.navigation appState of 
+          D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
+            D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
+          _ -> D.navigation appState }
+
 
 machineDisplay :: InputState -- ^ true editing mode false display mode
                -> Text -- ^ header of the page
@@ -211,7 +249,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> (MT.MachineType, [US.UpkeepSequence])
                -> [DOMElement]
                -> Maybe DOMElement
-               -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
+               -> (Maybe CP.ContactPersonId, Maybe DOMElement, DOMElement -> DOMElement)
                -> [(CP.ContactPersonId, CP.ContactPerson)]
                -> V.Validation
                -> Maybe M.MachineId
@@ -219,7 +257,7 @@ machineDisplay :: InputState -- ^ true editing mode false display mode
                -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
                -> DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText) 
-    _ (machineType, upkeepSequences) extraRows extraGrid (contactPersonId @ (cp, cpId, contactPersonActive))
+    _ (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
     contactPersons validation otherMachineId otherMachines extraFields = let
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
@@ -332,31 +370,6 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
     _ -> []
 
-  cpPartInputs :: Text
-               -> (CP.ContactPerson -> Text)
-               -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
-               -> [DOMElement]
-  cpPartInputs partLabel get set = let
-    i = input
-      editing
-      True
-      (SetValue . get $ cp)
-      (setCP . set cp)
-    in [
-      div' (class'' ["control-label", "my-text-left", "col-md-1"]) partLabel ,
-      B.col (B.mkColProps 2) i ]
-
-  setCP :: CP.ContactPerson -> Fay ()
-  setCP contactPerson = changeNavigationState $ \md -> let
-    (_, a0, a1) = MD.contactPersonId md
-    in md { MD.contactPersonId = (contactPerson, a0, MD.New) }
-
-  (newHighlight, byIdHighlight) = let
-    f = case contactPersonActive of
-      MD.ById -> Prelude.id
-      MD.New  -> swap
-    in f (span' (class' "underline"), Prelude.id)
-
   elements = div $ [form' (mkAttrs { className = Defined "form-horizontal" }) $
     B.grid $ [
       B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
@@ -373,17 +386,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           (const $ return ()) ,
         nullDropdownRow
           editing
-          (newHighlight . text2DOM $ "Kontaktní osoba - stávající")
+          (dropdownCPHighlight . text2DOM $ "Kontaktní osoba - stávající")
           contactPersons 
           CP.name 
-          (findInList cpId contactPersons) $
-          \cpId -> changeNavigationState $ \md -> let
-            (a, b, _) = MD.contactPersonId md
-            in md { MD.contactPersonId = (a, cpId, MD.ById) } ,
-        row (byIdHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
-          cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
-          cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
-          cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t }] ,
+          (findInList dropdownContactPersonId contactPersons) $
+          \cpId -> changeNavigationState $ \md -> md { MD.contactPersonId = cpId } ,
         nullDropdownRow
           editing 
           "Zapojení" 

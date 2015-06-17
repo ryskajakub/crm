@@ -27,7 +27,7 @@ data MachineData = MachineData {
   machineKindSpecific :: MachineKindEnum ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePicker ,
-  contactPersonId :: (ContactPerson, Maybe ContactPersonId, ContactPersonInMachine) ,
+  contactPersonId :: Maybe ContactPersonId ,
   contactPersons :: [(ContactPersonId, ContactPerson)] ,
   validation :: V.Validation ,
   otherMachineId :: Maybe MachineId ,
@@ -46,4 +46,5 @@ data MachineDetail = MachineDetail {
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,
-  maybeMachineTypeId :: Maybe MachineTypeId }
+  maybeMachineTypeId :: Maybe MachineTypeId ,
+  contactPersonNew :: (ContactPerson, ContactPersonInMachine) }
