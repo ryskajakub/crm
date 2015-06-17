@@ -144,3 +144,7 @@ computeColor (YMD.YearMonthDay y m d _) = let
   redPart = truncate $ colorScaleSize - (secondPartDiff * unit)
   greenPart = truncate $ unit * firstPart
   in toHexa redPart <> toHexa greenPart <> "00"
+
+setTimeout :: Int -> Fay () -> Fay ()
+setTimeout = ffi " setTimeout(%2, %1) "
+  

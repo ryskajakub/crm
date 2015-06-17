@@ -8,7 +8,7 @@ module Crm.Page.MachineKind (machineKindSettings) where
 import           Data.Text                    (fromString)
 import           Prelude                      hiding (div, span, id)
 import qualified Prelude                      
-import           Data.Var                     (Var)
+import           Data.Var                     (Var, modify)
 import           Data.Maybe                   (fromJust)
 
 import           HaskellReact
@@ -54,8 +54,12 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
           True 
           (SetValue . MK.name $ rowValue)
           (\t -> setRow $ (rowId, rowValue { MK.name = t }))
-      
-    submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
+    afterTimeout = let
+      modify' f = modify appVar $ \appState -> case D.navigation appState of
+        ef @ D.ExtraFields {} -> appState { D.navigation = f ef }
+      in modify' $ \ef -> ef
+    submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings $
+      setTimeout 3000 afterTimeout
     saveSuccess = B.col (B.mkColProps 12) $ A.alert A.Success
       "Uloženo"
 
