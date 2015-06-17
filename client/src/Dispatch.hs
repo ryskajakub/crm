@@ -118,8 +118,8 @@ loadFromLocalStorage = do
               let 
                 index = showInt i
                 parseBool text = case text of
-                  _ | text == "True" -> Just $ True
-                  _ | text == "False" -> Just $ True
+                  _ | text == "True"  -> Just $ True
+                  _ | text == "False" -> Just $ False
                   _ -> Nothing
               displayOrdering <- getLocalStorage ("us." <> index <> ".displayOrdering") 
               label <- getLocalStorage ("us." <> index <> ".label") 

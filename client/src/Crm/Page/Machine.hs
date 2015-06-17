@@ -343,7 +343,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           (input 
             editing
             True
-            (DefaultValue $ showInt $ M.mileagePerYear machine')
+            (SetValue $ showInt $ M.mileagePerYear machine')
             (let 
               errorHandler = changeNavigationState (\md -> 
                 md { MD.validation = V.add V.MachineUsageNumber validation })
