@@ -8,7 +8,7 @@ module Crm.Page.MachineKind (machineKindSettings) where
 import           Data.Text                    (fromString)
 import           Prelude                      hiding (div, span, id)
 import qualified Prelude                      
-import           Data.Var                     (Var, modify)
+import           Data.Var                     (Var, modifyWith)
 import           Data.Maybe                   (fromJust)
 
 import           HaskellReact
@@ -40,8 +40,9 @@ machineKindSettings appVar counter showSuccess editedEnum allSettings = mkGrid w
     B.grid header, 
     div' (class'' ["container", "form-horizontal"]) $ 
       (machineKindDropdown : kindAttributeFields) ++ [
-        B.row submitRow , 
-        B.row saveSuccess ]]
+        B.row submitRow ] ++ (if showSuccess
+          then [B.row saveSuccess]
+          else [] )]
     where
     header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
     machineKindDropdown = dropdownRow Editing "Druh stroje" MK.machineKinds (\x -> x) machineKindName
@@ -56,14 +57,21 @@ machineKindSettings appVar counter showSuccess editedEnum allSettings = mkGrid w
           True 
           (SetValue . MK.name $ rowValue)
           (\t -> setRow $ (rowId, rowValue { MK.name = t }))
-    afterTimeout = let
-      modify' f = modify appVar $ \appState -> case D.navigation appState of
-        ef @ D.ExtraFields {} -> appState { D.navigation = f ef }
-      in modify' $ \ef -> ef
-    submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings $
-      setTimeout 3000 afterTimeout
-    saveSuccess = B.col (B.mkColProps 12) $ A.alert A.Success
-      "Uloženo"
+    modify' f g = modifyWith appVar $ \appState -> case D.navigation appState of
+      ef @ D.ExtraFields {} -> do
+        let newState = f ef
+        g newState
+        return appState { D.navigation = newState }
+      _ -> return appState
+    afterTimeout state = modify' 
+      (\currentState -> if D.series currentState == D.series state
+        then currentState { D.showSuccess = False }
+        else currentState)
+      (const . return $ ())
+    submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings $ 
+      (modify' $ \ef -> ef { D.series = D.series ef + 1 , D.showSuccess = True })
+      (\s -> setTimeout 3000 (afterTimeout s))
+    saveSuccess = B.col (B.mkColProps 12) $ A.alert A.Success "Uloženo"
 
   setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()
   setNewSettings (key', newFields) = let
