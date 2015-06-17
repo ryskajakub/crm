@@ -110,15 +110,13 @@ lmap f (a,b) = (f(a),b)
 rmap :: (b -> b') -> (a,b) -> (a,b')
 rmap f (a,b) = (a,f(b))
 
-eventInt' :: (Int -> Fay ()) -> (Text -> Fay ()) -> Text -> Fay ()
-eventInt' success errorFun text = case parseSafely text of
-  Just(int) -> success int
-  Nothing | text == "" -> success 0
+eventInt' :: (Int -> Bool) -> (Int -> Fay ()) -> (Text -> Fay ()) -> Text -> Fay ()
+eventInt' intPredicate success errorFun text = case parseSafely text of
+  Just(int) | intPredicate int -> success int
   Nothing -> errorFun text
 
 eventInt :: (Int -> Fay ()) -> Text -> Fay ()
-eventInt fun = eventInt' fun (const $ return ())
-
+eventInt fun = eventInt' (const True) fun (const $ return ())
 
 toHexa' :: Int -> Text
 toHexa' = ffi " (%1).toString(16) "

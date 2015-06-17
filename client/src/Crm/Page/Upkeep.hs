@@ -309,6 +309,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
     recordedMileage = B.col (B.mkColProps 2) $ input editing False
       (DefaultValue $ showInt $ UM.recordedMileage $ fst machine) $ eventInt' 
+        (const True)
         (\i -> do
           let newValidation = V.remove (V.MthNumber machineId) validation
           modify' $ \ud -> ud { UD.validation = newValidation }
