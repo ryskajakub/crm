@@ -5,22 +5,23 @@
 
 module Crm.Page.MachineKind (machineKindSettings) where
 
-import           Data.Text                        (fromString)
-import           Prelude                          hiding (div, span, id)
-import qualified Prelude                          
-import           Data.Var                         (Var)
-import           Data.Maybe                       (fromJust)
+import           Data.Text                    (fromString)
+import           Prelude                      hiding (div, span, id)
+import qualified Prelude                      
+import           Data.Var                     (Var)
+import           Data.Maybe                   (fromJust)
 
 import           HaskellReact
-import qualified HaskellReact.Bootstrap           as B
-import qualified HaskellReact.BackboneRouter      as BR
+import qualified HaskellReact.Bootstrap       as B
+import qualified HaskellReact.BackboneRouter  as BR
+import qualified HaskellReact.Bootstrap.Alert as A
 
-import qualified Crm.Shared.MachineKind           as MK
-import qualified Crm.Shared.ExtraField            as EF
+import qualified Crm.Shared.MachineKind       as MK
+import qualified Crm.Shared.ExtraField        as EF
 
-import qualified Crm.Data.Data                    as D
+import qualified Crm.Data.Data                as D
 import           Crm.Helpers
-import           Crm.Server                       (saveExtraFieldSettings)
+import           Crm.Server                   (saveExtraFieldSettings)
 import           Crm.Component.Form
 
 
@@ -36,8 +37,9 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
   mkGrid = div [
     B.grid header, 
     div' (class'' ["container", "form-horizontal"]) $ 
-      (machineKindDropdown : kindAttributeFields) ++ 
-      [B.row submitRow]]
+      (machineKindDropdown : kindAttributeFields) ++ [
+        B.row submitRow , 
+        B.row saveSuccess ]]
     where
     header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
     machineKindDropdown = dropdownRow Editing "Druh stroje" MK.machineKinds (\x -> x) machineKindName
@@ -54,6 +56,8 @@ machineKindSettings appVar editedEnum allSettings = mkGrid where
           (\t -> setRow $ (rowId, rowValue { MK.name = t }))
       
     submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings BR.refresh
+    saveSuccess = B.col (B.mkColProps 12) $ A.alert A.Success
+      "Uloženo"
 
   setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()
   setNewSettings (key', newFields) = let
