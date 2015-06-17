@@ -82,7 +82,7 @@ startRouter appVar = startedRouter where
       fetchExtraFieldSettings $ \list -> let
         makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
         withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
-        in modify' $ D.ExtraFields MK.RotaryScrewCompressor withAssignedIds ,
+        in modify' $ D.ExtraFields 0 False MK.RotaryScrewCompressor withAssignedIds ,
     useHandler companyDetail' $ \companyId' ->
       case companyId' of
         Left _ -> modify appVar $ \appState -> appState {

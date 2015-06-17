@@ -63,6 +63,8 @@ data NavigationState =
   ContactPersonList {
     contactPersons :: [CP.ContactPerson'] } |
   ExtraFields {
+    series :: Int ,
+    showSuccess :: Bool ,
     editedKind :: MK.MachineKindEnum ,
     allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] } |
   MachinesSchema {

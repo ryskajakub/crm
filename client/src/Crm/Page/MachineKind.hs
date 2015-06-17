@@ -26,10 +26,12 @@ import           Crm.Component.Form
 
 
 machineKindSettings :: Var D.AppState
+                    -> Int
+                    -> Bool
                     -> MK.MachineKindEnum
                     -> [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
                     -> DOMElement
-machineKindSettings appVar editedEnum allSettings = mkGrid where
+machineKindSettings appVar counter showSuccess editedEnum allSettings = mkGrid where
 
   machineKindName = fromJust $ lookup editedEnum MK.machineKinds
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings

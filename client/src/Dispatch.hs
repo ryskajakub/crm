@@ -91,8 +91,8 @@ main' = do
       D.ContactPersonPage contactPerson identification companyId -> n $
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> n $ emptyCallback $ contactPersonsList router contactPersons
-      D.ExtraFields editedKind allSettings -> n $ 
-        emptyCallback $ machineKindSettings appVar' editedKind allSettings
+      D.ExtraFields counter showSuccess editedKind allSettings -> n $ 
+        emptyCallback $ machineKindSettings appVar' counter showSuccess editedKind allSettings
       D.MachinesSchema machines -> n $ schema machines
       D.Login password wrongPassword -> let
         (body, callback) = emptyCallback $ login appVar' router password wrongPassword
