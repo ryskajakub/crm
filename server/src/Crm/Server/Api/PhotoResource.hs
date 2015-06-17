@@ -6,7 +6,7 @@ import           Opaleye.RunQuery            (runQuery)
 import           Rest.Resource               (Resource, Void, schema, name, 
                                              get, mkResourceReaderWith, remove)
 import qualified Rest.Schema                 as S
-import           Rest.Dictionary.Combinators (fileO, jsonO, stringO)
+import           Rest.Dictionary.Combinators (fileO, jsonO)
 import           Rest.Handler                (Handler)
 
 import qualified Data.ByteString.Base64.Lazy as BB64
@@ -21,8 +21,6 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Helpers
 import           Crm.Server.Handler          (mkConstHandler', deleteRows'')
-
-import Data.ByteString.Lazy.Char8 as CH8
 
 photoResource :: Resource Dependencies (IdDependencies' P.PhotoId) P.PhotoId Void Void
 photoResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -42,10 +40,10 @@ removeHandler = mkConstHandler' jsonO $ do
 
 
 getPhotoHandler :: Handler (IdDependencies' P.PhotoId)
-getPhotoHandler = mkConstHandler' stringO $ do
+getPhotoHandler = mkConstHandler' fileO $ do
   ((_, conn), P.PhotoId photoIdInt) <- ask
   photo <- liftIO $ getMachinePhoto conn photoIdInt
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoIdInt)
   photoMeta <- singleRowOrColumn photoMetas
   let (_, mimeType, _) = photoMeta :: (Int, String, String)
-  return (CH8.unpack . BB64.encode $ photo)
+  return (BB64.encode photo, mimeType)
