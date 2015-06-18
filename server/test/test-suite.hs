@@ -3,7 +3,7 @@
 
 module Main where
 
-import Crm.Server.Core (nextServiceDate, Planned(..))
+import Crm.Server.Core (nextServiceDate, Planned(..), nextServiceTypeHint)
 import Crm.Server.Helpers
 
 import qualified Crm.Shared.Upkeep as U
@@ -34,7 +34,15 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "Next service day : All tests" [unitTests, propertyTests]
+tests = testGroup "All tests" [
+  nextServiceDayTests ,
+  hintNextServiceTypeTests ]
+
+hintNextServiceTypeTests :: TestTree
+hintNextServiceTypeTests = testGroup "Next service type: All tests" [propertyTests']
+
+nextServiceDayTests :: TestTree
+nextServiceDayTests = testGroup "Next service day : All tests" [unitTests, propertyTests]
 
 unitTests :: TestTree
 unitTests = testGroup "Next service day : Unit tests" [
@@ -163,11 +171,38 @@ instance Arbitrary Day where
   shrink = shrinkNothing
   arbitrary = dayGen
 
+instance Arbitrary US.UpkeepSequence where
+  shrink = shrinkNothing
+  arbitrary = do
+    oneTime <- arbitrary
+    return US.newUpkeepSequence {
+      US.oneTime = oneTime }
+
+
 plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
-  closedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
-  upkeeps = (plannedUpkeeps ++ closedUpkeeps)
+  closedUpkeeps' = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
+  upkeeps = (plannedUpkeeps ++ closedUpkeeps')
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
   in nextServiceDate undefined undefined upkeepsShuffled undefined == (earliestDay, Planned)
+
+
+propertyTests' :: TestTree
+propertyTests' = let
+  random = mkQCGen 0
+  option = QuickCheckReplay $ Just (random, 0)
+  in localOption option $ testGroup "Next service type hint: Property tests" [
+    testProperty "When there are no previous upkeeps, the onetime on is picked" $ noPreviousUpkeeps ,
+    testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps ]
+
+noPreviousUpkeeps :: NonEmptyList US.UpkeepSequence -> Bool
+noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let
+  result = nextServiceTypeHint (seq, seqs) []
+  in if any (US.oneTime) sequences
+    then US.oneTime result
+    else not . US.oneTime $ result
+
+previousUpkeeps :: Bool
+previousUpkeeps = False

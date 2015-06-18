@@ -7,6 +7,7 @@ import           Safe.Foldable             (minimumMay)
 
 import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.UpkeepMachine  as UM
 import qualified Crm.Shared.Upkeep         as U
 
 import           Crm.Server.Helpers        (ymdToDay)
@@ -55,3 +56,8 @@ nextServiceDate machine sequences upkeeps today = let
       let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> (nextOpenUpkeep, Planned)
     _ -> (computedUpkeep, Computed)
+
+nextServiceTypeHint :: (US.UpkeepSequence, [US.UpkeepSequence])
+                    -> [UM.UpkeepMachine]
+                    -> US.UpkeepSequence
+nextServiceTypeHint sequences pastUpkeeps = undefined
