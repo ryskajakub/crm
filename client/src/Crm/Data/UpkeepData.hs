@@ -16,7 +16,7 @@ import           Crm.Types                (DisplayedNote)
 
 data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,
-  machines :: [(MachineId, Machine, CompanyId, MachineTypeId, MachineType)] ,
+  machines :: [(MachineId, Machine, MachineType)] ,
   notCheckedMachines :: [UpkeepMachine'] ,
   upkeepDatePicker :: (DatePicker, Text) ,
   employees :: [Employee'] ,

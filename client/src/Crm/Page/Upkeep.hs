@@ -110,7 +110,7 @@ upkeepDetail :: R.CrmRouter
              -> U.Upkeep'
              -> (DP.DatePicker, Text)
              -> [UM.UpkeepMachine']
-             -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
+             -> [(M.MachineId, M.Machine, MT.MachineType)] 
              -> C.CompanyId -- ^ company id
              -> [E.Employee']
              -> [Maybe E.EmployeeId]
@@ -139,7 +139,7 @@ upkeepNew :: R.CrmRouter
           -> (U.Upkeep, [UM.UpkeepMachine'])
           -> (DP.DatePicker, Text)
           -> [UM.UpkeepMachine']
-          -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] -- ^ machine ids -> machines
+          -> [(M.MachineId, M.Machine, MT.MachineType)] -- ^ machine ids -> machines
           -> Either C.CompanyId U.UpkeepId
           -> [E.Employee']
           -> [Maybe E.EmployeeId]
@@ -178,7 +178,7 @@ upkeepForm :: Var D.AppState
            -> (U.Upkeep, [(UM.UpkeepMachine')])
            -> (DP.DatePicker, Text) -- ^ datepicker, datepicker openness
            -> [(UM.UpkeepMachine')]
-           -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)] 
+           -> [(M.MachineId, M.Machine, MT.MachineType)] 
               -- ^ machine ids -> machines
            -> (Bool -> DOMElement) -- ^ submit button
            -> Bool -- ^ display the mth input field
@@ -254,8 +254,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       onlyNote = [strong "Poznámka"]
       in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
-  upkeepMachineRow :: (M.MachineId, M.Machine, a1, a2, MT.MachineType) -> DOMElement
-  upkeepMachineRow (machineId, machine', _, _, machineType) = let
+  upkeepMachineRow :: (M.MachineId, M.Machine, MT.MachineType) -> DOMElement
+  upkeepMachineRow (machineId, machine', machineType) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -278,11 +278,11 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     machineToggleCheckedLink = let
       linkText = MT.machineTypeName machineType <> additionalText where
         machinesWithSameType = filter 
-          (\(_,_,_,_,machineType') -> 
+          (\(_,_,machineType') -> 
             MT.machineTypeName machineType' == MT.machineTypeName machineType)
           machines
         machinesWithLabels = filter
-          (\(_,machine'',_,_,_) -> M.note machine'' /= "")
+          (\(_,machine'',_) -> M.note machine'' /= "")
           machinesWithSameType
         useLabels = length machinesWithSameType == length machinesWithLabels
         getAdditionalText = if useLabels then M.note else M.serialNumber 

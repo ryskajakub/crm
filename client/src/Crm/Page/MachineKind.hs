@@ -13,7 +13,6 @@ import           Data.Maybe                   (fromJust)
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
-import qualified HaskellReact.BackboneRouter  as BR
 import qualified HaskellReact.Bootstrap.Alert as A
 
 import qualified Crm.Shared.MachineKind       as MK

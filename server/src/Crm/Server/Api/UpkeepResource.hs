@@ -40,7 +40,7 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
-import           TupleTH                     (proj)
+import           TupleTH                     (proj, takeTuple, catTuples)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
@@ -148,7 +148,8 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
     [] -> throwError NotAllowed
     (companyId',_) : _ -> return companyId'
   employeeIds <- liftIO $ runQuery conn (employeeIdsInUpkeep upkeepIdInt)
-  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map snd machines)
+  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), 
+    map ((\x -> $(catTuples 2 1) ($(takeTuple 5 2) x) ($(proj 5 4) x)) . snd) machines)
 
 
 -- resource

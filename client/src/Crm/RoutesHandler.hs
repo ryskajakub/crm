@@ -131,8 +131,8 @@ startRouter appVar = startedRouter where
         withCompany'
           companyId $
           \(_, _, machines') -> let
-            machines = map (\(a,b,c,d,e,_,_,_) -> (a,b,c,d,e)) machines'
-            notCheckedUpkeepMachines = map (\(machineId,_,_,_,_) -> 
+            machines = map (\(a,b,_,_,c,_,_,_) -> (a,b,c)) machines'
+            notCheckedUpkeepMachines = map (\(machineId,_,_) -> 
               (UM.newUpkeepMachine, machineId)) machines
             in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
               machines notCheckedUpkeepMachines
@@ -166,7 +166,7 @@ startRouter appVar = startedRouter where
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation } ,
     useHandler upkeepDetail' $ \upkeepId ->
-      fetchUpkeep upkeepId $ \(companyId,(upkeep, upkeepMachines, employeeIds),machines) -> 
+      fetchUpkeep upkeepId $ \(companyId,(upkeep, upkeepMachines, employeeIds), machines) -> 
         fetchEmployees $ \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
           upkeepDate = U.upkeepDate upkeep
@@ -198,10 +198,10 @@ startRouter appVar = startedRouter where
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ]
 
-notCheckedMachines' :: [(M.MachineId,t1,t2,t3,t4)] -> [(t5,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
+notCheckedMachines' :: [(M.MachineId,t1,t2)] -> [(t3,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
   addNotCheckedMachine acc element = let 
-    (machineId,_,_,_,_) = element
+    (machineId,_,_) = element
     machineChecked = find (\(_,machineId') -> 
       machineId == machineId') upkeepMachines
     in case machineChecked of
