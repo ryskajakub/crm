@@ -127,17 +127,14 @@ startRouter appVar = startedRouter where
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById)) ,
     useHandler newMaintenance' $ \companyId -> 
-      fetchEmployees $ \employees -> 
-        withCompany'
-          companyId $
-          \(_, _, machines') -> let
-            machines = map (\(a,b,_,_,c,_,_,_) -> (a,b,c)) machines'
-            notCheckedUpkeepMachines = map (\(machineId,_,_) -> 
-              (UM.newUpkeepMachine, machineId)) machines
-            in D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
-              machines notCheckedUpkeepMachines
-              ((nowYMD, False), displayDate nowYMD) employees 
-              [] V.new (Right $ UD.UpkeepNew $ Left companyId) ,
+      fetchUpkeepData companyId $ \ud ->
+        fetchEmployees $ \employees -> let
+          notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> 
+            (UM.newUpkeepMachine, machineId)) ud
+          in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
+            ud notCheckedUpkeepMachines
+            ((nowYMD, False), displayDate nowYMD) employees 
+            [] V.new (Right $ UD.UpkeepNew $ Left companyId) ,
     useHandler contactPersonList' $ \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList data'

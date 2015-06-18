@@ -12,11 +12,11 @@ import           Control.Monad                 (forM)
 
 import           Data.Tuple.All                (sel1, sel2, sel3)
 
-import           Rest.Resource                 (Resource, Void, schema, name,
+import           Rest.Resource                 (Resource, Void, schema, name, get, 
                                                list, mkResourceId)
 import qualified Rest.Schema                   as S
 import           Rest.Dictionary.Combinators   (jsonO)
-import           Rest.Handler                  (ListHandler)
+import           Rest.Handler                  (ListHandler, Handler)
 
 import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Company            as C
@@ -26,7 +26,8 @@ import           Crm.Server.Helpers
 import           Crm.Server.Boilerplate        ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler            (mkListing')
+import           Crm.Server.Handler            (mkListing', mkConstHandler')
+import           Crm.Server.Api.UpkeepResource (loadNextServiceTypeHint)
 
 import           TupleTH                       (proj, catTuples)
 
@@ -56,8 +57,17 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
     return ($(catTuples 3 1) r mappedEmployees)
   return withEmployees
 
-upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
+newUpkeepData :: Handler (IdDependencies' C.CompanyId)
+newUpkeepData = mkConstHandler' jsonO $ do
+  ((_, connection), companyId) <- ask
+  machines' <- liftIO $ runQuery connection (machinesQ . C.getCompanyId $ companyId)
+  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
+  machines'' <- loadNextServiceTypeHint machines connection
+  return $ map (\(m, mt, nextUpkeepSequence) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
+
+upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () () Void
 upkeepResource = mkResourceId {
   name = A.upkeep ,
-  schema = S.withListing () $ S.named [] ,
+  schema = S.withListing () $ S.named [(A.single, S.singleBy . const $ ())] ,
+  get = Just newUpkeepData ,
   list = const companyUpkeepsListing }

@@ -51,6 +51,8 @@ module Crm.Server.DB (
   runMachinesInCompanyByUpkeepQuery ,
   runCompanyUpkeepsQuery ,
   -- more complex query
+  expandedMachinesQuery ,
+  machinesQ ,
   extraFieldsForMachineQuery ,
   machineIdsHavingKind ,
   extraFieldsPerKindQuery ,
@@ -515,15 +517,17 @@ machinesInUpkeepQuery' upkeepId = proc () -> do
   machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
   returnA -< (machineRow, machineTypeRow)
 
+machinesQ :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesQ companyId = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
+  m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
+  mt <- join machineTypesQuery -< machineTypeFK
+  restrict -< (pgInt4 companyId .== companyFK)
+  returnA -< (m, mt)
+
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
 machinesInCompanyQuery companyId = let
-  machinesQ = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
-    m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
-    mt <- join machineTypesQuery -< machineTypeFK
-    restrict -< (pgInt4 companyId .== companyFK)
-    returnA -< (m, mt)
   joined = leftJoin 
-    machinesQ 
+    (machinesQ companyId)
     contactPersonsQuery 
     (\((machineRow,_), cpRow) -> sel3 machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
   in proc () -> do

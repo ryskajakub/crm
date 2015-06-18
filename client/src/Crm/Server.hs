@@ -17,6 +17,7 @@ module Crm.Server (
   uploadPhotoData ,
   uploadPhotoMeta ,
 
+  fetchUpkeepData ,
   fetchExtraFieldSettings ,
   fetchMachine , 
   fetchMachinePhotos ,
@@ -169,6 +170,11 @@ fetchUpkeep :: U.UpkeepId -- ^ upkeep id
                [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)]) -> Fay ()) 
             -> Fay ()
 fetchUpkeep = XU.bySingle 
+
+fetchUpkeepData :: C.CompanyId
+                -> ([(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> Fay ())
+                -> Fay ()
+fetchUpkeepData companyId = XCU.bySingle companyId "()"
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> Fay ()) -- ^ callback
