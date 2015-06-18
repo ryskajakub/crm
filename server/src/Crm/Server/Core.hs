@@ -1,6 +1,7 @@
 module Crm.Server.Core where
 
-import           Data.List                 (partition)
+import           Data.List                 (partition, minimumBy, find)
+import           Data.Maybe                (fromMaybe)
 
 import           Data.Time.Calendar        (Day, addDays)
 import           Safe.Foldable             (minimumMay)
@@ -60,4 +61,6 @@ nextServiceDate machine sequences upkeeps today = let
 nextServiceTypeHint :: (US.UpkeepSequence, [US.UpkeepSequence])
                     -> [UM.UpkeepMachine]
                     -> US.UpkeepSequence
-nextServiceTypeHint sequences pastUpkeeps = undefined
+nextServiceTypeHint (seq,seqs) [] = fromMaybe
+  (minimumBy (\this that -> US.repetition this `compare` US.repetition that) (seq:seqs))
+  (find (US.oneTime) (seq:seqs))
