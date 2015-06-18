@@ -78,7 +78,14 @@ upkeep = U.Upkeep {
   U.upkeepClosed = True }
 
 smallUpkeepAssertion :: Assertion
-smallUpkeepAssertion = undefined
+smallUpkeepAssertion = let
+  previousUpkeep = UM.newUpkeepMachine { UM.recordedMileage = 57000 }
+  smallUpkeep = upkeepSequence { US.repetition = 2000 }
+  bigUpkeep = upkeepSequence { US.repetition = 6000 }
+  result = nextServiceTypeHint (smallUpkeep, [bigUpkeep]) [previousUpkeep]
+  expectedResult = smallUpkeep
+  in assertEqual "The 2000 sequence must be picked"
+    expectedResult result
 
 bigUpkeepAssertion :: Assertion
 bigUpkeepAssertion = let
