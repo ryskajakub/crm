@@ -3,33 +3,33 @@
 
 module Main where
 
-import Crm.Server.Core (nextServiceDate, Planned(..), nextServiceTypeHint)
-import Crm.Server.Helpers
+import           Control.Monad.Error.Class (Error)
+import           Control.Monad             (forM_)
 
-import qualified Crm.Shared.Upkeep as U
-import qualified Crm.Shared.Machine as M
+import           Data.Time.Calendar        (Day, fromGregorian)
+import           Data.Time.Format          (readTime)
+import           Data.Time.Clock           (utctDay, UTCTime)
+import           Data.Bits                 (shiftL)
+import           Data.Word                 (Word32)
+import           Data.List.Unique          (repeated)
+
+import           System.Locale             (defaultTimeLocale)
+import           System.Random             (next, mkStdGen, StdGen)
+import           System.Random.Shuffle     (shuffle')
+
+import           Test.Tasty.HUnit
+import           Test.Tasty
+import           Test.Tasty.QuickCheck
+import           Test.QuickCheck
+import           Test.QuickCheck.Random
+
+import           Crm.Server.Core           (nextServiceDate, Planned(..), nextServiceTypeHint)
+import           Crm.Server.Helpers
+
+import qualified Crm.Shared.Upkeep         as U
+import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.UpkeepMachine as UM
-
-import Test.Tasty.HUnit
-import Test.Tasty
-import Test.Tasty.QuickCheck
-import Test.QuickCheck
-import Test.QuickCheck.Random
-
-import Data.Time.Calendar (Day, fromGregorian)
-import Data.Time.Format (readTime)
-import Data.Time.Clock (utctDay, UTCTime)
-import Data.Bits (shiftL)
-import Data.Word (Word32)
-import Data.List.Unique (repeated)
-
-import System.Locale (defaultTimeLocale)
-import System.Random (next, mkStdGen, StdGen)
-import System.Random.Shuffle (shuffle')
-
-import Control.Monad.Error.Class (Error)
-import Control.Monad (forM_)
+import qualified Crm.Shared.UpkeepMachine  as UM
 
 main :: IO ()
 main = defaultMain tests
