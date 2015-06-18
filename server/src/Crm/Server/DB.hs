@@ -78,6 +78,7 @@ module Crm.Server.DB (
   employeeIdsInUpkeep ,
   notesForUpkeep ,
   machinesInUpkeepQuery' ,
+  pastUpkeepMachinesQ ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -471,6 +472,14 @@ upkeepSequencesByIdQuery :: DBInt -> Query (DBInt, DBText, DBInt, DBInt, DBBool)
 upkeepSequencesByIdQuery machineTypeId = proc () -> do
   upkeepSequenceRow' <- upkeepSequencesByIdQuery' -< machineTypeId
   returnA -< upkeepSequenceRow'
+
+pastUpkeepMachinesQ :: Int -> Query UpkeepMachinesTable
+pastUpkeepMachinesQ machineId = proc () -> do
+  upkeepMachineRow <- upkeepMachinesQuery -< ()
+  restrict -< $(proj 6 2) upkeepMachineRow .== pgInt4 machineId
+  upkeepRow <- join upkeepsQuery -< $(proj 6 0) upkeepMachineRow
+  restrict -< $(proj 6 2) upkeepRow
+  returnA -< upkeepMachineRow
 
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike

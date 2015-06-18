@@ -20,7 +20,7 @@ import           Data.Tuple.All              (sel1, sel2, sel3)
 import           Data.List                   (nub)
 import           Data.Text                   (intercalate, pack)
 
-import           Rest.Types.Error            (Reason(NotAllowed))
+import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove, create)
 import qualified Rest.Schema                 as S
@@ -31,6 +31,7 @@ import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepMachine    as UM
 
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
@@ -39,6 +40,7 @@ import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
 import           Crm.Server.CachedCore       (recomputeWhole)
+import           Crm.Server.Core             (nextServiceTypeHint)
 
 import           TupleTH                     (proj, takeTuple, catTuples)
 
@@ -149,8 +151,18 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
     [] -> throwError NotAllowed
     (machineMapped,_) : _ -> return $ $(proj 6 1) machineMapped
   employeeIds <- liftIO $ runQuery conn (employeeIdsInUpkeep upkeepIdInt)
+  machines'' <- forM machines $ \(machine, machineType) -> do
+    upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
+    pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (M.getMachineId . $(proj 6 0) $ machine))
+    let upkeepSequences = map (\x -> ($(proj 2 1)) $ (convert x :: UpkeepSequenceMapped)) upkeepSequences'
+    let pastUpkeepMachines = map (\x -> ($(proj 3 2)) $ (convert x :: UpkeepMachineMapped)) pastUpkeepMachines'
+    uss <- case upkeepSequences of
+      (us' : uss') -> return (us', uss')
+      _ -> throwError $ CustomReason $ DomainReason "Db in invalid state"
+    return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
+
   return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), 
-    map (\(m, mt) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt)) machines)
+    map (\(m, mt, nextUpkeepSequence) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
 
 
 -- resource
