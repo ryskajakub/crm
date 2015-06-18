@@ -231,7 +231,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
-    else ([], 6, 6)
+    else ([], 4, 6)
 
   toggleNote = let
     newClose uc = uc { UD.displayedNote = newDisplayedNote } where
@@ -255,8 +255,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       onlyNote = [strong "Poznámka"]
       in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
-  upkeepMachineRow :: (M.MachineId, M.Machine, MT.MachineType, a) -> DOMElement
-  upkeepMachineRow (machineId, machine', machineType, _) = let
+  upkeepMachineRow :: (M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence) -> DOMElement
+  upkeepMachineRow (machineId, machine', machineType, nextUpkeepSequence) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -324,9 +324,11 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       textarea editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
 
+    nextUpkeepSequenceField = B.col (B.mkColProps 2) $ "Další servis: " <> US.label_ nextUpkeepSequence
+
     in mkRow $ if closeUpkeep'
       then [machineToggleCheckedLink, recordedMileage, warranty, note]
-      else [machineToggleCheckedLink, note]
+      else [machineToggleCheckedLink, nextUpkeepSequenceField, note]
 
   datePicker = let
     modifyDatepickerDate newDate = modify' $ \upkeepData -> upkeepData {
@@ -360,7 +362,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
       B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
-    B.col (B.mkColProps 1) $ strong "Záruka" ] else []) ++ [
+    B.col (B.mkColProps 1) $ strong "Záruka" ] else [
+      B.col (B.mkColProps 2) $ strong "Typ servisu" ]) ++ [
     B.col (B.mkColProps noteColsSize) noteHeaders]
 
   companyNameHeader =  B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
