@@ -65,7 +65,7 @@ machine = M.Machine {
   M.mileagePerYear = 5000 }
 
 upkeepSequence :: US.UpkeepSequence
-upkeepSequence = US.newUpkeepSequence {
+upkeepSequence = US.UpkeepSequence {
   US.oneTime = False ,
   US.repetition = 10000 }
 
@@ -85,7 +85,7 @@ smallUpkeepAssertion = let
   result = nextServiceTypeHint (smallUpkeep, [bigUpkeep]) [previousUpkeep]
   expectedResult = smallUpkeep
   in assertEqual "The 2000 sequence must be picked"
-    expectedResult result
+    (US.repetition expectedResult) (US.repetition result)
 
 bigUpkeepAssertion :: Assertion
 bigUpkeepAssertion = let
@@ -95,7 +95,7 @@ bigUpkeepAssertion = let
   result = nextServiceTypeHint (smallUpkeep, [bigUpkeep]) [previousUpkeep]
   expectedResult = bigUpkeep
   in assertEqual "The 6000 sequence must be picked"
-    expectedResult result
+    (US.repetition expectedResult) (US.repetition result)
 
 missingOperationStartDate :: Assertion
 missingOperationStartDate = let
