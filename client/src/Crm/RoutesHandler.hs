@@ -198,10 +198,10 @@ startRouter appVar = startedRouter where
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ]
 
-notCheckedMachines' :: [(M.MachineId,t1,t2)] -> [(t3,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
+notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
   addNotCheckedMachine acc element = let 
-    (machineId,_,_) = element
+    (machineId,_,_,_) = element
     machineChecked = find (\(_,machineId') -> 
       machineId == machineId') upkeepMachines
     in case machineChecked of

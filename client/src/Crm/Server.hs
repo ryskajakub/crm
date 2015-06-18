@@ -166,7 +166,7 @@ fetchEmployees = XE.list
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]), 
-               [(M.MachineId, M.Machine, MT.MachineType)]) -> Fay ()) 
+               [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)]) -> Fay ()) 
             -> Fay ()
 fetchUpkeep = XU.bySingle 
 

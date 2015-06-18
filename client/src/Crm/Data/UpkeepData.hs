@@ -7,6 +7,7 @@ import           Crm.Shared.Machine
 import           Crm.Shared.MachineType
 import           Crm.Shared.UpkeepMachine
 import           Crm.Shared.Upkeep
+import           Crm.Shared.UpkeepSequence
 import           Crm.Shared.Employee
 
 import           Crm.Component.DatePicker
@@ -16,7 +17,7 @@ import           Crm.Types                (DisplayedNote)
 
 data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,
-  machines :: [(MachineId, Machine, MachineType)] ,
+  machines :: [(MachineId, Machine, MachineType, UpkeepSequence)] ,
   notCheckedMachines :: [UpkeepMachine'] ,
   upkeepDatePicker :: (DatePicker, Text) ,
   employees :: [Employee'] ,
