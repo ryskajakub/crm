@@ -40,7 +40,7 @@ tests = testGroup "All tests" [
   hintNextServiceTypeTests ]
 
 hintNextServiceTypeTests :: TestTree
-hintNextServiceTypeTests = testGroup "Next service type: All tests" [propertyTests']
+hintNextServiceTypeTests = testGroup "Next service type: All tests" [unitTests', propertyTests']
 
 nextServiceDayTests :: TestTree
 nextServiceDayTests = testGroup "Next service day : All tests" [unitTests, propertyTests]
@@ -52,6 +52,9 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
   testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
   testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ]
+
+unitTests' :: TestTree
+unitTests' = testGroup "Next service type hint : Unit tests" []
 
 machine :: M.Machine
 machine = M.Machine {
@@ -200,12 +203,15 @@ propertyTests' = let
   in localOption option $ testGroup "Next service type hint: Property tests" [
     testProperty "When there are no previous upkeeps, the onetime is preferrably picked" $ noPreviousUpkeeps ,
     testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps random ,
-    testProperty "The result is element of the input list" resultFromInputList ]
+    testProperty "The result is element of the input list" $ resultFromInputList random ]
 
-resultFromInputList :: NonEmptyList US.UpkeepSequence -> [UM.UpkeepMachine] -> Bool
-resultFromInputList (NonEmpty (inputSequence @ (seq:seqs))) upkeepMachines = let
-  result = nextServiceTypeHint (seq, seqs) upkeepMachines
-  in elem result inputSequence
+resultFromInputList :: QCGen -> [US.UpkeepSequence] -> [UM.UpkeepMachine] -> Bool
+resultFromInputList random inputSequences upkeepMachines = let
+  seq = US.newUpkeepSequence { US.oneTime = False }
+  seqs = seq : inputSequences
+  (seq':seqs') = shuffle' seqs (length seqs) random
+  result = nextServiceTypeHint (seq', seqs') upkeepMachines
+  in elem result (seq':seqs')
 
 noPreviousUpkeeps :: NonEmptyList US.UpkeepSequence -> Bool
 noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let
@@ -214,8 +220,8 @@ noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let
     then US.oneTime result
     else not . US.oneTime $ result
 
-previousUpkeeps :: QCGen -> NonEmptyList US.UpkeepSequence -> NonEmptyList UM.UpkeepMachine -> Bool
-previousUpkeeps random (NonEmpty sequences) (NonEmpty upkeepMachines) = let
+previousUpkeeps :: QCGen -> [US.UpkeepSequence] -> NonEmptyList UM.UpkeepMachine -> Bool
+previousUpkeeps random sequences (NonEmpty upkeepMachines) = let
   repeatedUpkeepSequence = US.newUpkeepSequence { US.oneTime = False }
   sequencesWithRepeated = repeatedUpkeepSequence : sequences
   (seq:seqs) = shuffle' sequencesWithRepeated (length sequencesWithRepeated) random
