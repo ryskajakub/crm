@@ -55,7 +55,9 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ]
 
 unitTests' :: TestTree
-unitTests' = testGroup "Next service type hint : Unit tests" []
+unitTests' = testGroup "Next service type hint : Unit tests" [
+  testCase "When there time for big maintanance, the big upkeep sequence is picked." bigUpkeepAssertion ,
+  testCase "When there time for small maintanance, the small upkeep sequence is picked." smallUpkeepAssertion ]
 
 machine :: M.Machine
 machine = M.Machine {
@@ -63,7 +65,7 @@ machine = M.Machine {
   M.mileagePerYear = 5000 }
 
 upkeepSequence :: US.UpkeepSequence
-upkeepSequence = US.UpkeepSequence {
+upkeepSequence = US.newUpkeepSequence {
   US.oneTime = False ,
   US.repetition = 10000 }
 
@@ -74,6 +76,19 @@ upkeep :: U.Upkeep
 upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
   U.upkeepClosed = True }
+
+smallUpkeepAssertion :: Assertion
+smallUpkeepAssertion = undefined
+
+bigUpkeepAssertion :: Assertion
+bigUpkeepAssertion = let
+  previousUpkeep = UM.newUpkeepMachine { UM.recordedMileage = 59000 }
+  smallUpkeep = upkeepSequence { US.repetition = 2000 }
+  bigUpkeep = upkeepSequence { US.repetition = 6000 }
+  result = nextServiceTypeHint (smallUpkeep, [bigUpkeep]) [previousUpkeep]
+  expectedResult = bigUpkeep
+  in assertEqual "The 6000 sequence must be picked"
+    expectedResult result
 
 missingOperationStartDate :: Assertion
 missingOperationStartDate = let
