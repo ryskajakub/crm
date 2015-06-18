@@ -199,7 +199,13 @@ propertyTests' = let
   option = QuickCheckReplay $ Just (random, 0)
   in localOption option $ testGroup "Next service type hint: Property tests" [
     testProperty "When there are no previous upkeeps, the onetime is preferrably picked" $ noPreviousUpkeeps ,
-    testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps random ]
+    testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps random ,
+    testProperty "The result is element of the input list" resultFromInputList ]
+
+resultFromInputList :: NonEmptyList US.UpkeepSequence -> [UM.UpkeepMachine] -> Bool
+resultFromInputList (NonEmpty (inputSequence @ (seq:seqs))) upkeepMachines = let
+  result = nextServiceTypeHint (seq, seqs) upkeepMachines
+  in elem result inputSequence
 
 noPreviousUpkeeps :: NonEmptyList US.UpkeepSequence -> Bool
 noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let

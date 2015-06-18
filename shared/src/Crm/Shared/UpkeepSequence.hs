@@ -16,7 +16,7 @@ data UpkeepSequence = UpkeepSequence {
   repetition :: Int ,
   oneTime :: Bool }
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Eq)
 #endif
 
 newUpkeepSequence :: UpkeepSequence
