@@ -1,6 +1,6 @@
 module Crm.Server.Core where
 
-import           Data.List                 (partition, minimumBy, find)
+import           Data.List                 (partition, minimumBy, find, maximumBy)
 import           Data.Maybe                (fromMaybe)
 
 import           Data.Time.Calendar        (Day, addDays)
@@ -58,9 +58,25 @@ nextServiceDate machine sequences upkeeps today = let
       Just nextOpenUpkeep <- nextOpenUpkeep' -> (nextOpenUpkeep, Planned)
     _ -> (computedUpkeep, Computed)
 
+compareRepetition :: US.UpkeepSequence -> US.UpkeepSequence -> Ordering
+compareRepetition this that = US.repetition this `compare` US.repetition that
+
 nextServiceTypeHint :: (US.UpkeepSequence, [US.UpkeepSequence])
                     -> [UM.UpkeepMachine]
                     -> US.UpkeepSequence
-nextServiceTypeHint (seq,seqs) [] = fromMaybe
-  (minimumBy (\this that -> US.repetition this `compare` US.repetition that) (seq:seqs))
+nextServiceTypeHint (seq, seqs) [] = fromMaybe
+  (minimumBy compareRepetition (seq:seqs))
   (find (US.oneTime) (seq:seqs))
+nextServiceTypeHint (seq, seqs) ums = let
+  lastUpkeepMthSeq = maximumBy (\this that -> UM.recordedMileage this `compare` UM.recordedMileage that) ums
+  repeatedSeqs = filter (not . US.oneTime) (seq:seqs)
+  repeatedSeqsWithNextUpkeepMth = map (\repeatedSeq -> let
+    numberOfPreviousUpkeeps = truncate $ 
+      (fromIntegral . UM.recordedMileage $ lastUpkeepMthSeq :: Double) / 
+      (fromIntegral . US.repetition $ repeatedSeq)
+    numberOfNextUpkeep = numberOfPreviousUpkeeps + 1
+    mthOfNextUpkeep = numberOfNextUpkeep * US.repetition repeatedSeq
+    in (repeatedSeq, mthOfNextUpkeep)) repeatedSeqs
+  minimumNextUpkeepMth = minimum $ map snd repeatedSeqsWithNextUpkeepMth
+  findNextServiceSequence = maximumBy compareRepetition . map fst . filter (\(_, nextUpkeepMth) -> nextUpkeepMth == minimumNextUpkeepMth)
+  in findNextServiceSequence repeatedSeqsWithNextUpkeepMth
