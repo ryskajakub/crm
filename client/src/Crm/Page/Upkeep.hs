@@ -221,7 +221,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   textareaRowEditing = textareaRow Editing
   inputRowEditing = inputRow Editing
 
-  (closeUpkeepRows, machineColsSize, noteColsSize) = if closeUpkeep' 
+  machineColsSize = 4
+  (closeUpkeepRows, noteColsSize) = if closeUpkeep' 
     then ([inputRowEditing "Hodiny"
         (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
@@ -230,8 +231,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } ,
       textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
         \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 4, 5)
-    else ([], 4, 6)
+          ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 5)
+    else ([], 6)
 
   toggleNote = let
     newClose uc = uc { UD.displayedNote = newDisplayedNote } where
