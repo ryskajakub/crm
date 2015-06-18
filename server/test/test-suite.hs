@@ -9,6 +9,7 @@ import Crm.Server.Helpers
 import qualified Crm.Shared.Upkeep as U
 import qualified Crm.Shared.Machine as M
 import qualified Crm.Shared.UpkeepSequence as US
+import qualified Crm.Shared.UpkeepMachine as UM
 
 import Test.Tasty.HUnit
 import Test.Tasty
@@ -178,6 +179,9 @@ instance Arbitrary US.UpkeepSequence where
     return US.newUpkeepSequence {
       US.oneTime = oneTime }
 
+instance Arbitrary UM.UpkeepMachine where
+  shrink = shrinkNothing
+  arbitrary = return UM.newUpkeepMachine
 
 plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
@@ -194,8 +198,8 @@ propertyTests' = let
   random = mkQCGen 0
   option = QuickCheckReplay $ Just (random, 0)
   in localOption option $ testGroup "Next service type hint: Property tests" [
-    testProperty "When there are no previous upkeeps, the onetime on is picked" $ noPreviousUpkeeps ,
-    testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps ]
+    testProperty "When there are no previous upkeeps, the onetime is preferrably picked" $ noPreviousUpkeeps ,
+    testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps random ]
 
 noPreviousUpkeeps :: NonEmptyList US.UpkeepSequence -> Bool
 noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let
@@ -204,5 +208,10 @@ noPreviousUpkeeps (NonEmpty (sequences @ (seq:seqs))) = let
     then US.oneTime result
     else not . US.oneTime $ result
 
-previousUpkeeps :: Bool
-previousUpkeeps = False
+previousUpkeeps :: QCGen -> NonEmptyList US.UpkeepSequence -> NonEmptyList UM.UpkeepMachine -> Bool
+previousUpkeeps random (NonEmpty sequences) (NonEmpty upkeepMachines) = let
+  repeatedUpkeepSequence = US.newUpkeepSequence { US.oneTime = False }
+  sequencesWithRepeated = repeatedUpkeepSequence : sequences
+  (seq:seqs) = shuffle' sequencesWithRepeated (length sequencesWithRepeated) random
+  result = nextServiceTypeHint (seq, seqs) upkeepMachines
+  in not . US.oneTime $ result

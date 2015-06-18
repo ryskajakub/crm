@@ -20,7 +20,7 @@ data UpkeepMachine = UpkeepMachine {
   warrantyUpkeep :: Bool ,
   endNote :: Text }
 #ifndef FAY
-  deriving (Generic, Typeable, Data)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 
 newUpkeepMachine :: UpkeepMachine
