@@ -77,6 +77,7 @@ module Crm.Server.DB (
   employeesInUpkeep ,
   employeeIdsInUpkeep ,
   notesForUpkeep ,
+  machinesInUpkeepQuery' ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -497,6 +498,13 @@ machineTypesWithCountQuery = let
   aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min),p1(AGG.count))) query'
   orderedQuery = orderBy (asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
+
+machinesInUpkeepQuery' :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesInUpkeepQuery' upkeepId = proc () -> do
+  upkeepMachineRow <- machinesInUpkeepQuery upkeepId -< ()
+  machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
+  machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
+  returnA -< (machineRow, machineTypeRow)
 
 machinesInCompanyQuery :: Int -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
 machinesInCompanyQuery companyId = let

@@ -143,13 +143,14 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   ((_, conn), U.UpkeepId upkeepIdInt) <- ask
   upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepIdInt)
   upkeep <- singleRowOrColumn upkeeps
-  machines <- liftIO $ runMachinesInCompanyByUpkeepQuery upkeepIdInt conn
+  machines' <- liftIO $ runQuery conn (machinesInUpkeepQuery' upkeepIdInt)
+  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
   companyId <- case machines of
     [] -> throwError NotAllowed
-    (companyId',_) : _ -> return companyId'
+    (machineMapped,_) : _ -> return $ $(proj 6 1) machineMapped
   employeeIds <- liftIO $ runQuery conn (employeeIdsInUpkeep upkeepIdInt)
   return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), 
-    map ((\x -> $(catTuples 2 1) ($(takeTuple 5 2) x) ($(proj 5 4) x)) . snd) machines)
+    map (\(m, mt) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt)) machines)
 
 
 -- resource
