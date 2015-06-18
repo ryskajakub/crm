@@ -12,6 +12,7 @@ import           Data.Time.Clock           (utctDay, UTCTime)
 import           Data.Bits                 (shiftL)
 import           Data.Word                 (Word32)
 import           Data.List.Unique          (repeated)
+import           Data.Text                 (pack)
 
 import           System.Locale             (defaultTimeLocale)
 import           System.Random             (next, mkStdGen, StdGen)
@@ -179,7 +180,9 @@ instance Arbitrary US.UpkeepSequence where
   shrink = shrinkNothing
   arbitrary = do
     oneTime <- arbitrary
+    label_ <- arbitrary
     return US.newUpkeepSequence {
+      US.label_ = pack label_ ,
       US.oneTime = oneTime }
 
 instance Arbitrary UM.UpkeepMachine where
