@@ -380,7 +380,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           upkeepPerMileage = minimum repetitions where
             nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
             repetitions = map US.repetition nonOneTimeSequences
-          operationTypeTuples = [(8760, "24/7"), (upkeepPerMileage, "1 za rok")]
+          operationTypeTuples = [
+            (8760, "24/7") ,
+            (upkeepPerMileage, "1x za rok") , 
+            (truncate $ fromIntegral upkeepPerMileage / (2 :: Double), "1x za 2 roky") ] ++
+            (if upkeepPerMileage * 2 <= 8760 then [(upkeepPerMileage * 2, "1x za půl roku")] else [])
           buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
             operationTypeTuples
           buttonLabel = maybe "Jiný" snd buttonLabelMaybe
