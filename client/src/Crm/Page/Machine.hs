@@ -74,117 +74,117 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       datePickerText, usageSetMode) machineSpecific machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
-    where
-      pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
-      extraRow = [editableRow Display "Další servis" (displayDate nextService)]
-      upkeepHistoryHtml = let
-        mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine) -> [DOMElement]
-        mkUpkeepRows (_, upkeep, upkeepMachine) = let
-          (labelClass, labelText) = if U.upkeepClosed upkeep
-            then ("label-success", "Uzavřený")
-            else ("label-warning", "Naplánovaný")
-          stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
-          date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
-          mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
-          mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
-          warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
-          warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
-          employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
-          employee = B.col (B.mkColProps 2) $ "tbd"
-          descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
-          description = B.col (B.mkColProps 4) $ U.workDescription upkeep
-          noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
-          note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
-          in [
-            B.row [stateLabel, date, mthHeader, mth, 
-              warrantyHeader, warranty, employeeHeader, employee] ,
-            div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
-        rows = (map mkUpkeepRows upkeeps)
-        flattenedRows = foldl (++) [] rows
-        in if null flattenedRows
-          then []
-          else (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
-      extraGrid = (if editing == Editing && (not $ null upkeeps) 
-        then Nothing 
-        else (Just $ B.grid upkeepHistoryHtml))
-      
-      editableRowEditing = editableRow editing
-    
-      photoUploadRow = editableRowEditing
-        "Fotka" 
-        (let 
-          imageUploadHandler = const $ do
-            fileUpload <- JQ.select "#file-upload"
-            files <- getFileList fileUpload
-            file <- fileListElem 0 files
-            type' <- fileType file
-            name <- fileName file
-            uploadPhotoData file machineId $ \photoId ->
-              uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh
-          imageUploadLabel = "Přidej fotku"
-          photoList = map (\(photoId, photoMeta) -> let
-            deletePhotoHandler = const $ deletePhoto photoId BR.refresh
-            deletePhotoButton = BTN.button' 
-              (BTN.buttonProps {
-                BTN.bsStyle = Defined "danger" ,
-                BTN.onClick = Defined deletePhotoHandler })
-              "Smaž fotku"
-            in li [text2DOM $ PM.fileName photoMeta, deletePhotoButton] ) photos
-          in div [(ul' (class' "list-unstyled") photoList) : [div [
-            J.fileUploadI18n "Vyber obrázek" "Změň" ,
-            BTN.button'
-              (BTN.buttonProps {
-                BTN.bsStyle = Defined "primary" ,
-                BTN.onClick = Defined imageUploadHandler })
-              imageUploadLabel ]]]) 
-      mkPhoto (photoId, _) = IMG.image' 
-        (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
-        (IMG.mkImageAttrs "")
-      photoCarouselRow = editableRowEditing
-        "Fotky"
-        (carousel "my-carousel" (map mkPhoto photos))
-
-      deleteMachineRow = oneElementRow "Smazat" $ BTN.button'
-        (BTN.buttonProps { 
-          BTN.bsStyle = Defined "danger" ,
-          BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
-        "Smazat"
-
-      extraRows = (case (editing, photos) of
-        (Editing, _) -> [photoUploadRow]
-        (_, []) -> []
-        _ -> [photoCarouselRow]) ++ extraRow ++ (if editing == Editing && null upkeeps && null photos
-          then [deleteMachineRow]
-          else [])
-      setEditing :: InputState -> Fay ()
-      setEditing editing' = modify appVar (\appState -> appState {
-        D.navigation = case D.navigation appState of
-          D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
-            D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
-          _ -> D.navigation appState })
-      editButtonRow =
-        div' (class' "col-md-3") $
-          BTN.button'
-            (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
-            "Jdi do editačního módu"
-      extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-      editMachineAction = updateMachine machineId machine otherMachineId contactPersonId
-        extraFieldsForServer (setEditing Display)
-      buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
-      button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
+  where
+  pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
+  extraRow = [editableRow Display "Další servis" (displayDate nextService)]
+  upkeepHistoryHtml = let
+    mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine) -> [DOMElement]
+    mkUpkeepRows (_, upkeep, upkeepMachine) = let
+      (labelClass, labelText) = if U.upkeepClosed upkeep
+        then ("label-success", "Uzavřený")
+        else ("label-warning", "Naplánovaný")
+      stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
+      date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
+      mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
+      mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
+      warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
+      warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
+      employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
+      employee = B.col (B.mkColProps 2) $ "tbd"
+      descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
+      description = B.col (B.mkColProps 4) $ U.workDescription upkeep
+      noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
+      note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
+      in [
+        B.row [stateLabel, date, mthHeader, mth, 
+          warrantyHeader, warranty, employeeHeader, employee] ,
+        div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
+    rows = (map mkUpkeepRows upkeeps)
+    flattenedRows = foldl (++) [] rows
+    in if null flattenedRows
+      then []
+      else (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
+  extraGrid = (if editing == Editing && (not $ null upkeeps) 
+    then Nothing 
+    else (Just $ B.grid upkeepHistoryHtml))
   
-      fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
-        (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
-        (\imageData -> do
-          putStrLn imageData
-          let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
-          photoHtmlElement <- JQ.select photoHTMLId
-          _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
-          return ())
-        Nothing
-        Runtime.get
-        Nothing
-        Nothing
+  editableRowEditing = editableRow editing
+
+  photoUploadRow = editableRowEditing
+    "Fotka" 
+    (let 
+      imageUploadHandler = const $ do
+        fileUpload <- JQ.select "#file-upload"
+        files <- getFileList fileUpload
+        file <- fileListElem 0 files
+        type' <- fileType file
+        name <- fileName file
+        uploadPhotoData file machineId $ \photoId ->
+          uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh
+      imageUploadLabel = "Přidej fotku"
+      photoList = map (\(photoId, photoMeta) -> let
+        deletePhotoHandler = const $ deletePhoto photoId BR.refresh
+        deletePhotoButton = BTN.button' 
+          (BTN.buttonProps {
+            BTN.bsStyle = Defined "danger" ,
+            BTN.onClick = Defined deletePhotoHandler })
+          "Smaž fotku"
+        in li [text2DOM $ PM.fileName photoMeta, deletePhotoButton] ) photos
+      in div [(ul' (class' "list-unstyled") photoList) : [div [
+        J.fileUploadI18n "Vyber obrázek" "Změň" ,
+        BTN.button'
+          (BTN.buttonProps {
+            BTN.bsStyle = Defined "primary" ,
+            BTN.onClick = Defined imageUploadHandler })
+          imageUploadLabel ]]]) 
+  mkPhoto (photoId, _) = IMG.image' 
+    (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
+    (IMG.mkImageAttrs "")
+  photoCarouselRow = editableRowEditing
+    "Fotky"
+    (carousel "my-carousel" (map mkPhoto photos))
+
+  deleteMachineRow = oneElementRow "Smazat" $ BTN.button'
+    (BTN.buttonProps { 
+      BTN.bsStyle = Defined "danger" ,
+      BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
+    "Smazat"
+
+  extraRows = (case (editing, photos) of
+    (Editing, _) -> [photoUploadRow]
+    (_, []) -> []
+    _ -> [photoCarouselRow]) ++ extraRow ++ (if editing == Editing && null upkeeps && null photos
+      then [deleteMachineRow]
+      else [])
+  setEditing :: InputState -> Fay ()
+  setEditing editing' = modify appVar (\appState -> appState {
+    D.navigation = case D.navigation appState of
+      D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
+        D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
+      _ -> D.navigation appState })
+  editButtonRow =
+    div' (class' "col-md-3") $
+      BTN.button'
+        (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
+        "Jdi do editačního módu"
+  extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
+  editMachineAction = updateMachine machineId machine otherMachineId contactPersonId
+    extraFieldsForServer (setEditing Display)
+  buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
+  button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
+
+  fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
+    (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
+    (\imageData -> do
+      putStrLn imageData
+      let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
+      photoHtmlElement <- JQ.select photoHTMLId
+      _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
+      return ())
+    Nothing
+    Runtime.get
+    Nothing
+    Nothing
 
 
 machineNew :: R.CrmRouter
@@ -207,56 +207,56 @@ machineNew router appVar datePickerCalendar (machine', datePickerText, usageSetM
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
       buttonRow'' appVar datePickerCalendar (machine', datePickerText, usageSetMode) machineSpecific machineTypeTuple 
       [] Nothing (contactPersonId, Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
-    where
-      extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-      machineTypeEither = case machineTypeId of
-        Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
-        Nothing -> MT.MyMachineType machineTypeTuple
-      contactPersonId' = case contactPersonActiveRow of
-        MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
-        MD.ById -> M.ContactPersonIdForMachine `onJust` contactPersonId
-      saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
-        (R.navigate (R.companyDetail companyId) router)
-      buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
+  where
+  extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
+  machineTypeEither = case machineTypeId of
+    Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
+    Nothing -> MT.MyMachineType machineTypeTuple
+  contactPersonId' = case contactPersonActiveRow of
+    MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
+    MD.ById -> M.ContactPersonIdForMachine `onJust` contactPersonId
+  saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
+    (R.navigate (R.companyDetail companyId) router)
+  buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
 
-      cpPartInputs :: Text
-                   -> (CP.ContactPerson -> Text)
-                   -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
-                   -> [DOMElement]
-      cpPartInputs partLabel get set = let
-        i = input
-          Editing
-          True
-          (SetValue . get $ contactPerson)
-          (setCP . set contactPerson)
-        in [
-          div' (class'' ["control-label", "my-text-left", "col-md-1"]) partLabel ,
-          B.col (B.mkColProps 2) i ]
+  cpPartInputs :: Text
+               -> (CP.ContactPerson -> Text)
+               -> (CP.ContactPerson -> Text -> CP.ContactPerson) 
+               -> [DOMElement]
+  cpPartInputs partLabel get set = let
+    i = input
+      Editing
+      True
+      (SetValue . get $ contactPerson)
+      (setCP . set contactPerson)
+    in [
+      div' (class'' ["control-label", "my-text-left", "col-md-1"]) partLabel ,
+      B.col (B.mkColProps 2) i ]
 
-      setCP :: CP.ContactPerson -> Fay ()
-      setCP contactPerson' = changeNavigationState $ \mn ->
-        mn { MD.contactPersonNew = (contactPerson', MD.New) }
+  setCP :: CP.ContactPerson -> Fay ()
+  setCP contactPerson' = changeNavigationState $ \mn ->
+    mn { MD.contactPersonNew = (contactPerson', MD.New) }
 
-      (byIdHighlight, newHighlight) = let
-        f = case contactPersonActiveRow of
-          MD.ById -> Prelude.id
-          MD.New  -> swap
-        in f (span' (class' "underline"), Prelude.id)
+  (byIdHighlight, newHighlight) = let
+    f = case contactPersonActiveRow of
+      MD.ById -> Prelude.id
+      MD.New  -> swap
+    in f (span' (class' "underline"), Prelude.id)
 
-      newContactPersonRow = row (newHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
-        cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
-        cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
-        cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t } ]
+  newContactPersonRow = row (newHighlight . text2DOM $ "Kontaktní osoba - nová") $ concat [
+    cpPartInputs "Jméno" CP.name $ \cp t -> cp { CP.name = t } ,
+    cpPartInputs "Telefon" CP.phone $ \cp t -> cp { CP.phone = t } ,
+    cpPartInputs "Pozice" CP.position $ \cp t -> cp { CP.position = t } ]
 
-      setById :: Fay ()
-      setById = changeNavigationState $ \mn -> mn { MD.contactPersonNew = (contactPerson, MD.ById) }
+  setById :: Fay ()
+  setById = changeNavigationState $ \mn -> mn { MD.contactPersonNew = (contactPerson, MD.ById) }
 
-      changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
-      changeNavigationState f = modify appVar $ \appState -> appState {
-        D.navigation = case D.navigation appState of 
-          D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
-            D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
-          _ -> D.navigation appState }
+  changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
+  changeNavigationState f = modify appVar $ \appState -> appState {
+    D.navigation = case D.navigation appState of 
+      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
+        D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
+      _ -> D.navigation appState }
 
 
 machineDisplay :: InputState -- ^ true editing mode false display mode
