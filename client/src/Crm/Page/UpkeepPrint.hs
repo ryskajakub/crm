@@ -21,7 +21,10 @@ upkeepPrint :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, MT.MachineType,
             -> DOMElement
 upkeepPrint data' = let
   header = h2 "Denní akce"
-  displayUpkeep (upkeep, company, employees, machinesData) = B.row $ div ""
+  displayUpkeep (upkeep, company, employees, machinesData) = B.row $ upkeepPrintDataHeader where
+    upkeepPrintDataHeader = map (B.col (B.mkColProps 6)) [
+      strong "Firma" , text2DOM . C.companyName $ company ,
+      strong "Adresa" , text2DOM . C.companyAddress $ company ]
   in B.grid $
     B.row $ B.col (B.mkColProps 12) header :
     map displayUpkeep data' 
