@@ -81,6 +81,7 @@ module Crm.Server.DB (
   notesForUpkeep ,
   machinesInUpkeepQuery' ,
   pastUpkeepMachinesQ ,
+  dailyPlanQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -123,19 +124,20 @@ import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connecti
                                                       connect, close, query, Only(..), Binary(..), execute)
 import           Opaleye.QueryArr                     (Query, QueryArr)
 import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
-import           Opaleye.Column                       (Column, Nullable)
+import           Opaleye.Column                       (Column, Nullable, unsafeCast)
 import           Opaleye.Order                        (orderBy, asc, limit)
 import           Opaleye.RunQuery                     (runQuery)
 import           Opaleye.Operators                    (restrict, lower, (.==))
 import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
                                                       PGText, pgStrictText, pgBool, PGFloat8, 
-                                                      pgString, PGBytea)
+                                                      pgString, PGBytea, pgDay, PGArray)
 import qualified Opaleye.Aggregate                    as AGG
 import           Opaleye.Join                         (leftJoin)
 import           Opaleye.Distinct                     (distinct)
 import           Opaleye                              (runInsert)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
+import qualified Opaleye.Internal.Aggregate           as IAGG
 
 import           Rest.Types.Error                     (DataError(ParseError), Reason(InputError))
 import           TupleTH
@@ -713,6 +715,23 @@ extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc 
   restrict -< $(proj 3 1) extraFieldRow .== $(proj 11 0) machineRow
   extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
   returnA -< (extraFieldRow, extraFieldSettingRow)
+
+dailyPlanQuery :: Maybe E.EmployeeId -> Day -> Query (UpkeepsTable, Column (PGArray PGInt4))
+dailyPlanQuery employeeId' day = let
+  q = proc () -> do
+    upkeepRow <- upkeepsQuery -< ()
+    restrict -< $(proj 6 1) upkeepRow .== pgDay day
+    upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+    restrict -< case employeeId' of
+      Just (E.EmployeeId employeeId) -> pgInt4 employeeId .== $(proj 3 1) upkeepEmployeeRow
+      Nothing -> pgBool True
+    restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
+    upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+    returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
+  in AGG.aggregate (p2(p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min), p1(aggrArray))) q
+
+aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
+aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
 notesForUpkeep :: Int -> Query DBText
 notesForUpkeep upkeepId = proc () -> do

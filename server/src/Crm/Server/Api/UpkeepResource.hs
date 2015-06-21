@@ -21,13 +21,14 @@ import           Control.Monad.Trans.Except  (ExceptT)
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import           Data.List                   (nub, zip)
 import           Data.Text                   (intercalate, pack)
+import           Data.Time.Calendar          (fromGregorian)
 
 import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove, create)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
-import           Rest.Handler                (ListHandler, Handler)
+import           Rest.Handler                (ListHandler, Handler, mkListing)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Upkeep           as U
@@ -48,7 +49,7 @@ import           Crm.Server.Core             (nextServiceTypeHint)
 import           TupleTH                     (proj, takeTuple, catTuples)
 
 
-data UpkeepsListing = UpkeepsAll | UpkeepsPlanned
+data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
 
 
 addUpkeep :: Connection
@@ -124,7 +125,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
         pgStrictText $ U.workHours upkeep, 
         pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable (\upkeepRow -> $(proj 6 0) upkeepRow .== (pgInt4 $ U.getUpkeepId upkeepId))
+  _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> $(proj 6 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 3 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertEmployees conn upkeepId employeeIds
@@ -178,6 +179,13 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
     _ -> throwError $ CustomReason $ DomainReason "Db in invalid state"
   return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
 
+printDailyPlanListing :: ListHandler Dependencies
+printDailyPlanListing = mkListing' jsonO $ const $ do
+  (_, connection) <- ask
+  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery Nothing (fromGregorian 2015 6 17))
+  let dailyPlanUpkeeps = map (\(upkeep, es) -> (convert upkeep :: UpkeepMapped, es :: [Int])) dailyPlanUpkeeps'
+  return dailyPlanUpkeeps
+
 
 -- resource
 
@@ -185,7 +193,8 @@ upkeepResource :: Resource Dependencies (IdDependencies' U.UpkeepId) U.UpkeepId 
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \listingType -> case listingType of
     UpkeepsAll -> upkeepListing
-    UpkeepsPlanned -> upkeepsPlannedListing ,
+    UpkeepsPlanned -> upkeepsPlannedListing
+    PrintDailyPlan -> printDailyPlanListing ,
   name = A.upkeep ,
   update = Just updateUpkeepHandler ,
   schema = upkeepSchema ,
@@ -196,4 +205,5 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
 upkeepSchema :: S.Schema U.UpkeepId UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [
   (A.planned, S.listing UpkeepsPlanned) ,
+  ("print", S.listing PrintDailyPlan) ,
   (A.single, S.singleRead id )])
