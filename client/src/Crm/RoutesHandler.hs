@@ -8,7 +8,7 @@ import           Data.Text                   (fromString, showInt)
 import           Prelude                     hiding (div, span) 
 import           Data.Var                    (Var, modify, get)
 import           Data.Function               (fmap)
-import           Data.Maybe                  (fromJust)
+import           Data.Maybe                  (fromJust, onJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import           Moment                      (now, requireMoment, day)
@@ -32,7 +32,7 @@ import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
 import           Crm.Server
 import           Crm.Router
-import           Crm.Helpers                 (displayDate, rmap)
+import           Crm.Helpers                 (displayDate, rmap, parseSafely)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 import           Crm.Types                   (DisplayedNote (..))
@@ -60,6 +60,10 @@ startRouter appVar = startedRouter where
     ("", \router _ -> 
       fetchFrontPageData C.NextService DIR.Asc (CrmRouter router) $ \data' -> modify appVar 
         $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) ,
+    ("daily-plan/:date/employee/:employee", \router params -> let
+      dateParam = head params
+      employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
+      in modify appVar $ \appState -> appState { D.navigation = D.DailyPlan YMD.new employeeId }) ,
     ("home/:order/:direction", \router params -> let
       firstParam = head params
       secondParam = head $ tail params

@@ -27,6 +27,7 @@ import           Crm.Page.MachineSchema    (schema)
 import           Crm.Page.NotFound         (notFound)
 import           Crm.Page.Dashboard        (dashboard)
 import           Crm.Page.Login            (login)
+import           Crm.Page.UpkeepPrint      (upkeepPrint)
 import qualified Crm.Data.Data             as D
 import qualified Crm.Data.MachineData      as MD
 import qualified Crm.Data.UpkeepData       as UD
@@ -97,6 +98,8 @@ main' = do
       D.Login password wrongPassword -> let
         (body, callback) = emptyCallback $ login appVar' router password wrongPassword
         in simpleReactBody' body callback
+      D.DailyPlan {} ->
+        n . emptyCallback $ upkeepPrint
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

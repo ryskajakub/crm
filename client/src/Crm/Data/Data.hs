@@ -71,7 +71,10 @@ data NavigationState =
     machines :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)] } |
   Login { 
     password :: Text ,
-    wrongPassword :: Bool }
+    wrongPassword :: Bool } |
+  DailyPlan {
+    date :: YMD.YearMonthDay ,
+    employeeId :: Maybe E.EmployeeId }
 
 data AppState = AppState {
   navigation :: NavigationState ,

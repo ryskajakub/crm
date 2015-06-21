@@ -4,7 +4,8 @@
 
 module Crm.Shared.YearMonthDay (
   YearMonthDay(..) ,
-  Precision(..) ) where
+  Precision(..) ,
+  new ) where
 
 #ifndef FAY
 import GHC.Generics
@@ -25,3 +26,6 @@ data Precision = DayPrecision | MonthPrecision
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
+
+new :: YearMonthDay
+new = YearMonthDay 1970 0 1 (DayPrecision)

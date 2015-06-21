@@ -31,6 +31,7 @@ module Crm.Router (
   editEmployee' ,
   employees' ,
 
+  printDailyPlan ,
   login ,
   dashboard ,
   frontPage ,
@@ -282,6 +283,11 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
   _ -> "NextService") <> "/" <> (case direction of
   DIR.Asc -> "Asc"
   DIR.Desc -> "Desc")
+
+printDailyPlan :: Text -> Maybe E.EmployeeId -> CrmRoute
+printDailyPlan date employeeId' = CrmRoute $ "daily-plan/" <> date <> "/employee/" <> (case employeeId' of
+  Just employeeId -> showInt . E.getEmployeeId $ employeeId
+  Nothing -> "all")
 
 login :: CrmRoute
 login = fst login' ()
