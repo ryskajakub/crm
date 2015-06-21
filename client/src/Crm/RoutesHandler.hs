@@ -63,7 +63,8 @@ startRouter appVar = startedRouter where
     ("daily-plan/:date/employee/:employee", \router params -> let
       dateParam = head params
       employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
-      in modify appVar $ \appState -> appState { D.navigation = D.DailyPlan YMD.new employeeId }) ,
+      in fetchDailyPlanData dateParam $ \data' ->
+        modify appVar $ \appState -> appState { D.navigation = D.DailyPlan data' }) ,
     ("home/:order/:direction", \router params -> let
       firstParam = head params
       secondParam = head $ tail params
