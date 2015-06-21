@@ -128,7 +128,8 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 -- fetching of data from server
 
 fetchDailyPlanData :: Text
-                   -> ([(U.Upkeep, C.Company, [E.Employee], [(M.Machine, MT.MachineType, CP.ContactPerson)])] -> Fay ())
+                   -> ([(U.Upkeep, C.Company, [E.Employee], 
+                      [(M.Machine, MT.MachineType, CP.ContactPerson, UM.UpkeepMachine)])] -> Fay ())
                    -> Fay ()
 fetchDailyPlanData _ = XU.listPrint
 

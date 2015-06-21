@@ -73,7 +73,8 @@ data NavigationState =
     password :: Text ,
     wrongPassword :: Bool } |
   DailyPlan {
-    dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, MT.MachineType, CP.ContactPerson)])] }
+    dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee], 
+      [(M.Machine, MT.MachineType, CP.ContactPerson, UM.UpkeepMachine)])] }
 
 data AppState = AppState {
   navigation :: NavigationState ,
