@@ -83,6 +83,7 @@ module Crm.Server.DB (
   pastUpkeepMachinesQ ,
   dailyPlanQuery ,
   multiEmployeeQuery ,
+  companyInUpkeepQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -750,6 +751,13 @@ in' as compareA = foldl
   (\acc a -> acc .|| compareA a)
   (pgBool True)
   as
+
+companyInUpkeepQuery :: U.UpkeepId -> Query CompaniesTable
+companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
+  upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepIdInt
+  machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
+  companyRow <- join companiesQuery -< $(proj 11 1) machineRow
+  returnA -< companyRow
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]
