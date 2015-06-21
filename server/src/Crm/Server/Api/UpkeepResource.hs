@@ -187,8 +187,11 @@ printDailyPlanListing = mkListing' jsonO $ const $ do
     let upkeep = convert upkeepMapped :: UpkeepMapped
     employees <- fmap (map $ \e -> $(proj 2 1) (convert e :: EmployeeMapped)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
-    machines <- fmap (map $ \(m, mt) -> ($(proj 6 5) $ (convert m :: MachineMapped), $(proj 2 1) $ (convert mt :: MachineTypeMapped))) $ 
-      liftIO $ runQuery connection (machinesInUpkeepQuery' (U.getUpkeepId . $(proj 2 0) $ upkeep))
+    machines <- fmap (map $ \(m, mt, cp) -> (
+      $(proj 6 5) $ (convert m :: MachineMapped) , 
+      $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
+      $(proj 3 2) $ (convert cp :: ContactPersonMapped))) $ 
+      liftIO $ runQuery connection (machinesInUpkeepQuery'' ($(proj 2 0) upkeep))
     company <- fmap (\c -> $(proj 3 1) (convert c :: CompanyMapped)) $ 
       singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . $(proj 2 0) $ upkeep))
     return ($(proj 2 1) upkeep, company, employees, machines)

@@ -80,6 +80,7 @@ module Crm.Server.DB (
   employeeIdsInUpkeep ,
   notesForUpkeep ,
   machinesInUpkeepQuery' ,
+  machinesInUpkeepQuery'' ,
   pastUpkeepMachinesQ ,
   dailyPlanQuery ,
   multiEmployeeQuery ,
@@ -521,6 +522,13 @@ machinesInUpkeepQuery' upkeepId = proc () -> do
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
   machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
   returnA -< (machineRow, machineTypeRow)
+
+machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsTable)
+machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = proc () -> do
+  (machineRow, machineTypeRow) <- machinesInUpkeepQuery' upkeepIdInt -< ()
+  contactPersonRow <- contactPersonsQuery -< ()
+  restrict -< $(proj 11 0) machineRow .== $(proj 5 1) contactPersonRow
+  returnA -< (machineRow, machineTypeRow, contactPersonRow)
 
 machinesQ :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesQ companyId = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
