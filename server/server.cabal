@@ -14,7 +14,7 @@ flag build-gen-api
   default:     False
   manual:      True
 
-flag build-gen-pass
+flag build-insert-pass
   description: Builds the executable for inserting the password hash into db.
   default:     False
   manual:      True
@@ -29,81 +29,81 @@ Library
   hs-source-dirs:    src, shared
   ghc-options:       -Wall
   exposed-modules:
-      Server
-    , Crm.Server.Api.CompanyResource
-    , Crm.Server.Api.Company.MachineResource
-    , Crm.Server.Api.Company.UpkeepResource
-    , Crm.Server.Api.Company.ContactPersonResource
-    , Crm.Server.Api.MachineResource
-    , Crm.Server.Api.MachineTypeResource
-    , Crm.Server.Api.UpkeepResource
-    , Crm.Server.Api.EmployeeResource
-    , Crm.Server.Api.Machine.PhotoResource
-    , Crm.Server.Api.PhotoMetaResource
-    , Crm.Server.Api.PhotoResource
-    , Crm.Server.Api.ContactPersonResource
-    , Crm.Server.Api.MachineKindResource
-    , Crm.Server.Handler
-    , Crm.Server.Base
-    , Crm.Server.Boilerplate
-    , Crm.Server.DB
-    , Crm.Server.Helpers
-    , Crm.Server.Types
-    , Crm.Server.Core
-    , Crm.Server.CachedCore
+    Server ,
+    Crm.Server.Api.CompanyResource ,
+    Crm.Server.Api.Company.MachineResource ,
+    Crm.Server.Api.Company.UpkeepResource ,
+    Crm.Server.Api.Company.ContactPersonResource ,
+    Crm.Server.Api.MachineResource ,
+    Crm.Server.Api.MachineTypeResource ,
+    Crm.Server.Api.UpkeepResource ,
+    Crm.Server.Api.EmployeeResource ,
+    Crm.Server.Api.Machine.PhotoResource ,
+    Crm.Server.Api.PhotoMetaResource ,
+    Crm.Server.Api.PhotoResource ,
+    Crm.Server.Api.ContactPersonResource ,
+    Crm.Server.Api.MachineKindResource ,
+    Crm.Server.Handler ,
+    Crm.Server.Base ,
+    Crm.Server.Boilerplate ,
+    Crm.Server.DB ,
+    Crm.Server.Helpers ,
+    Crm.Server.Types ,
+    Crm.Server.Core ,
+    Crm.Server.CachedCore ,
 
-    , Crm.Shared.Direction
-    , Crm.Shared.MyMaybe
-    , Crm.Shared.Company
-    , Crm.Shared.ContactPerson
-    , Crm.Shared.Machine
-    , Crm.Shared.MachineType
-    , Crm.Shared.MachineKind
-    , Crm.Shared.Api
-    , Crm.Shared.Upkeep
-    , Crm.Shared.UpkeepMachine
-    , Crm.Shared.YearMonthDay
-    , Crm.Shared.Employee
-    , Crm.Shared.UpkeepSequence
-    , Crm.Shared.PhotoMeta
-    , Crm.Shared.Photo
-    , Crm.Shared.ExtraField
-    , Crm.Shared.Login
+    Crm.Shared.Direction ,
+    Crm.Shared.MyMaybe ,
+    Crm.Shared.Company ,
+    Crm.Shared.ContactPerson ,
+    Crm.Shared.Machine ,
+    Crm.Shared.MachineType ,
+    Crm.Shared.MachineKind ,
+    Crm.Shared.Api ,
+    Crm.Shared.Upkeep ,
+    Crm.Shared.UpkeepMachine ,
+    Crm.Shared.YearMonthDay ,
+    Crm.Shared.Employee ,
+    Crm.Shared.UpkeepSequence ,
+    Crm.Shared.PhotoMeta ,
+    Crm.Shared.Photo ,
+    Crm.Shared.ExtraField ,
+    Crm.Shared.Login
 
   Build-depends:
-      base >= 4.6 && < 4.8
-    , mtl >= 2.0 && < 2.3
-    , template-haskell
+    base >= 4.6 && < 4.8 ,
+    mtl >= 2.0 && < 2.3 ,
+    template-haskell ,
 
-    , rest-core == 0.35.*
-    , rest-types
-    , rest-wai
-    , wai >= 2.1 && < 3.1
-    , warp >= 2.1 && < 3.1
+    rest-core == 0.35.* ,
+    rest-types ,
+    rest-wai ,
+    wai >= 2.1 && < 3.1 ,
+    warp >= 2.1 && < 3.1 ,
 
-    , containers
-    , profunctors
-    , HTTP
-    , base64-string
-    , base64-bytestring
-    , opaleye >= 0.3.1.1
-    , scrypt
-    , tagged
-    , tuple-th >= 0.2.4
-    , lens
-    , text
-    , regular
-    , transformers
-    , json-schema
-    , aeson >= 0.8 && < 0.9
-    , fay == 0.21.2.1
-    , product-profunctors
-    , postgresql-simple
-    , safe
-    , time
-    , tuple
-    , text-icu
-    , bytestring
+    containers ,
+    profunctors ,
+    HTTP ,
+    base64-string ,
+    base64-bytestring ,
+    opaleye >= 0.3.1.1 ,
+    scrypt ,
+    tagged ,
+    tuple-th >= 0.2.4 ,
+    lens ,
+    text ,
+    regular ,
+    transformers ,
+    json-schema ,
+    aeson >= 0.8 && < 0.9 ,
+    fay == 0.21.2.1 ,
+    product-profunctors ,
+    postgresql-simple ,
+    safe ,
+    time ,
+    tuple ,
+    text-icu ,
+    bytestring
 
 Test-Suite tests
   default-language:  Haskell2010
@@ -111,45 +111,45 @@ Test-Suite tests
   hs-source-dirs:    test, src, shared
   main-is:           test-suite.hs
   build-depends:
-      base
-    , mtl >= 2.0 && < 2.3
+    base ,
+    mtl >= 2.0 && < 2.3 ,
 
-    , rest-types
-    , rest-core == 0.35.*
-    , rest-types
-    , rest-wai
-    , wai >= 2.1 && < 3.1
-    , warp >= 2.1 && < 3.1
+    rest-types ,
+    rest-core == 0.35.* ,
+    rest-types ,
+    rest-wai ,
+    wai >= 2.1 && < 3.1 ,
+    warp >= 2.1 && < 3.1 ,
 
-    , containers
-    , HTTP
-    , base64-string
-    , scrypt
-    , lens
-    , fay
-    , product-profunctors
-    , json-schema
-    , tuple
-    , tuple-th
-    , transformers
-    , opaleye >= 0.3.1.1
-    , tasty >= 0.7
-    , tasty-hunit
-    , tasty-smallcheck
-    , tasty-quickcheck
-    , smallcheck
-    , QuickCheck
-    , old-locale
-    , time
-    , random
-    , random-shuffle
-    , safe
-    , Unique
-    , postgresql-simple
-    , aeson
-    , text
-    , text-icu
-    , bytestring
+    containers ,
+    HTTP ,
+    base64-string ,
+    scrypt ,
+    lens ,
+    fay ,
+    product-profunctors ,
+    json-schema ,
+    tuple ,
+    tuple-th ,
+    transformers ,
+    opaleye >= 0.3.1.1 ,
+    tasty >= 0.7 ,
+    tasty-hunit ,
+    tasty-smallcheck ,
+    tasty-quickcheck ,
+    smallcheck ,
+    QuickCheck ,
+    old-locale ,
+    time ,
+    random ,
+    random-shuffle ,
+    safe ,
+    Unique ,
+    postgresql-simple ,
+    aeson ,
+    text ,
+    text-icu ,
+    bytestring
 
 Executable run-server
   default-language:  Haskell2010
@@ -165,12 +165,12 @@ Executable run-server
     buildable: False
 
 
-Executable gen-pass
+Executable insert-pass
   default-language:  Haskell2010
   ghc-options:       -Wall
   main-is:           Main.hs
   hs-source-dirs:    gen-pass
-  if flag(build-gen-pass)
+  if flag(build-insert-pass)
     buildable: True
     build-depends:
       base >= 4.6 && < 4.8 ,
