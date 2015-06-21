@@ -22,7 +22,7 @@ upkeepPrint :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, MT.MachineType,
             -> DOMElement
 upkeepPrint data' = let
   header = h2 "Denní akce"
-  displayUpkeep (upkeep, company, employees, machinesData) = B.row $
+  displayUpkeep (_, company, _, machinesData) = B.row $
     upkeepPrintDataHeader ++ 
     (concat . rdrMachines $ machinesData) 
     where

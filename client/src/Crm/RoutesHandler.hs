@@ -60,9 +60,8 @@ startRouter appVar = startedRouter where
     ("", \router _ -> 
       fetchFrontPageData C.NextService DIR.Asc (CrmRouter router) $ \data' -> modify appVar 
         $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) ,
-    ("daily-plan/:date/employee/:employee", \router params -> let
+    ("daily-plan/:date/employee/:employee", \_ params -> let
       dateParam = head params
-      employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
       in fetchDailyPlanData dateParam $ \data' ->
         modify appVar $ \appState -> appState { D.navigation = D.DailyPlan data' }) ,
     ("home/:order/:direction", \router params -> let

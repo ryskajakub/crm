@@ -12,9 +12,6 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified Moment                           as M
 
 import           Crm.Router 
-import           Crm.Helpers
-
-import qualified Crm.Shared.YearMonthDay          as YMD
 
 navigation' :: CrmRouter 
             -> (DOMElement, Fay ())
