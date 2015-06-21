@@ -82,6 +82,7 @@ module Crm.Server.DB (
   machinesInUpkeepQuery' ,
   pastUpkeepMachinesQ ,
   dailyPlanQuery ,
+  multiEmployeeQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -127,7 +128,7 @@ import           Opaleye.Table                        (Table(Table), required, q
 import           Opaleye.Column                       (Column, Nullable, unsafeCast)
 import           Opaleye.Order                        (orderBy, asc, limit)
 import           Opaleye.RunQuery                     (runQuery)
-import           Opaleye.Operators                    (restrict, lower, (.==))
+import           Opaleye.Operators                    (restrict, lower, (.==), (.||))
 import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
                                                       PGText, pgStrictText, pgBool, PGFloat8, 
                                                       pgString, PGBytea, pgDay, PGArray)
@@ -737,6 +738,18 @@ notesForUpkeep :: Int -> Query DBText
 notesForUpkeep upkeepId = proc () -> do
   upkeepMachinesRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
   returnA -< $(proj 6 1) upkeepMachinesRow
+
+multiEmployeeQuery :: [Int] -> Query EmployeeTable
+multiEmployeeQuery employeeIds = proc () -> do
+  employeeRow <- employeesQuery -< ()
+  restrict -< in' employeeIds $ ($(proj 4 0) employeeRow .==) . pgInt4
+  returnA -< employeeRow
+
+in' :: [a] -> (a -> Column PGBool) -> Column PGBool
+in' as compareA = foldl
+  (\acc a -> acc .|| compareA a)
+  (pgBool True)
+  as
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]

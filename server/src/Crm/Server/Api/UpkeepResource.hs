@@ -183,7 +183,10 @@ printDailyPlanListing :: ListHandler Dependencies
 printDailyPlanListing = mkListing' jsonO $ const $ do
   (_, connection) <- ask
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery Nothing (fromGregorian 2015 6 17))
-  let dailyPlanUpkeeps = map (\(upkeep, es) -> (convert upkeep :: UpkeepMapped, es :: [Int])) dailyPlanUpkeeps'
+  dailyPlanUpkeeps <- liftIO $ forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
+    let upkeep = convert upkeepMapped :: UpkeepMapped
+    employees <- fmap (map (\e -> convert e :: EmployeeMapped)) $ runQuery connection (multiEmployeeQuery es)
+    return ($(proj 2 1) upkeep, employees)
   return dailyPlanUpkeeps
 
 
