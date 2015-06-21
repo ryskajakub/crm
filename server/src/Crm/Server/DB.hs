@@ -516,19 +516,24 @@ machineTypesWithCountQuery = let
   orderedQuery = orderBy (asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
-machinesInUpkeepQuery' :: Int -> Query (MachinesTable, MachineTypesTable)
-machinesInUpkeepQuery' upkeepId = proc () -> do
+machinesInUpkeepQuery''' :: Int -> Query (MachinesTable, MachineTypesTable, UpkeepMachinesTable)
+machinesInUpkeepQuery''' upkeepId = proc () -> do
   upkeepMachineRow <- machinesInUpkeepQuery upkeepId -< ()
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
   machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
-  returnA -< (machineRow, machineTypeRow)
+  returnA -< (machineRow, machineTypeRow, upkeepMachineRow)
 
-machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsTable)
+machinesInUpkeepQuery' :: Int -> Query (MachinesTable, MachineTypesTable)
+machinesInUpkeepQuery' upkeepId = proc () -> do
+  (m, mt, _) <- machinesInUpkeepQuery''' upkeepId -< ()
+  returnA -< (m, mt)
+
+machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsTable, UpkeepMachinesTable)
 machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = proc () -> do
-  (machineRow, machineTypeRow) <- machinesInUpkeepQuery' upkeepIdInt -< ()
+  (machineRow, machineTypeRow, upkeepMachinesRow) <- machinesInUpkeepQuery''' upkeepIdInt -< ()
   contactPersonRow <- contactPersonsQuery -< ()
   restrict -< $(proj 11 0) machineRow .== $(proj 5 1) contactPersonRow
-  returnA -< (machineRow, machineTypeRow, contactPersonRow)
+  returnA -< (machineRow, machineTypeRow, contactPersonRow, upkeepMachinesRow)
 
 machinesQ :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesQ companyId = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
