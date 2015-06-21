@@ -127,7 +127,7 @@ import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connecti
                                                       connect, close, query, Only(..), Binary(..), execute)
 import           Opaleye.QueryArr                     (Query, QueryArr)
 import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
-import           Opaleye.Column                       (Column, Nullable, unsafeCast)
+import           Opaleye.Column                       (Column, Nullable)
 import           Opaleye.Order                        (orderBy, asc, limit)
 import           Opaleye.RunQuery                     (runQuery)
 import           Opaleye.Operators                    (restrict, lower, (.==), (.||))

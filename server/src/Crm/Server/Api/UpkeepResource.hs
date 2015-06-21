@@ -19,7 +19,7 @@ import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
-import           Data.List                   (nub, zip)
+import           Data.List                   (nub)
 import           Data.Text                   (intercalate, pack)
 import           Data.Time.Calendar          (fromGregorian)
 
@@ -28,7 +28,7 @@ import           Rest.Resource               (Resource, Void, schema, list, name
                                              mkResourceReaderWith, get, update, remove, create)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
-import           Rest.Handler                (ListHandler, Handler, mkListing)
+import           Rest.Handler                (ListHandler, Handler)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Upkeep           as U
@@ -46,7 +46,7 @@ import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', 
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 
-import           TupleTH                     (proj, takeTuple, catTuples)
+import           TupleTH                     (proj)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan

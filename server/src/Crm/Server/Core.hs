@@ -64,12 +64,12 @@ compareRepetition this that = US.repetition this `compare` US.repetition that
 nextServiceTypeHint :: (US.UpkeepSequence, [US.UpkeepSequence])
                     -> [UM.UpkeepMachine]
                     -> US.UpkeepSequence
-nextServiceTypeHint (seq, seqs) [] = fromMaybe
-  (minimumBy compareRepetition (seq:seqs))
-  (find (US.oneTime) (seq:seqs))
-nextServiceTypeHint (seq, seqs) ums = let
+nextServiceTypeHint (seq', seqs) [] = fromMaybe
+  (minimumBy compareRepetition (seq':seqs))
+  (find (US.oneTime) (seq':seqs))
+nextServiceTypeHint (seq', seqs) ums = let
   lastUpkeepMthSeq = maximumBy (\this that -> UM.recordedMileage this `compare` UM.recordedMileage that) ums
-  repeatedSeqs = filter (not . US.oneTime) (seq:seqs)
+  repeatedSeqs = filter (not . US.oneTime) (seq':seqs)
   repeatedSeqsWithNextUpkeepMth = map (\repeatedSeq -> let
     numberOfPreviousUpkeeps = truncate $ 
       (fromIntegral . UM.recordedMileage $ lastUpkeepMthSeq :: Double) / 

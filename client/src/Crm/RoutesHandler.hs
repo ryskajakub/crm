@@ -8,7 +8,7 @@ import           Data.Text                   (fromString, showInt)
 import           Prelude                     hiding (div, span) 
 import           Data.Var                    (Var, modify, get)
 import           Data.Function               (fmap)
-import           Data.Maybe                  (fromJust, onJust)
+import           Data.Maybe                  (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
 import           Moment                      (now, requireMoment, day)
@@ -32,7 +32,7 @@ import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
 import           Crm.Server
 import           Crm.Router
-import           Crm.Helpers                 (displayDate, rmap, parseSafely)
+import           Crm.Helpers                 (displayDate, rmap)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
 import           Crm.Types                   (DisplayedNote (..))
