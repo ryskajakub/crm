@@ -95,4 +95,5 @@ create table extra_fields (
 
 create table upkeep_employees (
   upkeep_id integer not null references upkeeps (id) ,
-  employee_id integer not null references employees (id) );
+  employee_id integer not null references employees (id) ,
+  order_ integer not null );

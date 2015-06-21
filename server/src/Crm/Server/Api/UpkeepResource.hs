@@ -19,7 +19,7 @@ import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
-import           Data.List                   (nub)
+import           Data.List                   (nub, zip)
 import           Data.Text                   (intercalate, pack)
 
 import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
@@ -68,8 +68,11 @@ addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
 
 insertEmployees :: Connection -> U.UpkeepId -> [E.EmployeeId] -> IO ()
 insertEmployees connection upkeepId employeeIds =
-  forM_ employeeIds $ \employeeId ->
-    runInsert connection upkeepEmployeesTable (pgInt4 . U.getUpkeepId $ upkeepId, pgInt4 . E.getEmployeeId $ employeeId)
+  forM_ (employeeIds `zip` [0..]) $ \(employeeId, ordering) ->
+    runInsert connection upkeepEmployeesTable (
+      pgInt4 . U.getUpkeepId $ upkeepId , 
+      pgInt4 . E.getEmployeeId $ employeeId , 
+      pgInt4 ordering)
 
 createUpkeepHandler :: Handler Dependencies
 createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> do
@@ -123,7 +126,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable (\upkeepRow -> $(proj 6 0) upkeepRow .== (pgInt4 $ U.getUpkeepId upkeepId))
   insertUpkeepMachines conn upkeepId upkeepMachines
-  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 2 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 3 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertEmployees conn upkeepId employeeIds
   return ()
 

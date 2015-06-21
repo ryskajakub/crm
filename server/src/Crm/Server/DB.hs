@@ -202,7 +202,7 @@ type ExtraFieldsTable = (DBInt, DBInt, DBText)
 
 type PasswordTable = (Column PGBytea)
 
-type UpkeepEmployeesTable = (DBInt, DBInt)
+type UpkeepEmployeesTable = (DBInt, DBInt, DBInt)
 
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )
@@ -303,9 +303,10 @@ upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
   required "one_time" )
 
 upkeepEmployeesTable :: Table UpkeepEmployeesTable UpkeepEmployeesTable
-upkeepEmployeesTable = Table "upkeep_employees" $ p2 (
+upkeepEmployeesTable = Table "upkeep_employees" $ p3 (
   required "upkeep_id" ,
-  required "employee_id" )
+  required "employee_id" ,
+  required "order_" )
 
 extraFieldsQuery :: Query ExtraFieldsTable
 extraFieldsQuery = queryTable extraFieldsTable
@@ -686,7 +687,7 @@ extraFieldsPerKindQuery machineKind = orderBy (asc $ $(proj 4 2)) $ proc () -> d
   restrict -< pgInt4 machineKind .== $(proj 4 1) extraFieldRow
   returnA -< extraFieldRow
 
-machineIdsHavingKind :: Int -> Query (DBInt)
+machineIdsHavingKind :: Int -> Query DBInt
 machineIdsHavingKind machineTypeKind = proc () -> do
   machineTypeRow <- machineTypesQuery -< ()
   restrict -< pgInt4 machineTypeKind .== $(proj 4 1) machineTypeRow
@@ -694,9 +695,9 @@ machineIdsHavingKind machineTypeKind = proc () -> do
   restrict -< $(proj 4 0) machineTypeRow .== $(proj 11 3) machineRow
   returnA -< $(proj 11 0) machineRow
 
-employeeIdsInUpkeep :: Int -> Query (DBInt)
+employeeIdsInUpkeep :: Int -> Query DBInt
 employeeIdsInUpkeep upkeepId = proc () -> do
-  (_, employeeId) <- join . queryTable $ upkeepEmployeesTable -< pgInt4 upkeepId
+  (_, employeeId, _) <- join . queryTable $ upkeepEmployeesTable -< pgInt4 upkeepId
   returnA -< employeeId
 
 employeesInUpkeep :: Int -> Query EmployeeTable
