@@ -22,7 +22,7 @@ line :: MyParsec String
 line = (many . noneOf $ "\r\n") <* eol
 
 listElementParser :: MyParsec Markup
-listElementParser = UnorderedList . (:[]) . pack <$> (string "- " *> line)
+listElementParser = UnorderedList <$> (many1 $ pack <$> (string "- " *> line))
  
 eol :: MyParsec ()
 eol = do

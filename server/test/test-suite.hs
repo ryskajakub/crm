@@ -95,7 +95,14 @@ multipleLists = let
     "- list elem 3 " ]
 
   x = parseList (pack list)
-  expectedResult = Right [SR.PlainText . pack $ "p"]
+  expectedResult = Right [
+    SR.PlainText . pack $ "plain text" ,
+    SR.PlainText . pack $ "another plain text" ,
+    SR.UnorderedList [
+      pack $ " list elem 1 " ,
+      pack $ "list elem 2 " ] ,
+    SR.PlainText . pack $ "another another plain text 2 " ,
+    SR.UnorderedList [ pack $ "list elem 3 " ]]
   in assertEqual "Message" expectedResult x
 
 smallUpkeepAssertion :: Assertion
