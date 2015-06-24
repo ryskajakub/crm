@@ -29,6 +29,7 @@ import qualified Crm.Shared.Photo          as P
 import qualified Crm.Shared.ExtraField     as EF
 import qualified Crm.Shared.Login          as L
 import qualified Crm.Shared.YearMonthDay   as D
+import qualified Crm.Shared.ServerRender   as SR
 import           Crm.Shared.MyMaybe
 
 deriveAll ''C.Company "PFCompany"
@@ -222,4 +223,11 @@ instance JS.JSONSchema M.ContactPersonForMachine where
 instance ToJSON M.ContactPersonForMachine where
   toJSON = fromJust . showToFay
 instance FromJSON M.ContactPersonForMachine where
+  parseJSON = fayInstance
+
+instance JS.JSONSchema SR.Markup where
+  schema = gSchema
+instance ToJSON SR.Markup where
+  toJSON = fromJust . showToFay
+instance FromJSON SR.Markup where
   parseJSON = fayInstance
