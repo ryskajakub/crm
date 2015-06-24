@@ -70,6 +70,7 @@ import qualified Crm.Shared.Employee                 as E
 import qualified Crm.Shared.UpkeepSequence           as US
 import qualified Crm.Shared.Direction                as DIR
 import qualified Crm.Shared.ExtraField               as EF
+import qualified Crm.Shared.ServerRender             as SR
 import           Crm.Shared.MyMaybe
 
 import qualified Crm.Client.Employees                as XE
@@ -128,10 +129,11 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 -- fetching of data from server
 
 fetchDailyPlanData :: Text
-                   -> ([(U.Upkeep, C.Company, [E.Employee], 
-                      [(M.Machine, MT.MachineType, CP.ContactPerson, UM.UpkeepMachine)])] -> Fay ())
+                   -> ([(U.Upkeep, C.Company, [E.Employee], [(M.Machine, MT.MachineType, 
+                      CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
                    -> Fay ()
-fetchDailyPlanData _ = XU.listPrint
+fetchDailyPlanData _ cb = XU.listPrint $ cb . map (\(a,b,c,d) -> (a,b,c,map 
+  (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
 
 fetchPhoto :: P.PhotoId
            -> Text

@@ -15,6 +15,7 @@ import qualified Crm.Shared.UpkeepMachine  as UM
 import qualified Crm.Shared.ExtraField     as EF
 import qualified Crm.Shared.YearMonthDay   as YMD
 import qualified Crm.Shared.Direction      as DIR
+import qualified Crm.Shared.ServerRender   as SR
 
 import           Crm.Data.MachineData
 import           Crm.Data.UpkeepData
@@ -73,8 +74,8 @@ data NavigationState =
     password :: Text ,
     wrongPassword :: Bool } |
   DailyPlan {
-    dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee], 
-      [(M.Machine, MT.MachineType, CP.ContactPerson, UM.UpkeepMachine)])] }
+    dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, 
+      MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] }
 
 data AppState = AppState {
   navigation :: NavigationState ,
