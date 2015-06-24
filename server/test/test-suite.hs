@@ -48,6 +48,7 @@ tests = testGroup "All tests" [
 parserTests :: TestTree
 parserTests = testGroup "Parser test" [
   testCase "Test parsing of a text with multiple lists" multipleLists ,
+  testCase "Parse list should survive no newline at the end." noNewlineAtTheEnd ,
   parseListProperties ]
 
 hintNextServiceTypeTests :: TestTree
@@ -87,6 +88,15 @@ upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
   U.upkeepClosed = True }
 
+noNewlineAtTheEnd :: Assertion
+noNewlineAtTheEnd = let
+  list = "item1 \n item2"
+  Right result = parseList . pack $ list
+  expectedResult = map (SR.PlainText . pack) [
+    "item1 ", " item2" ]
+  in assertEqual "Newline should be added at the end"
+    expectedResult result
+
 multipleLists :: Assertion
 multipleLists = let
   list = unlines [
@@ -96,8 +106,7 @@ multipleLists = let
     "- list elem 2 " ,
     "another another plain text 2 " ,
     "- list elem 3 " ]
-
-  x = parseList (pack list)
+  result = parseList (pack list)
   expectedResult = Right [
     SR.PlainText . pack $ "plain text" ,
     SR.PlainText . pack $ "another plain text" ,
@@ -106,7 +115,7 @@ multipleLists = let
       pack $ "list elem 2 " ] ,
     SR.PlainText . pack $ "another another plain text 2 " ,
     SR.UnorderedList [ pack $ "list elem 3 " ]]
-  in assertEqual "Message" expectedResult x
+  in assertEqual "Sample string should be parsed." expectedResult result
 
 smallUpkeepAssertion :: Assertion
 smallUpkeepAssertion = let
