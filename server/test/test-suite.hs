@@ -119,11 +119,16 @@ smallUpkeepAssertion = let
     (US.repetition expectedResult) (US.repetition result)
 
 parseListProperty :: NonEmptyList SR.Markup -> Bool
-parseListProperty (NonEmpty (markup @ (_:_))) =
-  (Right markup ==) . parseList . Text.unlines . concat . map markupToText $ markup 
-  where
-  markupToText (SR.PlainText pt) = [pt]
-  markupToText (SR.UnorderedList l) = map (\listElement -> pack "- " <> listElement) l
+parseListProperty (NonEmpty markups') =
+  (Right markups ==) . parseList . Text.unlines . concat . map markupToText $ markups
+    where
+    markupToText (SR.PlainText pt) = [pt]
+    markupToText (SR.UnorderedList l) = map (\listElement -> pack "- " <> listElement) l
+    markups = foldr foldStep [] markups'
+      where
+      foldStep a' acc' = case (acc', a') of
+        (SR.UnorderedList ul : rest, SR.UnorderedList ul') -> (SR.UnorderedList $ ul ++ ul') : rest
+        (pts, a) -> a : pts
 
 bigUpkeepAssertion :: Assertion
 bigUpkeepAssertion = let
