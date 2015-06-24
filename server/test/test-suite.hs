@@ -26,11 +26,13 @@ import           Test.QuickCheck.Random
 
 import           Crm.Server.Core           (nextServiceDate, Planned(..), nextServiceTypeHint)
 import           Crm.Server.Helpers
+import           Crm.Server.ListParser     (parseList)
 
 import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine  as UM
+import qualified Crm.Shared.ServerRender   as SR
 
 main :: IO ()
 main = defaultMain tests
@@ -38,7 +40,12 @@ main = defaultMain tests
 tests :: TestTree
 tests = testGroup "All tests" [
   nextServiceDayTests ,
-  hintNextServiceTypeTests ]
+  hintNextServiceTypeTests ,
+  parserTests ]
+
+parserTests :: TestTree
+parserTests = testGroup "Parser test" [
+  testCase "Test parsing of a text with multiple lists" multipleLists ]
 
 hintNextServiceTypeTests :: TestTree
 hintNextServiceTypeTests = testGroup "Next service type: All tests" [unitTests', propertyTests']
@@ -76,6 +83,20 @@ upkeep :: U.Upkeep
 upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
   U.upkeepClosed = True }
+
+multipleLists :: Assertion
+multipleLists = let
+  list = unlines [
+    "plain text" ,
+    "another plain text" ,
+    "-  list elem 1 " ,
+    "- list elem 2 " ,
+    "another another plain text 2 " ,
+    "- list elem 3 " ]
+
+  x = parseList (pack list)
+  expectedResult = Right [SR.PlainText . pack $ "p"]
+  in assertEqual "Message" expectedResult x
 
 smallUpkeepAssertion :: Assertion
 smallUpkeepAssertion = let
