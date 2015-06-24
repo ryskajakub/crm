@@ -5,6 +5,7 @@ module Main where
 
 import           Control.Monad.Error.Class (Error)
 import           Control.Monad             (forM_)
+import           Data.Monoid               ((<>))
 
 import           Data.Time.Calendar        (Day, fromGregorian)
 import           Data.Time.Format          (readTime)
@@ -13,6 +14,7 @@ import           Data.Bits                 (shiftL)
 import           Data.Word                 (Word32)
 import           Data.List.Unique          (repeated)
 import           Data.Text                 (pack, Text)
+import qualified Data.Text                 as Text
 
 import           System.Locale             (defaultTimeLocale)
 import           System.Random             (next, mkStdGen, StdGen)
@@ -116,6 +118,13 @@ smallUpkeepAssertion = let
   in assertEqual "The 2000 sequence must be picked"
     (US.repetition expectedResult) (US.repetition result)
 
+parseListProperty :: NonEmptyList SR.Markup -> Bool
+parseListProperty (NonEmpty (markup @ (_:_))) =
+  (Right markup ==) . parseList . Text.unlines . concat . map markupToText $ markup 
+  where
+  markupToText (SR.PlainText pt) = [pt]
+  markupToText (SR.UnorderedList l) = map (\listElement -> pack "- " <> listElement) l
+
 bigUpkeepAssertion :: Assertion
 bigUpkeepAssertion = let
   previousUpkeep = UM.newUpkeepMachine { UM.recordedMileage = 59000 }
@@ -211,8 +220,8 @@ parseListProperties :: TestTree
 parseListProperties = let
   random = mkQCGen 0
   option = QuickCheckReplay $ Just (random, 0)
-  in localOption option $ testGroup "List parser: Property tests" [ ]
-    -- testProperty "Correctly parse any input lines" $ parseListProperty random ]
+  in localOption option $ testGroup "List parser: Property tests" [
+    testProperty "Correctly parse any input lines" parseListProperty ]
 
 dayGen :: Gen Day
 dayGen = do 
@@ -250,7 +259,7 @@ instance Arbitrary UM.UpkeepMachine where
 instance Arbitrary Text where
   shrink = shrinkNothing
   arbitrary = do
-    string <- arbitrary
+    string <- listOf ( suchThat arbitrary $ \c -> c /= '\n' && c /= '\r' )
     return . pack $ string
 
 instance Arbitrary SR.Markup where
@@ -261,10 +270,9 @@ instance Arbitrary SR.Markup where
         t <- arbitrary
         return . SR.PlainText $ t
       unorderedListGen = do
-        list <- arbitrary
+        NonEmpty list <- arbitrary
         return . SR.UnorderedList $ list
     oneof [plainTextGen, unorderedListGen]
-
 
 plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
