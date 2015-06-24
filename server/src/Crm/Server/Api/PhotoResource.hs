@@ -47,4 +47,4 @@ getPhotoHandler = mkConstHandler' fileO $ do
   photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoIdInt)
   photoMeta <- singleRowOrColumn photoMetas
   let (_, _, fileName) = photoMeta :: (Int, String, String)
-  return (BB64.encode photo, fileName)
+  return (BB64.encode photo, fileName, False)
