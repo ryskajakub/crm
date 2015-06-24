@@ -1,17 +1,21 @@
 module Crm.Server.ListParser (parseList) where
 
-import Text.Parsec
-import Data.Text hiding (foldr)
+import           Text.Parsec
+import           Data.Text hiding        (foldr)
+import qualified Data.Text as            T
 
-import Control.Applicative ((<*), (<$>), (*>))
+import           Control.Applicative     ((<*), (<$>), (*>))
 
-import Crm.Shared.ServerRender (Markup(..))
+import           Crm.Shared.ServerRender (Markup(..))
 
 type MyParsec a = Parsec String () a
 
 parseList :: Text -> Either ParseError [Markup]
-parseList t = fmap joinListElements $ parse listParser "" (unpack t)
+parseList t = fmap joinListElements $ parse listParser "" (unpack t')
   where
+  t' = if T.null t || (('\n' /=) . T.last $ t)
+    then t `T.snoc` '\n'
+    else t
   joinListElements = foldr foldStep []
   foldStep (UnorderedList ul') (UnorderedList ul : rest) = (UnorderedList $ ul' ++ ul) : rest
   foldStep (element) (acc) = element : acc
