@@ -51,6 +51,7 @@ Library
     Crm.Server.Types ,
     Crm.Server.Core ,
     Crm.Server.CachedCore ,
+    Crm.Server.ListParser ,
 
     Crm.Shared.Direction ,
     Crm.Shared.MyMaybe ,
@@ -68,7 +69,8 @@ Library
     Crm.Shared.PhotoMeta ,
     Crm.Shared.Photo ,
     Crm.Shared.ExtraField ,
-    Crm.Shared.Login
+    Crm.Shared.Login ,
+    Crm.Shared.ServerRender
 
   Build-depends:
     base >= 4.6 && < 4.8 ,

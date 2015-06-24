@@ -17,6 +17,7 @@ import           Control.Monad.IO.Class      (MonadIO, liftIO)
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Arrow               (second)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import           Data.List                   (nub)
@@ -37,6 +38,7 @@ import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepMachine    as UM
 import qualified Crm.Shared.UpkeepSequence   as US
+import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
 import           Crm.Server.Boilerplate      ()
@@ -45,6 +47,7 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
+import           Crm.Server.ListParser       (parseList)
 
 import           TupleTH                     (proj)
 
@@ -184,14 +187,19 @@ printDailyPlanListing = mkListing' jsonO $ const $ do
   (_, connection) <- ask
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery Nothing (fromGregorian 2015 6 17))
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
-    let upkeep = convert upkeepMapped :: UpkeepMapped
+    let 
+      upkeep = convert upkeepMapped :: UpkeepMapped
+      listifyNote (um @ (UM.UpkeepMachine {})) = 
+        (um, catchError . parseList . UM.upkeepMachineNote $ um) where
+          catchError (Right r) = Just r
+          catchError (Left {}) = Nothing
     employees <- fmap (map $ \e -> $(proj 2 1) (convert e :: EmployeeMapped)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
     machines <- fmap (map $ \(m, mt, cp, um) -> (
       $(proj 6 5) $ (convert m :: MachineMapped) , 
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
       $(proj 3 2) $ (convert cp :: ContactPersonMapped) ,
-      $(proj 3 2) $ (convert um :: UpkeepMachineMapped) )) $ 
+      second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 
       liftIO $ runQuery connection (machinesInUpkeepQuery'' ($(proj 2 0) upkeep))
     company <- fmap (\c -> $(proj 3 1) (convert c :: CompanyMapped)) $ 
       singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . $(proj 2 0) $ upkeep))
