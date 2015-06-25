@@ -762,7 +762,7 @@ multiEmployeeQuery employeeIds = proc () -> do
 in' :: [a] -> (a -> Column PGBool) -> Column PGBool
 in' as compareA = foldl
   (\acc a -> acc .|| compareA a)
-  (pgBool True)
+  (pgBool False)
   as
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompaniesTable

@@ -182,6 +182,7 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
     _ -> throwError $ CustomReason $ DomainReason "Db in invalid state"
   return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
 
+
 printDailyPlanListing :: ListHandler Dependencies
 printDailyPlanListing = mkListing' jsonO $ const $ do
   (_, connection) <- ask
