@@ -56,7 +56,12 @@ plannedUpkeeps router upkeepCompanies = let
         router ,
       td $ C.companyAddress company ,
       td $ notes ,
-      td $ displayDate $ U.upkeepDate upkeep ,
+      let 
+        date = U.upkeepDate upkeep
+        in td $ R.link 
+          (displayDate date)
+          (R.dailyPlan date Nothing)
+          router ,
       td $ R.link
         "Přeplánovat"
         (R.replanUpkeep upkeepId)

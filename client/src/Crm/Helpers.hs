@@ -89,6 +89,11 @@ parseInt = ffi " (function() { var int = parseInt(%1); ret = ((typeof int) === '
 parseSafely :: Text -> Maybe Int
 parseSafely possibleNumber = fromNullable $ parseInt possibleNumber
 
+displayDateNumeral :: YMD.YearMonthDay -> Text
+displayDateNumeral (YMD.YearMonthDay y m d _) = let
+  dateAsMoment = dayPrecision y m d requireMoment
+  in format dateAsMoment "D.M.YYYY"
+
 displayDate :: YMD.YearMonthDay -> Text
 displayDate (YMD.YearMonthDay y m d precision) = let
   dateAsMoment = dayPrecision y m d requireMoment

@@ -15,7 +15,7 @@ import FFI
 import Data.Text    (Text, pack)
 
 import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.MachineKind as MK
+import qualified Crm.Shared.MachineKind    as MK
 
 #ifndef FAY
 instance Info MachineTypeId where

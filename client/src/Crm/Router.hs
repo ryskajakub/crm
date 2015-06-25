@@ -31,7 +31,7 @@ module Crm.Router (
   editEmployee' ,
   employees' ,
 
-  printDailyPlan ,
+  dailyPlan ,
   login ,
   dashboard ,
   frontPage ,
@@ -72,9 +72,10 @@ import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.Employee         as E
+import qualified Crm.Shared.YearMonthDay     as YMD
 
 import qualified Crm.Data.Data               as D
-import           Crm.Helpers                 (parseSafely, rmap)
+import           Crm.Helpers                 (parseSafely, rmap, displayDateNumeral)
 
 
 newtype CrmRouter = CrmRouter BR.BackboneRouter
@@ -270,6 +271,12 @@ contactPersonEdit' = prepareRouteAndMkHandler
 
 
 -- routes
+ 
+dailyPlan :: YMD.YearMonthDay -> Maybe E.EmployeeId -> CrmRoute
+dailyPlan ymd employeeId' =
+  CrmRoute $ "daily-plan/" <> displayDateNumeral ymd <> "/employee/" <> (case employeeId' of
+    Just (E.EmployeeId employeeId) -> showInt employeeId
+    Nothing -> "all")
 
 dashboard :: CrmRoute
 dashboard = fst dashboard' ()
@@ -283,11 +290,6 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
   _ -> "NextService") <> "/" <> (case direction of
   DIR.Asc -> "Asc"
   DIR.Desc -> "Desc")
-
-printDailyPlan :: Text -> Maybe E.EmployeeId -> CrmRoute
-printDailyPlan date employeeId' = CrmRoute $ "daily-plan/" <> date <> "/employee/" <> (case employeeId' of
-  Just employeeId -> showInt . E.getEmployeeId $ employeeId
-  Nothing -> "all")
 
 login :: CrmRoute
 login = fst login' ()
