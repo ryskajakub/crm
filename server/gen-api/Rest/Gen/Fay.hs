@@ -138,15 +138,19 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
   runtime = H.ModuleName "Crm.Runtime"
   callbackIdent = H.Ident "callback"
   funName = mkHsName ai
-  fParams = (map H.PVar lPars) ++ 
-    maybe [] ((:[]) . H.PVar . hsName . cleanName . description) (ident ai) ++ 
+  pFirst f s = H.PTuple H.Boxed [H.PVar . H.Ident $ f, H.PVar $ H.Ident s]
+  pRest = H.Ident "px"
+  fParams = 
+    (if null (params ai) then [] else [H.PInfixApp (pFirst "pName" "pValue") (H.UnQual . H.Symbol $ ":") (H.PVar pRest)]) ++
+    (map H.PVar lPars) ++ 
+    (maybe [] ((:[]) . H.PVar . hsName . cleanName . description) (ident ai)) ++ 
     (map H.PVar $ maybe [] (const [input]) mInp) ++ 
     (map H.PVar [callbackIdent])
   (lUrl, lPars) = linkToURL (ident ai) res lnk
   mInp :: Maybe InputInfo
   mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
   (isList, fType) = (isList', fTypify tyParts) where 
-    fayUnit = H.TyApp (H.TyCon $ H.UnQual $ H.Ident "Fay") (H.TyCon $ H.UnQual $ H.Ident "()")
+    fayUnit = H.TyApp (H.TyCon . H.UnQual . H.Ident $ "Fay") (H.TyCon . H.UnQual . H.Ident $ "()")
     (callbackParams, isList') = unList $ responseHaskellType output
     unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
     unList x = (x, False)
@@ -157,7 +161,9 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     fTypify [ty1] = ty1
     fTypify [ty1, ty2] = H.TyFun ty1 ty2
     fTypify (ty1 : tys) = H.TyFun ty1 (fTypify tys)
+    text = H.TyCon . H.UnQual . H.Ident $ "String"
     tyParts = 
+      (if null (params ai) then [] else [H.TyList . H.TyTuple H.Boxed $ [text, text]]) ++
       map qualIdent lPars ++ 
       maybe [] (return . Ident.haskellType) (ident ai) ++ 
       inp ++ 
@@ -182,14 +188,27 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
   items 
     | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
     | otherwise = id
-  exp' = ajax `H.App` (mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
+  exp' = ajax `H.App` (addParams . mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
       input' `H.App` method' `H.App` nothing `H.App` nothing where
+    plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
+    addParams url = if null . params $ ai 
+      then url
+      else url `pp` mkParam "?" "pName" "pValue" `pp` restParams
+      where
+      exp1 `pp` exp2 = H.InfixApp exp1 plusPlus exp2
+      mkParam symbol f s = (H.Lit . H.String $ symbol) `pp` (H.Var . H.UnQual . H.Ident $ f) `pp` (H.Lit . H.String $ "=") `pp` 
+        (H.Var . H.UnQual . H.Ident $ s)
+      mkOtherParams = H.Lambda noLoc [pFirst "pName'" "pValue'"] (mkParam "&" "pName'" "pValue'")
+      restParams = 
+        (H.Var . H.UnQual . H.Ident $ "concat") `H.App`  
+          ((H.Var . H.UnQual . H.Ident $ "map") `H.App` 
+          mkOtherParams `H.App` 
+          (H.Var . H.UnQual . H.Ident $ "px"))
     method' = mkMethod ai
     concat' (exp1:exp2:exps) = H.InfixApp (addEndSlash exp1) plusPlus $ concat' (exp2:exps) where
       addEndSlash e = H.InfixApp e plusPlus (H.Lit . H.String $ "/")
-      plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
     concat' (exp1:[]) = exp1
-    mkPack = H.InfixApp (var "pack") (H.QVarOp $ H.UnQual $ H.Symbol "$")
+    mkPack = H.InfixApp (var "pack") (H.QVarOp . H.UnQual . H.Symbol $ "$")
     input' = maybe nothing (const $ (H.Con . H.UnQual . H.Ident $ "Just") `H.App` use input) mInp
 
   errorI :: ResponseInfo
