@@ -28,7 +28,7 @@ import           Test.QuickCheck.Random
 
 import           Crm.Server.Core           (nextServiceDate, Planned(..), nextServiceTypeHint)
 import           Crm.Server.Helpers
-import           Crm.Server.ListParser     (parseList)
+import           Crm.Server.ListParser     (parseList, parseDate)
 
 import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.Machine        as M
@@ -49,6 +49,7 @@ parserTests :: TestTree
 parserTests = testGroup "Parser test" [
   testCase "Test parsing of a text with multiple lists" multipleLists ,
   testCase "Parse list should survive no newline at the end." noNewlineAtTheEnd ,
+  testProperty "Day parse" parseDayProp ,
   parseListProperties ]
 
 hintNextServiceTypeTests :: TestTree
@@ -229,6 +230,18 @@ propertyTests = let
   option = QuickCheckReplay $ Just (random, 0)
   in localOption option $ testGroup "Next service day: Property tests" [
     testProperty "When there are planned upkeeps, the earliest is taken" $ plannedUpkeepsProperty random ]
+
+newtype Day' = Day' Int
+  deriving Show
+instance Arbitrary Day' where
+  arbitrary = fmap Day' $ choose (1, 31)
+
+parseDayProp :: Day' -> Bool
+parseDayProp (Day' day) = 
+  (parseDate input) == expectedResult
+  where
+  expectedResult = Right day
+  input = show $ day
 
 parseListProperties :: TestTree
 parseListProperties = let

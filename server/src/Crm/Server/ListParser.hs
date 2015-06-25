@@ -1,4 +1,6 @@
-module Crm.Server.ListParser (parseList) where
+module Crm.Server.ListParser (
+  parseList ,
+  parseDate ) where
 
 import           Text.Parsec
 import           Data.Text hiding        (foldr)
@@ -7,6 +9,16 @@ import qualified Data.Text as            T
 import           Control.Applicative     ((<*), (<$>), (*>))
 
 import           Crm.Shared.ServerRender (Markup(..))
+
+import           Safe                        (readMay)
+
+parseDate' :: MyParsec Int
+parseDate' = parser where
+  parser = intParser
+  intParser = maybe (fail "not an int") return . readMay =<< many1 digit
+
+parseDate :: String -> Either ParseError Int
+parseDate = parse parseDate' ""
 
 type MyParsec a = Parsec String () a
 
