@@ -26,4 +26,4 @@ resource = mkResourceId {
 printListing :: ListHandler (IdDependencies' E.EmployeeId)
 printListing = mkListing' jsonO $ const $ do
   ((_, connection), employeeId) <- ask
-  printDailyPlanListing' (Just employeeId) connection
+  printDailyPlanListing' (Just employeeId) connection undefined

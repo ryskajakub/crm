@@ -11,6 +11,9 @@ import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, r
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
 import           Opaleye                     (runQuery)
 
+import qualified Text.Parsec as P
+-- import qualified Text.Parsec.Char as P
+
 import           Database.PostgreSQL.Simple  (Connection)
 
 import           Control.Monad.Reader        (ask)
@@ -20,17 +23,18 @@ import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
 
-import           Data.Tuple.All              (sel1, sel2, sel3)
+import           Data.Tuple.All              (sel1, sel2, sel3, uncurryN)
 import           Data.List                   (nub)
 import           Data.Text                   (intercalate, pack)
-import           Data.Time.Calendar          (fromGregorian)
+import           Data.Time.Calendar          (fromGregorian, Day)
 
-import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
+import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason), DataError(ParseError, MissingField))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove, create)
 import qualified Rest.Schema                 as S
-import           Rest.Dictionary.Combinators (jsonO, jsonI)
-import           Rest.Handler                (ListHandler, Handler)
+import           Rest.Dictionary.Combinators (jsonO, jsonI, mkPar)
+import           Rest.Dictionary.Types       (Dict, Param(..))
+import           Rest.Handler                (ListHandler, Handler, Env(param))
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Upkeep           as U
@@ -48,16 +52,26 @@ import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'')
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', mkGenHandler')
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
-import           Crm.Server.ListParser       (parseList)
+import           Crm.Server.ListParser       (parseList, parseDate)
 
-import           TupleTH                     (proj)
+import           TupleTH                     (proj, reverseTuple, updateAtN)
+
+import           Safe                        (readMay)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
 
+
+mkDayParam :: Dict h p i o e -> Dict h (Int, Int, Int) i o e
+mkDayParam = mkPar $ Param ["day"] parse
+  where
+  parse [Just day] = case parseDate day of
+    Left _ -> Left . ParseError $ "day parse failed"
+    Right r -> Right r
+  parse _ = Left . MissingField $ "day parameter not present"
 
 addUpkeep :: Connection
           -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
@@ -189,10 +203,11 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
 printDailyPlanListing' :: (MonadIO m, Functor m) 
                        => Maybe E.EmployeeId
                        -> Connection
+                       -> Day
                        -> ExceptT (Reason r) m [(U.Upkeep, C.Company, [(E.EmployeeId, E.Employee)], 
                           [(M.Machine, MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
-printDailyPlanListing' employeeId connection = do
-  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId (fromGregorian 2015 6 17))
+printDailyPlanListing' employeeId connection day = do
+  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
     let 
       upkeep = convert upkeepMapped :: UpkeepMapped
@@ -216,10 +231,10 @@ printDailyPlanListing' employeeId connection = do
   return dailyPlanUpkeeps
 
 printDailyPlanListing :: ListHandler Dependencies
-printDailyPlanListing = mkListing' jsonO $ const $ do
+printDailyPlanListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
+  let day = (uncurryN fromGregorian) ($(updateAtN 3 0) fromIntegral . $(reverseTuple 3) . param $ env)
   (_, connection) <- ask
-  printDailyPlanListing' Nothing connection
-
+  printDailyPlanListing' Nothing connection day
 
 -- resource
 
