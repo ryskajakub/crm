@@ -3,6 +3,7 @@
 module Crm.Server.Api.UpkeepResource (
   loadNextServiceTypeHint ,
   insertUpkeepMachines ,
+  printDailyPlanListing' ,
   upkeepResource ) where
 
 import           Opaleye.Operators           ((.==))
@@ -38,6 +39,9 @@ import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepMachine    as UM
 import qualified Crm.Shared.UpkeepSequence   as US
+import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.ServerRender     as SR
+import qualified Crm.Shared.Company          as C
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
@@ -182,11 +186,13 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
     _ -> throwError $ CustomReason $ DomainReason "Db in invalid state"
   return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
 
-
-printDailyPlanListing :: ListHandler Dependencies
-printDailyPlanListing = mkListing' jsonO $ const $ do
-  (_, connection) <- ask
-  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery Nothing (fromGregorian 2015 6 17))
+printDailyPlanListing' :: (MonadIO m, Functor m) 
+                       => Maybe E.EmployeeId
+                       -> Connection
+                       -> ExceptT (Reason r) m [(U.Upkeep, C.Company, [(E.EmployeeId, E.Employee)], 
+                          [(M.Machine, MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
+printDailyPlanListing' employeeId connection = do
+  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId (fromGregorian 2015 6 17))
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
     let 
       upkeep = convert upkeepMapped :: UpkeepMapped
@@ -208,6 +214,11 @@ printDailyPlanListing = mkListing' jsonO $ const $ do
       singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . $(proj 2 0) $ upkeep))
     return ($(proj 2 1) upkeep, company, employees, machines)
   return dailyPlanUpkeeps
+
+printDailyPlanListing :: ListHandler Dependencies
+printDailyPlanListing = mkListing' jsonO $ const $ do
+  (_, connection) <- ask
+  printDailyPlanListing' Nothing connection
 
 
 -- resource
