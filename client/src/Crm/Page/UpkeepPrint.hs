@@ -27,14 +27,13 @@ import qualified Crm.Shared.YearMonthDay  as YMD
 upkeepPrint :: R.CrmRouter
             -> YMD.YearMonthDay
             -> Maybe E.EmployeeId
-            -> [(U.Upkeep, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, 
+            -> [(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, 
                MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
+            -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
-upkeepPrint router day employeeId data' = let
-  employeeSelect = nullDropdown (nub . concat . pluckEmployees $ data') E.name employeeId (\eId -> 
-      R.navigate (R.dailyPlan day eId) router )
-    where
-    pluckEmployees = map $ \(_,_,e,_) -> e
+upkeepPrint router day employeeId data' employees = let
+  employeeSelect = nullDropdown employees E.name employeeId $
+    \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
   displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $
     upkeepPrintDataHeader ++ 

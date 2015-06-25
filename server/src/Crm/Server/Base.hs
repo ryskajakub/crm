@@ -17,6 +17,7 @@ import qualified Crm.Server.Api.PhotoMetaResource as PMR
 import qualified Crm.Server.Api.MachineKindResource as MKR
 import           Crm.Server.Api.PhotoResource (photoResource)
 import           Crm.Server.Api.Employee.UpkeepResource as EUR
+import           Crm.Server.Api.PrintResource as P
 
 
 router' :: Router Dependencies Dependencies
@@ -31,6 +32,7 @@ router' = root `compose` (((route companyResource `compose` route CMR.machineRes
                `compose` route photoResource
                `compose` route CPR.resource
                `compose` route MKR.resource
+               `compose` route P.resource
 
 api :: Api Dependencies
 api = [(mkVersion 1 0 0, Some1 router')]

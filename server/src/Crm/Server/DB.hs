@@ -85,6 +85,7 @@ module Crm.Server.DB (
   dailyPlanQuery ,
   multiEmployeeQuery ,
   companyInUpkeepQuery ,
+  mainEmployeesInDayQ ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -730,6 +731,16 @@ extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc 
   restrict -< $(proj 3 1) extraFieldRow .== $(proj 11 0) machineRow
   extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
   returnA -< (extraFieldRow, extraFieldSettingRow)
+
+mainEmployeesInDayQ :: Day
+                    -> Query EmployeeTable
+mainEmployeesInDayQ day = proc () -> do
+  upkeepRow <- upkeepsQuery -< ()
+  restrict -< $(proj 6 1) upkeepRow .== pgDay day
+  upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+  restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
+  employeeRow <- join employeesQuery -< $(proj 3 1) upkeepEmployeeRow
+  returnA -< employeeRow
 
 dailyPlanQuery :: Maybe E.EmployeeId -> Day -> Query (UpkeepsTable, Column (PGArray PGInt4))
 dailyPlanQuery employeeId' day = let

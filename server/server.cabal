@@ -44,6 +44,7 @@ Library
     Crm.Server.Api.PhotoResource ,
     Crm.Server.Api.ContactPersonResource ,
     Crm.Server.Api.MachineKindResource ,
+    Crm.Server.Api.PrintResource ,
     Crm.Server.Handler ,
     Crm.Server.Base ,
     Crm.Server.Boilerplate ,

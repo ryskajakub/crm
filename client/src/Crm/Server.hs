@@ -39,6 +39,7 @@ module Crm.Server (
   fetchCompaniesForMap ,
   fetchPhoto ,
   fetchDailyPlanData ,
+  fetchDailyPlanEmployees ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -87,6 +88,7 @@ import qualified Crm.Client.Companies.ContactPersons as XCCP
 import qualified Crm.Client.Companies.Upkeeps        as XCU
 import qualified Crm.Client.Machines.Photos          as XMP
 import qualified Crm.Client.Employees.Upkeeps        as XEU
+import qualified Crm.Client.Print                    as XPP
 
 import           Crm.Runtime
 import           Crm.Helpers                         (File, encodeURIComponent)
@@ -129,12 +131,17 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 
 -- fetching of data from server
 
+fetchDailyPlanEmployees :: YMD.YearMonthDay
+                        -> ([E.Employee'] -> Fay ())
+                        -> Fay ()
+fetchDailyPlanEmployees _ = XPP.list
+
 fetchDailyPlanData :: YMD.YearMonthDay
                    -> Maybe E.EmployeeId
                    -> ([(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
                       CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
                    -> Fay ()
-fetchDailyPlanData _ employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map 
+fetchDailyPlanData _ employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
   (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
   where
   remoteCall = maybe XU.listPrint XEU.listPrint employeeId
