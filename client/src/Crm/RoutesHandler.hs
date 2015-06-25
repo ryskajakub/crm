@@ -64,7 +64,7 @@ startRouter appVar = startedRouter where
         (year, month, day) = M.day moment
         ymd = YMD.YearMonthDay year month day (YMD.DayPrecision)
         employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
-        in fetchDailyPlanData ymd $ \data' ->
+        in fetchDailyPlanData ymd employeeId $ \data' ->
           modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeId data' }
       Nothing -> modify' D.NotFound) ,
     ("home/:order/:direction", \router params -> let

@@ -10,7 +10,7 @@ import           Data.Text                        (fromString, Text, showInt, (<
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
-import           Data.Maybe                       (onJust, joinMaybe, mapMaybe)
+import           Data.Maybe                       (mapMaybe)
 import           FFI (Defined(Defined))
 
 import           HaskellReact                     as HR
