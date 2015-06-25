@@ -36,6 +36,7 @@ module Crm.Component.Form (
 
 import           Prelude                               as P hiding (span, div, elem) 
 import           Data.Text                             (fromString, Text, (<>), showInt)
+import           Data.Maybe                            (onJust, joinMaybe)
 import           FFI                                   (Defined(Defined, Undefined))
 
 import           Crm.Helpers                           (zipWithIndex)
@@ -147,13 +148,15 @@ dropdown elements display currentElement setId = element where
   elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
   buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
 
-nullDropdown :: [(a, b)]
+nullDropdown :: (Eq a)
+             => [(a, b)]
              -> (b -> Text)
-             -> Maybe b
+             -> Maybe a
              -> (Maybe a -> Fay ())
              -> DOMElement
-nullDropdown elements display currentElement setId = 
+nullDropdown elements display currentElement' setId = 
   dropdown elements' display' currentElement setId where
+    currentElement = joinMaybe $ (\e -> lookup e elements) `onJust` currentElement'
     elements' = let
       notNullElements = map (\(a,b) -> (Just a, Just b)) elements
       nullElement = (Nothing, Nothing)

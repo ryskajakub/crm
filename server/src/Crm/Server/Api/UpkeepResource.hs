@@ -193,7 +193,9 @@ printDailyPlanListing = mkListing' jsonO $ const $ do
         (um, catchError . parseList . UM.upkeepMachineNote $ um) where
           catchError (Right r) = Just r
           catchError (Left {}) = Nothing
-    employees <- fmap (map $ \e -> $(proj 2 1) (convert e :: EmployeeMapped)) $ 
+    employees <- fmap (map $ \e -> let 
+      employee = (convert e :: EmployeeMapped) 
+      in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
     machines <- fmap (map $ \(m, mt, cp, um) -> (
       $(proj 6 5) $ (convert m :: MachineMapped) , 

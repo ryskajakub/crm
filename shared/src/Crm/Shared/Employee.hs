@@ -31,8 +31,10 @@ data Employee = Employee {
   name :: Text ,
   contact :: Text ,
   capabilities :: Text }
-#ifndef FAY
-  deriving (Generic, Typeable, Data)
+#ifdef FAY
+  deriving (Eq)
+#else
+  deriving (Generic, Typeable, Data, Eq)
 #endif
 
 newEmployee :: Employee

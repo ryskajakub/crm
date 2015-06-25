@@ -11,6 +11,8 @@ import           HaskellReact
 import qualified HaskellReact.Bootstrap   as B
 
 import           Crm.Helpers              (displayDate)
+import           Crm.Component.Form       (nullDropdown)
+import qualified Crm.Router                       as R
 
 import qualified Crm.Shared.Company       as C
 import qualified Crm.Shared.Employee      as E
@@ -22,11 +24,17 @@ import qualified Crm.Shared.UpkeepMachine as UM
 import qualified Crm.Shared.ServerRender  as SR
 import qualified Crm.Shared.YearMonthDay  as YMD
 
-upkeepPrint :: YMD.YearMonthDay
-            -> [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, 
+upkeepPrint :: R.CrmRouter
+            -> YMD.YearMonthDay
+            -> Maybe E.EmployeeId
+            -> [(U.Upkeep, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, 
                MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> DOMElement
-upkeepPrint day data' = let
+upkeepPrint router day employeeId data' = let
+  employeeSelect = nullDropdown (nub . concat . pluckEmployees $ data') E.name employeeId (\eId -> 
+      R.navigate (R.dailyPlan day eId) router )
+    where
+    pluckEmployees = map $ \(_,_,e,_) -> e
   header = h2 $ "Denní akce - " <> displayDate day
   displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $
     upkeepPrintDataHeader ++ 
@@ -50,5 +58,6 @@ upkeepPrint day data' = let
         strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson] ++ [
         (B.col (B.mkColProps 12) upkeepMachineText) ]
   in B.grid $
-    (B.row $ B.col (B.mkColProps 12) header) :
+    (B.row . B.col (B.mkColProps 12) $ header) :
+    (B.row . B.col (B.mkColProps 12) $ employeeSelect) :
     map displayUpkeep data' 
