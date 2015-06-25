@@ -74,6 +74,7 @@ data NavigationState =
     password :: Text ,
     wrongPassword :: Bool } |
   DailyPlan {
+    day :: YMD.YearMonthDay ,
     dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine, 
       MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] }
 

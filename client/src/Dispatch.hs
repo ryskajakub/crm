@@ -98,8 +98,8 @@ main' = do
       D.Login password wrongPassword -> let
         (body, callback) = emptyCallback $ login appVar' router password wrongPassword
         in simpleReactBody' body callback
-      D.DailyPlan dailyPlanData ->
-        n . emptyCallback $ upkeepPrint dailyPlanData
+      D.DailyPlan ymd dailyPlanData ->
+        n . emptyCallback $ upkeepPrint ymd dailyPlanData
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

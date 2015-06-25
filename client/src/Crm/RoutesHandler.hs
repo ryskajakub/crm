@@ -11,7 +11,7 @@ import           Data.Function               (fmap)
 import           Data.Maybe                  (fromJust)
 
 import qualified HaskellReact.BackboneRouter as BR
-import           Moment                      (now, requireMoment, day)
+import qualified Moment                      as M
 
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
@@ -37,7 +37,6 @@ import qualified Crm.Validation              as V
 import           Crm.Component.Form
 import           Crm.Types                   (DisplayedNote (..))
 
-
 -- handler
 
 startRouter :: Var D.AppState -> Fay CrmRouter
@@ -52,7 +51,7 @@ startRouter appVar = startedRouter where
     fetchCompany companyId $ \data' -> let
       newState = newStateFun data'
       in modify' newState
-  (nowYear, nowMonth, nowDay) = day $ now requireMoment
+  (nowYear, nowMonth, nowDay) = M.day . M.now $ M.requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
   appliedRoutes = map (\tuple -> rmap (\f -> const $ f appVar) tuple) routes
@@ -60,10 +59,13 @@ startRouter appVar = startedRouter where
     ("", \router _ -> 
       fetchFrontPageData C.NextService DIR.Asc (CrmRouter router) $ \data' -> modify appVar 
         $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) ,
-    ("daily-plan/:date/employee/:employee", \_ params -> let
-      dateParam = head params
-      in fetchDailyPlanData dateParam $ \data' ->
-        modify appVar $ \appState -> appState { D.navigation = D.DailyPlan data' }) ,
+    ("daily-plan/:date/employee/:employee", \_ params -> case M.parse M.requireMoment . head $ params of
+      Just (moment) -> let
+        (year, month, day) = M.day moment
+        ymd = YMD.YearMonthDay year month day (YMD.DayPrecision)
+        in fetchDailyPlanData ymd $ \data' ->
+          modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd data' }
+      Nothing -> modify' D.NotFound) ,
     ("home/:order/:direction", \router params -> let
       firstParam = head params
       secondParam = head $ tail params
