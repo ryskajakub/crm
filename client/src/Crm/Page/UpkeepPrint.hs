@@ -24,7 +24,7 @@ upkeepPrint :: [(U.Upkeep, C.Company, [E.Employee], [(M.Machine,
             -> DOMElement
 upkeepPrint data' = let
   header = h2 "Denní akce"
-  displayUpkeep (_, company, _, machinesData) = B.row $
+  displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $
     upkeepPrintDataHeader ++ 
     (concat . rdrMachines $ machinesData) 
     where
@@ -46,5 +46,5 @@ upkeepPrint data' = let
         strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson] ++ [
         (B.col (B.mkColProps 12) upkeepMachineText)]
   in B.grid $
-    B.row $ B.col (B.mkColProps 12) header :
+    (B.row $ B.col (B.mkColProps 12) header) :
     map displayUpkeep data' 
