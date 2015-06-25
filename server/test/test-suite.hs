@@ -236,8 +236,18 @@ newtype Day' = Day' Int
 instance Arbitrary Day' where
   arbitrary = fmap Day' $ choose (1, 31)
 
-parseDayProp :: Day' -> Day' -> Day' -> Bool
-parseDayProp (Day' day) (Day' month) (Day' year) = 
+newtype Month = Month Int
+  deriving Show
+instance Arbitrary Month where
+  arbitrary = fmap Month $ choose (1, 21)
+
+newtype Year = Year Int
+  deriving Show
+instance Arbitrary Year where
+  arbitrary = fmap Year $ choose (1, 9999)
+
+parseDayProp :: Day' -> Month -> Year -> Bool
+parseDayProp (Day' day) (Month month) (Year year) = 
   (parseDate input) == expectedResult
   where
   expectedResult = Right (day, month, year)
