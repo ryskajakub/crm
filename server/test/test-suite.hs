@@ -236,12 +236,12 @@ newtype Day' = Day' Int
 instance Arbitrary Day' where
   arbitrary = fmap Day' $ choose (1, 31)
 
-parseDayProp :: Day' -> Bool
-parseDayProp (Day' day) = 
+parseDayProp :: Day' -> Day' -> Day' -> Bool
+parseDayProp (Day' day) (Day' month) (Day' year) = 
   (parseDate input) == expectedResult
   where
-  expectedResult = Right day
-  input = show $ day
+  expectedResult = Right (day, month, year)
+  input = show day <> "." <> show month <> "." <> show year
 
 parseListProperties :: TestTree
 parseListProperties = let

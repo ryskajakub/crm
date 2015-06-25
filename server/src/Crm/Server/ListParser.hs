@@ -7,17 +7,23 @@ import           Data.Text hiding        (foldr)
 import qualified Data.Text as            T
 
 import           Control.Applicative     ((<*), (<$>), (*>))
+import           Control.Monad           (liftM3)
 
 import           Crm.Shared.ServerRender (Markup(..))
 
 import           Safe                        (readMay)
 
-parseDate' :: MyParsec Int
+parseDate' :: MyParsec (Int, Int, Int)
 parseDate' = parser where
-  parser = intParser
+  parser = 
+    liftM3 (,,)
+      (intParser <* dotParser)
+      (intParser <* dotParser)
+      intParser
+  dotParser = char '.'
   intParser = maybe (fail "not an int") return . readMay =<< many1 digit
 
-parseDate :: String -> Either ParseError Int
+parseDate :: String -> Either ParseError (Int, Int, Int)
 parseDate = parse parseDate' ""
 
 type MyParsec a = Parsec String () a
@@ -43,7 +49,6 @@ listElementParser = UnorderedList <$> ((:[]) . pack <$> (string "- " *> line))
 
 plainLineParser :: MyParsec Markup
 plainLineParser = PlainText . pack <$> line
-
 
 line :: MyParsec String
 line = (many . noneOf $ "\r\n") <* eol
