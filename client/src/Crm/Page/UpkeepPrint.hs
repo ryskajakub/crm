@@ -31,10 +31,20 @@ upkeepPrint data' = let
     upkeepPrintDataHeader = map (B.col (B.mkColProps 6)) [
       strong "Firma" , text2DOM . C.companyName $ company ,
       strong "Adresa" , text2DOM . C.companyAddress $ company ]
-    rdrMachines = map $ \(machine, machineType, contactPerson, (upkeepMachine, _)) -> map (B.col (B.mkColProps 6)) [
-      strong "Zařízení", text2DOM $ MT.machineTypeName machineType <> " " <> M.note machine <> " " <> M.serialNumber machine ,
-      strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson ] ++ [
-      (B.col (B.mkColProps 12) $ text2DOM . UM.upkeepMachineNote $ upkeepMachine)]
+    rdrMachines = map $ \(machine, machineType, contactPerson, (upkeepMachine, markup')) -> let
+      upkeepMachineText = case markup' of
+        Just (markup) -> div . render $ markup
+        Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
+      render = map renderItem
+      renderItem :: SR.Markup -> DOMElement
+      renderItem (SR.UnorderedList unorderedList) = ul $
+        map renderListItem unorderedList
+      renderItem (SR.PlainText t) = text2DOM t
+      renderListItem t = li t
+      in map (B.col (B.mkColProps 6)) [
+        strong "Zařízení", text2DOM $ MT.machineTypeName machineType <> " " <> M.note machine <> " " <> M.serialNumber machine ,
+        strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson] ++ [
+        (B.col (B.mkColProps 12) upkeepMachineText)]
   in B.grid $
     B.row $ B.col (B.mkColProps 12) header :
     map displayUpkeep data' 
