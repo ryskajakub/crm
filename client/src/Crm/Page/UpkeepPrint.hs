@@ -41,10 +41,12 @@ upkeepPrint data' = let
         map renderListItem unorderedList
       renderItem (SR.PlainText t) = text2DOM t
       renderListItem t = li t
+      machineTitle = strong . MT.machineTypeName $ machineType
       in map (B.col (B.mkColProps 6)) [
         strong "Zařízení", text2DOM $ MT.machineTypeName machineType <> " " <> M.note machine <> " " <> M.serialNumber machine ,
         strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson] ++ [
-        (B.col (B.mkColProps 12) upkeepMachineText)]
+        (B.col (B.mkColProps 12) machineTitle) ,
+        (B.col (B.mkColProps 12) upkeepMachineText) ]
   in B.grid $
     (B.row $ B.col (B.mkColProps 12) header) :
     map displayUpkeep data' 
