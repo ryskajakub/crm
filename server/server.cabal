@@ -196,6 +196,8 @@ Executable gen-api
   ghc-options:       -Wall
   main-is:           Main.hs
   hs-source-dirs:    gen-api
+  other-modules:
+    Rest.Gen.Fay
   if flag(build-gen-api)
     buildable: True
     build-depends:

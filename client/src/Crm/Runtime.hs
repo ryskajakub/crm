@@ -1,6 +1,5 @@
 module Crm.Runtime (
   items ,
-  count1000 ,
   apiRoot ,
   withPassword ,
   passwordAjax ,
@@ -81,9 +80,7 @@ passwordAjax url callback' inputData method' onError maybePassword =
       JQ.success = Defined callback' ,
       JQ.error' = toDefined onError ,
       JQ.type' = Defined method' ,
-      JQ.url = Defined $ apiRoot <> url <> if elem '&' (unpack url) 
-        then pack $ "&" ++ count1000' 
-        else pack $ "?" ++ count1000' }
+      JQ.url = Defined $ apiRoot <> url }
     in case inputData of
       Nothing -> let
         in JQ.ajax' commonSettings

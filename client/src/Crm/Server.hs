@@ -101,6 +101,9 @@ status :: JQ.JQXHR -> Int
 status = ffi " %1['status'] "
 
 
+maxCount :: [(String, String)]
+maxCount = [("count", "1000")]
+
 -- deletions
 
 deleteCompany :: C.CompanyId
@@ -134,7 +137,7 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())
                         -> Fay ()
-fetchDailyPlanEmployees _ = XPP.list
+fetchDailyPlanEmployees _ = XPP.list maxCount
 
 fetchDailyPlanData :: YMD.YearMonthDay
                    -> Maybe E.EmployeeId
@@ -144,7 +147,7 @@ fetchDailyPlanData :: YMD.YearMonthDay
 fetchDailyPlanData _ employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
   (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
   where
-  remoteCall = maybe XU.listPrint XEU.listPrint employeeId
+  remoteCall = maybe (XU.listPrint maxCount) (XEU.listPrint maxCount) employeeId
 
 fetchPhoto :: P.PhotoId
            -> Text
@@ -155,6 +158,7 @@ fetchMachineTypesManufacturer :: Text -- ^ the string user typed
                               -> Fay ()
 fetchMachineTypesManufacturer text = 
   XMT.listByAutocompleteManufacturer
+    maxCount
     (unpack . encodeURIComponent $ text)
   
 fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
@@ -162,10 +166,11 @@ fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
                               -> Fay ()
 fetchMachineTypesAutocomplete text = 
   XMT.listByAutocomplete 
+    maxCount
     (unpack . encodeURIComponent $ text)
 
 fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) -> Fay ()
-fetchMachineTypes = XMT.list
+fetchMachineTypes = XMT.list maxCount
 
 fetchMachineTypeById :: MT.MachineTypeId
                      -> (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ())
@@ -183,7 +188,7 @@ fetchMachineType machineTypeName callback =
 
 fetchEmployees :: ([E.Employee'] -> Fay ())
                -> Fay ()
-fetchEmployees = XE.list
+fetchEmployees = XE.list maxCount
 
 fetchUpkeep :: U.UpkeepId -- ^ upkeep id
             -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]), 
@@ -199,17 +204,17 @@ fetchUpkeepData companyId = XCU.bySingle companyId "()"
 fetchUpkeeps :: C.CompanyId -- ^ company id
              -> ([(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> Fay ()) -- ^ callback
              -> Fay ()
-fetchUpkeeps = XCU.list
+fetchUpkeeps = XCU.list maxCount
   
 fetchMachinePhotos :: M.MachineId
                    -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
                    -> Fay ()
-fetchMachinePhotos = XMP.list
+fetchMachinePhotos = XMP.list maxCount
 
 fetchMachinesInCompany :: C.CompanyId
                        -> ([(M.MachineId, M.Machine)] -> Fay ())
                        -> Fay ()
-fetchMachinesInCompany = XCM.list 
+fetchMachinesInCompany = XCM.list maxCount
 
 fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
                         -> Fay ()
@@ -241,7 +246,7 @@ fetchContactPerson = XCP.byContactPersonId
 fetchContactPersons :: C.CompanyId
                     -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
                     -> Fay ()
-fetchContactPersons = XCCP.list
+fetchContactPersons = XCCP.list maxCount
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
@@ -278,12 +283,13 @@ fetchFrontPageData order direction router callback =
 
 fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, Text)] -> Fay ())
                     -> Fay ()
-fetchPlannedUpkeeps = XU.listPlanned
+fetchPlannedUpkeeps = XU.listPlanned maxCount
 
 fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ())
                      -> Fay ()
 fetchCompaniesForMap callback = 
-  XC.listMap
+  XC.listMap 
+    maxCount
     (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
 
 
