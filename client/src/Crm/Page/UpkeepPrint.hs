@@ -10,7 +10,7 @@ import           Prelude                  hiding (div)
 import           HaskellReact
 import qualified HaskellReact.Bootstrap   as B
 
-import           Crm.Helpers              (displayDate)
+import           Crm.Helpers              (displayDate, plusDays)
 import           Crm.Component.Form       (nullDropdown)
 import qualified Crm.Router                       as R
 
@@ -32,6 +32,10 @@ upkeepPrint :: R.CrmRouter
             -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
 upkeepPrint router day employeeId data' employees = let
+  simpleDateControls = [
+    R.link "<< včera" (R.dailyPlan (plusDays (-1) day) Nothing) router ,
+    text2DOM " " ,
+    R.link "zítra >>" (R.dailyPlan (plusDays (1) day) Nothing) router ]
   employeeSelect = nullDropdown employees E.name employeeId $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
@@ -58,5 +62,7 @@ upkeepPrint router day employeeId data' employees = let
         (B.col (B.mkColProps 12) upkeepMachineText) ]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
-    (B.row . B.col (B.mkColProps 12) $ employeeSelect) :
+    (B.row $ [
+      B.col (B.mkColProps 6) employeeSelect ,
+      B.col (B.mkColProps 6) simpleDateControls ]) :
     map displayUpkeep data' 

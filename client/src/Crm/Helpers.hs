@@ -24,6 +24,12 @@ data FileList
 data File
 data FileContents
 
+plusDays :: Int -> YMD.YearMonthDay -> YMD.YearMonthDay
+plusDays int (YMD.YearMonthDay y m d prec) = let
+  dateAsMoment = dayPrecision y m d requireMoment
+  modifiedMoment = addDays dateAsMoment int 
+  (y', m', d') = day modifiedMoment
+  in YMD.YearMonthDay y' m' d' prec
 
 swap :: (a, b) -> (b, a)
 swap (x, y) = (y, x)
