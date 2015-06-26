@@ -10,6 +10,7 @@ module Moment (
   day ,
   parse ,
   diff ,
+  addDays ,
   DiffType(..) ,
   format ) where
 
@@ -33,6 +34,9 @@ browserMoment = ffi " moment "
 
 now :: Moment -> MomentObject
 now = ffi " %1() "
+
+addDays :: MomentObject -> Int -> MomentObject
+addDays = ffi " (%1).clone().add(%2, 'days') "
 
 dayPrecision :: Int -- ^ year
              -> Int -- ^ month
