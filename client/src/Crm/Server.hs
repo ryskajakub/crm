@@ -109,27 +109,27 @@ maxCount = [("count", "1000")]
 deleteCompany :: C.CompanyId
               -> Fay ()
               -> Fay ()
-deleteCompany ident cb = XC.removeBySingle ident $ const cb
+deleteCompany ident cb = XC.remove ident $ const cb
 
 deleteUpkeep :: U.UpkeepId
              -> Fay ()
              -> Fay ()
-deleteUpkeep ident cb = XU.removeBySingle ident $ const cb
+deleteUpkeep ident cb = XU.remove ident $ const cb
 
 deleteMachine :: M.MachineId
               -> Fay ()
               -> Fay ()
-deleteMachine ident cb = XM.removeByMachineId ident $ const cb
+deleteMachine ident cb = XM.remove ident $ const cb
 
 deletePhoto :: P.PhotoId
             -> Fay ()
             -> Fay ()
-deletePhoto ident cb = XP.removeByPhotoId ident $ const cb
+deletePhoto ident cb = XP.remove ident $ const cb
 
 deleteContactPerson :: CP.ContactPersonId
                     -> Fay ()
                     -> Fay ()
-deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
+deleteContactPerson ident cb = XCP.remove ident $ const cb
 
 
 -- fetching of data from server

@@ -244,7 +244,10 @@ urlParts mId' res lnk ac@(rlnk, pars) =
            where rlnk' = rlnk ++ ((H.Lit $ H.String $ r) : tailed)
                  tailed = [funName `H.App` (use $ hsName (cleanName r))]
                  h = modName . cleanHsName $ r
-                 funName = H.Var $ H.Qual (H.ModuleName h) (H.Ident "getInt'")
+                 q = if r == res
+                   then H.UnQual 
+                   else H.Qual (H.ModuleName h)
+                 funName = H.Var $ q (H.Ident "getInt'")
     (LParam p : xs) -> 
       urlParts mId' res xs (rlnk ++ [(mkToString . use $ hsName (cleanName p))], pars) 
         where
