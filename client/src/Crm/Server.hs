@@ -91,7 +91,7 @@ import qualified Crm.Client.Employees.Upkeeps        as XEU
 import qualified Crm.Client.Print                    as XPP
 
 import           Crm.Runtime
-import           Crm.Helpers                         (File, encodeURIComponent)
+import           Crm.Helpers                         (File, encodeURIComponent, displayDateNumeral)
 import qualified Crm.Router                          as R
 
 
@@ -144,10 +144,12 @@ fetchDailyPlanData :: YMD.YearMonthDay
                    -> ([(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
                       CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
                    -> Fay ()
-fetchDailyPlanData _ employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
+fetchDailyPlanData day employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
   (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
   where
-  remoteCall = maybe (XU.listPrint maxCount) (XEU.listPrint maxCount) employeeId
+    dayParam = [("day", unpack . displayDateNumeral $ day)]
+    allParams = maxCount ++ dayParam
+    remoteCall = maybe (XU.listPrint allParams) (XEU.listPrint allParams) employeeId
 
 fetchPhoto :: P.PhotoId
            -> Text
