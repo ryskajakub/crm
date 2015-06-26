@@ -52,7 +52,8 @@ import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', mkGenHandler')
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', 
+                                             mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 import           Crm.Server.ListParser       (parseList, parseDate)
@@ -63,15 +64,6 @@ import           Safe                        (readMay)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
-
-
-mkDayParam :: Dict h p i o e -> Dict h (Int, Int, Int) i o e
-mkDayParam = mkPar $ Param ["day"] parse
-  where
-  parse [Just day] = case parseDate day of
-    Left _ -> Left . ParseError $ "day parse failed"
-    Right r -> Right r
-  parse _ = Left . MissingField $ "day parameter not present"
 
 addUpkeep :: Connection
           -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
@@ -232,7 +224,7 @@ printDailyPlanListing' employeeId connection day = do
 
 printDailyPlanListing :: ListHandler Dependencies
 printDailyPlanListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
-  let day = (uncurryN fromGregorian) ($(updateAtN 3 0) fromIntegral . $(reverseTuple 3) . param $ env)
+  let day = getDayParam env
   (_, connection) <- ask
   printDailyPlanListing' Nothing connection day
 

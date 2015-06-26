@@ -134,10 +134,13 @@ deleteContactPerson ident cb = XCP.removeByContactPersonId ident $ const cb
 
 -- fetching of data from server
 
+dayParam :: YMD.YearMonthDay -> [(String, String)]
+dayParam day = [("day", unpack . displayDateNumeral $ day)]
+
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())
                         -> Fay ()
-fetchDailyPlanEmployees _ = XPP.list maxCount
+fetchDailyPlanEmployees day = XPP.list (maxCount ++ dayParam day)
 
 fetchDailyPlanData :: YMD.YearMonthDay
                    -> Maybe E.EmployeeId
@@ -147,8 +150,7 @@ fetchDailyPlanData :: YMD.YearMonthDay
 fetchDailyPlanData day employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
   (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
   where
-    dayParam = [("day", unpack . displayDateNumeral $ day)]
-    allParams = maxCount ++ dayParam
+    allParams = maxCount ++ dayParam day
     remoteCall = maybe (XU.listPrint allParams) (XEU.listPrint allParams) employeeId
 
 fetchPhoto :: P.PhotoId

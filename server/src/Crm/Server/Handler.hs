@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.Handler where
 
@@ -22,12 +23,13 @@ import           Data.Aeson.Types            (FromJSON)
 import           Data.JSON.Schema.Types      (JSONSchema)
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
-import           Data.Tuple.All              (sel1, Sel1)
+import           Data.Time.Calendar          (fromGregorian, Day)
+import           Data.Tuple.All              (sel1, Sel1, uncurryN)
 import           Database.PostgreSQL.Simple  (Connection)
 import           Opaleye.RunQuery            (runQuery)
 import           Opaleye                     (queryTable, pgInt4, PGInt4, Table, Column, (.==), runUpdate)
 import           Rest.Dictionary.Combinators (mkHeader, jsonE, mkPar, jsonO, jsonI)
-import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe)
+import           Rest.Dictionary.Types       (Header(..), Modifier, FromMaybe, Dict, Param(..))
 import           Rest.Handler                hiding (mkConstHandler, mkInputHandler, mkListing, mkOrderedListing, mkIdHandler)
 import           Rest.Types.Error            (Reason(..), DataError(..), DomainReason(..), 
                                              ToResponseCode, toResponseCode)
@@ -35,10 +37,13 @@ import           Rest.Types.Void             (Void)
 import           Safe                        (headMay)
 import           Data.Typeable               (Typeable)
 
+import           Crm.Server.ListParser       (parseDate)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
 import           Crm.Server.Types
 import           Crm.Server.Helpers
+
+import           TupleTH                     (proj, reverseTuple, updateAtN)
 
 
 data SessionId = Password { password :: Text }
@@ -162,3 +167,14 @@ updateRows'' table readToWrite showInt postUpdate = mkInputHandler' (jsonI . jso
         _ <- liftIO $ runUpdate conn table (readToWrite record) condition
         postUpdate (showInt recordId) conn cache
   withExceptT (const $ CustomReason $ DomainReason "updation failed") doUpdation
+
+mkDayParam :: Dict h p i o e -> Dict h (Int, Int, Int) i o e
+mkDayParam = mkPar $ Param ["day"] parse
+  where
+  parse [Just day] = case parseDate day of
+    Left _ -> Left . ParseError $ "day parse failed"
+    Right r -> Right r
+  parse _ = Left . MissingField $ "day parameter not present"
+
+getDayParam :: Env h (Int, Int, Int) i -> Day
+getDayParam = uncurryN fromGregorian . $(updateAtN 3 0) fromIntegral . $(reverseTuple 3) . param
