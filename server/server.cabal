@@ -213,6 +213,6 @@ Executable gen-api
       directory ,
       Cabal ,
       regex-compat ,
-      rest-gen
+      rest-gen >= 0.17.0.6
   else
     buildable: False

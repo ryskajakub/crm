@@ -1,4 +1,4 @@
-{-# OPTIONS -fno-warn-incomplete-patterns #-}
+{-# OPTIONS -fno-warn-incomplete-patterns #-} 
 
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PatternGuards #-}
@@ -12,6 +12,7 @@ import Control.Arrow (second)
 import Control.Category
 import Control.Monad
 import Data.List
+import Data.Char
 import Data.Maybe
 import Prelude hiding (id, (.))
 import Safe
@@ -27,7 +28,6 @@ import Rest.Api (Router)
 
 import Rest.Gen.Base
 import Rest.Gen.Types
-import Rest.Gen.Utils
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 import qualified Data.Generics.Uniplate.Data    as U
 
@@ -376,3 +376,16 @@ defaultErrorDataDesc dt =
     , _haskellType    = haskellVoidType
     , _haskellModules = [ModuleName "Rest.Types.Void"]
     }
+
+
+-- taken from rest gen private module
+
+upFirst :: String -> String
+upFirst = mapHead toUpper
+
+downFirst :: String -> String
+downFirst = mapHead toLower
+
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead _ [] = []
+mapHead f (x : xs) = f x : xs
