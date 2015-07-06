@@ -354,11 +354,8 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   employeeSelectRows = 
     multipleInputs "Servisman" "Další servisman" OrderingInvisible setList inputControl elems newField where
       setList employeeIds = modify' $ \ud -> ud { UD.selectedEmployees = employeeIds }
-      inputControl employee' setEmployee' = nullDropdown
-        employees
-        E.name
-        (employee')
-        (setEmployee')
+      inputControl employee' setEmployee' = fst $
+        nullDropdown employees E.name employee' setEmployee'
       elems = selectedEmployees
       newField = Nothing
 

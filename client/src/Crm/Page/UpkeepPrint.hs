@@ -36,7 +36,7 @@ upkeepPrint router day employeeId data' employees = let
     R.link "<< včera" (R.dailyPlan (plusDays (-1) day) Nothing) router ,
     text2DOM " " ,
     R.link "zítra >>" (R.dailyPlan (plusDays (1) day) Nothing) router ]
-  employeeSelect = nullDropdown employees E.name employeeId $
+  employeeSelect = fst . nullDropdown employees E.name employeeId $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
   displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $

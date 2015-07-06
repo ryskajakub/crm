@@ -93,6 +93,15 @@ findInList maybeKey list = value where
   lookup' key' = lookup key' list
   value = maybe Nothing lookup' maybeKey
 
+editDisplayDropdown ::
+  InputState ->
+  DOMElement ->
+  Text ->
+  DOMElement
+editDisplayDropdown Editing dropdownElement _ = div' (class' "col-md-9") dropdownElement
+editDisplayDropdown Display _ selectedElement = 
+  span' (class'' ["control-label", "col-md-9", "my-text-left"]) selectedElement
+
 
 -- form elements
 
@@ -153,16 +162,18 @@ nullDropdown :: (Eq a)
              -> (b -> Text)
              -> Maybe a
              -> (Maybe a -> Fay ())
-             -> DOMElement
+             -> (DOMElement, Text)
 nullDropdown elements display currentElement' setId = 
-  dropdown elements' display' currentElement setId where
-    currentElement = joinMaybe $ (\e -> lookup e elements) `onJust` currentElement'
-    elements' = let
-      notNullElements = map (\(a,b) -> (Just a, Just b)) elements
-      nullElement = (Nothing, Nothing)
-      in nullElement : notNullElements
-    display' (Just element) = display element
-    display' Nothing = "---"
+  (dd, display' currentElement)
+  where
+  dd = dropdown elements' display' currentElement setId
+  currentElement = joinMaybe $ (\e -> lookup e elements) `onJust` currentElement'
+  elements' = let
+    notNullElements = map (\(a,b) -> (Just a, Just b)) elements
+    nullElement = (Nothing, Nothing)
+    in nullElement : notNullElements
+  display' (Just element) = display element
+  display' Nothing = "---"
 
 
 -- row elements
@@ -252,33 +263,27 @@ dropdownRow :: (Renderable label)
             -> b -- the displayed element in the closed dropdown
             -> (a -> Fay ()) -- selection handler
             -> DOMElement
-dropdownRow editing rowLabel elements display currentElement setId = row rowLabel [element] where
-  element = case editing of
-    Editing -> div' (class' "col-md-9") $ BD.buttonDropdown buttonLabel elementsToBeSelected
-    Display -> span' (class'' ["control-label", "col-md-9", "my-text-left"]) $ display currentElement
-  selectLink theId label = let
-    selectAction = setId theId
-    in A.a''' (click selectAction) (display label)
-  elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
-  buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
+dropdownRow inputState rowLabel elements display currentElement setId = 
+  row rowLabel [element] 
+  where
+  element = editDisplayDropdown inputState dropdownElement (display currentElement)
+  dropdownElement = dropdown elements display currentElement setId
+  
 
 -- | Dropdown component with a null value
-nullDropdownRow :: (Renderable label)
+nullDropdownRow :: (Renderable label, Eq a)
                 => InputState
                 -> label
                 -> [(a, b)]
                 -> (b -> Text)
-                -> Maybe b
+                -> Maybe a
                 -> (Maybe a -> Fay ())
                 -> DOMElement
-nullDropdownRow editing rowLabel elements display currentElement setId = 
-  dropdownRow editing rowLabel elements' display' currentElement setId where
-    elements' = let
-      notNullElements = map (\(a,b) -> (Just a, Just b)) elements
-      nullElement = (Nothing, Nothing)
-      in nullElement : notNullElements
-    display' (Just element) = display element
-    display' Nothing = "---"
+nullDropdownRow inputState rowLabel elements display currentElement setId = 
+  row rowLabel [element]
+  where
+  element = editDisplayDropdown inputState dropdownElement currentElementText
+  (dropdownElement, currentElementText) = nullDropdown elements display currentElement setId
 
 
 multipleInputs :: forall a.

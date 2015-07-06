@@ -419,7 +419,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       (dropdownCPHighlight . text2DOM $ "Kontaktní osoba - stávající")
       contactPersons 
       CP.name 
-      (findInList dropdownContactPersonId contactPersons) $
+      dropdownContactPersonId $
       \cpId -> do
         changeNavigationState $ \md -> md { MD.contactPersonId = cpId }
         case newContactPersonRow of
@@ -431,7 +431,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       "Zapojení" 
       otherMachines 
       M.serialNumber 
-      (findInList otherMachineId otherMachines) $
+      otherMachineId $
       \omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId } ,
     inputRowEditing
       "Výrobní číslo"
