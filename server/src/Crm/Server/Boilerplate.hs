@@ -7,6 +7,8 @@
 
 module Crm.Server.Boilerplate where
 
+import Crm.TH  (mkFayTransferable)
+
 import           Generics.Regular          (deriveAll, PF)
 import           Data.Aeson.Types          (toJSON, ToJSON, FromJSON, parseJSON, Value)
 import qualified Data.JSON.Schema.Types    as JS (JSONSchema(schema))
@@ -32,20 +34,6 @@ import qualified Crm.Shared.YearMonthDay   as D
 import qualified Crm.Shared.ServerRender   as SR
 import           Crm.Shared.MyMaybe
 
-deriveAll ''C.Company "PFCompany"
-type instance PF C.Company = PFCompany
-
-deriveAll ''M.Machine "PFMachine"
-type instance PF M.Machine = PFMachine
-
-deriveAll ''MT.MachineType "PFMachineType"
-type instance PF MT.MachineType = PFMachineType
-
-deriveAll ''U.Upkeep "PFUpkeep"
-type instance PF U.Upkeep = PFUpkeep
-
-deriveAll ''UM.UpkeepMachine "PFUpkeepMachine"
-type instance PF UM.UpkeepMachine = PFUpkeepMachine
 
 fayInstance :: (Monad m, Data a) => Value -> m a
 fayInstance value = case readFromFay' value of
@@ -225,9 +213,4 @@ instance ToJSON M.ContactPersonForMachine where
 instance FromJSON M.ContactPersonForMachine where
   parseJSON = fayInstance
 
-instance JS.JSONSchema SR.Markup where
-  schema = gSchema
-instance ToJSON SR.Markup where
-  toJSON = fromJust . showToFay
-instance FromJSON SR.Markup where
-  parseJSON = fayInstance
+mkFayTransferable ''SR.Markup
