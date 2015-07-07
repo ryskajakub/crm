@@ -28,7 +28,7 @@ import           Test.QuickCheck.Random
 
 import           Crm.Server.Core           (nextServiceDate, Planned(..), nextServiceTypeHint)
 import           Crm.Server.Helpers
-import           Crm.Server.ListParser     (parseList, parseDate)
+import           Crm.Server.Parsers        (parseList, parseDate)
 
 import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.Machine        as M

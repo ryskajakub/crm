@@ -56,11 +56,9 @@ import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', 
                                              mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
-import           Crm.Server.ListParser       (parseList, parseDate)
+import           Crm.Server.Parsers          (parseList)
 
-import           TupleTH                     (proj, reverseTuple, updateAtN)
-
-import           Safe                        (readMay)
+import           TupleTH                     (proj)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan

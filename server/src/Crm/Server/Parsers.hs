@@ -1,4 +1,4 @@
-module Crm.Server.ListParser (
+module Crm.Server.Parsers (
   parseList ,
   parseDate ) where
 

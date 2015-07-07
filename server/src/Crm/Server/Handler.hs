@@ -37,7 +37,7 @@ import           Rest.Types.Void             (Void)
 import           Safe                        (headMay)
 import           Data.Typeable               (Typeable)
 
-import           Crm.Server.ListParser       (parseDate)
+import           Crm.Server.Parsers          (parseDate)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.DB
 import           Crm.Server.Types
