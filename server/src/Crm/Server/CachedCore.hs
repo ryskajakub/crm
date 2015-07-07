@@ -1,12 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.CachedCore where
 
 import           Control.Monad              (forM, forM_)
 import           Control.Concurrent         (forkIO, threadDelay)
 import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
+import           Control.Concurrent.Async   (async, wait, Async)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
+import           Data.Pool                  (withResource)
 
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Except (mapExceptT, runExceptT)
@@ -28,20 +31,27 @@ import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
 
 
-recomputeWhole' :: (MonadIO m)
-                => Connection 
+recomputeWhole' ::
+  forall r m.
+  (MonadIO m)
+                => ConnectionPool
                 -> Cache 
                 -> ExceptT (Reason r) m (MVar ())
-recomputeWhole' connection (cache @ (Cache c)) = do
-  companyRows <- liftIO $ runQuery connection (queryTable companiesTable)
+recomputeWhole' pool (cache @ (Cache c)) = do
+  companyRows <- liftIO $ withResource pool $ \connection -> runQuery connection (queryTable companiesTable)
   let companies = convert companyRows :: [CompanyMapped]
   let companyIds = fmap $(proj 3 0) companies
   _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
   daemon <- liftIO $ newEmptyMVar 
   _ <- liftIO $ forkIO $ do
     liftIO . putStrLn $ "starting cache computation"
-    _ <- runExceptT $ withConnection $ \conn -> forM_ companyIds $ \companyId -> do 
-      recomputeSingle companyId conn cache
+    _ <- liftIO $ let
+      forkRecomputation :: C.CompanyId -> IO (Async (Either (Reason r) ()))
+      forkRecomputation companyId = async $ withResource pool $ \connection -> 
+        runExceptT $ recomputeSingle companyId connection cache
+      in do
+        computations <- forM companyIds forkRecomputation
+        forM_ computations $ \computation -> wait computation >> (return ())
     liftIO . putStrLn $ "stopping cache computation"
     putMVar daemon ()  
   return daemon
@@ -52,7 +62,7 @@ recomputeWhole :: (MonadIO m)
                -> Cache 
                -> ExceptT (Reason r) m ()
 recomputeWhole conn cache = do
-  _ <- recomputeWhole' conn cache
+  -- _ <- recomputeWhole' conn cache
   return ()
 
 

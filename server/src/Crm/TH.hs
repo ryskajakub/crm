@@ -14,6 +14,8 @@ import qualified Data.JSON.Schema.Types   as JS (JSONSchema(schema))
 import           Fay.Convert              (showToFay, readFromFay')
 import           Data.Maybe               (fromJust)
 import           Data.JSON.Schema.Generic (gSchema)
+
+
 import           Data.Data
 
 

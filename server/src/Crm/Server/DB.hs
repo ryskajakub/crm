@@ -92,6 +92,7 @@ module Crm.Server.DB (
   withConnection ,
   singleRowOrColumn ,
   mapUpkeeps ,
+  initiateConnection ,
   -- mappings
   ColumnToRecordDeep ,
   convert ,
@@ -823,14 +824,18 @@ runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
   return $ map (\(companyId,a,b) -> (C.CompanyId companyId, convertExpanded (a,b))) rows
 
-withConnection :: (MonadIO m) => (Connection -> m a) -> m a
-withConnection runQ = do
-  let connectInfo = defaultConnectInfo {
+initiateConnection :: IO Connection 
+initiateConnection = let 
+  connectInfo = defaultConnectInfo {
     connectUser = "haskell" ,
     connectDatabase = "crm" ,
     connectPassword = "haskell" ,
     connectHost = "localhost" }
-  conn <- liftIO $ connect connectInfo
+  in connect connectInfo
+
+withConnection :: (MonadIO m) => (Connection -> m a) -> m a
+withConnection runQ = do
+  conn <- liftIO initiateConnection
   result <- runQ conn
   liftIO $ close conn
   return result

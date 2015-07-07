@@ -4,6 +4,7 @@ module Crm.Server.Types where
 
 import           Data.IORef                 (IORef)
 import qualified Data.Map                   as M
+import           Data.Pool                  (Pool)
 
 import           Control.Monad.Reader       (ReaderT)
 import           Database.PostgreSQL.Simple (Connection)
@@ -27,3 +28,5 @@ type MachineTypeDependencies = (ReaderT (GlobalBindings, MachineTypeSid) IO :: *
 type UrlId = Either String Int 
 
 data Direction = Asc | Desc
+
+type ConnectionPool = Pool Connection
