@@ -3,7 +3,8 @@
 module Crm.Server.CachedCore where
 
 import           Control.Monad              (forM, forM_)
-import           Control.Concurrent         (forkIO)
+import           Control.Concurrent         (forkIO, threadDelay)
+import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 
@@ -27,18 +28,31 @@ import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
 
 
-recomputeWhole :: (MonadIO m)
-               => Connection 
-               -> Cache 
-               -> ExceptT (Reason r) m ()
-recomputeWhole connection (cache @ (Cache c)) = do
+recomputeWhole' :: (MonadIO m)
+                => Connection 
+                -> Cache 
+                -> ExceptT (Reason r) m (MVar ())
+recomputeWhole' connection (cache @ (Cache c)) = do
   companyRows <- liftIO $ runQuery connection (queryTable companiesTable)
   let companies = convert companyRows :: [CompanyMapped]
   let companyIds = fmap $(proj 3 0) companies
   _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
+  daemon <- liftIO $ newEmptyMVar 
   _ <- liftIO $ forkIO $ do
-    _ <- runExceptT $ withConnection $ \conn -> forM_ companyIds $ \companyId -> recomputeSingle companyId conn cache
-    return ()
+    liftIO . putStrLn $ "starting cache computation"
+    _ <- runExceptT $ withConnection $ \conn -> forM_ companyIds $ \companyId -> do 
+      recomputeSingle companyId conn cache
+    liftIO . putStrLn $ "stopping cache computation"
+    putMVar daemon ()  
+  return daemon
+
+
+recomputeWhole :: (MonadIO m)
+               => Connection 
+               -> Cache 
+               -> ExceptT (Reason r) m ()
+recomputeWhole conn cache = do
+  _ <- recomputeWhole' conn cache
   return ()
 
 
