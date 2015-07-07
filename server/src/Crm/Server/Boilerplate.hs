@@ -106,8 +106,6 @@ instance JS.JSONSchema D.Precision where
   schema = gSchema
 instance JS.JSONSchema MT.MachineType where
   schema = gSchema
-instance JS.JSONSchema Char where
-  schema = gSchema
 instance JS.JSONSchema MT.MyEither where
   schema = gSchema
 instance JS.JSONSchema U.Upkeep where

@@ -25,7 +25,7 @@ import           Control.Arrow               (second)
 
 import           Data.Tuple.All              (sel1, sel2, sel3, uncurryN)
 import           Data.List                   (nub)
-import           Data.Text                   (intercalate, pack)
+import           Data.Text                   (intercalate, pack, Text)
 import           Data.Time.Calendar          (fromGregorian, Day)
 
 import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason), DataError(ParseError, MissingField))
@@ -181,7 +181,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
 loadNextServiceTypeHint :: (MonadIO m)
                         => [(MachineMapped, MachineTypeMapped)] 
                         -> Connection 
-                        -> ExceptT (Reason String) m [(MachineMapped, MachineTypeMapped, US.UpkeepSequence)]
+                        -> ExceptT (Reason Text) m [(MachineMapped, MachineTypeMapped, US.UpkeepSequence)]
 loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) -> do
   upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
   pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (M.getMachineId . $(proj 6 0) $ machine))
@@ -189,7 +189,7 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
   let pastUpkeepMachines = map (\x -> ($(proj 3 2)) $ (convert x :: UpkeepMachineMapped)) pastUpkeepMachines'
   uss <- case upkeepSequences of
     (us' : uss') -> return (us', uss')
-    _ -> throwError $ CustomReason $ DomainReason "Db in invalid state"
+    _ -> throwError . CustomReason . DomainReason . pack $ "Db in invalid state"
   return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
 
 printDailyPlanListing' :: (MonadIO m, Functor m) 

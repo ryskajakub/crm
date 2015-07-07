@@ -43,7 +43,7 @@ import           Crm.Server.DB
 import           Crm.Server.Types
 import           Crm.Server.Helpers
 
-import           TupleTH                     (proj, reverseTuple, updateAtN)
+import           TupleTH                     (reverseTuple, updateAtN)
 
 
 data SessionId = Password { password :: Text }
@@ -59,10 +59,11 @@ instance HasConnection ((c, Connection), b) where
 instance HasConnection Connection where
   getConnection = id
 
-mkGenHandler' :: (MonadReader a m, MonadIO m, HasConnection a) 
-              => Modifier () p i o Nothing
-              -> (Env SessionId p (FromMaybe () i) -> ExceptT (Reason String) m (Apply f (FromMaybe () o)))
-              -> GenHandler m f
+mkGenHandler' :: 
+  (MonadReader a m, MonadIO m, HasConnection a) => 
+  Modifier () p i o Nothing -> 
+  (Env SessionId p (FromMaybe () i) -> ExceptT (Reason Text) m (Apply f (FromMaybe () o))) -> 
+  GenHandler m f
 mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
   connection <- ask
   verifyPassword (getConnection connection) (header env)
@@ -72,7 +73,7 @@ mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
     [Just authHeader] -> Right . Password . pack . B64.decode $ authHeader
     _ -> Left . ParseError $ "data not parsed correctly"
 
-verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason String) m ()
+verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason Text) m ()
 verifyPassword connection (Password inputPassword) = do
   dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
   let dbPassword' = headMay dbPasswords
@@ -87,39 +88,39 @@ verifyPassword connection (Password inputPassword) = do
       passwordCandidate = CS.Pass . encodeUtf8 $ inputPassword
     Nothing -> throwPasswordError 
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
-    where throwPasswordError = throwError . CustomReason . DomainReason
+    where throwPasswordError = throwError . CustomReason . DomainReason . pack
 
 mkConstHandler' :: (MonadReader a m, MonadIO m, HasConnection a) 
                 => Modifier () p Nothing o Nothing
-                -> ExceptT (Reason String) m (FromMaybe () o)
+                -> ExceptT (Reason Text) m (FromMaybe () o)
                 -> Handler m
 mkConstHandler' d a = mkGenHandler' d (const a)
 
 mkInputHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
                 => Modifier () p (Just i) o Nothing
-                -> (i -> ExceptT (Reason String) m (FromMaybe () o))
+                -> (i -> ExceptT (Reason Text) m (FromMaybe () o))
                 -> Handler m
 mkInputHandler' d a = mkGenHandler' d (a . input)
 
 mkIdHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
              => Modifier () p (Just i) o Nothing
-             -> (i -> a -> ExceptT (Reason String) m (FromMaybe () o))
+             -> (i -> a -> ExceptT (Reason Text) m (FromMaybe () o))
              -> Handler m
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
 
 mkListing' :: (MonadReader a m, MonadIO m, HasConnection a)
            => Modifier () () Nothing o Nothing
-           -> (Range -> ExceptT (Reason String) m [FromMaybe () o])
+           -> (Range -> ExceptT (Reason Text) m [FromMaybe () o])
            -> ListHandler m
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 
 mkOrderedListing' :: (MonadReader a m, MonadIO m, HasConnection a)
                   => Modifier () () Nothing o Nothing
-                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason String) m [FromMaybe () o])
+                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) m [FromMaybe () o])
                   -> ListHandler m
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
-instance ToResponseCode String where
+instance ToResponseCode Text where
   toResponseCode = const 401
 
 updateRows' :: forall record m columnsW columnsR.
@@ -134,7 +135,7 @@ updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(r
     let condition row = pgInt4 recordId .== sel1 row
     _ <- liftIO $ runUpdate conn table (readToWrite record) condition
     postUpdate recordId conn cache
-  in withExceptT (const $ CustomReason $ DomainReason "updation failed") doUpdation
+  in withExceptT (const . CustomReason . DomainReason . pack $ "updation failed") doUpdation
 
 updateRows :: forall record m columnsW columnsR.
               (Functor m, MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
@@ -166,7 +167,7 @@ updateRows'' table readToWrite showInt postUpdate = mkInputHandler' (jsonI . jso
         let condition row = pgInt4 (showInt recordId) .== sel1 row
         _ <- liftIO $ runUpdate conn table (readToWrite record) condition
         postUpdate (showInt recordId) conn cache
-  withExceptT (const $ CustomReason $ DomainReason "updation failed") doUpdation
+  withExceptT (const . CustomReason . DomainReason . pack $ "updation failed") doUpdation
 
 mkDayParam :: Dict h p i o e -> Dict h (Int, Int, Int) i o e
 mkDayParam = mkPar $ Param ["day"] parse
