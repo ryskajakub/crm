@@ -54,6 +54,7 @@ Library
     Crm.Server.Core ,
     Crm.Server.CachedCore ,
     Crm.Server.ListParser ,
+    Crm.TH ,
 
     Crm.Shared.Direction ,
     Crm.Shared.MyMaybe ,

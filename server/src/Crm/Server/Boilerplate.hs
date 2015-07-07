@@ -7,7 +7,7 @@
 
 module Crm.Server.Boilerplate where
 
-import Crm.TH  (mkFayTransferable)
+import Crm.TH  (mkFayTransferables)
 
 import           Generics.Regular          (deriveAll, PF)
 import           Data.Aeson.Types          (toJSON, ToJSON, FromJSON, parseJSON, Value)
@@ -204,11 +204,4 @@ instance ToJSON L.Login where
 instance FromJSON L.Login where
   parseJSON = fayInstance
 
-instance JS.JSONSchema M.ContactPersonForMachine where
-  schema = gSchema
-instance ToJSON M.ContactPersonForMachine where
-  toJSON = fromJust . showToFay
-instance FromJSON M.ContactPersonForMachine where
-  parseJSON = fayInstance
-
-mkFayTransferable ''SR.Markup
+mkFayTransferables [''SR.Markup, ''M.ContactPersonForMachine]

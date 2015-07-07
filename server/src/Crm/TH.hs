@@ -1,16 +1,18 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
 
-module Crm.TH where
+module Crm.TH (
+  mkFayTransferable , 
+  mkFayTransferables ) where
 
 import           Language.Haskell.TH
+import           Control.Monad            (forM)
 
-import           Generics.Regular          (deriveAll, PF)
-import           Data.Aeson.Types          (toJSON, ToJSON, FromJSON, parseJSON, Value)
-import qualified Data.JSON.Schema.Types    as JS (JSONSchema(schema))
-import           Fay.Convert               (showToFay, readFromFay')
-import           Data.Maybe                (fromJust)
-import           Data.JSON.Schema.Generic  (gSchema)
+import           Data.Aeson.Types         (toJSON, ToJSON, FromJSON, parseJSON, Value)
+import qualified Data.JSON.Schema.Types   as JS (JSONSchema(schema))
+import           Fay.Convert              (showToFay, readFromFay')
+import           Data.Maybe               (fromJust)
+import           Data.JSON.Schema.Generic (gSchema)
 import           Data.Data
 
 
@@ -31,4 +33,6 @@ mkFayTransferable name = let
     instance JS.JSONSchema $(qName) where
       schema = gSchema |]
   in toJsonInstance
-  
+ 
+mkFayTransferables :: [Name] -> Q [Dec]
+mkFayTransferables names = fmap concat . forM names $ mkFayTransferable
