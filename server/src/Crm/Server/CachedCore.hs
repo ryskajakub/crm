@@ -46,15 +46,21 @@ recomputeWhole' pool (cache @ (Cache c)) = do
   _ <- liftIO $ forkIO $ do
     liftIO . putStrLn $ "starting cache computation"
     _ <- liftIO $ let
-      forkRecomputation :: C.CompanyId -> IO (Async (Either (Reason r) ()))
-      forkRecomputation companyId = async $ withResource pool $ \connection -> 
-        runExceptT $ recomputeSingle companyId connection cache
+      forkRecomputation :: [C.CompanyId] -> IO (Async (Either (Reason r) [()]))
+      forkRecomputation companyIdsBatch = async $ withResource pool $ \connection -> 
+        runExceptT $ forM companyIdsBatch $ \companyId -> recomputeSingle companyId connection cache
+      batchedCompanyIds = batch companyIds 5
       in do
-        computations <- forM companyIds forkRecomputation
+        computations <- forM batchedCompanyIds forkRecomputation
         forM_ computations $ \computation -> wait computation >> (return ())
     liftIO . putStrLn $ "stopping cache computation"
     putMVar daemon ()  
   return daemon
+
+
+batch :: [a] -> Int -> [[a]]
+batch [] _ = []
+batch list batchSize = take batchSize list : batch (drop batchSize list) batchSize
 
 
 recomputeWhole :: (MonadIO m)
