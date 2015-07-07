@@ -3,7 +3,8 @@
 
 module Crm.TH (
   mkFayTransferable , 
-  mkFayTransferables ) where
+  mkFayTransferables ,
+  fayInstance ) where
 
 import           Language.Haskell.TH
 import           Control.Monad            (forM)
