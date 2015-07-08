@@ -10,6 +10,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Crm.Server.DB (
   -- tables
@@ -30,7 +31,6 @@ module Crm.Server.DB (
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
-  companiesQuery ,
   machinesQuery ,
   machineTypesQuery ,
   upkeepsQuery ,
@@ -61,6 +61,7 @@ module Crm.Server.DB (
   groupedPlannedUpkeepsQuery ,
   expandedUpkeepsQuery ,
   companyByIdQuery ,
+  companyByIdCompanyQuery ,
   machineDetailQuery ,
   contactPersonsByIdQuery ,
   nextServiceMachinesQuery ,
@@ -111,7 +112,7 @@ module Crm.Server.DB (
   ExtraFieldMapped ,
   MachineMapped ) where
 
-import           Control.Arrow                        (returnA)
+import           Control.Arrow                        (returnA, (^<<))
 import           Control.Applicative                  ((<*>), pure)
 import           Control.Monad                        (forM_)
 import           Data.List                            (intersperse)
@@ -143,7 +144,7 @@ import           Opaleye                              (runInsert)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
 import qualified Opaleye.Internal.Aggregate           as IAGG
-import           Data.Profunctor.Product.TH           (makeAdaptorAndInstance)
+import           Data.Profunctor.Product.TH
 
 import           Rest.Types.Error                     (DataError(ParseError), Reason(InputError))
 import           TupleTH
@@ -169,9 +170,6 @@ type DBInt8 = Column PGInt8
 type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
-
-type CompaniesTable = (DBInt, DBText, DBText, DBText, Column (Nullable PGFloat8), Column (Nullable PGFloat8))
-type CompaniesWriteTable = (Maybe DBInt, DBText, DBText, DBText, Column (Nullable PGFloat8), Column (Nullable PGFloat8))
 
 type ContactPersonsTable = (DBInt, DBInt, DBText, DBText, DBText)
 type ContactPersonsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGInt4), 
@@ -213,10 +211,6 @@ type PasswordTable = (Column PGBytea)
 type UpkeepEmployeesTable = (DBInt, DBInt, DBInt)
 
 
-newtype X a = X { getA :: a }
-makeAdaptorAndInstance "pX" ''X
-
-
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )
 
@@ -244,14 +238,27 @@ machinePhotosTable = Table "machine_photos" $ p2 (
   required "photo_id" ,
   required "machine_id" )
 
-companiesTable :: Table CompaniesWriteTable CompaniesTable
-companiesTable = Table "companies" $ p6 (
-  optional "id" ,
-  required "name" ,
-  required "plant" ,
-  required "address" ,
-  required "latitude" ,
-  required "longitude" )
+makeAdaptorAndInstance "pCompany" ''C.Company'
+makeAdaptorAndInstance "pCoordinates" ''C.Coordinates'
+makeAdaptorAndInstance "pCompanyId" ''C.CompanyId'
+
+type CompanyColumns = C.Company' DBText DBText DBText
+type CompaniesTable = (C.CompanyId' DBInt, CompanyColumns, 
+  C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8)))
+companiesTable :: 
+  Table
+  (C.CompanyId' (Maybe DBInt), CompanyColumns, C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8)))
+  CompaniesTable
+companiesTable = Table "companies" $ p3 (
+  pCompanyId C.CompanyId {
+    C.getCompanyId = optional "id" } ,
+  pCompany C.Company {
+    C.companyName = required "name" ,
+    C.companyPlant = required "plant" ,
+    C.companyAddress = required "address" } ,
+  pCoordinates C.Coordinates {
+    C.latitude = required "latitude" ,
+    C.longitude = required "longitude" } )
 
 contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable
 contactPersonsTable = Table "contact_persons" $ p5 (
@@ -335,9 +342,6 @@ photosMetaQuery = queryTable photosMetaTable
 
 machinePhotosQuery :: Query MachinePhotosTable
 machinePhotosQuery = queryTable machinePhotosTable
-
-companiesQuery :: Query CompaniesTable
-companiesQuery = queryTable companiesTable
 
 machinesQuery :: Query MachinesTable
 machinesQuery = queryTable machinesTable
@@ -453,6 +457,22 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
+join' :: 
+  (Sel1 a (f (Column PGInt4)), Functor f) =>
+  Query a ->
+  f Int ->
+  Query a 
+join' q surrogateId = let
+  surrogateId' = fmap pgInt4 surrogateId
+  in undefined
+{-
+    in proc () -> do
+    table <- q -< ()
+    restrict -< sel1 table .== undefined -- fmap pgInt4 surrogateId
+    returnA -< table
+-}
+
+
 machinePhotosByMachineId :: Int -> Query PhotosMetaTable
 machinePhotosByMachineId machineId = proc () -> do
   (photoId, machineId') <- machinePhotosQuery -< ()
@@ -468,9 +488,8 @@ machineManufacturersQuery str = autocomplete $ distinct $ proc () -> do
 
 otherMachinesInCompanyQuery :: Int -> Query MachinesTable
 otherMachinesInCompanyQuery companyId = proc () -> do
-  companyRow <- join companiesQuery -< pgInt4 companyId
   machinesRow <- machinesQuery -< ()
-  restrict -< ($(proj 6 0) companyRow) .== ($(proj 11 1) machinesRow)
+  restrict -< pgInt4 companyId .== $(proj 11 1) machinesRow
   returnA -< machinesRow
 
 photoMetaQuery :: Int -> Query PhotosMetaTable
@@ -509,10 +528,15 @@ machineTypesQuery' mid = autocomplete $ proc () -> do
   restrict -< (lower name' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' mid) <> "%")))
   returnA -< name'
 
-companyByIdQuery :: Int -> Query (CompaniesTable)
+companyByIdQuery :: C.CompanyId -> Query CompaniesTable
 companyByIdQuery companyId = proc () -> do
-  company <- join companiesQuery -< pgInt4 companyId
-  returnA -< company
+  companyRow <- queryTable companiesTable -< ()
+  let C.CompanyId companyPK = $(proj 3 0) companyRow
+  restrict -< companyPK .== (pgInt4 . C.getCompanyId) companyId
+  returnA -< companyRow
+
+companyByIdCompanyQuery :: C.CompanyId -> Query CompanyColumns
+companyByIdCompanyQuery companyId = (\(_,company,_) -> company) ^<< companyByIdQuery companyId
 
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
@@ -674,23 +698,26 @@ singleEmployeeQuery employeeId = proc () -> do
   employeeRow <- join employeesQuery -< (pgInt4 employeeId)
   returnA -< employeeRow
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, CompaniesTable)
+groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, (C.CompanyId' DBInt, CompanyColumns))
 groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_) <- upkeepsQuery -< ()
     restrict -< upkeepClosed .== pgBool False
     upkeepMachinesRow <- join upkeepMachinesQuery -< upkeepPK
     (_,companyFK,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< $(proj 6 2) upkeepMachinesRow
-    companyRow <- join companiesQuery -< companyFK
-    returnA -< (upkeepRow, companyRow)
+    (companyId, companyColumns, _) <- queryTable companiesTable -< ()
+    restrict -< C.getCompanyId companyId .== companyFK
+    returnA -< (upkeepRow, (companyId,companyColumns))
   in orderBy (asc(\((_,date,_,_,_,_), _) -> date)) $ 
     AGG.aggregate (p2 (p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min),
-      p6(AGG.min, AGG.min, AGG.min, AGG.min, AGG.min, AGG.min))) plannedUpkeepsQuery
+      p2(pCompanyId . C.CompanyId $ AGG.min, pCompany $ C.Company AGG.min AGG.min AGG.min))) 
+        plannedUpkeepsQuery
 
 singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompaniesTable)
 singleContactPersonQuery contactPersonId = proc () -> do
   contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
-  companyRow <- join companiesQuery -< sel2 contactPersonRow
+  companyRow <- queryTable companiesTable -< ()
+  restrict -< (C.getCompanyId . $(proj 3 0)) companyRow .== $(proj 5 1) contactPersonRow
   returnA -< (contactPersonRow, companyRow)
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
@@ -783,12 +810,13 @@ in' as compareA = foldl
   (pgBool False)
   as
 
-companyInUpkeepQuery :: U.UpkeepId -> Query CompaniesTable
+companyInUpkeepQuery :: U.UpkeepId -> Query CompanyColumns
 companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
   upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepIdInt
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
-  companyRow <- join companiesQuery -< $(proj 11 1) machineRow
-  returnA -< companyRow
+  (companyPK, company, _) <- queryTable companiesTable -< ()
+  restrict -< (C.getCompanyId companyPK) .== $(proj 11 1) machineRow
+  returnA -< company
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]

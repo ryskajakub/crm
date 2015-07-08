@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Shared.Company where
 
@@ -11,12 +12,16 @@ import Rest.Info    (Info(..))
 #endif
 import Data.Text    (Text, pack)
 
-newtype CompanyId = CompanyId { getCompanyId :: Int }
+newtype CompanyId' id = CompanyId { getCompanyId :: id }
 #ifdef FAY
   deriving (Show)
 #else
   deriving (Generic, Typeable, Data, Ord, Eq, Show)
 #endif
+type CompanyId = CompanyId' Int
+
+instance Functor CompanyId' where
+  f `fmap` (CompanyId companyId) = CompanyId . f $ companyId
 
 #ifndef FAY
 instance Info CompanyId where
@@ -28,20 +33,23 @@ instance Read CompanyId where
 data OrderType = CompanyName | NextService
   deriving (Show, Read)
 
-data Coordinates = Coordinates {
-  latitude :: Double ,
-  longitude :: Double }
+data Coordinates' latitude longitude = Coordinates {
+  latitude :: latitude ,
+  longitude :: longitude }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+type Coordinates = Coordinates' Double Double
+type CoordinatesJoin = Coordinates' (Maybe Double) (Maybe Double)
 
-data Company = Company {
-  companyName :: Text , 
-  companyPlant :: Text ,
-  companyAddress :: Text }
+data Company' name plant address = Company {
+  companyName :: name , 
+  companyPlant :: plant ,
+  companyAddress :: address }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+type Company = Company' Text Text Text
 
 mkCoordinates :: (Double, Double) -> Coordinates
 mkCoordinates (lat, lng) = Coordinates lat lng

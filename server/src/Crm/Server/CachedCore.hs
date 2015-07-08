@@ -7,6 +7,9 @@ import           Control.Monad              (forM, forM_)
 import           Control.Concurrent         (forkIO, threadDelay)
 import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
 import           Control.Concurrent.Async   (async, wait, Async)
+import           Control.Lens               (_3, over, mapped, _1)
+import           Control.Applicative        (pure, (<*>))
+
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 import           Data.Pool                  (withResource)
@@ -33,14 +36,15 @@ import           Crm.Server.Types
 
 recomputeWhole' ::
   forall r m .
-  (MonadIO m) =>
+  (MonadIO m, Functor m) =>
   ConnectionPool -> 
   Cache -> 
   ExceptT (Reason r) m (MVar ())
 recomputeWhole' pool (cache @ (Cache c)) = do
-  companyRows <- liftIO $ withResource pool $ \connection -> runQuery connection (queryTable companiesTable)
-  let companies = convert companyRows :: [CompanyMapped]
-  let companyIds = fmap $(proj 3 0) companies
+  let mapCoordinates coordinates = pure C.Coordinates <*> C.latitude coordinates <*> C.longitude coordinates
+  companiesRows <- liftIO $ withResource pool $ \connection -> runQuery connection (queryTable companiesTable)
+  let (companies :: [(C.CompanyId, C.Company, Maybe C.Coordinates)]) = over (mapped._3) mapCoordinates companiesRows
+  let companyIds = over mapped (\(x,_,_) -> x) companies
   _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
   daemon <- liftIO $ newEmptyMVar 
   _ <- liftIO $ forkIO $ do
@@ -64,7 +68,7 @@ batch list batchSize = take batchSize list : batch (drop batchSize list) batchSi
 
 
 recomputeWhole :: 
-  MonadIO m => 
+  (MonadIO m, Functor m) => 
   ConnectionPool -> 
   Cache -> 
   ExceptT (Reason r) m ()
@@ -79,9 +83,10 @@ recomputeSingle :: (MonadIO m)
                 -> Cache 
                 -> ExceptT (Reason r) m ()
 recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
-  companyRow' <- liftIO $ runQuery connection (companyByIdQuery $ C.getCompanyId companyId)
-  companyRow <- singleRowOrColumn companyRow'
-  let company = convert companyRow :: CompanyMapped
+  companyRows <- liftIO $ runQuery connection (companyByIdQuery companyId)
+  companyRow <- singleRowOrColumn companyRows
+  let mapCoordinates coordinates = pure C.Coordinates <*> C.latitude coordinates <*> C.longitude coordinates
+  let (_ :: (C.CompanyId), company, coordinates) = over _3 mapCoordinates companyRow
   machines <- liftIO $ runMachinesInCompanyQuery (C.getCompanyId companyId) connection
   nextDays <- liftIO $ forM machines $ \machine -> do
     (computationMethod, nextServiceDay) <- addNextDates $(proj 7 0) $(proj 7 1) machine connection
@@ -90,7 +95,7 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
       Computed -> Just nextServiceDay
   let 
     nextDay = minimumMay $ mapMaybe id nextDays
-    value = ($(proj 3 1) company, nextDay, $(proj 3 2) company)
+    value = (company, nextDay, coordinates)
     modify mapCache = Map.insert companyId value mapCache
   _ <- liftIO $ atomicModifyIORef' cache $ \a -> let 
     modifiedA = modify a

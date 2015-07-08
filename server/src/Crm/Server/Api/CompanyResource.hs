@@ -6,8 +6,8 @@
 module Crm.Server.Api.CompanyResource where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (pgDouble, pgStrictText)
-import           Opaleye.Manipulation        (runInsertReturning)
+import           Opaleye                     (pgDouble, pgStrictText, PGFloat8, Nullable, Column, runDelete, pgInt4, (.==))
+import           Opaleye.Manipulation        (runInsertReturning, runUpdate)
 
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.Except  (ExceptT, mapExceptT)
@@ -56,9 +56,15 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
   ids <- withResource pool $ \connection -> liftIO $ runInsertReturning 
     connection 
     companiesTable
-    (Nothing, pgStrictText $ C.companyName newCompany, pgStrictText $ C.companyPlant newCompany, pgStrictText $ C.companyAddress newCompany,
-      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
-    sel1
+    (C.CompanyId Nothing,
+    C.Company 
+      (pgStrictText . C.companyName $ newCompany) 
+      (pgStrictText . C.companyPlant $ newCompany)
+      (pgStrictText . C.companyAddress $ newCompany) ,
+    C.Coordinates
+      (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
+      (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))
+    (C.getCompanyId . $(proj 3 0))
   id' <- singleRowOrColumn ids
   let companyId = C.CompanyId id'
   mapExceptT lift $ withResource pool $ \connection -> recomputeSingle companyId connection cache
@@ -108,34 +114,55 @@ singleCompany :: Handler (IdDependencies' C.CompanyId)
 singleCompany = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   let theId = C.getCompanyId companyId
-  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (companyByIdQuery theId)
-  companyRow <- singleRowOrColumn rows
+  companies <- withResource pool $ \connection -> liftIO $ runQuery connection (companyByIdCompanyQuery companyId)
+  (company :: C.Company) <- singleRowOrColumn companies
   machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery theId connection
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
   nextServiceDates <- withResource pool $ \connection -> liftIO $ forM machinesMyMaybe $ 
     \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
   cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery theId
   return (
-    sel2 $ (convert companyRow :: CompanyMapped) ,
+    company ,
     map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,
     machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates )
+    
 
 updateCompany :: Handler (IdDependencies' C.CompanyId)
 updateCompany = let
   readToWrite (company, coordinates') = let 
     coordinates = toMaybe coordinates'
-    in const (Nothing, pgStrictText $ C.companyName company, pgStrictText $ C.companyPlant company, pgStrictText $ C.companyAddress company, 
-      maybeToNullable $ (pgDouble . C.latitude) `fmap` coordinates, maybeToNullable $ (pgDouble . C.longitude) `fmap` coordinates)
+    in const 
+      (C.CompanyId Nothing,
+      C.Company 
+        (pgStrictText . C.companyName $ company) 
+        (pgStrictText . C.companyPlant $ company)
+        (pgStrictText . C.companyAddress $ company) ,
+      C.Coordinates
+        (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
+        (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))
   recomputeCache int connection cache = 
     mapExceptT lift $ recomputeSingle (C.CompanyId int) connection cache
-  in updateRows'' companiesTable readToWrite C.getCompanyId recomputeCache
+  condition (C.CompanyId companyId) (C.CompanyId companyPK,_,_) = companyPK .== pgInt4 companyId
+  in mkInputHandler' (jsonO . jsonI) $ \companyData -> do
+    ((cache, pool), companyId) <- ask
+    liftIO $ withResource pool $ \connection -> runUpdate
+      connection
+      companiesTable
+      (readToWrite companyData)
+      (condition companyId)
+
 
 deleteCompany :: Handler (IdDependencies' C.CompanyId)
 deleteCompany = mkConstHandler' jsonO $ do
   ((cache, pool), companyId) <- ask
   let theId = C.getCompanyId companyId
   liftIO $ withResource pool $ \connection -> 
-    forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f theId connection
+    forM_ [
+      createDeletion' sel2 contactPersonsTable, \int deletion ->
+      runDelete
+        connection
+        companiesTable
+        (\row -> (C.getCompanyId . $(proj 3 0)) row .== pgInt4 theId) >> return ()] $ \f -> f theId connection
   recomputeWhole pool cache
 
 companyResource :: Resource Dependencies (IdDependencies' C.CompanyId) C.CompanyId MachineMid Void

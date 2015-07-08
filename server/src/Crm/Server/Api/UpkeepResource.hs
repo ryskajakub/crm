@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.Api.UpkeepResource (
   loadNextServiceTypeHint ,
@@ -154,12 +155,12 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
-  liftIO $ forM rows $ \row -> do
-    let (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
+  liftIO $ forM rows $ \(upkeepRowPart, (companyId :: C.CompanyId, company :: C.Company)) -> do
+    let (u :: UpkeepMapped) = convert upkeepRowPart
     let upkeepId = $(proj 2 0) u
     notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
     let note = intercalate (pack " | ") notes
-    return (upkeepId, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c, note)
+    return (upkeepId, $(proj 2 1) u, companyId, company, note)
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
@@ -218,7 +219,7 @@ printDailyPlanListing' employeeId connection day = do
       $(proj 3 2) $ (convert cp :: ContactPersonMapped) ,
       second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 
       liftIO $ runQuery connection (machinesInUpkeepQuery'' ($(proj 2 0) upkeep))
-    company <- fmap (\c -> $(proj 3 1) (convert c :: CompanyMapped)) $ 
+    (company :: C.Company) <-
       singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . $(proj 2 0) $ upkeep))
     return ($(proj 2 1) upkeep, company, employees, machines)
   return dailyPlanUpkeeps

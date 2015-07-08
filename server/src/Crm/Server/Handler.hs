@@ -152,14 +152,14 @@ deleteRows'' :: (MonadIO m) => [Int -> Connection -> IO ()] -> Int -> Connection
 deleteRows'' deletions theId pool = 
   liftIO $ forM_ deletions $ \deletion -> withResource pool $ \connection -> deletion theId connection
 
-updateRows'' :: forall record columnsW columnsR recordId.
-                (
-                  Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
-             => Table columnsW columnsR 
-             -> (record -> columnsR -> columnsW) 
-             -> (recordId -> Int)
-             -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, recordId) IO) ())
-             -> Handler (ReaderT (GlobalBindings, recordId) IO)
+updateRows'' :: 
+  forall record columnsW columnsR recordId .
+  (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record) => 
+  Table columnsW columnsR -> 
+  (record -> columnsR -> columnsW) -> 
+  (recordId -> Int) -> 
+  (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, recordId) IO) ()) -> 
+  Handler (ReaderT (GlobalBindings, recordId) IO)
 updateRows'' table readToWrite showInt postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> do
   ((cache, pool), recordId) <- ask
   let doUpdation = withResource pool $ \connection -> do
