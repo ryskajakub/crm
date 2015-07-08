@@ -143,6 +143,7 @@ import           Opaleye                              (runInsert)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
 import qualified Opaleye.Internal.Aggregate           as IAGG
+import           Data.Profunctor.Product.TH           (makeAdaptorAndInstance)
 
 import           Rest.Types.Error                     (DataError(ParseError), Reason(InputError))
 import           TupleTH
@@ -210,6 +211,11 @@ type ExtraFieldsTable = (DBInt, DBInt, DBText)
 type PasswordTable = (Column PGBytea)
 
 type UpkeepEmployeesTable = (DBInt, DBInt, DBInt)
+
+
+newtype X a = X { getA :: a }
+makeAdaptorAndInstance "pX" ''X
+
 
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )

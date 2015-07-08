@@ -1,6 +1,7 @@
 flags: {}
 packages:
 - '.'
+- '../../product-profunctors'
 extra-deps: 
 - scrypt-0.5.0
 - rest-core-0.36.0.5
