@@ -17,7 +17,7 @@ data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | Co
 data MachineTypeSid = MachineTypeByName String | MachineTypeById MT.MachineTypeId
 
 newtype Cache = Cache (IORef (M.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)))
-type GlobalBindings = (Cache, Connection)
+type GlobalBindings = (Cache, ConnectionPool)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)
 type IdDependencies = (ReaderT (GlobalBindings, Either String Int) IO :: * -> *)

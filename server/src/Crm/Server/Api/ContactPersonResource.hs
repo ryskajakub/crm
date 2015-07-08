@@ -6,6 +6,7 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
 
 import           Data.Tuple.All              (sel1, sel2, sel3)
+import           Data.Pool                   (withResource)
 
 import           Rest.Resource               (Resource, Void, schema, name, mkResourceReaderWith, 
                                              get, update, remove)
@@ -33,13 +34,14 @@ resource = (mkResourceReaderWith prepareReaderTuple) {
 
 deleteHandler :: Handler (IdDependencies' CP.ContactPersonId)
 deleteHandler = mkConstHandler' jsonO $ do
-  ((_,connection), contactPersonId) <- ask
-  deleteRows'' [createDeletion contactPersonsTable] (CP.getContactPersonId contactPersonId) connection
+  ((_, pool), contactPersonId) <- ask
+  deleteRows'' [createDeletion contactPersonsTable] (CP.getContactPersonId contactPersonId) pool
 
 getHandler :: Handler (IdDependencies' CP.ContactPersonId)
 getHandler = mkConstHandler' jsonO $ do
-  ((_, connection), contactPersonId) <- ask
-  rows <- liftIO $ runQuery connection (singleContactPersonQuery $ CP.getContactPersonId contactPersonId)
+  ((_, pool), contactPersonId) <- ask
+  rows <- liftIO $ withResource pool $ \connection -> 
+    runQuery connection (singleContactPersonQuery $ CP.getContactPersonId contactPersonId)
   (cp, company) <- singleRowOrColumn rows
   return $ (sel3 $ (convert cp :: ContactPersonMapped), sel1 $ (convert company :: CompanyMapped))
 

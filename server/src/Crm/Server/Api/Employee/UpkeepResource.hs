@@ -2,6 +2,8 @@ module Crm.Server.Api.Employee.UpkeepResource where
 
 import           Control.Monad.Reader          (ask)
 
+import           Data.Pool                     (withResource)
+
 import           Rest.Resource                 (Resource, Void, schema, name,
                                                list, mkResourceId)
 import qualified Rest.Schema                   as S
@@ -25,5 +27,5 @@ resource = mkResourceId {
 
 printListing :: ListHandler (IdDependencies' E.EmployeeId)
 printListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
-  ((_, connection), employeeId) <- ask
-  printDailyPlanListing' (Just employeeId) connection (getDayParam env)
+  ((_, pool), employeeId) <- ask
+  withResource pool $ \connection -> printDailyPlanListing' (Just employeeId) connection (getDayParam env)

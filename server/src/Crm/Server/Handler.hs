@@ -21,6 +21,7 @@ import           Control.Monad.Reader.Class  (MonadReader)
 import qualified Crypto.Scrypt               as CS
 import           Data.Aeson.Types            (FromJSON)
 import           Data.JSON.Schema.Types      (JSONSchema)
+import           Data.Pool                   (withResource)
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
 import           Data.Time.Calendar          (fromGregorian, Day)
@@ -49,24 +50,24 @@ import           TupleTH                     (reverseTuple, updateAtN)
 data SessionId = Password { password :: Text }
 
 class HasConnection a where
-  getConnection :: a -> Connection
-instance HasConnection (Connection, b) where
+  getConnection :: a -> ConnectionPool
+instance HasConnection (ConnectionPool, b) where
   getConnection = fst
 instance HasConnection GlobalBindings where
   getConnection = snd
-instance HasConnection ((c, Connection), b) where
+instance HasConnection ((c, ConnectionPool), b) where
   getConnection = snd . fst
-instance HasConnection Connection where
+instance HasConnection ConnectionPool where
   getConnection = id
 
 mkGenHandler' :: 
-  (MonadReader a m, MonadIO m, HasConnection a) => 
+  HasConnection a => 
   Modifier () p i o Nothing -> 
-  (Env SessionId p (FromMaybe () i) -> ExceptT (Reason Text) m (Apply f (FromMaybe () o))) -> 
-  GenHandler m f
+  (Env SessionId p (FromMaybe () i) -> ExceptT (Reason Text) (ReaderT a IO) (Apply f (FromMaybe () o))) -> 
+  GenHandler (ReaderT a IO) f
 mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
-  connection <- ask
-  verifyPassword (getConnection connection) (header env)
+  pool <- ask
+  withResource (getConnection pool) $ \connection -> verifyPassword connection (header env)
   a env
   where
   authorizationHeader = mkHeader $ Header ["Authorization"] $ \headers' -> case headers' of
@@ -90,46 +91,45 @@ verifyPassword connection (Password inputPassword) = do
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason . pack
 
-mkConstHandler' :: (MonadReader a m, MonadIO m, HasConnection a) 
+mkConstHandler' :: HasConnection a
                 => Modifier () p Nothing o Nothing
-                -> ExceptT (Reason Text) m (FromMaybe () o)
-                -> Handler m
+                -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)
+                -> Handler (ReaderT a IO)
 mkConstHandler' d a = mkGenHandler' d (const a)
 
-mkInputHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
+mkInputHandler' :: HasConnection a
                 => Modifier () p (Just i) o Nothing
-                -> (i -> ExceptT (Reason Text) m (FromMaybe () o))
-                -> Handler m
+                -> (i -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o))
+                -> Handler (ReaderT a IO)
 mkInputHandler' d a = mkGenHandler' d (a . input)
 
-mkIdHandler' :: (MonadReader a m, MonadIO m, HasConnection a)
+mkIdHandler' :: (HasConnection a)
              => Modifier () p (Just i) o Nothing
-             -> (i -> a -> ExceptT (Reason Text) m (FromMaybe () o))
-             -> Handler m
+             -> (i -> a -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o))
+             -> Handler (ReaderT a IO)
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
 
-mkListing' :: (MonadReader a m, MonadIO m, HasConnection a)
+mkListing' :: HasConnection a
            => Modifier () () Nothing o Nothing
-           -> (Range -> ExceptT (Reason Text) m [FromMaybe () o])
-           -> ListHandler m
+           -> (Range -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o])
+           -> ListHandler (ReaderT a IO)
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 
-mkOrderedListing' :: (MonadReader a m, MonadIO m, HasConnection a)
+mkOrderedListing' :: HasConnection a
                   => Modifier () () Nothing o Nothing
-                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) m [FromMaybe () o])
-                  -> ListHandler m
+                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o])
+                  -> ListHandler (ReaderT a IO)
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode Text where
   toResponseCode = const 401
 
-updateRows' :: forall record m columnsW columnsR.
-               (Functor m, MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
-                 Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+updateRows' :: forall record columnsW columnsR.
+               (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
             => Table columnsW columnsR 
             -> (record -> columnsR -> columnsW) 
-            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) m ())
-            -> Handler m
+            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, Either String Int) IO) ())
+            -> Handler (ReaderT (GlobalBindings, Either String Int) IO)
 updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> let
   doUpdation = withConnId' $ \conn cache recordId -> do
     let condition row = pgInt4 recordId .== sel1 row
@@ -137,36 +137,35 @@ updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(r
     postUpdate recordId conn cache
   in withExceptT (const . CustomReason . DomainReason . pack $ "updation failed") doUpdation
 
-updateRows :: forall record m columnsW columnsR.
-              (Functor m, MonadIO m, MonadReader (GlobalBindings, Either String Int) m, 
-                Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
+updateRows :: forall record columnsW columnsR.
+              (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
            => Table columnsW columnsR 
            -> (record -> columnsR -> columnsW) 
-           -> Handler m
+           -> Handler (ReaderT (GlobalBindings, Either String Int) IO)
 updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies
 deleteRows' deletions = mkConstHandler' jsonO $ withConnId $ \connection theId ->
   liftIO $ forM_ deletions $ \deletion -> deletion theId connection
 
-deleteRows'' :: (MonadIO m) => [Int -> Connection -> IO ()] -> Int -> Connection -> m ()
-deleteRows'' deletions theId connection = 
-  liftIO $ forM_ deletions $ \deletion -> deletion theId connection
+deleteRows'' :: (MonadIO m) => [Int -> Connection -> IO ()] -> Int -> ConnectionPool -> m ()
+deleteRows'' deletions theId pool = 
+  liftIO $ forM_ deletions $ \deletion -> withResource pool $ \connection -> deletion theId connection
 
-updateRows'' :: forall record m columnsW columnsR recordId.
-                (Functor m, MonadIO m, 
+updateRows'' :: forall record columnsW columnsR recordId.
+                (
                   Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
              => Table columnsW columnsR 
              -> (record -> columnsR -> columnsW) 
              -> (recordId -> Int)
-             -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, recordId) m) ())
-             -> Handler (ReaderT (GlobalBindings, recordId) m)
+             -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, recordId) IO) ())
+             -> Handler (ReaderT (GlobalBindings, recordId) IO)
 updateRows'' table readToWrite showInt postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> do
-  ((cache, conn), recordId) <- ask
-  let doUpdation = do
+  ((cache, pool), recordId) <- ask
+  let doUpdation = withResource pool $ \connection -> do
         let condition row = pgInt4 (showInt recordId) .== sel1 row
-        _ <- liftIO $ runUpdate conn table (readToWrite record) condition
-        postUpdate (showInt recordId) conn cache
+        _ <- liftIO $ runUpdate connection table (readToWrite record) condition
+        postUpdate (showInt recordId) connection cache
   withExceptT (const . CustomReason . DomainReason . pack $ "updation failed") doUpdation
 
 mkDayParam :: Dict h p i o e -> Dict h (Int, Int, Int) i o e

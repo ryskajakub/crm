@@ -7,6 +7,8 @@ import           Opaleye.RunQuery            (runQuery)
 import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgString)
 import           Opaleye                     (runInsertReturning, runDelete, (./=), (.&&), pgBool, runInsert)
 
+import           Data.Pool                   (withResource)
+
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad               (forM, forM_)
@@ -39,12 +41,12 @@ resource = mkResourceId {
 
 getter :: Handler Dependencies
 getter = mkConstHandler' jsonO $ do
-  (_,connection) <- ask
+  (_, pool) <- ask
   let 
     machineKindsEnums = fst `fmap` MK.machineKinds
     kindDbReprs = (first $ arr MK.kindToDbRepr) `fmap` (machineKindsEnums `zip` machineKindsEnums)
   liftIO $ forM kindDbReprs $ \(kindDbRepr, kind) -> do
-    fieldsForKind <- runQuery connection (extraFieldsPerKindQuery kindDbRepr)
+    fieldsForKind <- withResource pool $ \connection -> runQuery connection (extraFieldsPerKindQuery kindDbRepr)
     let
       convert' row = (convert row :: ExtraFieldSettingsMapped)
       fieldsMapped = convert' `fmap` fieldsForKind
@@ -52,7 +54,7 @@ getter = mkConstHandler' jsonO $ do
 
 updation :: Handler Dependencies
 updation = mkInputHandler' jsonI $ \allSettings -> do
-  (_,connection) <- ask 
+  (_, pool) <- ask 
   let
     s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
     insertSetting (machineKindEnum, extraFields) = let
@@ -61,24 +63,29 @@ updation = mkInputHandler' jsonI $ \allSettings -> do
         allFields = (Nothing, pgInt4 $ machineKindDbRepr, pgInt4 index, pgStrictText $ MK.name field)
         in case fieldId of
           EF.ToBeAssigned -> do
-            newIds <- runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))
+            newIds <- withResource pool $ \connection -> 
+              runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))
             let newExtraFieldsSettingId = (head newIds :: Int)
-            machineIdsToAddEmptyFields <- runQuery connection (machineIdsHavingKind machineKindDbRepr)
+            machineIdsToAddEmptyFields <- withResource pool $ \connection ->
+              runQuery connection (machineIdsHavingKind machineKindDbRepr)
             forM_ machineIdsToAddEmptyFields $ \machineId ->
-              runInsert connection extraFieldsTable (pgInt4 newExtraFieldsSettingId, pgInt4 machineId, pgString "")
+              withResource pool $ \connection -> 
+                runInsert connection extraFieldsTable (pgInt4 newExtraFieldsSettingId, pgInt4 machineId, pgString "")
               >> return ()
             return newExtraFieldsSettingId
           EF.Assigned assignedId -> do
             let extraFieldId = EF.getExtraFieldId assignedId
-            prepareUpdate extraFieldSettingsTable (const $ allFields) extraFieldId connection
+            withResource pool $ \connection -> 
+              prepareUpdate extraFieldSettingsTable (const $ allFields) extraFieldId connection
             return extraFieldId
       in forM ([0..] `zip` extraFields) insertField
   keepIdsNested <- forM allSettings insertSetting
   let 
     keepIds = concat keepIdsNested
-    mkDeletion table locateExtraFieldId = liftIO $ runDelete connection table $ \field -> let
-      keepFieldEquations = ((locateExtraFieldId field ./=) . pgInt4) `fmap` keepIds
-      in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
+    mkDeletion table locateExtraFieldId = withResource pool $ \connection -> 
+      liftIO $ runDelete connection table $ \field -> let
+        keepFieldEquations = ((locateExtraFieldId field ./=) . pgInt4) `fmap` keepIds
+        in foldl (\conditionAcc condition -> conditionAcc .&& condition) (pgBool True) keepFieldEquations
   -- delete all fields that were not in the request
   _ <- mkDeletion extraFieldsTable ($(proj 3 0))
   _ <- mkDeletion extraFieldSettingsTable ($(proj 4 0))

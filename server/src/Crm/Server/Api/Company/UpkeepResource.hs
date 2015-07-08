@@ -11,6 +11,7 @@ import           Control.Monad.Reader          (ask)
 import           Control.Monad                 (forM)
 
 import           Data.Tuple.All                (sel1, sel2, sel3)
+import           Data.Pool                     (withResource)
 
 import           Rest.Resource                 (Resource, Void, schema, name, get, 
                                                list, mkResourceId)
@@ -34,8 +35,9 @@ import           TupleTH                       (proj, catTuples)
 
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
-  ((_,conn), companyId) <- ask
-  rows <- liftIO $ runQuery conn (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
+  ((_, pool), companyId) <- ask
+  rows <- liftIO $ withResource pool $ \connection -> runQuery 
+    connection (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
   let
     mappedResults = mapResultsToList
       sel1
@@ -51,18 +53,19 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
       rows
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults
-  withEmployees <- liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
-    results <- runQuery conn (employeesInUpkeep $ U.getUpkeepId upkeepId)
+  withEmployees <- withResource pool $ \connection -> liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
+    results <- runQuery connection (employeesInUpkeep $ U.getUpkeepId upkeepId)
     let mappedEmployees = fmap (\row -> convert row) results :: [EmployeeMapped]
     return ($(catTuples 3 1) r mappedEmployees)
   return withEmployees
 
 newUpkeepData :: Handler (IdDependencies' C.CompanyId)
 newUpkeepData = mkConstHandler' jsonO $ do
-  ((_, connection), companyId) <- ask
-  machines' <- liftIO $ runQuery connection (machinesQ . C.getCompanyId $ companyId)
+  ((_, pool), companyId) <- ask
+  machines' <- withResource pool $ \connection -> liftIO $ 
+    runQuery connection (machinesQ . C.getCompanyId $ companyId)
   let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
-  machines'' <- loadNextServiceTypeHint machines connection
+  machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
   return $ map (\(m, mt, nextUpkeepSequence) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () () Void

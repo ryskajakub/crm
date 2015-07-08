@@ -19,6 +19,7 @@ import           Data.List                   (sortBy)
 import           Data.Tuple.All              (sel1, sel2, sel3)
 import qualified Data.Text.ICU               as I
 import qualified Data.Map                    as M
+import           Data.Pool                   (withResource)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, create, 
                                              mkResourceReaderWith, get, update, remove)
@@ -51,8 +52,8 @@ data MachineMid = NextServiceListing | MapListing
 createCompanyHandler :: Handler Dependencies
 createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinates') -> do
   let coordinates = toMaybe coordinates'
-  (cache, connection) <- ask
-  ids <- liftIO $ runInsertReturning 
+  (cache, pool) <- ask
+  ids <- withResource pool $ \connection -> liftIO $ runInsertReturning 
     connection 
     companiesTable
     (Nothing, pgStrictText $ C.companyName newCompany, pgStrictText $ C.companyPlant newCompany, pgStrictText $ C.companyAddress newCompany,
@@ -60,7 +61,7 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
     sel1
   id' <- singleRowOrColumn ids
   let companyId = C.CompanyId id'
-  mapExceptT lift $ recomputeSingle companyId connection cache
+  mapExceptT lift $ withResource pool $ \connection -> recomputeSingle companyId connection cache
   return companyId
 
 mapListing :: ListHandler Dependencies
@@ -72,7 +73,7 @@ unsortedResult = do
   (cache, _) <- ask
   content <- liftIO $ getCacheContent cache
   let asList = map (\(a,(b,c,d)) -> (a,b, toMyMaybe c, toMyMaybe d)) . M.toList
-  return $ asList content
+  return . asList $ content
 
 listing :: ListHandler Dependencies
 listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
@@ -105,15 +106,15 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
 
 singleCompany :: Handler (IdDependencies' C.CompanyId)
 singleCompany = mkConstHandler' jsonO $ do
-  ((_, connection), companyId) <- ask
+  ((_, pool), companyId) <- ask
   let theId = C.getCompanyId companyId
-  rows <- liftIO $ runQuery connection (companyByIdQuery theId)
+  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (companyByIdQuery theId)
   companyRow <- singleRowOrColumn rows
-  machines <- liftIO $ runMachinesInCompanyQuery theId connection
+  machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery theId connection
   let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
-  nextServiceDates <- liftIO $ forM machinesMyMaybe $ 
+  nextServiceDates <- withResource pool $ \connection -> liftIO $ forM machinesMyMaybe $ 
     \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
-  cpRows <- liftIO $ runQuery connection $ contactPersonsByIdQuery theId
+  cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery theId
   return (
     sel2 $ (convert companyRow :: CompanyMapped) ,
     map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,
@@ -131,10 +132,11 @@ updateCompany = let
 
 deleteCompany :: Handler (IdDependencies' C.CompanyId)
 deleteCompany = mkConstHandler' jsonO $ do
-  ((cache, connection), companyId) <- ask
+  ((cache, pool), companyId) <- ask
   let theId = C.getCompanyId companyId
-  liftIO $ forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f theId connection
-  recomputeWhole connection cache
+  liftIO $ withResource pool $ \connection -> 
+    forM_ [createDeletion' sel2 contactPersonsTable, createDeletion companiesTable] $ \f -> f theId connection
+  recomputeWhole pool cache
 
 companyResource :: Resource Dependencies (IdDependencies' C.CompanyId) C.CompanyId MachineMid Void
 companyResource = (mkResourceReaderWith prepareReaderTuple) {

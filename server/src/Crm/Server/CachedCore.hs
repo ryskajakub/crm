@@ -32,11 +32,11 @@ import           Crm.Server.Types
 
 
 recomputeWhole' ::
-  forall r m.
-  (MonadIO m)
-                => ConnectionPool
-                -> Cache 
-                -> ExceptT (Reason r) m (MVar ())
+  forall r m .
+  (MonadIO m) =>
+  ConnectionPool -> 
+  Cache -> 
+  ExceptT (Reason r) m (MVar ())
 recomputeWhole' pool (cache @ (Cache c)) = do
   companyRows <- liftIO $ withResource pool $ \connection -> runQuery connection (queryTable companiesTable)
   let companies = convert companyRows :: [CompanyMapped]
@@ -63,12 +63,13 @@ batch [] _ = []
 batch list batchSize = take batchSize list : batch (drop batchSize list) batchSize
 
 
-recomputeWhole :: (MonadIO m)
-               => Connection 
-               -> Cache 
-               -> ExceptT (Reason r) m ()
-recomputeWhole conn cache = do
-  -- _ <- recomputeWhole' conn cache
+recomputeWhole :: 
+  MonadIO m => 
+  ConnectionPool -> 
+  Cache -> 
+  ExceptT (Reason r) m ()
+recomputeWhole pool cache = do
+  _ <- recomputeWhole' pool cache
   return ()
 
 

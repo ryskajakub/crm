@@ -10,6 +10,7 @@ import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Reader        (ask)
 import           Data.Tuple.All              (sel1)
 import           Data.Text                   (Text)
+import           Data.Pool                   (withResource)
 import           Database.PostgreSQL.Simple  (Connection)
 import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgDay, pgBool)
 import           Opaleye.Manipulation        (runInsert, runInsertReturning)
@@ -44,21 +45,21 @@ import           TupleTH                     (proj)
 createMachineHandler :: Handler (IdDependencies' C.CompanyId)
 createMachineHandler = mkInputHandler' (jsonO . jsonI) $
     \(newMachine, machineType, contactPersonIdentification', linkedMachineId, machineSpecificData) -> do
-  ((cache, connection), companyId) <- ask
+  ((cache, pool), companyId) <- ask
   let contactPersonIdentification = toMaybe contactPersonIdentification'
   contactPersonId' <- case contactPersonIdentification of
     Just (M.ContactPersonIdForMachine contactPersonId) -> return . Just $ contactPersonId
     Just (M.ContactPersonForMachine contactPerson) -> do
-      contactPersonNewIds <- liftIO $ runInsertReturning connection contactPersonsTable
+      contactPersonNewIds <- liftIO $ withResource pool $ \connection -> runInsertReturning connection contactPersonsTable
         (Nothing, pgInt4 . C.getCompanyId $ companyId, pgStrictText . CP.name $ contactPerson,
           pgStrictText . CP.name $ contactPerson, pgStrictText . CP.name $ contactPerson)
         $(proj 5 0)
       contactPersonNewId <- singleRowOrColumn contactPersonNewIds
       return . Just . CP.ContactPersonId $ contactPersonNewId
     Nothing -> return Nothing
-  machineId <- addMachine connection newMachine (C.getCompanyId companyId) machineType 
-    contactPersonId' (toMaybe linkedMachineId) machineSpecificData
-  recomputeSingle companyId connection cache
+  machineId <- withResource pool $ \connection -> addMachine connection newMachine 
+    (C.getCompanyId companyId) machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData
+  withResource pool $ \connection -> recomputeSingle companyId connection cache
   return $ M.MachineId machineId
     
 
@@ -103,8 +104,9 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
 
 listing :: ListHandler (IdDependencies' C.CompanyId)
 listing = mkListing' jsonO $ const $ do
-  ((_, connection), companyId) <- ask
-  otherMachines <- liftIO $ runQuery connection (otherMachinesInCompanyQuery $ C.getCompanyId companyId)
+  ((_, pool), companyId) <- ask
+  otherMachines <- liftIO $ withResource pool $ \connection -> runQuery 
+    connection (otherMachinesInCompanyQuery $ C.getCompanyId companyId)
   let 
     machinesMapped = convert otherMachines :: [MachineMapped]
     result = fmap (\mm -> ($(proj 6 0) mm,$(proj 6 5) mm)) machinesMapped

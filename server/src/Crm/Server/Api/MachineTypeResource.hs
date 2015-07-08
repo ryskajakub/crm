@@ -16,6 +16,7 @@ import           Control.Monad               (forM_)
 import           Data.Tuple.All              (sel1, sel2, sel4)
 import           Data.Int                    (Int64)
 import           Data.Text                   (Text)
+import           Data.Pool                   (withResource)
 
 import           Rest.Types.Error            (Reason(NotFound, UnsupportedRoute))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
@@ -46,12 +47,13 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   schema = autocompleteSchema }
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
-machineTypesListing (Autocomplete mid) = mkListing' jsonO (const $ 
-  ask >>= \(_,conn) -> liftIO $ runMachineTypesQuery' mid conn)
-machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO (const $
-  ask >>= \(_,conn) -> liftIO $ ((runQuery conn (machineManufacturersQuery mid)) :: IO [Text]))
+machineTypesListing (Autocomplete mid) = mkListing' jsonO $ const $ 
+  ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ runMachineTypesQuery' mid connection
+machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO $ const $
+  ask >>= \(_,pool) -> withResource pool $ \connection -> 
+    liftIO $ ((runQuery connection (machineManufacturersQuery mid)) :: IO [Text])
 machineTypesListing CountListing = mkListing' jsonO $ const $ do
-  rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn machineTypesWithCountQuery 
+  rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ runQuery connection machineTypesWithCountQuery 
   let 
     mapRow :: ((Int,Int,Text,Text),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
     mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
@@ -59,8 +61,9 @@ machineTypesListing CountListing = mkListing' jsonO $ const $ do
   return mappedRows
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) ->
-  ask >>= \((cache, connection), sid) -> case sid of
+updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) -> do
+  ((cache, pool), sid) <- ask
+  case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
     MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> do 
       liftIO $ do
@@ -68,18 +71,20 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSeque
           readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
             pgStrictText $ MT.machineTypeManufacturer machineType)
           condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeIdInt
-        _ <- runUpdate connection machineTypesTable readToWrite condition
-        _ <- runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeIdInt)
+        _ <- withResource pool $ \connection -> runUpdate connection machineTypesTable readToWrite condition
+        _ <- withResource pool $ \connection -> 
+          runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeIdInt)
         forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) -> 
-          runInsert connection upkeepSequencesTable (pgInt4 displayOrder,
+          withResource pool $ \connection -> runInsert connection upkeepSequencesTable (pgInt4 displayOrder,
             pgStrictText label, pgInt4 repetition, pgInt4 machineTypeIdInt, pgBool oneTime)
-      recomputeWhole connection cache
+      recomputeWhole pool cache
 
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler' jsonO $ do
-  ((_,conn), machineTypeSid) <- ask
+  ((_, pool), machineTypeSid) <- ask
   let 
-    performQuery parameter = liftIO $ runQuery conn (singleMachineTypeQuery parameter)
+    performQuery parameter = withResource pool $ \connection -> 
+      liftIO $ runQuery connection (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
       MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> 
         (throwError NotFound, performQuery $ Right machineTypeIdInt)
@@ -89,7 +94,8 @@ machineTypesSingle = mkConstHandler' jsonO $ do
   case rows of
     x:xs | null xs -> do 
       let mt = convert x :: MachineTypeMapped
-      upkeepSequences <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId $ sel1 mt)
+      upkeepSequences <- withResource pool $ \connection -> liftIO $ 
+        runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId $ sel1 mt)
       let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
       return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
     [] -> onEmptyResult

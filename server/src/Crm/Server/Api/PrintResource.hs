@@ -2,6 +2,8 @@ module Crm.Server.Api.PrintResource where
 
 import           Opaleye.RunQuery              (runQuery)
 
+import           Data.Pool                     (withResource)
+
 import           Control.Monad.Reader          (ask)
 import           Control.Monad.IO.Class        (liftIO)
 
@@ -25,7 +27,8 @@ resource = mkResourceId {
 
 printListing :: ListHandler Dependencies
 printListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
-  (_, connection) <- ask
+  (_, pool) <- ask
   let day = getDayParam env
-  mainEmployees <- (map $ \e -> convert e :: EmployeeMapped) `fmap` (liftIO $ runQuery connection (mainEmployeesInDayQ day))
+  mainEmployees <- withResource pool $ \connection ->
+    (map $ \e -> convert e :: EmployeeMapped) `fmap` (liftIO $ runQuery connection (mainEmployeesInDayQ day))
   return mainEmployees

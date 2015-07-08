@@ -18,8 +18,8 @@ import           Crm.Server.Base
 import           Crm.Server.Types
 import           Crm.Server.DB
 
-import           Data.Pool                  (createPool, Pool)
-import           Database.PostgreSQL.Simple (close, Connection)
+import           Data.Pool                  (createPool)
+import           Database.PostgreSQL.Simple (close)
 
 main :: IO ()
 main = do
@@ -29,7 +29,10 @@ main = do
   let cache = Cache cache'
   daemon <- runExceptT $ recomputeWhole' pool cache
   either (const . return $ ()) (takeMVar) daemon
-  return ()
+  let 
+    app = apiToApplication (runDependencies pool cache) api
+    removeApiPrefix = lmap $ \r -> r { pathInfo = tail . pathInfo $ r }
+  run 8000 (removeApiPrefix app)
 
 
 createPsqlConnPool :: IO ConnectionPool
@@ -41,5 +44,5 @@ createPsqlConnPool = createPool
   10
 
 
-runDependencies :: Cache -> Dependencies a -> IO a
-runDependencies cache deps = withConnection $ \c -> runReaderT deps (cache, c)
+runDependencies :: ConnectionPool -> Cache -> Dependencies a -> IO a
+runDependencies pool cache deps = runReaderT deps (cache, pool)

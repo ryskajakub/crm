@@ -11,6 +11,7 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
 
 import           Data.Tuple.All              (sel1, sel3)
+import           Data.Pool                   (withResource)
 
 import           Rest.Resource               (Resource, Void, schema, name, 
                                              create, mkResourceId, list)
@@ -29,8 +30,8 @@ import           Crm.Server.Handler          (mkInputHandler', mkListing')
 
 createContactPersonHandler :: Handler (IdDependencies' C.CompanyId)
 createContactPersonHandler = mkInputHandler' (jsonO . jsonI) $ \contactPerson -> do
-  ((_, connection), companyId) <- ask
-  _ <- liftIO $ runInsert
+  ((_, pool), companyId) <- ask
+  _ <- liftIO $ withResource pool $ \connection -> runInsert
     connection
     contactPersonsTable
     (Nothing, pgInt4 $ C.getCompanyId companyId, pgStrictText $ CP.name contactPerson,
@@ -46,7 +47,8 @@ contactPersonResource = mkResourceId {
 
 listing :: ListHandler (IdDependencies' C.CompanyId)
 listing = mkListing' jsonO $ const $ do
-  ((_, connection), companyId) <- ask
-  rawRows <- liftIO $ runQuery connection (contactPersonsByIdQuery $ C.getCompanyId companyId)
+  ((_, pool), companyId) <- ask
+  rawRows <- liftIO $ withResource pool $ \connection -> 
+    runQuery connection (contactPersonsByIdQuery $ C.getCompanyId companyId)
   let rowsMapped = (\x -> (sel1 x, sel3 x)) `fmap` (convert rawRows :: [ContactPersonMapped])
   return rowsMapped

@@ -10,6 +10,7 @@ import           Rest.Dictionary.Combinators (fileO, jsonO)
 import           Rest.Handler                (Handler)
 
 import qualified Data.ByteString.Base64.Lazy as BB64
+import           Data.Pool                   (withResource)
 
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
@@ -33,18 +34,18 @@ photoResource = (mkResourceReaderWith prepareReaderTuple) {
 
 removeHandler :: Handler (IdDependencies' P.PhotoId)
 removeHandler = mkConstHandler' jsonO $ do
-  ((_, connection), P.PhotoId photoIdInt) <- ask
+  ((_, pool), P.PhotoId photoIdInt) <- ask
   deleteRows'' [
     createDeletion machinePhotosTable , 
     createDeletion photosMetaTable ,
-    flip deletePhoto ] photoIdInt connection
+    flip deletePhoto ] photoIdInt pool
 
 
 getPhotoHandler :: Handler (IdDependencies' P.PhotoId)
 getPhotoHandler = mkConstHandler' fileO $ do
-  ((_, conn), P.PhotoId photoIdInt) <- ask
-  photo <- liftIO $ getMachinePhoto conn photoIdInt
-  photoMetas <- liftIO $ runQuery conn (photoMetaQuery photoIdInt)
+  ((_, pool), P.PhotoId photoIdInt) <- ask
+  photo <- withResource pool $ \connection -> liftIO $ getMachinePhoto connection photoIdInt
+  photoMetas <- withResource pool $ \connection -> liftIO $ runQuery connection (photoMetaQuery photoIdInt)
   photoMeta <- singleRowOrColumn photoMetas
   let (_, _, fileName) = photoMeta :: (Int, String, String)
   return (BB64.encode photo, fileName, False)

@@ -7,6 +7,7 @@ import           Opaleye.RunQuery            (runQuery)
 import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgDay)
 
 import           Data.Tuple.All              (sel2, sel1, sel3)
+import           Data.Pool                   (withResource)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
@@ -46,13 +47,14 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
     
 machineDelete :: Handler (IdDependencies' M.MachineId)
 machineDelete = mkConstHandler' jsonO $ do
-  ((cache, connection), machineId) <- ask
-  liftIO $ createDeletion machinesTable (M.getMachineId machineId) connection
-  recomputeWhole connection cache
+  ((cache, pool), machineId) <- ask
+  liftIO $ withResource pool $ \connection ->
+    createDeletion machinesTable (M.getMachineId machineId) connection
+  recomputeWhole pool cache
 
 machineUpdate :: Handler (IdDependencies' M.MachineId)
 machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> do
-  ((cache, connection), machineId) <- ask
+  ((cache, pool), machineId) <- ask
 
   let 
     unwrappedId = M.getMachineId machineId
@@ -65,18 +67,18 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
         pgStrictText $ M.yearOfManufacture machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
-  liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection
-  liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable unwrappedId connection
-  liftIO $ insertExtraFields machineId extraFields connection
+  withResource pool $ \connection -> liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection
+  withResource pool $ \connection -> liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable unwrappedId connection
+  withResource pool $ \connection -> liftIO $ insertExtraFields machineId extraFields connection
 
-  recomputeWhole connection cache
+  recomputeWhole pool cache
 
   return ()
 
 machineSingle :: Handler (IdDependencies' M.MachineId)
 machineSingle = mkConstHandler' jsonO $ do
-  ((_,conn), machineId') <- ask 
-  rows <- liftIO $ runQuery conn (machineDetailQuery $ M.getMachineId machineId')
+  ((_,pool), machineId') <- ask 
+  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (machineDetailQuery $ M.getMachineId machineId')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
     (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let
@@ -84,10 +86,13 @@ machineSingle = mkConstHandler' jsonO $ do
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp, toMyMaybe $ $(proj 6 4) m)
-  upkeepSequenceRows <- liftIO $ runQuery conn (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
-  upkeepRows <- liftIO $ runQuery conn (upkeepsDataForMachine $ M.getMachineId machineId)
+  upkeepSequenceRows <- withResource pool $ \connection -> liftIO $ 
+    runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
+  upkeepRows <- withResource pool $ \connection -> 
+    liftIO $ runQuery connection (upkeepsDataForMachine $ M.getMachineId machineId)
   today' <- liftIO today
-  extraFields <- liftIO $ runQuery conn (extraFieldsForMachineQuery $ M.getMachineId machineId)
+  extraFields <- withResource pool $ \connection -> liftIO $ 
+    runQuery connection (extraFieldsForMachineQuery $ M.getMachineId machineId)
   let 
     extraFieldsConvert (ef', efs') = let
       ef = convert $ ef' :: ExtraFieldMapped
@@ -109,5 +114,5 @@ machineSingle = mkConstHandler' jsonO $ do
     (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing' (jsonO) (const $ do
-  ask >>= \(_,conn) -> liftIO $ runExpandedMachinesQuery Nothing conn)
+machineListing = mkListing' (jsonO) (const $
+  ask >>= \(_, pool) -> withResource pool $ \connection -> liftIO $ runExpandedMachinesQuery Nothing connection)

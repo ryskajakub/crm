@@ -27,6 +27,7 @@ import           Data.Tuple.All              (sel1, sel2, sel3, uncurryN)
 import           Data.List                   (nub)
 import           Data.Text                   (intercalate, pack, Text)
 import           Data.Time.Calendar          (fromGregorian, Day)
+import           Data.Pool                   (withResource)
 
 import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason), DataError(ParseError, MissingField))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
@@ -88,10 +89,10 @@ insertEmployees connection upkeepId employeeIds =
 
 createUpkeepHandler :: Handler Dependencies
 createUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \newUpkeep -> do
-  (cache, connection) <- ask
+  (cache, pool) <- ask
   -- todo check that the machines are belonging to this company
-  upkeepId <- liftIO $ addUpkeep connection newUpkeep
-  recomputeWhole connection cache
+  upkeepId <- withResource pool $ \connection -> liftIO $ addUpkeep connection newUpkeep
+  recomputeWhole pool cache
   return upkeepId
 
 insertUpkeepMachines :: Connection -> U.UpkeepId -> [(UM.UpkeepMachine, M.MachineId)] -> IO ()
@@ -119,9 +120,10 @@ updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
 updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeIds) -> let 
   upkeepTuple = (upkeep, machines)
   in do 
-    ((cache, connection), upkeepId) <- ask
-    liftIO $ updateUpkeep connection upkeepId upkeepTuple employeeIds
-    recomputeWhole connection cache
+    ((cache, pool), upkeepId) <- ask
+    withResource pool $ \connection -> liftIO $ 
+      updateUpkeep connection upkeepId upkeepTuple employeeIds
+    recomputeWhole pool cache
 
 updateUpkeep :: Connection
              -> U.UpkeepId
@@ -144,30 +146,31 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
 
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO $ const $ do
-  rows <- ask >>= \(_,conn) -> liftIO $ runQuery conn expandedUpkeepsQuery
+  (_, pool) <- ask 
+  rows <- withResource pool $ \connection -> liftIO $ runQuery connection expandedUpkeepsQuery
   return . mapUpkeeps $ rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
-  (_,conn) <- ask
-  rows <- liftIO $ runQuery conn groupedPlannedUpkeepsQuery
+  (_,pool) <- ask
+  rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
   liftIO $ forM rows $ \row -> do
     let (u, c) = convertDeep row :: (UpkeepMapped, CompanyMapped)
     let upkeepId = $(proj 2 0) u
-    notes <- runQuery conn (notesForUpkeep . U.getUpkeepId $ upkeepId)
+    notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
     let note = intercalate (pack " | ") notes
     return (upkeepId, $(proj 2 1) u, $(proj 3 0) c, $(proj 3 1) c, note)
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
-  ((_, conn), U.UpkeepId upkeepIdInt) <- ask
-  upkeeps <- liftIO $ fmap mapUpkeeps (runQuery conn $ expandedUpkeepsQuery2 upkeepIdInt)
+  ((_, pool), U.UpkeepId upkeepIdInt) <- ask
+  upkeeps <- withResource pool $ \connection -> liftIO $ fmap mapUpkeeps (runQuery connection $ expandedUpkeepsQuery2 upkeepIdInt)
   upkeep <- singleRowOrColumn upkeeps
 
-  machines' <- liftIO $ runQuery conn (machinesInUpkeepQuery' upkeepIdInt)
-  employeeIds <- liftIO $ runQuery conn (employeeIdsInUpkeep upkeepIdInt)
+  machines' <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInUpkeepQuery' upkeepIdInt)
+  employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepIdInt)
   let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
-  machines'' <- loadNextServiceTypeHint machines conn
+  machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
 
   companyId <- case machines of
     [] -> throwError NotAllowed
@@ -223,8 +226,8 @@ printDailyPlanListing' employeeId connection day = do
 printDailyPlanListing :: ListHandler Dependencies
 printDailyPlanListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
   let day = getDayParam env
-  (_, connection) <- ask
-  printDailyPlanListing' Nothing connection day
+  (_, pool) <- ask
+  withResource pool $ \connection -> printDailyPlanListing' Nothing connection day
 
 -- resource
 

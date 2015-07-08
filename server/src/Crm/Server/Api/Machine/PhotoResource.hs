@@ -5,6 +5,8 @@ import           Opaleye.RunQuery            (runQuery)
 import           Opaleye.Manipulation        (runInsert)
 import           Opaleye.PGTypes             (pgInt4)
 
+import           Data.Pool                   (withResource)
+
 import           Rest.Resource               (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (fileI, jsonO)
@@ -32,14 +34,16 @@ photoResource = mkResourceId {
 
 addPhotoHandler :: Handler (IdDependencies' M.MachineId)
 addPhotoHandler = mkInputHandler' (fileI . jsonO) $ \photo -> do 
-  ((_, connection), M.MachineId machineIdInt) <- ask
-  newPhotoIds <- liftIO $ addMachinePhoto connection machineIdInt photo
+  ((_, pool), M.MachineId machineIdInt) <- ask
+  newPhotoIds <- withResource pool $ \connection -> liftIO $ addMachinePhoto connection machineIdInt photo
   newPhotoId <- singleRowOrColumn newPhotoIds
-  _ <- liftIO $ runInsert connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineIdInt)
+  _ <- withResource pool $ \connection -> liftIO $ runInsert 
+    connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineIdInt)
   return $ P.PhotoId newPhotoId
 
 listPhotoHandler :: ListHandler (IdDependencies' M.MachineId)
 listPhotoHandler = mkListing' jsonO $ const $ do
-  ((_, conn), M.MachineId machineIdInt) <- ask
-  rows <- liftIO $ runQuery conn (machinePhotosByMachineId machineIdInt)
+  ((_, pool), M.MachineId machineIdInt) <- ask
+  rows <- withResource pool $ \connection -> liftIO $ 
+    runQuery connection (machinePhotosByMachineId machineIdInt)
   return $ (convert rows :: [PhotoMetaMapped])

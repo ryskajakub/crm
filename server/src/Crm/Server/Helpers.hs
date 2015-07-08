@@ -26,11 +26,12 @@ import           Data.Functor.Identity       (runIdentity)
 
 import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import           Control.Monad.Trans.Class   (lift)
-import           Control.Monad.Trans.Except  (ExceptT)
+import           Control.Monad.Trans.Except  (ExceptT, runExceptT)
 import           Control.Monad.Error.Class   (throwError)
 import           Data.Time.Calendar          (fromGregorian, Day, toGregorian)
 import           Data.Time.Clock             (utctDay, UTCTime, getCurrentTime)
 import           Data.Tuple.All              (sel1, Sel1)
+import           Data.Pool                   (withResource)
 import           Database.PostgreSQL.Simple  (Connection)
 import           Opaleye.Column              (Column, toNullable, Nullable)
 import qualified Opaleye.Column              as COL
@@ -119,16 +120,16 @@ maybeId maybeInt onSuccess = case maybeInt of
   Left(string) -> throwError $ IdentError $ ParseError
     ("provided identificator(" ++ string ++ ") cannot be parsed into number.")
 
-withConnId' :: (MonadReader (GlobalBindings, Either String Int) m)
-            => (Connection -> Cache -> Int -> ExceptT (Reason r) m a)
-            -> ExceptT (Reason r) m a
+withConnId' :: 
+  (Connection -> Cache -> Int -> ExceptT (Reason r) (ReaderT (GlobalBindings, Either String Int) IO) a) -> 
+  ExceptT (Reason r) (ReaderT (GlobalBindings, Either String Int) IO) a
 withConnId' f = do 
-  ((cache, conn), id') <- ask
-  maybeId id' (f conn cache)
+  ((cache, pool), id') <- ask
+  withResource pool $ \connection -> maybeId id' (f connection cache)
 
-withConnId :: (MonadReader (GlobalBindings, Either String Int) m)
-           => (Connection -> Int -> ExceptT (Reason r) m a)
-           -> ExceptT (Reason r) m a
+withConnId :: 
+  (Connection -> Int -> ExceptT (Reason r) (ReaderT (GlobalBindings, Either String Int) IO) a) -> 
+  ExceptT (Reason r) (ReaderT (GlobalBindings, Either String Int) IO) a
 withConnId f = withConnId' $ \connection -> const $ f connection
 
 readMay' :: (Read a) => String -> Either String a

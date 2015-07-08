@@ -8,6 +8,7 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 
 import           Data.Tuple.All              (sel2)
+import           Data.Pool                   (withResource)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              create, mkResourceReaderWith, get, update)
@@ -35,8 +36,8 @@ employeeResource = (mkResourceReaderWith prepareReaderTuple) {
 
 getEmployeeHandler :: Handler (IdDependencies' E.EmployeeId)
 getEmployeeHandler = mkConstHandler' jsonO $ do
-  ((_, connection), theId) <- ask
-  rows <- liftIO $ runQuery connection (singleEmployeeQuery . E.getEmployeeId $ theId)
+  ((_, pool), theId) <- ask
+  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (singleEmployeeQuery . E.getEmployeeId $ theId)
   let rowsMapped = fmap (\row -> sel2 $ (convert row :: EmployeeMapped)) rows
   singleRowOrColumn rowsMapped
 
@@ -48,14 +49,14 @@ updateEmployeeHandler = let
 
 createEmployeeHandler :: Handler Dependencies
 createEmployeeHandler = mkInputHandler' (jsonO . jsonI) (\newEmployee -> do
-  (_,conn) <- ask 
-  _ <- liftIO $ runInsert conn employeesTable (Nothing, pgStrictText $ E.name newEmployee,
+  (_, pool) <- ask 
+  _ <- liftIO $ withResource pool $ \connection -> runInsert connection employeesTable (Nothing, pgStrictText $ E.name newEmployee,
     pgStrictText $ E.contact newEmployee, pgStrictText $ E.capabilities newEmployee)
   return () )
 
 employeesListing :: ListHandler Dependencies 
 employeesListing = mkListing' (jsonO) $ const $ do
-  (_,conn) <- ask
-  rawRows <- liftIO $ runQuery conn employeesQuery
+  (_, pool) <- ask
+  rawRows <- withResource pool $ \connection -> liftIO $ runQuery connection employeesQuery
   let rowsMapped = convert rawRows :: [EmployeeMapped]
   return rowsMapped
