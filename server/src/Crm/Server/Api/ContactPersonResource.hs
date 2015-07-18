@@ -7,10 +7,9 @@ import           Opaleye                     (runQuery, pgStrictText)
 
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
-import           Control.Applicative         ((<*>), pure)
-import           Control.Lens                (_2, _3, over)
+import           Control.Lens                (_2, over)
 
-import           Data.Tuple.All              (sel1, sel2, sel3)
+import           Data.Tuple.All              (sel2, sel3)
 import           Data.Pool                   (withResource)
 
 import           Rest.Resource               (Resource, Void, schema, name, mkResourceReaderWith, 
@@ -29,7 +28,6 @@ import           Crm.Server.DB
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion)
 import           Crm.Server.Handler          (mkConstHandler', deleteRows'', updateRows'')
 
-import           TupleTH                     (proj)
 
 resource :: Resource Dependencies (IdDependencies' CP.ContactPersonId) CP.ContactPersonId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
@@ -49,9 +47,8 @@ getHandler = mkConstHandler' jsonO $ do
   ((_, pool), contactPersonId) <- ask
   rows <- liftIO $ withResource pool $ \connection -> 
     runQuery connection (singleContactPersonQuery $ CP.getContactPersonId contactPersonId)
-  let mapCoordinates coordinates = pure C.Coordinates <*> C.latitude coordinates <*> C.longitude coordinates
-  (cp, company :: (C.CompanyId, C.Company, Maybe C.Coordinates)) <- over (_2._3) mapCoordinates `fmap` singleRowOrColumn rows
-  return (sel3 (convert cp :: ContactPersonMapped), $(proj 3 0) company)
+  (cp, company :: C.CompanyRecord) <- over (_2 . C.companyCoords) C.mapCoordinates `fmap` singleRowOrColumn rows
+  return (sel3 (convert cp :: ContactPersonMapped), C._companyPK company)
 
 updateHandler :: Handler (IdDependencies' CP.ContactPersonId)
 updateHandler = let

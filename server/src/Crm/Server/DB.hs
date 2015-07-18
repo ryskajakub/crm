@@ -238,27 +238,27 @@ machinePhotosTable = Table "machine_photos" $ p2 (
   required "photo_id" ,
   required "machine_id" )
 
-makeAdaptorAndInstance "pCompany" ''C.Company'
-makeAdaptorAndInstance "pCoordinates" ''C.Coordinates'
-makeAdaptorAndInstance "pCompanyId" ''C.CompanyId'
+makeAdaptorAndInstance' ''C.Company'
+makeAdaptorAndInstance' ''C.Coordinates'
+makeAdaptorAndInstance' ''C.CompanyId'
+makeAdaptorAndInstance' ''C.CompanyTable'
 
-type CompanyColumns = C.Company' DBText DBText DBText
-type CompaniesTable = (C.CompanyId' DBInt, CompanyColumns, 
-  C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8)))
-companiesTable :: 
-  Table
-  (C.CompanyId' (Maybe DBInt), CompanyColumns, C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8)))
-  CompaniesTable
-companiesTable = Table "companies" $ p3 (
-  pCompanyId C.CompanyId {
-    C.getCompanyId = optional "id" } ,
-  pCompany C.Company {
+type CompanyCore = C.Company' DBText DBText DBText
+type CompanyCoords = C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8))
+type CompanyRead = C.CompanyTable' (C.CompanyId' DBInt) CompanyCore CompanyCoords
+type CompanyWrite = C.CompanyTable' (C.CompanyId' (Maybe DBInt)) CompanyCore CompanyCoords
+
+companiesTable :: Table CompanyWrite CompanyRead
+companiesTable = Table "companies" $ pCompanyTable C.CompanyTable {
+  C._companyPK = (pCompanyId C.CompanyId {
+    C.getCompanyId = optional "id" }) ,
+  C._companyCore = (pCompany C.Company {
     C.companyName = required "name" ,
     C.companyPlant = required "plant" ,
-    C.companyAddress = required "address" } ,
-  pCoordinates C.Coordinates {
+    C.companyAddress = required "address" }) ,
+  C._companyCoords = (pCoordinates C.Coordinates {
     C.latitude = required "latitude" ,
-    C.longitude = required "longitude" } )
+    C.longitude = required "longitude" })}
 
 contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable
 contactPersonsTable = Table "contact_persons" $ p5 (
@@ -528,14 +528,14 @@ machineTypesQuery' mid = autocomplete $ proc () -> do
   restrict -< (lower name' `like` (lower $ pgStrictText ("%" <> (pack $ intersperse '%' mid) <> "%")))
   returnA -< name'
 
-companyByIdQuery :: C.CompanyId -> Query CompaniesTable
+companyByIdQuery :: C.CompanyId -> Query CompanyRead
 companyByIdQuery companyId = proc () -> do
   companyRow <- queryTable companiesTable -< ()
-  restrict -< $(proj 3 0) companyRow .== fmap pgInt4 companyId
+  restrict -< C._companyPK companyRow .== fmap pgInt4 companyId
   returnA -< companyRow
 
-companyByIdCompanyQuery :: C.CompanyId -> Query CompanyColumns
-companyByIdCompanyQuery companyId = (\(_,company,_) -> company) ^<< companyByIdQuery companyId
+companyByIdCompanyQuery :: C.CompanyId -> Query CompanyCore
+companyByIdCompanyQuery companyId = C._companyCore ^<< companyByIdQuery companyId
 
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
@@ -697,26 +697,26 @@ singleEmployeeQuery employeeId = proc () -> do
   employeeRow <- join employeesQuery -< (pgInt4 employeeId)
   returnA -< employeeRow
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, (C.CompanyId' DBInt, CompanyColumns))
+groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, (C.CompanyId' DBInt, CompanyCore))
 groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_) <- upkeepsQuery -< ()
     restrict -< upkeepClosed .== pgBool False
     upkeepMachinesRow <- join upkeepMachinesQuery -< upkeepPK
     (_,companyFK,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< $(proj 6 2) upkeepMachinesRow
-    (companyId, companyColumns, _) <- queryTable companiesTable -< ()
-    restrict -< C.getCompanyId companyId .== companyFK
-    returnA -< (upkeepRow, (companyId,companyColumns))
+    companyRow <- queryTable companiesTable -< ()
+    restrict -< (C.getCompanyId . C._companyPK) companyRow .== companyFK
+    returnA -< (upkeepRow, (C._companyPK companyRow, C._companyCore companyRow))
   in orderBy (asc(\((_,date,_,_,_,_), _) -> date)) $ 
     AGG.aggregate (p2 (p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min),
       p2(pCompanyId . C.CompanyId $ AGG.min, pCompany $ C.Company AGG.min AGG.min AGG.min))) 
         plannedUpkeepsQuery
 
-singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompaniesTable)
+singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompanyRead)
 singleContactPersonQuery contactPersonId = proc () -> do
   contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
   companyRow <- queryTable companiesTable -< ()
-  restrict -< (C.getCompanyId . $(proj 3 0)) companyRow .== $(proj 5 1) contactPersonRow
+  restrict -< (C.getCompanyId . C._companyPK) companyRow .== $(proj 5 1) contactPersonRow
   returnA -< (contactPersonRow, companyRow)
 
 singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
@@ -809,13 +809,13 @@ in' as compareA = foldl
   (pgBool False)
   as
 
-companyInUpkeepQuery :: U.UpkeepId -> Query CompanyColumns
+companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
   upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepIdInt
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
-  (companyPK, company, _) <- queryTable companiesTable -< ()
-  restrict -< (C.getCompanyId companyPK) .== $(proj 11 1) machineRow
-  returnA -< company
+  companyRow <- queryTable companiesTable -< ()
+  restrict -< (C.getCompanyId . C._companyPK $ companyRow) .== $(proj 11 1) machineRow
+  returnA -< C._companyCore companyRow
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]
