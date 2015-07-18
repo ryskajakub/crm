@@ -46,8 +46,8 @@ plannedUpkeeps router upkeepCompanies = let
     th "Adresa" ,
     th "Poznámky" ,
     th "Datum" ,
-    th "Přeplánovat" ,
-    th "Uzavřít" ]
+    th G.edit ,
+    th G.check ]
   body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes) ->
     tr [
       td $ R.link
@@ -63,11 +63,11 @@ plannedUpkeeps router upkeepCompanies = let
           (R.dailyPlan date Nothing)
           router ,
       td $ R.link
-        "Přeplánovat"
+        G.edit
         (R.replanUpkeep upkeepId)
         router,
       td $ R.link
-        "Uzavřít"
+        G.check
         (R.upkeepDetail upkeepId)
         router ]) upkeepCompanies
 
