@@ -131,7 +131,7 @@ import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connecti
 import           Opaleye.QueryArr                     (Query, QueryArr)
 import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
 import           Opaleye.Column                       (Column, Nullable)
-import           Opaleye.Order                        (orderBy, asc, limit)
+import           Opaleye.Order                        (orderBy, asc, limit, PGOrd)
 import           Opaleye.RunQuery                     (runQuery)
 import           Opaleye.Operators                    (restrict, lower, (.==), (.||))
 import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
@@ -519,7 +519,7 @@ pastUpkeepMachinesQ machineId = proc () -> do
 like :: Column PGText -> Column PGText -> Column PGBool
 like = C.binOp HPQ.OpLike
 
-autocomplete :: Query (Column a) -> Query (Column a)
+autocomplete :: (PGOrd a) => Query (Column a) -> Query (Column a)
 autocomplete = limit 10 . orderBy (asc id)
 
 machineTypesQuery' :: String -> Query DBText
@@ -531,8 +531,7 @@ machineTypesQuery' mid = autocomplete $ proc () -> do
 companyByIdQuery :: C.CompanyId -> Query CompaniesTable
 companyByIdQuery companyId = proc () -> do
   companyRow <- queryTable companiesTable -< ()
-  let C.CompanyId companyPK = $(proj 3 0) companyRow
-  restrict -< companyPK .== (pgInt4 . C.getCompanyId) companyId
+  restrict -< $(proj 3 0) companyRow .== fmap pgInt4 companyId
   returnA -< companyRow
 
 companyByIdCompanyQuery :: C.CompanyId -> Query CompanyColumns
