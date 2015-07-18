@@ -58,7 +58,7 @@ plannedUpkeeps router upkeepCompanies = let
         (R.companyDetail companyId)
         router ,
       td $ C.companyAddress company ,
-      td . ul . mkNote $ notes ,
+      td . (ul' (class' "list-unstyled")) . mkNote $ notes ,
       let 
         date = U.upkeepDate upkeep
         in td $ R.link 
