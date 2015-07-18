@@ -8,6 +8,7 @@ module Crm.Page.Employee (
 
 import           Data.Text                        (fromString, Text, length)
 import           Prelude                          hiding (div, span, id, length)
+import qualified Prelude                          as P
 import           FFI                              (Defined (Defined))
 import           Data.Var                         (Var, modify)
 
@@ -108,10 +109,18 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
         "Kvalifikace"
         (SetValue $ E.capabilities employee) $ 
         \employeeName -> modify' $ employee { E.capabilities = employeeName } ,
+      nullDropdownRow
+        Editing
+        "Barva"
+        colours
+        P.id
+        Nothing
+        (const . return $ ()) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []
     where
+    colours = [("xxx", "yyy"), ("zzz", "111")]
     inputRowEditing = inputRow Editing
