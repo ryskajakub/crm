@@ -272,7 +272,7 @@ fetchFrontPageData order direction router callback =
     lMb [] = []
     lMb ((a,b,x) : xs) = (a,b,toMaybe x) : lMb xs
   in passwordAjax
-    (pack $ A.companies ++ "?order=" ++ (case order of
+    (pack $ A.companies ++ "?count=1000&order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"

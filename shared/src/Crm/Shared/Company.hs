@@ -31,8 +31,10 @@ newtype CompanyId' id = CompanyId { getCompanyId :: id }
 #endif
 type CompanyId = CompanyId' Int
 
+#ifndef FAY
 instance Functor CompanyId' where
   f `fmap` (CompanyId companyId) = CompanyId . f $ companyId
+#endif
 
 #ifndef FAY
 instance Info CompanyId where
