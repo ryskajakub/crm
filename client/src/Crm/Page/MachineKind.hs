@@ -43,7 +43,7 @@ machineKindSettings appVar showSuccess editedEnum allSettings = mkGrid where
           else [] )]
     where
     header = pageInfo "Další políčka u strojů" $ Just "Tady můžeš vybrat, jaká další políčka se budou dát vyplnit u strojů. Ke každému druhu stroje můžeš přiřadit další políčka, ty se zobrazí potom na stránce stroje, kde ho vyplníš."
-    machineKindDropdown = dropdownRow Editing "Druh stroje" MK.machineKinds (\x -> x) machineKindName
+    machineKindDropdown = dropdownRow Editing "Druh stroje" MK.machineKinds text2DOM machineKindName
       $ \selectedKind -> D.modifyState appVar $ \navig -> navig { D.editedKind = selectedKind }
     kindAttributeFields = multipleInputs
       "Pole" "Přidat pole" OrderingVisible setList mkInput elems newElem where

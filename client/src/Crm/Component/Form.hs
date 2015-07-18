@@ -96,7 +96,7 @@ findInList maybeKey list = value where
 editDisplayDropdown ::
   InputState ->
   DOMElement ->
-  Text ->
+  DOMElement ->
   DOMElement
 editDisplayDropdown Editing dropdownElement _ = div' (class' "col-md-9") dropdownElement
 editDisplayDropdown Display _ selectedElement = 
@@ -145,7 +145,7 @@ textInput mkInput editing' displayPlain displayValue onChange' = let
     else mkInput inputNormalAttrs inputAttrs
 
 dropdown :: [(a, b)] -- key value list
-         -> (b -> Text) -- format the b value for the user to see
+         -> (b -> DOMElement) -- format the b value for the user to see
          -> b -- the displayed element in the closed dropdown
          -> (a -> Fay ()) -- selection handler
          -> DOMElement
@@ -155,14 +155,14 @@ dropdown elements display currentElement setId = element where
     selectAction = setId theId
     in A.a''' (click selectAction) (display label)
   elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
-  buttonLabel = [text2DOM $ (display currentElement) <> " " , span' (class' "caret") ""]
+  buttonLabel = [display currentElement, text2DOM " " , span' (class' "caret") ""]
 
-nullDropdown :: (Eq a)
+nullDropdown :: Eq a
              => [(a, b)]
-             -> (b -> Text)
+             -> (b -> DOMElement)
              -> Maybe a
              -> (Maybe a -> Fay ())
-             -> (DOMElement, Text)
+             -> (DOMElement, DOMElement)
 nullDropdown elements display currentElement' setId = 
   (dd, display' currentElement)
   where
@@ -173,7 +173,7 @@ nullDropdown elements display currentElement' setId =
     nullElement = (Nothing, Nothing)
     in nullElement : notNullElements
   display' (Just element) = display element
-  display' Nothing = "---"
+  display' Nothing = text2DOM "---"
 
 
 -- row elements
@@ -259,7 +259,7 @@ dropdownRow :: (Renderable label)
             => InputState 
             -> label -- label for the row
             -> [(a, b)] -- key value list
-            -> (b -> Text) -- format the b value for the user to see
+            -> (b -> DOMElement) -- format the b value for the user to see
             -> b -- the displayed element in the closed dropdown
             -> (a -> Fay ()) -- selection handler
             -> DOMElement
@@ -275,7 +275,7 @@ nullDropdownRow :: (Renderable label, Eq a)
                 => InputState
                 -> label
                 -> [(a, b)]
-                -> (b -> Text)
+                -> (b -> DOMElement)
                 -> Maybe a
                 -> (Maybe a -> Fay ())
                 -> DOMElement

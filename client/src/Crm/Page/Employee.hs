@@ -113,7 +113,7 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
         Editing
         "Barva"
         colours
-        P.id
+        text2DOM
         Nothing
         (const . return $ ()) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'

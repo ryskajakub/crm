@@ -389,7 +389,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           MD.machine = (machine' { M.mileagePerYear = value }, datePickerText, showInt value) }
         (operationTypesDropdown, buttonLabel) = nullDropdown 
           preselectedOperationTypes
-          Prelude.id
+          text2DOM
           (fst `onJust` buttonLabelMaybe)
           selectAction
         dd = case editing of
@@ -418,7 +418,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       editing
       (dropdownCPHighlight . text2DOM $ "Kontaktní osoba - stávající")
       contactPersons 
-      CP.name 
+      (text2DOM . CP.name)
       dropdownContactPersonId $
       \cpId -> do
         changeNavigationState $ \md -> md { MD.contactPersonId = cpId }
@@ -430,7 +430,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       editing 
       "Zapojení" 
       otherMachines 
-      M.serialNumber 
+      (text2DOM . M.serialNumber)
       otherMachineId $
       \omId -> changeNavigationState $ \md -> md { MD.otherMachineId = omId } ,
     inputRowEditing
