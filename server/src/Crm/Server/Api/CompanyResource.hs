@@ -142,16 +142,17 @@ updateCompany = let
         (C.Coordinates
           (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
           (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))
-  recomputeCache int connection cache = 
-    mapExceptT lift $ recomputeSingle (C.CompanyId int) connection cache
+  recomputeCache cId connection cache = 
+    mapExceptT lift $ recomputeSingle cId connection cache
   condition companyId companyRow = C._companyPK companyRow .== fmap pgInt4 companyId
   in mkInputHandler' (jsonO . jsonI) $ \companyData -> do
     ((cache, pool), companyId) <- ask
-    liftIO $ withResource pool $ \connection -> runUpdate
+    _ <- liftIO $ withResource pool $ \connection -> runUpdate
       connection
       companiesTable
       (readToWrite companyData)
       (condition companyId)
+    withResource pool $ \connection -> recomputeCache companyId connection cache
 
 
 deleteCompany :: Handler (IdDependencies' C.CompanyId)
@@ -160,7 +161,7 @@ deleteCompany = mkConstHandler' jsonO $ do
   let theId = C.getCompanyId companyId
   liftIO $ withResource pool $ \connection -> 
     forM_ [
-      createDeletion' sel2 contactPersonsTable, \int deletion ->
+      createDeletion' sel2 contactPersonsTable, const . const $
       runDelete
         connection
         companiesTable
