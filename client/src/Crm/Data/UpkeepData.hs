@@ -12,8 +12,8 @@ import           Crm.Shared.Employee
 
 import           Crm.Component.DatePicker
 
-import qualified Crm.Validation           as V
-import           Crm.Types                (DisplayedNote)
+import qualified Crm.Validation            as V
+import           Crm.Types                 (DisplayedNote)
 
 data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,

@@ -792,10 +792,12 @@ dailyPlanQuery employeeId' day = let
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
-notesForUpkeep :: Int -> Query DBText
+notesForUpkeep :: Int -> Query (DBInt, DBText, DBText)
 notesForUpkeep upkeepId = proc () -> do
   upkeepMachinesRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
-  returnA -< $(proj 6 1) upkeepMachinesRow
+  machinesRow <- join machinesQuery -< $(proj 6 2) upkeepMachinesRow
+  machineTypesRow <- join machineTypesQuery -< $(proj 11 3) machinesRow
+  returnA -< ($(proj 6 2) upkeepMachinesRow, $(proj 4 2) machineTypesRow, $(proj 6 1) upkeepMachinesRow)
 
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do

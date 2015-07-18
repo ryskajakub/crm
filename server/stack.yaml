@@ -9,4 +9,5 @@ extra-deps:
 - rest-types-1.14.0.1
 - Unique-0.4
 - tuple-th-0.2.5
+- rest-gen-0.17.1
 resolver: lts-2.15

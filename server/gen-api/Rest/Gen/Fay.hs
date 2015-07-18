@@ -31,6 +31,7 @@ import Rest.Gen.Types
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 import qualified Data.Generics.Uniplate.Data    as U
 
+import Debug.Trace
 
 rewriteModuleNames :: [(H.ModuleName, H.ModuleName)] -> H.Module -> H.Module
 rewriteModuleNames rews = U.transformBi $ \m -> lookupJustDef m m rews
@@ -123,6 +124,7 @@ idData node =
           qName = getQName . Ident.haskellType $ i
           getQName type' = case type' of
             H.TyCon q -> q
+            H.TyApp (H.TyCon (H.Qual module' (H.Ident name'))) _ -> H.Qual module' (H.Ident . init $ name')
           newtypeToString = newtype' `H.TyFun` string
           newtype' = Ident.haskellType i
           string = H.TyCon $ H.UnQual $ H.Ident "String"

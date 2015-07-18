@@ -38,7 +38,7 @@ import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: R.CrmRouter
-               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, Text)]
+               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
@@ -48,14 +48,17 @@ plannedUpkeeps router upkeepCompanies = let
     th "Datum" ,
     th G.edit ,
     th G.check ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes) ->
-    tr [
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes) -> let
+    mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
+      R.link machineTypeName (R.machineDetail machineId) router ,
+      text2DOM " : " , text2DOM note]
+    in tr [
       td $ R.link
         (C.companyName company)
         (R.companyDetail companyId)
         router ,
       td $ C.companyAddress company ,
-      td $ notes ,
+      td . ul . mkNote $ notes ,
       let 
         date = U.upkeepDate upkeep
         in td $ R.link 

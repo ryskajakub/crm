@@ -158,4 +158,3 @@ computeColor (YMD.YearMonthDay y m d _) = let
 
 setTimeout :: Int -> Fay () -> Fay ()
 setTimeout = ffi " setTimeout(%2, %1) "
-  

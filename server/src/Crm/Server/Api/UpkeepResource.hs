@@ -159,8 +159,7 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
     let (u :: UpkeepMapped) = convert upkeepRowPart
     let upkeepId = $(proj 2 0) u
     notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
-    let note = intercalate (pack " | ") notes
-    return (upkeepId, $(proj 2 1) u, companyId, company, note)
+    return (upkeepId, $(proj 2 1) u, companyId, company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
