@@ -10,11 +10,12 @@ div.panel-body h3 {
 
 div.colours {
   height: 20px;
+  white-space: nowrap;
   div.colourDot {
+    display: inline-block;
     position: relative;
     width: 20px;
     height: 20px;
-    display: inline-block;
     span {
       position: absolute;
       top: -29px;
