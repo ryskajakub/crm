@@ -19,6 +19,9 @@ import           Crm.Component.Form
 import           Crm.Router             (CrmRouter, navigate, defaultFrontPage)
 import           Crm.Server             (testEmployeesPage, status)
 
+enter :: Int
+enter = 13
+
 login :: Var D.AppState
       -> CrmRouter
       -> Text 
@@ -31,17 +34,20 @@ login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, 
       _ -> D.navigation appState }
   pageHeader = "Přihlášení"
   headerRow = B.row $ B.col (B.mkColProps 12) $ h2 pageHeader
-  formWrapper element = div $ form' (mkAttrs { className = Defined "form-horizontal" }) element
+  formWrapper element = div' (mkAttrs { className = Defined "form-horizontal" }) element
   passwordRow = oneElementRow "Heslo" passwordInput where
-    passwordInput = textInput I.password Editing True (SetValue password) $ 
-      \password' -> modify' $ const $ D.Login password' False
-  submitRow = B.row $ buttonRow "Přihlásit se" submitButtonHandler where
-    submitButtonHandler = testEmployeesPage
-      password
-      (storePassword >> navigate defaultFrontPage router)
-      (\e _ _ -> if status e == 401
-        then modify' $ \l -> l { D.wrongPassword = True }
-        else return ())
+    inputAttrs = I.mkInputAttrs {
+      I.value_ = Defined password ,
+      I.onChange = Defined $ eventValue >=> \password' -> modify' . const $ D.Login password' False ,
+      I.onKeyUp = Defined $ keyCode >=> \code -> if code == enter then submitButtonHandler else return () }
+    passwordInput = I.input inputNormalAttrs inputAttrs
+  submitButtonHandler = testEmployeesPage
+    password
+    (storePassword >> navigate defaultFrontPage router)
+    (\e _ _ -> if status e == 401
+      then modify' $ \l -> l { D.wrongPassword = True }
+      else return ())
+  submitRow = B.row $ buttonRow "Přihlásit se" submitButtonHandler
   storePassword = setLocalStorage "password" password
   errorRow = if wrongPassword
     then (B.row $ B.col (B.mkColProps 12) $ p "Špatné heslo") : []
