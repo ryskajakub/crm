@@ -6,7 +6,7 @@ module Crm.Page.Employee (
   employeePage ,
   newEmployeeForm ) where
 
-import           Data.Text                        (fromString, Text, length)
+import           Data.Text                        (fromString, Text, length, (<>))
 import           Prelude                          hiding (div, span, id, length)
 import qualified Prelude                          as P
 import           FFI                              (Defined (Defined))
@@ -113,7 +113,7 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
         Editing
         "Barva"
         colours
-        text2DOM
+        renderColour
         Nothing
         (const . return $ ()) ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
@@ -122,5 +122,15 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
         buttonAction]) :
     (validationHtml validationMessages) : []
     where
-    colours = [("xxx", "yyy"), ("zzz", "111")]
+    renderColour (colour, label) =
+      span' colourStyle $ "• " <> label
+      where
+      colourStyle = mkAttrs {
+        style = Defined style' }
+      style' = Style $ "#" <> colour
+    colours = colours' `zip` coloursLabels
+      where
+      colours' = ["e46688", "f07f23", "73c597", "f9bb33", "f4dece", "8f624a", "3894d8", "54c1cd", "a8a4d4", "bfc0ba"]
+      labels = ["Zimolez", "Korál", "Hrachový lusk", "Včelí vosk", "Stříbrná pivoňka", "Rezavá červeň", "Regata", "Modré curacao", "Levandule", "Stříbrný oblak"]
+      coloursLabels = colours' `zip` labels
     inputRowEditing = inputRow Editing
