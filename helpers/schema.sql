@@ -54,7 +54,8 @@ create table employees (
   id serial primary key ,
   name varchar (500) unique not null ,
   contact varchar (500) not null ,
-  capabilities varchar (500) not null );
+  capabilities varchar (500) not null ,
+  colour varchar (500) not null );
 
 create table upkeeps (
   id serial primary key ,

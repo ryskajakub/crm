@@ -191,9 +191,8 @@ type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, DBText, DBText, DBText)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText)
 
-type EmployeeTable = (DBInt, DBText, DBText, DBText)
-type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
-type EmployeeWriteTable = (Maybe DBInt, DBText, DBText, DBText)
+type EmployeeTable = (DBInt, DBText, DBText, DBText, DBText)
+type EmployeeWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
 
@@ -308,11 +307,12 @@ upkeepMachinesTable = Table "upkeep_machines" $ p6 (
   required "end_note" )
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
-employeesTable = Table "employees" $ p4 (
+employeesTable = Table "employees" $ p5 (
   optional "id" ,
   required "name" ,
   required "contact" ,
-  required "capabilities" )
+  required "capabilities" ,
+  required "colour" )
 
 upkeepSequencesTable :: Table UpkeepSequencesTable UpkeepSequencesTable
 upkeepSequencesTable = Table "upkeep_sequences" $ p5 (
@@ -410,14 +410,12 @@ instance ColumnToRecord (Maybe Int, Maybe Int, Maybe Text, Maybe Text, Maybe Tex
   convert tuple = let
     maybeCp = pure CP.ContactPerson <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
     in (CP.ContactPersonId `fmap` $(proj 5 0) tuple, C.CompanyId `fmap` $(proj 5 1) tuple, maybeCp)
-instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
-  convert tuple = (E.EmployeeId `fmap` sel1 tuple, pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple)
 instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) UpkeepMapped where
   convert tuple = let
     (_,a,b,c,d,e) = tuple
     in (U.UpkeepId $ $(proj 6 0) tuple, U.Upkeep (dayToYmd a) b c d e)
-instance ColumnToRecord (Int, Text, Text, Text) EmployeeMapped where
-  convert tuple = (E.EmployeeId $ $(proj 4 0) tuple, uncurryN (const E.Employee) $ tuple)
+instance ColumnToRecord (Int, Text, Text, Text, Text) EmployeeMapped where
+  convert tuple = (E.EmployeeId $ $(proj 5 0) tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
 instance ColumnToRecord (Int, Text, Int, Int, Bool, Text) UpkeepMachineMapped where
@@ -802,7 +800,7 @@ notesForUpkeep upkeepId = proc () -> do
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do
   employeeRow <- employeesQuery -< ()
-  restrict -< in' employeeIds $ ($(proj 4 0) employeeRow .==) . pgInt4
+  restrict -< in' employeeIds $ ($(proj 5 0) employeeRow .==) . pgInt4
   returnA -< employeeRow
 
 in' :: [a] -> (a -> Column PGBool) -> Column PGBool
