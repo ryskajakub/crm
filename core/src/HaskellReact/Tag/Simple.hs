@@ -23,7 +23,7 @@ module HaskellReact.Tag.Simple (
   form , form' ,
   label' , label ,
   nav' ,
-  strong
+  strong , strong'
 ) where
 
 import "fay-base" Prelude hiding (div, span)
@@ -38,8 +38,11 @@ constructSimple :: Renderable a
                 -> DOMElement
 constructSimple name attributes children = constructDOMElement name attributes (NoAttributes {}) children
 
+strong' :: Renderable a => Attributes -> a -> DOMElement
+strong' = constructSimple "strong"
+
 strong :: Renderable a => a -> DOMElement
-strong = constructSimple "strong" defaultAttributes
+strong = strong' defaultAttributes
 
 span' :: Renderable a => Attributes -> a -> DOMElement
 span' = constructSimple "span"

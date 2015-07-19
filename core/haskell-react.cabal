@@ -23,4 +23,5 @@ library
     , HaskellReact.Tag.Simple
     , HaskellReact.Tag.Hyperlink
     , HaskellReact.Tag.Input
-  build-depends: fay-base >= 0.18
+  build-depends: 
+    fay-base >= 0.18

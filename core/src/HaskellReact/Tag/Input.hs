@@ -123,6 +123,9 @@ data InputAttributes = InputAttributes {
   onPaste :: Defined (SyntheticClipboardEvent -> Fay ()) ,
   disabled_ :: Defined Text ,
   name :: Defined Text ,
+  onKeyDown :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
+  onKeyPress :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
+  onKeyUp :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
   onBlur :: Defined (SyntheticEvent -> Fay ()) }
 
 mkInputAttrs :: InputAttributes
@@ -138,6 +141,9 @@ defaultInputAttributes = InputAttributes {
   disabled_ = Undefined ,
   name = Undefined ,
   onPaste = Undefined ,
+  onKeyDown = Undefined ,
+  onKeyPress = Undefined ,
+  onKeyUp = Undefined ,
   onBlur = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
