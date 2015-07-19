@@ -135,10 +135,12 @@ mkFunction :: String -> ApiAction -> ([H.Decl], [H.ModuleName])
 mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImports) where
   typeSignature = H.TypeSig noLoc [funName] fType
   functionBinding = H.FunBind [H.Match noLoc funName fParams Nothing rhs noBinds]
-  usedImports = responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime]
+  usedImports = responseModules errorI ++ responseModules output ++ maybe [] inputModules mInp ++ [runtime, router]
 
   runtime = H.ModuleName "Crm.Runtime"
+  router = H.ModuleName "Crm.Router"
   callbackIdent = H.Ident "callback"
+  routerIdent = H.Ident "router"
   funName = mkHsName ai
   pFirst f s = H.PTuple H.Boxed [H.PVar . H.Ident $ f, H.PVar $ H.Ident s]
   pRest = H.Ident "px"
@@ -147,7 +149,8 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     (map H.PVar lPars) ++ 
     (maybe [] ((:[]) . H.PVar . hsName . cleanName . description) (ident ai)) ++ 
     (map H.PVar $ maybe [] (const [input]) mInp) ++ 
-    (map H.PVar [callbackIdent])
+    (map H.PVar [callbackIdent]) ++
+    [H.PVar routerIdent]
   (lUrl, lPars) = linkToURL (ident ai) res lnk
   mInp :: Maybe InputInfo
   mInp = fmap (inputInfo . L.get desc . chooseType) . NList.nonEmpty . inputs $ ai
@@ -157,6 +160,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     unList ( H.TyApp (H.TyCon (H.Qual (H.ModuleName "Rest.Types.Container") _)) elements) = (H.TyList elements, True)
     unList x = (x, False)
     callback = H.TyFun callbackParams fayUnit
+    crmRouter = H.TyCon . H.Qual router . H.Ident $ "CrmRouter"
 
     fTypify :: [H.Type] -> H.Type
     fTypify [] = error "Rest.Gen.Haskell.mkFunction.fTypify - expects at least one type"
@@ -169,8 +173,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
       map qualIdent lPars ++ 
       maybe [] (return . Ident.haskellType) (ident ai) ++ 
       inp ++ 
-      [callback] ++ 
-      [fayUnit]
+      [callback, crmRouter, fayUnit]
 
     qualIdent (H.Ident s)
       | s == cleanHsName res = H.TyCon $ H.UnQual tyIdent
@@ -191,7 +194,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     | isList = \cbackIdent -> H.InfixApp cbackIdent compose itemsIdent
     | otherwise = id
   exp' = ajax `H.App` (addParams . mkPack . concat' $ lUrl) `H.App` (items callbackVar) `H.App` 
-      input' `H.App` method' `H.App` nothing `H.App` nothing where
+      input' `H.App` method' `H.App` nothing `H.App` nothing `H.App` (H.Var . H.UnQual $ routerIdent) where
     plusPlus = (H.QVarOp $ H.UnQual $ H.Symbol "++")
     addParams url = if null . params $ ai 
       then url
