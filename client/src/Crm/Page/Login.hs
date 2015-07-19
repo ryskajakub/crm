@@ -40,7 +40,7 @@ login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, 
       I.value_ = Defined password ,
       I.onChange = Defined $ eventValue >=> \password' -> modify' . const $ D.Login password' False ,
       I.onKeyUp = Defined $ keyCode >=> \code -> if code == enter then submitButtonHandler else return () }
-    passwordInput = I.input inputNormalAttrs inputAttrs
+    passwordInput = I.password inputNormalAttrs inputAttrs
   submitButtonHandler = testEmployeesPage
     password
     (storePassword >> navigate defaultFrontPage router)
