@@ -54,7 +54,7 @@ upkeepHistory upkeepsInfo companyId router = let
             _ -> Defined "upkeep-row"
           in attributes { className = newClassname }
         deleteButton = let
-          clickHandler = deleteUpkeep upkeepId BR.refresh
+          clickHandler = deleteUpkeep upkeepId BR.refresh router
           buttonProps = (BTN.buttonProps {
             BTN.bsStyle = Defined "danger" ,
             BTN.onClick = Defined $ const clickHandler })

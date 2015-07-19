@@ -144,6 +144,7 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
             upkeep3
             (mapMaybe Prelude.id selectedEmployees)
             (R.navigate (R.maintenances companyId) router)
+            router
           in mkSubmitButton 
             [span G.plus , span " Uzavřít"]
             closeUpkeepHandler
@@ -168,6 +169,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         newUpkeepHandler = createUpkeep
           (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
+          router
         button = mkSubmitButton
           [G.plus , text2DOM " Naplánovat"]
           newUpkeepHandler
@@ -177,6 +179,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
           (upkeepId, upkeepU, upkeepMachines)
           (mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
+          router
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
           replanUpkeepHandler

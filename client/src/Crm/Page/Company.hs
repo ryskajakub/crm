@@ -103,8 +103,8 @@ companyNew :: R.CrmRouter
 companyNew router var company' = let
   saveHandler =
     computeCoordinates (C.companyAddress company') $ \coordinates ->
-      createCompany company' (C.mkCoordinates `onJust` coordinates) $ \companyId ->
-        R.navigate (R.companyDetail companyId) router
+      createCompany company' (C.mkCoordinates `onJust` coordinates) (\companyId ->
+        R.navigate (R.companyDetail companyId) router) router
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
       cd @ (D.CompanyNew _) -> cd { D.company = modifiedCompany }
@@ -126,7 +126,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
 
   saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
     updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
-      BR.refresh 
+      BR.refresh router
 
   setCompany modifiedCompany = modify var (\appState -> appState {
     D.navigation = case D.navigation appState of
@@ -157,7 +157,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
   machineBoxes = map machineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {
-    BTN.onClick = Defined $ const $ deleteCompany companyId $ R.navigate R.defaultFrontPage router ,
+    BTN.onClick = Defined $ const $ deleteCompany companyId (R.navigate R.defaultFrontPage router) router ,
     BTN.disabled = if null machines' then Undefined else Defined True ,
     BTN.bsStyle = Defined "danger" }) "Smazat"
 

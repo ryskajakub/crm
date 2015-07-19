@@ -46,6 +46,7 @@ startRouter appVar = startedRouter where
   withCompany' :: C.CompanyId
                -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
                   MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
+               -> CrmRouter
                -> Fay ()
   withCompany' companyId newStateFun = 
     fetchCompany companyId $ \data' -> let
@@ -54,20 +55,23 @@ startRouter appVar = startedRouter where
   (nowYear, nowMonth, nowDay) = M.day . M.now $ M.requireMoment
   nowYMD = YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
 
-  appliedRoutes = map (\tuple -> rmap (\f -> const $ f appVar) tuple) routes
+  appliedRoutes = map (\tuple -> rmap (\f r -> f (CrmRouter r) appVar) tuple) routes
   otherRoutes = [
-    ("", \router _ -> 
-      fetchFrontPageData C.NextService DIR.Asc (CrmRouter router) $ \data' -> modify appVar 
-        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) ,
-    ("daily-plan/:date/employee/:employee", \_ params -> case M.parse M.requireMoment . head $ params of
-      Just (moment) -> let
-        (year, month, day) = M.day moment
-        ymd = YMD.YearMonthDay year month day (YMD.DayPrecision)
-        employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
-        in fetchDailyPlanData ymd employeeId $ \data' ->
-          fetchDailyPlanEmployees ymd $ \dpe ->
-            modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeId data' dpe }
-      Nothing -> modify' D.NotFound) ,
+    ("", \router _ -> let
+      crmRouter = CrmRouter router
+      in fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
+        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) crmRouter ) ,
+    ("daily-plan/:date/employee/:employee", \router params -> let
+      crmRouter = CrmRouter router
+      in case M.parse M.requireMoment . head $ params of
+        Just (moment) -> let
+          (year, month, day) = M.day moment
+          ymd = YMD.YearMonthDay year month day (YMD.DayPrecision)
+          employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
+          in fetchDailyPlanData ymd employeeId (\data' ->
+            fetchDailyPlanEmployees ymd (\dpe ->
+              modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeId data' dpe } ) crmRouter ) crmRouter
+        Nothing -> modify' D.NotFound) ,
     ("home/:order/:direction", \router params -> let
       firstParam = head params
       secondParam = head $ tail params
@@ -77,11 +81,13 @@ startRouter appVar = startedRouter where
       direction = if secondParam == "Asc"
         then DIR.Asc
         else DIR.Desc
-      in fetchFrontPageData order direction (CrmRouter router) $ \data' ->
+      crmRouter = CrmRouter router
+      in fetchFrontPageData order direction (\data' ->
         modify appVar $ \appState -> appState { D.navigation = 
-          D.FrontPage (order, direction) data' })]
+          D.FrontPage (order, direction) data' }) crmRouter )]
+
   routes = [
-    useHandler login' $ const $ 
+    useHandler login' $ const . const $ 
       modify appVar $ \appState -> appState { D.navigation = D.Login "" False } ,
     useHandler dashboard' $ const $
       fetchCompaniesForMap $ \companiesTriple -> 
@@ -93,7 +99,7 @@ startRouter appVar = startedRouter where
         in modify' $ D.ExtraFields 0 False MK.RotaryScrewCompressor withAssignedIds ,
     useHandler companyDetail' $ \companyId' ->
       case companyId' of
-        Left _ -> modify appVar $ \appState -> appState {
+        Left _ -> const $ modify appVar $ \appState -> appState {
           D.navigation = D.CompanyNew C.newCompany }
         Right companyId ->
           fetchCompany companyId $ \(company, contactPersons, machines) -> let
@@ -116,7 +122,7 @@ startRouter appVar = startedRouter where
         \(_, _, machines) -> let
           pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
           in D.MachinesSchema $ pickMachines machines ,
-    useHandler newMachinePhase2' $ \companyId -> do
+    useHandler newMachinePhase2' $ \companyId router -> do
       appState <- get appVar
       let
         machineTypeTuple = D.machineTypeFromPhase1 appState
@@ -127,22 +133,22 @@ startRouter appVar = startedRouter where
           MK.RotaryScrewCompressor -> machine'
           _ -> machine' { M.mileagePerYear = MK.hoursInYear }
         machineTuple = (machine, "", showInt . M.mileagePerYear $ machine)
-      fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
-        fetchExtraFieldSettings $ \efSettings -> let
+      fetchContactPersons companyId (\cps -> (fetchMachinesInCompany companyId $ \otherMachines -> 
+        fetchExtraFieldSettings (\efSettings -> let
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
           in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineKind machineTypeTuple
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
-              (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById)) ,
-    useHandler newMaintenance' $ \companyId -> 
-      fetchUpkeepData companyId $ \ud ->
-        fetchEmployees $ \employees -> let
+              (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById))) router ) router ) router ,
+    useHandler newMaintenance' $ \companyId router -> 
+      fetchUpkeepData companyId ( \ud ->
+        fetchEmployees ( \employees -> let
           notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> 
             (UM.newUpkeepMachine, machineId)) ud
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
             ud notCheckedUpkeepMachines
             ((nowYMD, False), displayDate nowYMD) employees 
-            [] V.new (Right $ UD.UpkeepNew $ Left companyId) ,
+            [] V.new (Right $ UD.UpkeepNew $ Left companyId)) router ) router ,
     useHandler contactPersonList' $ \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList data'
@@ -151,46 +157,46 @@ startRouter appVar = startedRouter where
       fetchUpkeeps companyId $ \upkeepsData -> let
         ns = D.UpkeepHistory upkeepsData companyId
         in modify' ns ,
-    useHandler machineDetail' $ \machineId ->
+    useHandler machineDetail' $ \machineId router ->
       fetchMachine machineId
-        $ \(companyId, machine, machineTypeId, machineTypeTuple, 
+        (\(companyId, machine, machineTypeId, machineTypeTuple, 
             machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields'') ->
-          fetchMachinePhotos machineId $ \photos ->
+          fetchMachinePhotos machineId (\photos ->
             let 
               machineTriple = (machine, "", showInt . M.mileagePerYear $ machine)
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-            in fetchContactPersons companyId $ \cps -> fetchMachinesInCompany companyId $ \otherMachines -> 
+            in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId ( \otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
                 machineTriple machineSpecificData machineTypeTuple (startDateInCalendar, False)
                   contactPersonId cps V.new otherMachineId otherMachines extraFields''
                     (Left $ MD.MachineDetail machineId machineNextService 
-                      Display machineTypeId photos upkeeps companyId) ,
+                      Display machineTypeId photos upkeeps companyId) ) router ) router ) router ) router ,
     useHandler plannedUpkeeps' $ const $
       fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation } ,
-    useHandler upkeepDetail' $ \upkeepId ->
-      fetchUpkeep upkeepId $ \(companyId,(upkeep, upkeepMachines, employeeIds), machines) -> 
-        fetchEmployees $ \employees -> let
+    useHandler upkeepDetail' $ \upkeepId router ->
+      fetchUpkeep upkeepId ( \(companyId,(upkeep, upkeepMachines, employeeIds), machines) -> 
+        fetchEmployees ( \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) ((upkeepDate, False), displayDate upkeepDate) employees 
-            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId Note) ,
+            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId Note) ) router ) router ,
     useHandler machineTypesList' $ const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ,
     useHandler machineTypeEdit' $ \machineTypeId ->
       fetchMachineTypeById machineTypeId ((\(_,machineType, upkeepSequences) ->
         let upkeepSequences' = map ((\us -> (us, showInt $ US.repetition us ))) upkeepSequences
         in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')) . fromJust) ,
-    useHandler replanUpkeep' $ \upkeepId ->
-      fetchUpkeep upkeepId $ \(_, (upkeep, upkeepMachines, employeeIds), machines) ->
-        fetchEmployees $ \employees ->
+    useHandler replanUpkeep' $ \upkeepId router ->
+      fetchUpkeep upkeepId ( \(_, (upkeep, upkeepMachines, employeeIds), machines) ->
+        fetchEmployees ( \employees ->
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) 
             ((U.upkeepDate upkeep, False), displayDate $ U.upkeepDate upkeep)
-            employees (map Just employeeIds) V.new (Right $ UD.UpkeepNew $ Right upkeepId) ,
+            employees (map Just employeeIds) V.new (Right $ UD.UpkeepNew $ Right upkeepId) ) router ) router ,
     useHandler contactPersonEdit' $ \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
@@ -198,7 +204,7 @@ startRouter appVar = startedRouter where
       fetchEmployees $ \employees -> modify' $ D.EmployeeList employees ,
     useHandler editEmployee' $ \employeeId' ->
       case employeeId' of
-        Left _ -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
+        Left _ -> const $ modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
         Right employeeId -> 
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ]

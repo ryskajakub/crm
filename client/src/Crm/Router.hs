@@ -111,7 +111,7 @@ data URLEncodable a = URLEncodable {
   toURL :: a -> Text ,
   fromURL :: Int -> a }
 
-type RouteAndMkHandler a = (a -> CrmRoute, (Text, (a -> Fay ()) -> Var D.AppState -> [Text] -> Fay ()))
+type RouteAndMkHandler a = (a -> CrmRoute, (Text, (a -> CrmRouter -> Fay ()) -> CrmRouter -> Var D.AppState -> [Text] -> Fay ()))
 
 mkSimpleURLEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable a
 mkSimpleURLEncodable toInt = URLEncodable Nothing (showInt . toInt)
@@ -125,10 +125,10 @@ prepareRouteAndMkHandler :: Route a
 prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandler)) where
   mkRoute routeVariable = CrmRoute $ prefix route <> "/" <> (toURL urlEncodable) routeVariable <> postfix'
   handlerPattern = prefix route <> "/:id" <> postfix'
-  mkHandler appStateModifier appState urlVariables = 
+  mkHandler appStateModifier crmRouter appState urlVariables = 
     case (parsedInt, alternativeRoute) of
-      (Just a, _) -> appStateModifier a
-      (Nothing, Just alternativeRouteId)  -> appStateModifier alternativeRouteId
+      (Just a, _) -> appStateModifier a crmRouter
+      (Nothing, Just alternativeRouteId)  -> appStateModifier alternativeRouteId crmRouter
       _ -> D.modifyState appState (const D.NotFound)
       where
         headVariable = head urlVariables
@@ -139,7 +139,7 @@ prepareRouteAndMkHandler route urlEncodable = (mkRoute, (handlerPattern, mkHandl
 prepareUnitRouteAndMkHandler :: Text
                              -> RouteAndMkHandler ()
 prepareUnitRouteAndMkHandler t = (const . CrmRoute $ t, (t, mkHandler)) where
-  mkHandler appStateModifier = const $ const $ appStateModifier ()
+  mkHandler appStateModifier crmRouter  = const $ const $ appStateModifier () crmRouter
 
 
 -- internal helpers

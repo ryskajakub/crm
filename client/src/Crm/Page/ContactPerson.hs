@@ -73,17 +73,19 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
     Nothing -> ("Vytvoř", "Nová kontaktní osoba", createContactPerson
       companyId
       contactPerson
-      (R.navigate (R.contactPersonList companyId) router ), [])
+      (R.navigate (R.contactPersonList companyId) router) 
+      router, [])
     Just contactPersonId -> let
       deleteButton' = BTN.button' buttonProps "Smazat" where
-        delete = deleteContactPerson contactPersonId $ R.navigate (R.companyDetail companyId) router
+        delete = deleteContactPerson contactPersonId (R.navigate (R.companyDetail companyId) router) router
         buttonProps = BTN.buttonProps {
           BTN.bsStyle = Defined "danger" ,
           BTN.onClick = Defined $ const delete }
       in ("Edituj", "Kontaktní osoba", updateContactPerson
         contactPersonId
         contactPerson
-        (R.navigate (R.contactPersonList companyId) router ), [deleteButton'])
+        (R.navigate (R.contactPersonList companyId) router)
+        router, [deleteButton'])
 
   form = div' (class' "contact-person") $ B.grid $ (B.row $ pageInfo') : [
     inputRow'

@@ -120,10 +120,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         type' <- fileType file
         name <- fileName file
         uploadPhotoData file machineId $ \photoId ->
-          uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh
+          uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh router
       imageUploadLabel = "Přidej fotku"
       photoList = map (\(photoId, photoMeta) -> let
-        deletePhotoHandler = const $ deletePhoto photoId BR.refresh
+        deletePhotoHandler = const $ deletePhoto photoId BR.refresh router
         deletePhotoButton = BTN.button' 
           (BTN.buttonProps {
             BTN.bsStyle = Defined "danger" ,
@@ -147,7 +147,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   deleteMachineRow = oneElementRow "Smazat" $ BTN.button'
     (BTN.buttonProps { 
       BTN.bsStyle = Defined "danger" ,
-      BTN.onClick = Defined $ const $ deleteMachine machineId $ R.navigate (R.companyDetail companyId) router })
+      BTN.onClick = Defined $ const $ deleteMachine machineId (R.navigate (R.companyDetail companyId) router) router })
     "Smazat"
 
   extraRows = (case (editing, photos) of
@@ -169,7 +169,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         "Jdi do editačního módu"
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   editMachineAction = updateMachine machineId machine otherMachineId contactPersonId
-    extraFieldsForServer (setEditing Display)
+    extraFieldsForServer (setEditing Display) router
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
 
@@ -185,6 +185,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     Runtime.get
     Nothing
     Nothing
+    router
 
 
 machineNew :: R.CrmRouter
@@ -216,7 +217,7 @@ machineNew router appVar datePickerCalendar (machine', datePickerText, usageSetM
     MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
     MD.ById -> M.ContactPersonIdForMachine `onJust` contactPersonId
   saveNewMachine = createMachine machine' companyId machineTypeEither contactPersonId' otherMachineId extraFieldsForServer
-    (R.navigate (R.companyDetail companyId) router)
+    (R.navigate (R.companyDetail companyId) router) router
   buttonRow'' validationOk = buttonRow' validationOk "Vytvoř" saveNewMachine
 
   cpPartInputs :: Text

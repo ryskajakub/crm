@@ -47,6 +47,7 @@ login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, 
     (\e _ _ -> if status e == 401
       then modify' $ \l -> l { D.wrongPassword = True }
       else return ())
+    router
   submitRow = B.row $ buttonRow "Přihlásit se" submitButtonHandler
   storePassword = setLocalStorage "password" password
   errorRow = if wrongPassword

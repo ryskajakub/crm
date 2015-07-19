@@ -9,7 +9,6 @@ module Crm.Runtime (
   get ) where
 
 import           FFI                       (ffi, Automatic, Defined(Defined))
-import           Prelude                   hiding (putStrLn)
 import           Data.Text                 (Text, (<>), pack, unpack)
 import           Data.LocalStorage
 import           Data.Defined              (fromDefined, toDefined)
@@ -17,6 +16,8 @@ import           Data.Defined              (fromDefined, toDefined)
 import qualified JQuery                    as JQ
 
 import           Crm.Helpers               (encodeB64)
+import           Crm.Router                (CrmRouter)
+import qualified Crm.Router                as R
 
 
 data Items
@@ -41,6 +42,9 @@ get = pack "GET"
 items :: Items -> Automatic a
 items = ffi " %1['items'] "
 
+status :: JQ.JQXHR -> Int
+status = ffi " %1['status'] "
+
 count1000' :: String
 count1000' = "count=1000"
 
@@ -49,6 +53,9 @@ count1000 = "?" ++ count1000'
 
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"
+
+notAuthorized :: Int
+notAuthorized = 401
 
 withPassword :: Maybe Text
              -> (JQ.AjaxSettings a b -> Fay ())
@@ -64,7 +71,7 @@ withPassword maybePassword callback = do
         failingPassword = ""
         in pack failingPassword 
     passwordSettings = JQ.defaultAjaxSettings {
-    JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
+      JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
   callback passwordSettings
 
 passwordAjax :: Text
@@ -73,12 +80,17 @@ passwordAjax :: Text
              -> Text
              -> (Maybe (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ()))
              -> Maybe Text
+             -> CrmRouter
              -> Fay ()
-passwordAjax url callback' inputData method' onError maybePassword = 
+passwordAjax url callback' inputData method' onError maybePassword router = 
   withPassword maybePassword $ \passwordSettings -> let
     commonSettings = passwordSettings {
       JQ.success = Defined callback' ,
-      JQ.error' = toDefined onError ,
+      JQ.error' = Defined $ \xhr t1 t2 -> if status xhr == notAuthorized 
+        then R.navigate R.login router
+        else case onError of
+          Just onError' -> onError' xhr t1 t2
+          Nothing       -> return () ,
       JQ.type' = Defined method' ,
       JQ.url = Defined $ apiRoot <> url }
     in case inputData of

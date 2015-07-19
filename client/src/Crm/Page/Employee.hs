@@ -63,7 +63,7 @@ newEmployeeForm :: CrmRouter
                 -> DOMElement
 newEmployeeForm router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
   buttonLabel = "Přidat servismena"
-  buttonAction = createEmployee employee $ navigate R.employeePage router
+  buttonAction = createEmployee employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího."
 
 
@@ -74,7 +74,7 @@ employeeEdit :: E.EmployeeId
              -> DOMElement
 employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
   buttonLabel = "Edituj"
-  buttonAction = updateEmployee employeeId employee $ navigate R.employeePage router
+  buttonAction = updateEmployee employeeId employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
 employeeForm :: (Renderable a)

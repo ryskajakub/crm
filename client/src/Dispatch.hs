@@ -93,7 +93,7 @@ main' = do
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> n $ emptyCallback $ contactPersonsList router contactPersons
       D.ExtraFields _ showSuccess editedKind allSettings -> n $ 
-        emptyCallback $ machineKindSettings appVar' showSuccess editedKind allSettings
+        emptyCallback $ machineKindSettings appVar' showSuccess editedKind allSettings router
       D.MachinesSchema machines -> n $ schema machines
       D.Login password wrongPassword -> let
         (body, callback) = emptyCallback $ login appVar' router password wrongPassword

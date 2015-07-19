@@ -22,14 +22,16 @@ import qualified Crm.Data.Data                as D
 import           Crm.Helpers
 import           Crm.Server                   (saveExtraFieldSettings)
 import           Crm.Component.Form
+import           Crm.Router                   (CrmRouter)
 
 
 machineKindSettings :: Var D.AppState
                     -> Bool
                     -> MK.MachineKindEnum
                     -> [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
+                    -> CrmRouter
                     -> DOMElement
-machineKindSettings appVar showSuccess editedEnum allSettings = mkGrid where
+machineKindSettings appVar showSuccess editedEnum allSettings router = mkGrid where
 
   machineKindName = fromJust $ lookup editedEnum MK.machineKinds
   theEditedMachineKind = fromJust $ lookup editedEnum allSettings
@@ -66,9 +68,9 @@ machineKindSettings appVar showSuccess editedEnum allSettings = mkGrid where
         then currentState { D.showSuccess = False }
         else currentState)
       (const . return $ ())
-    submitRow = buttonRow "Ulož" $ saveExtraFieldSettings allSettings $ 
+    submitRow = buttonRow "Ulož" ( saveExtraFieldSettings allSettings (
       (modify' $ \ef -> ef { D.series = D.series ef + 1 , D.showSuccess = True })
-      (\s -> setTimeout 3000 (afterTimeout s))
+      (\s -> setTimeout 3000 (afterTimeout s))) router )
     saveSuccess = div' (class'' ["col-md-12", "save-success"]) $ A.alert A.Success "Uloženo"
 
   setNewSettings :: (MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)]) -> Fay ()

@@ -94,12 +94,13 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
           Just (machineTypeId', machineType', sequences) -> do
             setMachineWhole (machineType', map (\x -> (x, showInt $ US.repetition x)) sequences)
             setMachineTypeId $ Just machineTypeId'
-          Nothing -> return ())
+          Nothing -> return ()) crmRouter
         else return ())
-      fetchMachineTypesAutocomplete
+      (\a b -> fetchMachineTypesAutocomplete a b crmRouter)
       "machine-type-autocomplete"
       (II.mkInputAttrs {
         II.defaultValue = Defined $ MT.machineTypeName machineType })
+      
 
   storeUpkeepSequencesIntoLS :: [US.UpkeepSequence] -> Fay ()
   storeUpkeepSequencesIntoLS sequences = let
@@ -125,7 +126,7 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   submitButtonLabel = text2DOM "Dále"
 
   (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, 
-    upkeepSequences) appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler
+    upkeepSequences) appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler crmRouter
   in (result, callback >> afterRenderCallback)
 
 machineTypeForm' :: MachineTypeForm
@@ -137,10 +138,11 @@ machineTypeForm' :: MachineTypeForm
                  -> DOMElement -- ^ first row input field
                  -> DOMElement -- ^ submit button label
                  -> Fay () -- ^ submit button handler
+                 -> R.CrmRouter
                  -> (DOMElement, Fay ())
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
-    submitButtonHandler = let
+    submitButtonHandler router = let
 
   set1YearUpkeepSequences :: Fay ()
   set1YearUpkeepSequences = let
@@ -249,7 +251,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         inputNormalAttrs
         onChange
         onChange
-        fetchMachineTypesManufacturer 
+        (\a b -> fetchMachineTypesManufacturer a b router)
         "machine-type-manufacturer-autocomplete"
         (II.mkInputAttrs {
           II.defaultValue = Defined $ MT.machineTypeManufacturer machineType })
@@ -334,9 +336,9 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   submitButtonLabel = text2DOM "Uložit"
   submitButtonHandler = 
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 
-      (R.navigate R.machineTypesList router)
+      (R.navigate R.machineTypesList router) router
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
-    setMachineType machineTypeInput submitButtonLabel submitButtonHandler
+    setMachineType machineTypeInput submitButtonLabel submitButtonHandler router
 
 machineTypesList :: R.CrmRouter
                  -> [(MT.MachineType', Int)]
