@@ -8,6 +8,18 @@ div.panel-body h3 {
 .print-company {
   margin-top: 30px; }
 
+div.colours {
+  height: 20px;
+  div.colourDot {
+    position: relative;
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    span {
+      position: absolute;
+      top: -29px;
+      font-size: 4em; }}}
+
 .health {
   font-size: 3em;
   position: absolute;

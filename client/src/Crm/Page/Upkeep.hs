@@ -38,21 +38,27 @@ import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: R.CrmRouter
-               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]
+               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]
                -> DOMElement
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
+    th G.user ,
     th "Název firmy" ,
     th "Adresa" ,
     th "Poznámky" ,
     th "Datum" ,
     th G.edit ,
     th G.check ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes) -> let
+  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
     mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
       R.link machineTypeName (R.machineDetail machineId) router ,
       text2DOM " : " , text2DOM note]
+    mkColours = map $ \(employeeId, employee) -> div' (class' "colourDot") $ span'
+      (mkAttrs { 
+        style = Defined . Style $ "#" <> E.colour employee })
+      "•"
     in tr [
+      td . div' (class' "colours") . mkColours $ employees ,
       td $ R.link
         (C.companyName company)
         (R.companyDetail companyId)

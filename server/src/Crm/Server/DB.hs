@@ -87,6 +87,7 @@ module Crm.Server.DB (
   multiEmployeeQuery ,
   companyInUpkeepQuery ,
   mainEmployeesInDayQ ,
+  employeesInUpkeeps ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -133,7 +134,7 @@ import           Opaleye.Table                        (Table(Table), required, q
 import           Opaleye.Column                       (Column, Nullable)
 import           Opaleye.Order                        (orderBy, asc, limit, PGOrd)
 import           Opaleye.RunQuery                     (runQuery)
-import           Opaleye.Operators                    (restrict, lower, (.==), (.||))
+import           Opaleye.Operators                    (restrict, lower, (.==), (.||), in_)
 import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
                                                       PGText, pgStrictText, pgBool, PGFloat8, 
                                                       pgString, PGBytea, pgDay, PGArray)
@@ -695,6 +696,14 @@ singleEmployeeQuery employeeId = proc () -> do
   employeeRow <- join employeesQuery -< (pgInt4 employeeId)
   returnA -< employeeRow
 
+employeesInUpkeeps :: [U.UpkeepId] -> Query (DBInt, EmployeeTable)
+employeesInUpkeeps upkeepIds = proc () -> do
+  upkeepRow <- upkeepsQuery -< ()
+  restrict -< in_ ((pgInt4 . U.getUpkeepId) `fmap` upkeepIds) ($(proj 6 0) upkeepRow)
+  upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+  employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
+  returnA -< ($(proj 6 0) upkeepRow, employeeRow)
+
 groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, (C.CompanyId' DBInt, CompanyCore))
 groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
@@ -800,14 +809,8 @@ notesForUpkeep upkeepId = proc () -> do
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do
   employeeRow <- employeesQuery -< ()
-  restrict -< in' employeeIds $ ($(proj 5 0) employeeRow .==) . pgInt4
+  restrict -< in_ (pgInt4 `fmap` employeeIds) ($(proj 5 0) employeeRow)
   returnA -< employeeRow
-
-in' :: [a] -> (a -> Column PGBool) -> Column PGBool
-in' as compareA = foldl
-  (\acc a -> acc .|| compareA a)
-  (pgBool False)
-  as
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do

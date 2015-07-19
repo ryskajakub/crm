@@ -60,7 +60,7 @@ import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 import           Crm.Server.Parsers          (parseList)
 
-import           TupleTH                     (proj)
+import           TupleTH                     (proj, catTuples)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
@@ -155,11 +155,20 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
-  liftIO $ forM rows $ \(upkeepRowPart, (companyId :: C.CompanyId, company :: C.Company)) -> do
+  (upkeeps' :: [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
+      liftIO $ forM rows $ \(upkeepRowPart, (companyId :: C.CompanyId, company :: C.Company)) -> do
     let (u :: UpkeepMapped) = convert upkeepRowPart
     let upkeepId = $(proj 2 0) u
     notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
     return (upkeepId, $(proj 2 1) u, companyId, company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
+  employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
+    (employeesInUpkeeps (fmap $(proj 5 0) upkeeps'))
+  let 
+    (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (U.UpkeepId uId, convert e)) `fmap` employeeRows
+    upkeepsWithEmployees = map (\tuple -> let
+      employee = map snd . filter (($(proj 5 0) tuple ==) . fst) $ employees
+      in $(catTuples 5 1) tuple employee) upkeeps'
+  return upkeepsWithEmployees
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
