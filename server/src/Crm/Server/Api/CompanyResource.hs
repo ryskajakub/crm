@@ -132,9 +132,9 @@ updateCompany :: Handler (IdDependencies' C.CompanyId)
 updateCompany = let
   readToWrite (company, coordinates') = let 
     coordinates = toMaybe coordinates'
-    in const $
+    in \companyRow ->
       C.CompanyTable
-        (C.CompanyId Nothing)
+        (Just `fmap` C._companyPK companyRow)
         (C.Company 
           (pgStrictText . C.companyName $ company) 
           (pgStrictText . C.companyPlant $ company)

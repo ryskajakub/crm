@@ -28,6 +28,8 @@ import           Crm.Server.DB
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion)
 import           Crm.Server.Handler          (mkConstHandler', deleteRows'', updateRows'')
 
+import           TupleTH                     (proj)
+
 
 resource :: Resource Dependencies (IdDependencies' CP.ContactPersonId) CP.ContactPersonId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
@@ -52,6 +54,6 @@ getHandler = mkConstHandler' jsonO $ do
 
 updateHandler :: Handler (IdDependencies' CP.ContactPersonId)
 updateHandler = let
-  readToWrite contactPerson row = (Nothing, sel2 row, pgStrictText $ CP.name contactPerson ,
+  readToWrite contactPerson row = (Just . $(proj 5 0) $ row, sel2 row, pgStrictText $ CP.name contactPerson ,
     pgStrictText $ CP.phone contactPerson, pgStrictText $ CP.position contactPerson)
   in updateRows'' contactPersonsTable readToWrite CP.getContactPersonId (const . const . const . return $ ())

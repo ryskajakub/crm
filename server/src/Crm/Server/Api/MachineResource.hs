@@ -58,8 +58,8 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
 
   let 
     unwrappedId = M.getMachineId machineId
-    machineReadToWrite (_,companyId,_,machineTypeId,_,_,_,_,_,_,_) =
-      (Nothing, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
+    machineReadToWrite (mId,companyId,_,machineTypeId,_,_,_,_,_,_,_) =
+      (Just mId, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
         machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 

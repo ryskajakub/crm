@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
@@ -37,6 +38,8 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
+import           TupleTH                     (proj)
+
 
 machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
@@ -68,7 +71,7 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSeque
     MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> do 
       liftIO $ do
         let 
-          readToWrite row = (Nothing, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
+          readToWrite row = (Just . $(proj 4 0) $ row, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
             pgStrictText $ MT.machineTypeManufacturer machineType)
           condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeIdInt
         _ <- withResource pool $ \connection -> runUpdate connection machineTypesTable readToWrite condition

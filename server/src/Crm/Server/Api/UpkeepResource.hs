@@ -134,8 +134,8 @@ updateUpkeep :: Connection
 updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
   _ <- let
     condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
-    readToWrite _ =
-      (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
+    readToWrite u =
+      (Just . $(proj 6 0) $ u, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
         pgStrictText $ U.workHours upkeep, 
         pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
