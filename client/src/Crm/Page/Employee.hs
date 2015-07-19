@@ -6,7 +6,7 @@ module Crm.Page.Employee (
   employeePage ,
   newEmployeeForm ) where
 
-import           Data.Text                        (fromString, Text, length, (<>))
+import           Data.Text                        (fromString, Text, length, (<>), unpack)
 import           Prelude                          hiding (div, span, id, length)
 import qualified Prelude                          as P
 import           FFI                              (Defined (Defined))
@@ -114,14 +114,19 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
         "Barva"
         colours
         renderColour
-        Nothing
-        (const . return $ ()) ,
+        employeeColour
+        setEmployeeColour ,
       B.row $ B.col (B.mkColProps 12) $ div' (class' "form-group") $ buttonRow'
         (buttonStateFromBool . null $ validationMessages)
         buttonLabel
         buttonAction]) :
     (validationHtml validationMessages) : []
     where
+    setEmployeeColour (Just colour) = modify' $ employee { E.colour = colour }
+    setEmployeeColour Nothing       = modify' $ employee { E.colour = "000000" }
+    employeeColour = case E.colour employee of
+      colour | all ('0' ==) (unpack colour) -> Nothing
+      colour                                -> Just colour
     renderColour (colour, label) =
       span' colourStyle $ "• " <> label
       where

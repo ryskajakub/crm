@@ -30,7 +30,8 @@ type Employee' = (EmployeeId, Employee)
 data Employee = Employee {
   name :: Text ,
   contact :: Text ,
-  capabilities :: Text }
+  capabilities :: Text ,
+  colour :: Text }
 #ifdef FAY
   deriving (Eq)
 #else
@@ -38,4 +39,4 @@ data Employee = Employee {
 #endif
 
 newEmployee :: Employee
-newEmployee = Employee (pack "") (pack "") (pack "")
+newEmployee = Employee (pack "") (pack "") (pack "") (pack "000000")
