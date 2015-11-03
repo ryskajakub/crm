@@ -11,7 +11,7 @@ import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
 import           Data.Maybe                       (mapMaybe)
-import           FFI (Defined(Defined))
+import           FFI (Defined(Defined), ffi)
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
@@ -37,9 +37,10 @@ import           Crm.Component.Form
 import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
+
 plannedUpkeeps :: R.CrmRouter
                -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]
-               -> DOMElement
+               -> (DOMElement, Fay ())
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [
     th G.user ,
@@ -47,8 +48,8 @@ plannedUpkeeps router upkeepCompanies = let
     th "Adresa" ,
     th "Poznámky" ,
     th "Datum" ,
-    th G.edit ,
-    th G.check ]
+    th $ B.tooltip (B.TooltipData "tooltip" "left" "Přeplánovat") G.edit ,
+    th $ B.tooltip (B.TooltipData "tooltip" "right" "Uzavřít") G.check ]
   body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
     mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
       R.link machineTypeName (R.machineDetail machineId) router ,
@@ -72,20 +73,25 @@ plannedUpkeeps router upkeepCompanies = let
           (R.dailyPlan date Nothing)
           router ,
       td $ R.link
-        G.edit
+        (B.tooltip (B.TooltipData "tooltip" "bottom" "Přeplánovat") G.edit)
         (R.replanUpkeep upkeepId)
         router,
       td $ R.link
-        G.check
+        (B.tooltip (B.TooltipData "tooltip" "bottom" "Uzavřít") G.check)
         (R.upkeepDetail upkeepId)
         router ]) upkeepCompanies
 
   advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
   pageInfo' = pageInfo "Naplánované servisy" $ Just advice
+  tooltipInitializer = initializeTooltip
 
-  in B.grid $ B.row $
+  in (B.grid $ B.row $
     pageInfo' ++
-    [B.col (B.mkColProps 12) $ main $ B.table [head', body]]
+    [B.col (B.mkColProps 12) $ main $ B.table [head', body]] , tooltipInitializer)
+
+
+initializeTooltip :: Fay ()
+initializeTooltip = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
 
 
 -- | if the element is in the first list, put it in the other one, if the element
