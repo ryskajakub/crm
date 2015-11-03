@@ -11,7 +11,7 @@ import "fay-base" FFI (Defined(Undefined))
 
 import HaskellReact (Renderable, DOMElement)
 import HaskellReact.Event (SyntheticMouseEvent)
-import HaskellReact.Bootstrap
+import HaskellReact.Bootstrap (reactBootstrap)
 
 data ButtonProps = ButtonProps {
   bsStyle :: Defined Text , 

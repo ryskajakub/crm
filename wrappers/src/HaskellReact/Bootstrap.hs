@@ -28,8 +28,19 @@ reactBootstrap = foreignReact requireReactBootstrap
 data Technical1 = Technical1 {
   role :: Text }
 
+data TooltipData = TooltipData {
+  data_toggle :: Text ,
+  data_placement :: Text ,
+  title :: Text }
+
 technical1 :: Technical1
 technical1 = Technical1 "navigation"
+
+tooltip :: Renderable a
+        => TooltipData
+        -> a
+        -> DOMElement
+tooltip tooltipData child = constructDOMElement "span" mkAttrs tooltipData child
 
 navBar' :: Renderable a
         => (Attributes -> Attributes)
