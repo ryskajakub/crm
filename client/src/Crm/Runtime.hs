@@ -68,7 +68,7 @@ withPassword maybePassword callback = do
     password = case fromDefined password' of
       Just passInLocalStorage -> passInLocalStorage
       Nothing -> let
-        failingPassword = ""
+        failingPassword = "none"
         in pack failingPassword 
     passwordSettings = JQ.defaultAjaxSettings {
       JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
