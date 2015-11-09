@@ -1,5 +1,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
@@ -64,7 +65,7 @@ machineTypesListing CountListing = mkListing' jsonO $ const $ do
   return mappedRows
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences) -> do
+updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences :: [US.UpkeepSequence]) -> do
   ((cache, pool), sid) <- ask
   case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute

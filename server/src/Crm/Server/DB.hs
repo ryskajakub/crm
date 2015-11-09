@@ -530,7 +530,8 @@ machineTypesQuery' mid = autocomplete $ proc () -> do
 companyByIdQuery :: C.CompanyId -> Query CompanyRead
 companyByIdQuery companyId = proc () -> do
   companyRow <- queryTable companiesTable -< ()
-  restrict -< C._companyPK companyRow .== fmap pgInt4 companyId
+  restrict -< (C.getCompanyId (C._companyPK companyRow :: C.CompanyId' DBInt))
+    .== (C.getCompanyId (fmap pgInt4 companyId :: C.CompanyId' DBInt))
   returnA -< companyRow
 
 companyByIdCompanyQuery :: C.CompanyId -> Query CompanyCore

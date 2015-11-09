@@ -61,7 +61,7 @@ gulp.task('copy-jquery', function () {
 });
 
 gulp.task('compile', function() {
-  var fayCommand = "../server/.cabal-sandbox/bin/fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom --package-conf ../server/.cabal-sandbox/x86_64-linux-ghc-7.6.3-packages.conf.d/";
+  var fayCommand = "fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

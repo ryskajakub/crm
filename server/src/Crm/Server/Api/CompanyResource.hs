@@ -2,11 +2,12 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Crm.Server.Api.CompanyResource where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (pgDouble, pgStrictText, PGFloat8, Nullable, Column, runDelete, pgInt4, (.==))
+import           Opaleye                     (pgDouble, pgStrictText, PGFloat8, Nullable, Column, runDelete, pgInt4, (.==), (.===), PGInt8)
 import           Opaleye.Manipulation        (runInsertReturning, runUpdate)
 
 import           Control.Monad.Trans.Class   (lift)
@@ -111,7 +112,7 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
         _ -> LT
       ) unsortedResult')
 
-singleCompany :: Handler (IdDependencies' C.CompanyId)
+singleCompany :: Handler (IdDependencies' (C.CompanyId' Int))
 singleCompany = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   let theId = C.getCompanyId companyId
@@ -144,9 +145,9 @@ updateCompany = let
           (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))
   recomputeCache cId connection cache = 
     mapExceptT lift $ recomputeSingle cId connection cache
-  condition companyId companyRow = C._companyPK companyRow .== fmap pgInt4 companyId
+  condition companyId companyRow = C._companyPK companyRow .=== fmap pgInt4 companyId
   in mkInputHandler' (jsonO . jsonI) $ \companyData -> do
-    ((cache, pool), companyId) <- ask
+    ((cache, pool), companyId :: C.CompanyId) <- ask
     _ <- liftIO $ withResource pool $ \connection -> runUpdate
       connection
       companiesTable
@@ -157,7 +158,7 @@ updateCompany = let
 
 deleteCompany :: Handler (IdDependencies' C.CompanyId)
 deleteCompany = mkConstHandler' jsonO $ do
-  ((cache, pool), companyId) <- ask
+  ((cache, pool), companyId :: C.CompanyId) <- ask
   let theId = C.getCompanyId companyId
   liftIO $ withResource pool $ \connection -> 
     forM_ [
@@ -165,7 +166,7 @@ deleteCompany = mkConstHandler' jsonO $ do
       runDelete
         connection
         companiesTable
-        (\row -> C._companyPK row .== fmap pgInt4 companyId) >> return ()] $ \f -> f theId connection
+        (\row -> C._companyPK row .=== fmap pgInt4 companyId) >> return ()] $ \f -> f theId connection
   recomputeWhole pool cache
 
 companyResource :: Resource Dependencies (IdDependencies' C.CompanyId) C.CompanyId MachineMid Void

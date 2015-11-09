@@ -81,7 +81,7 @@ Library
     Crm.Shared.ServerRender
 
   Build-depends:
-    base >= 4.6 && < 4.8 ,
+    base >= 4.6 && < 4.9 ,
     mtl >= 2.0 && < 2.3 ,
     template-haskell ,
 
@@ -91,6 +91,7 @@ Library
     wai ,
     warp ,
 
+    regular ,
     async ,
     parsec ,
     resource-pool ,
@@ -99,13 +100,12 @@ Library
     HTTP ,
     base64-string ,
     base64-bytestring ,
-    opaleye >= 0.3.1.1 ,
+    opaleye >= 0.4.2.0 ,
     scrypt ,
     tagged ,
     tuple-th >= 0.2.4 ,
     lens ,
     text ,
-    regular ,
     transformers ,
     transformers-compat ,
     json-schema ,
@@ -135,6 +135,7 @@ Test-Suite tests
     wai ,
     warp ,
 
+    regular ,
     async ,
     resource-pool ,
     parsec ,
@@ -150,7 +151,7 @@ Test-Suite tests
     tuple-th ,
     transformers ,
     transformers-compat ,
-    opaleye >= 0.3.1.1 ,
+    opaleye >= 0.4.2.0 ,
     tasty >= 0.7 ,
     tasty-hunit ,
     tasty-smallcheck ,
@@ -180,7 +181,7 @@ Executable run-server
   if flag(build-run-server)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.8 ,
+      base >= 4.6 && < 4.9 ,
       server
   else
     buildable: False
@@ -194,7 +195,7 @@ Executable insert-pass
   if flag(build-insert-pass)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.8 ,
+      base >= 4.6 && < 4.9 ,
       haskeline ,
       transformers ,
       opaleye ,
@@ -214,7 +215,7 @@ Executable gen-api
   if flag(build-gen-api)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.8 ,
+      base >= 4.6 && < 4.9 ,
       server ,
       rest-core ,
       haskell-src-exts >= 1.16.0 ,
