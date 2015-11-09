@@ -44,7 +44,6 @@ mkLatLng = ffi " new google.maps.LatLng(%1,%2) "
 startMapOnLoad :: Fay () -> Fay ()
 startMapOnLoad = ffi " google.maps.event.addDomListener(window, 'load', %1) "
 
-
 addMarker :: Double -> Double -> Text -> Map -> Fay MapMarker
 addMarker lat lng color map' = let
   position = mkLatLng lat lng
@@ -56,7 +55,6 @@ mkMarker' = ffi " new google.maps.Marker({position: %1, map: %2, icon: %3}) "
 
 addClickListener :: MapMarker -> Fay () -> Fay ()
 addClickListener = ffi " google.maps.event.addListener(%1, 'click', %2) "
-
 
 mkGeocoderRequest :: Text -> GeocoderRequest
 mkGeocoderRequest = ffi " { \"address\":%1 } "
@@ -82,4 +80,4 @@ getResultsHead :: GeocoderResults -> Nullable GeocoderResult
 getResultsHead = ffi " (function () { var results = %1; return (results.length > 0 ? results[0] : null ); })() "
 
 getCoordinates :: GeocoderResult -> (Double, Double)
-getCoordinates = ffi " (function () { var location = %1['geometry']['location']; return [location.A, location.F] })() "
+getCoordinates = ffi " (function () { var location = %1['geometry']['location']; return [location.lat(), location.lng()] })() "
