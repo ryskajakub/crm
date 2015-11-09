@@ -13,7 +13,6 @@ import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictTex
 import           Opaleye                     (runQuery)
 
 import qualified Text.Parsec as P
--- import qualified Text.Parsec.Char as P
 
 import           Database.PostgreSQL.Simple  (Connection)
 
@@ -114,7 +113,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
 removeUpkeep :: Handler (IdDependencies' U.UpkeepId)
 removeUpkeep = mkConstHandler' jsonO $ do
   ((_, connection), U.UpkeepId upkeepIdInt) <- ask
-  deleteRows'' [createDeletion upkeepMachinesTable, createDeletion upkeepsTable]
+  deleteRows'' [createDeletion upkeepEmployeesTable, createDeletion upkeepMachinesTable, createDeletion upkeepsTable]
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
