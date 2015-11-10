@@ -288,6 +288,7 @@ nullDropdownRow inputState rowLabel elements display currentElement setId =
 
 multipleInputs :: forall a.
                   Text
+               -> [Text]
                -> Text
                -> OrderingControls
                -> ([a] -> Fay ())
@@ -295,7 +296,8 @@ multipleInputs :: forall a.
                -> [a] 
                -> a
                -> [DOMElement]
-multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag setList inputControl elems newField = 
+multipleInputs fieldLabel' overrideFieldLabels addNewButtonLabel orderingControlsFlag 
+    setList inputControl elems newField = 
 
   map (displayRow . assignPosition) (zipWithIndex elems) ++ [addAnotherFieldRow] where
 
@@ -333,9 +335,14 @@ multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag setList inputC
           Middle -> [upArrowLink]
           Last -> [upArrowLink]
           _ -> []
-      fieldLabel = label' 
-        (class'' ["control-label", "col-md-" <> showInt labelFieldSize])
-        (fieldLabel' <> " " <> showInt (index + 1))
+      fieldLabel = let
+        fl = case (drop index overrideFieldLabels) of
+          [] -> fieldLabel' <> " " <> showInt (index + 1)
+          fl':_ -> fl'
+        in label' 
+          (class'' ["control-label", "col-md-" <> showInt labelFieldSize])
+          fl
+          
       setFieldValue a' = let
         (start, _ : rest) = splitAt index elems
         in setList $ start ++ [a'] ++ rest
