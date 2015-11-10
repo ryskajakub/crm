@@ -8,15 +8,13 @@ import           Control.Monad             (forM_)
 import           Data.Monoid               ((<>))
 
 import           Data.Time.Calendar        (Day, fromGregorian)
-import           Data.Time.Format          (readTime)
+import           Data.Time.Format          (parseTimeOrError, defaultTimeLocale)
 import           Data.Time.Clock           (utctDay, UTCTime)
 import           Data.Bits                 (shiftL)
 import           Data.Word                 (Word32)
-import           Data.List.Unique          (repeated)
 import           Data.Text                 (pack, Text)
 import qualified Data.Text                 as Text
 
-import           System.Locale             (defaultTimeLocale)
 import           System.Random             (next, mkStdGen, StdGen)
 import           System.Random.Shuffle     (shuffle')
 
@@ -264,7 +262,7 @@ dayGen :: Gen Day
 dayGen = do 
   word32 <- choose (minBound, maxBound) :: Gen Word32
   let string = show word32
-  let utctime = readTime defaultTimeLocale "%s" string
+  let utctime = parseTimeOrError False defaultTimeLocale "%s" string
   return $ utctDay utctime
 
 instance Arbitrary U.Upkeep where

@@ -7,7 +7,6 @@ extra-deps:
 - scrypt-0.5.0
 - rest-core-0.36.0.5
 - rest-types-1.14.0.1
-- Unique-0.4
 - tuple-th-0.2.5
 - rest-gen-0.17.1
 - regular-0.3.4.4

@@ -163,7 +163,6 @@ Test-Suite tests
     random ,
     random-shuffle ,
     safe ,
-    Unique ,
     postgresql-simple ,
     aeson ,
     text ,
