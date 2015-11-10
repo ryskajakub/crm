@@ -40,9 +40,12 @@ parseMarkup t = fmap joinListElements $ parse markupParser "" (unpack t')
 
 markupParser :: MyParsec [Markup]
 markupParser = do
-  result <- many $ try listElementParser <|> plainLineParser 
+  result <- many $ try listElementParser <|> try headerParser <|> plainLineParser 
   eof
   return result
+
+headerParser :: MyParsec Markup
+headerParser = Header . pack <$> (string "+ " *> line)
 
 listElementParser :: MyParsec Markup
 listElementParser = UnorderedList <$> ((:[]) . pack <$> (string "- " *> line))

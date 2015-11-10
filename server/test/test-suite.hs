@@ -45,6 +45,7 @@ tests = testGroup "All tests" [
 
 parserTests :: TestTree
 parserTests = testGroup "Parser test" [
+  testCase "Header parser test" headerParserTest ,
   testCase "Test parsing of a text with multiple lists" multipleLists ,
   testCase "Parse list should survive no newline at the end." noNewlineAtTheEnd ,
   testProperty "Day parse" parseDayProp ,
@@ -96,16 +97,36 @@ noNewlineAtTheEnd = let
   in assertEqual "Newline should be added at the end"
     expectedResult result
 
+headerParserTest :: Assertion
+headerParserTest = let
+  input = unlines [
+    "+ header" ,
+    "plain text" ,
+    "+noheader" ,
+    "+ header 2" ,
+    "- list elem 1" ,
+    "-  list elem 2" ]
+  result = parseMarkup (pack input)
+  expectedResult = Right [
+    SR.Header . pack $ "header" ,
+    SR.PlainText . pack $ "plain text" ,
+    SR.PlainText . pack $ "+noheader" ,
+    SR.Header . pack $ "header 2" ,
+    SR.UnorderedList [
+      pack "list elem 1" ,
+      pack " list elem 2" ] ]
+  in assertEqual "Headers should be parsed correctly." expectedResult result
+
 multipleLists :: Assertion
 multipleLists = let
-  list = unlines [
+  input = unlines [
     "plain text" ,
     "another plain text" ,
     "-  list elem 1 " ,
     "- list elem 2 " ,
     "another another plain text 2 " ,
     "- list elem 3 " ]
-  result = parseMarkup (pack list)
+  result = parseMarkup (pack input)
   expectedResult = Right [
     SR.PlainText . pack $ "plain text" ,
     SR.PlainText . pack $ "another plain text" ,
