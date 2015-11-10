@@ -22,7 +22,7 @@ import           Crm.Page.MachineKind      (machineKindSettings)
 import           Crm.Page.Upkeep           (upkeepNew, plannedUpkeeps, upkeepDetail)
 import           Crm.Page.UpkeepHistory    (upkeepHistory)
 import           Crm.Page.MachineType      (machineTypesList, machineTypeForm, machineTypePhase1Form)
-import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit)
+import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit, employeeTasks)
 import           Crm.Page.MachineSchema    (schema)
 import           Crm.Page.NotFound         (notFound)
 import           Crm.Page.Dashboard        (dashboard)
@@ -100,6 +100,8 @@ main' = do
         in simpleReactBody' body callback
       D.DailyPlan ymd employeeId dailyPlanData es ->
         n . emptyCallback $ upkeepPrint router ymd employeeId dailyPlanData es
+      D.EmployeeTasks (ED.EmployeeTasksData employeeId employee employeeTasks') ->
+        n . emptyCallback $ employeeTasks employeeId employee employeeTasks'
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

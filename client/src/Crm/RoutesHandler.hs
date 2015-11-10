@@ -207,7 +207,11 @@ startRouter appVar = startedRouter where
         Left _ -> const $ modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
         Right employeeId -> 
           fetchEmployee employeeId $ \employee ->
-            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ]
+            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ,
+    useHandler employeeTasks' $ \employeeId ->
+      fetchEmployeeTasks employeeId $ \(employee, employeeTasks) -> let 
+        e = D.EmployeeTasks $ ED.EmployeeTasksData employeeId employee employeeTasks
+        in modify' e ]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

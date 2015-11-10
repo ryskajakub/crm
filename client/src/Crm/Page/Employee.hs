@@ -4,6 +4,7 @@
 module Crm.Page.Employee (
   employeeEdit ,
   employeePage ,
+  employeeTasks ,
   newEmployeeForm ) where
 
 import           Data.Text                        (fromString, Text, length, (<>), unpack)
@@ -21,10 +22,12 @@ import           Crm.Server                       (createEmployee, updateEmploye
 import           Crm.Component.Form
 import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.EmployeeData            as ED
-import qualified Crm.Shared.Employee              as E
 import           Crm.Router                       (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router                       as R
 import           Crm.Helpers                      (pageInfo, validationHtml)
+
+import qualified Crm.Shared.Employee              as E
+import qualified Crm.Shared.EmployeeTask          as ET
 
 
 employeePage :: CrmRouter
@@ -32,10 +35,12 @@ employeePage :: CrmRouter
              -> DOMElement
 employeePage router employees = mkGrid where
 
-  mkEmployeeRow (employeeId, employee) = tr [ 
-    td $ R.link (E.name employee) (R.editEmployee employeeId) router ,
-    td $ E.contact employee ,
-    td $ E.capabilities employee ]
+  mkEmployeeRow (employeeId, employee) = let
+    in tr [ 
+      td $ R.link (E.name employee) (R.editEmployee employeeId) router ,
+      td $ E.contact employee ,
+      td $ E.capabilities employee ,
+      td $ R.link "Činnosti" (R.employeeTasks employeeId) router ]
 
   addEmployeeButton = BTN.button'
     (BTN.buttonProps {
@@ -51,9 +56,10 @@ employeePage router employees = mkGrid where
     where
     head' =
       thead $ tr [
-        th $ "Jméno" ,
-        th $ "Kontakt" ,
-        th $ "Kvalifikace" ]
+        th "Jméno" ,
+        th "Kontakt" ,
+        th "Kvalifikace" ,
+        th "Činnosti" ]
     body = tbody $ map mkEmployeeRow employees
 
 
@@ -139,3 +145,11 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
       labels = ["Zimolez", "Korál", "Hrachový lusk", "Včelí vosk", "Stříbrná pivoňka", "Rezavá červeň", "Regata", "Modré curacao", "Levandule", "Stříbrný oblak"]
       coloursLabels = colours' `zip` labels
     inputRowEditing = inputRow Editing
+
+
+employeeTasks :: 
+  E.EmployeeId -> 
+  E.Employee ->
+  [ET.EmployeeTask] ->
+  DOMElement
+employeeTasks = undefined

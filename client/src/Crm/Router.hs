@@ -30,6 +30,7 @@ module Crm.Router (
   upkeepDetail' ,
   editEmployee' ,
   employees' ,
+  employeeTasks' ,
 
   dailyPlan ,
   login ,
@@ -55,7 +56,8 @@ module Crm.Router (
   extraFields ,
   machinesSchema ,
   upkeepDetail ,
-  editEmployee ) where
+  editEmployee ,
+  employeeTasks ) where
 
 import           Data.Text                   (fromString, showInt, Text, (<>))
 import           Prelude                     hiding (div, span) 
@@ -156,6 +158,9 @@ mkCompaniesRoute = Route "companies" Nothing
 mkUpkeepsRoute :: Route a
 mkUpkeepsRoute = Route "upkeeps" Nothing
 
+mkEmployeesRoute :: Route a
+mkEmployeesRoute = Route "employees" Nothing
+
 
 -- url encodables for id newtypes over int
 
@@ -173,6 +178,9 @@ machineTypeIdEncodable = mkSimpleURLEncodable MT.getMachineTypeId MT.MachineType
 
 contactPersonIdEncodable :: URLEncodable CP.ContactPersonId
 contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.ContactPersonId
+
+employeeIdEncodable :: URLEncodable E.EmployeeId
+employeeIdEncodable = mkSimpleURLEncodable E.getEmployeeId E.EmployeeId
 
 newOrEditEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable (Either Text a)
 newOrEditEncodable toInt fromInt = URLEncodable
@@ -254,10 +262,14 @@ machineTypeEdit' :: RouteAndMkHandler MT.MachineTypeId
 machineTypeEdit' = prepareRouteAndMkHandler (Route "machine-types" $ Nothing) machineTypeIdEncodable
 
 editEmployee' :: RouteAndMkHandler (Either Text E.EmployeeId)
-editEmployee' = 
-  prepareRouteAndMkHandler 
-  (Route "employees" $ Nothing)
+editEmployee' = prepareRouteAndMkHandler 
+  mkEmployeesRoute
   (newOrEditEncodable E.getEmployeeId E.EmployeeId)
+
+employeeTasks' :: RouteAndMkHandler E.EmployeeId
+employeeTasks' = prepareRouteAndMkHandler
+  (mkEmployeesRoute { postfix = Just "tasks" })
+  employeeIdEncodable
 
 contactPersonList' :: RouteAndMkHandler C.CompanyId
 contactPersonList' = prepareRouteAndMkHandler 
@@ -353,3 +365,6 @@ contactPersonEdit = fst contactPersonEdit'
 
 extraFields :: CrmRoute
 extraFields = fst extraFields' ()
+
+employeeTasks :: E.EmployeeId -> CrmRoute
+employeeTasks = fst employeeTasks'

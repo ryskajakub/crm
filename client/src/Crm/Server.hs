@@ -40,6 +40,7 @@ module Crm.Server (
   fetchPhoto ,
   fetchDailyPlanData ,
   fetchDailyPlanEmployees ,
+  fetchEmployeeTasks ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -68,6 +69,7 @@ import qualified Crm.Shared.Photo                    as P
 import qualified Crm.Shared.PhotoMeta                as PM
 import qualified Crm.Shared.YearMonthDay             as YMD
 import qualified Crm.Shared.Employee                 as E
+import qualified Crm.Shared.EmployeeTask             as ET
 import qualified Crm.Shared.UpkeepSequence           as US
 import qualified Crm.Shared.Direction                as DIR
 import qualified Crm.Shared.ExtraField               as EF
@@ -141,6 +143,14 @@ deleteContactPerson ident cb = XCP.remove ident $ const cb
 
 dayParam :: YMD.YearMonthDay -> [(String, String)]
 dayParam day = [("day", unpack . displayDateNumeral $ day)]
+
+fetchEmployeeTasks :: 
+  E.EmployeeId ->
+  ((E.Employee, [ET.EmployeeTask]) -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchEmployeeTasks employeeId callback =
+  undefined
 
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())
