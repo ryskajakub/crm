@@ -11,6 +11,7 @@ import "fay-base" Data.Text (fromString, Text)
 import "fay-base" Prelude
 
 import qualified HaskellReact as HR
+import qualified HaskellReact.Tag.Table as T
 import HaskellReact.Bootstrap (reactBootstrap)
 
 
@@ -27,4 +28,4 @@ table ::
   HR.DOMElement
 table tableStyle' contents = let 
   tableClasses = ["table"] ++ (maybe [] ((:[]) . styleAsClass) tableStyle')
-  in HR.table' (HR.class'' tableClasses) contents
+  in T.table' (HR.class'' tableClasses) contents
