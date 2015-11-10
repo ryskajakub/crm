@@ -65,6 +65,7 @@ upkeepPrint router day employeeId data' employees = let
       renderItem (SR.UnorderedList unorderedList) = ul $
         map renderListItem unorderedList
       renderItem (SR.PlainText t) = text2DOM t
+      renderItem (SR.Header h) = h4 h
       renderListItem t = li t
       in BT.table (Just BT.Bordered) [
         tr [th "Zařízení", td . text2DOM . MT.machineTypeName $ machineType ] ,
