@@ -26,7 +26,7 @@ import           Test.QuickCheck.Random
 
 import           Crm.Server.Core           (nextServiceDate, Planned(..), nextServiceTypeHint)
 import           Crm.Server.Helpers
-import           Crm.Server.Parsers        (parseList, parseDate)
+import           Crm.Server.Parsers        (parseMarkup, parseDate)
 
 import qualified Crm.Shared.Upkeep         as U
 import qualified Crm.Shared.Machine        as M
@@ -48,7 +48,7 @@ parserTests = testGroup "Parser test" [
   testCase "Test parsing of a text with multiple lists" multipleLists ,
   testCase "Parse list should survive no newline at the end." noNewlineAtTheEnd ,
   testProperty "Day parse" parseDayProp ,
-  parseListProperties ]
+  parseMarkupProperties ]
 
 hintNextServiceTypeTests :: TestTree
 hintNextServiceTypeTests = testGroup "Next service type: All tests" [unitTests', propertyTests']
@@ -90,7 +90,7 @@ upkeep = U.Upkeep {
 noNewlineAtTheEnd :: Assertion
 noNewlineAtTheEnd = let
   list = "item1 \n item2"
-  Right result = parseList . pack $ list
+  Right result = parseMarkup . pack $ list
   expectedResult = map (SR.PlainText . pack) [
     "item1 ", " item2" ]
   in assertEqual "Newline should be added at the end"
@@ -105,7 +105,7 @@ multipleLists = let
     "- list elem 2 " ,
     "another another plain text 2 " ,
     "- list elem 3 " ]
-  result = parseList (pack list)
+  result = parseMarkup (pack list)
   expectedResult = Right [
     SR.PlainText . pack $ "plain text" ,
     SR.PlainText . pack $ "another plain text" ,
@@ -126,10 +126,11 @@ smallUpkeepAssertion = let
   in assertEqual "The 2000 sequence must be picked"
     (US.repetition expectedResult) (US.repetition result)
 
-parseListProperty :: NonEmptyList SR.Markup -> Bool
-parseListProperty (NonEmpty markups') =
-  (Right markups ==) . parseList . Text.unlines . concat . map markupToText $ markups
+parseMarkupProperty :: NonEmptyList SR.Markup -> Bool
+parseMarkupProperty (NonEmpty markups') =
+  (Right markups ==) . parseMarkup . Text.unlines . concat . map markupToText $ markups
     where
+    markupToText (SR.Header h) = [pack "+ " <> h]
     markupToText (SR.PlainText pt) = [pt]
     markupToText (SR.UnorderedList l) = map (\listElement -> pack "- " <> listElement) l
     markups = foldr foldStep [] markups'
@@ -251,12 +252,12 @@ parseDayProp (Day' day) (Month month) (Year year) =
   expectedResult = Right (day, month, year)
   input = show day <> "." <> show month <> "." <> show year
 
-parseListProperties :: TestTree
-parseListProperties = let
+parseMarkupProperties :: TestTree
+parseMarkupProperties = let
   random = mkQCGen 0
   option = QuickCheckReplay $ Just (random, 0)
-  in localOption option $ testGroup "List parser: Property tests" [
-    testProperty "Correctly parse any input lines" parseListProperty ]
+  in localOption option $ testGroup "Markup parser: Property tests" [
+    testProperty "Correctly parse any input lines" parseMarkupProperty ]
 
 dayGen :: Gen Day
 dayGen = do 
@@ -307,7 +308,10 @@ instance Arbitrary SR.Markup where
       unorderedListGen = do
         NonEmpty list <- arbitrary
         return . SR.UnorderedList $ list
-    oneof [plainTextGen, unorderedListGen]
+      headerGen = do
+        t <- arbitrary
+        return . SR.Header $ t
+    oneof [plainTextGen, unorderedListGen, headerGen]
 
 plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
@@ -317,7 +321,6 @@ plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
   in nextServiceDate undefined undefined upkeepsShuffled undefined == (earliestDay, Planned)
-
 
 propertyTests' :: TestTree
 propertyTests' = let

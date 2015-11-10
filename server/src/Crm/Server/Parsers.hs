@@ -1,5 +1,5 @@
 module Crm.Server.Parsers (
-  parseList ,
+  parseMarkup ,
   parseDate ) where
 
 import           Text.Parsec
@@ -28,8 +28,8 @@ parseDate = parse parseDate' ""
 
 type MyParsec a = Parsec String () a
 
-parseList :: Text -> Either ParseError [Markup]
-parseList t = fmap joinListElements $ parse listParser "" (unpack t')
+parseMarkup :: Text -> Either ParseError [Markup]
+parseMarkup t = fmap joinListElements $ parse markupParser "" (unpack t')
   where
   t' = if T.null t || (('\n' /=) . T.last $ t)
     then t `T.snoc` '\n'
@@ -38,8 +38,8 @@ parseList t = fmap joinListElements $ parse listParser "" (unpack t')
   foldStep (UnorderedList ul') (UnorderedList ul : rest) = (UnorderedList $ ul' ++ ul) : rest
   foldStep (element) (acc) = element : acc
 
-listParser :: MyParsec [Markup]
-listParser = do
+markupParser :: MyParsec [Markup]
+markupParser = do
   result <- many $ try listElementParser <|> plainLineParser 
   eof
   return result

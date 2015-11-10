@@ -57,7 +57,7 @@ import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', 
                                              mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
-import           Crm.Server.Parsers          (parseList)
+import           Crm.Server.Parsers          (parseMarkup)
 
 import           TupleTH                     (proj, catTuples)
 
@@ -213,7 +213,7 @@ printDailyPlanListing' employeeId connection day = do
     let 
       upkeep = convert upkeepMapped :: UpkeepMapped
       listifyNote (um @ (UM.UpkeepMachine {})) = 
-        (um, catchError . parseList . UM.upkeepMachineNote $ um) where
+        (um, catchError . parseMarkup . UM.upkeepMachineNote $ um) where
           catchError (Right r) = Just r
           catchError (Left {}) = Nothing
     employees <- fmap (map $ \e -> let 
