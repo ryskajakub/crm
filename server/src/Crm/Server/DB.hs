@@ -132,7 +132,7 @@ import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connecti
 import           Opaleye.QueryArr                     (Query, QueryArr)
 import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
 import           Opaleye.Column                       (Column, Nullable)
-import           Opaleye.Order                        (orderBy, asc, limit, PGOrd)
+import           Opaleye.Order                        (orderBy, asc, limit, PGOrd, desc)
 import           Opaleye.RunQuery                     (runQuery)
 import           Opaleye.Operators                    (restrict, lower, (.==), (.||), in_)
 import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, PGInt4, PGInt8, 
@@ -690,7 +690,8 @@ expandedUpkeepsByCompanyQuery companyId = let
     machineType <- join machineTypesQuery -< (sel4 machine)
     restrict -< sel2 machine .== pgInt4 companyId
     returnA -< (upkeepRow, upkeepMachineRow, machineType)
-  in upkeepsWithMachines
+  orderedUpkeepsWithMachines = orderBy (desc (\(u,_,_) -> $(proj 6 1) u) <> desc (\(u,_,_) -> $(proj 6 0) u)) upkeepsWithMachines
+  in orderedUpkeepsWithMachines
 
 singleEmployeeQuery :: Int -> Query (EmployeeTable)
 singleEmployeeQuery employeeId = proc () -> do
