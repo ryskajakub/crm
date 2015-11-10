@@ -5,7 +5,8 @@ module Crm.Page.UpkeepPrint (
   upkeepPrint ) where
 
 
-import           Data.Text                    (fromString, (<>))
+import           Data.Text                    (fromString, (<>), intercalate)
+import qualified Data.Text                    as T
 import           Prelude                      hiding (div)
 import           FFI                          (Defined(Defined))
 
@@ -43,7 +44,7 @@ upkeepPrint router day employeeId data' employees = let
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) employeeId $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
-  displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $
+  displayUpkeep (_, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
@@ -52,7 +53,9 @@ upkeepPrint router day employeeId data' employees = let
     upkeepPrintDataHeader = [
       h3 (text2DOM . C.companyName $ company) ,
       BT.table (Just BT.Bordered) [
-        tr [th "Adresa", td (text2DOM . C.companyAddress $ company)]] ]
+        tr [th "Adresa", td (text2DOM . C.companyAddress $ company)] ,
+        tr [th "Posádka", td . text2DOM . T.intercalate " + " . map renderEmployee $ employees']]]
+    renderEmployee (_, employee) = E.name employee
     rdrMachines = map $ \(machine, machineType, contactPerson, (upkeepMachine, markup')) -> let
       upkeepMachineText = case markup' of
         Just (markup) -> div . render $ markup
