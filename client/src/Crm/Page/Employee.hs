@@ -73,7 +73,7 @@ employeeEdit :: E.EmployeeId
              -> Var D.AppState
              -> DOMElement
 employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
-  buttonLabel = "Edituj"
+  buttonLabel = "Ulož"
   buttonAction = updateEmployee employeeId employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
