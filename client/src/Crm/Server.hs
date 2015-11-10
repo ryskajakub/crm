@@ -149,8 +149,12 @@ fetchEmployeeTasks ::
   ((E.Employee, [ET.EmployeeTask]) -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchEmployeeTasks employeeId callback =
-  undefined
+fetchEmployeeTasks employeeId callback = \r -> let
+  employee = E.Employee (pack "Pepa") undefined undefined undefined
+  tasks = [
+    ET.EmployeeTask (YMD.YearMonthDay 2015 1 1 YMD.DayPrecision) (pack "hotovo"), 
+    ET.EmployeeTask (YMD.YearMonthDay 2015 11 1 YMD.DayPrecision) (pack "konec borec")]
+  in callback (employee, tasks)
 
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())

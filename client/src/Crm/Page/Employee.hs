@@ -16,6 +16,7 @@ import           Data.Var                         (Var, modify)
 import           HaskellReact
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.Bootstrap.Table     as BT
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import           Crm.Server                       (createEmployee, updateEmployee)
@@ -24,7 +25,7 @@ import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.EmployeeData            as ED
 import           Crm.Router                       (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router                       as R
-import           Crm.Helpers                      (pageInfo, validationHtml)
+import           Crm.Helpers                      (pageInfo, validationHtml, displayDate)
 
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.EmployeeTask          as ET
@@ -152,4 +153,16 @@ employeeTasks ::
   E.Employee ->
   [ET.EmployeeTask] ->
   DOMElement
-employeeTasks = undefined
+employeeTasks employeeId employee tasks = let
+  tasksTable = let
+    head' = tr [
+      th "Datum" ,
+      th "Činnost" ]
+    mkBody = map $ \(ET.EmployeeTask date' task) ->
+      tr [
+        td . displayDate $ date' ,
+        td task ]
+    in BT.table (Just BT.Bordered) (head' : mkBody tasks)
+  in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
+    h2 ("Úkoly - " <> E.name employee) ,
+    tasksTable ])
