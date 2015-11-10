@@ -7,6 +7,7 @@ module Crm.Page.UpkeepPrint (
 
 import           Data.Text                    (fromString, (<>))
 import           Prelude                      hiding (div)
+import           FFI                          (Defined(Defined))
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
@@ -46,7 +47,7 @@ upkeepPrint router day employeeId data' employees = let
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
-      (concat . rdrMachines $ machinesData) )
+      (rdrMachines machinesData) )
     where
     upkeepPrintDataHeader = [
       h3 (text2DOM . C.companyName $ company) ,
@@ -62,10 +63,13 @@ upkeepPrint router day employeeId data' employees = let
         map renderListItem unorderedList
       renderItem (SR.PlainText t) = text2DOM t
       renderListItem t = li t
-      in map (B.col (B.mkColProps 6)) [
-        strong "Zařízení", text2DOM $ MT.machineTypeName machineType <> " " <> M.note machine <> " " <> M.serialNumber machine ,
-        strong "Kontaktní osoba", text2DOM $ (maybe "" CP.name contactPerson) <> " " <> (maybe "" CP.phone contactPerson)] ++ [
-        (B.col (B.mkColProps 12) upkeepMachineText) ]
+      in BT.table (Just BT.Bordered) [
+        tr [th "Zařízení", td . text2DOM . MT.machineTypeName $ machineType ] ,
+        tr [th "Sériové číslo", td . text2DOM . M.serialNumber $ machine ] ,
+        tr [th "Poznámka", td . text2DOM . M.note $ machine ] ,
+        tr [th "Kontaktní osoba", td . text2DOM . (maybe "---" CP.name) $ contactPerson ] ,
+        tr [th "Telefon", td . text2DOM . (maybe "---" CP.phone) $ contactPerson ] ,
+        tr . (td'' mkAttrs (mkTableCellAttributes { colSpan = Defined 2 } )) $ upkeepMachineText ]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
     (B.row $ [
