@@ -335,7 +335,7 @@ multipleInputs fieldLabel' addNewButtonLabel orderingControlsFlag setList inputC
           _ -> []
       fieldLabel = label' 
         (class'' ["control-label", "col-md-" <> showInt labelFieldSize])
-        (fieldLabel' <> " " <> showInt index)
+        (fieldLabel' <> " " <> showInt (index + 1))
       setFieldValue a' = let
         (start, _ : rest) = splitAt index elems
         in setList $ start ++ [a'] ++ rest
