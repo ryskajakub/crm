@@ -206,7 +206,7 @@ printDailyPlanListing' :: (MonadIO m, Functor m)
                        -> Connection
                        -> Day
                        -> ExceptT (Reason r) m [(U.Upkeep, C.Company, [(E.EmployeeId, E.Employee)], 
-                          [(M.Machine, MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
+                          [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
 printDailyPlanListing' employeeId connection day = do
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
@@ -223,7 +223,7 @@ printDailyPlanListing' employeeId connection day = do
     machines <- fmap (map $ \(m, mt, cp, um) -> (
       $(proj 6 5) $ (convert m :: MachineMapped) , 
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
-      $(proj 3 2) $ (convert cp :: ContactPersonMapped) ,
+      toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 
       liftIO $ runQuery connection (machinesInUpkeepQuery'' ($(proj 2 0) upkeep))
     (company :: C.Company) <-

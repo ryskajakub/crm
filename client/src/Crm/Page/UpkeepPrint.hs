@@ -4,6 +4,7 @@
 module Crm.Page.UpkeepPrint (
   upkeepPrint ) where
 
+
 import           Data.Text                    (fromString, (<>))
 import           Prelude                      hiding (div)
 
@@ -25,11 +26,12 @@ import qualified Crm.Shared.UpkeepMachine     as UM
 import qualified Crm.Shared.ServerRender      as SR
 import qualified Crm.Shared.YearMonthDay      as YMD
 
+
 upkeepPrint :: R.CrmRouter
             -> YMD.YearMonthDay
             -> Maybe E.EmployeeId
             -> [(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, 
-               MT.MachineType, CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
+               MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
 upkeepPrint router day employeeId data' employees = let
@@ -41,12 +43,15 @@ upkeepPrint router day employeeId data' employees = let
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
   displayUpkeep (_, company, _, machinesData) = div' (class'' ["row", "print-company"]) $
-    (B.col (B.mkColProps 12) upkeepPrintDataHeader) :
-    (concat . rdrMachines $ machinesData) 
+    B.col (B.mkColProps 12) (
+      upkeepPrintDataHeader ++
+      [h4 "Úkony"] ++
+      (concat . rdrMachines $ machinesData) )
     where
-    upkeepPrintDataHeader = BT.table (Just BT.Bordered) [
-      tr [th "Firma", td (text2DOM . C.companyName $ company)] ,
-      tr [th "Adresa", td (text2DOM . C.companyAddress $ company)]]
+    upkeepPrintDataHeader = [
+      h3 (text2DOM . C.companyName $ company) ,
+      BT.table (Just BT.Bordered) [
+        tr [th "Adresa", td (text2DOM . C.companyAddress $ company)]] ]
     rdrMachines = map $ \(machine, machineType, contactPerson, (upkeepMachine, markup')) -> let
       upkeepMachineText = case markup' of
         Just (markup) -> div . render $ markup
@@ -59,7 +64,7 @@ upkeepPrint router day employeeId data' employees = let
       renderListItem t = li t
       in map (B.col (B.mkColProps 6)) [
         strong "Zařízení", text2DOM $ MT.machineTypeName machineType <> " " <> M.note machine <> " " <> M.serialNumber machine ,
-        strong "Kontaktní osoba", text2DOM $ CP.name contactPerson <> " " <> CP.phone contactPerson] ++ [
+        strong "Kontaktní osoba", text2DOM $ (maybe "" CP.name contactPerson) <> " " <> (maybe "" CP.phone contactPerson)] ++ [
         (B.col (B.mkColProps 12) upkeepMachineText) ]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :

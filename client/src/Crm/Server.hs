@@ -151,11 +151,11 @@ fetchDailyPlanEmployees day = XPP.list (maxCount ++ dayParam day)
 fetchDailyPlanData :: YMD.YearMonthDay
                    -> Maybe E.EmployeeId
                    -> ([(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
-                      CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
+                      Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
               -> R.CrmRouter
                    -> Fay ()
 fetchDailyPlanData day employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
-  (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,a3,(a4',toMaybe a4''))) d))
+  (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,toMaybe a3,(a4',toMaybe a4''))) d))
   where
     allParams = maxCount ++ dayParam day
     remoteCall = maybe (XU.listPrint allParams) (XEU.listPrint allParams) employeeId

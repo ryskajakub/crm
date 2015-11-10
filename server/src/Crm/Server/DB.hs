@@ -559,13 +559,16 @@ machinesInUpkeepQuery' upkeepId = proc () -> do
   (m, mt, _) <- machinesInUpkeepQuery''' upkeepId -< ()
   returnA -< (m, mt)
 
-machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsTable, UpkeepMachinesTable)
-machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = proc () -> do
-  (machineRow, machineTypeRow, upkeepMachinesRow) <- machinesInUpkeepQuery''' upkeepIdInt -< ()
-  contactPersonRow <- contactPersonsQuery -< ()
-  restrict -< $(proj 11 0) machineRow .== $(proj 5 1) contactPersonRow
-  returnA -< (machineRow, machineTypeRow, contactPersonRow, upkeepMachinesRow)
-
+machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable, UpkeepMachinesTable)
+machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = let
+  joined = leftJoin
+    (machinesInUpkeepQuery''' upkeepIdInt)
+    contactPersonsQuery
+    (\((machineRow,_,_), contactPersonRow) -> $(proj 11 0) machineRow .== $(proj 5 1) contactPersonRow)
+  in proc () -> do
+    ((a,b,c), contactPersons) <- joined -< ()
+    returnA -< (a,b,contactPersons,c)
+  
 machinesQ :: Int -> Query (MachinesTable, MachineTypesTable)
 machinesQ companyId = orderBy (asc(\(machine,_) -> sel2 machine)) $ proc () -> do
   m @ (_,companyFK,_,machineTypeFK,_,_,_,_,_,_,_) <- machinesQuery -< ()
