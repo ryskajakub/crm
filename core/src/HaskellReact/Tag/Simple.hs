@@ -13,6 +13,7 @@ module HaskellReact.Tag.Simple (
   section , section' ,
   main , main' ,
   tr , tr' ,
+  table , table' ,
   thead , thead' ,
   tbody , tbody' ,
   th , th' ,
@@ -109,6 +110,12 @@ td' = constructSimple "td"
 
 td :: (Renderable a) => a -> DOMElement
 td = td' defaultAttributes
+
+table :: Renderable a => a -> DOMElement
+table = table' defaultAttributes
+
+table' :: Renderable a => Attributes -> a -> DOMElement
+table' = constructSimple "table"
 
 thead :: (Renderable a) => a -> DOMElement
 thead = thead' defaultAttributes
