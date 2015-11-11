@@ -22,11 +22,12 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import           Crm.Server                       (createEmployee, updateEmployee)
 import           Crm.Component.Form
+import           Crm.Component.DatePicker         as DP
 import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.EmployeeData            as ED
 import           Crm.Router                       (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router                       as R
-import           Crm.Helpers                      (pageInfo, validationHtml, displayDate)
+import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, rmap, lmap)
 
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.EmployeeTask          as ET
@@ -104,7 +105,7 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
     else ["Jméno musí mít alespoň jeden znak."]
 
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    (B.grid $ (B.row $ pageInfo') : [
+    (B.grid $ (B.row pageInfo') : [
       inputRowEditing
         "Jméno" 
         (SetValue $ E.name employee) $ 
@@ -170,6 +171,37 @@ employeeTasks employeeId tasks router = let
 
 
 employeeTask ::
+  Var D.AppState ->
   ED.EmployeeTaskData ->
   DOMElement
-employeeTask _ = div "employee task form"
+employeeTask appVar (ED.EmployeeTaskData employeeTask taskDatePicker employeeTaskId) = mkForm where
+  mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
+    B.grid $ (B.row . B.col (B.mkColProps 12) . h2 $ "Nový úkol") : inputRows
+  inputRowEditing = inputRow Editing
+  inputRows = [dateRow, descriptionRow, submitButton]
+
+  modify' :: (ED.EmployeeTaskData -> ED.EmployeeTaskData) -> Fay ()
+  modify' modifyEtd = modify appVar $ \appState -> appState {
+    D.navigation = case D.navigation appState of 
+      D.EmployeeTaskScreen (etd @ (ED.EmployeeTaskData {})) -> D.EmployeeTaskScreen . modifyEtd $ etd
+      _ -> D.navigation appState }
+
+  datePicker = let
+    modifyDatepickerDate newDate = modify' $ \etd -> etd {
+      ED.taskDatePicker = lmap (\t -> lmap (const newDate) t) (ED.taskDatePicker etd) }
+    setPickerOpenness openness = modify' $ \etd -> etd {
+      ED.taskDatePicker = lmap (\t -> rmap (const openness) t) (ED.taskDatePicker etd) }
+    setDate date = case date of
+      Right date' -> modify' $ \etd -> etd {
+        ED.employeeTask = employeeTask { ET.date = date' } ,
+        ED.taskDatePicker = rmap (const . displayDate $ date') taskDatePicker }
+      Left text' -> modify' $ \etd -> etd {
+        ED.taskDatePicker = rmap (const text') taskDatePicker }
+    dateValue = if (displayDate . ET.date $ employeeTask) == snd taskDatePicker
+      then Right . ET.date $ employeeTask
+      else Left . snd $ taskDatePicker
+    in DP.datePicker Editing (fst taskDatePicker) modifyDatepickerDate setPickerOpenness dateValue setDate
+
+  dateRow = oneElementRow "Datum" datePicker
+  descriptionRow = text2DOM ""
+  submitButton = text2DOM ""

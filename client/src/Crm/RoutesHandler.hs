@@ -87,6 +87,8 @@ startRouter appVar = startedRouter where
         modify appVar $ \appState -> appState { D.navigation = 
           D.FrontPage (order, direction) data' }) crmRouter )]
 
+  newDatePickerData = ((nowYMD, False), displayDate nowYMD)
+
   routes = [
     useHandler login' $ const . const $ 
       modify appVar $ \appState -> appState { D.navigation = D.Login "" False } ,
@@ -111,11 +113,11 @@ startRouter appVar = startedRouter where
     useHandler employeeTask' $ \employeeId' ->
       case employeeId' of
         Left _ -> const $ modify appVar $ \appState -> appState {
-          D.navigation = D.EmployeeTaskScreen . ED.NewEmployeeTask $ ET.newEmployeeTask }
+          D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData ET.newEmployeeTask newDatePickerData Nothing }
         Right employeeTaskId ->
           fetchEmployeeTask employeeTaskId $ \employeeTaskData ->
             modify appVar $ \appState -> appState {
-              D.navigation = D.EmployeeTaskScreen . ED.EditEmployeeTask $ employeeTaskData } ,
+              D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData employeeTaskData undefined undefined } ,
     useHandler newMachinePhase1' $ \companyId ->
       withCompany'
         companyId
@@ -156,7 +158,7 @@ startRouter appVar = startedRouter where
             (UM.newUpkeepMachine, machineId)) ud
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
             ud notCheckedUpkeepMachines
-            ((nowYMD, False), displayDate nowYMD) employees 
+            newDatePickerData employees 
             [] V.new (Right $ UD.UpkeepNew $ Left companyId)) router ) router ,
     useHandler contactPersonList' $ \companyId ->
       fetchContactPersons companyId $ \data' -> let
