@@ -178,7 +178,7 @@ employeeTask appVar (ED.EmployeeTaskData employeeTask taskDatePicker employeeTas
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     B.grid $ (B.row . B.col (B.mkColProps 12) . h2 $ "Nový úkol") : inputRows
   inputRowEditing = inputRow Editing
-  inputRows = [dateRow, descriptionRow, submitButton]
+  inputRows = [dateRow, descriptionRow, submitRow]
 
   modify' :: (ED.EmployeeTaskData -> ED.EmployeeTaskData) -> Fay ()
   modify' modifyEtd = modify appVar $ \appState -> appState {
@@ -203,5 +203,11 @@ employeeTask appVar (ED.EmployeeTaskData employeeTask taskDatePicker employeeTas
     in DP.datePicker Editing (fst taskDatePicker) modifyDatepickerDate setPickerOpenness dateValue setDate
 
   dateRow = oneElementRow "Datum" datePicker
-  descriptionRow = text2DOM ""
-  submitButton = text2DOM ""
+  descriptionRow = textareaRow
+    Editing 
+    "Popis"
+    (SetValue . ET.task $ employeeTask)
+    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { ET.task = t }} )
+  submitRow = buttonRow
+    "Ulož"
+    (return ())
