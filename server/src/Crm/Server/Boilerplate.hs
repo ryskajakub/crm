@@ -18,6 +18,7 @@ import           Data.Data
 
 import qualified Crm.Shared.Company        as C
 import qualified Crm.Shared.Employee       as E
+import qualified Crm.Shared.EmployeeTask   as ET
 import qualified Crm.Shared.ContactPerson  as CP
 import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.MachineType    as MT
@@ -47,4 +48,4 @@ mkFayTransferables [''SR.Markup, ''M.ContactPersonForMachine, ''L.Login, ''MK.Ma
   ''EF.ExtraFieldIdentification, ''C.Coordinates, ''U.UpkeepId, ''P.PhotoId, ''MT.MachineTypeId, ''M.MachineId, 
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
   ''U.Upkeep, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, ''E.Employee,
-  ''PM.PhotoMeta, ''CP.ContactPerson ]
+  ''PM.PhotoMeta, ''CP.ContactPerson, ''ET.EmployeeTask, ''ET.EmployeeTaskId ]

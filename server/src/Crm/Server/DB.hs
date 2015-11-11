@@ -88,6 +88,7 @@ module Crm.Server.DB (
   companyInUpkeepQuery ,
   mainEmployeesInDayQ ,
   employeesInUpkeeps ,
+  tasksForEmployeeQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -106,6 +107,7 @@ module Crm.Server.DB (
   UpkeepMapped ,
   MaybeEmployeeMapped ,
   EmployeeMapped ,
+  EmployeeTaskMapped ,
   UpkeepSequenceMapped ,
   UpkeepMachineMapped ,
   PhotoMetaMapped ,
@@ -152,6 +154,7 @@ import           TupleTH
 
 import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.Employee                  as E
+import qualified Crm.Shared.EmployeeTask              as ET
 import qualified Crm.Shared.ContactPerson             as CP
 import qualified Crm.Shared.Machine                   as M
 import qualified Crm.Shared.MachineType               as MT
@@ -387,6 +390,7 @@ type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
 type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, Text)
+type EmployeeTaskMapped = (ET.EmployeeTaskId, ET.EmployeeTask)
 
 instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
@@ -427,6 +431,10 @@ instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
   convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
 instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
   convert tuple = (EF.ExtraFieldId $ $(proj 3 0) tuple, M.MachineId $ $(proj 3 1) tuple, $(proj 3 2) tuple)
+instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) EmployeeTaskMapped where
+  convert tuple = let
+    (_,a,_,_,d,_) = tuple
+    in (ET.EmployeeTaskId . $(proj 6 0) $ tuple, ET.EmployeeTask (dayToYmd a) d)
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
@@ -800,6 +808,13 @@ dailyPlanQuery employeeId' day = let
     upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
     returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
   in AGG.aggregate (p2(p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min), p1(aggrArray))) q
+
+tasksForEmployeeQuery :: E.EmployeeId -> Query UpkeepsTable
+tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
+  upkeepRow <- upkeepsQuery -< ()
+  upkeepEmployeesRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+  restrict -< pgInt4 employeeId .== $(proj 3 1) upkeepEmployeesRow
+  returnA -< upkeepRow
 
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"

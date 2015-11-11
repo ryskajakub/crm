@@ -18,6 +18,7 @@ import qualified Crm.Server.Api.MachineKindResource as MKR
 import           Crm.Server.Api.PhotoResource (photoResource)
 import           Crm.Server.Api.Employee.UpkeepResource as EUR
 import           Crm.Server.Api.PrintResource as P
+import           Crm.Server.Api.Employee.TaskResource as ETR
 
 
 router' :: Router Dependencies Dependencies
@@ -27,7 +28,8 @@ router' = root `compose` (((route companyResource `compose` route CMR.machineRes
                `compose` (route machineResource `compose` route MPR.photoResource)
                `compose` route UR.upkeepResource
                `compose` route machineTypeResource
-               `compose` (route employeeResource `compose` route EUR.resource)
+               `compose` ((route employeeResource `compose` route EUR.resource)
+                                                  `compose` route ETR.resource)
                `compose` route PMR.photoMetaResource
                `compose` route photoResource
                `compose` route CPR.resource

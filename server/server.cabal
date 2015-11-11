@@ -45,6 +45,7 @@ Library
     Crm.Server.Api.UpkeepResource ,
     Crm.Server.Api.EmployeeResource ,
     Crm.Server.Api.Employee.UpkeepResource ,
+    Crm.Server.Api.Employee.TaskResource ,
     Crm.Server.Api.PhotoMetaResource ,
     Crm.Server.Api.PhotoResource ,
     Crm.Server.Api.ContactPersonResource ,
@@ -61,6 +62,7 @@ Library
     Crm.Server.Parsers ,
     Crm.TH ,
 
+    Crm.Shared.EmployeeTask
     Crm.Shared.Direction ,
     Crm.Shared.MyMaybe ,
     Crm.Shared.Company ,
