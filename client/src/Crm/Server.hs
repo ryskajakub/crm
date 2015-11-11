@@ -4,6 +4,7 @@ module Crm.Server (
   createUpkeep , 
   createEmployee ,
   createContactPerson ,
+  createEmployeeTask ,
 
   updateUpkeep ,
   updateMachine , 
@@ -396,6 +397,15 @@ createContactPerson companyId contactPerson callback =
     companyId
     contactPerson
     (const callback)
+
+createEmployeeTask :: 
+  E.EmployeeId ->
+  ET.EmployeeTask ->
+  Fay () ->
+  R.CrmRouter ->
+  Fay ()
+createEmployeeTask employeeId employeeTask callback =
+  XET.create employeeId employeeTask (const callback)
 
 
 -- updations

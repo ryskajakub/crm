@@ -18,4 +18,4 @@ data EmployeeTasksData = EmployeeTasksData {
 data EmployeeTaskData = EmployeeTaskData {
   employeeTask :: EmployeeTask ,
   taskDatePicker :: (DatePicker, Text) ,
-  employeeTaskId :: Maybe EmployeeTaskId }
+  identification :: Either EmployeeTaskId EmployeeId }

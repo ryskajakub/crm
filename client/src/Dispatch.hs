@@ -105,7 +105,7 @@ main' = do
       D.EmployeeTasksScreen (f@(ED.EmployeeTasksData employeeId employeeTasks')) ->
         trace (show f) $ n . emptyCallback $ employeeTasks employeeId employeeTasks' router
       D.EmployeeTaskScreen employeeTaskData ->
-        n . emptyCallback $ employeeTask appVar' employeeTaskData
+        n . emptyCallback $ employeeTask appVar' router employeeTaskData
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

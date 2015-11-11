@@ -32,6 +32,7 @@ module Crm.Router (
   employees' ,
   employeeTasks' ,
   employeeTask' ,
+  newEmployeeTask' ,
 
   dailyPlan ,
   login ,
@@ -105,6 +106,7 @@ link :: Renderable a
      -> DOMElement
 link children (CrmRoute route) (CrmRouter router) = 
   BR.link children route router
+
 
 -- route and mk handlers orchestration
 
@@ -215,6 +217,10 @@ login' = prepareUnitRouteAndMkHandler "login"
 
 
 -- routes and mk handlers with one parameter
+
+newEmployeeTask' :: RouteAndMkHandler E.EmployeeId
+newEmployeeTask' = prepareRouteAndMkHandler
+  (mkEmployeesRoute { postfix = Just "new-task" }) employeeIdEncodable
 
 newMachinePhase1' :: RouteAndMkHandler C.CompanyId
 newMachinePhase1' = prepareRouteAndMkHandler
@@ -381,5 +387,5 @@ employeeTasks = fst employeeTasks'
 employeeTask :: ET.EmployeeTaskId -> CrmRoute
 employeeTask = fst employeeTask' . Right
 
-newEmployeeTask :: CrmRoute
-newEmployeeTask = fst employeeTask' leftNew
+newEmployeeTask :: E.EmployeeId -> CrmRoute
+newEmployeeTask = fst newEmployeeTask'

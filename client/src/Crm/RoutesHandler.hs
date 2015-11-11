@@ -110,14 +110,6 @@ startRouter appVar = startedRouter where
             in modify appVar $ \appState -> appState {
               D.navigation = D.CompanyDetail 
                 companyId company contactPersons Display (ignoreLinkage machines)} ,
-    useHandler employeeTask' $ \employeeId' ->
-      case employeeId' of
-        Left _ -> const $ modify appVar $ \appState -> appState {
-          D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData ET.newEmployeeTask newDatePickerData Nothing }
-        Right employeeTaskId ->
-          fetchEmployeeTask employeeTaskId $ \employeeTaskData ->
-            modify appVar $ \appState -> appState {
-              D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData employeeTaskData undefined undefined } ,
     useHandler newMachinePhase1' $ \companyId ->
       withCompany'
         companyId
@@ -222,7 +214,10 @@ startRouter appVar = startedRouter where
     useHandler employeeTasks' $ \employeeId ->
       fetchEmployeeTasks employeeId $ \employeeTasksData -> let 
         e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId employeeTasksData
-        in modify' e]
+        in modify' e ,
+    useHandler newEmployeeTask' $ \employeeId ->
+      const $ modify appVar $ \appState -> appState {
+        D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData ET.newEmployeeTask newDatePickerData (Right employeeId) } ]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

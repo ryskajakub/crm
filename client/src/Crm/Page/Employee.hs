@@ -20,7 +20,7 @@ import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Bootstrap.Table     as BT
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import           Crm.Server                       (createEmployee, updateEmployee)
+import           Crm.Server                       (createEmployee, updateEmployee, createEmployeeTask)
 import           Crm.Component.Form
 import           Crm.Component.DatePicker         as DP
 import qualified Crm.Data.Data                    as D
@@ -86,6 +86,7 @@ employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, b
   buttonAction = updateEmployee employeeId employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
+
 employeeForm :: (Renderable a)
              => a
              -> (Text, Fay ())
@@ -95,10 +96,10 @@ employeeForm :: (Renderable a)
 employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm where
 
   modify' :: E.Employee -> Fay ()
-  modify' employee' = modify appVar (\appState -> appState {
+  modify' employee' = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
       D.EmployeeManage (ED.EmployeeData _ a) -> D.EmployeeManage (ED.EmployeeData employee' a)
-      _ -> D.navigation appState })
+      _ -> D.navigation appState }
 
   validationMessages = if (length $ E.name employee) > 0
     then []
@@ -162,19 +163,26 @@ employeeTasks employeeId tasks router = let
       th "Činnost" ]
     mkBody = map $ \(employeeTaskId, ET.EmployeeTask date' task) ->
       tr [
-        td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
+        -- td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
+        td . displayDate $ date' ,
         td task ]
     in BT.table (Just BT.Bordered) (head' : mkBody tasks)
+  newTaskButton = BTN.button'
+    (BTN.buttonProps {
+      BTN.onClick = Defined . const $ navigate (R.newEmployeeTask employeeId) router })
+    [G.plus, text2DOM " Přidat úkol"]
   in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
     h2 ("Úkoly") ,
+    newTaskButton ,
     tasksTable ])
 
 
 employeeTask ::
   Var D.AppState ->
+  CrmRouter ->
   ED.EmployeeTaskData ->
   DOMElement
-employeeTask appVar (ED.EmployeeTaskData employeeTask taskDatePicker employeeTaskId) = mkForm where
+employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Right employeeId)) = mkForm where
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     B.grid $ (B.row . B.col (B.mkColProps 12) . h2 $ "Nový úkol") : inputRows
   inputRowEditing = inputRow Editing
@@ -207,7 +215,7 @@ employeeTask appVar (ED.EmployeeTaskData employeeTask taskDatePicker employeeTas
     Editing 
     "Popis"
     (SetValue . ET.task $ employeeTask)
-    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { ET.task = t }} )
+    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { ET.task = t }})
   submitRow = buttonRow
     "Ulož"
-    (return ())
+    (createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
