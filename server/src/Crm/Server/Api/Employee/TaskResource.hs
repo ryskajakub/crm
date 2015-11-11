@@ -30,7 +30,7 @@ resource = mkResourceId {
   list = const tasksListing }
 
 tasksListing :: ListHandler (IdDependencies' E.EmployeeId)
-tasksListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
+tasksListing = mkGenHandler' jsonO $ \env -> do
   ((_, pool), employeeId) <- ask
   withResource pool $ \connection -> liftIO $ do
     upkeeps <- runQuery connection (tasksForEmployeeQuery employeeId)

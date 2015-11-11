@@ -111,11 +111,11 @@ startRouter appVar = startedRouter where
     useHandler employeeTask' $ \employeeId' ->
       case employeeId' of
         Left _ -> const $ modify appVar $ \appState -> appState {
-          D.navigation = D.EmployeeTask . ED.NewEmployeeTask $ ET.newEmployeeTask }
+          D.navigation = D.EmployeeTaskScreen . ED.NewEmployeeTask $ ET.newEmployeeTask }
         Right employeeTaskId ->
-          fetchEmployeeTask employeeTaskId $ \employeeTask ->
+          fetchEmployeeTask employeeTaskId $ \employeeTaskData ->
             modify appVar $ \appState -> appState {
-              D.navigation = D.EmployeeTask . ED.EditEmployeeTask $ employeeTask } ,
+              D.navigation = D.EmployeeTaskScreen . ED.EditEmployeeTask $ employeeTaskData } ,
     useHandler newMachinePhase1' $ \companyId ->
       withCompany'
         companyId
@@ -218,9 +218,9 @@ startRouter appVar = startedRouter where
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ,
     useHandler employeeTasks' $ \employeeId ->
-      fetchEmployeeTasks employeeId $ \(employee, employeeTasks) -> let 
-        e = D.EmployeeTasks $ ED.EmployeeTasksData employeeId employee employeeTasks
-        in modify' e ]
+      fetchEmployeeTasks employeeId $ \employeeTasksData -> let 
+        e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId employeeTasksData
+        in modify' e]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

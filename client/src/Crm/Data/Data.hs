@@ -57,8 +57,8 @@ data NavigationState =
   EmployeeList {
     employees :: [(E.EmployeeId, E.Employee)] } |
   EmployeeManage EmployeeData |
-  EmployeeTasks EmployeeTasksData |
-  EmployeeTask EmployeeTaskData |
+  EmployeeTasksScreen EmployeeTasksData |
+  EmployeeTaskScreen EmployeeTaskData |
   ContactPersonPage {
     contactPerson :: CP.ContactPerson ,
     identification :: Maybe CP.ContactPersonId ,

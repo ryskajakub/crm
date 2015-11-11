@@ -151,11 +151,10 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
 
 employeeTasks :: 
   E.EmployeeId -> 
-  E.Employee ->
   [(ET.EmployeeTaskId, ET.EmployeeTask)] ->
   CrmRouter ->
   DOMElement
-employeeTasks employeeId employee tasks router = let
+employeeTasks employeeId tasks router = let
   tasksTable = let
     head' = tr [
       th "Datum" ,
@@ -166,7 +165,7 @@ employeeTasks employeeId employee tasks router = let
         td task ]
     in BT.table (Just BT.Bordered) (head' : mkBody tasks)
   in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
-    h2 ("Úkoly - " <> E.name employee) ,
+    h2 ("Úkoly") ,
     tasksTable ])
 
 

@@ -78,6 +78,7 @@ import qualified Crm.Shared.ServerRender             as SR
 import           Crm.Shared.MyMaybe
 
 import qualified Crm.Client.Employees                as XE
+import qualified Crm.Client.Employees.Task           as XET
 import qualified Crm.Client.Companies                as XC
 import qualified Crm.Client.Upkeeps                  as XU
 import qualified Crm.Client.Machines                 as XM
@@ -147,15 +148,10 @@ dayParam day = [("day", unpack . displayDateNumeral $ day)]
 
 fetchEmployeeTasks :: 
   E.EmployeeId ->
-  ((E.Employee, [(ET.EmployeeTaskId, ET.EmployeeTask)]) -> Fay ()) ->
+  ([(ET.EmployeeTaskId, ET.EmployeeTask)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchEmployeeTasks employeeId callback = \r -> let
-  employee = E.Employee (pack "Pepa") undefined undefined undefined
-  tasks = [
-    (ET.EmployeeTaskId 1, ET.EmployeeTask (YMD.YearMonthDay 2015 1 1 YMD.DayPrecision) (pack "hotovo")), 
-    (ET.EmployeeTaskId 2, ET.EmployeeTask (YMD.YearMonthDay 2015 11 1 YMD.DayPrecision) (pack "konec borec"))]
-  in callback (employee, tasks)
+fetchEmployeeTasks employeeId = XET.list maxCount employeeId
 
 fetchEmployeeTask ::
   ET.EmployeeTaskId ->

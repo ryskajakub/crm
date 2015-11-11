@@ -9,7 +9,6 @@ data EmployeeData = EmployeeData {
 
 data EmployeeTasksData = EmployeeTasksData {
   employeeId :: EmployeeId ,
-  employee' :: Employee ,
   employeeTasks :: [(EmployeeTaskId, EmployeeTask)] }
 
 data EmployeeTaskData = 

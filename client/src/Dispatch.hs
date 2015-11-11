@@ -38,6 +38,8 @@ import qualified Crm.Shared.MachineType    as MT
 import qualified Crm.Shared.MachineKind    as MK
 import qualified Crm.Shared.UpkeepSequence as US
 
+import Debug.Trace
+
 
 emptyCallback :: a -> (a, Fay ())
 emptyCallback element = (element, return ())
@@ -100,9 +102,9 @@ main' = do
         in simpleReactBody' body callback
       D.DailyPlan ymd employeeId dailyPlanData es ->
         n . emptyCallback $ upkeepPrint router ymd employeeId dailyPlanData es
-      D.EmployeeTasks (ED.EmployeeTasksData employeeId employee employeeTasks') ->
-        n . emptyCallback $ employeeTasks employeeId employee employeeTasks' router
-      D.EmployeeTask employeeTaskData ->
+      D.EmployeeTasksScreen (f@(ED.EmployeeTasksData employeeId employeeTasks')) ->
+        trace (show f) $ n . emptyCallback $ employeeTasks employeeId employeeTasks' router
+      D.EmployeeTaskScreen employeeTaskData ->
         n . emptyCallback $ employeeTask employeeTaskData
   return ()
 
