@@ -10,4 +10,10 @@ data EmployeeData = EmployeeData {
 data EmployeeTasksData = EmployeeTasksData {
   employeeId :: EmployeeId ,
   employee' :: Employee ,
-  employeeTasks :: [EmployeeTask] }
+  employeeTasks :: [(EmployeeTaskId, EmployeeTask)] }
+
+data EmployeeTaskData = 
+  NewEmployeeTask {
+    newEmployeeTask :: EmployeeTask } |
+  EditEmployeeTask {
+    employeeTask :: EmployeeTask } 

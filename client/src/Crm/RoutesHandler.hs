@@ -24,6 +24,7 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.Employee         as E
+import qualified Crm.Shared.EmployeeTask     as ET
 import qualified Crm.Shared.ExtraField       as EF
 
 import qualified Crm.Data.MachineData        as MD
@@ -107,6 +108,14 @@ startRouter appVar = startedRouter where
             in modify appVar $ \appState -> appState {
               D.navigation = D.CompanyDetail 
                 companyId company contactPersons Display (ignoreLinkage machines)} ,
+    useHandler employeeTask' $ \employeeId' ->
+      case employeeId' of
+        Left _ -> const $ modify appVar $ \appState -> appState {
+          D.navigation = D.EmployeeTask . ED.NewEmployeeTask $ ET.newEmployeeTask }
+        Right employeeTaskId ->
+          fetchEmployeeTask employeeTaskId $ \employeeTask ->
+            modify appVar $ \appState -> appState {
+              D.navigation = D.EmployeeTask . ED.EditEmployeeTask $ employeeTask } ,
     useHandler newMachinePhase1' $ \companyId ->
       withCompany'
         companyId

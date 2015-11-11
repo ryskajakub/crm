@@ -34,3 +34,8 @@ data EmployeeTask = EmployeeTask {
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+
+newEmployeeTask :: EmployeeTask
+newEmployeeTask = EmployeeTask {
+  date = YMD.new ,
+  task = pack "" }

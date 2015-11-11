@@ -5,6 +5,7 @@ module Crm.Page.Employee (
   employeeEdit ,
   employeePage ,
   employeeTasks ,
+  employeeTask ,
   newEmployeeForm ) where
 
 import           Data.Text                        (fromString, Text, length, (<>), unpack)
@@ -151,18 +152,25 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
 employeeTasks :: 
   E.EmployeeId -> 
   E.Employee ->
-  [ET.EmployeeTask] ->
+  [(ET.EmployeeTaskId, ET.EmployeeTask)] ->
+  CrmRouter ->
   DOMElement
-employeeTasks employeeId employee tasks = let
+employeeTasks employeeId employee tasks router = let
   tasksTable = let
     head' = tr [
       th "Datum" ,
       th "Činnost" ]
-    mkBody = map $ \(ET.EmployeeTask date' task) ->
+    mkBody = map $ \(employeeTaskId, ET.EmployeeTask date' task) ->
       tr [
-        td . displayDate $ date' ,
+        td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
         td task ]
     in BT.table (Just BT.Bordered) (head' : mkBody tasks)
   in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
     h2 ("Úkoly - " <> E.name employee) ,
     tasksTable ])
+
+
+employeeTask ::
+  ED.EmployeeTaskData ->
+  DOMElement
+employeeTask _ = div "employee task form"

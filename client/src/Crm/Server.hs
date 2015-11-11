@@ -41,6 +41,7 @@ module Crm.Server (
   fetchDailyPlanData ,
   fetchDailyPlanEmployees ,
   fetchEmployeeTasks ,
+  fetchEmployeeTask ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -146,15 +147,24 @@ dayParam day = [("day", unpack . displayDateNumeral $ day)]
 
 fetchEmployeeTasks :: 
   E.EmployeeId ->
-  ((E.Employee, [ET.EmployeeTask]) -> Fay ()) ->
+  ((E.Employee, [(ET.EmployeeTaskId, ET.EmployeeTask)]) -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
 fetchEmployeeTasks employeeId callback = \r -> let
   employee = E.Employee (pack "Pepa") undefined undefined undefined
   tasks = [
-    ET.EmployeeTask (YMD.YearMonthDay 2015 1 1 YMD.DayPrecision) (pack "hotovo"), 
-    ET.EmployeeTask (YMD.YearMonthDay 2015 11 1 YMD.DayPrecision) (pack "konec borec")]
+    (ET.EmployeeTaskId 1, ET.EmployeeTask (YMD.YearMonthDay 2015 1 1 YMD.DayPrecision) (pack "hotovo")), 
+    (ET.EmployeeTaskId 2, ET.EmployeeTask (YMD.YearMonthDay 2015 11 1 YMD.DayPrecision) (pack "konec borec"))]
   in callback (employee, tasks)
+
+fetchEmployeeTask ::
+  ET.EmployeeTaskId ->
+  (ET.EmployeeTask -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchEmployeeTask employeeTaskId callback = \r -> let
+  task = ET.EmployeeTask (YMD.YearMonthDay 2016 1 1 YMD.DayPrecision) (pack "task description")
+  in callback task
 
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())
