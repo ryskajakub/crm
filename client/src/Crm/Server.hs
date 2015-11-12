@@ -12,6 +12,7 @@ module Crm.Server (
   updateContactPerson ,
   updateEmployee ,
   updateMachineType , 
+  updateTask ,
 
   saveExtraFieldSettings ,
 
@@ -463,6 +464,14 @@ updateMachineType (machineTypeId, machineType, upkeepSequences) cb =
     machineTypeId
     (machineType, upkeepSequences)
     (const cb)
+
+updateTask :: 
+  T.TaskId -> 
+  T.Task ->
+  Fay () ->
+  R.CrmRouter ->
+  Fay ()
+updateTask _ _ callback _ = callback
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine

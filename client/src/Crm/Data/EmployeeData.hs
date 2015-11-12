@@ -1,6 +1,6 @@
 module Crm.Data.EmployeeData where
 
-import Data.Text               (Text)
+import Data.Text                (Text)
 
 import Crm.Shared.Employee
 import Crm.Shared.Task

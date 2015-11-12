@@ -20,7 +20,7 @@ import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Bootstrap.Table     as BT
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import           Crm.Server                       (createEmployee, updateEmployee, createEmployeeTask)
+import           Crm.Server                       (createEmployee, updateEmployee, createEmployeeTask, updateTask)
 import           Crm.Component.Form
 import           Crm.Component.DatePicker         as DP
 import qualified Crm.Data.Data                    as D
@@ -183,7 +183,7 @@ employeeTask ::
   CrmRouter ->
   ED.EmployeeTaskData ->
   DOMElement
-employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Right employeeId)) = mkForm where
+employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker taskIdentification) = mkForm where
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     B.grid $ (B.row . B.col (B.mkColProps 12) . h2 $ "Nový úkol") : inputRows
   inputRowEditing = inputRow Editing
@@ -217,6 +217,12 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Rig
     "Popis"
     (SetValue . T.description $ employeeTask)
     (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
-  submitRow = div' (class' "form-group") $ buttonRow
-    "Ulož"
-    (createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
+
+  (buttonLabel, buttonAction) = case taskIdentification of
+    Left taskId -> ("Uzavři" ,
+      updateTask taskId employeeTask (navigate R.employeePage router) router)
+    Right employeeId -> ("Ulož" ,
+      createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
+
+  submitRow = div' (class' "form-group") $ buttonRow buttonLabel buttonAction
+    
