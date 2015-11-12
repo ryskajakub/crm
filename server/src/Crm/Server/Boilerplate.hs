@@ -47,5 +47,5 @@ instance (JS.JSONSchema a) => JS.JSONSchema (MyMaybe a) where
 mkFayTransferables [''SR.Markup, ''M.ContactPersonForMachine, ''L.Login, ''MK.MachineKindSpecific, ''EF.ExtraFieldId,
   ''EF.ExtraFieldIdentification, ''C.Coordinates, ''U.UpkeepId, ''P.PhotoId, ''MT.MachineTypeId, ''M.MachineId, 
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
-  ''U.Upkeep, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, ''E.Employee,
-  ''PM.PhotoMeta, ''CP.ContactPerson, ''T.Task, ''T.TaskId ]
+  ''U.Upkeep, ''U.UpkeepMarkup, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, 
+  ''E.Employee, ''PM.PhotoMeta, ''CP.ContactPerson, ''T.Task, ''T.TaskId ]

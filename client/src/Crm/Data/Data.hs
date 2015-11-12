@@ -78,7 +78,7 @@ data NavigationState =
   DailyPlan {
     day :: YMD.YearMonthDay ,
     employeeId :: Maybe E.EmployeeId ,
-    dailyPlanData :: [(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, 
+    dailyPlanData :: [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
       MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] ,
     employees :: [E.Employee'] }
 

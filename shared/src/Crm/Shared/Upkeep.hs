@@ -4,15 +4,16 @@
 
 module Crm.Shared.Upkeep where
 
-import Crm.Shared.YearMonthDay as D
+import Crm.Shared.YearMonthDay  as D
 import Crm.Shared.UpkeepMachine as UM
+import Crm.Shared.ServerRender  as SR
 
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Rest.Info    (Info(..))
+import Rest.Info                (Info(..))
 #endif
-import Data.Text    (Text, pack)
+import Data.Text                (Text, pack)
 
 #ifndef FAY
 instance Info UpkeepId where
@@ -31,15 +32,17 @@ newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 type Upkeep'' = (UpkeepId, Upkeep)
 type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
-data Upkeep = Upkeep {
+data UpkeepGen workDescription = Upkeep {
   upkeepDate :: D.YearMonthDay ,
   upkeepClosed :: Bool ,
   workHours :: Text ,
-  workDescription :: Text ,
+  workDescription :: workDescription ,
   recommendation :: Text }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+type Upkeep = UpkeepGen Text
+type UpkeepMarkup = UpkeepGen [SR.Markup]
 
 newUpkeep :: D.YearMonthDay -> Upkeep
 newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")

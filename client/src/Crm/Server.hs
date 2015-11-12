@@ -171,7 +171,7 @@ fetchDailyPlanEmployees day = XPP.list (maxCount ++ dayParam day)
 
 fetchDailyPlanData :: YMD.YearMonthDay
                    -> Maybe E.EmployeeId
-                   -> ([(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
+                   -> ([(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
                       Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
               -> R.CrmRouter
                    -> Fay ()

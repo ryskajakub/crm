@@ -1,19 +1,19 @@
 module Crm.Server.Api.PrintResource where
 
-import           Opaleye.RunQuery              (runQuery)
+import           Opaleye.RunQuery            (runQuery)
 
-import           Data.Pool                     (withResource)
+import           Data.Pool                   (withResource)
 
-import           Control.Monad.Reader          (ask)
-import           Control.Monad.IO.Class        (liftIO)
+import           Control.Monad.Reader        (ask)
+import           Control.Monad.IO.Class      (liftIO)
 
-import           Rest.Resource                 (Resource, Void, schema, name,
-                                               list, mkResourceId)
-import qualified Rest.Schema                   as S
-import           Rest.Dictionary.Combinators   (jsonO)
-import           Rest.Handler                  (ListHandler)
+import           Rest.Resource               (Resource, Void, schema, name,
+                                             list, mkResourceId)
+import qualified Rest.Schema                 as S
+import           Rest.Dictionary.Combinators (jsonO)
+import           Rest.Handler                (ListHandler)
 
-import           Crm.Server.Boilerplate        ()
+import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler

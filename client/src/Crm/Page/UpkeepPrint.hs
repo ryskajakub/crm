@@ -29,10 +29,21 @@ import qualified Crm.Shared.ServerRender      as SR
 import qualified Crm.Shared.YearMonthDay      as YMD
 
 
+renderMarkup :: [SR.Markup] -> [DOMElement]
+renderMarkup = let
+  renderItem :: SR.Markup -> DOMElement
+  renderItem (SR.UnorderedList unorderedList) = ul $
+    map renderListItem unorderedList
+  renderItem (SR.PlainText t) = text2DOM t
+  renderItem (SR.Header h) = h4 h
+  renderListItem t = li t
+  in map renderItem
+
+
 upkeepPrint :: R.CrmRouter
             -> YMD.YearMonthDay
             -> Maybe E.EmployeeId
-            -> [(U.Upkeep, C.Company, [E.Employee'], [(M.Machine, 
+            -> [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
                MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
@@ -51,7 +62,7 @@ upkeepPrint router day employeeId data' employees = let
       [generalDescription] ++
       (rdrMachines machinesData))
     where
-    generalDescription = text2DOM . U.workDescription $ upkeep
+    generalDescription = div . renderMarkup . U.workDescription $ upkeep
     upkeepPrintDataHeader = [
       h3 (text2DOM . C.companyName $ company) ,
       BT.table (Just BT.Bordered) [
@@ -60,15 +71,8 @@ upkeepPrint router day employeeId data' employees = let
     renderEmployee (_, employee) = E.name employee
     rdrMachines = map $ \(machine, machineType, contactPerson, (upkeepMachine, markup')) -> let
       upkeepMachineText = case markup' of
-        Just (markup) -> div . render $ markup
+        Just (markup) -> div . renderMarkup $ markup
         Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
-      render = map renderItem
-      renderItem :: SR.Markup -> DOMElement
-      renderItem (SR.UnorderedList unorderedList) = ul $
-        map renderListItem unorderedList
-      renderItem (SR.PlainText t) = text2DOM t
-      renderItem (SR.Header h) = h4 h
-      renderListItem t = li t
       in BT.table (Just BT.Bordered) [
         tr [th "Zařízení", td . text2DOM . MT.machineTypeName $ machineType ] ,
         tr [th "Sériové číslo", td . text2DOM . M.serialNumber $ machine ] ,
@@ -81,4 +85,4 @@ upkeepPrint router day employeeId data' employees = let
     (B.row $ [
       B.col (B.mkColProps 6) employeeSelect ,
       B.col (B.mkColProps 6) simpleDateControls ]) :
-    map displayUpkeep data' 
+    map displayUpkeep data'
