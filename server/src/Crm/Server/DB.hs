@@ -136,7 +136,7 @@ import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connecti
                                                       connect, close, query, Only(..), Binary(..), execute)
 import           Opaleye.QueryArr                     (Query, QueryArr)
 import           Opaleye.Table                        (Table(Table), required, queryTable, optional)
-import           Opaleye.Column                       (Column, Nullable)
+import           Opaleye.Column                       (Column, Nullable, isNull)
 import           Opaleye.Order                        (orderBy, asc, limit, PGOrd, desc)
 import           Opaleye.RunQuery                     (runQuery)
 import           Opaleye.Operators                    (restrict, lower, (.==), (.||), in_)
@@ -832,6 +832,7 @@ tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
   taskRow <- queryTable tasksTable -< ()
   taskEmployeeRow <- join . queryTable $ taskEmployeesTable -< $(proj 4 0) taskRow
   restrict -< pgInt4 employeeId .== $(proj 2 1) taskEmployeeRow
+  restrict -< isNull . $(proj 4 3) $ taskRow
   returnA -< taskRow
 
 getTaskQuery :: T.TaskId -> Query TasksTable
@@ -862,7 +863,6 @@ companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
   companyRow <- queryTable companiesTable -< ()
   restrict -< (C.getCompanyId . C._companyPK $ companyRow) .== $(proj 11 1) machineRow
   returnA -< C._companyCore companyRow
-
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]
