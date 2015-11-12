@@ -44,12 +44,14 @@ upkeepPrint router day employeeId data' employees = let
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) employeeId $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
-  displayUpkeep (_, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
+  displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
-      (rdrMachines machinesData) )
+      [generalDescription] ++
+      (rdrMachines machinesData))
     where
+    generalDescription = text2DOM . U.workDescription $ upkeep
     upkeepPrintDataHeader = [
       h3 (text2DOM . C.companyName $ company) ,
       BT.table (Just BT.Bordered) [
