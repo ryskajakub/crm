@@ -247,7 +247,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   machineColsSize = 4
   (closeUpkeepRows, noteColsSize) = let
     workDescription =
-      textareaRowEditing "Popis práce" (SetValue . U.workDescription $ upkeep) $
+      textareaRowEditing "Popis servisu" (SetValue . U.workDescription $ upkeep) $
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } 
     in if closeUpkeep'
@@ -267,20 +267,23 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         EndNote -> Note
         x -> x
     in modify' $ \ud -> ud { UD.upkeepPageMode = mapEither newClose (UD.upkeepPageMode ud) }
-  (getNote, setNote, noteHeaders) = case displayedNoteFlag of
-    Note -> let
-      noteActive = [ 
-        strong "Poznámka" ,
-        A.a''' ((class' "my-text-right") { onClick = Defined . const $ toggleNote } ) "Koncová poznámka" ]
-      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, noteActive)
-    EndNote -> let
-      endNoteActive = [
-        A.a''' (mkAttrs { onClick = Defined . const $ toggleNote }) "Poznámka" ,
-        strong' (class' "my-text-right") "Koncová poznámka" ]
-      in (UM.endNote, \t um -> um { UM.endNote = t }, endNoteActive)
-    NoChoice -> let
-      onlyNote = [strong "Poznámka"]
-      in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
+  (getNote, setNote, noteHeaders) = let
+    noteText = strong "Plánované úkony"
+    endNoteText = strong "Závěry po servisu"
+    in case displayedNoteFlag of
+      Note -> let
+        noteActive = [ 
+          noteText ,
+          A.a''' ((class' "my-text-right") { onClick = Defined . const $ toggleNote } ) endNoteText ]
+        in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, noteActive)
+      EndNote -> let
+        endNoteActive = [
+          A.a''' (mkAttrs { onClick = Defined . const $ toggleNote }) noteText ,
+          strong' (class' "my-text-right") endNoteText ]
+        in (UM.endNote, \t um -> um { UM.endNote = t }, endNoteActive)
+      NoChoice -> let
+        onlyNote = [noteText]
+        in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
   upkeepMachineRow :: (M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence) -> DOMElement
   upkeepMachineRow (machineId, machine', machineType, nextUpkeepSequence) = let
@@ -390,7 +393,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   companyNameHeader =  B.row $ pageInfo 
     pageHeader 
-    (Just $ p [ text2DOM "Políčka ", strong "Popis práce", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. Když na začátek řádku napíšeš mínus (-) potom se tato řádka na stránce pro tisk denních akcích zobrazí jako odrážka seznamu. Pokud na začátek řádku napíšeš plus (+), pak se to zobrazí jako nadpis."])
+    (Just $ p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. Když na začátek řádku napíšeš mínus (-) potom se tato řádka na stránce pro tisk denních akcích zobrazí jako odrážka seznamu. Pokud na začátek řádku napíšeš plus (+), pak se to zobrazí jako nadpis."])
   validationMessages'' = V.messages validation
   validationMessages' = if (null upkeepMachines)
     then ["V servisu musí figurovat alespoň jeden stroj."]
