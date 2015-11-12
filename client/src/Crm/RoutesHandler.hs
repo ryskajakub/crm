@@ -70,8 +70,12 @@ startRouter appVar = startedRouter where
           ymd = YMD.YearMonthDay year month day (YMD.DayPrecision)
           employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
           in fetchDailyPlanData ymd employeeId (\data' ->
-            fetchDailyPlanEmployees ymd (\dpe ->
-              modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeId data' dpe } ) crmRouter ) crmRouter
+            fetchDailyPlanEmployees ymd (\dpe -> let
+              modifyAppvar employeeTasks = modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeTasks data' dpe }
+              in case employeeId of
+                Just employeeId' -> fetchTasks employeeId' (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
+                Nothing -> modifyAppvar Nothing
+                  ) crmRouter ) crmRouter
         Nothing -> modify' D.NotFound) ,
     ("home/:order/:direction", \router params -> let
       firstParam = head params

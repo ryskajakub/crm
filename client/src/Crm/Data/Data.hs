@@ -16,6 +16,7 @@ import qualified Crm.Shared.ExtraField     as EF
 import qualified Crm.Shared.YearMonthDay   as YMD
 import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ServerRender   as SR
+import qualified Crm.Shared.Task           as T
 
 import           Crm.Data.MachineData
 import           Crm.Data.UpkeepData
@@ -77,7 +78,7 @@ data NavigationState =
     wrongPassword :: Bool } |
   DailyPlan {
     day :: YMD.YearMonthDay ,
-    employeeId :: Maybe E.EmployeeId ,
+    employeeId :: Maybe (E.EmployeeId, [(T.TaskId, T.Task)]) ,
     dailyPlanData :: [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
       MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] ,
     employees :: [E.Employee'] }

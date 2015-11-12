@@ -7,6 +7,7 @@ module Crm.Page.UpkeepPrint (
 
 import           Data.Text                    (fromString, (<>), intercalate)
 import qualified Data.Text                    as T
+import           Data.Maybe                   (onJust)
 import           Prelude                      hiding (div)
 import           FFI                          (Defined(Defined))
 
@@ -27,6 +28,7 @@ import qualified Crm.Shared.Upkeep            as U
 import qualified Crm.Shared.UpkeepMachine     as UM
 import qualified Crm.Shared.ServerRender      as SR
 import qualified Crm.Shared.YearMonthDay      as YMD
+import qualified Crm.Shared.Task              as T
 
 
 renderMarkup :: [SR.Markup] -> [DOMElement]
@@ -42,25 +44,29 @@ renderMarkup = let
 
 upkeepPrint :: R.CrmRouter
             -> YMD.YearMonthDay
-            -> Maybe E.EmployeeId
+            -> Maybe (E.EmployeeId, [(T.TaskId, T.Task)])
             -> [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
                MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
-upkeepPrint router day employeeId data' employees = let
+upkeepPrint router day employeeTasks data' employees = let
   simpleDateControls = [
     R.link "<< včera" (R.dailyPlan (plusDays (-1) day) Nothing) router ,
     text2DOM " " ,
     R.link "zítra >>" (R.dailyPlan (plusDays (1) day) Nothing) router ]
-  employeeSelect = fst . nullDropdown employees (text2DOM . E.name) employeeId $
+  employeeSelect = fst . nullDropdown employees (text2DOM . E.name) (fst `onJust` employeeTasks) $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
+  renderTasks tasks = text2DOM "tasks"
+  tasks = maybe (text2DOM "") (\(_, tasks') -> renderTasks tasks') employeeTasks
   displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
       [generalDescription] ++
-      (rdrMachines machinesData))
+      (rdrMachines machinesData) ++
+      [h4 "Další úkoly"] ++ 
+      [tasks])
     where
     generalDescription = div . renderMarkup . U.workDescription $ upkeep
     upkeepPrintDataHeader = [
