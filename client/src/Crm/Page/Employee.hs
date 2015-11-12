@@ -160,12 +160,13 @@ employeeTasks employeeId tasks router = let
   tasksTable = let
     head' = thead $ tr [
       th "Datum" ,
-      th "Činnost" ]
-    mkBody = map $ \(employeeTaskId, T.Task startDate task endDate) ->
+      th "Činnost" ,
+      th "Uzavřít" ]
+    mkBody = map $ \(taskId, T.Task startDate task endDate) ->
       tr [
-        -- td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
         td . displayDate $ startDate ,
-        td task ]
+        td task ,
+        td $ R.link G.check (R.employeeTask taskId) router ]
     in BT.table (Just BT.Bordered) [head', tbody . mkBody $ tasks]
   newTaskButton = BTN.button'
     (BTN.buttonProps {

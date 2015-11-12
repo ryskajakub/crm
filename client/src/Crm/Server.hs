@@ -79,6 +79,7 @@ import qualified Crm.Shared.ServerRender             as SR
 import           Crm.Shared.MyMaybe
 
 import qualified Crm.Client.Employees                as XE
+import qualified Crm.Client.Task                     as XT
 import qualified Crm.Client.Employees.Task           as XET
 import qualified Crm.Client.Companies                as XC
 import qualified Crm.Client.Upkeeps                  as XU
@@ -159,9 +160,7 @@ fetchTask ::
   (T.Task -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchTask employeeTaskId callback = \r -> let
-  task = T.Task (YMD.YearMonthDay 2016 1 1 YMD.DayPrecision) (pack "task description") Nothing
-  in callback task
+fetchTask = XT.byTaskId
 
 fetchDailyPlanEmployees :: YMD.YearMonthDay
                         -> ([E.Employee'] -> Fay ())

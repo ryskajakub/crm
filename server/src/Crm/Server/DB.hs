@@ -91,6 +91,7 @@ module Crm.Server.DB (
   mainEmployeesInDayQ ,
   employeesInUpkeeps ,
   tasksForEmployeeQuery ,
+  getTaskQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -833,6 +834,11 @@ tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
   restrict -< pgInt4 employeeId .== $(proj 2 1) taskEmployeeRow
   returnA -< taskRow
 
+getTaskQuery :: T.TaskId -> Query TasksTable
+getTaskQuery (T.TaskId taskIdInt) = proc () -> do
+  taskRow <- join . queryTable $ tasksTable -< pgInt4 taskIdInt
+  returnA -< taskRow
+
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
@@ -856,6 +862,7 @@ companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
   companyRow <- queryTable companiesTable -< ()
   restrict -< (C.getCompanyId . C._companyPK $ companyRow) .== $(proj 11 1) machineRow
   returnA -< C._companyCore companyRow
+
 
 runMachinesInCompanyQuery :: Int -> Connection -> 
   IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId)]

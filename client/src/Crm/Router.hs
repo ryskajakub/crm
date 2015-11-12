@@ -188,6 +188,9 @@ contactPersonIdEncodable = mkSimpleURLEncodable CP.getContactPersonId CP.Contact
 employeeIdEncodable :: URLEncodable E.EmployeeId
 employeeIdEncodable = mkSimpleURLEncodable E.getEmployeeId E.EmployeeId
 
+taskIdEncondable :: URLEncodable T.TaskId
+taskIdEncondable = mkSimpleURLEncodable T.getTaskId T.TaskId
+
 newOrEditEncodable :: (a -> Int) -> (Int -> a) -> URLEncodable (Either Text a)
 newOrEditEncodable toInt fromInt = URLEncodable
   (Just $ \t -> if t == new then Just $ Left new else Nothing)
@@ -240,10 +243,10 @@ companyDetail' = prepareRouteAndMkHandler
   mkCompaniesRoute
   (newOrEditEncodable C.getCompanyId C.CompanyId)
 
-employeeTask' :: RouteAndMkHandler (Either Text T.TaskId)
+employeeTask' :: RouteAndMkHandler T.TaskId
 employeeTask' = prepareRouteAndMkHandler
   (Route "employee-task" Nothing)
-  (newOrEditEncodable T.getTaskId T.TaskId)
+  taskIdEncondable
 
 newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
@@ -385,7 +388,7 @@ employeeTasks :: E.EmployeeId -> CrmRoute
 employeeTasks = fst employeeTasks'
 
 employeeTask :: T.TaskId -> CrmRoute
-employeeTask = fst employeeTask' . Right
+employeeTask = fst employeeTask'
 
 newEmployeeTask :: E.EmployeeId -> CrmRoute
 newEmployeeTask = fst newEmployeeTask'
