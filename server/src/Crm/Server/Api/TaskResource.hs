@@ -11,9 +11,9 @@ import           Data.Pool                   (withResource)
 import           Data.Tuple.All              (sel1)
 
 import           Opaleye                     (runQuery, pgBool, runInsert, pgDay, pgString, pgStrictText,
-                                             runInsertReturning, pgInt4)
+                                             runInsertReturning, pgInt4, runUpdate, (.==))
 
-import           Rest.Resource               (Resource, Void, schema, name, create, get, mkResourceReaderWith)
+import           Rest.Resource               (Resource, Void, schema, name, create, get, mkResourceReaderWith, update) 
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
@@ -35,7 +35,8 @@ resource :: Resource Dependencies (IdDependencies' T.TaskId) T.TaskId Void Void
 resource = (mkResourceReaderWith prepareReaderTuple) {
   name = "task" ,
   schema = S.noListing $ S.unnamedSingleRead id ,
-  get = Just getTask }
+  get = Just getTask ,
+  update = Just closeTask }
 
 
 getTask :: Handler (IdDependencies' T.TaskId)
@@ -45,3 +46,16 @@ getTask = mkConstHandler' jsonO $ do
   singleTask <- singleRowOrColumn task
   let mappedTask = $(proj 2 1) (convert singleTask :: TaskMapped)
   return mappedTask
+
+
+closeTask :: Handler (IdDependencies' T.TaskId)
+closeTask = mkInputHandler' (jsonI . jsonO) $ \task -> do
+  ((_, pool), T.TaskId taskIdInt) <- ask
+  _ <- liftIO $ withResource pool $ \connection -> runUpdate
+    connection
+    tasksTable
+    (\taskRow -> (Just . $(proj 4 0) $ taskRow, pgDay . ymdToDay . T.startDate $ task,
+      pgStrictText . T.description $ task, maybeToNullable . fmap (pgDay . ymdToDay) . T.endDate $ task))
+    (\taskRow -> $(proj 4 0) taskRow .== pgInt4 taskIdInt)
+  return ()
+

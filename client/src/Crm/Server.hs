@@ -471,7 +471,7 @@ updateTask ::
   Fay () ->
   R.CrmRouter ->
   Fay ()
-updateTask _ _ callback _ = callback
+updateTask tId t callback = XT.saveByTaskId tId t (const callback)
 
 updateMachine :: M.MachineId -- ^ machine id
               -> M.Machine

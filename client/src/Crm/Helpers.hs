@@ -24,6 +24,11 @@ data FileList
 data File
 data FileContents
 
+nowYMD :: YMD.YearMonthDay
+nowYMD = let
+  (nowYear, nowMonth, nowDay) = M.day . M.now $ M.requireMoment
+  in YMD.YearMonthDay nowYear nowMonth nowDay YMD.DayPrecision
+
 plusDays :: Int -> YMD.YearMonthDay -> YMD.YearMonthDay
 plusDays int (YMD.YearMonthDay y m d prec) = let
   dateAsMoment = dayPrecision y m d requireMoment
