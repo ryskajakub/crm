@@ -41,8 +41,8 @@ module Crm.Server (
   fetchPhoto ,
   fetchDailyPlanData ,
   fetchDailyPlanEmployees ,
-  fetchEmployeeTasks ,
-  fetchEmployeeTask ,
+  fetchTasks ,
+  fetchTask ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -71,7 +71,7 @@ import qualified Crm.Shared.Photo                    as P
 import qualified Crm.Shared.PhotoMeta                as PM
 import qualified Crm.Shared.YearMonthDay             as YMD
 import qualified Crm.Shared.Employee                 as E
-import qualified Crm.Shared.EmployeeTask             as ET
+import qualified Crm.Shared.Task                     as T
 import qualified Crm.Shared.UpkeepSequence           as US
 import qualified Crm.Shared.Direction                as DIR
 import qualified Crm.Shared.ExtraField               as EF
@@ -147,20 +147,20 @@ deleteContactPerson ident cb = XCP.remove ident $ const cb
 dayParam :: YMD.YearMonthDay -> [(String, String)]
 dayParam day = [("day", unpack . displayDateNumeral $ day)]
 
-fetchEmployeeTasks :: 
+fetchTasks :: 
   E.EmployeeId ->
-  ([(ET.EmployeeTaskId, ET.EmployeeTask)] -> Fay ()) ->
+  ([(T.TaskId, T.Task)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchEmployeeTasks employeeId = XET.list maxCount employeeId
+fetchTasks employeeId = XET.list maxCount employeeId
 
-fetchEmployeeTask ::
-  ET.EmployeeTaskId ->
-  (ET.EmployeeTask -> Fay ()) ->
+fetchTask ::
+  T.TaskId ->
+  (T.Task -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchEmployeeTask employeeTaskId callback = \r -> let
-  task = ET.EmployeeTask (YMD.YearMonthDay 2016 1 1 YMD.DayPrecision) (pack "task description")
+fetchTask employeeTaskId callback = \r -> let
+  task = T.Task (YMD.YearMonthDay 2016 1 1 YMD.DayPrecision) (pack "task description") Nothing
   in callback task
 
 fetchDailyPlanEmployees :: YMD.YearMonthDay
@@ -400,7 +400,7 @@ createContactPerson companyId contactPerson callback =
 
 createEmployeeTask :: 
   E.EmployeeId ->
-  ET.EmployeeTask ->
+  T.Task ->
   Fay () ->
   R.CrmRouter ->
   Fay ()

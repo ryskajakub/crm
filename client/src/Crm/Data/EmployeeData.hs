@@ -3,7 +3,7 @@ module Crm.Data.EmployeeData where
 import Data.Text               (Text)
 
 import Crm.Shared.Employee
-import Crm.Shared.EmployeeTask
+import Crm.Shared.Task
 
 import Crm.Component.DatePicker
 
@@ -13,9 +13,9 @@ data EmployeeData = EmployeeData {
 
 data EmployeeTasksData = EmployeeTasksData {
   employeeId :: EmployeeId ,
-  employeeTasks :: [(EmployeeTaskId, EmployeeTask)] }
+  employeeTasks :: [(TaskId, Task)] }
 
 data EmployeeTaskData = EmployeeTaskData {
-  employeeTask :: EmployeeTask ,
+  employeeTask :: Task ,
   taskDatePicker :: (DatePicker, Text) ,
-  identification :: Either EmployeeTaskId EmployeeId }
+  identification :: Either TaskId EmployeeId }

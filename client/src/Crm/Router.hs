@@ -78,7 +78,7 @@ import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.Employee         as E
-import qualified Crm.Shared.EmployeeTask     as ET
+import qualified Crm.Shared.Task             as T
 import qualified Crm.Shared.YearMonthDay     as YMD
 
 import qualified Crm.Data.Data               as D
@@ -240,10 +240,10 @@ companyDetail' = prepareRouteAndMkHandler
   mkCompaniesRoute
   (newOrEditEncodable C.getCompanyId C.CompanyId)
 
-employeeTask' :: RouteAndMkHandler (Either Text ET.EmployeeTaskId)
+employeeTask' :: RouteAndMkHandler (Either Text T.TaskId)
 employeeTask' = prepareRouteAndMkHandler
   (Route "employee-task" Nothing)
-  (newOrEditEncodable ET.getEmployeeTaskId ET.EmployeeTaskId)
+  (newOrEditEncodable T.getTaskId T.TaskId)
 
 newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
@@ -384,7 +384,7 @@ extraFields = fst extraFields' ()
 employeeTasks :: E.EmployeeId -> CrmRoute
 employeeTasks = fst employeeTasks'
 
-employeeTask :: ET.EmployeeTaskId -> CrmRoute
+employeeTask :: T.TaskId -> CrmRoute
 employeeTask = fst employeeTask' . Right
 
 newEmployeeTask :: E.EmployeeId -> CrmRoute

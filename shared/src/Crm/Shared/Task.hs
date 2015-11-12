@@ -2,10 +2,11 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
 
-module Crm.Shared.EmployeeTask where
+module Crm.Shared.Task where
 
 import Crm.Shared.YearMonthDay  as YMD
 import Crm.Shared.UpkeepMachine as UM
+import Crm.Shared.MyMaybe
 
 #ifndef FAY
 import GHC.Generics
@@ -15,27 +16,29 @@ import Rest.Info                (Info(..))
 import Data.Text                (Text, pack)
 
 #ifndef FAY
-instance Info EmployeeTaskId where
-  describe _ = "employeeTaskId"
-instance Read EmployeeTaskId where 
-  readsPrec i = fmap (\(a,b) -> (EmployeeTaskId a, b)) `fmap` readsPrec i
+instance Info TaskId where
+  describe _ = "taskId"
+instance Read TaskId where 
+  readsPrec i = fmap (\(a,b) -> (TaskId a, b)) `fmap` readsPrec i
 #endif
 
-newtype EmployeeTaskId = EmployeeTaskId { getEmployeeTaskId :: Int }
+newtype TaskId = TaskId { getTaskId :: Int }
 #ifdef FAY
   deriving Eq
 #else
   deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
-data EmployeeTask = EmployeeTask {
-  date :: YMD.YearMonthDay ,
-  task :: Text }
+data Task = Task {
+  startDate :: YMD.YearMonthDay ,
+  description :: Text ,
+  endDate :: Maybe YMD.YearMonthDay }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
 
-newEmployeeTask :: EmployeeTask
-newEmployeeTask = EmployeeTask {
-  date = YMD.new ,
-  task = pack "" }
+newTask :: Task
+newTask = Task {
+  startDate = YMD.new ,
+  endDate = Nothing ,
+  description = pack "" }

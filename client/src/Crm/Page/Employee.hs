@@ -30,7 +30,7 @@ import qualified Crm.Router                       as R
 import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, rmap, lmap)
 
 import qualified Crm.Shared.Employee              as E
-import qualified Crm.Shared.EmployeeTask          as ET
+import qualified Crm.Shared.Task                  as T
 
 
 employeePage :: CrmRouter
@@ -153,7 +153,7 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
 
 employeeTasks :: 
   E.EmployeeId -> 
-  [(ET.EmployeeTaskId, ET.EmployeeTask)] ->
+  [(T.TaskId, T.Task)] ->
   CrmRouter ->
   DOMElement
 employeeTasks employeeId tasks router = let
@@ -161,10 +161,10 @@ employeeTasks employeeId tasks router = let
     head' = tr [
       th "Datum" ,
       th "Činnost" ]
-    mkBody = map $ \(employeeTaskId, ET.EmployeeTask date' task) ->
+    mkBody = map $ \(employeeTaskId, T.Task startDate task endDate) ->
       tr [
         -- td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
-        td . displayDate $ date' ,
+        td . displayDate $ startDate ,
         td task ]
     in BT.table (Just BT.Bordered) (head' : mkBody tasks)
   newTaskButton = BTN.button'
@@ -201,12 +201,12 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Rig
       ED.taskDatePicker = lmap (\t -> rmap (const openness) t) (ED.taskDatePicker etd) }
     setDate date = case date of
       Right date' -> modify' $ \etd -> etd {
-        ED.employeeTask = employeeTask { ET.date = date' } ,
+        ED.employeeTask = employeeTask { T.startDate = date' } ,
         ED.taskDatePicker = rmap (const . displayDate $ date') taskDatePicker }
       Left text' -> modify' $ \etd -> etd {
         ED.taskDatePicker = rmap (const text') taskDatePicker }
-    dateValue = if (displayDate . ET.date $ employeeTask) == snd taskDatePicker
-      then Right . ET.date $ employeeTask
+    dateValue = if (displayDate . T.startDate $ employeeTask) == snd taskDatePicker
+      then Right . T.startDate $ employeeTask
       else Left . snd $ taskDatePicker
     in DP.datePicker Editing (fst taskDatePicker) modifyDatepickerDate setPickerOpenness dateValue setDate
 
@@ -214,8 +214,8 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Rig
   descriptionRow = textareaRow
     Editing 
     "Popis"
-    (SetValue . ET.task $ employeeTask)
-    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { ET.task = t }})
+    (SetValue . T.description $ employeeTask)
+    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
   submitRow = buttonRow
     "Ulož"
     (createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)

@@ -20,13 +20,13 @@ import           Rest.Handler                  (ListHandler, Handler)
 
 import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Employee           as E
-import qualified Crm.Shared.EmployeeTask       as ET
+import qualified Crm.Shared.Task               as T
 
 import           Crm.Server.DB
 import           Crm.Server.Boilerplate        ()
 import           Crm.Server.Types
 import           Crm.Server.Handler
-import           Crm.Server.Helpers            (ymdToDay)
+import           Crm.Server.Helpers            (ymdToDay, maybeToNullable)
 
 
 resource :: Resource (IdDependencies' E.EmployeeId) (IdDependencies' E.EmployeeId) Void () Void
@@ -40,23 +40,23 @@ tasksListing :: ListHandler (IdDependencies' E.EmployeeId)
 tasksListing = mkGenHandler' jsonO $ \env -> do
   ((_, pool), employeeId) <- ask
   withResource pool $ \connection -> liftIO $ do
-    upkeeps <- runQuery connection (tasksForEmployeeQuery employeeId)
-    let employeeTasks = convert upkeeps :: [EmployeeTaskMapped]
+    tasks <- runQuery connection (tasksForEmployeeQuery employeeId)
+    let employeeTasks = convert tasks :: [TaskMapped]
     return employeeTasks
 
 createHandler :: Handler (IdDependencies' E.EmployeeId)
 createHandler = mkInputHandler' (jsonO . jsonI) $ \newTask -> do
   ((_, pool), (E.EmployeeId employeeId)) <- ask
   withResource pool $ \connection -> do
-    upkeepIds <- liftIO $ runInsertReturning
+    taskIds <- liftIO $ runInsertReturning
       connection
-      upkeepsTable
-      (Nothing, pgDay . ymdToDay . ET.date $ newTask, pgBool False, pgString "", 
-        pgStrictText . ET.task $ newTask, pgString "")
+      tasksTable
+      (Nothing, pgDay . ymdToDay . T.startDate $ newTask,
+        pgStrictText . T.description $ newTask, maybeToNullable . fmap (pgDay . ymdToDay) . T.endDate $ newTask)
       sel1
-    (upkeepId :: Int) <- singleRowOrColumn upkeepIds
+    (taskId :: Int) <- singleRowOrColumn taskIds
     liftIO $ runInsert
       connection
-      upkeepEmployeesTable      
-      (pgInt4 upkeepId, pgInt4 employeeId, pgInt4 0)
+      taskEmployeesTable
+      (pgInt4 taskId, pgInt4 employeeId)
   return ()

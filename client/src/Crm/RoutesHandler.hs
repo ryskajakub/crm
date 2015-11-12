@@ -24,7 +24,7 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Direction        as DIR
 import qualified Crm.Shared.Employee         as E
-import qualified Crm.Shared.EmployeeTask     as ET
+import qualified Crm.Shared.Task             as T
 import qualified Crm.Shared.ExtraField       as EF
 
 import qualified Crm.Data.MachineData        as MD
@@ -212,12 +212,13 @@ startRouter appVar = startedRouter where
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ,
     useHandler employeeTasks' $ \employeeId ->
-      fetchEmployeeTasks employeeId $ \employeeTasksData -> let 
+      fetchTasks employeeId $ \employeeTasksData -> let 
         e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId employeeTasksData
         in modify' e ,
     useHandler newEmployeeTask' $ \employeeId ->
       const $ modify appVar $ \appState -> appState {
-        D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData ET.newEmployeeTask newDatePickerData (Right employeeId) } ]
+        D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData 
+          (T.newTask { T.startDate = nowYMD }) newDatePickerData (Right employeeId) } ]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

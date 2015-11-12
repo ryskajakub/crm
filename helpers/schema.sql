@@ -98,3 +98,13 @@ create table upkeep_employees (
   upkeep_id integer not null references upkeeps (id) ,
   employee_id integer not null references employees (id) ,
   order_ integer not null );
+
+create table task_employees (
+  task_id integer not null references tasks (id) ,
+  employee_id integer not null references employees (id));
+
+create table tasks (
+  id serial primary key ,
+  start_date date not null ,
+  end_date date ,
+  description varchar (5000) not null );

@@ -28,6 +28,8 @@ module Crm.Server.DB (
   extraFieldsTable ,
   passwordTable ,
   upkeepEmployeesTable ,
+  taskEmployeesTable ,
+  tasksTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -107,7 +109,7 @@ module Crm.Server.DB (
   UpkeepMapped ,
   MaybeEmployeeMapped ,
   EmployeeMapped ,
-  EmployeeTaskMapped ,
+  TaskMapped ,
   UpkeepSequenceMapped ,
   UpkeepMachineMapped ,
   PhotoMetaMapped ,
@@ -154,7 +156,7 @@ import           TupleTH
 
 import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.Employee                  as E
-import qualified Crm.Shared.EmployeeTask              as ET
+import qualified Crm.Shared.Task                      as T
 import qualified Crm.Shared.ContactPerson             as CP
 import qualified Crm.Shared.Machine                   as M
 import qualified Crm.Shared.MachineType               as MT
@@ -213,6 +215,9 @@ type PasswordTable = (Column PGBytea)
 
 type UpkeepEmployeesTable = (DBInt, DBInt, DBInt)
 
+type TaskEmployeesTable = (DBInt, DBInt)
+type TasksWriteTable = (Maybe DBInt, DBDate, DBText, Column (Nullable PGDate))
+type TasksTable = (DBInt, DBDate, DBText, Column (Nullable PGDate))
 
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )
@@ -332,6 +337,18 @@ upkeepEmployeesTable = Table "upkeep_employees" $ p3 (
   required "employee_id" ,
   required "order_" )
 
+taskEmployeesTable :: Table TaskEmployeesTable TaskEmployeesTable
+taskEmployeesTable = Table "task_employees" $ p2 (
+  required "task_id" , 
+  required "employee_id" )
+
+tasksTable :: Table TasksWriteTable TasksTable
+tasksTable = Table "tasks" $ p4 (
+  optional "id" ,
+  required "start_date" ,
+  required "description" , 
+  required "end_date" )
+
 extraFieldsQuery :: Query ExtraFieldsTable
 extraFieldsQuery = queryTable extraFieldsTable
 
@@ -390,7 +407,7 @@ type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
 type PhotoMetaMapped = (P.PhotoId, PM.PhotoMeta)
 type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
 type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, Text)
-type EmployeeTaskMapped = (ET.EmployeeTaskId, ET.EmployeeTask)
+type TaskMapped = (T.TaskId, T.Task)
 
 instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
@@ -431,10 +448,10 @@ instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
   convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
 instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
   convert tuple = (EF.ExtraFieldId $ $(proj 3 0) tuple, M.MachineId $ $(proj 3 1) tuple, $(proj 3 2) tuple)
-instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) EmployeeTaskMapped where
+instance ColumnToRecord (Int, Day, Text, Maybe Day) TaskMapped where
   convert tuple = let
-    (_,a,_,_,d,_) = tuple
-    in (ET.EmployeeTaskId . $(proj 6 0) $ tuple, ET.EmployeeTask (dayToYmd a) d)
+    (id, startDate, description, endDate) = tuple
+    in (T.TaskId id, T.Task (dayToYmd startDate) description (dayToYmd `fmap` endDate))
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
@@ -809,12 +826,12 @@ dailyPlanQuery employeeId' day = let
     returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
   in AGG.aggregate (p2(p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min), p1(aggrArray))) q
 
-tasksForEmployeeQuery :: E.EmployeeId -> Query UpkeepsTable
+tasksForEmployeeQuery :: E.EmployeeId -> Query TasksTable
 tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
-  upkeepRow <- upkeepsQuery -< ()
-  upkeepEmployeesRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
-  restrict -< pgInt4 employeeId .== $(proj 3 1) upkeepEmployeesRow
-  returnA -< upkeepRow
+  taskRow <- queryTable tasksTable -< ()
+  taskEmployeeRow <- join . queryTable $ taskEmployeesTable -< $(proj 4 0) taskRow
+  restrict -< pgInt4 employeeId .== $(proj 2 1) taskEmployeeRow
+  returnA -< taskRow
 
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"

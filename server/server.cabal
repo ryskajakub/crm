@@ -62,7 +62,7 @@ Library
     Crm.Server.Parsers ,
     Crm.TH ,
 
-    Crm.Shared.EmployeeTask
+    Crm.Shared.Task
     Crm.Shared.Direction ,
     Crm.Shared.MyMaybe ,
     Crm.Shared.Company ,
