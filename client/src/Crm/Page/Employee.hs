@@ -158,7 +158,7 @@ employeeTasks ::
   DOMElement
 employeeTasks employeeId tasks router = let
   tasksTable = let
-    head' = tr [
+    head' = thead $ tr [
       th "Datum" ,
       th "Činnost" ]
     mkBody = map $ \(employeeTaskId, T.Task startDate task endDate) ->
@@ -166,7 +166,7 @@ employeeTasks employeeId tasks router = let
         -- td . (\content -> R.link content (R.employeeTask employeeTaskId) router) . displayDate $ date' ,
         td . displayDate $ startDate ,
         td task ]
-    in BT.table (Just BT.Bordered) (head' : mkBody tasks)
+    in BT.table (Just BT.Bordered) [head', tbody . mkBody $ tasks]
   newTaskButton = BTN.button'
     (BTN.buttonProps {
       BTN.onClick = Defined . const $ navigate (R.newEmployeeTask employeeId) router })
