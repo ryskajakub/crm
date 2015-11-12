@@ -245,17 +245,20 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
   inputRowEditing = inputRow Editing
 
   machineColsSize = 4
-  (closeUpkeepRows, noteColsSize) = if closeUpkeep' 
-    then ([inputRowEditing "Hodiny"
-        (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
-      textareaRowEditing "Popis práce" (SetValue $ U.workDescription upkeep) $ 
+  (closeUpkeepRows, noteColsSize) = let
+    workDescription =
+      textareaRowEditing "Popis práce" (SetValue . U.workDescription $ upkeep) $
         \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } ,
-      textareaRowEditing "Doporučení" (SetValue $ U.recommendation upkeep) $
-        \es -> modify' $ \ud ->
-          ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 5)
-    else ([], 6)
+          ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } 
+    in if closeUpkeep'
+      then ([inputRowEditing "Hodiny"
+          (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
+            ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
+        workDescription ,
+        textareaRowEditing "Doporučení" (SetValue . U.recommendation $ upkeep) $
+          \es -> modify' $ \ud ->
+            ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 5)
+      else ([workDescription], 6)
 
   toggleNote = let
     newClose uc = uc { UD.displayedNote = newDisplayedNote } where
