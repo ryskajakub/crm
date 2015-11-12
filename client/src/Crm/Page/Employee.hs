@@ -216,6 +216,6 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker (Rig
     "Popis"
     (SetValue . T.description $ employeeTask)
     (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
-  submitRow = buttonRow
+  submitRow = div' (class' "form-group") $ buttonRow
     "Ulož"
     (createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
