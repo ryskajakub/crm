@@ -35,7 +35,7 @@ renderMarkup = let
   renderItem (SR.UnorderedList unorderedList) = ul $
     map renderListItem unorderedList
   renderItem (SR.PlainText t) = text2DOM t
-  renderItem (SR.Header h) = h4 h
+  renderItem (SR.Header h) = h5 h
   renderListItem t = li t
   in map renderItem
 
