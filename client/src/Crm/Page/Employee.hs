@@ -43,7 +43,7 @@ employeePage router employees = mkGrid where
       td $ R.link (E.name employee) (R.editEmployee employeeId) router ,
       td $ E.contact employee ,
       td $ E.capabilities employee ,
-      td $ R.link "Činnosti" (R.employeeTasks employeeId) router ]
+      td $ R.link (G.tasks) (R.employeeTasks employeeId) router ]
 
   addEmployeeButton = BTN.button'
     (BTN.buttonProps {
@@ -62,7 +62,7 @@ employeePage router employees = mkGrid where
         th "Jméno" ,
         th "Kontakt" ,
         th "Kvalifikace" ,
-        th "Činnosti" ]
+        th "Úkoly" ]
     body = tbody $ map mkEmployeeRow employees
 
 
