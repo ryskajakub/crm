@@ -148,8 +148,8 @@ startRouter appVar = startedRouter where
             (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById))) router ) router ) router ,
     useHandler newMaintenance' $ \companyId router -> 
-      fetchUpkeepData companyId ( \ud ->
-        fetchEmployees ( \employees -> let
+      fetchUpkeepData companyId (\ud ->
+        fetchEmployees (\employees -> let
           notCheckedUpkeepMachines = map (\(machineId,_,_,_) -> 
             (UM.newUpkeepMachine, machineId)) ud
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 

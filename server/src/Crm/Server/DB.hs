@@ -805,7 +805,7 @@ extraFieldsForMachineQuery machineId = orderBy (asc $ $(proj 4 2) . snd) $ proc 
 
 mainEmployeesInDayQ :: Day
                     -> Query EmployeeTable
-mainEmployeesInDayQ day = proc () -> do
+mainEmployeesInDayQ day = distinct $ proc () -> do
   upkeepRow <- upkeepsQuery -< ()
   restrict -< $(proj 6 1) upkeepRow .== pgDay day
   upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
