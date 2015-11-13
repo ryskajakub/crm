@@ -64,8 +64,7 @@ upkeepPrint router day employeeTasks data' employees = let
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
       [generalDescription] ++
-      (rdrMachines machinesData) ++
-      tasks)
+      (rdrMachines machinesData))
     where
     generalDescription = div . renderMarkup . U.workDescription $ upkeep
     upkeepPrintDataHeader = [
@@ -90,4 +89,5 @@ upkeepPrint router day employeeTasks data' employees = let
     (B.row $ [
       B.col (B.mkColProps 6) employeeSelect ,
       B.col (B.mkColProps 6) simpleDateControls ]) :
-    map displayUpkeep data'
+    map displayUpkeep data' ++
+    [B.row . B.col (B.mkColProps 12) $ tasks]
