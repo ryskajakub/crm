@@ -857,7 +857,7 @@ multiEmployeeQuery employeeIds = proc () -> do
   returnA -< employeeRow
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
-companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = proc () -> do
+companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = distinct $ proc () -> do
   upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepIdInt
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
   companyRow <- queryTable companiesTable -< ()
