@@ -57,16 +57,15 @@ upkeepPrint router day employeeTasks data' employees = let
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) (fst `onJust` employeeTasks) $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
-  renderTasks tasks = text2DOM "tasks"
-  tasks = maybe (text2DOM "") (\(_, tasks') -> renderTasks tasks') employeeTasks
+  renderTasks = map $ \(_, task) -> li . T.description $ task
+  tasks = maybe [text2DOM ""] (\(_, tasks') -> (h4 "Úkoly":) . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
       [h4 "Úkony"] ++
       [generalDescription] ++
       (rdrMachines machinesData) ++
-      [h4 "Další úkoly"] ++ 
-      [tasks])
+      tasks)
     where
     generalDescription = div . renderMarkup . U.workDescription $ upkeep
     upkeepPrintDataHeader = [
