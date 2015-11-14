@@ -205,8 +205,7 @@ printDailyPlanListing' :: (MonadIO m, Functor m)
                        => Maybe E.EmployeeId
                        -> Connection
                        -> Day
-                       -> ExceptT (Reason r) m [(U.UpkeepMarkup, C.Company, [(E.EmployeeId, E.Employee)], 
-                          [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
+                       -> ExceptT (Reason r) m [(U.UpkeepMarkup, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
 printDailyPlanListing' employeeId connection day = do
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do

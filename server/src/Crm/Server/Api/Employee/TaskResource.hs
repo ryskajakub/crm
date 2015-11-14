@@ -9,6 +9,9 @@ import           Control.Monad.IO.Class      (liftIO)
 import           Data.Pool                   (withResource)
 import           Data.Tuple.All              (sel1)
 import           Data.Text                   (pack)
+import           Data.Aeson.Types            (ToJSON)
+import           Data.Typeable               (Typeable)
+import           Data.JSON.Schema            (JSONSchema)
 
 import           Opaleye                     (runQuery, pgBool, runInsert, pgDay, pgString, pgStrictText,
                                              runInsertReturning, pgInt4)
@@ -34,19 +37,26 @@ import           Crm.Server.Parsers          (parseMarkup)
 
 data TasksListing = TasksListingNormal | TasksListingMarkup
 
-tasksListingMarkup :: ListHandler (IdDependencies' E.EmployeeId)
-tasksListingMarkup = mkGenHandler' jsonO $ \env -> do
+tasksListing' :: 
+  (Typeable o, ToJSON o, JSONSchema o) =>
+  ([(T.TaskId, T.Task)] -> [o]) ->
+  ListHandler (IdDependencies' E.EmployeeId)
+tasksListing' modifyTasks = mkListing' jsonO $ const $ do
   ((_, pool), employeeId) <- ask
   withResource pool $ \connection -> liftIO $ do
     tasks <- runQuery connection (tasksForEmployeeQuery employeeId)
     let 
       employeeTasks = convert tasks :: [TaskMapped]
-      mkEmployeeTasksMarkup = map $ \(taskId, task) -> let
-        taskMarkup = task { 
-          T.description = maybe ((:[]). SR.PlainText . pack $ "") (\x -> x) . 
-            catchError . parseMarkup . T.description $ task }
-        in (taskId, taskMarkup)
-    return . mkEmployeeTasksMarkup $ employeeTasks
+    return . modifyTasks $ employeeTasks
+
+tasksListingMarkup :: ListHandler (IdDependencies' E.EmployeeId)
+tasksListingMarkup = let
+  mkEmployeeTasksMarkup = map $ \(taskId, task) -> let
+    taskMarkup = task { 
+      T.description = maybe ((:[]). SR.PlainText . pack $ "") (\x -> x) . 
+        catchError . parseMarkup . T.description $ task }
+    in (taskId, taskMarkup)
+  in tasksListing' mkEmployeeTasksMarkup
 
 resource :: Resource (IdDependencies' E.EmployeeId) (IdDependencies' E.EmployeeId) Void TasksListing Void
 resource = mkResourceId {
@@ -59,12 +69,7 @@ resource = mkResourceId {
     TasksListingMarkup -> tasksListingMarkup }
 
 tasksListing :: ListHandler (IdDependencies' E.EmployeeId)
-tasksListing = mkGenHandler' jsonO $ \env -> do
-  ((_, pool), employeeId) <- ask
-  withResource pool $ \connection -> liftIO $ do
-    tasks <- runQuery connection (tasksForEmployeeQuery employeeId)
-    let employeeTasks = convert tasks :: [TaskMapped]
-    return employeeTasks
+tasksListing = tasksListing' (\x -> x)
 
 createHandler :: Handler (IdDependencies' E.EmployeeId)
 createHandler = mkInputHandler' (jsonO . jsonI) $ \newTask -> do
