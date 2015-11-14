@@ -73,7 +73,7 @@ startRouter appVar = startedRouter where
             fetchDailyPlanEmployees ymd (\dpe -> let
               modifyAppvar employeeTasks = modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeTasks data' dpe }
               in case employeeId of
-                Just employeeId' -> fetchTasks employeeId' (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
+                Just employeeId' -> fetchMarkupTasks employeeId' (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
                 Nothing -> modifyAppvar Nothing
                   ) crmRouter ) crmRouter
         Nothing -> modify' D.NotFound) ,

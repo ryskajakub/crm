@@ -44,6 +44,7 @@ module Crm.Server (
   fetchDailyPlanEmployees ,
   fetchTasks ,
   fetchTask ,
+  fetchMarkupTasks ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -155,6 +156,13 @@ fetchTasks ::
   R.CrmRouter ->
   Fay ()
 fetchTasks employeeId = XET.list maxCount employeeId
+
+fetchMarkupTasks ::
+  E.EmployeeId ->
+  ([(T.TaskId, T.TaskMarkup)] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchMarkupTasks employeeId = XET.listMarkupTasks maxCount employeeId
 
 fetchTask ::
   T.TaskId ->

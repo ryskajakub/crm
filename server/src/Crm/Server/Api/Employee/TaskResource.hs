@@ -45,7 +45,7 @@ tasksListingMarkup = mkGenHandler' jsonO $ \env -> do
         taskMarkup = task { 
           T.description = maybe ((:[]). SR.PlainText . pack $ "") (\x -> x) . 
             catchError . parseMarkup . T.description $ task }
-        in taskMarkup
+        in (taskId, taskMarkup)
     return . mkEmployeeTasksMarkup $ employeeTasks
 
 resource :: Resource (IdDependencies' E.EmployeeId) (IdDependencies' E.EmployeeId) Void TasksListing Void

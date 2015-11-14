@@ -78,7 +78,7 @@ data NavigationState =
     wrongPassword :: Bool } |
   DailyPlan {
     day :: YMD.YearMonthDay ,
-    employeeId :: Maybe (E.EmployeeId, [(T.TaskId, T.Task)]) ,
+    employeeId :: Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)]) ,
     dailyPlanData :: [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
       MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] ,
     employees :: [E.Employee'] }

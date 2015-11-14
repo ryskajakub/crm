@@ -44,7 +44,7 @@ renderMarkup = let
 
 upkeepPrint :: R.CrmRouter
             -> YMD.YearMonthDay
-            -> Maybe (E.EmployeeId, [(T.TaskId, T.Task)])
+            -> Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)])
             -> [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
                MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> [(E.EmployeeId, E.Employee)]
@@ -57,7 +57,7 @@ upkeepPrint router day employeeTasks data' employees = let
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) (fst `onJust` employeeTasks) $
     \eId -> R.navigate (R.dailyPlan day eId) router
   header = h2 $ "Denní akce - " <> displayDate day
-  renderTasks = map $ \(_, task) -> li . T.description $ task
+  renderTasks = map $ \(_, task) -> li . renderMarkup . T.description $ task
   tasks = maybe [text2DOM ""] (\(_, tasks') -> (h3 "Další úkoly":) . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
