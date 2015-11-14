@@ -19,7 +19,8 @@ module Crm.Server.Helpers (
   mapResultsToList ,
   prepareReader , 
   prepareReaderIdentity ,
-  prepareReaderTuple ) where
+  prepareReaderTuple ,
+  catchError ) where
 
 
 import           Data.Functor.Identity       (runIdentity)
@@ -46,6 +47,10 @@ import qualified Crm.Shared.YearMonthDay     as YMD
 
 import           Crm.Server.Types            (GlobalBindings, Cache)
 
+
+catchError :: Either a b -> Maybe b
+catchError (Right r) = Just r
+catchError (Left {}) = Nothing
 
 prepareUpdate :: (Sel1 columnsR (Column PGInt4))
               => Table columnsW columnsR

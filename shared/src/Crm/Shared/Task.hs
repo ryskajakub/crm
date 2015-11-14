@@ -7,6 +7,7 @@ module Crm.Shared.Task where
 import Crm.Shared.YearMonthDay  as YMD
 import Crm.Shared.UpkeepMachine as UM
 import Crm.Shared.MyMaybe
+import Crm.Shared.ServerRender  as SR
 
 #ifndef FAY
 import GHC.Generics
@@ -29,13 +30,15 @@ newtype TaskId = TaskId { getTaskId :: Int }
   deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
-data Task = Task {
+data Task' description = Task {
   startDate :: YMD.YearMonthDay ,
-  description :: Text ,
+  description :: description ,
   endDate :: Maybe YMD.YearMonthDay }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+type Task = Task' Text
+type TaskMarkup = Task' [SR.Markup]
 
 newTask :: Task
 newTask = Task {

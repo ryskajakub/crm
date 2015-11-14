@@ -109,5 +109,5 @@ autocompleteSchema :: S.Schema MachineTypeSid MachineTypeMid Void
 autocompleteSchema = S.withListing CountListing $ S.named [
   (A.autocompleteManufacturer, S.listingBy AutocompleteManufacturer) ,
   (A.autocomplete, S.listingBy Autocomplete) ,
-  (A.byName, S.singleBy MachineTypeByName) , 
+  (A.byName, S.singleBy MachineTypeByName) ,
   (A.byId, S.singleRead MachineTypeById) ]

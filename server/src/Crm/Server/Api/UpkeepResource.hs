@@ -49,7 +49,7 @@ import qualified Crm.Shared.ServerRender     as SR
 import qualified Crm.Shared.Company          as C
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay, catchError)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -212,8 +212,6 @@ printDailyPlanListing' employeeId connection day = do
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
     let 
       upkeep = convert upkeepMapped :: UpkeepMapped
-      catchError (Right r) = Just r
-      catchError (Left {}) = Nothing
       listifyNote (um @ (UM.UpkeepMachine {})) = 
         (um, catchError . parseMarkup . UM.upkeepMachineNote $ um) where
       upkeepRaw = $(proj 2 1) upkeep
