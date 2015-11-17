@@ -303,3 +303,7 @@ form.upkeep-sequence-form input[type=checkbox] {
   -moz-border-radius: 0px;
   background-image: none;
 }
+
+@media print {
+  .no-print {
+    display: none; } }

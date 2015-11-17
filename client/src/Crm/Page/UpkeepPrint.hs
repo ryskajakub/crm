@@ -86,7 +86,7 @@ upkeepPrint router day employeeTasks data' employees = let
         tr . (td'' mkAttrs (mkTableCellAttributes { colSpan = Defined 2 } )) $ upkeepMachineText ]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
-    (B.row $ [
+    (B.row' (const . class' $ "no-print") $ [
       B.col (B.mkColProps 6) employeeSelect ,
       B.col (B.mkColProps 6) simpleDateControls ]) :
     map displayUpkeep data' ++
