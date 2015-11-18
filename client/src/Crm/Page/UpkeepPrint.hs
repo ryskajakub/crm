@@ -64,7 +64,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
       D.navigation = case D.navigation appState of
         (dp @ D.DailyPlan {}) -> dp { D.day = newDay } }
     modifyDPD dpd = modifyDay (date, dpd)
-    modifyDate date' = modifyDay (date', datePickerData)
+    modifyDate date' = R.navigate (R.dailyPlan date' (fst `onJust` employeeTasks)) router
     in DP.datePicker' Editing datePickerData modifyDPD date modifyDate
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) (fst `onJust` employeeTasks) $
     \eId -> R.navigate (R.dailyPlan date eId) router
