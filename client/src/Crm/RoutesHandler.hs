@@ -72,7 +72,8 @@ startRouter appVar = startedRouter where
           employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
           in fetchDailyPlanData ymd employeeId (\data' ->
             fetchDailyPlanEmployees ymd (\dpe -> let
-              modifyAppvar employeeTasks = modify appVar $ \appState -> appState { D.navigation = D.DailyPlan ymd employeeTasks data' dpe }
+              day = (ymd, DP.DatePickerData ymd True (displayDate ymd))
+              modifyAppvar employeeTasks = modify appVar $ \appState -> appState { D.navigation = D.DailyPlan day employeeTasks data' dpe }
               in case employeeId of
                 Just employeeId' -> fetchMarkupTasks employeeId' (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
                 Nothing -> modifyAppvar Nothing

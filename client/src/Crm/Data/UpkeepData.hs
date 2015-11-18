@@ -32,4 +32,3 @@ data UpkeepClose = UpkeepClose {
   upkeepId :: UpkeepId ,
   companyId :: CompanyId , 
   displayedNote :: DisplayedNote }
-

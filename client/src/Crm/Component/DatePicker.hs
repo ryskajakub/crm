@@ -45,7 +45,7 @@ datePicker' inputState datePickerData setDatePickerData date setDate = let
   setDisplayed (Left text) = setDatePickerData $ datePickerData { rawText = text }
   setDisplayed (Right newDate) = do
     setDate newDate
-    setDatePickerData $ datePickerData { rawText = displayDate newDate, open = False }
+    setDatePickerData $ datePickerData { rawText = displayDate newDate, open = False } -- todo should be automatic close be underlying datePicker
   in datePicker inputState (calendarDate, open) setDatePickerDate setOpen displayed setDisplayed
 
 datePicker :: InputState -- ^ editing

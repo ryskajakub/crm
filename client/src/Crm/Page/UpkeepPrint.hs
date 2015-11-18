@@ -10,14 +10,17 @@ import qualified Data.Text                    as T
 import           Data.Maybe                   (onJust)
 import           Prelude                      hiding (div)
 import           FFI                          (Defined(Defined))
+import           Data.Var                     (Var, modify)
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
 import           Crm.Helpers                  (displayDate, plusDays)
-import           Crm.Component.Form           (nullDropdown)
+import           Crm.Component.Form           (nullDropdown, InputState(Editing))
+import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
+import qualified Crm.Data.Data                as D
 
 import qualified Crm.Shared.Company           as C
 import qualified Crm.Shared.Employee          as E
@@ -42,21 +45,30 @@ renderMarkup = let
   in map renderItem
 
 
-upkeepPrint :: R.CrmRouter
-            -> YMD.YearMonthDay
+upkeepPrint :: 
+  R.CrmRouter ->
+  Var D.AppState ->
+            (YMD.YearMonthDay, DP.DatePickerData)
             -> Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)])
             -> [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
                MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
             -> [(E.EmployeeId, E.Employee)]
             -> DOMElement
-upkeepPrint router day employeeTasks data' employees = let
+upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees = let
   simpleDateControls = [
-    R.link "<< včera" (R.dailyPlan (plusDays (-1) day) Nothing) router ,
+    R.link "<< včera" (R.dailyPlan (plusDays (-1) date) Nothing) router ,
     text2DOM " " ,
-    R.link "zítra >>" (R.dailyPlan (plusDays (1) day) Nothing) router ]
+    R.link "zítra >>" (R.dailyPlan (plusDays (1) date) Nothing) router ]
+  plansDatePicker = let 
+    modifyDay newDay = modify appVar $ \appState -> appState {
+      D.navigation = case D.navigation appState of
+        (dp @ D.DailyPlan {}) -> dp { D.day = newDay } }
+    modifyDPD dpd = modifyDay (date, dpd)
+    modifyDate date' = modifyDay (date', datePickerData)
+    in DP.datePicker' Editing datePickerData modifyDPD date modifyDate
   employeeSelect = fst . nullDropdown employees (text2DOM . E.name) (fst `onJust` employeeTasks) $
-    \eId -> R.navigate (R.dailyPlan day eId) router
-  header = h2 $ "Denní akce - " <> displayDate day
+    \eId -> R.navigate (R.dailyPlan date eId) router
+  header = h2 $ "Denní akce - " <> displayDate date
   renderTasks = map $ \(_, task) -> li . renderMarkup . T.description $ task
   tasks = maybe [text2DOM ""] (\(_, tasks') -> (h3 "Další úkoly":) . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
@@ -88,6 +100,6 @@ upkeepPrint router day employeeTasks data' employees = let
     (B.row . B.col (B.mkColProps 12) $ header) :
     (B.row' (const . class' $ "no-print") $ [
       B.col (B.mkColProps 6) employeeSelect ,
-      B.col (B.mkColProps 6) simpleDateControls ]) :
+      B.col (B.mkColProps 3) plansDatePicker ]) :
     map displayUpkeep data' ++
     [B.row . B.col (B.mkColProps 12) $ tasks]

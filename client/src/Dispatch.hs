@@ -101,7 +101,7 @@ main' = do
         (body, callback) = emptyCallback $ login appVar' router password wrongPassword
         in simpleReactBody' body callback
       D.DailyPlan ymd employeeId dailyPlanData es ->
-        n . emptyCallback $ upkeepPrint router ymd employeeId dailyPlanData es
+        n . emptyCallback $ upkeepPrint router appVar' ymd employeeId dailyPlanData es
       D.EmployeeTasksScreen (f@(ED.EmployeeTasksData employeeId employeeTasks')) ->
         trace (show f) $ n . emptyCallback $ employeeTasks employeeId employeeTasks' router
       D.EmployeeTaskScreen employeeTaskData ->
