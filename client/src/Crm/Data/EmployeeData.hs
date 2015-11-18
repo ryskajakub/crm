@@ -17,5 +17,5 @@ data EmployeeTasksData = EmployeeTasksData {
 
 data EmployeeTaskData = EmployeeTaskData {
   employeeTask :: Task ,
-  taskDatePicker :: (DatePicker, Text) ,
+  taskDatePicker :: DatePickerData ,
   identification :: Either TaskId EmployeeId }

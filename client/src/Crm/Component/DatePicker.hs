@@ -5,19 +5,48 @@
 
 module Crm.Component.DatePicker (
   datePicker ,
-  DatePicker ) where
+  datePicker' ,
+  DatePicker ,
+  DatePickerData (..) ) where
 
 import           Prelude                              hiding (putStrLn)
-import           Data.Text                            (fromString, Text)
+import           Data.Text                            (fromString, Text, unpack, putStrLn)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import           HaskellReact
 
 import qualified Crm.Shared.YearMonthDay              as YMD
-import           Crm.Helpers                          (displayPrecision)
+import           Crm.Helpers                          (displayPrecision, displayDate)
 import           Crm.Component.Form
 
+import           Debug.Trace
+
 type DatePicker = (YMD.YearMonthDay, Bool)
+
+data DatePickerData = DatePickerData {
+  calendarDate :: YMD.YearMonthDay ,
+  open :: Bool ,
+  rawText :: Text }
+
+datePicker' ::
+  InputState ->
+  DatePickerData ->
+  (DatePickerData -> Fay ()) ->
+  YMD.YearMonthDay ->
+  (YMD.YearMonthDay -> Fay ()) ->
+  [DOMElement]
+datePicker' inputState datePickerData setDatePickerData date setDate = let
+  DatePickerData calendarDate open rawText = datePickerData
+  setDatePickerDate ymd = setDatePickerData $ datePickerData { calendarDate = ymd }
+  setOpen open' = setDatePickerData $ datePickerData { open = open' }
+  displayed = trace (show datePickerData ++ unpack " " ++ show date) $ if (rawText ==) . displayDate $ date
+    then Right date
+    else Left rawText
+  setDisplayed (Left text) = setDatePickerData $ datePickerData { rawText = text }
+  setDisplayed (Right newDate) = do
+    setDate newDate
+    setDatePickerData $ datePickerData { rawText = displayDate newDate }
+  in datePicker inputState (calendarDate, open) setDatePickerDate setOpen displayed setDisplayed
 
 datePicker :: InputState -- ^ editing
            -> DatePicker
@@ -41,8 +70,8 @@ datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     where 
       setDate' precision' = do
         let dateToSet = YMD.YearMonthDay year month day precision'
-        setDate $ Right dateToSet
         setDatePickerDate dateToSet
+        setDate $ Right dateToSet
   userTypingHandler :: Text -> Fay ()
   userTypingHandler text = setDate $ Left text
   YMD.YearMonthDay pickerYear pickerMonth _ _ = pickerStateDate

@@ -195,23 +195,12 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
       D.EmployeeTaskScreen (etd @ (ED.EmployeeTaskData {})) -> D.EmployeeTaskScreen . modifyEtd $ etd
       _ -> D.navigation appState }
 
-  datePicker = let
-    modifyDatepickerDate newDate = modify' $ \etd -> etd {
-      ED.taskDatePicker = lmap (\t -> lmap (const newDate) t) (ED.taskDatePicker etd) }
-    setPickerOpenness openness = modify' $ \etd -> etd {
-      ED.taskDatePicker = lmap (\t -> rmap (const openness) t) (ED.taskDatePicker etd) }
-    setDate date = case date of
-      Right date' -> modify' $ \etd -> etd {
-        ED.employeeTask = employeeTask { T.startDate = date' } ,
-        ED.taskDatePicker = rmap (const . displayDate $ date') taskDatePicker }
-      Left text' -> modify' $ \etd -> etd {
-        ED.taskDatePicker = rmap (const text') taskDatePicker }
-    dateValue = if (displayDate . T.startDate $ employeeTask) == snd taskDatePicker
-      then Right . T.startDate $ employeeTask
-      else Left . snd $ taskDatePicker
-    in DP.datePicker Editing (fst taskDatePicker) modifyDatepickerDate setPickerOpenness dateValue setDate
+  startDatePicker = let
+    setDatePickerData dpd = modify' $ \etd -> etd { ED.taskDatePicker = dpd }
+    setDate date = modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.startDate = date } }
+    in DP.datePicker' Editing taskDatePicker setDatePickerData (T.startDate employeeTask) setDate
 
-  dateRow = oneElementRow "Datum" datePicker
+  dateRow = oneElementRow "Datum" startDatePicker
   descriptionRow = textareaRow
     Editing 
     "Popis"

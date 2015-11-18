@@ -36,6 +36,7 @@ import           Crm.Router
 import           Crm.Helpers                 (displayDate, rmap, parseSafely)
 import qualified Crm.Validation              as V
 import           Crm.Component.Form
+import           Crm.Component.DatePicker    as DP
 import           Crm.Types                   (DisplayedNote (..))
 
 -- handler
@@ -221,11 +222,11 @@ startRouter appVar = startedRouter where
         in modify' e ,
     useHandler newEmployeeTask' $ \employeeId ->
       const $ modify appVar $ \appState -> appState {
-        D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData 
-          (T.newTask { T.startDate = nowYMD }) newDatePickerData (Right employeeId) } ,
+        D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData (T.newTask { T.startDate = nowYMD }) 
+        (DP.DatePickerData nowYMD False (displayDate nowYMD)) (Right employeeId) } ,
     employeeTask' `useHandler` \taskId ->
       fetchTask taskId $ \task -> modify' $ D.EmployeeTaskScreen $ ED.EmployeeTaskData task 
-        ((T.startDate task, False), displayDate . T.startDate $ task) (Left taskId) ]
+        (DP.DatePickerData (T.startDate task) False (displayDate . T.startDate $ task)) (Left taskId) ]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 
