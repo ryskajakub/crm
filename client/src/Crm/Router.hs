@@ -306,7 +306,7 @@ dailyPlan :: YMD.YearMonthDay -> Maybe E.EmployeeId -> CrmRoute
 dailyPlan ymd employeeId' =
   CrmRoute $ "daily-plan/" <> displayDateNumeral ymd <> "/employee/" <> (case employeeId' of
     Just (E.EmployeeId employeeId) -> showInt employeeId
-    Nothing -> "all")
+    Nothing -> "none")
 
 dashboard :: CrmRoute
 dashboard = fst dashboard' ()

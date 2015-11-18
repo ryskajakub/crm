@@ -821,7 +821,7 @@ dailyPlanQuery employeeId' day = let
     upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
     restrict -< case employeeId' of
       Just (E.EmployeeId employeeId) -> pgInt4 employeeId .== $(proj 3 1) upkeepEmployeeRow
-      Nothing -> pgBool True
+      Nothing -> pgBool False -- todo return no results earlier than here in db query
     restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
     upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
     returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
