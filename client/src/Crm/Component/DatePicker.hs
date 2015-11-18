@@ -39,13 +39,13 @@ datePicker' inputState datePickerData setDatePickerData date setDate = let
   DatePickerData calendarDate open rawText = datePickerData
   setDatePickerDate ymd = setDatePickerData $ datePickerData { calendarDate = ymd }
   setOpen open' = setDatePickerData $ datePickerData { open = open' }
-  displayed = trace (show datePickerData ++ unpack " " ++ show date) $ if (rawText ==) . displayDate $ date
+  displayed = if (rawText ==) . displayDate $ date
     then Right date
     else Left rawText
   setDisplayed (Left text) = setDatePickerData $ datePickerData { rawText = text }
   setDisplayed (Right newDate) = do
     setDate newDate
-    setDatePickerData $ datePickerData { rawText = displayDate newDate }
+    setDatePickerData $ datePickerData { rawText = displayDate newDate, open = False }
   in datePicker inputState (calendarDate, open) setDatePickerDate setOpen displayed setDisplayed
 
 datePicker :: InputState -- ^ editing
