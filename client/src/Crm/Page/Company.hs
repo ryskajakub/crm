@@ -254,8 +254,8 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
         (\text -> setCompany (company' { C.companyAddress = text })) ,
       dt "Poznámka" , 
       dd $ F.textarea' 3 editing' True
-        (SetValue $ C.companyPlant company') 
-        (\text -> setCompany (company' { C.companyPlant = text })) ]
+        (SetValue $ C.companyNote company') 
+        (\text -> setCompany (company' { C.companyNote = text })) ]
       ++ [saveEditButton] ]
   companyBasicInfo' = case editing' of 
     Editing -> companyBasicInfo 

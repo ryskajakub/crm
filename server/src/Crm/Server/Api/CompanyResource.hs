@@ -60,7 +60,7 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
       (C.CompanyId Nothing)
       (C.Company 
         (pgStrictText . C.companyName $ newCompany) 
-        (pgStrictText . C.companyPlant $ newCompany)
+        (pgStrictText . C.companyNote $ newCompany)
         (pgStrictText . C.companyAddress $ newCompany))
       (C.Coordinates
         (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
@@ -137,7 +137,7 @@ updateCompany = let
         (Just `fmap` C._companyPK companyRow)
         (C.Company 
           (pgStrictText . C.companyName $ company) 
-          (pgStrictText . C.companyPlant $ company)
+          (pgStrictText . C.companyNote $ company)
           (pgStrictText . C.companyAddress $ company))
         (C.Coordinates
           (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))

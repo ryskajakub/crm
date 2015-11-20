@@ -13,11 +13,11 @@ create table photos_meta (
 create table companies (
   id serial primary key , 
   name varchar(500) not null , 
-  plant varchar(500) not null ,
+  note varchar(500) not null ,
   address varchar (500) not null ,
   latitude float8 ,
   longitude float8 ,
-  unique (name, plant) );
+  unique (name) );
 
 create table machine_types (
   id serial primary key , 

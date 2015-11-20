@@ -55,9 +55,9 @@ data Coordinates' latitude longitude = Coordinates {
 type Coordinates = Coordinates' Double Double
 type CoordinatesJoin = Coordinates' (Maybe Double) (Maybe Double)
 
-data Company' name plant address = Company {
+data Company' name note address = Company {
   companyName :: name , 
-  companyPlant :: plant ,
+  companyNote :: note ,
   companyAddress :: address }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
