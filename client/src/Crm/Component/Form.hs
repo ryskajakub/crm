@@ -18,6 +18,7 @@ module Crm.Component.Form (
   checkbox ,
   input ,
   textarea ,
+  textarea' ,
   textInput ,
   dropdown ,
   nullDropdown ,
