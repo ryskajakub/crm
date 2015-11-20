@@ -63,7 +63,6 @@ companiesList router orderType direction companies' = let
   head' =
     thead $ tr [
       th [text2DOM "Název firmy ", companyNameOrdering ], 
-      th "Označení (Provozovna)" , 
       th "Adresa" , 
       th [text2DOM "Další servis ", nextServiceOrdering ]]
   body = tbody $ map (\idCompany ->
@@ -74,7 +73,6 @@ companiesList router orderType direction companies' = let
           (C.companyName company')
           (R.companyDetail id')
           router ,
-      td $ C.companyPlant company' , 
       td $ C.companyAddress company' , 
       td $ maybe "" displayDate nextServiceDate
     ]) companies'
