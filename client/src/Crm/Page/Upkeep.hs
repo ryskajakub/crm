@@ -252,7 +252,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } 
     in if closeUpkeep'
-      then ([inputRowEditing "Hodiny"
+      then ([inputRowEditing "Délka práce"
           (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
             ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
         workDescription ,
