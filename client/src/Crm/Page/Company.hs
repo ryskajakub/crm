@@ -140,7 +140,8 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
             (MT.machineTypeName machineType)
             (R.machineDetail machineId')
             router ,
-          span' ((class' "health") {style = Defined $ Style healthColor}) "•" ] ,
+          span' (class' "quick-upkeep-link") G.wrench ,
+          span' ((class' "health") { style = Defined . Style $ healthColor }) "•" ] ,
         dl [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
