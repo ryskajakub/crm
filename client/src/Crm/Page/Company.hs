@@ -250,7 +250,7 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
   companyBasicInfo = [
     header , 
     dl $ [
-      dt "Adresa" , 
+      dt "Adresa (ulice, město, PSČ)" , 
       dd $ appliedInput
         (SetValue $ C.companyAddress company')
         (\text -> setCompany (company' { C.companyAddress = text })) ,
