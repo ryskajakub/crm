@@ -27,7 +27,7 @@ import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.EmployeeData            as ED
 import           Crm.Router                       (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router                       as R
-import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, rmap, lmap, nowYMD)
+import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, rmap, lmap, nowYMD, basicMarkupInfo)
 
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.Task                  as T
@@ -185,7 +185,7 @@ employeeTask ::
   DOMElement
 employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker taskIdentification) = mkForm where
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid $ (B.row . B.col (B.mkColProps 12) . h2 $ "Nový úkol") : inputRows
+    B.grid $ (B.row $ (div $ pageInfo "Nový úkol" (Just [text2DOM "Políčko ", strong "popis", text2DOM " umožňuje jednoduché formátování. ", text2DOM basicMarkupInfo])) : inputRows)
   inputRowEditing = inputRow Editing
   inputRows = [dateRow, descriptionRow, submitRow]
 

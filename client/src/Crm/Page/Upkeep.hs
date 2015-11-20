@@ -393,7 +393,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
 
   companyNameHeader =  B.row $ pageInfo 
     pageHeader 
-    (Just $ p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. Když na začátek řádku napíšeš mínus (-) potom se tato řádka na stránce pro tisk denních akcích zobrazí jako odrážka seznamu. Pokud na začátek řádku napíšeš plus (+), pak se to zobrazí jako nadpis."])
+    (Just $ p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. ", text2DOM basicMarkupInfo ])
   validationMessages'' = V.messages validation
   validationMessages' = if (null upkeepMachines)
     then ["V servisu musí figurovat alespoň jeden stroj."]

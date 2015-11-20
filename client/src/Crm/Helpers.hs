@@ -163,3 +163,6 @@ computeColor (YMD.YearMonthDay y m d _) = let
 
 setTimeout :: Int -> Fay () -> Fay ()
 setTimeout = ffi " setTimeout(%2, %1) "
+
+basicMarkupInfo :: Text
+basicMarkupInfo = "Když na začátek řádku napíšeš mínus (-) potom se tato řádka na stránce pro tisk denních akcích zobrazí jako odrážka seznamu. Pokud na začátek řádku napíšeš plus (+), pak se to zobrazí jako nadpis."
