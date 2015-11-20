@@ -30,6 +30,7 @@ module Crm.Component.Form (
   editableRow ,
   inputRow ,
   textareaRow ,
+  textareaRow' ,
   dropdownRow ,
   nullDropdownRow ,
   multipleInputs ) where
@@ -123,6 +124,11 @@ input = textInput I.input
 
 textarea :: InputState -> Bool -> DisplayValue -> (Text -> Fay ()) -> DOMElement
 textarea = textInput I.textarea
+
+textarea' :: Int -> InputState -> Bool -> DisplayValue -> (Text -> Fay ()) -> DOMElement
+textarea' rows' = textInput rowsTextarea where
+  rowsTextarea attributes inputAttributes = I.textarea attributes rowsInputAttributes where
+    rowsInputAttributes = inputAttributes { I.rows = Defined rows' }
 
 textInput :: (Attributes -> I.InputAttributes -> DOMElement) 
           -> InputState
@@ -251,8 +257,19 @@ textareaRow :: InputState
             -> DisplayValue
             -> (Text -> Fay ())
             -> DOMElement
-textareaRow editing label value onChange = editableRow editing label textarea' where
-  textarea' = textarea editing True value onChange
+textareaRow editing label value onChange = editableRow editing label textarea'' where
+  textarea'' = textarea editing True value onChange
+
+-- | textareaRow where you can specify the rows
+textareaRow' :: 
+  Int ->
+  InputState -> 
+  Text -> 
+  DisplayValue -> 
+  (Text -> Fay ()) -> 
+  DOMElement
+textareaRow' rows editing label value onChange = editableRow editing label textarea'' where
+  textarea'' = textarea' rows editing True value onChange
 
 -- | Dropdown component
 dropdownRow :: (Renderable label)

@@ -201,7 +201,8 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
     in DP.datePicker' Editing taskDatePicker setDatePickerData (T.startDate employeeTask) setDate
 
   dateRow = oneElementRow "Datum" startDatePicker
-  descriptionRow = textareaRow
+  descriptionRow = textareaRow'
+    10
     Editing 
     "Popis"
     (SetValue . T.description $ employeeTask)
