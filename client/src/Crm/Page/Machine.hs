@@ -111,7 +111,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   editableRowEditing = editableRow editing
 
   photoUploadRow = editableRowEditing
-    "Fotka" 
+    "Fotka (Max. 2MB)" 
     (let 
       imageUploadHandler = const $ do
         fileUpload <- JQ.select "#file-upload"
