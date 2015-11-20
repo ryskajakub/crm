@@ -44,6 +44,7 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machines ,
   remove = Just machineDelete ,
   schema = S.withListing () $ S.unnamedSingleRead id }
+
     
 machineDelete :: Handler (IdDependencies' M.MachineId)
 machineDelete = mkConstHandler' jsonO $ do
@@ -51,6 +52,7 @@ machineDelete = mkConstHandler' jsonO $ do
   liftIO $ withResource pool $ \connection ->
     createDeletion machinesTable (M.getMachineId machineId) connection
   recomputeWhole pool cache
+
 
 machineUpdate :: Handler (IdDependencies' M.MachineId)
 machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> do
@@ -62,9 +64,9 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
       (Just mId, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
         machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
-        pgInt4 $ M.initialMileage machine', pgInt4 $ M.mileagePerYear machine', 
-        pgStrictText $ M.note machine', pgStrictText $ M.serialNumber machine',
-        pgStrictText $ M.yearOfManufacture machine')
+        pgInt4 $ M.initialMileage machine', pgInt4 . M.mileagePerYear $ machine', 
+        pgStrictText . M.label $ machine', pgStrictText . M.serialNumber $ machine',
+        pgStrictText . M.yearOfManufacture $ machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
   withResource pool $ \connection -> liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection
@@ -74,6 +76,7 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
   recomputeWhole pool cache
 
   return ()
+
 
 machineSingle :: Handler (IdDependencies' M.MachineId)
 machineSingle = mkConstHandler' jsonO $ do
@@ -112,6 +115,7 @@ machineSingle = mkConstHandler' jsonO $ do
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
     (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
+
 
 machineListing :: ListHandler Dependencies
 machineListing = mkListing' (jsonO) (const $

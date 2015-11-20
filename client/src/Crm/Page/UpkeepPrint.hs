@@ -92,7 +92,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
       in BT.table (Just BT.Bordered) [
         tr [th "Zařízení", td . text2DOM . MT.machineTypeName $ machineType ] ,
         tr [th "Sériové číslo", td . text2DOM . M.serialNumber $ machine ] ,
-        tr [th "Poznámka", td . text2DOM . M.note $ machine ] ,
+        tr [th "Označení", td . text2DOM . M.label $ machine ] ,
         tr [th "Kontaktní osoba", td . text2DOM . (maybe "---" CP.name) $ contactPerson ] ,
         tr [th "Telefon", td . text2DOM . (maybe "---" CP.phone) $ contactPerson ] ,
         tr . (td'' mkAttrs (mkTableCellAttributes { colSpan = Defined 2 } )) $ upkeepMachineText ]

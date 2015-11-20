@@ -288,7 +288,7 @@ machinesTable = Table "machines" $ p11 (
   required "operation_start" ,
   required "initial_mileage" ,
   required "mileage_per_year" ,
-  required "note" ,
+  required "label" ,
   required "serial_number" ,
   required "year_of_manufacture" )
 

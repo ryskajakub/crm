@@ -87,7 +87,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
           pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
       return machineTypeId
   let
-    M.Machine machineOperationStartDate' initialMileage mileagePerYear note 
+    M.Machine machineOperationStartDate' initialMileage mileagePerYear label 
       serialNumber yearOfManufacture = machine
   machineIds <- liftIO $ runInsertReturning
     connection
@@ -95,7 +95,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
     (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
       pgInt4 machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId,
       maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText note, 
+      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText label, 
       pgStrictText serialNumber, pgStrictText yearOfManufacture)
     sel1
   let machineId = head machineIds -- todo safe

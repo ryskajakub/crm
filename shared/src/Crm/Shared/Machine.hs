@@ -41,7 +41,7 @@ data Machine = Machine {
   machineOperationStartDate :: Maybe YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int ,
-  note :: Text ,
+  label :: Text ,
   serialNumber :: Text ,
   yearOfManufacture :: Text }
 #ifndef FAY
@@ -52,7 +52,7 @@ newMachine' :: Maybe YearMonthDay -> Machine
 newMachine' ymd = Machine {
   machineOperationStartDate = ymd ,
   initialMileage = 0 ,
-  note = (pack "") ,
+  label = (pack "") ,
   mileagePerYear = 365 * 24 ,
   serialNumber = (pack "") ,
   yearOfManufacture = (pack "") }
