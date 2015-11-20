@@ -248,14 +248,14 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
   companyBasicInfo = [
     header , 
     dl $ [
-      dt "Označení provozovny (pro odlišení provozoven se stejným názvem firmy)" , 
-      dd $ appliedInput
-        (SetValue $ C.companyPlant company') 
-        (\text -> setCompany (company' { C.companyPlant = text })) , 
       dt "Adresa" , 
       dd $ appliedInput
         (SetValue $ C.companyAddress company')
-        (\text -> setCompany (company' { C.companyAddress = text }))]
+        (\text -> setCompany (company' { C.companyAddress = text })) ,
+      dt "Poznámka" , 
+      dd $ appliedInput
+        (SetValue $ C.companyPlant company') 
+        (\text -> setCompany (company' { C.companyPlant = text })) ]
       ++ [saveEditButton] ]
   companyBasicInfo' = case editing' of 
     Editing -> companyBasicInfo 
