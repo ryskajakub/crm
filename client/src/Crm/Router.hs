@@ -45,6 +45,7 @@ module Crm.Router (
   newMachinePhase1 ,
   newMaintenance ,
   replanUpkeep ,
+  newMaintanceViaQuickLink ,
   maintenances ,
   newContactPerson ,
   plannedUpkeeps ,
@@ -320,6 +321,10 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
   _ -> "NextService") <> "/" <> (case direction of
   DIR.Asc -> "Asc"
   DIR.Desc -> "Desc")
+
+newMaintanceViaQuickLink :: C.CompanyId -> M.MachineId -> CrmRoute
+newMaintanceViaQuickLink (C.CompanyId companyId) (M.MachineId machineId) =
+  CrmRoute $ "companies/" <> showInt companyId <> "/new-maintenance/" <> showInt machineId
 
 login :: CrmRoute
 login = fst login' ()
