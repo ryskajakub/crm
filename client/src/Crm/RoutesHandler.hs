@@ -63,6 +63,20 @@ startRouter appVar = startedRouter where
       crmRouter = CrmRouter router
       in fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
         $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) crmRouter ) ,
+    ("companies/:companyId/new-maintenance/:machineId", \router params -> let
+      crmRouter = CrmRouter router
+      companyIdText = head $ params
+      machineIdText = head . tail $ params
+      in case (C.CompanyId `onJust` parseSafely companyIdText, M.MachineId `onJust` parseSafely machineIdText) of
+        (Just companyId, Just machineId) -> fetchUpkeepData companyId (\ud ->
+          fetchEmployees (\employees -> let
+            notCheckedUpkeepMachines = map (\(machineId',_,_,_) -> 
+              (UM.newUpkeepMachine, machineId')) . filter (\(machineId',_,_,_) -> machineId' /= machineId) $ ud
+            in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, [(UM.newUpkeepMachine, machineId)])
+              ud notCheckedUpkeepMachines
+              newDatePickerData employees
+              [] V.new (Right . UD.UpkeepNew . Left $ companyId)) crmRouter ) crmRouter 
+        _ -> modify' D.NotFound) ,
     ("daily-plan/:date/employee/:employee", \router params -> let
       crmRouter = CrmRouter router
       in case M.parse M.requireMoment . head $ params of
