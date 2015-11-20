@@ -335,8 +335,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
 
   mkFormGroup = div' (class' "form-group")
   
-  noteRow = textareaRowEditing
-    "Poznámka"
+  noteRow = inputRowEditing
+    "Označení"
     (SetValue $ M.note machine') 
     (\str -> setMachine $ machine' { M.note = str })
 
