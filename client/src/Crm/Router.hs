@@ -6,6 +6,7 @@ module Crm.Router (
   CrmRoute ,
 
   useHandler ,
+  ($->) ,
   navigate ,
   link ,
   routeToText ,
@@ -127,6 +128,11 @@ mkSimpleURLEncodable toInt = URLEncodable Nothing (showInt . toInt)
 
 useHandler :: (a, (b, c -> c')) -> c -> (b, c')
 useHandler t c = (rmap $ \f -> f c) (snd t)
+
+($->) :: (a, (b, c -> c')) -> c -> (b, c')
+($->) = useHandler
+
+infix 5 $->
 
 prepareRouteAndMkHandler :: Route a 
                          -> URLEncodable a 
