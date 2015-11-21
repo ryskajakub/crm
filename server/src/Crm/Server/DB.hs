@@ -710,15 +710,15 @@ nextServiceUpkeepsQuery machineId = proc () -> do
   upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
   returnA -< upkeepRow
 
-upkeepsDataForMachine :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
-upkeepsDataForMachine machineId = let 
-  upkeepUpkeepMachine = proc () -> do
-    machineRow <- join machinesQuery -< pgInt4 machineId
-    upkeepMachineRow <- upkeepMachinesQuery -< ()
-    restrict -< sel3 upkeepMachineRow .== sel1 machineRow
-    upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
-    returnA -< (upkeepRow, upkeepMachineRow)
-  in upkeepUpkeepMachine
+upkeepsDataForMachine :: Int -> Query (UpkeepsTable, UpkeepMachinesTable, EmployeeTable)
+upkeepsDataForMachine machineId = proc () -> do
+  machineRow <- join machinesQuery -< pgInt4 machineId
+  upkeepMachineRow <- upkeepMachinesQuery -< ()
+  restrict -< sel3 upkeepMachineRow .== sel1 machineRow
+  upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
+  upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
+  employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
+  returnA -< (upkeepRow, upkeepMachineRow, employeeRow)
 
 nextServiceUpkeepSequencesQuery :: Int -> Query (DBInt, DBText, DBInt, DBInt, DBBool)
 nextServiceUpkeepSequencesQuery machineId = proc () -> do

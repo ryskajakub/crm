@@ -23,6 +23,9 @@ import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.ContactPerson    as CP
+import qualified Crm.Shared.Upkeep           as U
+import qualified Crm.Shared.UpkeepMachine    as UM
+import qualified Crm.Shared.Employee         as E
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers 
@@ -103,11 +106,22 @@ machineSingle = mkConstHandler' jsonO $ do
       in ($(proj 3 0) ef, snd efs, $(proj 3 2) ef)
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
-    upkeepsData = fmap (\(upkeep', upkeepMachine') -> let
-      upkeep = convert upkeep' :: UpkeepMapped
-      upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
-      in ($(proj 2 0) upkeep, $(proj 2 1) upkeep, sel3 upkeepMachine)) upkeepRows
-    upkeeps = fmap sel2 upkeepsData
+    upkeepsData = 
+        (fmap (\(a, b) -> ($(proj 3 0) a, $(proj 3 1) a, $(proj 3 2) a, b))
+        . mapResultsToList
+          $(proj 3 0)
+          (\row -> ($(proj 4 0) row, $(proj 4 1) row, $(proj 4 2) row))
+          $(proj 4 3)
+        . fmap (\(upkeep', upkeepMachine', employee') -> let
+          upkeep = convert upkeep' :: UpkeepMapped
+          upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
+          employee = convert employee' :: EmployeeMapped
+          intermediate = (($(proj 2 0) upkeep, $(proj 2 1) upkeep, $(proj 3 2) upkeepMachine, $(proj 2 1) employee)
+            :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, E.Employee))
+          in intermediate)
+        $ upkeepRows)
+      :: [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
+    upkeeps = fmap $(proj 4 1) upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)

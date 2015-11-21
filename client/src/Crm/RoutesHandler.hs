@@ -188,7 +188,6 @@ startRouter appVar = startedRouter where
             machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields'') ->
           fetchMachinePhotos machineId (\photos ->
             let 
-              upkeeps' = map (\(a,b,c) -> (a,b,c,[E.newEmployee])) upkeeps
               machineTriple = (machine, "", showInt . M.mileagePerYear $ machine)
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
             in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId ( \otherMachines -> 
@@ -196,7 +195,7 @@ startRouter appVar = startedRouter where
                 machineTriple machineSpecificData machineTypeTuple (startDateInCalendar, False)
                   contactPersonId cps V.new otherMachineId otherMachines extraFields''
                     (Left $ MD.MachineDetail machineId machineNextService 
-                      Display machineTypeId photos upkeeps' companyId) ) router ) router ) router ) router ,
+                      Display machineTypeId photos upkeeps companyId) ) router ) router ) router ) router ,
     plannedUpkeeps' $-> ( const $
       fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''

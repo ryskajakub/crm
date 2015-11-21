@@ -278,7 +278,7 @@ fetchExtraFieldSettings = XMK.byString "()"
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
                 (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)], Maybe M.MachineId, 
+                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])], Maybe M.MachineId, 
                 MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
               -> R.CrmRouter
              -> Fay ()
