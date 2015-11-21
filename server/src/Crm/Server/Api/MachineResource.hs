@@ -107,10 +107,10 @@ machineSingle = mkConstHandler' jsonO $ do
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepsData = 
-        (fmap (\(a, b) -> ($(proj 3 0) a, $(proj 3 1) a, $(proj 3 2) a, b))
+        (fmap (\(b, c) -> $(catTuples 3 1) b c)
         . mapResultsToList
           $(proj 3 0)
-          (\row -> ($(proj 4 0) row, $(proj 4 1) row, $(proj 4 2) row))
+          $(takeTuple 4 3)
           $(proj 4 3)
         . fmap (\(upkeep', upkeepMachine', employee') -> let
           upkeep = convert upkeep' :: UpkeepMapped
