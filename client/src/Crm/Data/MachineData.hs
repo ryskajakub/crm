@@ -14,6 +14,7 @@ import           Crm.Shared.PhotoMeta
 import           Crm.Shared.Upkeep
 import           Crm.Shared.UpkeepMachine
 import           Crm.Shared.ExtraField
+import           Crm.Shared.Employee
 
 import           Crm.Component.DatePicker
 import qualified Crm.Validation            as V
@@ -42,7 +43,7 @@ data MachineDetail = MachineDetail {
   formState :: InputState ,
   machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,
-  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine)] ,
+  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, [Employee])] ,
   companyId' :: CompanyId }
 
 data MachineNew = MachineNew {

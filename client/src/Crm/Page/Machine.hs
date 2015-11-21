@@ -36,6 +36,7 @@ import qualified Crm.Shared.UpkeepMachine              as UM
 import qualified Crm.Shared.ExtraField                 as EF
 import qualified Crm.Shared.MachineKind                as MK
 import qualified Crm.Shared.Api                        as A
+import qualified Crm.Shared.Employee                   as E
 
 import qualified Crm.Data.MachineData                  as MD
 import qualified Crm.Data.Data                         as D
@@ -59,7 +60,7 @@ machineDetail :: InputState
               -> M.MachineId
               -> YMD.YearMonthDay
               -> [(P.PhotoId, PM.PhotoMeta)]
-              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine)]
+              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
               -> Maybe CP.ContactPersonId
               -> [(CP.ContactPersonId, CP.ContactPerson)]
               -> V.Validation
@@ -78,8 +79,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = [editableRow Display "Další servis" (displayDate nextService)]
   upkeepHistoryHtml = let
-    mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine) -> [DOMElement]
-    mkUpkeepRows (_, upkeep, upkeepMachine) = let
+    mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
+    mkUpkeepRows (_, upkeep, upkeepMachine, employees) = let
       (labelClass, labelText) = if U.upkeepClosed upkeep
         then ("label-success", "Uzavřený")
         else ("label-warning", "Naplánovaný")
@@ -89,8 +90,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
       warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
       warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
-      employeeHeader = B.col (B.mkColProps 1) $ strong "Servisák"
-      employee = B.col (B.mkColProps 2) $ "tbd"
+      employeeHeader = B.col (B.mkColProps 1) $ strong "Servisáci"
+      employee = B.col (B.mkColProps 2) . mkColours $ employees
       descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
       description = B.col (B.mkColProps 4) $ U.workDescription upkeep
       noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
