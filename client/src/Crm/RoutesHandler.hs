@@ -120,16 +120,17 @@ startRouter appVar = startedRouter where
         makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
         withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list
         in modify' $ D.ExtraFields 0 False MK.RotaryScrewCompressor withAssignedIds ) ,
-    companyDetail' $-> \companyId' ->
+    companyDetail' $-> \companyId' router ->
       case companyId' of
-        Left _ -> const $ modify appVar $ \appState -> appState {
-          D.navigation = D.CompanyNew C.newCompany }
+        Left _ -> modify appVar $ \appState -> appState {
+          D.navigation = D.CompanyNew C.newCompany } 
         Right companyId ->
-          fetchCompany companyId $ \(company, contactPersons, machines) -> let
-            ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
-            in modify appVar $ \appState -> appState {
-              D.navigation = D.CompanyDetail 
-                companyId company contactPersons Display (ignoreLinkage machines)} ,
+          fetchRecommendation companyId (\(_, lastUpkeep) ->
+            fetchCompany companyId (\(company, contactPersons, machines) -> let
+              ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
+              in modify appVar $ \appState -> appState {
+                D.navigation = D.CompanyDetail 
+                  companyId company contactPersons Display (ignoreLinkage machines) lastUpkeep } ) router ) router ,
     newMachinePhase1' $-> \companyId ->
       withCompany'
         companyId

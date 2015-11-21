@@ -867,6 +867,7 @@ lastRecommendationQuery (C.CompanyId companyId) = let
     upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
     restrict -< $(proj 6 2) upkeepMachineRow .== $(proj 11 0) machineRow
     upkeepRow <- join . queryTable $ upkeepsTable -< $(proj 6 0) upkeepMachineRow
+    restrict -< $(proj 6 2) upkeepRow .== pgBool True
     returnA -< upkeepRow
   in latestUpkeepQ
 
