@@ -356,10 +356,11 @@ fetchCompaniesForMap callback =
 
 fetchRecommendation :: 
   C.CompanyId ->
-  ((U.UpkeepId, U.Upkeep) -> Fay ()) ->
+  (Maybe (U.UpkeepId, U.Upkeep) -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchRecommendation = XCR.access
+fetchRecommendation companyId callback = XCR.access companyId callback' where
+  callback' lastUpkeep = callback . toMaybe $ lastUpkeep
   
 
 -- creations

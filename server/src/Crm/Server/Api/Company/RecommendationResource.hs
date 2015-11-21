@@ -30,7 +30,7 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
-import           Crm.Shared.MyMaybe          (toMaybe)
+import           Crm.Shared.MyMaybe          (toMaybe, toMyMaybe)
 
 import           Crm.Server.Helpers          (ymdToDay, maybeToNullable)
 import           Crm.Server.Boilerplate      ()
@@ -40,15 +40,15 @@ import           Crm.Server.Handler          (mkConstHandler')
 import           Crm.Server.CachedCore       (recomputeSingle)
 
 import           TupleTH                     (proj)
+import           Safe                        (headMay)
 
 
 getter :: Handler (IdDependencies' C.CompanyId)
 getter = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
-  lastUpkeeps <- liftIO $ withResource pool $ \connection -> runQuery connection (lastRecommendationQuery companyId)
-  lastUpkeep <- singleRowOrColumn lastUpkeeps
-  let lastUpkeepMapped = convert lastUpkeep :: UpkeepMapped
-  return lastUpkeepMapped
+  lastUpkeep <- liftIO . withResource pool $ \connection -> runQuery connection (lastRecommendationQuery companyId)
+  let lastUpkeepMapped = convert `fmap` headMay lastUpkeep :: Maybe UpkeepMapped
+  return . toMyMaybe $ lastUpkeepMapped
 
 resource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () Void Void
 resource = mkResourceId {

@@ -120,9 +120,9 @@ companyDetail :: InputState -- ^ is the page editing mode
               -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
                    MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] 
                  -- ^ machines of the company
-              -> U.Upkeep
+              -> Maybe U.Upkeep
               -> DOMElement -- ^ company detail page fraction
-companyDetail editing' router var contactPersons (companyId, company') machines' lastUpkeep = let
+companyDetail editing' router var contactPersons (companyId, company') machines' lastUpkeep' = let
 
   saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
     updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
@@ -188,10 +188,10 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
   machineBoxItemsHtml :: [DOMElement]
   machineBoxItemsHtml = map B.row machineBoxItems'
 
-  lastUpkeepRecommendation :: DOMElement
-  lastUpkeepRecommendation = B.row $ B.col (B.mkColProps 12) [
+  lastUpkeepRecommendation :: [DOMElement]
+  lastUpkeepRecommendation = maybe [] (\lastUpkeep -> (:[]) . B.row $ B.col (B.mkColProps 12) [
     h2 "Doporučení z posledního servisu" ,
-    p . U.recommendation $ lastUpkeep ]
+    p . U.recommendation $ lastUpkeep ]) lastUpkeep'
 
   contactPersonsHtml = contactPersonsList' router contactPersons
 
@@ -212,7 +212,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
             [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
         R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
         R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
-          : contactPersonsHtml : lastUpkeepRecommendation : machineBoxItemsHtml ]]
+          : contactPersonsHtml : (lastUpkeepRecommendation ++ machineBoxItemsHtml) ]]
 
 companyForm :: InputState -- ^ is the page editing mode
             -> Var D.AppState -- ^ app state var, where the editing result can be set

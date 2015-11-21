@@ -37,7 +37,7 @@ data NavigationState =
     editing :: InputState , 
     companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
       MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] ,
-    lastUpkeep :: U.Upkeep } | 
+    lastUpkeep :: Maybe U.Upkeep } | 
   CompanyNew {
     company :: C.Company } | 
   NotFound | 

@@ -125,8 +125,9 @@ startRouter appVar = startedRouter where
         Left _ -> modify appVar $ \appState -> appState {
           D.navigation = D.CompanyNew C.newCompany } 
         Right companyId ->
-          fetchRecommendation companyId (\(_, lastUpkeep) ->
-            fetchCompany companyId (\(company, contactPersons, machines) -> let
+          fetchRecommendation companyId (\(lastUpkeep') -> let
+            lastUpkeep = snd `onJust` lastUpkeep'
+            in fetchCompany companyId (\(company, contactPersons, machines) -> let
               ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
               in modify appVar $ \appState -> appState {
                 D.navigation = D.CompanyDetail 
