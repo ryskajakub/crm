@@ -12,6 +12,7 @@ import qualified Crm.Server.Api.ContactPersonResource as CPR
 import qualified Crm.Server.Api.Company.MachineResource as CMR
 import qualified Crm.Server.Api.Company.UpkeepResource as CUP
 import qualified Crm.Server.Api.Company.ContactPersonResource as CCPR
+import qualified Crm.Server.Api.Company.RecommendationResource as CRR
 import qualified Crm.Server.Api.Machine.PhotoResource as MPR
 import qualified Crm.Server.Api.PhotoMetaResource as PMR
 import qualified Crm.Server.Api.MachineKindResource as MKR
@@ -23,8 +24,9 @@ import           Crm.Server.Api.TaskResource as T
 
 
 router' :: Router Dependencies Dependencies
-router' = root `compose` (((route companyResource `compose` route CMR.machineResource)
+router' = root `compose` ((((route companyResource `compose` route CMR.machineResource)
                                                   `compose` route CUP.upkeepResource)
+                                                  `compose` route CRR.resource)
                                                   `compose` route CCPR.contactPersonResource)
                `compose` (route machineResource `compose` route MPR.photoResource)
                `compose` route UR.upkeepResource

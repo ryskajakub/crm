@@ -39,6 +39,7 @@ Library
     Crm.Server.Api.Company.MachineResource ,
     Crm.Server.Api.Company.UpkeepResource ,
     Crm.Server.Api.Company.ContactPersonResource ,
+    Crm.Server.Api.Company.RecommendationResource ,
     Crm.Server.Api.MachineResource ,
     Crm.Server.Api.Machine.PhotoResource ,
     Crm.Server.Api.MachineTypeResource ,

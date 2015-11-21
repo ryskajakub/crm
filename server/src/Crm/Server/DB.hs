@@ -93,6 +93,7 @@ module Crm.Server.DB (
   tasksForEmployeeQuery ,
   getTaskQuery ,
   machinesNotInUpkeepQuery ,
+  lastRecommendationQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -857,6 +858,17 @@ getTaskQuery :: T.TaskId -> Query TasksTable
 getTaskQuery (T.TaskId taskIdInt) = proc () -> do
   taskRow <- join . queryTable $ tasksTable -< pgInt4 taskIdInt
   returnA -< taskRow
+
+lastRecommendationQuery :: C.CompanyId -> Query UpkeepsTable
+lastRecommendationQuery (C.CompanyId companyId) = let
+  latestUpkeepQ = limit 1 . orderBy (desc $(proj 6 1)) $ proc () -> do
+    machineRow <- queryTable machinesTable -< ()
+    restrict -< $(proj 11 1) machineRow .== pgInt4 companyId
+    upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
+    restrict -< $(proj 6 2) upkeepMachineRow .== $(proj 11 0) machineRow
+    upkeepRow <- join . queryTable $ upkeepsTable -< $(proj 6 0) upkeepMachineRow
+    returnA -< upkeepRow
+  in latestUpkeepQ
 
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"

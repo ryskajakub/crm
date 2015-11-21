@@ -45,6 +45,7 @@ module Crm.Server (
   fetchTasks ,
   fetchTask ,
   fetchMarkupTasks ,
+  fetchRecommendation ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -94,6 +95,7 @@ import qualified Crm.Client.MachineKind              as XMK
 import qualified Crm.Client.Companies.Machines       as XCM
 import qualified Crm.Client.Companies.ContactPersons as XCCP
 import qualified Crm.Client.Companies.Upkeeps        as XCU
+import qualified Crm.Client.Companies.Recommendation as XCR
 import qualified Crm.Client.Machines.Photos          as XMP
 import qualified Crm.Client.Employees.Upkeeps        as XEU
 import qualified Crm.Client.Print                    as XPP
@@ -352,6 +354,13 @@ fetchCompaniesForMap callback =
     maxCount
     (callback . (map (\(a,b,c,d) -> (a,b,toMaybe c,toMaybe d))))
 
+fetchRecommendation :: 
+  C.CompanyId ->
+  ((U.UpkeepId, U.Upkeep) -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchRecommendation = XCR.access
+  
 
 -- creations
 
