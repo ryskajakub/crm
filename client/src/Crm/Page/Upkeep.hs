@@ -239,12 +239,13 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       UD.notCheckedMachines = notCheckedMachines' }
 
   textareaRowEditing = textareaRow Editing
+  textareaRowEditing' int = textareaRow' int Editing
   inputRowEditing = inputRow Editing
 
   machineColsSize = 4
   (closeUpkeepRows, noteColsSize) = let
     workDescription =
-      textareaRowEditing "Popis servisu" (SetValue . U.workDescription $ upkeep) $
+      textareaRowEditing' 5 "Popis servisu" (SetValue . U.workDescription $ upkeep) $
         \es -> modify' $ \ud ->
           ud { UD.upkeep = lmap (const $ upkeep { U.workDescription = es }) (UD.upkeep ud) } 
     in if closeUpkeep'
@@ -252,7 +253,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           (SetValue $ U.workHours upkeep) $ \es -> modify' $ \ud ->
             ud { UD.upkeep = lmap (const $ upkeep { U.workHours = es }) (UD.upkeep ud) } ,
         workDescription ,
-        textareaRowEditing "Doporučení" (SetValue . U.recommendation $ upkeep) $
+        textareaRowEditing' 5 "Doporučení" (SetValue . U.recommendation $ upkeep) $
           \es -> modify' $ \ud ->
             ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 5)
       else ([workDescription], 6)
@@ -342,7 +343,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
-      textarea editing False (SetValue . getNote . fst $ machine) $ \es ->
+      textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
 
     nextUpkeepSequenceField = B.col (B.mkColProps 2) $ "Další servis: " <> US.label_ nextUpkeepSequence
