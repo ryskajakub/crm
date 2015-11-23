@@ -154,7 +154,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
           dt "Výrobní číslo" ,
           dd $ M.serialNumber machine' ,
           dt "Označení" ,
-          dd . M.label $ machine' ,
+          dd . M.label_ $ machine' ,
           dt "Rok výroby" ,
           dd $ M.yearOfManufacture machine' ,
           dt "Kontaktní osoba" ,

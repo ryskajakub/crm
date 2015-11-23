@@ -68,7 +68,7 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
         machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 . M.mileagePerYear $ machine', 
-        pgStrictText . M.label $ machine', pgStrictText . M.serialNumber $ machine',
+        pgStrictText . M.label_ $ machine', pgStrictText . M.serialNumber $ machine',
         pgStrictText . M.yearOfManufacture $ machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
