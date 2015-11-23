@@ -32,17 +32,18 @@ newtype UpkeepId = UpkeepId { getUpkeepId :: Int }
 type Upkeep'' = (UpkeepId, Upkeep)
 type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
-data UpkeepGen workDescription = Upkeep {
+data UpkeepGen workDescription recommendation = Upkeep {
   upkeepDate :: D.YearMonthDay ,
   upkeepClosed :: Bool ,
   workHours :: Text ,
   workDescription :: workDescription ,
-  recommendation :: Text }
+  recommendation :: recommendation }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
-type Upkeep = UpkeepGen Text
-type UpkeepMarkup = UpkeepGen [SR.Markup]
+type Upkeep = UpkeepGen Text Text
+type UpkeepMarkup = UpkeepGen [SR.Markup] Text
+type Upkeep2Markup = UpkeepGen [SR.Markup] [SR.Markup]
 
 newUpkeep :: D.YearMonthDay -> Upkeep
 newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")

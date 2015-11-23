@@ -42,8 +42,11 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
     mappedResults = mapResultsToList
       sel1
       (\(upkeepCols,_,_) -> let
-        upkeep = convert upkeepCols :: UpkeepMapped
-        in ($(proj 2 0) upkeep, $(proj 2 1) upkeep))
+        (uId, upkeep) = convert upkeepCols :: UpkeepMapped
+        upkeepMarkup = upkeep {
+          U.recommendation = parseMarkupOrPlain . U.recommendation $ upkeep ,
+          U.workDescription = parseMarkupOrPlain . U.workDescription $ upkeep }
+        in (uId, upkeepMarkup))
       (\(_, upkeepMachine', machineType') -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped

@@ -26,7 +26,7 @@ import           Crm.Server                    (deleteUpkeep)
 
 
 upkeepHistory :: 
-  [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
   C.CompanyId -> 
   CrmRouter -> 
   DOMElement
