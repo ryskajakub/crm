@@ -158,16 +158,18 @@ employeeTasks ::
   CrmRouter ->
   DOMElement
 employeeTasks employeeId openTasks closedTasks router = let
-  mkTasksTable tasks = let
-    head' = thead $ tr [
+  mkTasksTable open tasks = let
+    head' = thead $ tr $ [
       th "Datum" ,
-      th "Činnost" ,
-      th "Uzavřít" ]
+      th "Činnost" ] ++ if open 
+        then [th "Uzavřít"]
+        else []
     mkBody = map $ \(taskId, T.Task startDate task endDate) ->
-      tr [
+      tr $ [
         td . displayDate $ startDate ,
-        td task ,
-        td $ R.link G.check (R.employeeTask taskId) router ]
+        td task ] ++ if open
+          then [td $ R.link G.check (R.employeeTask taskId) router]
+          else []
     in BT.table (Just BT.Bordered) [head', tbody . mkBody $ tasks]
   newTaskButton = BTN.button'
     (BTN.buttonProps {
@@ -176,9 +178,9 @@ employeeTasks employeeId openTasks closedTasks router = let
   in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
     h2 ("Úkoly") ,
     newTaskButton ,
-    mkTasksTable openTasks ,
+    mkTasksTable True openTasks ,
     h2 ("Uzavřené úkoly") ,
-    mkTasksTable closedTasks ])
+    mkTasksTable False closedTasks ])
 
 
 employeeTask ::
