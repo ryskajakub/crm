@@ -75,7 +75,7 @@ upkeepHistory upkeepsInfo companyId router = let
         recommendationContent = div . renderMarkup . U.recommendation $ upkeep
 
     mkLineUpkeepMachineInfo (upkeepMachine, machineType, machineId) =
-      B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
+      B.col (B.mkColProps 6) $ B.panel [ h3 $ link 
         (MT.machineTypeName machineType)
         (machineDetail machineId)
         router ,
@@ -87,7 +87,7 @@ upkeepHistory upkeepsInfo companyId router = let
           (if U.upkeepClosed upkeep then [
           dt "Naměřené motohodiny" ,
           dd $ showInt $ UM.recordedMileage upkeepMachine ,
-          dd "Záruka" ,
+          dt "Záruka" ,
           dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]
     upkeepMachinesInfo = B.row $ map mkLineUpkeepMachineInfo upkeepMachines
 
