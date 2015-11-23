@@ -851,7 +851,6 @@ tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
   taskRow <- queryTable tasksTable -< ()
   taskEmployeeRow <- join . queryTable $ taskEmployeesTable -< $(proj 4 0) taskRow
   restrict -< pgInt4 employeeId .== $(proj 2 1) taskEmployeeRow
-  restrict -< isNull . $(proj 4 3) $ taskRow
   returnA -< taskRow
 
 getTaskQuery :: T.TaskId -> Query TasksTable

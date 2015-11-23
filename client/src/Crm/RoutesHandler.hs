@@ -234,8 +234,8 @@ startRouter appVar = startedRouter where
           fetchEmployee employeeId $ \employee ->
             modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ,
     employeeTasks' $-> \employeeId ->
-      fetchTasks employeeId $ \employeeTasksData -> let 
-        e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId employeeTasksData
+      fetchTasks employeeId $ \openTasks closedTasks -> let 
+        e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId openTasks closedTasks
         in modify' e ,
     newEmployeeTask' $-> \employeeId ->
       const $ modify appVar $ \appState -> appState {

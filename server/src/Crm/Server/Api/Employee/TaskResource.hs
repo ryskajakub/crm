@@ -12,12 +12,13 @@ import           Data.Text                   (pack)
 import           Data.Aeson.Types            (ToJSON)
 import           Data.Typeable               (Typeable)
 import           Data.JSON.Schema            (JSONSchema)
+import           Data.Maybe                  (isJust)
 
 import           Opaleye                     (runQuery, pgBool, runInsert, pgDay, pgString, pgStrictText,
                                              runInsertReturning, pgInt4)
 
 import           Rest.Resource               (Resource, Void, schema, name, create,
-                                             list, mkResourceId)
+                                             list, mkResourceId, get)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
@@ -35,41 +36,46 @@ import           Crm.Server.Helpers          (ymdToDay, maybeToNullable, catchEr
 import           Crm.Server.Parsers          (parseMarkup)
 
 
-data TasksListing = TasksListingNormal | TasksListingMarkup
+type Task' = (T.TaskId, T.Task)
 
-tasksListing' :: 
-  (Typeable o, ToJSON o, JSONSchema o) =>
-  ([(T.TaskId, T.Task)] -> [o]) ->
-  ListHandler (IdDependencies' E.EmployeeId)
-tasksListing' modifyTasks = mkListing' jsonO $ const $ do
-  ((_, pool), employeeId) <- ask
-  withResource pool $ \connection -> liftIO $ do
+tasksListing' :: ConnectionPool -> E.EmployeeId -> ([Task'] -> [Task'] -> a) -> IO a
+tasksListing' pool employeeId modifyTasks =
+  withResource pool $ \connection -> do
     tasks <- runQuery connection (tasksForEmployeeQuery employeeId)
     let 
       employeeTasks = convert tasks :: [TaskMapped]
-    return . modifyTasks $ employeeTasks
+      isClosed = isJust . T.endDate . snd
+      isOpen = not . isClosed
+      closedTasks = filter isClosed employeeTasks
+      openTasks = filter isOpen employeeTasks
+    return . modifyTasks openTasks $ closedTasks
 
 tasksListingMarkup :: ListHandler (IdDependencies' E.EmployeeId)
-tasksListingMarkup = let
-  mkEmployeeTasksMarkup = map $ \(taskId, task) -> let
-    taskMarkup = task { 
-      T.description = maybe ((:[]). SR.PlainText . pack $ "") (\x -> x) . 
-        catchError . parseMarkup . T.description $ task }
-    in (taskId, taskMarkup)
-  in tasksListing' mkEmployeeTasksMarkup
+tasksListingMarkup = mkListing' jsonO $ const $ do
+  ((_, pool), employeeId) <- ask
+  let 
+    mkEmployeeTasksMarkup = map $ \(taskId, task) -> let
+      taskMarkup = task { 
+        T.description = maybe ((:[]). SR.PlainText . pack $ "") (\x -> x) . 
+          catchError . parseMarkup . T.description $ task }
+      in (taskId, taskMarkup)
+  liftIO $ tasksListing' pool employeeId (\o _ -> mkEmployeeTasksMarkup o)
 
-resource :: Resource (IdDependencies' E.EmployeeId) (IdDependencies' E.EmployeeId) Void TasksListing Void
+resource :: Resource (IdDependencies' E.EmployeeId) (IdDependencies' E.EmployeeId) () () Void
 resource = mkResourceId {
   name = "task" ,
   create = Just createHandler ,
-  schema = S.withListing TasksListingNormal $ 
-    S.named [("markup-tasks", S.listing TasksListingMarkup)] ,
-  list = \tasksListingType -> case tasksListingType of
-    TasksListingNormal -> tasksListing
-    TasksListingMarkup -> tasksListingMarkup }
+  get = Just tasksListing ,
+  schema = S.withListing () $ 
+    S.named [
+      ("markup-tasks", S.listing ()) ,
+      ("tasks", S.single ()) ] ,
+  list = const tasksListingMarkup }
 
-tasksListing :: ListHandler (IdDependencies' E.EmployeeId)
-tasksListing = tasksListing' (\x -> x)
+tasksListing :: Handler (IdDependencies' E.EmployeeId)
+tasksListing = mkConstHandler' jsonO $ do
+  ((_, pool), employeeId) <- ask
+  liftIO $ tasksListing' pool employeeId (\o c -> (o, c))
 
 createHandler :: Handler (IdDependencies' E.EmployeeId)
 createHandler = mkInputHandler' (jsonO . jsonI) $ \newTask -> do

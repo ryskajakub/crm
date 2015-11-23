@@ -100,8 +100,8 @@ main' = do
         in simpleReactBody' body callback
       D.DailyPlan ymd employeeId dailyPlanData es ->
         n . emptyCallback $ upkeepPrint router appVar' ymd employeeId dailyPlanData es
-      D.EmployeeTasksScreen (f@(ED.EmployeeTasksData employeeId employeeTasks')) ->
-        n . emptyCallback $ employeeTasks employeeId employeeTasks' employeeTasks' router
+      D.EmployeeTasksScreen (ED.EmployeeTasksData employeeId openTasks closedTasks) ->
+        n . emptyCallback $ employeeTasks employeeId openTasks closedTasks router
       D.EmployeeTaskScreen employeeTaskData ->
         n . emptyCallback $ employeeTask appVar' router employeeTaskData
   return ()

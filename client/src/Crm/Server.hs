@@ -154,10 +154,10 @@ dayParam day = [("day", unpack . displayDateNumeral $ day)]
 
 fetchTasks :: 
   E.EmployeeId ->
-  ([(T.TaskId, T.Task)] -> Fay ()) ->
+  ([(T.TaskId, T.Task)] -> [(T.TaskId, T.Task)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchTasks employeeId = XET.list maxCount employeeId
+fetchTasks employeeId callback = XET.tasks employeeId (\(o, c) -> callback o c)
 
 fetchMarkupTasks ::
   E.EmployeeId ->

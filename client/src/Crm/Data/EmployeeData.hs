@@ -13,7 +13,8 @@ data EmployeeData = EmployeeData {
 
 data EmployeeTasksData = EmployeeTasksData {
   employeeId :: EmployeeId ,
-  employeeTasks :: [(TaskId, Task)] }
+  openTasks :: [(TaskId, Task)] ,
+  closedTasks :: [(TaskId, Task)] }
 
 data EmployeeTaskData = EmployeeTaskData {
   employeeTask :: Task ,
