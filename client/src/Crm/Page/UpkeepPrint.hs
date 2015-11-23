@@ -16,7 +16,7 @@ import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
-import           Crm.Helpers                  (displayDate, plusDays)
+import           Crm.Helpers                  (displayDate, plusDays, renderMarkup)
 import           Crm.Component.Form           (nullDropdown, InputState(Editing))
 import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
@@ -32,17 +32,6 @@ import qualified Crm.Shared.UpkeepMachine     as UM
 import qualified Crm.Shared.ServerRender      as SR
 import qualified Crm.Shared.YearMonthDay      as YMD
 import qualified Crm.Shared.Task              as T
-
-
-renderMarkup :: [SR.Markup] -> [DOMElement]
-renderMarkup = let
-  renderItem :: SR.Markup -> DOMElement
-  renderItem (SR.UnorderedList unorderedList) = ul $
-    map renderListItem unorderedList
-  renderItem (SR.PlainText t) = text2DOM t
-  renderItem (SR.Header h) = h5 h
-  renderListItem t = li t
-  in map renderItem
 
 
 upkeepPrint :: 

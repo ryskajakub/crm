@@ -20,7 +20,8 @@ import qualified Crm.Shared.Machine            as M
 import qualified Crm.Shared.MachineType        as MT
 import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
-import           Crm.Helpers                   (displayDate)
+
+import           Crm.Helpers                   (displayDate, renderMarkup)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep)
 
@@ -70,8 +71,8 @@ upkeepHistory upkeepsInfo companyId router = let
         recommendation = [
           h3 "Doporučení" ,
           recommendationContent ]
-        noteContent = text2DOM ""
-        recommendationContent = text2DOM ""
+        noteContent = div . renderMarkup . U.workDescription $ upkeep
+        recommendationContent = div . renderMarkup . U.recommendation $ upkeep
 
     mkLineUpkeepMachineInfo (upkeepMachine, machineType, machineId) =
       B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
