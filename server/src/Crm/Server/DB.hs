@@ -94,6 +94,7 @@ module Crm.Server.DB (
   getTaskQuery ,
   machinesNotInUpkeepQuery ,
   lastRecommendationQuery ,
+  machinesInCompanyQuery' ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -630,6 +631,21 @@ machinesInCompanyQuery companyId = let
   in proc () -> do
     ((a,b),c) <- joined -< ()
     returnA -< (a,b,c)
+
+machinesInCompanyQuery' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable)
+machinesInCompanyQuery' (U.UpkeepId upkeepId) = let
+  companyPKQ = distinct $ proc () -> do
+    upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
+    machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
+    companyRow <- queryTable companiesTable -< ()
+    restrict -< (C.getCompanyId . C._companyPK $ companyRow) .== $(proj 11 1) machineRow
+    returnA -< C._companyPK companyRow
+  in proc () -> do
+    companyId <- companyPKQ -< ()
+    machineRow <- queryTable machinesTable -< ()
+    restrict -< $(proj 11 1) machineRow .== C.getCompanyId companyId
+    machineTypeRow <- join . queryTable $ machineTypesTable -< $(proj 11 3) machineRow
+    returnA -< (machineRow, machineTypeRow)
 
 companyUpkeepsQuery :: Int -> Query UpkeepsTable
 companyUpkeepsQuery companyId = let 
