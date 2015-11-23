@@ -11,6 +11,7 @@ import           Data.Nullable                        (fromNullable)
 import qualified Crm.Shared.YearMonthDay              as YMD
 import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.Employee                  as E
+import qualified Crm.Shared.ServerRender              as SR
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
@@ -24,6 +25,16 @@ import qualified JQuery                               as JQ
 data FileList
 data File
 data FileContents
+
+renderMarkup :: [SR.Markup] -> [DOMElement]
+renderMarkup = let
+  renderItem :: SR.Markup -> DOMElement
+  renderItem (SR.UnorderedList unorderedList) = ul $
+    map renderListItem unorderedList
+  renderItem (SR.PlainText t) = text2DOM t
+  renderItem (SR.Header h) = h5 h
+  renderListItem t = li t
+  in map renderItem
 
 nowYMD :: YMD.YearMonthDay
 nowYMD = let

@@ -20,19 +20,20 @@ import qualified Crm.Shared.Machine            as M
 import qualified Crm.Shared.MachineType        as MT
 import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
-import           Crm.Helpers                   (displayDate)
+
+import           Crm.Helpers                   (displayDate, renderMarkup)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep)
 
 
-upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
-                 [E.Employee'])]
-              -> C.CompanyId
-              -> CrmRouter
-              -> DOMElement
+upkeepHistory :: 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
+  C.CompanyId -> 
+  CrmRouter -> 
+  DOMElement
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, notes, upkeepMachinesInfo] where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
@@ -60,20 +61,33 @@ upkeepHistory upkeepsInfo companyId router = let
             BTN.onClick = Defined $ const clickHandler })
           in span' (class' "delete") $ BTN.button' buttonProps "Smazat"
 
+    notes = B.row [
+      mkCol note , 
+      mkCol recommendation ] where
+        mkCol = B.col (B.mkColProps 6)
+        note = [
+          h3 "Popis servisu" ,
+          noteContent ]
+        recommendation = [
+          h3 "Doporučení" ,
+          recommendationContent ]
+        noteContent = div . renderMarkup . U.workDescription $ upkeep
+        recommendationContent = div . renderMarkup . U.recommendation $ upkeep
+
     mkLineUpkeepMachineInfo (upkeepMachine, machineType, machineId) =
-      B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
+      B.col (B.mkColProps 6) $ B.panel [ h3 $ link 
         (MT.machineTypeName machineType)
         (machineDetail machineId)
         router ,
         dl [[
-          dt "Poznámka" ,
-          dd $ UM.upkeepMachineNote upkeepMachine ,
-          dt "Koncová poznámka" ,
-          dd $ UM.endNote upkeepMachine ] ++ 
+          dt "Plánované úkony" ,
+          dd . renderMarkup . UM.upkeepMachineNote $ upkeepMachine ,
+          dt "Závěry po servisu" ,
+          dd . renderMarkup . UM.endNote $ upkeepMachine ] ++ 
           (if U.upkeepClosed upkeep then [
           dt "Naměřené motohodiny" ,
           dd $ showInt $ UM.recordedMileage upkeepMachine ,
-          dd "Záruka" ,
+          dt "Záruka" ,
           dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]
     upkeepMachinesInfo = B.row $ map mkLineUpkeepMachineInfo upkeepMachines
 

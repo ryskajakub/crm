@@ -22,6 +22,7 @@ import           Rest.Handler                  (ListHandler, Handler)
 import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Upkeep             as U
+import qualified Crm.Shared.UpkeepMachine      as UM
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
@@ -42,14 +43,20 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
     mappedResults = mapResultsToList
       sel1
       (\(upkeepCols,_,_) -> let
-        upkeep = convert upkeepCols :: UpkeepMapped
-        in ($(proj 2 0) upkeep, $(proj 2 1) upkeep))
+        (uId, upkeep) = convert upkeepCols :: UpkeepMapped
+        upkeepMarkup = upkeep {
+          U.recommendation = parseMarkupOrPlain . U.recommendation $ upkeep ,
+          U.workDescription = parseMarkupOrPlain . U.workDescription $ upkeep }
+        in (uId, upkeepMarkup))
       (\(_, upkeepMachine', machineType') -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
+        upkeepMachineMarkup = upkeepMachine {
+          UM.endNote = parseMarkupOrPlain . UM.endNote $ upkeepMachine ,
+          UM.upkeepMachineNote = parseMarkupOrPlain . UM.upkeepMachineNote $ upkeepMachine }
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
         machineId = sel2 upkeepMachineMapped
-        in (upkeepMachine, machineType, machineId))
+        in (upkeepMachineMarkup, machineType, machineId))
       rows
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults

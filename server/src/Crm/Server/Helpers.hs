@@ -5,6 +5,7 @@
 {-# LANGUAGE ExistentialQuantification #-}
 
 module Crm.Server.Helpers (
+  parseMarkupOrPlain ,
   createDeletion ,
   createDeletion' ,
   prepareUpdate ,
@@ -24,6 +25,7 @@ module Crm.Server.Helpers (
 
 
 import           Data.Functor.Identity       (runIdentity)
+import           Data.Text                   (Text)
 
 import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import           Control.Monad.Trans.Class   (lift)
@@ -44,13 +46,22 @@ import           Rest.Types.Error            (DataError(ParseError), Reason(Iden
 import           Safe                        (readMay)
 
 import qualified Crm.Shared.YearMonthDay     as YMD
+import qualified Crm.Shared.ServerRender     as SR
 
 import           Crm.Server.Types            (GlobalBindings, Cache)
+import           Crm.Server.Parsers          (parseMarkup)
 
 
 catchError :: Either a b -> Maybe b
 catchError (Right r) = Just r
 catchError (Left {}) = Nothing
+
+parseMarkupOrPlain :: 
+  Text ->
+  [SR.Markup]
+parseMarkupOrPlain text = either 
+  (const . (:[]) . SR.PlainText $ text) (id)
+  . parseMarkup $ text
 
 prepareUpdate :: (Sel1 columnsR (Column PGInt4))
               => Table columnsW columnsR

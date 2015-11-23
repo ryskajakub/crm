@@ -4,21 +4,25 @@
 
 module Crm.Shared.UpkeepMachine where
 
-import qualified Crm.Shared.Machine as M
+import qualified Crm.Shared.Machine      as M
+import qualified Crm.Shared.ServerRender as SR
 
 #ifndef FAY
 import GHC.Generics
 import Data.Data
 #endif
-import Data.Text                    (Text, pack)
+import Data.Text                         (Text, pack)
 
 type UpkeepMachine' = (UpkeepMachine, M.MachineId)
 
-data UpkeepMachine = UpkeepMachine {
-  upkeepMachineNote :: Text , 
+type UpkeepMachine = UpkeepMachineGen Text Text
+type UpkeepMachineMarkup = UpkeepMachineGen [SR.Markup] [SR.Markup]
+
+data UpkeepMachineGen upkeepMachineNote endNote = UpkeepMachine {
+  upkeepMachineNote :: upkeepMachineNote , 
   recordedMileage :: Int ,
   warrantyUpkeep :: Bool ,
-  endNote :: Text }
+  endNote :: endNote }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
