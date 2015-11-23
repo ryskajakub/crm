@@ -82,7 +82,6 @@ module Crm.Server.DB (
   employeesInUpkeep ,
   employeeIdsInUpkeep ,
   notesForUpkeep ,
-  machinesInUpkeepQuery' ,
   machinesInUpkeepQuery'' ,
   pastUpkeepMachinesQ ,
   dailyPlanQuery ,
@@ -92,7 +91,6 @@ module Crm.Server.DB (
   employeesInUpkeeps ,
   tasksForEmployeeQuery ,
   getTaskQuery ,
-  machinesNotInUpkeepQuery ,
   lastRecommendationQuery ,
   machinesInCompanyQuery' ,
   -- manipulations
@@ -582,28 +580,6 @@ machinesInUpkeepQuery''' upkeepId = proc () -> do
   machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
   machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
   returnA -< (machineRow, machineTypeRow, upkeepMachineRow)
-
-machinesInUpkeepQuery' :: Int -> Query (MachinesTable, MachineTypesTable)
-machinesInUpkeepQuery' upkeepId = proc () -> do
-  (m, mt, _) <- machinesInUpkeepQuery''' upkeepId -< ()
-  returnA -< (m, mt)
-
-machinesNotInUpkeepQuery :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable)
-machinesNotInUpkeepQuery (U.UpkeepId upkeepId) = let
-  companyPKQ = distinct $ proc () -> do
-    upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
-    machineRow <- join machinesQuery -< $(proj 6 2) upkeepMachineRow
-    companyRow <- queryTable companiesTable -< ()
-    restrict -< (C.getCompanyId . C._companyPK $ companyRow) .== $(proj 11 1) machineRow
-    returnA -< C._companyPK companyRow
-  in proc () -> do
-    companyPK <- companyPKQ -< ()
-    machineRow <- machinesQuery -< ()
-    restrict -< $(proj 11 1) machineRow .== C.getCompanyId companyPK
-    upkeepMachineRow <- join upkeepMachinesQuery -< pgInt4 upkeepId
-    restrict -< $(proj 6 2) upkeepMachineRow ./= $(proj 11 0) machineRow
-    machineTypeRow <- join machineTypesQuery -< $(proj 11 3) machineRow
-    returnA -< (machineRow, machineTypeRow)
 
 machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable, UpkeepMachinesTable)
 machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = let

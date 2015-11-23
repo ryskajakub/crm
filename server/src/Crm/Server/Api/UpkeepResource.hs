@@ -179,7 +179,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
   
   employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepIdInt)
-  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) allMachines
+  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) (allMachines)
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
 
   companyId <- case machines of
