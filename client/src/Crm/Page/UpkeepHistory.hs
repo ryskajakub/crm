@@ -27,7 +27,7 @@ import           Crm.Server                    (deleteUpkeep)
 
 
 upkeepHistory :: 
-  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
   C.CompanyId -> 
   CrmRouter -> 
   DOMElement
@@ -81,9 +81,9 @@ upkeepHistory upkeepsInfo companyId router = let
         router ,
         dl [[
           dt "Plánované úkony" ,
-          dd $ UM.upkeepMachineNote upkeepMachine ,
+          dd . renderMarkup . UM.upkeepMachineNote $ upkeepMachine ,
           dt "Závěry po servisu" ,
-          dd $ UM.endNote upkeepMachine ] ++ 
+          dd . renderMarkup . UM.endNote $ upkeepMachine ] ++ 
           (if U.upkeepClosed upkeep then [
           dt "Naměřené motohodiny" ,
           dd $ showInt $ UM.recordedMileage upkeepMachine ,
