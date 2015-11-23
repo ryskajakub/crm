@@ -154,10 +154,11 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
 employeeTasks :: 
   E.EmployeeId -> 
   [(T.TaskId, T.Task)] ->
+  [(T.TaskId, T.Task)] ->
   CrmRouter ->
   DOMElement
-employeeTasks employeeId tasks router = let
-  tasksTable = let
+employeeTasks employeeId openTasks closedTasks router = let
+  mkTasksTable tasks = let
     head' = thead $ tr [
       th "Datum" ,
       th "Činnost" ,
@@ -175,7 +176,9 @@ employeeTasks employeeId tasks router = let
   in B.grid ((B.row . B.col (B.mkColProps 12)) [ 
     h2 ("Úkoly") ,
     newTaskButton ,
-    tasksTable ])
+    mkTasksTable openTasks ,
+    h2 ("Uzavřené úkoly") ,
+    mkTasksTable closedTasks ])
 
 
 employeeTask ::
