@@ -338,8 +338,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
   
   noteRow = inputRowEditing
     "Označení"
-    (SetValue $ M.label machine') 
-    (\str -> setMachine $ machine' { M.label = str })
+    (SetValue $ M.label_ machine') 
+    (\str -> setMachine $ machine' { M.label_ = str })
 
   rotaryScrewCompressorInputs = [
     inputRowEditing
