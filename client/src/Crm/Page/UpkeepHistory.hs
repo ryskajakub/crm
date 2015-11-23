@@ -25,14 +25,14 @@ import           Crm.Router
 import           Crm.Server                    (deleteUpkeep)
 
 
-upkeepHistory :: [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], 
-                 [E.Employee'])]
-              -> C.CompanyId
-              -> CrmRouter
-              -> DOMElement
+upkeepHistory :: 
+  [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
+  C.CompanyId -> 
+  CrmRouter -> 
+  DOMElement
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, notes, upkeepMachinesInfo] where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
@@ -59,6 +59,19 @@ upkeepHistory upkeepsInfo companyId router = let
             BTN.bsStyle = Defined "danger" ,
             BTN.onClick = Defined $ const clickHandler })
           in span' (class' "delete") $ BTN.button' buttonProps "Smazat"
+
+    notes = B.row [
+      mkCol note , 
+      mkCol recommendation ] where
+        mkCol = B.col (B.mkColProps 6)
+        note = [
+          h3 "Popis servisu" ,
+          noteContent ]
+        recommendation = [
+          h3 "Doporučení" ,
+          recommendationContent ]
+        noteContent = text2DOM ""
+        recommendationContent = text2DOM ""
 
     mkLineUpkeepMachineInfo (upkeepMachine, machineType, machineId) =
       B.col (B.mkColProps 4) $ B.panel [ h3 $ link 
