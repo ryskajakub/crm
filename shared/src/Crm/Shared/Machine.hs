@@ -43,7 +43,8 @@ data Machine = Machine {
   mileagePerYear :: Int ,
   label_ :: Text ,
   serialNumber :: Text ,
-  yearOfManufacture :: Text }
+  yearOfManufacture :: Text ,
+  archived :: Bool }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
@@ -55,7 +56,8 @@ newMachine' ymd = Machine {
   label_ = (pack "") ,
   mileagePerYear = 365 * 24 ,
   serialNumber = (pack "") ,
-  yearOfManufacture = (pack "") }
+  yearOfManufacture = (pack "") ,
+  archived = False }
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = newMachine' $ Just ymd

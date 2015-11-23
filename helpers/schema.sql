@@ -43,7 +43,8 @@ create table machines (
   mileage_per_year integer not null ,
   note varchar (500) not null ,
   serial_number varchar (500) not null ,
-  year_of_manufacture varchar (500) not null );
+  year_of_manufacture varchar (500) not null ,
+  archived boolean not null );
 
 create table machine_photos (
   photo_id integer references photos (id) ,
