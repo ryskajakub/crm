@@ -19,7 +19,7 @@ hoursInYear = 8760
 machineKinds :: [(MachineKindEnum, Text)]
 machineKinds = [
   (RotaryScrewCompressor, pack "Šroubový kompresor") ,
-  (CondensationDryer, pack "Sušička") ,
+  (CondensationDryer, pack "Kondenzační sušička") ,
   (VacuumPump, pack "Vývěva") ,
   (PistonCompressor, pack "Pístový kompresor") ,
   (CoolingUnit, pack "Chladicí jednotka") ,
