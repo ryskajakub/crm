@@ -277,6 +277,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     MK.RotaryScrewCompressor -> False
     _ -> True
 
+  deleteButton = maybe [] (\b -> [b]) deleteButtonM
+
   result =
     (B.grid $ B.row $
       case machineTypeFormType of
@@ -314,7 +316,7 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 in BTN.button' buttonProps "Přidat servisní řadu")
                (text2DOM "") ,
             div' (class' "form-group") (buttonRow' (buttonStateFromBool . null $ validationMessages)
-              submitButtonLabel submitButtonHandler)])) : (
+              submitButtonLabel submitButtonHandler)] ++ deleteButton)) : (
     if null validationMessages
     then []
     else let
