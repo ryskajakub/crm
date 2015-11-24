@@ -769,13 +769,26 @@ singleContactPersonQuery contactPersonId = proc () -> do
   restrict -< (C.getCompanyId . C._companyPK) companyRow .== $(proj 5 1) contactPersonRow
   returnA -< (contactPersonRow, companyRow)
 
-singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
-singleMachineTypeQuery machineTypeSid = proc () -> do
-  machineTypeNameRow @ (mtId',_,name',_) <- machineTypesQuery -< ()
-  restrict -< case machineTypeSid of
-    Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
-    Left(machineTypeName) -> (name' .== pgString machineTypeName)
-  returnA -< machineTypeNameRow
+singleMachineTypeQuery :: Either String Int -> Query (MachineTypesTable, Column PGInt8)
+singleMachineTypeQuery machineTypeSid = let
+  machineTypeQ = proc () -> do
+    machineTypeNameRow @ (mtId',_,name',_) <- machineTypesQuery -< ()
+    restrict -< case machineTypeSid of
+      Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
+      Left(machineTypeName) -> (name' .== pgString machineTypeName)
+    returnA -< machineTypeNameRow
+  machineIdQ = proc () -> do
+    machineRow <- queryTable machinesTable -< ()
+    returnA -< $(proj 12 3) machineRow
+  withMachinesQ :: Query (MachineTypesTable, Column (Nullable PGInt4))
+  withMachinesQ = leftJoin machineTypeQ machineIdQ $ \(mt, m) -> 
+    $(proj 4 0) mt .== m
+  essentialWithMQ = proc () -> do
+    (mt, m) <- withMachinesQ -< ()
+    returnA -< (mt, m)
+  withCountQ = AGG.aggregate aggregator essentialWithMQ where
+    aggregator = p2 (p4 (AGG.min, AGG.min, AGG.min, AGG.min), AGG.count)
+  in withCountQ
 
 machinesInUpkeepQuery :: Int -> Query UpkeepMachinesTable
 machinesInUpkeepQuery upkeepId = proc () -> do

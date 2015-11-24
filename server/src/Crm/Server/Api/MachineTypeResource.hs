@@ -92,17 +92,17 @@ machineTypesSingle = mkConstHandler' jsonO $ do
       liftIO $ runQuery connection (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
       MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> 
-        (throwError NotFound, performQuery $ Right machineTypeIdInt)
+        (throwError NotFound, performQuery . Right $ machineTypeIdInt)
       MachineTypeByName (mtName) -> 
         (return MyNothing, performQuery . Left $ mtName)
   rows <- result
   case rows of
-    x:xs | null xs -> do 
+    (x,countM):xs | null xs -> do 
       let mt = convert x :: MachineTypeMapped
       upkeepSequences <- withResource pool $ \connection -> liftIO $ 
         runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId $ sel1 mt)
       let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
-      return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
+      return $ MyJust (sel1 mt, sel2 mt, fromIntegral (countM :: Int64) :: Int, mappedUpkeepSequences)
     [] -> onEmptyResult
     _ -> throwError NotFound
 
