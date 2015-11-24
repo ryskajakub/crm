@@ -125,8 +125,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     R.navigate (R.newMachinePhase2 companyId) crmRouter
   submitButtonLabel = text2DOM "Dále"
 
-  (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, 
-    upkeepSequences) appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler crmRouter
+  (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, upkeepSequences) 
+    appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing crmRouter
   in (result, callback >> afterRenderCallback)
 
 machineTypeForm' :: MachineTypeForm
@@ -138,11 +138,12 @@ machineTypeForm' :: MachineTypeForm
                  -> DOMElement -- ^ first row input field
                  -> DOMElement -- ^ submit button label
                  -> Fay () -- ^ submit button handler
+                 -> Maybe DOMElement -- ^ delete button
                  -> R.CrmRouter
                  -> (DOMElement, Fay ())
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
-    submitButtonHandler router = let
+    submitButtonHandler deleteButtonM router = let
 
   set1YearUpkeepSequences :: Fay ()
   set1YearUpkeepSequences = let
@@ -337,8 +338,13 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
   submitButtonHandler = 
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 
       (R.navigate R.machineTypesList router) router
+  deleteButton = BTN.button' deleteButtonProps "Smaž" where
+    deleteButtonProps = BTN.buttonProps {
+      BTN.bsStyle = Defined "danger" ,
+      BTN.onClick = Defined . const $ handler }
+    handler = return ()
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
-    setMachineType machineTypeInput submitButtonLabel submitButtonHandler router
+    setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) router
 
 machineTypesList :: R.CrmRouter
                  -> [(MT.MachineType', Int)]
