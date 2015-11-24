@@ -5,10 +5,12 @@ module Crm.Server.Api.Employee.TaskResource (
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
+import           Control.Arrow               (second)
 
 import           Data.Pool                   (withResource)
 import           Data.Tuple.All              (sel1)
-import           Data.Text                   (pack)
+import           Data.Text                   (pack, append)
+import qualified Data.Text                   as TT
 import           Data.Aeson.Types            (ToJSON)
 import           Data.Typeable               (Typeable)
 import           Data.JSON.Schema            (JSONSchema)
@@ -75,7 +77,11 @@ resource = mkResourceId {
 tasksListing :: Handler (IdDependencies' E.EmployeeId)
 tasksListing = mkConstHandler' jsonO $ do
   ((_, pool), employeeId) <- ask
-  liftIO $ tasksListing' pool employeeId (\o c -> (o, c))
+  liftIO $ tasksListing' pool employeeId (\o c -> (trimTo50tasks o, trimTo50tasks c)) where
+    trimTo50tasks tasks = fmap (second trimTo50) tasks
+    trimTo50 task = task { T.description = if (50 <) . TT.length . T.description $ task 
+      then (`append` (pack "...")) . TT.take 50 . T.description $ task
+      else T.description task }
 
 createHandler :: Handler (IdDependencies' E.EmployeeId)
 createHandler = mkInputHandler' (jsonO . jsonI) $ \newTask -> do
