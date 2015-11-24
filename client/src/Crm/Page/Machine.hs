@@ -340,6 +340,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
     "Označení"
     (SetValue $ M.label_ machine') 
     (\str -> setMachine $ machine' { M.label_ = str })
+  archivedRow = editableRow editing "Archivován" archivedCheckbox where
+    archivedCheckbox = checkbox editing (M.archived machine') (\archived -> setMachine $ machine' { M.archived = archived })
 
   rotaryScrewCompressorInputs = [
     inputRowEditing
@@ -446,7 +448,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
     editableRow
       editing
       ("Datum uvedení do provozu") 
-      datePicker ] ++ computationRows ++ [noteRow] ++ kindSpecificRows ++ extraRows ++ [
+      datePicker ] ++ computationRows ++ [noteRow, archivedRow] ++ kindSpecificRows ++ extraRows ++ [
       mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]
 
   mkGrid = 
