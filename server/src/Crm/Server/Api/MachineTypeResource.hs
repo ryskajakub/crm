@@ -30,6 +30,7 @@ import           Rest.Handler                (ListHandler, Handler)
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.UpkeepSequence   as US
+import qualified Crm.Shared.MachineKind      as MK
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers          (prepareReaderTuple)
@@ -72,8 +73,8 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSeque
     MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> do 
       liftIO $ do
         let 
-          readToWrite row = (Just . $(proj 4 0) $ row, sel2 row, pgStrictText $ MT.machineTypeName machineType, 
-            pgStrictText $ MT.machineTypeManufacturer machineType)
+          readToWrite row = (Just . $(proj 4 0) $ row, pgInt4 . MK.kindToDbRepr . MT.kind $ machineType, 
+            pgStrictText $ MT.machineTypeName machineType, pgStrictText $ MT.machineTypeManufacturer machineType)
           condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeIdInt
         _ <- withResource pool $ \connection -> runUpdate connection machineTypesTable readToWrite condition
         _ <- withResource pool $ \connection -> 
