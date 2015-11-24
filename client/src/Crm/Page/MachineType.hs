@@ -328,8 +328,9 @@ machineTypeForm :: R.CrmRouter
                 -> Var D.AppState
                 -> MT.MachineTypeId
                 -> (MT.MachineType, [(US.UpkeepSequence, Text)])
+                -> Int
                 -> (DOMElement, Fay ())
-machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machinesCount = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
     Editing
@@ -341,9 +342,8 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) = let
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 
       (R.navigate R.machineTypesList router) router
   deleteButton = BTN.button' deleteButtonProps "Smaž" where
-    disabled = True
     deleteButtonProps = BTN.buttonProps {
-      BTN.disabled = Defined disabled ,
+      BTN.disabled = Defined $ if machinesCount <= 0 then False else True ,
       BTN.bsStyle = Defined "danger" ,
       BTN.onClick = Defined . const $ handler }
     handler = return ()

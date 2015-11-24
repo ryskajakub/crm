@@ -52,6 +52,7 @@ data NavigationState =
     machineTypes :: [(MT.MachineType',Int)] } |
   MachineTypeEdit {
     machineTypeId :: MT.MachineTypeId ,
+    machinesCount :: Int ,
     machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
