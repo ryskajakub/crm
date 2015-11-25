@@ -340,8 +340,8 @@ fetchFrontPageData order direction callback router =
     Nothing
     router
 
-fetchPlannedUpkeeps :: ([(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], 
-                         [(E.EmployeeId, E.Employee)])] -> Fay ())
+fetchPlannedUpkeeps :: ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], 
+                         [(E.EmployeeId, E.Employee)])]] -> Fay ())
               -> R.CrmRouter
                     -> Fay ()
 fetchPlannedUpkeeps = XU.listPlanned maxCount

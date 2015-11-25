@@ -43,47 +43,48 @@ plannedUpkeeps :: R.CrmRouter
                -> [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]]
                -> (DOMElement, Fay ())
 plannedUpkeeps router upkeepCompanies = let
-  head' = thead $ tr [
-    th G.user ,
-    th "Název firmy" ,
-    th "Adresa" ,
-    th "Poznámky" ,
-    th "Datum" ,
-    th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
-    th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
-  body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
-    mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
-      R.link machineTypeName (R.machineDetail machineId) router ,
-      text2DOM " : " , text2DOM note]
-    in tr [
-      td . mkColours . map snd $ employees ,
-      td $ R.link
-        (C.companyName company)
-        (R.companyDetail companyId)
-        router ,
-      td $ C.companyAddress company ,
-      td . (ul' (class' "list-unstyled")) . mkNote $ notes ,
-      let 
-        date = U.upkeepDate upkeep
-        in td $ R.link 
-          (displayDate date)
-          (R.dailyPlan date Nothing)
+  mkTable data' = B.table [head', body] where
+    head' = thead $ tr [
+      th G.user ,
+      th "Název firmy" ,
+      th "Adresa" ,
+      th "Poznámky" ,
+      th "Datum" ,
+      th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
+      th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
+    body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
+      mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
+        R.link machineTypeName (R.machineDetail machineId) router ,
+        text2DOM " : " , text2DOM note]
+      in tr [
+        td . mkColours . map snd $ employees ,
+        td $ R.link
+          (C.companyName company)
+          (R.companyDetail companyId)
           router ,
-      td $ R.link
-        (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Přeplánovat") Undefined) G.edit)
-        (R.replanUpkeep upkeepId)
-        router,
-      td $ R.link
-        (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Uzavřít") Undefined) G.check)
-        (R.upkeepDetail upkeepId)
-        router ]) upkeepCompanies
+        td $ C.companyAddress company ,
+        td . (ul' (class' "list-unstyled")) . mkNote $ notes ,
+        let 
+          date = U.upkeepDate upkeep
+          in td $ R.link 
+            (displayDate date)
+            (R.dailyPlan date Nothing)
+            router ,
+        td $ R.link
+          (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Přeplánovat") Undefined) G.edit)
+          (R.replanUpkeep upkeepId)
+          router,
+        td $ R.link
+          (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Uzavřít") Undefined) G.check)
+          (R.upkeepDetail upkeepId)
+          router ]) data'
 
   advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
   pageInfo' = pageInfo "Naplánované servisy" $ Just advice
   tooltipInitializer = initializeTooltip
 
-  compressorsTable = B.table [head', body]
-  othersTable = "other"
+  compressorsTable = mkTable . head $ upkeepCompanies
+  othersTable = mkTable . head . tail $ upkeepCompanies
   pills = ul' (class'' ["nav", "nav-pills"]) [
     li' (class' "active") . B.pill (click (return ())) "screw" $ "Šroubové kompresory" ,
     li . B.pill (click (return ())) "others" $ "Ostatní" ]
