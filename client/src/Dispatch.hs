@@ -85,10 +85,10 @@ main' = do
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> n $ machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> n $ emptyCallback $ employeePage router employees
-      D.EmployeeManage (ED.EmployeeData employee (Just employeeId)) -> n $
-        emptyCallback $ employeeEdit employeeId router employee appVar'
-      D.EmployeeManage (ED.EmployeeData employee _) -> n $ 
-        emptyCallback $ newEmployeeForm router employee appVar'
+      D.EmployeeManage (ED.EmployeeData employee (Just employeeId) takenColours) -> n $
+        emptyCallback $ employeeEdit employeeId router employee appVar' takenColours
+      D.EmployeeManage (ED.EmployeeData employee _ takenColours) -> n $ 
+        emptyCallback $ newEmployeeForm router employee appVar' takenColours
       D.ContactPersonPage contactPerson identification companyId -> n $
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
       D.ContactPersonList contactPersons -> n $ emptyCallback $ contactPersonsList router contactPersons

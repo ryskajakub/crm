@@ -9,7 +9,8 @@ import Crm.Component.DatePicker
 
 data EmployeeData = EmployeeData {
   employee :: Employee ,
-  employeePageMode :: Maybe EmployeeId }
+  employeePageMode :: Maybe EmployeeId ,
+  takenColours :: [Text] }
 
 data EmployeeTasksData = EmployeeTasksData {
   employeeId :: EmployeeId ,

@@ -33,9 +33,10 @@ import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.Task                  as T
 
 
-employeePage :: CrmRouter
-             -> [(E.EmployeeId, E.Employee)]
-             -> DOMElement
+employeePage :: 
+  CrmRouter -> 
+  [(E.EmployeeId, E.Employee)] -> 
+  DOMElement
 employeePage router employees = mkGrid where
 
   mkEmployeeRow (employeeId, employee) = let
@@ -66,39 +67,45 @@ employeePage router employees = mkGrid where
     body = tbody $ map mkEmployeeRow employees
 
 
-newEmployeeForm :: CrmRouter
-                -> E.Employee
-                -> Var D.AppState
-                -> DOMElement
-newEmployeeForm router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
+newEmployeeForm :: 
+  CrmRouter -> 
+  E.Employee -> 
+  Var D.AppState -> 
+  [Text] ->
+  DOMElement
+newEmployeeForm router employee takenColours = employeeForm pageInfo' (buttonLabel, buttonAction) employee takenColours where
   buttonLabel = "Přidat servismena"
   buttonAction = createEmployee employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Nový servisman" $ Just "Tady můžeš přídat nového servismana, pokud najmete nového zaměstnance, nebo pokud využijete služeb někoho externího."
 
 
-employeeEdit :: E.EmployeeId
-             -> CrmRouter
-             -> E.Employee
-             -> Var D.AppState
-             -> DOMElement
-employeeEdit employeeId router employee = employeeForm pageInfo' (buttonLabel, buttonAction) employee where
+employeeEdit :: 
+  E.EmployeeId -> 
+  CrmRouter -> 
+  E.Employee -> 
+  Var D.AppState -> 
+  [Text] ->
+  DOMElement
+employeeEdit employeeId router employee takenColours = employeeForm pageInfo' (buttonLabel, buttonAction) employee takenColours where
   buttonLabel = "Ulož"
   buttonAction = updateEmployee employeeId employee (navigate R.employeePage router) router
   pageInfo' = pageInfo "Editace servismena" (Nothing :: Maybe DOMElement)
 
 
-employeeForm :: (Renderable a)
-             => a
-             -> (Text, Fay ())
-             -> E.Employee
-             -> Var D.AppState
-             -> DOMElement
-employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm where
+employeeForm :: 
+  (Renderable a) => 
+  a -> 
+  (Text, Fay ()) -> 
+  E.Employee -> 
+  Var D.AppState -> 
+  [Text] ->
+  DOMElement
+employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar takenColours = mkForm where
 
   modify' :: E.Employee -> Fay ()
   modify' employee' = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.EmployeeManage (ED.EmployeeData _ a) -> D.EmployeeManage (ED.EmployeeData employee' a)
+      D.EmployeeManage (ED.EmployeeData _ a c) -> D.EmployeeManage (ED.EmployeeData employee' a c)
       _ -> D.navigation appState }
 
   validationMessages = if (length $ E.name employee) > 0
@@ -138,8 +145,11 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar = mkForm wher
       colour | all ('0' ==) (unpack colour) -> Nothing
       colour                                -> Just colour
     renderColour (colour, label) =
-      span' colourStyle $ "• " <> label
+      span $ [span' colourStyle $ "• " <> label] ++ takenLabel
       where
+      takenLabel = if elem colour takenColours
+        then [span " (Zabraná)"]
+        else []
       colourStyle = mkAttrs {
         style = Defined style' }
       style' = Style $ "#" <> colour

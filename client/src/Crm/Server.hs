@@ -46,6 +46,7 @@ module Crm.Server (
   fetchTask ,
   fetchMarkupTasks ,
   fetchRecommendation ,
+  fetchTakenColours ,
 
   deleteUpkeep ,
   deleteCompany ,
@@ -293,7 +294,7 @@ fetchEmployee :: E.EmployeeId
               -> (E.Employee -> Fay ())
               -> R.CrmRouter
               -> Fay ()
-fetchEmployee = XE.byEmployeeId
+fetchEmployee = XE.bySingle
 
 fetchContactPerson :: CP.ContactPersonId
                    -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
@@ -362,6 +363,11 @@ fetchRecommendation ::
 fetchRecommendation companyId callback = XCR.access companyId callback' where
   callback' lastUpkeep = callback . toMaybe $ lastUpkeep
   
+fetchTakenColours ::
+  ([Text] -> Fay ()) -> 
+  R.CrmRouter ->
+  Fay ()
+fetchTakenColours = XE.listColours maxCount
 
 -- creations
 
@@ -434,7 +440,7 @@ updateEmployee :: E.EmployeeId
               -> R.CrmRouter
                -> Fay ()
 updateEmployee employeeId employee callback = 
-  XE.saveByEmployeeId
+  XE.saveBySingle
     employeeId
     employee
     (const callback)

@@ -227,12 +227,12 @@ startRouter appVar = startedRouter where
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
     employees' $-> ( const $
       fetchEmployees $ \employees -> modify' $ D.EmployeeList employees ) ,
-    editEmployee' $-> \employeeId' ->
+    editEmployee' $-> \employeeId' router -> fetchTakenColours ( \takenColours ->
       case employeeId' of
-        Left _ -> const $ modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing
+        Left _ -> modify' $ D.EmployeeManage $ ED.EmployeeData E.newEmployee Nothing takenColours
         Right employeeId -> 
-          fetchEmployee employeeId $ \employee ->
-            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) ,
+          fetchEmployee employeeId ( \employee ->
+            modify' $ D.EmployeeManage $ ED.EmployeeData employee (Just employeeId) takenColours ) router ) router ,
     employeeTasks' $-> \employeeId ->
       fetchTasks employeeId $ \openTasks closedTasks -> let 
         e = D.EmployeeTasksScreen $ ED.EmployeeTasksData employeeId openTasks closedTasks
