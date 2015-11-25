@@ -30,11 +30,23 @@ data Technical1 = Technical1 {
 
 data TooltipData = TooltipData {
   data_toggle :: Text ,
-  data_placement :: Text ,
-  title :: Text }
+  data_placement :: Defined Text ,
+  title :: Defined Text ,
+  href :: Defined Text }
+
+pillData :: TooltipData
+pillData = TooltipData "pill" Undefined Undefined Undefined
 
 technical1 :: Technical1
 technical1 = Technical1 "navigation"
+
+pill ::
+  Renderable a
+  => Attributes
+  -> Text
+  -> a
+  -> DOMElement
+pill attrs aria child = constructDOMElement "a" attrs (pillData { href = Defined $ "#" <> aria }) child
 
 tooltip :: Renderable a
         => TooltipData

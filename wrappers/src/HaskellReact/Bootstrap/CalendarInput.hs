@@ -90,8 +90,8 @@ dayInput editing' displayedDate (pickerYear, pickerMonth)
         changeViewLink "next-month" NextMonth ">" ,
         changeViewLink "next-year" NextYear ">>" ,
         monthCalendar momentFromParams (\y' m' d' t' -> do 
-          onDayPick y' m' d' t' 
-          setPickerOpen False )]]
+          setPickerOpen False 
+          onDayPick y' m' d' t' )]]
     else []
   display = 
     if editing'

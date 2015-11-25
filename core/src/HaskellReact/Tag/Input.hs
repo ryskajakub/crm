@@ -126,7 +126,9 @@ data InputAttributes = InputAttributes {
   onKeyDown :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
   onKeyPress :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
   onKeyUp :: Defined (SyntheticKeyboardEvent -> Fay ()) ,
-  onBlur :: Defined (SyntheticEvent -> Fay ()) }
+  onBlur :: Defined (SyntheticEvent -> Fay ()) ,
+  rows :: Defined Int ,
+  cols :: Defined Int }
 
 mkInputAttrs :: InputAttributes
 mkInputAttrs = defaultInputAttributes
@@ -144,7 +146,9 @@ defaultInputAttributes = InputAttributes {
   onKeyDown = Undefined ,
   onKeyPress = Undefined ,
   onKeyUp = Undefined ,
-  onBlur = Undefined }
+  onBlur = Undefined ,
+  cols = Undefined ,
+  rows = Undefined }
 
 input' :: (Renderable a) => Attributes -> InputAttributes -> a -> DOMElement
 input' = constructDOMElement "input"
