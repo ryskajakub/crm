@@ -12,7 +12,7 @@ import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
 import           Data.Maybe                       (mapMaybe)
-import           FFI (Defined(Defined), ffi)
+import           FFI (Defined(..), ffi)
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
@@ -49,8 +49,8 @@ plannedUpkeeps router upkeepCompanies = let
     th "Adresa" ,
     th "Poznámky" ,
     th "Datum" ,
-    th $ B.tooltip (B.TooltipData "tooltip" "left" "Přeplánovat") G.edit ,
-    th $ B.tooltip (B.TooltipData "tooltip" "right" "Uzavřít") G.check ]
+    th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
+    th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
   body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
     mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
       R.link machineTypeName (R.machineDetail machineId) router ,
@@ -70,11 +70,11 @@ plannedUpkeeps router upkeepCompanies = let
           (R.dailyPlan date Nothing)
           router ,
       td $ R.link
-        (B.tooltip (B.TooltipData "tooltip" "bottom" "Přeplánovat") G.edit)
+        (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Přeplánovat") Undefined) G.edit)
         (R.replanUpkeep upkeepId)
         router,
       td $ R.link
-        (B.tooltip (B.TooltipData "tooltip" "bottom" "Uzavřít") G.check)
+        (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Uzavřít") Undefined) G.check)
         (R.upkeepDetail upkeepId)
         router ]) upkeepCompanies
 
@@ -82,9 +82,17 @@ plannedUpkeeps router upkeepCompanies = let
   pageInfo' = pageInfo "Naplánované servisy" $ Just advice
   tooltipInitializer = initializeTooltip
 
+  compressorsTable = B.table [head', body]
+  othersTable = B.table [head', body]
+  pills = ul' (class'' ["nav", "nav-pills"]) [
+    li . B.pill (click (return ())) "screw" $ "Šroubové kompresory" ,
+    li . B.pill (click (return ())) "others" $ "Ostatní" ]
+  tables = div' (class' "tab-content") [
+    div' (mkAttrs { id = Defined "screw" }) compressorsTable ,
+    div' (mkAttrs { id = Defined "others" }) othersTable ]
   in (B.grid $ B.row $
     pageInfo' ++
-    [B.col (B.mkColProps 12) $ main $ B.table [head', body]] , tooltipInitializer)
+    [B.col (B.mkColProps 12) . main $ [pills, tables]] , tooltipInitializer)
 
 
 initializeTooltip :: Fay ()
