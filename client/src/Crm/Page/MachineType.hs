@@ -356,13 +356,13 @@ machineTypesList :: R.CrmRouter
 machineTypesList router machineTypes = let
   head' =
     thead $ tr [
-      th "Název typu" , 
       th "Výrobce" , 
+      th "Název typu" , 
       th "Počet zařízení v systému" ]
   body = tbody $ map (\((machineTypeId,(MT.MachineType _ name manufacturer)), count) ->
     tr [
-      td $ R.link name (R.machineTypeEdit machineTypeId) router ,
       td manufacturer , 
+      td $ R.link name (R.machineTypeEdit machineTypeId) router ,
       td $ showInt count]) machineTypes
   alertInfo = text2DOM "Tady edituješ typ stroje - který je společný pro více strojů. Například, když je výrobce " : strong "REMEZA" : text2DOM " a typ " : strong "BK 150" : text2DOM " a ty při zadávání údajů uděláš chybu a napíšeš třeba " : strong "BK 150a" : text2DOM ", pak to tady můžeš opravit a ta oprava se projeví u všech strojů, ne jenom u tohoto jednoho. Potom v budoucnosti, pokud se budou evidovat díly u strojů a zařízení, tak se ty díly budou přidávat tady." : []
   in B.grid $ B.row $ 
