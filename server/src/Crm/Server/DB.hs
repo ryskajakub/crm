@@ -93,6 +93,7 @@ module Crm.Server.DB (
   getTaskQuery ,
   lastRecommendationQuery ,
   machinesInCompanyQuery' ,
+  takenColoursQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -862,6 +863,11 @@ lastRecommendationQuery (C.CompanyId companyId) = let
     restrict -< $(proj 6 2) upkeepRow .== pgBool True
     returnA -< upkeepRow
   in latestUpkeepQ
+
+takenColoursQuery :: Query DBText
+takenColoursQuery = distinct $ proc () -> do
+  employeeRow <- queryTable employeesTable -< ()
+  returnA -< $(proj 5 4) employeeRow
 
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"

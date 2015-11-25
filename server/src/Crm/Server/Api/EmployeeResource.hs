@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.Api.EmployeeResource where
 
@@ -11,6 +12,7 @@ import           Control.Monad.IO.Class      (liftIO)
 
 import           Data.Tuple.All              (sel2)
 import           Data.Pool                   (withResource)
+import           Data.Text                   (Text)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              create, mkResourceReaderWith, get, update)
@@ -29,14 +31,26 @@ import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', 
 
 import           TupleTH                     (proj)
 
-employeeResource :: Resource Dependencies (IdDependencies' E.EmployeeId) E.EmployeeId () Void
+data EmployeeListing = EmployeesListing | ColoursListing
+
+employeeResource :: Resource Dependencies (IdDependencies' E.EmployeeId) E.EmployeeId EmployeeListing Void
 employeeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.employees ,
-  schema = S.withListing () $ S.unnamedSingleRead id ,
-  list = const employeesListing ,
+  schema = S.withListing EmployeesListing $ S.named [
+    ("single", S.singleRead id) ,
+    ("colours", S.listing ColoursListing)] ,
+  list = \listingType -> case listingType of
+    EmployeesListing -> employeesListing 
+    ColoursListing -> coloursListing ,
   get = Just getEmployeeHandler ,
   update = Just updateEmployeeHandler ,
   create = Just createEmployeeHandler }
+
+coloursListing :: ListHandler Dependencies
+coloursListing = mkListing' jsonO $ const $ do
+  (_, pool) <- ask
+  (rows :: [Text]) <- withResource pool $ \connection -> liftIO $ runQuery connection takenColoursQuery
+  return rows
 
 getEmployeeHandler :: Handler (IdDependencies' E.EmployeeId)
 getEmployeeHandler = mkConstHandler' jsonO $ do
