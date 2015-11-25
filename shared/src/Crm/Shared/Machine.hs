@@ -15,6 +15,7 @@ import           Rest.Info                (Info(..))
 import           Data.Text                (Text, pack)
 
 import qualified Crm.Shared.ContactPerson as CP
+import qualified Crm.Shared.ServerRender  as SR
 
 #ifndef FAY
 instance Info MachineId where
@@ -37,17 +38,21 @@ newtype MachineId = MachineId { getMachineId :: Int }
   deriving (Eq, Generic, Typeable, Data, Show)
 #endif
 
-data Machine = Machine {
+data Machine' note = Machine {
   machineOperationStartDate :: Maybe YearMonthDay ,
   initialMileage :: Int ,
   mileagePerYear :: Int ,
   label_ :: Text ,
   serialNumber :: Text ,
   yearOfManufacture :: Text ,
-  archived :: Bool }
+  archived :: Bool ,
+  note :: note }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+
+type Machine = Machine' Text
+type MachineMarkup = Machine' [SR.Markup]
 
 newMachine' :: Maybe YearMonthDay -> Machine
 newMachine' ymd = Machine {
@@ -57,7 +62,8 @@ newMachine' ymd = Machine {
   mileagePerYear = 365 * 24 ,
   serialNumber = (pack "") ,
   yearOfManufacture = (pack "") ,
-  archived = False }
+  archived = False ,
+  note = pack "" }
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = newMachine' $ Just ymd

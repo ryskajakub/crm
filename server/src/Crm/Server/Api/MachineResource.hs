@@ -63,13 +63,14 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
 
   let 
     unwrappedId = M.getMachineId machineId
-    machineReadToWrite (mId,companyId,_,machineTypeId,_,_,_,_,_,_,_,_) =
+    machineReadToWrite (mId,companyId,_,machineTypeId,_,_,_,_,_,_,_,_,_) =
       (Just mId, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
         machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
         maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
         pgInt4 $ M.initialMileage machine', pgInt4 . M.mileagePerYear $ machine', 
         pgStrictText . M.label_ $ machine', pgStrictText . M.serialNumber $ machine',
-        pgStrictText . M.yearOfManufacture $ machine', pgBool . M.archived $ machine')
+        pgStrictText . M.yearOfManufacture $ machine', pgBool . M.archived $ machine', 
+        pgStrictText . M.note $ machine')
     updateMachine = prepareUpdate machinesTable machineReadToWrite
 
   withResource pool $ \connection -> liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection

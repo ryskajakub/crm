@@ -88,15 +88,15 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       return machineTypeId
   let
     M.Machine machineOperationStartDate' initialMileage mileagePerYear label
-      serialNumber yearOfManufacture archived = machine
+      serialNumber yearOfManufacture archived note = machine
   machineIds <- liftIO $ runInsertReturning
     connection
     machinesTable 
     (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
       pgInt4 machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId,
       maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText label, 
-      pgStrictText serialNumber, pgStrictText yearOfManufacture, pgBool archived)
+      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText label, pgStrictText serialNumber, 
+      pgStrictText yearOfManufacture, pgBool archived, pgStrictText note)
     sel1
   let machineId = head machineIds -- todo safe
   liftIO $ insertExtraFields (M.MachineId machineId) extraFields connection

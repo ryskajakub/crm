@@ -44,7 +44,8 @@ create table machines (
   note varchar (500) not null ,
   serial_number varchar (500) not null ,
   year_of_manufacture varchar (500) not null ,
-  archived boolean not null );
+  archived boolean not null ,
+  note varchar (5000) not null );
 
 create table machine_photos (
   photo_id integer references photos (id) ,
