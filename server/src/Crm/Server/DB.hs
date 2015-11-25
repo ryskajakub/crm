@@ -573,7 +573,7 @@ machineTypesWithCountQuery = let
   query' :: Query (MachineTypesTable, Column (Nullable PGInt4))
   query' = leftJoin (queryTable machineTypesTable) machineTypeIdQ $ \(mt, m) -> $(proj 4 0) mt .== m
   aggregatedQuery = AGG.aggregate (p2(p4(AGG.groupBy, AGG.min, AGG.min, AGG.min), AGG.count)) query'
-  orderedQuery = orderBy (asc(\((_,_,name',_),_) -> name')) aggregatedQuery
+  orderedQuery = orderBy (asc(\( (_,_,_,m),_) -> m) <> asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
 singleMachineTypeQuery :: Either String Int -> Query (MachineTypesTable, Column PGInt8)
