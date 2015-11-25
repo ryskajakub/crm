@@ -754,18 +754,19 @@ employeesInUpkeeps upkeepIds = proc () -> do
   employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
   returnA -< ($(proj 6 0) upkeepRow, employeeRow)
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, (C.CompanyId' DBInt, CompanyCore))
+groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, DBInt, (C.CompanyId' DBInt, CompanyCore))
 groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow @ (upkeepPK,_,upkeepClosed,_,_,_) <- upkeepsQuery -< ()
     restrict -< upkeepClosed .== pgBool False
     upkeepMachinesRow <- join upkeepMachinesQuery -< upkeepPK
-    (_,companyFK,_,_,_,_,_,_,_,_,_,_,_) <- join machinesQuery -< $(proj 6 2) upkeepMachinesRow
+    (machineRow @ (_,companyFK,_,_,_,_,_,_,_,_,_,_,_)) <- join machinesQuery -< $(proj 6 2) upkeepMachinesRow
     companyRow <- queryTable companiesTable -< ()
+    machineTypeRow <- join . queryTable $ machineTypesTable -< $(proj 13 3) machineRow
     restrict -< (C.getCompanyId . C._companyPK) companyRow .== companyFK
-    returnA -< (upkeepRow, (C._companyPK companyRow, C._companyCore companyRow))
-  in orderBy (asc(\((_,date,_,_,_,_), _) -> date)) $ 
-    AGG.aggregate (p2 (p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min),
+    returnA -< (upkeepRow, $(proj 4 1) machineTypeRow , (C._companyPK companyRow, C._companyCore companyRow))
+  in orderBy (asc(\((_,date,_,_,_,_), _, _) -> date)) $ 
+    AGG.aggregate (p3 (p6(AGG.groupBy, AGG.min, AGG.boolOr, AGG.min, AGG.min, AGG.min), AGG.min,
       p2(pCompanyId . C.CompanyId $ AGG.min, pCompany $ C.Company AGG.min AGG.min AGG.min))) 
         plannedUpkeepsQuery
 

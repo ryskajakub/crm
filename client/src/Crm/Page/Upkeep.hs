@@ -40,7 +40,7 @@ import           Crm.Types                        (DisplayedNote (..))
 
 
 plannedUpkeeps :: R.CrmRouter
-               -> [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]
+               -> [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]]
                -> (DOMElement, Fay ())
 plannedUpkeeps router upkeepCompanies = let
   head' = thead $ tr [

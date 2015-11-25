@@ -42,6 +42,7 @@ import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Machine          as M
 import qualified Crm.Shared.MachineType      as MT
+import qualified Crm.Shared.MachineKind      as MK
 import qualified Crm.Shared.UpkeepMachine    as UM
 import qualified Crm.Shared.UpkeepSequence   as US
 import qualified Crm.Shared.ContactPerson    as CP
@@ -59,7 +60,7 @@ import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 import           Crm.Server.Parsers          (parseMarkup)
 
-import           TupleTH                     (proj, catTuples)
+import           TupleTH                     (proj, catTuples, dropTuple)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
@@ -154,20 +155,23 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
-  (upkeeps' :: [(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
-      liftIO $ forM rows $ \(upkeepRowPart, (companyId :: C.CompanyId, company :: C.Company)) -> do
+  (upkeeps' :: [(MK.MachineKindEnum, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
+      liftIO $ forM rows $ \(upkeepRowPart, machineKind, (companyId :: C.CompanyId, company :: C.Company)) -> do
     let (u :: UpkeepMapped) = convert upkeepRowPart
     let upkeepId = $(proj 2 0) u
     notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
-    return (upkeepId, $(proj 2 1) u, companyId, company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
+    return (MK.dbReprToKind machineKind, upkeepId, $(proj 2 1) u, companyId, 
+      company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
-    (employeesInUpkeeps (fmap $(proj 5 0) upkeeps'))
+    (employeesInUpkeeps (fmap $(proj 6 1) upkeeps'))
   let 
     (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (U.UpkeepId uId, convert e)) `fmap` employeeRows
     upkeepsWithEmployees = map (\tuple -> let
-      employee = map snd . filter (($(proj 5 0) tuple ==) . fst) $ employees
-      in $(catTuples 5 1) tuple employee) upkeeps'
-  return upkeepsWithEmployees
+      employee = map snd . filter (($(proj 6 1) tuple ==) . fst) $ employees
+      in $(catTuples 6 1) tuple employee) upkeeps'
+    screw = filter (\t -> (MK.RotaryScrewCompressor ==) $ $(proj 7 0) t) upkeepsWithEmployees
+    others = filter (\t -> (MK.RotaryScrewCompressor /=) $ $(proj 7 0) t) upkeepsWithEmployees
+  return [fmap $(dropTuple 7 1) screw, fmap $(dropTuple 7 1) others]
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
