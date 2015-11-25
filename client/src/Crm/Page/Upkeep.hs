@@ -83,13 +83,13 @@ plannedUpkeeps router upkeepCompanies = let
   tooltipInitializer = initializeTooltip
 
   compressorsTable = B.table [head', body]
-  othersTable = B.table [head', body]
+  othersTable = "other"
   pills = ul' (class'' ["nav", "nav-pills"]) [
-    li . B.pill (click (return ())) "screw" $ "Šroubové kompresory" ,
+    li' (class' "active") . B.pill (click (return ())) "screw" $ "Šroubové kompresory" ,
     li . B.pill (click (return ())) "others" $ "Ostatní" ]
   tables = div' (class' "tab-content") [
-    div' (mkAttrs { id = Defined "screw" }) compressorsTable ,
-    div' (mkAttrs { id = Defined "others" }) othersTable ]
+    div' (mkAttrs { id = Defined "screw" , className = Defined "tab-pane active" }) compressorsTable ,
+    div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ]
   in (B.grid $ B.row $
     pageInfo' ++
     [B.col (B.mkColProps 12) . main $ [pills, tables]] , tooltipInitializer)
