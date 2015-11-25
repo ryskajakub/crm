@@ -157,6 +157,8 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
           dd . M.label_ $ machine' ,
           dt "Rok výroby" ,
           dd $ M.yearOfManufacture machine' ,
+          dt "Poznámky" ,
+          dd . M.note $ machine' ,
           dt "Kontaktní osoba" ,
           dd $ maybe "" CP.name contactPerson , 
           dt "Další servis" ,
