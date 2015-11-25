@@ -336,7 +336,13 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
 
   mkFormGroup = div' (class' "form-group")
   
-  noteRow = inputRowEditing
+  noteRow = textareaRow'
+    5
+    editing
+    "Poznámky"
+    (SetValue . M.note $ machine')
+    (\str -> setMachine $ machine' { M.note = str })
+  labelRow = inputRowEditing
     "Označení"
     (SetValue $ M.label_ machine') 
     (\str -> setMachine $ machine' { M.label_ = str })
@@ -448,7 +454,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
     editableRow
       editing
       ("Datum uvedení do provozu") 
-      datePicker ] ++ computationRows ++ [noteRow, archivedRow] ++ kindSpecificRows ++ extraRows ++ [
+      datePicker ] ++ computationRows ++ [labelRow, archivedRow, noteRow] ++ kindSpecificRows ++ extraRows ++ [
       mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]
 
   mkGrid = 
