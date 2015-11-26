@@ -387,11 +387,14 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
         upkeepPerMileage = minimum repetitions where
           nonOneTimeSequences = filter (not . US.oneTime) upkeepSequences
           repetitions = map US.repetition nonOneTimeSequences
-        preselectedOperationTypes = [
-          (8760, "24/7") ,
-          (upkeepPerMileage, "1x za rok") , 
-          (truncate $ fromIntegral upkeepPerMileage / (2 :: Double), "1x za 2 roky") ] ++
-          (if upkeepPerMileage * 2 <= 8760 then [(upkeepPerMileage * 2, "1x za půl roku")] else [])
+        preselectedOperationTypes = 
+          (8760, "24/7") :
+          (if upkeepPerMileage * 4 <= 8760 then [(upkeepPerMileage * 4, "1x za čtvrt roku")] else []) ++
+          (if upkeepPerMileage * 2 <= 8760 then [(upkeepPerMileage * 2, "1x za půl roku")] else []) ++ [
+          (upkeepPerMileage, "1x za rok") ,
+          (truncate $ fromIntegral upkeepPerMileage / (2 :: Double), "1x za 2 roky") ,
+          (truncate $ fromIntegral upkeepPerMileage / (3 :: Double), "1x za 3 roky") ,
+          (truncate $ fromIntegral upkeepPerMileage / (4 :: Double), "1x za 4 roky") ]
         buttonLabelMaybe = find (\(value, _) -> value == M.mileagePerYear machine') 
           preselectedOperationTypes
         selectAction Nothing = return ()
