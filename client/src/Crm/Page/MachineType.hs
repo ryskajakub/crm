@@ -145,11 +145,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
     submitButtonHandler deleteButtonM router = let
 
-  set1YearUpkeepSequences :: Fay ()
-  set1YearUpkeepSequences = let
+  setOneUpkeepSequence :: Int -> Fay ()
+  setOneUpkeepSequence repetition = let
     us = US.newUpkeepSequence {
       US.oneTime = False ,
-      US.repetition = 8760 } -- 1 year
+      US.repetition = repetition } 
     usTuple = (us, showInt $ US.repetition us)
     in D.modifyState appVar (\navig -> navig { D.machineTypeTuple = rmap (const [usTuple]) (D.machineTypeTuple navig) })
     
@@ -267,7 +267,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
         setMachineType (machineType { MT.kind = kindId })
         case kindId of
           MK.RotaryScrewCompressor -> return ()
-          _ -> set1YearUpkeepSequences
+          MK.VacuumPump -> setOneUpkeepSequence 730 -- month
+          _ -> setOneUpkeepSequence 8760 -- year
       in li $ AA.a''' (click selectAction) kindLabel
     selectElements = map mkLink MK.machineKinds
     in BD.buttonDropdown' (not $ isJust machineTypeId && machineTypeFormType == Phase1) buttonLabel selectElements
