@@ -363,7 +363,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
             MD.validation = newValidation })
         (\t -> changeNavigationState $ \md -> md { 
           MD.validation = V.add V.MachineInitialMileageNumber validation , 
-          MD.machine = (machine', datePickerText, t) })) ,
+          MD.machine = (machine', datePickerText, t) }))]
+  usageRows = [
     row 
       "Provoz mth/rok (Rok má 8760 mth)" [
       (div' (class'' ["control-label", "my-text-left", "col-md-3"]) 
@@ -413,7 +414,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
 
   -- rows that ore used in the computation by mth
   computationRows = case MT.kind machineType of
-    MK.RotaryScrewCompressor -> rotaryScrewCompressorInputs
+    MK.RotaryScrewCompressor -> rotaryScrewCompressorInputs ++ usageRows
+    MK.VacuumPump -> usageRows
     _ -> []
 
   formInputs = [
