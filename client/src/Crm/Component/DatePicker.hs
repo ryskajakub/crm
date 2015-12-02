@@ -4,7 +4,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Component.DatePicker (
-  datePicker ,
   datePicker' ,
   DatePicker ,
   DatePickerData (..) ) where
