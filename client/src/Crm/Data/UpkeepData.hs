@@ -19,7 +19,7 @@ data UpkeepData = UpkeepData {
   upkeep :: (Upkeep, [UpkeepMachine']) ,
   machines :: [(MachineId, Machine, MachineType, UpkeepSequence)] ,
   notCheckedMachines :: [UpkeepMachine'] ,
-  upkeepDatePicker :: (DatePicker, Text) ,
+  upkeepDatePicker :: DatePickerData ,
   employees :: [Employee'] ,
   selectedEmployees :: [Maybe EmployeeId] ,
   validation :: V.Validation ,

@@ -39,9 +39,10 @@ import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
 
-plannedUpkeeps :: R.CrmRouter
-               -> [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]]
-               -> (DOMElement, Fay ())
+plannedUpkeeps :: 
+  R.CrmRouter -> 
+  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] -> 
+  (DOMElement, Fay ())
 plannedUpkeeps router upkeepCompanies = let
   mkTable data' = B.table [head', body] where
     head' = thead $ tr [
@@ -118,11 +119,12 @@ toggle lists findElem = let
   in toggleInternal lists True
 
 
-mkSubmitButton :: Renderable a
-               => a
-               -> Fay ()
-               -> Bool
-               -> DOMElement
+mkSubmitButton :: 
+  Renderable a => 
+  a -> 
+  Fay () -> 
+  Bool -> 
+  DOMElement
 mkSubmitButton buttonLabel handler enabled = let
   basicButtonProps = BTN.buttonProps {
     BTN.bsStyle = Defined "primary" }
@@ -132,18 +134,19 @@ mkSubmitButton buttonLabel handler enabled = let
   in BTN.button' buttonProps buttonLabel
 
 
-upkeepDetail :: R.CrmRouter
-             -> Var D.AppState
-             -> U.Upkeep'
-             -> (DP.DatePicker, Text)
-             -> [UM.UpkeepMachine']
-             -> [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] 
-             -> C.CompanyId -- ^ company id
-             -> [E.Employee']
-             -> [Maybe E.EmployeeId]
-             -> V.Validation
-             -> DisplayedNote
-             -> DOMElement
+upkeepDetail :: 
+  R.CrmRouter -> 
+  Var D.AppState -> 
+  U.Upkeep' -> 
+  DP.DatePickerData -> 
+  [UM.UpkeepMachine'] -> 
+  [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> 
+  C.CompanyId -> -- ^ company id
+  [E.Employee'] -> 
+  [Maybe E.EmployeeId] -> 
+  V.Validation -> 
+  DisplayedNote -> 
+  DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v dnf =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
@@ -161,18 +164,18 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
             [span G.plus , span " Uzavřít"]
             closeUpkeepHandler
 
-
-upkeepNew :: R.CrmRouter
-          -> Var D.AppState
-          -> (U.Upkeep, [UM.UpkeepMachine'])
-          -> (DP.DatePicker, Text)
-          -> [UM.UpkeepMachine']
-          -> [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -- ^ machine ids -> machines
-          -> Either C.CompanyId U.UpkeepId
-          -> [E.Employee']
-          -> [Maybe E.EmployeeId]
-          -> V.Validation
-          -> DOMElement
+upkeepNew :: 
+  R.CrmRouter -> 
+  Var D.AppState -> 
+  (U.Upkeep, [UM.UpkeepMachine']) -> 
+  DP.DatePickerData -> 
+  [UM.UpkeepMachine'] -> 
+  [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> -- ^ machine ids -> machines  
+  Either C.CompanyId U.UpkeepId -> 
+  [E.Employee'] -> 
+  [Maybe E.EmployeeId] -> 
+  V.Validation -> 
+  DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
   upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice where
     (upkeepU, upkeepMachines) = upkeep
@@ -203,22 +206,23 @@ mapEither f (Left a) = Left . f $ a
 mapEither _ (Right b) = Right b
 
 
-upkeepForm :: Var D.AppState
-           -> Text -- ^ page header
-           -> (U.Upkeep, [(UM.UpkeepMachine')])
-           -> (DP.DatePicker, Text) -- ^ datepicker, datepicker openness
-           -> [(UM.UpkeepMachine')]
-           -> [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] 
-              -- ^ machine ids -> machines
-           -> (Bool -> DOMElement) -- ^ submit button
-           -> Bool -- ^ display the mth input field
-           -> [E.Employee']
-           -> [Maybe E.EmployeeId]
-           -> V.Validation
-           -> DisplayedNote
-           -> DOMElement
-upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawUpkeepDate)
-    uncheckedMachines machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag = let
+upkeepForm :: 
+  Var D.AppState -> 
+  Text -> -- ^ page header
+  (U.Upkeep, [(UM.UpkeepMachine')]) ->
+  DP.DatePickerData ->
+  [(UM.UpkeepMachine')] ->
+  [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> -- ^ machine ids -> machines
+  (Bool -> DOMElement) -> -- ^ submit button
+  Bool -> -- ^ display the mth input field
+  [E.Employee'] ->
+  [Maybe E.EmployeeId] ->
+  V.Validation ->
+  DisplayedNote ->
+  DOMElement
+upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' uncheckedMachines 
+    machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag = let
+  rawUpkeepDate = DP.rawText upkeepDatePicker'
   upkeepFormRows = 
     [companyNameHeader] ++
     [formHeader] ++
@@ -234,12 +238,9 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       D.UpkeepScreen ud -> D.UpkeepScreen $ fun ud
     in appState' { D.navigation = newState }
 
-  setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Text -> Fay ()
-  setUpkeep modifiedUpkeep upkeepDateText = modify' $ \upkeepData ->
-    let dp = fst $ UD.upkeepDatePicker upkeepData
-    in upkeepData { 
-      UD.upkeep = modifiedUpkeep ,
-      UD.upkeepDatePicker = (dp, upkeepDateText) }
+  setUpkeep :: (U.Upkeep, [UM.UpkeepMachine']) -> Fay ()
+  setUpkeep modifiedUpkeep = modify' $ \upkeepData ->
+    upkeepData { UD.upkeep = modifiedUpkeep }
   
   setNotCheckedMachines :: [UM.UpkeepMachine'] -> [UM.UpkeepMachine'] -> Fay ()
   setNotCheckedMachines checkedMachines notCheckedMachines' = modify' $ 
@@ -308,7 +309,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
           ums = map (\(um @ (_,machineId')) -> if machineId' == machineId
             then (upkeepMachine, machineId')
             else um) upkeepMachines 
-          in setUpkeep (upkeep, ums) rawUpkeepDate
+          in setUpkeep (upkeep, ums)
         in (checkedMachine, setter, Editing) 
       (Nothing, Just(uncheckedMachine)) ->
         (uncheckedMachine, const $ return (), Display)
@@ -362,17 +363,9 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) (upkeepDatePicker', rawU
       else [machineToggleCheckedLink, nextUpkeepSequenceField, note]
 
   datePicker = let
-    modifyDatepickerDate newDate = modify' $ \upkeepData -> upkeepData {
-      UD.upkeepDatePicker = lmap (\t -> lmap (const newDate) t) (UD.upkeepDatePicker upkeepData)}
-    setPickerOpenness open = modify' $ \upkeepData -> upkeepData {
-      UD.upkeepDatePicker = lmap (\t -> rmap (const open) t) (UD.upkeepDatePicker upkeepData)}
-    setDate date = case date of
-      Right date' -> setUpkeep (upkeep { U.upkeepDate = date' }, upkeepMachines) $ displayDate date'
-      Left text' -> setUpkeep (upkeep, upkeepMachines) text'
-    dateValue = if (displayDate $ U.upkeepDate upkeep) == rawUpkeepDate
-      then Right $ U.upkeepDate upkeep
-      else Left rawUpkeepDate
-    in DP.datePicker Editing upkeepDatePicker' modifyDatepickerDate setPickerOpenness dateValue setDate
+    modifyDatepickerDate newDpd = modify' $ \ud -> ud { UD.upkeepDatePicker = newDpd }
+    setDate date' = setUpkeep $ (upkeep { U.upkeepDate = date' }, upkeepMachines)
+    in DP.datePicker' Editing upkeepDatePicker' modifyDatepickerDate (U.upkeepDate upkeep) setDate
 
   dateRow = oneElementRow "Datum" datePicker
 
