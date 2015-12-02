@@ -56,7 +56,6 @@ machineDetail ::
   C.CompanyId -> 
   DP.DatePickerData -> 
   (M.Machine, Text) -> 
-  MK.MachineKindEnum -> 
   (MT.MachineType, [US.UpkeepSequence]) -> 
   M.MachineId -> 
   YMD.YearMonthDay -> 
@@ -70,11 +69,11 @@ machineDetail ::
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
   (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
-    usageSetMode) machineSpecific machineTypeTuple machineId nextService photos upkeeps
+    usageSetMode) machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      usageSetMode) machineSpecific machineTypeTuple extraRows extraGrid 
+      usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
@@ -161,8 +160,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   setEditing :: InputState -> Fay ()
   setEditing editing' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
-        D.MachineScreen (MD.MachineData a a1 b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
+      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
+        D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
       _ -> D.navigation appState })
   editButtonRow =
     div' (class' "col-md-3") $
@@ -195,7 +194,6 @@ machineNew ::
   Var D.AppState -> 
   DP.DatePickerData -> 
   (M.Machine, Text) -> 
-  MK.MachineKindEnum -> 
   C.CompanyId -> 
   (MT.MachineType, [US.UpkeepSequence]) -> 
   Maybe MT.MachineTypeId -> 
@@ -206,11 +204,11 @@ machineNew ::
   [(M.MachineId, M.Machine)] -> 
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
   DOMElement
-machineNew router appVar datePickerCalendar (machine', usageSetMode) machineSpecific companyId machineTypeTuple 
-    machineTypeId (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
-  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
-      buttonRow'' appVar datePickerCalendar (machine', usageSetMode) machineSpecific machineTypeTuple 
-      [] Nothing (contactPersonId, Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
+machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId machineTypeTuple machineTypeId 
+    (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
+  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
+    datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
+    Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   machineTypeEither = case machineTypeId of
@@ -258,7 +256,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) machineSpec
   changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
   changeNavigationState f = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
+      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
         D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
       _ -> D.navigation appState }
 
@@ -270,7 +268,6 @@ machineDisplay ::
   Var D.AppState ->
   DP.DatePickerData ->
   (M.Machine, Text) -> -- ^ machine, text of the datepicker
-  MK.MachineKindEnum ->
   (MT.MachineType, [US.UpkeepSequence]) ->
   [DOMElement] ->
   Maybe DOMElement ->
@@ -282,7 +279,7 @@ machineDisplay ::
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] ->
   DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage)
-    _ (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
+    (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
     contactPersons validation otherMachineId otherMachines extraFields = mkGrid where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()

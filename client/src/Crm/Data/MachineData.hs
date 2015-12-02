@@ -26,7 +26,6 @@ data ContactPersonInMachine = New | ById
 
 data MachineData = MachineData {
   machine :: (Machine, Text) ,
-  machineKindSpecific :: MachineKindEnum ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
   operationStartCalendar :: DatePickerData ,
   contactPersonId :: Maybe ContactPersonId ,
