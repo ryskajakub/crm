@@ -25,10 +25,10 @@ import           Crm.Component.Form        (InputState)
 data ContactPersonInMachine = New | ById
 
 data MachineData = MachineData {
-  machine :: (Machine, Text, Text) ,
+  machine :: (Machine, Text) ,
   machineKindSpecific :: MachineKindEnum ,
   machineTypeTuple :: (MachineType, [UpkeepSequence]) ,
-  operationStartCalendar :: DatePicker ,
+  operationStartCalendar :: DatePickerData ,
   contactPersonId :: Maybe ContactPersonId ,
   contactPersons :: [(ContactPersonId, ContactPerson)] ,
   validation :: V.Validation ,

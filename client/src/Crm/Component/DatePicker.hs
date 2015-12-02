@@ -48,13 +48,14 @@ datePicker' inputState datePickerData setDatePickerData date setDate = let
     setDatePickerData $ datePickerData { rawText = displayDate newDate, open = False } -- todo should be automatic close be underlying datePicker
   in datePicker inputState (calendarDate, open) setDatePickerDate setOpen displayed setDisplayed
 
-datePicker :: InputState -- ^ editing
-           -> DatePicker
-           -> (YMD.YearMonthDay -> Fay ()) -- ^ set date picker date
-           -> (Bool -> Fay ()) -- ^ set date picker openness
-           -> Either Text YMD.YearMonthDay -- ^ displayed date or some text, that the user entered
-           -> (Either Text YMD.YearMonthDay -> Fay ()) -- ^ set date
-           -> [DOMElement]
+datePicker :: 
+  InputState -> -- ^ editing 
+  DatePicker -> 
+  (YMD.YearMonthDay -> Fay ()) -> -- ^ set date picker date
+  (Bool -> Fay ()) -> -- ^ set date picker openness
+  Either Text YMD.YearMonthDay -> -- ^ displayed date or some text, that the user entered
+  (Either Text YMD.YearMonthDay -> Fay ()) -> -- ^ set date
+  [DOMElement]
 datePicker editing (pickerStateDate, pickerStateOpen) setDatePickerDate
     setDatePickerOpenness displayedDateOrText setDate = let
   displayedDateOrText' = case displayedDateOrText of

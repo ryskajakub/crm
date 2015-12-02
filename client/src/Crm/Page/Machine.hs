@@ -49,31 +49,32 @@ import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
 
 
-machineDetail :: InputState
-              -> Var D.AppState
-              -> R.CrmRouter
-              -> C.CompanyId
-              -> DP.DatePicker
-              -> (M.Machine, Text, Text)
-              -> MK.MachineKindEnum
-              -> (MT.MachineType, [US.UpkeepSequence])
-              -> M.MachineId
-              -> YMD.YearMonthDay
-              -> [(P.PhotoId, PM.PhotoMeta)]
-              -> [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
-              -> Maybe CP.ContactPersonId
-              -> [(CP.ContactPersonId, CP.ContactPerson)]
-              -> V.Validation
-              -> Maybe M.MachineId
-              -> [(M.MachineId, M.Machine)]
-              -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
-              -> (DOMElement, Fay ())
+machineDetail :: 
+  InputState -> 
+  Var D.AppState -> 
+  R.CrmRouter -> 
+  C.CompanyId -> 
+  DP.DatePickerData -> 
+  (M.Machine, Text) -> 
+  MK.MachineKindEnum -> 
+  (MT.MachineType, [US.UpkeepSequence]) -> 
+  M.MachineId -> 
+  YMD.YearMonthDay -> 
+  [(P.PhotoId, PM.PhotoMeta)] -> 
+  [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])] -> 
+  Maybe CP.ContactPersonId -> 
+  [(CP.ContactPersonId, CP.ContactPerson)] -> 
+  V.Validation -> 
+  Maybe M.MachineId -> 
+  [(M.MachineId, M.Machine)] -> 
+  [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
+  (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
-    datePickerText, usageSetMode) machineSpecific machineTypeTuple machineId nextService photos upkeeps
+    usageSetMode) machineSpecific machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
-      datePickerText, usageSetMode) machineSpecific machineTypeTuple extraRows extraGrid 
+      usageSetMode) machineSpecific machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
@@ -189,25 +190,26 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     router
 
 
-machineNew :: R.CrmRouter
-           -> Var D.AppState
-           -> DP.DatePicker
-           -> (M.Machine, Text, Text)
-           -> MK.MachineKindEnum
-           -> C.CompanyId
-           -> (MT.MachineType, [US.UpkeepSequence])
-           -> Maybe MT.MachineTypeId
-           -> (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine)
-           -> [(CP.ContactPersonId, CP.ContactPerson)]
-           -> V.Validation
-           -> Maybe M.MachineId
-           -> [(M.MachineId, M.Machine)]
-           -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
-           -> DOMElement
-machineNew router appVar datePickerCalendar (machine', datePickerText, usageSetMode) machineSpecific companyId machineTypeTuple 
+machineNew :: 
+  R.CrmRouter -> 
+  Var D.AppState -> 
+  DP.DatePickerData -> 
+  (M.Machine, Text) -> 
+  MK.MachineKindEnum -> 
+  C.CompanyId -> 
+  (MT.MachineType, [US.UpkeepSequence]) -> 
+  Maybe MT.MachineTypeId -> 
+  (CP.ContactPerson, Maybe CP.ContactPersonId, MD.ContactPersonInMachine) -> 
+  [(CP.ContactPersonId, CP.ContactPerson)] -> 
+  V.Validation -> 
+  Maybe M.MachineId -> 
+  [(M.MachineId, M.Machine)] -> 
+  [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
+  DOMElement
+machineNew router appVar datePickerCalendar (machine', usageSetMode) machineSpecific companyId machineTypeTuple 
     machineTypeId (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji"
-      buttonRow'' appVar datePickerCalendar (machine', datePickerText, usageSetMode) machineSpecific machineTypeTuple 
+      buttonRow'' appVar datePickerCalendar (machine', usageSetMode) machineSpecific machineTypeTuple 
       [] Nothing (contactPersonId, Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
@@ -261,24 +263,25 @@ machineNew router appVar datePickerCalendar (machine', datePickerText, usageSetM
       _ -> D.navigation appState }
 
 
-machineDisplay :: InputState -- ^ true editing mode false display mode
-               -> Text -- ^ header of the page
-               -> (ButtonState -> DOMElement)
-               -> Var D.AppState
-               -> DP.DatePicker
-               -> (M.Machine, Text, Text) -- ^ machine, text of the datepicker
-               -> MK.MachineKindEnum
-               -> (MT.MachineType, [US.UpkeepSequence])
-               -> [DOMElement]
-               -> Maybe DOMElement
-               -> (Maybe CP.ContactPersonId, Maybe (DOMElement, Fay ()), DOMElement -> DOMElement)
-               -> [(CP.ContactPersonId, CP.ContactPerson)]
-               -> V.Validation
-               -> Maybe M.MachineId
-               -> [(M.MachineId, M.Machine)]
-               -> [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]
-               -> DOMElement
-machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (machine', datePickerText, rawUsage)
+machineDisplay :: 
+  InputState -> 
+  Text -> -- ^ header of the page
+  (ButtonState -> DOMElement) ->
+  Var D.AppState ->
+  DP.DatePickerData ->
+  (M.Machine, Text) -> -- ^ machine, text of the datepicker
+  MK.MachineKindEnum ->
+  (MT.MachineType, [US.UpkeepSequence]) ->
+  [DOMElement] ->
+  Maybe DOMElement ->
+  (Maybe CP.ContactPersonId, Maybe (DOMElement, Fay ()), DOMElement -> DOMElement) ->
+  [(CP.ContactPersonId, CP.ContactPerson)] ->
+  V.Validation ->
+  Maybe M.MachineId ->
+  [(M.MachineId, M.Machine)] ->
+  [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] ->
+  DOMElement
+machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage)
     _ (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
     contactPersons validation otherMachineId otherMachines extraFields = mkGrid where
 
@@ -289,31 +292,17 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
       _ -> D.navigation appState })
 
   setMachine :: M.Machine -> Fay ()
-  setMachine machine = setMachineFull (machine, datePickerText)
+  setMachine machine = setMachineFull machine
   
-  setMachineFull :: (M.Machine, Text) -> Fay ()
-  setMachineFull (machine, datePickerText') = changeNavigationState
-    (\md -> md { MD.machine = (machine, datePickerText', rawUsage) })
+  setMachineFull :: M.Machine -> Fay ()
+  setMachineFull machine = changeNavigationState
+    (\md -> md { MD.machine = (machine, rawUsage)})
 
   datePicker = let
-    setDatePickerDate date = changeNavigationState $ \state ->
-      state { MD.operationStartCalendar = 
-        lmap (const date) (MD.operationStartCalendar state )}
-    setPickerOpenness openness = changeNavigationState $ \state ->
-      state { MD.operationStartCalendar = 
-        rmap (const openness) (MD.operationStartCalendar state )}
-    displayedDate = case M.machineOperationStartDate machine' of
-      Just date' -> Right date'
-      Nothing -> Left datePickerText
-    setDate date = case date of
-      Right ymd -> let
-        newMachine = machine' { M.machineOperationStartDate = Just ymd }
-        in setMachine newMachine
-      Left text' -> let 
-        newMachine = machine' { M.machineOperationStartDate = Nothing }
-        in setMachineFull (newMachine, text')
-    in DP.datePicker editing operationStartCalendar setDatePickerDate 
-      setPickerOpenness displayedDate setDate
+    setDpd dpd' = changeNavigationState $ \md -> md { MD.operationStartCalendar = dpd' }
+    setMachineOpStart d = setMachine $ machine' { M.machineOperationStartDate = Just d }
+    machineOpStart = maybe YMD.new (\x -> x) (M.machineOperationStartDate machine')
+    in DP.datePicker' editing operationStartCalendarDpd setDpd machineOpStart setMachineOpStart
 
   validationErrorsGrid = case validation of
     V.Validation [] -> []
@@ -359,11 +348,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           newMachine = machine' { M.initialMileage = im }
           newValidation = V.remove V.MachineInitialMileageNumber validation
           in changeNavigationState $ \md -> md { 
-            MD.machine = (newMachine, datePickerText, showInt . M.mileagePerYear $ newMachine) ,
+            MD.machine = (newMachine, showInt . M.mileagePerYear $ newMachine) ,
             MD.validation = newValidation })
         (\t -> changeNavigationState $ \md -> md { 
           MD.validation = V.add V.MachineInitialMileageNumber validation , 
-          MD.machine = (machine', datePickerText, t) }))]
+          MD.machine = (machine', t) }))]
   usageRows = [
     row 
       "Provoz mth/rok (Rok má 8760 mth)" [
@@ -374,14 +363,14 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           (SetValue rawUsage)
           (let 
             errorHandler t = changeNavigationState $ \md -> md { 
-              MD.machine = (machine', datePickerText, t) ,
+              MD.machine = (machine', t) ,
               MD.validation = V.add V.MachineUsageNumber validation }
             in eventInt' 
               (> 0)
               (\mileagePerYear ->
                 changeNavigationState $ \md -> md { 
                   MD.validation = V.remove V.MachineUsageNumber validation , 
-                  MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, datePickerText, showInt mileagePerYear)})
+                  MD.machine = (machine' { M.mileagePerYear = mileagePerYear }, showInt mileagePerYear)})
               errorHandler))) ,
       (label' (class'' ["control-label", "col-md-3"]) "Typ provozu") ,
       (let
@@ -400,7 +389,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendar (mac
           preselectedOperationTypes
         selectAction Nothing = return ()
         selectAction (Just value) = changeNavigationState $ \md -> md {
-          MD.machine = (machine' { M.mileagePerYear = value }, datePickerText, showInt value) }
+          MD.machine = (machine' { M.mileagePerYear = value }, showInt value) }
         (operationTypesDropdown, buttonLabel) = nullDropdown 
           preselectedOperationTypes
           text2DOM

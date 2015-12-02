@@ -157,13 +157,13 @@ startRouter appVar = startedRouter where
         machine = case machineKind of
           MK.RotaryScrewCompressor -> machine'
           _ -> machine' { M.mileagePerYear = MK.hoursInYear }
-        machineTuple = (machine, "", showInt . M.mileagePerYear $ machine)
+        machineTuple = (machine, showInt . M.mileagePerYear $ machine)
       fetchContactPersons companyId (\cps -> (fetchMachinesInCompany companyId $ \otherMachines -> 
         fetchExtraFieldSettings (\efSettings -> let
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
           in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineKind machineTypeTuple
-            (nowYMD, False) Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
+            (DP.DatePickerData nowYMD False "") Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
               (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById))) router ) router ) router ,
     newMaintenance' $-> \companyId router -> 
       fetchUpkeepData companyId (\ud ->
@@ -188,11 +188,11 @@ startRouter appVar = startedRouter where
             machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields'') ->
           fetchMachinePhotos machineId (\photos ->
             let 
-              machineTriple = (machine, "", showInt . M.mileagePerYear $ machine)
+              machineTriple = (machine, showInt . M.mileagePerYear $ machine)
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
             in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId ( \otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
-                machineTriple machineSpecificData machineTypeTuple (startDateInCalendar, False)
+                machineTriple machineSpecificData machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
                   contactPersonId cps V.new otherMachineId otherMachines extraFields''
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display machineTypeId photos upkeeps companyId) ) router ) router ) router ) router ,
