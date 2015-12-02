@@ -5,7 +5,7 @@ module Crm.Helpers where
 
 import           Data.Text                            as T (Text, showInt, fromString, (<>), length)
 import           Prelude                              as P hiding (div, span, id)
-import           FFI                                  (Nullable, ffi, Defined(Defined))
+import           FFI                                  (Nullable, ffi, Defined(Defined, Undefined))
 import           Data.Nullable                        (fromNullable)
 
 import qualified Crm.Shared.YearMonthDay              as YMD
@@ -179,8 +179,17 @@ setTimeout = ffi " setTimeout(%2, %1) "
 basicMarkupInfo :: Text
 basicMarkupInfo = "Když na začátek řádku napíšeš mínus (-) potom se tato řádka na stránce pro tisk denních akcích zobrazí jako odrážka seznamu. Pokud na začátek řádku napíšeš plus (+), pak se to zobrazí jako nadpis."
 
+mkColours' :: [E.Employee] -> (DOMElement, Fay ())
+mkColours' employees = let
+  mkTooltip (E.Employee name _ _ _) = 
+    B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined name) Undefined)
+  element = div' (class' "colours") . (map $ \employee -> mkTooltip employee $ div' (class' "colourDot") $ span'
+    (mkAttrs {
+      style = Defined . Style $ "#" <> E.colour employee })
+    "•") $ employees
+  cb :: Fay ()
+  cb = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
+  in (element, cb)
+
 mkColours :: [E.Employee] -> DOMElement
-mkColours = div' (class' "colours") . (map $ \employee -> div' (class' "colourDot") $ span'
-  (mkAttrs { 
-    style = Defined . Style $ "#" <> E.colour employee })
-  "•")
+mkColours = fst . mkColours'
