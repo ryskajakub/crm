@@ -63,11 +63,14 @@ nextServiceDate machine sequences upkeeps today = let
     nonEmptySequences = fst sequences : snd sequences
 
   openUpkeeps = filter (not . U.upkeepClosed) upkeeps
-  in case openUpkeeps of
+  activeMachineResult = case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> Planned nextOpenUpkeep
     _ -> Computed computedUpkeep 
+  in if M.archived machine
+    then Inactive
+    else activeMachineResult
 
 compareRepetition :: US.UpkeepSequence -> US.UpkeepSequence -> Ordering
 compareRepetition this that = US.repetition this `compare` US.repetition that

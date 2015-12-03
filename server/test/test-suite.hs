@@ -63,7 +63,8 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are only past upkeeps, then the day is computed from the last one" closedUpkeeps ,
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
   testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
-  testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ]
+  testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ,
+  testCase "When the machine is inactive, nothing else is looked at and no date is computed" inactiveCompany ]
 
 unitTests' :: TestTree
 unitTests' = testGroup "Next service type hint : Unit tests" [
@@ -73,6 +74,7 @@ unitTests' = testGroup "Next service type hint : Unit tests" [
 machine :: M.Machine
 machine = M.Machine {
   M.machineOperationStartDate = Just $ dayToYmd $ fromGregorian 2000 1 1 ,
+  M.archived = False ,
   M.mileagePerYear = 5000 }
 
 upkeepSequence :: US.UpkeepSequence
@@ -179,6 +181,14 @@ missingOperationStartDate = let
   expectedResult = Computed $ fromGregorian 2016 12 31
   in assertEqual "Date must be +2 years from today, that is: 2016 12 31"
     expectedResult result
+
+inactiveCompany :: Assertion
+inactiveCompany = let
+  machine' = machine {
+    M.archived = True }
+  result = nextServiceDate machine' undefined undefined undefined
+  expectedResult = Inactive
+  in assertEqual "Inactive should be returned" expectedResult result
 
 firstUpkeep :: Assertion
 firstUpkeep = let
@@ -341,7 +351,8 @@ plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   upkeeps = (plannedUpkeeps ++ closedUpkeeps')
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
-  in nextServiceDate undefined undefined upkeepsShuffled undefined == Planned earliestDay
+  nonArchivedMachine = M.Machine { M.archived = False }
+  in nextServiceDate nonArchivedMachine undefined upkeepsShuffled undefined == Planned earliestDay
 
 propertyTests' :: TestTree
 propertyTests' = let
