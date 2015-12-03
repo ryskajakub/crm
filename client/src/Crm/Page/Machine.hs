@@ -86,7 +86,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         else ("label-warning", "Naplánovaný")
       stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
       (postMthOffset, includeMths) = case MT.kind . fst $ machineTypeTuple of
-        MK.RotaryScrewCompressor -> (Undefined, True)
+        MK.RotaryScrewCompressor | U.upkeepClosed upkeep -> (Undefined, True)
         _ -> (Defined 4, False)
       date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
       mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
