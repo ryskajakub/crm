@@ -45,6 +45,7 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', 
                                              mkListing', updateRows'')
 import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle, recomputeWhole)
+import           Crm.Server.Core             (getMaybe)
 
 
 data MachineMid = NextServiceListing | MapListing
@@ -125,7 +126,7 @@ singleCompany = mkConstHandler' jsonO $ do
   return (
     company ,
     map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,
-    machinesMyMaybe `zip` fmap $(proj 2 1) nextServiceDates )
+    machinesMyMaybe `zip` fmap getMaybe nextServiceDates)
     
 
 updateCompany :: Handler (IdDependencies' C.CompanyId)

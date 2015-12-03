@@ -32,7 +32,7 @@ import           Crm.Server.Helpers
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Core             (nextServiceDate)
+import           Crm.Server.Core             (nextServiceDate, getMaybe)
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
@@ -126,10 +126,10 @@ machineSingle = mkConstHandler' jsonO $ do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)
-    nextServiceYmd = fst $ nextServiceDate machine upkeepSequenceTuple upkeeps today'
+    nextServiceYmd = getMaybe $ nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd $ nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
+    (dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
 
 
 machineListing :: ListHandler Dependencies

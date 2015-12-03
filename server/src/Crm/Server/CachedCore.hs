@@ -27,7 +27,7 @@ import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
 import qualified Crm.Shared.YearMonthDay    as YMD
 
-import           Crm.Server.Core            (nextServiceDate, Planned(..))
+import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
 import           Crm.Server.DB
 import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
@@ -86,10 +86,11 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   let (company :: C.CompanyRecord) = over C.companyCoords C.mapCoordinates companyRow
   machines <- liftIO $ runMachinesInCompanyQuery (C.getCompanyId companyId) connection
   nextDays <- liftIO $ forM machines $ \machine -> do
-    (computationMethod, nextServiceDay) <- addNextDates $(proj 7 0) $(proj 7 1) machine connection
-    return $ case computationMethod of
-      Planned -> Nothing
-      Computed -> Just nextServiceDay
+    nextServiceDay <- addNextDates $(proj 7 0) $(proj 7 1) machine connection
+    return $ case nextServiceDay of
+      Planned _  -> Nothing
+      Computed d -> Just d
+      Inactive   -> Nothing
   let 
     nextDay = minimumMay $ mapMaybe id nextDays
     value = (C._companyCore company, nextDay, C._companyCoords company)
@@ -108,7 +109,7 @@ addNextDates :: (a -> M.MachineId)
              -> (a -> M.Machine)
              -> a
              -> Connection
-             -> IO (Planned, YMD.YearMonthDay)
+             -> IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
   upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId $ getMachineId a)
@@ -119,5 +120,5 @@ addNextDates getMachineId getMachine a = \conn -> do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x, xs)
-    (nextServiceDay, computationMethod) = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap $(proj 2 1) upkeeps) today'
-  return (computationMethod, dayToYmd nextServiceDay)
+    nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap $(proj 2 1) upkeeps) today'
+  return (fmap dayToYmd nextServiceDay)

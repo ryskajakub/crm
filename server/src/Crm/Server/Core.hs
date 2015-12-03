@@ -15,16 +15,27 @@ import           Crm.Server.Helpers        (ymdToDay)
 
 
 -- | Signs, if the next service date is computed from the past upkeeps, or if the next planned service is taken.
-data Planned = 
-  Planned | -- ^ day taken from next planned service
-  Computed -- ^ day computed from the past upkeeps and into operation
+data NextServiceDate a = 
+  Planned a | -- ^ day taken from next planned service
+  Computed a | -- ^ day computed from the past upkeeps and into operation
+  Inactive -- ^ day not returned, machine is marked inactive
   deriving (Eq, Show)
+
+instance Functor NextServiceDate where
+  fmap f (Planned d) = Planned $ f d
+  fmap f (Computed d) = Computed $ f d
+  fmap _ Inactive = Inactive
+
+getMaybe :: NextServiceDate a -> Maybe a
+getMaybe (Planned a) = Just a
+getMaybe (Computed a) = Just a
+getMaybe Inactive = Nothing
 
 nextServiceDate :: M.Machine -- ^ machine for which the next service date is computed
                 -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
                 -> [U.Upkeep] -- ^ upkeeps belonging to this machine
                 -> Day -- ^ today
-                -> (Day, Planned) -- ^ computed next service date for this machine
+                -> NextServiceDate Day -- ^ computed next service date for this machine
 nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
@@ -55,8 +66,8 @@ nextServiceDate machine sequences upkeeps today = let
   in case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
-      Just nextOpenUpkeep <- nextOpenUpkeep' -> (nextOpenUpkeep, Planned)
-    _ -> (computedUpkeep, Computed)
+      Just nextOpenUpkeep <- nextOpenUpkeep' -> Planned nextOpenUpkeep
+    _ -> Computed computedUpkeep 
 
 compareRepetition :: US.UpkeepSequence -> US.UpkeepSequence -> Ordering
 compareRepetition this that = US.repetition this `compare` US.repetition that
