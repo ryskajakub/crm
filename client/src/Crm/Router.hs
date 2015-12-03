@@ -11,6 +11,7 @@ module Crm.Router (
   link ,
   routeToText ,
 
+  serverDown' ,
   login' ,
   dashboard' ,
   companyDetail' ,
@@ -35,6 +36,7 @@ module Crm.Router (
   employeeTask' ,
   newEmployeeTask' ,
 
+  serverDown ,
   dailyPlan ,
   login ,
   dashboard ,
@@ -225,6 +227,9 @@ employees' = prepareUnitRouteAndMkHandler "employees"
 login' :: RouteAndMkHandler ()
 login' = prepareUnitRouteAndMkHandler "login"
 
+serverDown' :: RouteAndMkHandler ()
+serverDown' = prepareUnitRouteAndMkHandler "server-down"
+
 
 -- routes and mk handlers with one parameter
 
@@ -334,6 +339,9 @@ newMaintanceViaQuickLink (C.CompanyId companyId) (M.MachineId machineId) =
 
 login :: CrmRoute
 login = fst login' ()
+
+serverDown :: CrmRoute
+serverDown = fst serverDown' ()
 
 newCompany :: CrmRoute
 newCompany = fst companyDetail' leftNew

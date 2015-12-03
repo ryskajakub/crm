@@ -41,6 +41,7 @@ data NavigationState =
   CompanyNew {
     company :: C.Company } | 
   NotFound | 
+  ServerDown |
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {

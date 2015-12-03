@@ -1,3 +1,5 @@
+{-# LANGUAGE MultiWayIf #-}
+
 module Crm.Runtime (
   items ,
   apiRoot ,
@@ -18,6 +20,8 @@ import qualified JQuery                    as JQ
 import           Crm.Helpers               (encodeB64)
 import           Crm.Router                (CrmRouter)
 import qualified Crm.Router                as R
+
+import Debug.Trace
 
 
 data Items
@@ -57,6 +61,9 @@ apiRoot = pack "/api/v1.0.0/"
 notAuthorized :: Int
 notAuthorized = 401
 
+serverDown :: Int
+serverDown = 502
+
 withPassword :: Maybe Text
              -> (JQ.AjaxSettings a b -> Fay ())
              -> Fay ()
@@ -86,9 +93,10 @@ passwordAjax url callback' inputData method' onError maybePassword router =
   withPassword maybePassword $ \passwordSettings -> let
     commonSettings = passwordSettings {
       JQ.success = Defined callback' ,
-      JQ.error' = Defined $ \xhr t1 t2 -> if status xhr == notAuthorized 
-        then R.navigate R.login router
-        else case onError of
+      JQ.error' = Defined $ \xhr t1 t2 -> if 
+        | status xhr == notAuthorized -> R.navigate R.login router
+        | status xhr == serverDown -> R.navigate R.serverDown router
+        | otherwise -> case onError of
           Just onError' -> onError' xhr t1 t2
           Nothing       -> return () ,
       JQ.type' = Defined method' ,

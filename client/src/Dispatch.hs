@@ -24,7 +24,7 @@ import           Crm.Page.UpkeepHistory    (upkeepHistory)
 import           Crm.Page.MachineType      (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit, employeeTasks, employeeTask)
 import           Crm.Page.MachineSchema    (schema)
-import           Crm.Page.NotFound         (notFound)
+import           Crm.Page.NotFound         (notFound, serverDown)
 import           Crm.Page.Dashboard        (dashboard)
 import           Crm.Page.Login            (login)
 import           Crm.Page.UpkeepPrint      (upkeepPrint)
@@ -53,6 +53,7 @@ main' = do
       D.FrontPage ordering data' -> n $ emptyCallback 
         (companiesList router (fst ordering) (snd ordering) data')
       D.NotFound -> n $ emptyCallback $ notFound
+      D.ServerDown -> n $ emptyCallback $ serverDown
       D.CompanyDetail companyId' company' contactPersons editing' machines' lastUpkeep -> n $
         emptyCallback (companyDetail editing' router appVar' contactPersons (companyId', company') machines' lastUpkeep)
       D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')

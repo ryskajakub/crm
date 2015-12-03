@@ -110,6 +110,8 @@ startRouter appVar = startedRouter where
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
 
   routes = [
+    serverDown' $-> (const . const $ modify appVar $ \appState ->
+      appState { D.navigation = D.ServerDown }) ,
     login' $-> ( const . const $ 
       modify appVar $ \appState -> appState { D.navigation = D.Login "" False } ) ,
     dashboard' $-> ( const $
