@@ -10,7 +10,7 @@ import           Prelude                               hiding (div, span, id, pu
 import qualified Prelude                 
 import           Data.Var                              (Var, modify)
 import           Data.Maybe                            (onJust, maybeToList)
-import           FFI                                   (Defined(Defined))
+import           FFI                                   (Defined(..))
 
 import           HaskellReact                          hiding (row)
 import qualified HaskellReact.Bootstrap                as B
@@ -85,10 +85,13 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         then ("label-success", "Uzavřený")
         else ("label-warning", "Naplánovaný")
       stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
+      (postMthOffset, includeMths) = case MT.kind . fst $ machineTypeTuple of
+        MK.RotaryScrewCompressor -> (Undefined, True)
+        _ -> (Defined 4, False)
       date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
       mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
       mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
-      warrantyHeader = B.col (B.mkColProps 1) $ strong "Záruka"
+      warrantyHeader = B.col (B.ColProps 1 postMthOffset) $ strong "Záruka"
       warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
       employeeHeader = B.col (B.mkColProps 1) $ strong "Servisáci"
       employee = B.col (B.mkColProps 2) . mkColours $ employees
@@ -97,7 +100,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
       note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
       in [
-        B.row [stateLabel, date, mthHeader, mth, 
+        B.row $ [stateLabel, date] ++ (if includeMths then [mthHeader, mth] else []) ++ [
           warrantyHeader, warranty, employeeHeader, employee] ,
         div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
     rows = (map mkUpkeepRows upkeeps)
