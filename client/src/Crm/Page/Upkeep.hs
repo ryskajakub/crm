@@ -362,7 +362,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' unchec
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
 
-    nextUpkeepSequenceField = B.col (B.ColProps 2 nextFieldOffset) $ 
+    nextUpkeepSequenceField = B.col (B.mkColProps 2) $ 
       "Další servis: " <> US.label_ nextUpkeepSequence
 
     in mkRow $ if closeUpkeep'
