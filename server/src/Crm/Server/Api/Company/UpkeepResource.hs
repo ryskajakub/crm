@@ -73,7 +73,8 @@ newUpkeepData = mkConstHandler' jsonO $ do
     runQuery connection (machinesQ . C.getCompanyId $ companyId)
   let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
-  return $ map (\(m, mt, nextUpkeepSequence) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
+  return $ map (\(m, mt, nextUpkeepSequence) -> 
+    ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () () Void
 upkeepResource = mkResourceId {

@@ -23,6 +23,7 @@ import qualified HaskellReact.Tag.Hyperlink       as A
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Machine               as M
 import qualified Crm.Shared.MachineType           as MT
+import qualified Crm.Shared.MachineKind           as MK
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.UpkeepMachine         as UM
@@ -314,6 +315,10 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' unchec
       (Nothing, Just(uncheckedMachine)) ->
         (uncheckedMachine, const $ return (), Display)
 
+    (nextFieldOffset, showMileage) = case MT.kind machineType of
+      MK.RotaryScrewCompressor -> (Undefined, True)
+      _ -> (Defined 2, False)
+
     machineToggleCheckedLink = let
       linkText = note' <> MT.machineTypeName machineType <> serialNumber' where
         note' = if T.null . M.label_ $ machine'
@@ -349,17 +354,19 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' unchec
           updateUpkeepMachine $ ((fst machine) { UM.recordedMileage = i })) 
         (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation })
 
-    warranty = B.col (B.mkColProps 1) $ checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
-      updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
+    warranty = B.col (B.ColProps 1 nextFieldOffset) $ 
+      checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
+        updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
 
-    nextUpkeepSequenceField = B.col (B.mkColProps 2) $ "Další servis: " <> US.label_ nextUpkeepSequence
+    nextUpkeepSequenceField = B.col (B.ColProps 2 nextFieldOffset) $ 
+      "Další servis: " <> US.label_ nextUpkeepSequence
 
     in mkRow $ if closeUpkeep'
-      then [machineToggleCheckedLink, recordedMileage, warranty, note]
+      then [machineToggleCheckedLink] ++ (if showMileage then [recordedMileage] else []) ++ [warranty, note]
       else [machineToggleCheckedLink, nextUpkeepSequenceField, note]
 
   datePicker = let
