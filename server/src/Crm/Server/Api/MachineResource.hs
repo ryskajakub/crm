@@ -129,7 +129,7 @@ machineSingle = mkConstHandler' jsonO $ do
     nextServiceYmd = getMaybe $ nextServiceDate machine upkeepSequenceTuple upkeeps today'
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
+    (toMyMaybe $ dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
 
 
 machineListing :: ListHandler Dependencies

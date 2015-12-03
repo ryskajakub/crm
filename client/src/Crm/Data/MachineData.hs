@@ -38,7 +38,7 @@ data MachineData = MachineData {
 
 data MachineDetail = MachineDetail {
   machineId :: MachineId ,
-  machineNextService :: YearMonthDay ,
+  machineNextService :: Maybe YearMonthDay ,
   formState :: InputState ,
   machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,

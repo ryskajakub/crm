@@ -58,7 +58,7 @@ machineDetail ::
   (M.Machine, Text) -> 
   (MT.MachineType, [US.UpkeepSequence]) -> 
   M.MachineId -> 
-  YMD.YearMonthDay -> 
+  Maybe YMD.YearMonthDay -> 
   [(P.PhotoId, PM.PhotoMeta)] -> 
   [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])] -> 
   Maybe CP.ContactPersonId -> 
@@ -77,7 +77,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
-  extraRow = [editableRow Display "Další servis" (displayDate nextService)]
+  extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
   upkeepHistoryHtml = let
     mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
     mkUpkeepRows (_, upkeep, upkeepMachine, employees) = let

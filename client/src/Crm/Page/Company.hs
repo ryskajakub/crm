@@ -112,16 +112,16 @@ companyNew router var company' = let
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 "Nová firma") :
     companyForm Editing var setCompany company' saveHandler []
 
-companyDetail :: InputState -- ^ is the page editing mode
-              -> R.CrmRouter -- ^ common read data
-              -> Var D.AppState -- ^ app state var, where the editing result can be set
-              -> [CP.ContactPerson']
-              -> (C.CompanyId, C.Company) -- ^ company, which data are displayed on this screen
-              -> [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-                   MT.MachineType, Maybe CP.ContactPerson, YMD.YearMonthDay)] 
-                 -- ^ machines of the company
-              -> Maybe U.Upkeep
-              -> DOMElement -- ^ company detail page fraction
+companyDetail :: 
+  InputState -> -- ^ is the page editing mode
+  R.CrmRouter -> -- ^ common read data
+  Var D.AppState -> -- ^ app state var, where the editing result can be set
+  [CP.ContactPerson'] ->
+  (C.CompanyId, C.Company) -> -- ^ company, which data are displayed on this screen
+  [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+    MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay)] -> -- ^ machines of the company
+  Maybe U.Upkeep ->
+  DOMElement -- ^ company detail page fraction
 companyDetail editing' router var contactPersons (companyId, company') machines' lastUpkeep' = let
 
   saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
@@ -133,8 +133,10 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
       cd @ (D.CompanyDetail {}) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
 
-  machineBox (machineId', machine', _, _, machineType, contactPerson, nextService) = let 
-    healthColor = "#" <> computeColor nextService
+  mkMachineBox (machineId', machine', _, _, machineType, contactPerson, nextService) = let 
+    (nextServiceRow, healthColor) = maybe ([], "#000") (\nextService' -> 
+      ([dt "Další servis" , dd $ displayDate nextService'], "#" <> computeColor nextService')) nextService
+
     in B.col (B.mkColProps 4) $
       B.panel [
         h3 [
@@ -148,7 +150,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
               (R.newMaintanceViaQuickLink companyId machineId')
               router ,
           span' ((class' "health") { style = Defined . Style $ healthColor }) "•" ] ,
-        dl [
+        dl $ [
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
           dt "Výrobní číslo" ,
@@ -160,10 +162,8 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
           dt "Poznámky" ,
           dd . M.note $ machine' ,
           dt "Kontaktní osoba" ,
-          dd $ maybe "" CP.name contactPerson , 
-          dt "Další servis" ,
-          dd $ displayDate nextService ]]
-  machineBoxes = map machineBox machines'
+          dd $ maybe "" CP.name contactPerson] ++ nextServiceRow]
+  machineBoxes = map mkMachineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {
     BTN.onClick = Defined $ const $ deleteCompany companyId (R.navigate R.defaultFrontPage router) router ,

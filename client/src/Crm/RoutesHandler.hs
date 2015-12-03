@@ -47,7 +47,7 @@ startRouter appVar = startedRouter where
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany' :: C.CompanyId
                -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
-                  MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> D.NavigationState)
+                  MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay)]) -> D.NavigationState)
                -> CrmRouter
                -> Fay ()
   withCompany' companyId newStateFun = 

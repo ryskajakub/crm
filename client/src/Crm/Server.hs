@@ -278,7 +278,7 @@ fetchExtraFieldSettings = XMK.byString "()"
 
 fetchMachine :: M.MachineId -- ^ machine id
              -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
-                (MT.MachineType, [US.UpkeepSequence]), YMD.YearMonthDay, Maybe CP.ContactPersonId,
+                (MT.MachineType, [US.UpkeepSequence]), Maybe YMD.YearMonthDay, Maybe CP.ContactPersonId,
                 [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])], Maybe M.MachineId, 
                 MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
               -> R.CrmRouter
@@ -287,7 +287,7 @@ fetchMachine machineId callback =
   XM.byMachineId 
     machineId
     (let
-      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,e,toMaybe e1,g,toMaybe g2,f,l)
+      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,toMaybe e,toMaybe e1,g,toMaybe g2,f,l)
       in callback . fun)
 
 fetchEmployee :: E.EmployeeId
@@ -310,14 +310,14 @@ fetchContactPersons = XCCP.list maxCount
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
+                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
               -> R.CrmRouter
              -> Fay ()
 fetchCompany companyId callback = 
   XC.bySingle
     companyId
     (callback . (\(a0, a1, a2) -> 
-      (a0, a1, (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,h))) a2)))
+      (a0, a1, (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,toMaybe h))) a2)))
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction

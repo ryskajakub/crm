@@ -126,7 +126,7 @@ singleCompany = mkConstHandler' jsonO $ do
   return (
     company ,
     map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,
-    machinesMyMaybe `zip` fmap getMaybe nextServiceDates)
+    machinesMyMaybe `zip` fmap (toMyMaybe . getMaybe) nextServiceDates)
     
 
 updateCompany :: Handler (IdDependencies' C.CompanyId)
