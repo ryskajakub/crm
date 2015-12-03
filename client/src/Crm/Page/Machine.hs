@@ -336,7 +336,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     (SetValue $ M.label_ machine') 
     (\str -> setMachine $ machine' { M.label_ = str })
   archivedRow = editableRow editing "Archivován" archivedCheckbox where
-    archivedCheckbox = checkbox editing (M.archived machine') (\archived -> setMachine $ machine' { M.archived = archived })
+    archivedCheckbox = div' (if editing == Editing then class' "editing-checkbox" else mkAttrs) $
+      checkbox editing (M.archived machine') (\archived -> setMachine $ machine' { M.archived = archived })
 
   rotaryScrewCompressorInputs = [
     inputRowEditing
