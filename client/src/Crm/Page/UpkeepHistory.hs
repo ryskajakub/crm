@@ -18,6 +18,7 @@ import qualified Crm.Shared.Upkeep             as U
 import qualified Crm.Shared.UpkeepMachine      as UM
 import qualified Crm.Shared.Machine            as M
 import qualified Crm.Shared.MachineType        as MT
+import qualified Crm.Shared.MachineKind        as MK
 import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
 
@@ -33,7 +34,8 @@ upkeepHistory ::
   DOMElement
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = [generalUpkeepInfo, notes, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = 
+    [generalUpkeepInfo, notes, upkeepMachinesInfo] where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
@@ -84,9 +86,9 @@ upkeepHistory upkeepsInfo companyId router = let
           dd . renderMarkup . UM.upkeepMachineNote $ upkeepMachine ,
           dt "Závěry po servisu" ,
           dd . renderMarkup . UM.endNote $ upkeepMachine ] ++ 
-          (if U.upkeepClosed upkeep then [
+          (if U.upkeepClosed upkeep then (if MT.kind machineType == MK.RotaryScrewCompressor then [
           dt "Naměřené motohodiny" ,
-          dd $ showInt $ UM.recordedMileage upkeepMachine ,
+          dd $ showInt $ UM.recordedMileage upkeepMachine] else []) ++ [
           dt "Záruka" ,
           dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]
     upkeepMachinesInfo = B.row $ map mkLineUpkeepMachineInfo upkeepMachines
