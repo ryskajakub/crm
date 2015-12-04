@@ -228,11 +228,11 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
     (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
 
   (buttonLabel, buttonAction) = case taskIdentification of
-    Left taskId -> let
+    ED.Close taskId -> let
       employeeTask' = employeeTask { T.endDate = Just nowYMD }
       in ("Uzavři",
         updateTask taskId employeeTask' (navigate R.employeePage router) router)
-    Right employeeId -> ("Ulož",
+    ED.New employeeId -> ("Vytvoř",
       createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
 
   submitRow = div' (class' "form-group") $ buttonRow buttonLabel buttonAction

@@ -242,10 +242,10 @@ startRouter appVar = startedRouter where
     newEmployeeTask' $-> \employeeId ->
       const $ modify appVar $ \appState -> appState {
         D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData (T.newTask { T.startDate = nowYMD }) 
-        (DP.DatePickerData nowYMD False (displayDate nowYMD)) (Right employeeId) } ,
+        (DP.DatePickerData nowYMD False (displayDate nowYMD)) (ED.New employeeId) } ,
     employeeTask' $-> \taskId ->
       fetchTask taskId $ \task -> modify' $ D.EmployeeTaskScreen $ ED.EmployeeTaskData task 
-        (DP.DatePickerData (T.startDate task) False (displayDate . T.startDate $ task)) (Left taskId) ]
+        (DP.DatePickerData (T.startDate task) False (displayDate . T.startDate $ task)) (ED.Close taskId) ]
 
 notCheckedMachines' :: [(M.MachineId,t1,t2,t3)] -> [(t4,M.MachineId)] -> [(UM.UpkeepMachine, M.MachineId)]
 notCheckedMachines' machines upkeepMachines = let 

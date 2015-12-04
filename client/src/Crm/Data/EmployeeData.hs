@@ -17,7 +17,12 @@ data EmployeeTasksData = EmployeeTasksData {
   openTasks :: [(TaskId, Task)] ,
   closedTasks :: [(TaskId, Task)] }
 
+data EmployeeTaskPageMode =
+  Close TaskId |
+  Edit TaskId |
+  New EmployeeId
+
 data EmployeeTaskData = EmployeeTaskData {
   employeeTask :: Task ,
   taskDatePicker :: DatePickerData ,
-  identification :: Either TaskId EmployeeId }
+  identification :: EmployeeTaskPageMode }
