@@ -3,7 +3,7 @@
 
 module HaskellReact.BackboneRouter where
 
-import "fay-base" Data.Text (Text, pack)
+import "fay-base" Data.Text (Text, pack, (<>))
 import "fay-base" Prelude
 import "fay-base" FFI (ffi, Defined(Defined), Automatic)
 
@@ -44,7 +44,6 @@ link :: Renderable a
      -> DOMElement
 link children route router = let
   aAttr = mkAAttrs {
-    href = Defined $ pack "javascript://" }
-  attr = mkAttrs {
-    onClick = Defined $ const $ navigate route router }
+    href = Defined $ pack "/#" <> route }
+  attr = mkAttrs 
   in a'' attr aAttr children
