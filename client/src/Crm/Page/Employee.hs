@@ -204,7 +204,7 @@ employeeTask ::
   DOMElement
 employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker taskIdentification) = mkForm where
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
-    B.grid $ (B.row $ (div $ pageInfo "Nový úkol" (Just [text2DOM "Políčko ", strong "popis", text2DOM " umožňuje jednoduché formátování. ", text2DOM basicMarkupInfo])) : inputRows)
+    B.grid $ (B.row $ (div $ pageInfo (pageHeader <> " úkol") (Just [text2DOM "Políčko ", strong "popis", text2DOM " umožňuje jednoduché formátování. ", text2DOM basicMarkupInfo])) : inputRows)
   inputRowEditing = inputRow Editing
   inputRows = [dateRow, descriptionRow, submitRow]
 
@@ -227,14 +227,14 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
     (SetValue . T.description $ employeeTask)
     (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
 
-  (buttonLabel, buttonAction) = case taskIdentification of
+  (buttonLabel, pageHeader, buttonAction) = case taskIdentification of
     ED.Close taskId -> let
       employeeTask' = employeeTask { T.endDate = Just nowYMD }
-      in ("Uzavři",
+      in ("Uzavři", "Uzavřít",
         updateTask taskId employeeTask' (navigate R.employeePage router) router)
-    ED.New employeeId -> ("Vytvoř",
+    ED.New employeeId -> ("Vytvoř", "Nový",
       createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
-    ED.Edit taskId -> ("Uprav",
+    ED.Edit taskId -> ("Uprav", "Editovat",
       updateTask taskId employeeTask (navigate R.employeePage router) router)
       
 
