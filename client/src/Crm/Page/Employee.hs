@@ -169,21 +169,22 @@ employeeTasks ::
   DOMElement
 employeeTasks employeeId openTasks closedTasks router = let
   mkTasksTable open tasks = let
+    (mkTaskActionLinks, taskActionHeaders) = if open
+      then let
+        mkTaskActionLinks' taskId = 
+          [td $ R.link G.edit (R.editEmployeeTask taskId) router, td $ R.link G.check (R.employeeTask taskId) router]
+        taskActionHeaders' = [th "Editovat", th "Uzavřít"]
+        in (mkTaskActionLinks', taskActionHeaders')
+      else (const [], [])
     head' = thead $ tr $ [
       th "Datum" ,
-      th "Činnost" ] ++ (if open 
-        then [th "Editovat"]
-        else []) ++ (if open
-        then [th "Uzavřít"]
-        else [])
+      th "Činnost" ] ++ 
+      taskActionHeaders
     mkBody = map $ \(taskId, T.Task startDate task endDate) ->
       tr $ [
         td . displayDate $ startDate ,
-        td task ] ++ (if open
-          then [td $ R.link G.edit (R.editEmployeeTask taskId) router]
-          else []) ++ (if open
-          then [td $ R.link G.check (R.employeeTask taskId) router]
-          else [])
+        td task ] ++ 
+        (mkTaskActionLinks taskId)
     in BT.table (Just BT.Bordered) [head', tbody . mkBody $ tasks]
   newTaskButton = BTN.button'
     (BTN.buttonProps {
