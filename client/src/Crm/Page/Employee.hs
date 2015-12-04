@@ -171,15 +171,19 @@ employeeTasks employeeId openTasks closedTasks router = let
   mkTasksTable open tasks = let
     head' = thead $ tr $ [
       th "Datum" ,
-      th "Činnost" ] ++ if open 
+      th "Činnost" ] ++ (if open 
+        then [th "Editovat"]
+        else []) ++ (if open
         then [th "Uzavřít"]
-        else []
+        else [])
     mkBody = map $ \(taskId, T.Task startDate task endDate) ->
       tr $ [
         td . displayDate $ startDate ,
-        td task ] ++ if open
+        td task ] ++ (if open
+          then [td "Editovat"]
+          else []) ++ (if open
           then [td $ R.link G.check (R.employeeTask taskId) router]
-          else []
+          else [])
     in BT.table (Just BT.Bordered) [head', tbody . mkBody $ tasks]
   newTaskButton = BTN.button'
     (BTN.buttonProps {
