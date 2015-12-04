@@ -180,7 +180,7 @@ employeeTasks employeeId openTasks closedTasks router = let
       tr $ [
         td . displayDate $ startDate ,
         td task ] ++ (if open
-          then [td "Editovat"]
+          then [td $ R.link G.edit (R.editEmployeeTask taskId) router]
           else []) ++ (if open
           then [td $ R.link G.check (R.employeeTask taskId) router]
           else [])
@@ -234,5 +234,8 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
         updateTask taskId employeeTask' (navigate R.employeePage router) router)
     ED.New employeeId -> ("Vytvoř",
       createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
+    ED.Edit taskId -> ("Uprav",
+      updateTask taskId employeeTask (navigate R.employeePage router) router)
+      
 
   submitRow = div' (class' "form-group") $ buttonRow buttonLabel buttonAction

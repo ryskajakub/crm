@@ -35,6 +35,7 @@ module Crm.Router (
   employeeTasks' ,
   employeeTask' ,
   newEmployeeTask' ,
+  editEmployeeTask' ,
 
   serverDown ,
   dailyPlan ,
@@ -65,6 +66,7 @@ module Crm.Router (
   editEmployee ,
   employeeTasks ,
   employeeTask ,
+  editEmployeeTask ,
   newEmployeeTask ) where
 
 import           Data.Text                   (fromString, showInt, Text, (<>))
@@ -176,6 +178,8 @@ mkUpkeepsRoute = Route "upkeeps" Nothing
 mkEmployeesRoute :: Route a
 mkEmployeesRoute = Route "employees" Nothing
 
+mkTaskRoute :: Route a
+mkTaskRoute = Route "employee-task" Nothing
 
 -- url encodables for id newtypes over int
 
@@ -233,6 +237,10 @@ serverDown' = prepareUnitRouteAndMkHandler "server-down"
 
 -- routes and mk handlers with one parameter
 
+editEmployeeTask' :: RouteAndMkHandler T.TaskId
+editEmployeeTask' = prepareRouteAndMkHandler
+  (mkTaskRoute { postfix = Just "edit" }) taskIdEncondable
+
 newEmployeeTask' :: RouteAndMkHandler E.EmployeeId
 newEmployeeTask' = prepareRouteAndMkHandler
   (mkEmployeesRoute { postfix = Just "new-task" }) employeeIdEncodable
@@ -257,8 +265,7 @@ companyDetail' = prepareRouteAndMkHandler
 
 employeeTask' :: RouteAndMkHandler T.TaskId
 employeeTask' = prepareRouteAndMkHandler
-  (Route "employee-task" Nothing)
-  taskIdEncondable
+  (mkTaskRoute { postfix = Just "close" }) taskIdEncondable
 
 newMaintenance' :: RouteAndMkHandler C.CompanyId
 newMaintenance' = prepareRouteAndMkHandler
@@ -411,3 +418,6 @@ employeeTask = fst employeeTask'
 
 newEmployeeTask :: E.EmployeeId -> CrmRoute
 newEmployeeTask = fst newEmployeeTask'
+
+editEmployeeTask :: T.TaskId -> CrmRoute
+editEmployeeTask = fst editEmployeeTask'

@@ -243,6 +243,9 @@ startRouter appVar = startedRouter where
       const $ modify appVar $ \appState -> appState {
         D.navigation = D.EmployeeTaskScreen $ ED.EmployeeTaskData (T.newTask { T.startDate = nowYMD }) 
         (DP.DatePickerData nowYMD False (displayDate nowYMD)) (ED.New employeeId) } ,
+    editEmployeeTask' $-> \taskId ->
+      fetchTask taskId $ \task -> modify' $ D.EmployeeTaskScreen $ ED.EmployeeTaskData task
+        (DP.DatePickerData (T.startDate task) False (displayDate . T.startDate $ task)) (ED.Edit taskId) ,
     employeeTask' $-> \taskId ->
       fetchTask taskId $ \task -> modify' $ D.EmployeeTaskScreen $ ED.EmployeeTaskData task 
         (DP.DatePickerData (T.startDate task) False (displayDate . T.startDate $ task)) (ED.Close taskId) ]
