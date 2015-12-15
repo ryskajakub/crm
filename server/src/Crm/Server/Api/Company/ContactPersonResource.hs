@@ -49,6 +49,6 @@ listing :: ListHandler (IdDependencies' C.CompanyId)
 listing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
   rawRows <- liftIO $ withResource pool $ \connection -> 
-    runQuery connection (contactPersonsByIdQuery $ C.getCompanyId companyId)
+    runQuery connection (contactPersonsByIdQuery companyId)
   let rowsMapped = (\x -> (sel1 x, sel3 x)) `fmap` (convert rawRows :: [ContactPersonMapped])
   return rowsMapped

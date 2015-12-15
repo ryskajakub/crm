@@ -3,15 +3,14 @@
 
 module Crm.Server.Api.MachineResource where
 
-import           Opaleye.RunQuery            (runQuery)
-import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgDay, pgBool)
+import           Opaleye                     ((.===), runUpdate, runDelete, runQuery,
+                                               pgInt4, pgStrictText, pgDay, pgBool)
 
 import           Data.Tuple.All              (sel2, sel1, sel3)
 import           Data.Pool                   (withResource)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
-import           Control.Monad               (forM_)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -52,28 +51,38 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
 machineDelete :: Handler (IdDependencies' M.MachineId)
 machineDelete = mkConstHandler' jsonO $ do
   ((cache, pool), machineId) <- ask
-  liftIO $ withResource pool $ \connection ->
-    createDeletion machinesTable (M.getMachineId machineId) connection
+  _ <- liftIO $ withResource pool $ \connection ->
+    runDelete connection machinesTable (((.===) (fmap pgInt4 machineId)) . _machinePK)
   recomputeWhole pool cache
 
 
 machineUpdate :: Handler (IdDependencies' M.MachineId)
 machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> do
-  ((cache, pool), machineId) <- ask
+  ((cache, pool), machineId :: M.MachineId) <- ask
 
   let 
     unwrappedId = M.getMachineId machineId
-    machineReadToWrite (mId,companyId,_,machineTypeId,_,_,_,_,_,_,_,_,_) =
-      (Just mId, companyId, maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId, 
-        machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId),
-        maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine'),
-        pgInt4 $ M.initialMileage machine', pgInt4 . M.mileagePerYear $ machine', 
-        pgStrictText . M.label_ $ machine', pgStrictText . M.serialNumber $ machine',
-        pgStrictText . M.yearOfManufacture $ machine', pgBool . M.archived $ machine', 
-        pgStrictText . M.note $ machine')
-    updateMachine = prepareUpdate machinesTable machineReadToWrite
+    machineReadToWrite machineRow =
+      (machineRow {
+        _machinePK = fmap (Just . pgInt4) machineId ,
+        _contactPersonFK =
+          (maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId) ,
+        _linkageFK = 
+          M.MachineId
+            (maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId)) ,
+        _machine = M.Machine {
+          M.machineOperationStartDate =
+            (maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine')) ,
+          M.initialMileage = pgInt4 . M.initialMileage $ machine' ,
+          M.mileagePerYear = pgInt4 . M.mileagePerYear $ machine' ,
+          M.label_ = pgStrictText . M.label_ $ machine' ,
+          M.serialNumber = pgStrictText . M.serialNumber $ machine' ,
+          M.yearOfManufacture = pgStrictText . M.yearOfManufacture $ machine' ,
+          M.archived = pgBool . M.archived $ machine' ,
+          M.note = pgStrictText . M.note $ machine' }})
 
-  withResource pool $ \connection -> liftIO $ forM_ [updateMachine] $ \updation -> updation unwrappedId connection
+  _ <- withResource pool $ \connection -> liftIO $ runUpdate connection machinesTable machineReadToWrite 
+    (((.===) (fmap pgInt4 machineId)) . _machinePK)
   withResource pool $ \connection -> liftIO $ createDeletion' ($(proj 3 1)) extraFieldsTable unwrappedId connection
   withResource pool $ \connection -> liftIO $ insertExtraFields machineId extraFields connection
 
@@ -85,21 +94,21 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
 machineSingle :: Handler (IdDependencies' M.MachineId)
 machineSingle = mkConstHandler' jsonO $ do
   ((_,pool), machineId') <- ask 
-  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (machineDetailQuery $ M.getMachineId machineId')
+  rows <- withResource pool $ \connection -> liftIO $ runQuery connection (machineDetailQuery machineId')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
     (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let
-      m = convert $ sel1 row :: MachineMapped
+      (m :: MachineRecord) = mapMachineDate . sel1 $ row
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
-      in (sel1 m, $(proj 6 5) m, sel2 m, sel1 mt, sel2 mt, toMyMaybe $ sel1 cp, toMyMaybe $ $(proj 6 4) m)
+      in (_machinePK m, _machine m, _companyFK m, sel1 mt, sel2 mt, toMyMaybe . sel1 $ cp, _linkageFK m)
   upkeepSequenceRows <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
   upkeepRows <- withResource pool $ \connection -> 
-    liftIO $ runQuery connection (upkeepsDataForMachine $ M.getMachineId machineId)
+    liftIO $ runQuery connection (upkeepsDataForMachine machineId)
   today' <- liftIO today
   extraFields <- withResource pool $ \connection -> liftIO $ 
-    runQuery connection (extraFieldsForMachineQuery $ M.getMachineId machineId)
+    runQuery connection (extraFieldsForMachineQuery machineId)
   let 
     extraFieldsConvert (ef', efs') = let
       ef = convert $ ef' :: ExtraFieldMapped

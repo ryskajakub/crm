@@ -115,14 +115,13 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
 singleCompany :: Handler (IdDependencies' (C.CompanyId' Int))
 singleCompany = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
-  let theId = C.getCompanyId companyId
   companies <- withResource pool $ \connection -> liftIO $ runQuery connection (companyByIdCompanyQuery companyId)
   (company :: C.Company) <- singleRowOrColumn companies
-  machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery theId connection
-  let machinesMyMaybe = fmap ($(updateAtN 7 6) toMyMaybe . $(updateAtN 7 5) toMyMaybe) machines
+  machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery companyId connection
+  let machinesMyMaybe = fmap ($(updateAtN 7 5) toMyMaybe) machines
   nextServiceDates <- withResource pool $ \connection -> liftIO $ forM machinesMyMaybe $ 
     \machine -> addNextDates $(proj 7 0) $(proj 7 1) machine connection
-  cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery theId
+  cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery companyId
   return (
     company ,
     map (\cp -> ($(proj 3 0) cp, $(proj 3 2) cp)) . map (\x -> convert x :: ContactPersonMapped) $ cpRows ,

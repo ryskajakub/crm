@@ -84,7 +84,7 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   companyRows <- liftIO $ runQuery connection (companyByIdQuery companyId)
   companyRow <- singleRowOrColumn companyRows
   let (company :: C.CompanyRecord) = over C.companyCoords C.mapCoordinates companyRow
-  machines <- liftIO $ runMachinesInCompanyQuery (C.getCompanyId companyId) connection
+  machines <- liftIO $ runMachinesInCompanyQuery companyId connection
   nextDays <- liftIO $ forM machines $ \machine -> do
     nextServiceDay <- addNextDates $(proj 7 0) $(proj 7 1) machine connection
     return $ case nextServiceDay of
@@ -112,7 +112,7 @@ addNextDates :: (a -> M.MachineId)
              -> IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
   upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
-  upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery $ M.getMachineId $ getMachineId a)
+  upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
     upkeeps = convert upkeepRows :: [UpkeepMapped] 

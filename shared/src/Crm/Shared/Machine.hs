@@ -1,12 +1,13 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Shared.Machine where
 
-import Crm.Shared.YearMonthDay (YearMonthDay)
-
 #ifndef FAY
+import           Control.Lens.TH          (makeLensesFor)
 import           GHC.Generics
 import           Data.Data
 import           Prelude
@@ -14,6 +15,7 @@ import           Rest.Info                (Info(..))
 #endif
 import           Data.Text                (Text, pack)
 
+import           Crm.Shared.YearMonthDay  (YearMonthDay)
 import qualified Crm.Shared.ContactPerson as CP
 import qualified Crm.Shared.ServerRender  as SR
 
@@ -31,28 +33,37 @@ data ContactPersonForMachine =
   deriving (Generic, Typeable, Data)
 #endif
 
-newtype MachineId = MachineId { getMachineId :: Int }
+newtype MachineId' machineId = MachineId { getMachineId :: machineId }
 #ifdef FAY
-  deriving (Eq)
+  deriving Eq
 #else
   deriving (Eq, Generic, Typeable, Data, Show)
 #endif
+type MachineId = MachineId' Int
+type MachineIdM = MachineId' (Maybe Int)
 
-data Machine' note = Machine {
-  machineOperationStartDate :: Maybe YearMonthDay ,
-  initialMileage :: Int ,
-  mileagePerYear :: Int ,
-  label_ :: Text ,
-  serialNumber :: Text ,
-  yearOfManufacture :: Text ,
-  archived :: Bool ,
+#ifndef FAY
+instance Functor MachineId' where
+  f `fmap` (MachineId mId) = MachineId . f $ mId
+#endif
+
+data Machine' machineOperationStartDate initialMileage mileagePerYear 
+    label serialNumber yearOfManufacture archived note = Machine {
+  machineOperationStartDate :: machineOperationStartDate ,
+  initialMileage :: initialMileage ,
+  mileagePerYear :: mileagePerYear ,
+  label_ :: label ,
+  serialNumber :: serialNumber ,
+  yearOfManufacture :: yearOfManufacture ,
+  archived :: archived ,
   note :: note }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
+makeLensesFor [("machineOperationStartDate", "operationStartDateL")] ''Machine'
 #endif
 
-type Machine = Machine' Text
-type MachineMarkup = Machine' [SR.Markup]
+type Machine = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool Text
+type MachineMarkup = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool [SR.Markup]
 
 newMachine' :: Maybe YearMonthDay -> Machine
 newMachine' ymd = Machine {

@@ -38,7 +38,7 @@ companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery 
-    connection (expandedUpkeepsByCompanyQuery $ C.getCompanyId companyId)
+    connection (expandedUpkeepsByCompanyQuery companyId)
   let
     mappedResults = mapResultsToList
       sel1
@@ -70,11 +70,11 @@ newUpkeepData :: Handler (IdDependencies' C.CompanyId)
 newUpkeepData = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   machines' <- withResource pool $ \connection -> liftIO $ 
-    runQuery connection (machinesQ . C.getCompanyId $ companyId)
-  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) machines'
+    runQuery connection (machinesQ companyId)
+  let machines = map (\(m, mt) -> (mapMachineDate m, convert mt :: MachineTypeMapped)) machines'
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
   return $ map (\(m, mt, nextUpkeepSequence) -> 
-    ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
+    (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines''
 
 upkeepResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () () Void
 upkeepResource = mkResourceId {

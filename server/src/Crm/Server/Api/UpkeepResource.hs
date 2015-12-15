@@ -183,23 +183,23 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
   
   employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepIdInt)
-  let machines = map (\(m, mt) -> (convert m :: MachineMapped, convert mt :: MachineTypeMapped)) (allMachines)
+  let machines = map (\(m, mt) -> (mapMachineDate m, convert mt :: MachineTypeMapped)) (allMachines)
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
 
   companyId <- case machines of
     [] -> throwError NotAllowed
-    (machineMapped,_) : _ -> return $ $(proj 6 1) machineMapped
+    (machineMapped,_) : _ -> return . _companyFK $ machineMapped
 
-  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), 
-    map (\(m, mt, nextUpkeepSequence) -> ($(proj 6 0) m, $(proj 6 5) m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
+  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map 
+    (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
 
 loadNextServiceTypeHint :: (MonadIO m)
-                        => [(MachineMapped, MachineTypeMapped)] 
+                        => [(MachineRecord, MachineTypeMapped)] 
                         -> Connection 
-                        -> ExceptT (Reason Text) m [(MachineMapped, MachineTypeMapped, US.UpkeepSequence)]
+                        -> ExceptT (Reason Text) m [(MachineRecord, MachineTypeMapped, US.UpkeepSequence)]
 loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) -> do
   upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
-  pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (M.getMachineId . $(proj 6 0) $ machine))
+  pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (_machinePK machine))
   let upkeepSequences = map (\x -> ($(proj 2 1)) $ (convert x :: UpkeepSequenceMapped)) upkeepSequences'
   let pastUpkeepMachines = map (\x -> ($(proj 3 2)) $ (convert x :: UpkeepMachineMapped)) pastUpkeepMachines'
   uss <- case upkeepSequences of
@@ -228,7 +228,7 @@ printDailyPlanListing' employeeId connection day = do
       in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
     machines <- fmap (map $ \(m, mt, cp, um) -> (
-      $(proj 6 5) $ (convert m :: MachineMapped) , 
+      _machine . mapMachineDate $ m , 
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
       toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 

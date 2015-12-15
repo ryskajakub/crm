@@ -30,6 +30,7 @@ import           Crm.Server.Handler          (mkConstHandler', mkInputHandler')
 
 import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.Machine          as M
 
 import           TupleTH
 
@@ -67,11 +68,11 @@ updation = mkInputHandler' jsonI $ \allSettings -> do
             newIds <- withResource pool $ \connection -> 
               runInsertReturning connection extraFieldSettingsTable allFields ($(proj 4 0))
             let newExtraFieldsSettingId = (head newIds :: Int)
-            machineIdsToAddEmptyFields <- withResource pool $ \connection ->
+            (machineIdsToAddEmptyFields :: [M.MachineId]) <- withResource pool $ \connection ->
               runQuery connection (machineIdsHavingKind machineKindDbRepr)
             forM_ machineIdsToAddEmptyFields $ \machineId ->
               withResource pool $ \connection -> 
-                runInsert connection extraFieldsTable (pgInt4 newExtraFieldsSettingId, pgInt4 machineId, pgString "")
+                runInsert connection extraFieldsTable (pgInt4 newExtraFieldsSettingId, pgInt4 . M.getMachineId $ machineId, pgString "")
               >> return ()
             return newExtraFieldsSettingId
           EF.Assigned assignedId -> do

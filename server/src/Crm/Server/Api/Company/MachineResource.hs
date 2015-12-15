@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Crm.Server.Api.Company.MachineResource ( 
   machineResource ) where
@@ -60,7 +61,7 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
   machineId <- withResource pool $ \connection -> addMachine connection newMachine 
     (C.getCompanyId companyId) machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData
   withResource pool $ \connection -> recomputeSingle companyId connection cache
-  return $ M.MachineId machineId
+  return machineId
     
 
 addMachine :: Connection
@@ -70,7 +71,7 @@ addMachine :: Connection
            -> Maybe CP.ContactPersonId
            -> Maybe M.MachineId
            -> [(EF.ExtraFieldId, Text)]
-           -> ExceptT (Reason r) (IdDependencies' C.CompanyId) Int -- ^ id of newly created machine
+           -> ExceptT (Reason r) (IdDependencies' C.CompanyId) M.MachineId -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
   machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'
@@ -92,24 +93,34 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
   machineIds <- liftIO $ runInsertReturning
     connection
     machinesTable 
-    (Nothing, pgInt4 companyId', maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId, 
-      pgInt4 machineTypeId, maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId,
-      maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate',
-      pgInt4 initialMileage, pgInt4 mileagePerYear, pgStrictText label, pgStrictText serialNumber, 
-      pgStrictText yearOfManufacture, pgBool archived, pgStrictText note)
-    sel1
-  let machineId = head machineIds -- todo safe
-  liftIO $ insertExtraFields (M.MachineId machineId) extraFields connection
+    (MachineRow {
+      _machinePK = M.MachineId Nothing ,
+      _companyFK = C.CompanyId . pgInt4 $ companyId' ,
+      _contactPersonFK = maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId ,
+      _machineTypeFK = pgInt4 machineTypeId ,
+      _linkageFK = M.MachineId $ maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId ,
+      _machine = M.Machine {
+        M.machineOperationStartDate = maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate' ,
+        M.initialMileage = pgInt4 initialMileage ,
+        M.mileagePerYear = pgInt4 mileagePerYear ,
+        M.label_ = pgStrictText label ,
+        M.serialNumber = pgStrictText serialNumber ,
+        M.yearOfManufacture = pgStrictText yearOfManufacture , 
+        M.archived = pgBool archived , 
+        M.note = pgStrictText note }})
+    _machinePK      
+  let (machineId :: M.MachineId) = head machineIds -- todo safe
+  liftIO $ insertExtraFields machineId extraFields connection
   return machineId 
 
 listing :: ListHandler (IdDependencies' C.CompanyId)
 listing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
   otherMachines <- liftIO $ withResource pool $ \connection -> runQuery 
-    connection (otherMachinesInCompanyQuery $ C.getCompanyId companyId)
+    connection (otherMachinesInCompanyQuery companyId)
   let 
-    machinesMapped = convert otherMachines :: [MachineMapped]
-    result = fmap (\mm -> ($(proj 6 0) mm,$(proj 6 5) mm)) machinesMapped
+    machinesMapped = fmap mapMachineDate otherMachines
+    result = fmap (\mm -> (_machinePK mm, _machine mm)) machinesMapped
   return result
 
 machineResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
