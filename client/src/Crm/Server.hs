@@ -287,7 +287,8 @@ fetchMachine machineId callback =
   XM.byMachineId 
     machineId
     (let
-      fun ((a,b,c,d),(e,e1,g,g2,f,l)) = (a,b,c,d,toMaybe e,toMaybe e1,g,toMaybe g2,f,l)
+      fun ((a,b,c,d),(e,e1,g,M.MachineId g2,f,l)) = (a,b,c,d,toMaybe e,toMaybe e1,g,
+        swapMaybe M.MachineId g2,f,l)
       in callback . fun)
 
 fetchEmployee :: E.EmployeeId
@@ -317,7 +318,15 @@ fetchCompany companyId callback =
   XC.bySingle
     companyId
     (callback . (\(a0, a1, a2) -> 
-      (a0, a1, (map (\((a,b,c,d,e,f,g),h) -> (a,b,c,d,e,toMaybe f,toMaybe g,toMaybe h))) a2)))
+      (a0, a1, (map (\((a,b,c,d,e,f,M.MachineId linkageId),h) -> 
+        (a,b,c,d,e,toMaybe f,swapMaybe M.MachineId linkageId,toMaybe h))) a2)))
+
+swapMaybe :: 
+  (a -> b) ->
+  Maybe a ->
+  Maybe b
+swapMaybe putIntoNewtype value =
+  maybe Nothing (\lId -> Just . putIntoNewtype $ lId) value
 
 fetchFrontPageData :: C.OrderType
                    -> DIR.Direction
