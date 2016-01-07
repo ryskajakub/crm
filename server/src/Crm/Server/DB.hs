@@ -195,6 +195,8 @@ type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, DBText, DBText, DBText)
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText)
 
 type EmployeeTable = (DBInt, DBText, DBText, DBText, DBText)
+type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText), Column (Nullable PGText),
+  Column (Nullable PGText), Column (Nullable PGText))
 type EmployeeWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText)
 
 type UpkeepSequencesTable = (DBInt, DBText, DBInt, DBInt, DBBool)
@@ -469,6 +471,10 @@ instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) UpkeepMapped where
     in (U.UpkeepId $ $(proj 6 0) tuple, U.Upkeep (dayToYmd a) b c d e)
 instance ColumnToRecord (Int, Text, Text, Text, Text) EmployeeMapped where
   convert tuple = (E.EmployeeId $ $(proj 5 0) tuple, uncurryN (const E.Employee) $ tuple)
+instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
+  convert tuple = let
+    maybeE = pure E.Employee <*> $(proj 5 1) tuple <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
+    in (E.EmployeeId `fmap` $(proj 5 0) tuple, maybeE)
 instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
 instance ColumnToRecord (Int, Text, Int, Int, Bool, Text) UpkeepMachineMapped where
@@ -752,16 +758,27 @@ nextServiceUpkeepsQuery machineId = proc () -> do
   upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
   returnA -< upkeepRow
 
-upkeepsDataForMachine :: M.MachineId -> Query (UpkeepsTable, UpkeepMachinesTable, EmployeeTable)
-upkeepsDataForMachine (M.MachineId machineId) = proc () -> do
-  machineRow <- queryTable machinesTable -< ()
-  restrict -< _machinePK machineRow .=== (M.MachineId . pgInt4 $ machineId)
-  upkeepMachineRow <- upkeepMachinesQuery -< ()
-  restrict -< (M.MachineId . sel3 $ upkeepMachineRow) .=== _machinePK machineRow
-  upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
-  upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< $(proj 6 0) upkeepRow
-  employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
-  returnA -< (upkeepRow, upkeepMachineRow, employeeRow)
+upkeepsDataForMachine :: M.MachineId -> Query (UpkeepsTable, UpkeepMachinesTable, EmployeeLeftJoinTable)
+upkeepsDataForMachine (M.MachineId machineId) = let 
+  upkeepEQ :: Query (UpkeepEmployeesTable, EmployeeTable)
+  upkeepEQ = proc () -> do
+    upkeepEmployeeRow <- queryTable upkeepEmployeesTable -< ()
+    employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
+    returnA -< (upkeepEmployeeRow, employeeRow)
+  upkeepQ :: Query (UpkeepsTable, UpkeepMachinesTable)
+  upkeepQ = proc () -> do
+    machineRow <- queryTable machinesTable -< ()
+    restrict -< _machinePK machineRow .=== (M.MachineId . pgInt4 $ machineId)
+    upkeepMachineRow <- upkeepMachinesQuery -< ()
+    restrict -< (M.MachineId . sel3 $ upkeepMachineRow) .=== _machinePK machineRow
+    upkeepRow <- join upkeepsQuery -< sel1 upkeepMachineRow
+    returnA -< (upkeepRow, upkeepMachineRow)
+  ljQ :: Query ((UpkeepsTable, UpkeepMachinesTable), (
+    (Column (Nullable PGInt4), Column (Nullable PGInt4), Column (Nullable PGInt4)), EmployeeLeftJoinTable))
+  ljQ = leftJoin upkeepQ upkeepEQ (\((u, _), (ue, _)) -> $(proj 6 0) u .== $(proj 3 0) ue)
+  in proc () -> do
+    ((u, um), (_, e)) <- ljQ -< ()
+    returnA -< (u, um, e)
 
 nextServiceUpkeepSequencesQuery :: M.MachineId -> Query (DBInt, DBText, DBInt, DBInt, DBBool)
 nextServiceUpkeepSequencesQuery (M.MachineId machineId) = proc () -> do

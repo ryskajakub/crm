@@ -6,6 +6,7 @@ module Crm.Server.Api.MachineResource where
 import           Opaleye                     ((.===), runUpdate, runDelete, runQuery,
                                                pgInt4, pgStrictText, pgDay, pgBool)
 
+import           Data.Maybe                  (catMaybes)
 import           Data.Tuple.All              (sel2, sel1, sel3)
 import           Data.Pool                   (withResource)
 
@@ -117,7 +118,8 @@ machineSingle = mkConstHandler' jsonO $ do
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepsData = 
-        (fmap (\(b, c) -> $(catTuples 3 1) b c)
+          fmap (\x -> $(catTuples 3 1) ($(takeTuple 4 3) x) (catMaybes . $(proj 4 3) $ x))
+        . fmap (\(b, c) -> $(catTuples 3 1) b c)
         . mapResultsToList
           $(proj 3 0)
           $(takeTuple 4 3)
@@ -125,11 +127,11 @@ machineSingle = mkConstHandler' jsonO $ do
         . fmap (\(upkeep', upkeepMachine', employee') -> let
           upkeep = convert upkeep' :: UpkeepMapped
           upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
-          employee = convert employee' :: EmployeeMapped
+          employee = convert employee' :: MaybeEmployeeMapped
           intermediate = (($(proj 2 0) upkeep, $(proj 2 1) upkeep, $(proj 3 2) upkeepMachine, $(proj 2 1) employee)
-            :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, E.Employee))
+            :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))
           in intermediate)
-        $ upkeepRows)
+        $ upkeepRows
       :: [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
     upkeeps = fmap $(proj 4 1) upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
