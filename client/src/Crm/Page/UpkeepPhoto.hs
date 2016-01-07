@@ -2,7 +2,8 @@
 {-# LANGUAGE RebindableSyntax #-}
 
 module Crm.Page.UpkeepPhoto (
-  addPhotoToUpkeepList ) where
+  addPhotoToUpkeepList ,
+  upkeepPhotos ) where
 
 import           Data.Text                        (fromString, Text, showInt, (<>), empty)
 import qualified Data.Text                        as T
@@ -41,7 +42,7 @@ addPhotoToUpkeepList router upkeeps = let
       td $ BB.buttonP 
         BB.LargeButton
         BB.PrimaryButton
-        (const $ return ())
+        (const $ R.navigate (R.upkeepPhotoAdd upkeepId) router)
         [G.camera, text2DOM " Přidat fotky"] ,
       td . displayDate . U.upkeepDate $ upkeep ]
     body = tbody $ map renderUpkeepRow (concat upkeeps)

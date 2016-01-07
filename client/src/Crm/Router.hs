@@ -37,7 +37,9 @@ module Crm.Router (
   newEmployeeTask' ,
   editEmployeeTask' ,
   upkeepPhotos' ,
+  upkeepPhotoAdd' ,
 
+  upkeepPhotoAdd ,
   upkeepPhotos ,
   serverDown ,
   dailyPlan ,
@@ -322,9 +324,17 @@ contactPersonEdit' = prepareRouteAndMkHandler
   (Route "contact-persons" $ Nothing)
   contactPersonIdEncodable
 
+upkeepPhotoAdd' :: RouteAndMkHandler U.UpkeepId
+upkeepPhotoAdd' = prepareRouteAndMkHandler
+  (mkUpkeepsRoute { postfix = Just "add-photo" })
+  upkeepIdEncodable
+
 
 -- routes
  
+upkeepPhotoAdd :: U.UpkeepId -> CrmRoute
+upkeepPhotoAdd = fst upkeepPhotoAdd'
+
 dailyPlan :: YMD.YearMonthDay -> Maybe E.EmployeeId -> CrmRoute
 dailyPlan ymd employeeId' =
   CrmRoute $ "daily-plan/" <> displayDateNumeral ymd <> "/employee/" <> (case employeeId' of

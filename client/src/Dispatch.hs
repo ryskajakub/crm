@@ -23,7 +23,7 @@ import           Crm.Page.Upkeep           (upkeepNew, plannedUpkeeps, upkeepDet
 import           Crm.Page.UpkeepHistory    (upkeepHistory)
 import           Crm.Page.MachineType      (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit, employeeTasks, employeeTask)
-import           Crm.Page.UpkeepPhoto      (addPhotoToUpkeepList)
+import           Crm.Page.UpkeepPhoto      (addPhotoToUpkeepList, upkeepPhotos)
 import           Crm.Page.MachineSchema    (schema)
 import           Crm.Page.NotFound         (notFound, serverDown)
 import           Crm.Page.Dashboard        (dashboard)
@@ -106,7 +106,9 @@ main' = do
         n . emptyCallback $ employeeTasks employeeId openTasks closedTasks router
       D.EmployeeTaskScreen employeeTaskData ->
         n . emptyCallback $ employeeTask appVar' router employeeTaskData
-      D.AddPhotoToUpkeep pu -> n . emptyCallback $ addPhotoToUpkeepList router pu
+      D.AddPhotoToUpkeepList pu -> n . emptyCallback $ addPhotoToUpkeepList router pu
+      D.AddPhotoToUpkeep upkeepId upkeep company -> n . emptyCallback $ 
+        upkeepPhotos router upkeepId upkeep company
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))

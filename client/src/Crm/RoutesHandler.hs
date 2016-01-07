@@ -119,9 +119,14 @@ startRouter appVar = startedRouter where
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple }) ,
     upkeepPhotos' $-> (const $
       fetchPlannedUpkeeps $ \plannedUpkeeps -> let
-        navig = D.AddPhotoToUpkeep plannedUpkeeps
+        navig = D.AddPhotoToUpkeepList plannedUpkeeps
         in modify appVar $ \appState ->
           appState { D.navigation = navig } ) ,
+    upkeepPhotoAdd' $-> (\upkeepId ->
+      fetchUpkeep upkeepId $ \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> let
+        navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "")
+        in modify appVar $ \appState ->
+          appState { D.navigation = navig }) ,
     extraFields' $-> (const $
       fetchExtraFieldSettings $ \list -> let
         makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
