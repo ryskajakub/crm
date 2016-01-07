@@ -123,7 +123,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         file <- fileListElem 0 files
         type' <- fileType file
         name <- fileName file
-        uploadPhotoData file machineId $ \photoId ->
+        uploadMachinePhotoData machineId file $ \photoId ->
           uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh router
       imageUploadLabel = "Přidej fotku"
       photoList = map (\(photoId, photoMeta) -> let
@@ -180,7 +180,6 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
     (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
     (\imageData -> do
-      putStrLn imageData
       let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
       photoHtmlElement <- JQ.select photoHTMLId
       _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 

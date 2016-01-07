@@ -44,6 +44,7 @@ Library
     Crm.Server.Api.Machine.PhotoResource ,
     Crm.Server.Api.MachineTypeResource ,
     Crm.Server.Api.UpkeepResource ,
+    Crm.Server.Api.Upkeep.PhotoResource ,
     Crm.Server.Api.EmployeeResource ,
     Crm.Server.Api.Employee.UpkeepResource ,
     Crm.Server.Api.Employee.TaskResource ,

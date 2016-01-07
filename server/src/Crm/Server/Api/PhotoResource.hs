@@ -44,7 +44,7 @@ removeHandler = mkConstHandler' jsonO $ do
 getPhotoHandler :: Handler (IdDependencies' P.PhotoId)
 getPhotoHandler = mkConstHandler' fileO $ do
   ((_, pool), P.PhotoId photoIdInt) <- ask
-  photo <- withResource pool $ \connection -> liftIO $ getMachinePhoto connection photoIdInt
+  photo <- withResource pool $ \connection -> liftIO $ getPhoto connection photoIdInt
   photoMetas <- withResource pool $ \connection -> liftIO $ runQuery connection (photoMetaQuery photoIdInt)
   photoMeta <- singleRowOrColumn photoMetas
   let (_, _, fileName) = photoMeta :: (Int, String, String)

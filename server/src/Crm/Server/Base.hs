@@ -6,6 +6,7 @@ import           Crm.Server.Types
 import           Crm.Server.Api.CompanyResource (companyResource)
 import           Crm.Server.Api.MachineResource (machineResource)
 import qualified Crm.Server.Api.UpkeepResource as UR
+import qualified Crm.Server.Api.Upkeep.PhotoResource as UPR
 import           Crm.Server.Api.MachineTypeResource (machineTypeResource)
 import           Crm.Server.Api.EmployeeResource (employeeResource)
 import qualified Crm.Server.Api.ContactPersonResource as CPR
@@ -29,7 +30,7 @@ router' = root `compose` ((((route companyResource `compose` route CMR.machineRe
                                                   `compose` route CRR.resource)
                                                   `compose` route CCPR.contactPersonResource)
                `compose` (route machineResource `compose` route MPR.photoResource)
-               `compose` route UR.upkeepResource
+               `compose` (route UR.upkeepResource `compose` route UPR.resource)
                `compose` route machineTypeResource
                `compose` ((route employeeResource `compose` route EUR.resource)
                                                   `compose` route ETR.resource)

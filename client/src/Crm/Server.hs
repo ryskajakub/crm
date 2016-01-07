@@ -16,8 +16,9 @@ module Crm.Server (
 
   saveExtraFieldSettings ,
 
-  uploadPhotoData ,
   uploadPhotoMeta ,
+  uploadUpkeepPhotoData ,
+  uploadMachinePhotoData ,
 
   fetchUpkeepData ,
   fetchExtraFieldSettings ,
@@ -58,7 +59,6 @@ module Crm.Server (
   status ) where
 
 import           FFI                                 (ffi, Defined(Defined))
-import           Prelude                             hiding (putStrLn)
 import           Data.Text                           (Text, unpack, pack, (<>))
 
 import qualified JQuery                              as JQ
@@ -530,18 +530,34 @@ saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, M
 saveExtraFieldSettings data' cb = 
   XMK.saveByString "()" data' (const cb)
 
-uploadPhotoData :: File
-                -> M.MachineId
-                -> (P.PhotoId -> Fay ())
-                -> Fay ()
-uploadPhotoData fileContents machineId callback = withPassword Nothing $ \settings ->
+uploadPhotoData :: 
+  String ->
+  Int -> 
+  File -> 
+  (P.PhotoId -> Fay ()) -> 
+  Fay ()
+uploadPhotoData recordType theId fileContents callback = withPassword Nothing $ \settings ->
   JQ.ajax' $ settings {
     JQ.success = Defined callback ,
     JQ.data' = Defined fileContents ,
-    JQ.url = Defined $ apiRoot <> (pack $ A.machines ++ "/" ++ (show . M.getMachineId $ machineId) ++ "/" ++ A.photos) ,
+    JQ.url = Defined $ apiRoot <> (pack $ recordType ++ "/" ++ show theId ++ "/" ++ A.photos) ,
     JQ.type' = Defined post ,
     JQ.processData = Defined False ,
     JQ.contentType = Defined $ pack "application/x-www-form-urlencoded" }
+
+uploadMachinePhotoData ::
+  M.MachineId -> 
+  File -> 
+  (P.PhotoId -> Fay ()) -> 
+  Fay ()
+uploadMachinePhotoData machineId = uploadPhotoData A.machines (M.getMachineId $ machineId)
+
+uploadUpkeepPhotoData ::
+  U.UpkeepId ->
+  File ->
+  (P.PhotoId -> Fay ()) ->
+  Fay ()
+uploadUpkeepPhotoData upkeepId = uploadPhotoData (A.upkeep ++ "/" ++ A.single) (U.getUpkeepId $ upkeepId)
 
 uploadPhotoMeta :: PM.PhotoMeta
                 -> P.PhotoId

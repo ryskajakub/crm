@@ -52,6 +52,11 @@ create table machine_photos (
   machine_id integer references machines (id) ,
   primary key (photo_id, machine_id) );
 
+create table upkeep_photos (
+  photo_id integer references photos (id) ,
+  upkeep_id integer references upkeeps (id) ,
+  primary key (photo_id, upkeep_id) );
+
 create table employees (
   id serial primary key ,
   name varchar (500) unique not null ,

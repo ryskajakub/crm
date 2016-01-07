@@ -1,5 +1,5 @@
-module Crm.Server.Api.Machine.PhotoResource ( 
-  photoResource ) where
+module Crm.Server.Api.Upkeep.PhotoResource ( 
+  resource ) where
 
 import           Opaleye.RunQuery            (runQuery)
 import           Opaleye.Manipulation        (runInsert)
@@ -17,7 +17,7 @@ import           Control.Monad.IO.Class      (liftIO)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Photo            as P
-import qualified Crm.Shared.Machine          as M
+import qualified Crm.Shared.Upkeep           as U
 
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -25,25 +25,22 @@ import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Handler          (mkInputHandler', mkListing')
 
 
-photoResource :: Resource (IdDependencies' M.MachineId) (IdDependencies' M.MachineId) M.MachineId () Void
-photoResource = mkResourceId {
+resource :: Resource (IdDependencies' U.UpkeepId) (IdDependencies' U.UpkeepId) Void () Void
+resource = mkResourceId {
   name = A.photos ,
   schema = S.withListing () $ S.named [] ,
   create = Just addPhotoHandler ,
   list = const listPhotoHandler }
 
-addPhotoHandler :: Handler (IdDependencies' M.MachineId)
+addPhotoHandler :: Handler (IdDependencies' U.UpkeepId)
 addPhotoHandler = mkInputHandler' (fileI . jsonO) $ \photo -> do 
-  ((_, pool), M.MachineId machineIdInt) <- ask
+  ((_, pool), upkeepId) <- ask
+  let U.UpkeepId upkeepIdInt = upkeepId
   newPhotoIds <- withResource pool $ \connection -> liftIO $ addPhoto connection photo
   newPhotoId <- singleRowOrColumn newPhotoIds
   _ <- withResource pool $ \connection -> liftIO $ runInsert 
-    connection machinePhotosTable (pgInt4 newPhotoId, pgInt4 machineIdInt)
+    connection upkeepPhotosTable (pgInt4 newPhotoId, pgInt4 upkeepIdInt)
   return $ P.PhotoId newPhotoId
 
-listPhotoHandler :: ListHandler (IdDependencies' M.MachineId)
-listPhotoHandler = mkListing' jsonO $ const $ do
-  ((_, pool), M.MachineId machineIdInt) <- ask
-  rows <- withResource pool $ \connection -> liftIO $ 
-    runQuery connection (machinePhotosByMachineId machineIdInt)
-  return $ (convert rows :: [PhotoMetaMapped])
+listPhotoHandler :: ListHandler (IdDependencies' U.UpkeepId)
+listPhotoHandler = undefined

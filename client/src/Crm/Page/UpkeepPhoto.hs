@@ -9,9 +9,10 @@ import           Data.Text                        (fromString, Text, showInt, (<
 import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
-import           FFI                                   (Defined(..))
+import           FFI                              (ffi, Defined(..))
 
 import           HaskellReact                     as HR
+import qualified HaskellReact.BackboneRouter      as BR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
 import qualified HaskellReact.Jasny               as J
@@ -22,9 +23,11 @@ import qualified Crm.Shared.Machine               as M
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.Employee              as E
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified Crm.Shared.PhotoMeta             as PM
 
 import qualified Crm.Router                       as R
 import           Crm.Helpers
+import           Crm.Server 
 
 addPhotoToUpkeepList :: 
   R.CrmRouter -> 
@@ -50,6 +53,9 @@ addPhotoToUpkeepList router upkeeps = let
     pageInfo' ++
     [B.col (B.mkColProps 12) $ main table])
 
+reload :: Fay ()
+reload = ffi " location.reload() "
+
 upkeepPhotos ::
   R.CrmRouter ->
   U.UpkeepId ->
@@ -67,7 +73,8 @@ upkeepPhotos router upkeepId upkeep company = let
       file <- fileListElem 0 files
       type' <- fileType file
       name <- fileName file
-      return ()
+      uploadUpkeepPhotoData upkeepId file $ \photoId ->
+        uploadPhotoMeta (PM.PhotoMeta type' name) photoId reload router
     imageUploadLabel = "Nahraj fotku"
     in div [
       J.fileUploadI18n "Vyber obrázek" "Dej jiný obrázek" ,

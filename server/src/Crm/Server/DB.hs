@@ -30,6 +30,7 @@ module Crm.Server.DB (
   upkeepEmployeesTable ,
   taskEmployeesTable ,
   tasksTable ,
+  upkeepPhotosTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -39,11 +40,11 @@ module Crm.Server.DB (
   employeesQuery ,
   upkeepSequencesQuery ,
   machinePhotosQuery ,
-  getMachinePhoto ,
+  getPhoto ,
   singleEmployeeQuery ,
   contactPersonsQuery ,
   -- manipulations
-  addMachinePhoto ,
+  addPhoto ,
   deletePhoto ,
   -- runs
   runExpandedMachinesQuery ,
@@ -205,6 +206,8 @@ type PhotosMetaTable = (DBInt, DBText, DBText)
 
 type MachinePhotosTable = (DBInt, DBInt)
 
+type UpkeepPhotosTable = (DBInt, DBInt)
+
 type ExtraFieldSettingsTable = (DBInt, DBInt, DBInt, DBText)
 type ExtraFieldSettingsWriteTable = (Maybe DBInt, DBInt, DBInt, DBText)
 
@@ -247,6 +250,11 @@ machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
   required "photo_id" ,
   required "machine_id" )
+
+upkeepPhotosTable :: Table UpkeepPhotosTable UpkeepPhotosTable
+upkeepPhotosTable = Table "upkeep_photos" $ p2 (
+  required "photo_id" ,
+  required "upkeep_id" )
 
 
 type CompanyCore = C.Company' DBText DBText DBText
@@ -1027,19 +1035,20 @@ insertExtraFields machineId extraFields connection =
     runInsert connection extraFieldsTable
       (pgInt4 $ EF.getExtraFieldId extraFieldId, pgInt4 $ M.getMachineId machineId, pgStrictText extraFieldValue) >> return ()
 
-getMachinePhoto :: Connection
-                -> Int
-                -> IO ByteString
-getMachinePhoto connection photoId = do
+getPhoto :: 
+  Connection -> 
+  Int -> 
+  IO ByteString
+getPhoto connection photoId = do
   let q = " select data from photos where id = ? "
   result <- query connection q (Only photoId)
   return $ fromOnly $ head $ result
 
-addMachinePhoto :: Connection
-                -> Int
-                -> ByteString
-                -> IO [Int]
-addMachinePhoto connection _ photo = do
+addPhoto :: 
+  Connection -> 
+  ByteString -> 
+  IO [Int]
+addPhoto connection photo = do
   let q = " insert into photos(data) values (?) returning id "
   newIds <- query connection q (Only $ Binary photo)
   let ints = map (\(Only id') -> id') newIds
