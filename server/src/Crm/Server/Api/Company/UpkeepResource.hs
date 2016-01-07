@@ -23,6 +23,7 @@ import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Upkeep             as U
 import qualified Crm.Shared.UpkeepMachine      as UM
+import qualified Crm.Shared.Photo              as P
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
@@ -60,11 +61,13 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
       rows
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults
-  withEmployees <- withResource pool $ \connection -> liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
-    results <- runQuery connection (employeesInUpkeep $ U.getUpkeepId upkeepId)
-    let mappedEmployees = fmap (\row -> convert row) results :: [EmployeeMapped]
-    return ($(catTuples 3 1) r mappedEmployees)
-  return withEmployees
+  withEmployeesAndPhotos <- withResource pool $ \connection -> liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
+    employeeResults <- runQuery connection (employeesInUpkeep $ U.getUpkeepId upkeepId)
+    let mappedEmployees = fmap (\row -> convert row) employeeResults :: [EmployeeMapped]
+    photoIdsRaw <- runQuery connection (photosInUpkeepQuery upkeepId)
+    let photoIds = fmap P.PhotoId photoIdsRaw
+    return $ $(catTuples 4 1) ($(catTuples 3 1) r mappedEmployees) photoIds
+  return withEmployeesAndPhotos
 
 newUpkeepData :: Handler (IdDependencies' C.CompanyId)
 newUpkeepData = mkConstHandler' jsonO $ do

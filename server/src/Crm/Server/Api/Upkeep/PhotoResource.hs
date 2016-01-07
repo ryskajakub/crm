@@ -25,12 +25,11 @@ import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Handler          (mkInputHandler', mkListing')
 
 
-resource :: Resource (IdDependencies' U.UpkeepId) (IdDependencies' U.UpkeepId) Void () Void
+resource :: Resource (IdDependencies' U.UpkeepId) (IdDependencies' U.UpkeepId) Void Void Void
 resource = mkResourceId {
   name = A.photos ,
-  schema = S.withListing () $ S.named [] ,
-  create = Just addPhotoHandler ,
-  list = const listPhotoHandler }
+  schema = S.noListing $ S.named [] ,
+  create = Just addPhotoHandler }
 
 addPhotoHandler :: Handler (IdDependencies' U.UpkeepId)
 addPhotoHandler = mkInputHandler' (fileI . jsonO) $ \photo -> do 
@@ -41,6 +40,3 @@ addPhotoHandler = mkInputHandler' (fileI . jsonO) $ \photo -> do
   _ <- withResource pool $ \connection -> liftIO $ runInsert 
     connection upkeepPhotosTable (pgInt4 newPhotoId, pgInt4 upkeepIdInt)
   return $ P.PhotoId newPhotoId
-
-listPhotoHandler :: ListHandler (IdDependencies' U.UpkeepId)
-listPhotoHandler = undefined

@@ -94,6 +94,7 @@ module Crm.Server.DB (
   lastRecommendationQuery ,
   machinesInCompanyQuery' ,
   takenColoursQuery ,
+  photosInUpkeepQuery ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -951,6 +952,12 @@ multiEmployeeQuery employeeIds = proc () -> do
   employeeRow <- employeesQuery -< ()
   restrict -< in_ (pgInt4 `fmap` employeeIds) ($(proj 5 0) employeeRow)
   returnA -< employeeRow
+
+photosInUpkeepQuery :: U.UpkeepId -> Query DBInt
+photosInUpkeepQuery (U.UpkeepId upkeepId) = proc () -> do
+  upkeepPhotosRow <- queryTable upkeepPhotosTable -< ()
+  restrict -< $(proj 2 1) upkeepPhotosRow .== pgInt4 upkeepId
+  returnA -< $(proj 2 0) upkeepPhotosRow
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = distinct $ proc () -> do

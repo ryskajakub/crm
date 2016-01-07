@@ -17,6 +17,7 @@ import qualified Crm.Shared.YearMonthDay   as YMD
 import qualified Crm.Shared.Direction      as DIR
 import qualified Crm.Shared.ServerRender   as SR
 import qualified Crm.Shared.Task           as T
+import qualified Crm.Shared.Photo          as P
 
 import           Crm.Data.MachineData
 import           Crm.Data.UpkeepData
@@ -45,7 +46,7 @@ data NavigationState =
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {
-    companyUpkeeps :: [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'])] ,
+    companyUpkeeps :: [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] ,
     companyId :: C.CompanyId } |
   PlannedUpkeeps { 
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] } |

@@ -4,15 +4,18 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import           Data.Text                     (fromString, showInt, (<>), intercalate)
+import           Data.Text                     (fromString, showInt, (<>), intercalate, pack)
 import           Prelude                       hiding (div, span, id, intercalate)
 import           FFI                           (Defined(Defined))
+
+import qualified JQuery                        as JQ
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap        as B
 import qualified HaskellReact.Bootstrap.Nav    as BN
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.BackboneRouter   as BR
+import qualified HaskellReact.Tag.Image        as IMG
 
 import qualified Crm.Shared.Upkeep             as U
 import qualified Crm.Shared.UpkeepMachine      as UM
@@ -21,21 +24,24 @@ import qualified Crm.Shared.MachineType        as MT
 import qualified Crm.Shared.MachineKind        as MK
 import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
+import qualified Crm.Shared.Photo              as P
+import qualified Crm.Shared.Api                as A
 
 import           Crm.Helpers                   (displayDate, renderMarkup)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep)
+import qualified Crm.Runtime                   as Runtime
 
 
 upkeepHistory :: 
-  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'])] -> 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
   C.CompanyId -> 
   CrmRouter -> 
-  DOMElement
+  (DOMElement, Fay ())
 upkeepHistory upkeepsInfo companyId router = let
 
-  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees) = 
-    [generalUpkeepInfo, notes, upkeepMachinesInfo] where
+  upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees, photos) = 
+    ([generalUpkeepInfo, notes, upkeepMachinesInfo] ++ photoHtml, fetchPhotos) where
 
     generalUpkeepInfo = B.row' marginTop [
       B.col (B.mkColProps 4) [
@@ -94,11 +100,30 @@ upkeepHistory upkeepsInfo companyId router = let
           dt "Záruka" ,
           dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]
     upkeepMachinesInfo = B.row $ map mkLineUpkeepMachineInfo upkeepMachines
+    photoHtml = map mkPhotoRow photos
+    mkPhotoRow photoId = B.row $ B.fullCol $ IMG.image' 
+      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
+      (IMG.mkImageAttrs "")
+
+    fetchPhotos = forM_ photos $ \photoId -> Runtime.passwordAjax
+      (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
+      (\imageData -> do
+        let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
+        photoHtmlElement <- JQ.select photoHTMLId
+        _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
+        return ())
+      Nothing
+      Runtime.get
+      Nothing
+      Nothing
+      router
 
   upkeepsHtml = map upkeepRenderHtml upkeepsInfo
-  flattenedUpkeepsHtml = foldl (++) [] upkeepsHtml
+  flattenedUpkeepsHtml = foldl (++) [] . map fst $ upkeepsHtml
+  allFetchPhotos = foldl (>>) (return ()) . map snd $ upkeepsHtml
+  
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $
     BN.nav [ link "Zpátky na firmu" (companyDetail companyId) router ]
 
-  in div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml)
+  in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), allFetchPhotos)
