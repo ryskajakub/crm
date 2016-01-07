@@ -103,7 +103,7 @@ upkeepHistory upkeepsInfo companyId router = let
     photoHtml = map mkPhotoRow photos
     mkPhotoRow photoId = B.row $ B.fullCol $ IMG.image' 
       (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-      (IMG.mkImageAttrs "")
+      ((IMG.mkImageAttrs "") { IMG.width = Defined 1135 })
 
     fetchPhotos = forM_ photos $ \photoId -> Runtime.passwordAjax
       (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
