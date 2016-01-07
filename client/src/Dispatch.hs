@@ -106,7 +106,7 @@ main' = do
         n . emptyCallback $ employeeTasks employeeId openTasks closedTasks router
       D.EmployeeTaskScreen employeeTaskData ->
         n . emptyCallback $ employeeTask appVar' router employeeTaskData
-      D.AddPhotoToUpkeep plannedUpkeeps -> n . emptyCallback $ addPhotoToUpkeepList router plannedUpkeeps
+      D.AddPhotoToUpkeep pu -> n . emptyCallback $ addPhotoToUpkeepList router pu
   return ()
 
 loadFromLocalStorage :: Fay (Maybe (MT.MachineType, [US.UpkeepSequence], Maybe MT.MachineTypeId))
