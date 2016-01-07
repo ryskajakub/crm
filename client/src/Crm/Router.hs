@@ -36,7 +36,9 @@ module Crm.Router (
   employeeTask' ,
   newEmployeeTask' ,
   editEmployeeTask' ,
+  upkeepPhotos' ,
 
+  upkeepPhotos ,
   serverDown ,
   dailyPlan ,
   login ,
@@ -234,6 +236,8 @@ login' = prepareUnitRouteAndMkHandler "login"
 serverDown' :: RouteAndMkHandler ()
 serverDown' = prepareUnitRouteAndMkHandler "server-down"
 
+upkeepPhotos' :: RouteAndMkHandler ()
+upkeepPhotos' = prepareUnitRouteAndMkHandler "upkeep-photos"
 
 -- routes and mk handlers with one parameter
 
@@ -343,6 +347,9 @@ frontPage order direction = CrmRoute $ "home/" <> (case order of
 newMaintanceViaQuickLink :: C.CompanyId -> M.MachineId -> CrmRoute
 newMaintanceViaQuickLink (C.CompanyId companyId) (M.MachineId machineId) =
   CrmRoute $ "companies/" <> showInt companyId <> "/new-maintenance/" <> showInt machineId
+
+upkeepPhotos :: CrmRoute
+upkeepPhotos = fst upkeepPhotos' ()
 
 login :: CrmRoute
 login = fst login' ()

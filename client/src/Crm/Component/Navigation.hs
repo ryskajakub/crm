@@ -38,6 +38,7 @@ navigation' router (body, callbacks) = do
       li $ link [G.dashboard, text2DOM " Nástěnka"] dashboard router ,
       li $ link [G.asterisk, text2DOM " Speciální pole"] extraFields router ,
       li $ link [G.print, text2DOM " Tisk denních plánů"] (dailyPlan todayYMD Nothing) router ,
+      li $ link [G.camera, text2DOM " Fotky servisů"] upkeepPhotos router ,
       li $ A.a''' (click logout) [G.logOut, text2DOM " Odhlášení"]] ,
     div body ]) callbacks 
 

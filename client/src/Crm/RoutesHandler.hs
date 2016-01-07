@@ -117,7 +117,12 @@ startRouter appVar = startedRouter where
     dashboard' $-> ( const $
       fetchCompaniesForMap $ \companiesTriple -> 
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple }) ,
-    extraFields' $-> ( const $
+    upkeepPhotos' $-> (const $
+      fetchPlannedUpkeeps $ \plannedUpkeeps -> let
+        navig = D.AddPhotoToUpkeep plannedUpkeeps
+        in modify appVar $ \appState ->
+          appState { D.navigation = navig } ) ,
+    extraFields' $-> (const $
       fetchExtraFieldSettings $ \list -> let
         makeIdsAssigned = map (\(fId, field) -> (EF.Assigned fId, field)) 
         withAssignedIds = map (\(enum, fields) -> (enum, makeIdsAssigned fields)) list

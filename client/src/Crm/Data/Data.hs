@@ -85,7 +85,9 @@ data NavigationState =
     employeeId :: Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)]) ,
     dailyPlanData :: [(U.UpkeepMarkup, C.Company, [E.Employee'], 
       [(M.Machine, MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] ,
-    employees :: [E.Employee'] }
+    employees :: [E.Employee'] } |
+  AddPhotoToUpkeep {
+    plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] }
 
 data AppState = AppState {
   navigation :: NavigationState ,
