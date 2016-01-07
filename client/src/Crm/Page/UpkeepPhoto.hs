@@ -8,10 +8,13 @@ import           Data.Text                        (fromString, Text, showInt, (<
 import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
+import           FFI                                   (Defined(..))
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
+import qualified HaskellReact.Jasny               as J
+import qualified JQuery                           as JQ
 
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Machine               as M
@@ -52,5 +55,24 @@ upkeepPhotos ::
   U.Upkeep ->
   C.Company ->
   DOMElement
-upkeepPhotos router upkeepId upkeep company = 
-  div "upload fotek"
+upkeepPhotos router upkeepId upkeep company = let
+  rows = [
+    B.fullCol [C.companyName company, displayDate . U.upkeepDate $ upkeep] ,
+    photo ]
+  photo = let
+    imageUploadHandler = const $ do
+      fileUpload <- JQ.select "#file-upload"
+      files <- getFileList fileUpload
+      file <- fileListElem 0 files
+      type' <- fileType file
+      name <- fileName file
+      return ()
+    imageUploadLabel = "Nahraj fotku"
+    in div [
+      J.fileUploadI18n "Vyber obrázek" "Dej jiný obrázek" ,
+      BB.button'
+        (BB.buttonProps {
+          BB.bsStyle = Defined "primary" ,
+          BB.onClick = Defined imageUploadHandler })
+        imageUploadLabel ]
+  in (B.grid $ B.row rows)
