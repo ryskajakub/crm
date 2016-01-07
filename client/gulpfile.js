@@ -9,6 +9,7 @@ var commonSources = [
   '../../fay-react/core/src/' ,
   '../../fay-react/wrappers/src/' ,
   './shared/' ,
+  '../../fay-dom/src/' ,
   '../../fay-jquery/src/' ,
   '../../fay-moment/src/' ,
   '../../fay-googlemaps/src' ];
@@ -61,7 +62,7 @@ gulp.task('copy-jquery', function () {
 });
 
 gulp.task('compile', function() {
-  var fayCommand = "fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js --package fay-dom";
+  var fayCommand = "fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

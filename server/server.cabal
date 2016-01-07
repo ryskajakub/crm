@@ -115,7 +115,7 @@ Library
     json-schema ,
     aeson >= 0.8 && < 0.9 ,
     fay >= 0.23.1 && < 0.24 ,
-    product-profunctors == 0.6.3 ,
+    product-profunctors == 0.6.3.1 ,
     postgresql-simple ,
     safe ,
     time ,
