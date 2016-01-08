@@ -27,6 +27,7 @@ import qualified Crm.Shared.MachineType           as MT
 import qualified Crm.Shared.YearMonthDay          as YMD
 import qualified Crm.Shared.Direction             as DIR
 import qualified Crm.Shared.Upkeep                as U
+import qualified Crm.Shared.MachineKind           as MK
 
 import qualified Crm.Data.Data                    as D
 import           Crm.Component.Form               as F
@@ -151,6 +152,8 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
               router ,
           span' ((class' "health") { style = Defined . Style $ healthColor }) "•" ] ,
         dl $ [
+          dt "Druh" ,
+          dd . MK.kindToStringRepr . MT.kind $ machineType ,
           dt "Uvedení do provozu" , 
           dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
           dt "Výrobní číslo" ,
