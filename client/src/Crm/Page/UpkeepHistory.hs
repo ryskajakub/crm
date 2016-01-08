@@ -45,6 +45,9 @@ upkeepHistory ::
   (DOMElement, Fay ())
 upkeepHistory upkeepsInfo companyId deletable var router = let
 
+  basicDeleteButtonProps = BTN.buttonProps {
+    BTN.disabled = Defined . not $ deletable }
+
   upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees, photos) = 
     ([generalUpkeepInfo, notes, upkeepMachinesInfo] ++ photoHtml, fetchPhotos) where
 
@@ -77,9 +80,9 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
         editLink = link "Editovat" (upkeepDetail upkeepId) router
         deleteButton = let
           clickHandler = deleteUpkeep upkeepId BR.refresh router
-          buttonProps = (BTN.buttonProps {
+          buttonProps = basicDeleteButtonProps {
             BTN.bsStyle = Defined "danger" ,
-            BTN.onClick = Defined $ const clickHandler })
+            BTN.onClick = Defined $ const clickHandler }
           in span' (class' "delete") $ BTN.button' buttonProps "Smazat"
 
     notes = B.row [
@@ -115,9 +118,9 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
 
     mkPhotoRow photoId = let
       deleteButton = let
-        buttonProps = (BTN.buttonProps {
+        buttonProps = basicDeleteButtonProps {
           BTN.bsStyle = Defined "danger" ,
-          BTN.onClick = Defined $ const clickHandler })
+          BTN.onClick = Defined $ const clickHandler }
         clickHandler = deletePhoto photoId reload router
         in BTN.button' buttonProps [G.arrowDown, text2DOM " Smazat fotku"]
       in B.row [ 
