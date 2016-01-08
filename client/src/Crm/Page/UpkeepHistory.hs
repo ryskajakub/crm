@@ -7,6 +7,7 @@ module Crm.Page.UpkeepHistory (
 import           Data.Text                     (fromString, showInt, (<>), intercalate, pack)
 import           Prelude                       hiding (div, span, id, intercalate)
 import           FFI                           (Defined(Defined))
+import           Data.Var                         (Var, modify)
 
 import qualified JQuery                        as JQ
 
@@ -28,6 +29,7 @@ import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Photo              as P
 import qualified Crm.Shared.Api                as A
 
+import qualified Crm.Data.Data                    as D
 import           Crm.Helpers                   (displayDate, renderMarkup, reload)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
@@ -37,9 +39,11 @@ import qualified Crm.Runtime                   as Runtime
 upkeepHistory :: 
   [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
   C.CompanyId -> 
+  Bool ->
+  Var D.AppState ->
   CrmRouter -> 
   (DOMElement, Fay ())
-upkeepHistory upkeepsInfo companyId router = let
+upkeepHistory upkeepsInfo companyId deletable var router = let
 
   upkeepRenderHtml (upkeepId, upkeep, upkeepMachines, employees, photos) = 
     ([generalUpkeepInfo, notes, upkeepMachinesInfo] ++ photoHtml, fetchPhotos) where
@@ -141,6 +145,16 @@ upkeepHistory upkeepsInfo companyId router = let
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $
-    BN.nav [ link "Zpátky na firmu" (companyDetail companyId) router ]
-
+    BN.nav [ 
+      link "Zpátky na firmu" (companyDetail companyId) router ,
+      let 
+        buttonProps = (BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const clickHandler })
+        clickHandler = modify var $ \appState -> appState {
+          D.navigation = case D.navigation appState of
+            dh @ (D.UpkeepHistory {}) -> dh { D.deletable = not deletable }
+            _ -> D.navigation appState }
+        label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
+        in BTN.button' buttonProps label ]
   in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), allFetchPhotos)

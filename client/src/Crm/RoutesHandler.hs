@@ -192,7 +192,7 @@ startRouter appVar = startedRouter where
         in modify' ns ,
     maintenances' $-> \companyId ->
       fetchUpkeeps companyId $ \upkeepsData -> let
-        ns = D.UpkeepHistory upkeepsData companyId
+        ns = D.UpkeepHistory upkeepsData companyId False
         in modify' ns ,
     machineDetail' $-> \machineId router ->
       fetchMachine machineId
