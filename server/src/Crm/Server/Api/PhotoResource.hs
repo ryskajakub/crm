@@ -36,6 +36,7 @@ removeHandler :: Handler (IdDependencies' P.PhotoId)
 removeHandler = mkConstHandler' jsonO $ do
   ((_, pool), P.PhotoId photoIdInt) <- ask
   deleteRows'' [
+    createDeletion upkeepPhotosTable ,
     createDeletion machinePhotosTable , 
     createDeletion photosMetaTable ,
     flip deletePhoto ] photoIdInt pool

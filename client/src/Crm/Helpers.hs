@@ -36,6 +36,9 @@ renderMarkup = let
   renderListItem t = li t
   in map renderItem
 
+reload :: Fay ()
+reload = ffi " location.reload() "
+
 nowYMD :: YMD.YearMonthDay
 nowYMD = let
   (nowYear, nowMonth, nowDay) = M.day . M.now $ M.requireMoment

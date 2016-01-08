@@ -53,9 +53,6 @@ addPhotoToUpkeepList router upkeeps = let
     pageInfo' ++
     [B.col (B.mkColProps 12) $ main table])
 
-reload :: Fay ()
-reload = ffi " location.reload() "
-
 upkeepPhotos ::
   R.CrmRouter ->
   U.UpkeepId ->

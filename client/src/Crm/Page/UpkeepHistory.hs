@@ -16,6 +16,7 @@ import qualified HaskellReact.Bootstrap.Nav    as BN
 import qualified HaskellReact.Bootstrap.Button as BTN
 import qualified HaskellReact.BackboneRouter   as BR
 import qualified HaskellReact.Tag.Image        as IMG
+import qualified HaskellReact.Bootstrap.Glyphicon as G
 
 import qualified Crm.Shared.Upkeep             as U
 import qualified Crm.Shared.UpkeepMachine      as UM
@@ -27,9 +28,9 @@ import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Photo              as P
 import qualified Crm.Shared.Api                as A
 
-import           Crm.Helpers                   (displayDate, renderMarkup)
+import           Crm.Helpers                   (displayDate, renderMarkup, reload)
 import           Crm.Router
-import           Crm.Server                    (deleteUpkeep, reopenUpkeep)
+import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
 import qualified Crm.Runtime                   as Runtime
 
 
@@ -107,9 +108,19 @@ upkeepHistory upkeepsInfo companyId router = let
           dd $ (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne") ] else []) ]]
     upkeepMachinesInfo = B.row $ map mkLineUpkeepMachineInfo upkeepMachines
     photoHtml = map mkPhotoRow photos
-    mkPhotoRow photoId = B.row $ B.fullCol $ IMG.image' 
-      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-      ((IMG.mkImageAttrs "") { IMG.width = Defined 1140 })
+
+    mkPhotoRow photoId = let
+      deleteButton = let
+        buttonProps = (BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const clickHandler })
+        clickHandler = deletePhoto photoId reload router
+        in BTN.button' buttonProps [G.arrowDown, text2DOM " Smazat fotku"]
+      in B.row [ 
+      B.col ((B.mkColProps 2) { B.mdOffset = Defined 10 }) deleteButton ,
+      B.fullCol $ IMG.image' 
+        (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
+        ((IMG.mkImageAttrs "") { IMG.width = Defined 1140 }) ]
 
     fetchPhotos = forM_ photos $ \photoId -> Runtime.passwordAjax
       (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
