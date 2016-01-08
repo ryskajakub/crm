@@ -29,7 +29,7 @@ import qualified Crm.Shared.Api                as A
 
 import           Crm.Helpers                   (displayDate, renderMarkup)
 import           Crm.Router
-import           Crm.Server                    (deleteUpkeep)
+import           Crm.Server                    (deleteUpkeep, reopenUpkeep)
 import qualified Crm.Runtime                   as Runtime
 
 
@@ -55,8 +55,14 @@ upkeepHistory upkeepsInfo companyId router = let
       B.col (B.mkColProps 1) $ deleteButton ] where
         employeeText = intercalate " " . map (\(_, employee) -> E.name employee) $ employees
         (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
-          then ("label-success", "Uzavřený", text2DOM "")
-          else ("label-warning", "Naplánovaný", link "Uzavřít" (upkeepDetail upkeepId) router)
+          then ("label-success", "Uzavřený", let
+            buttonProps = (BTN.buttonProps {
+              BTN.bsStyle = Defined "warning" ,
+              BTN.onClick = Defined $ const clickHandler })
+            clickHandler = reopenUpkeep upkeepId goEditUpkeep router
+            goEditUpkeep = navigate (upkeepDetail upkeepId) router
+            in BTN.button' buttonProps "Otevřít")
+          else ("label-warning", "Naplánovaný", link "Uzavřít" (upkeepDetail upkeepId) router) 
         marginTop attributes = let
           previousClassname = className attributes
           newClassname = case previousClassname of

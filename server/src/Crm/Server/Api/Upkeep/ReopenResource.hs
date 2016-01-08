@@ -1,5 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+
+-- todo make it an action under upkeep
+
 module Crm.Server.Api.Upkeep.ReopenResource ( 
   resource ) where
 
@@ -8,7 +11,7 @@ import           Opaleye                     (runUpdate, runInsert, pgInt4, (.==
 import           Data.Pool                   (withResource)
 import           Data.ByteString.Lazy        (fromStrict, toStrict, ByteString)
 
-import           Rest.Resource               (Resource, Void, schema, name, update, mkResourceId, list)
+import           Rest.Resource               (Resource, Void, schema, name, create, mkResourceId, list)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (fileI, jsonO, jsonI)
 import           Rest.Handler                (Handler, ListHandler)
@@ -32,7 +35,7 @@ resource :: Resource (IdDependencies' U.UpkeepId) (IdDependencies' U.UpkeepId) V
 resource = mkResourceId {
   name = "reopen" ,
   schema = S.noListing $ S.named [] ,
-  update = Just reopen }
+  create = Just reopen }
 
 reopen :: Handler (IdDependencies' U.UpkeepId)
 reopen = mkInputHandler' jsonI $ \(str :: Double) -> do 

@@ -15,6 +15,7 @@ module Crm.Server (
   updateTask ,
 
   saveExtraFieldSettings ,
+  reopenUpkeep ,
 
   uploadPhotoMeta ,
   uploadUpkeepPhotoData ,
@@ -87,6 +88,7 @@ import qualified Crm.Client.Task                     as XT
 import qualified Crm.Client.Employees.Task           as XET
 import qualified Crm.Client.Companies                as XC
 import qualified Crm.Client.Upkeeps                  as XU
+import qualified Crm.Client.Upkeeps.Reopen           as XUR
 import qualified Crm.Client.Machines                 as XM
 import qualified Crm.Client.Photos                   as XP
 import qualified Crm.Client.PhotoMeta                as XPM
@@ -529,6 +531,14 @@ saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, M
                        -> Fay ()
 saveExtraFieldSettings data' cb = 
   XMK.saveByString "()" data' (const cb)
+
+reopenUpkeep :: 
+  U.UpkeepId ->
+  Fay () ->
+  R.CrmRouter ->
+  Fay ()
+reopenUpkeep upkeepId cb =
+  XUR.create upkeepId 3 (const cb)
 
 uploadPhotoData :: 
   String ->
