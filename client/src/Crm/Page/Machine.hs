@@ -410,6 +410,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
   formInputs = [
     inputRow
       Display
+      "Druh zařízení"
+      (SetValue . MK.kindToStringRepr . MT.kind $ machineType)
+      (const . return $ ()) ,
+    inputRow
+      Display
       "Typ zařízení" 
       (SetValue $ MT.machineTypeName machineType) 
       (const $ return ()) ,

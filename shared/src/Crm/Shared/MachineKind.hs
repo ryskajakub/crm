@@ -54,6 +54,9 @@ kindToDbRepr' x' (_:xs) = 1 + kindToDbRepr' x' xs
 dbReprToKind :: Int -> MachineKindEnum
 dbReprToKind int = fst $ machineKinds !! int
 
+kindToStringRepr :: MachineKindEnum -> Text
+kindToStringRepr = snd . (\i -> machineKinds !! i) . kindToDbRepr
+
 data MachineKindSpecific = MachineKindSpecific {
   name :: Text }
 #ifdef FAY
