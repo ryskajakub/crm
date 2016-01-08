@@ -122,6 +122,7 @@ Library
     time ,
     tuple ,
     text-icu ,
+    gd ,
     bytestring
 
 Test-Suite tests
@@ -172,6 +173,7 @@ Test-Suite tests
     aeson ,
     text ,
     text-icu ,
+    gd ,
     bytestring
 
 Executable run-server
