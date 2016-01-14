@@ -58,8 +58,7 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
       let 
         i = if length employees > 1 then "i" else ""
         in B.col (B.mkColProps 4) [ strong $ "Servisman" <> i <> ": ", text2DOM employeeText ] ,
-      B.col (B.mkColProps 2) $ formLink , 
-      B.col (B.mkColProps 1) $ editLink ,
+      B.col (B.mkColProps 3) $ formLink , 
       B.col (B.mkColProps 1) $ deleteButton ] where
         employeeText = intercalate " " . map (\(_, employee) -> E.name employee) $ employees
         (labelClass, labelText, formLink) = if U.upkeepClosed upkeep
@@ -77,7 +76,6 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
             Defined text -> Defined $ text <> " upkeep-row"
             _ -> Defined "upkeep-row"
           in attributes { className = newClassname }
-        editLink = link "Editovat" (upkeepDetail upkeepId) router
         deleteButton = let
           clickHandler = deleteUpkeep upkeepId BR.refresh router
           buttonProps = basicDeleteButtonProps {

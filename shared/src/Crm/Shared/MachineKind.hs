@@ -26,7 +26,8 @@ machineKinds = [
   (NitrogenGenerator, pack "Generátor dusíku") ,
   (AdsorptionDryer, pack "Adsorpční sušička") ,
   (Filter, pack "Filtr") ,
-  (Separator, pack "Odlučovač") ]
+  (Separator, pack "Odlučovač") ,
+  (Other, pack "Jiný") ]
 
 data MachineKindEnum = 
   RotaryScrewCompressor | 
@@ -37,7 +38,8 @@ data MachineKindEnum =
   NitrogenGenerator | 
   AdsorptionDryer |
   Filter |
-  Separator
+  Separator |
+  Other
 #ifdef FAY
   deriving (Eq)
 #else
