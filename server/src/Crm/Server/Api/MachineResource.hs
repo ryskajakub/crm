@@ -3,7 +3,7 @@
 
 module Crm.Server.Api.MachineResource where
 
-import           Opaleye                     ((.===), runUpdate, runDelete, runQuery,
+import           Opaleye                     ((.===), (.==), runUpdate, runDelete, runQuery,
                                                pgInt4, pgStrictText, pgDay, pgBool)
 
 import           Data.Maybe                  (catMaybes)
@@ -52,7 +52,8 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
 machineDelete :: Handler (IdDependencies' M.MachineId)
 machineDelete = mkConstHandler' jsonO $ do
   ((cache, pool), machineId) <- ask
-  _ <- liftIO $ withResource pool $ \connection ->
+  _ <- liftIO $ withResource pool $ \connection -> do
+    runDelete connection extraFieldsTable (((.==) (pgInt4 . M.getMachineId $ machineId)) . $(proj 3 1))
     runDelete connection machinesTable (((.===) (fmap pgInt4 machineId)) . _machinePK)
   recomputeWhole pool cache
 
