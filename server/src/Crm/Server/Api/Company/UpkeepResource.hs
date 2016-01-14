@@ -24,6 +24,7 @@ import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Upkeep             as U
 import qualified Crm.Shared.UpkeepMachine      as UM
 import qualified Crm.Shared.Photo              as P
+import qualified Crm.Shared.Machine            as M
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate        ()
@@ -43,21 +44,23 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
   let
     mappedResults = mapResultsToList
       sel1
-      (\(upkeepCols,_,_) -> let
+      (\(upkeepCols,_,_,_) -> let
         (uId, upkeep) = convert upkeepCols :: UpkeepMapped
         upkeepMarkup = upkeep {
           U.recommendation = parseMarkupOrPlain . U.recommendation $ upkeep ,
           U.workDescription = parseMarkupOrPlain . U.workDescription $ upkeep }
         in (uId, upkeepMarkup))
-      (\(_, upkeepMachine', machineType') -> let
+      (\(_, upkeepMachine', machine' :: MachineRecord', machineType') -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
         upkeepMachineMarkup = upkeepMachine {
           UM.endNote = parseMarkupOrPlain . UM.endNote $ upkeepMachine ,
           UM.upkeepMachineNote = parseMarkupOrPlain . UM.upkeepMachineNote $ upkeepMachine }
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
+        machine = _machine machine'
         machineId = sel2 upkeepMachineMapped
-        in (upkeepMachineMarkup, machineType, machineId))
+        in (upkeepMachineMarkup, machine { M.machineOperationStartDate = fmap dayToYmd . M.machineOperationStartDate $ machine } ,
+          machineType, machineId))
       rows
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults

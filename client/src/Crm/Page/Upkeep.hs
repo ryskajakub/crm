@@ -320,7 +320,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' unchec
       _ -> (Defined 2, False)
 
     machineToggleCheckedLink = let
-      linkText = note' <> MT.machineTypeName machineType <> serialNumber' where
+      linkText = note' <> (displayMachine machine' machineType) <> serialNumber' where
         note' = if T.null . M.label_ $ machine'
           then ""
           else M.label_ machine' <> " - "

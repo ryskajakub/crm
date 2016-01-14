@@ -30,14 +30,14 @@ import qualified Crm.Shared.Photo              as P
 import qualified Crm.Shared.Api                as A
 
 import qualified Crm.Data.Data                    as D
-import           Crm.Helpers                   (displayDate, renderMarkup, reload)
+import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayMachine)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
 import qualified Crm.Runtime                   as Runtime
 
 
 upkeepHistory :: 
-  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
   C.CompanyId -> 
   Bool ->
   Var D.AppState ->
@@ -96,9 +96,9 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
         noteContent = div . renderMarkup . U.workDescription $ upkeep
         recommendationContent = div . renderMarkup . U.recommendation $ upkeep
 
-    mkLineUpkeepMachineInfo (upkeepMachine, machineType, machineId) =
+    mkLineUpkeepMachineInfo (upkeepMachine, machine, machineType, machineId) =
       B.col (B.mkColProps 6) $ B.panel [ h3 $ link 
-        (MT.machineTypeName machineType)
+        (displayMachine machine machineType)
         (machineDetail machineId)
         router ,
         dl [[

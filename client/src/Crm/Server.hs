@@ -256,7 +256,7 @@ fetchUpkeepData :: C.CompanyId
 fetchUpkeepData companyId = XCU.bySingle companyId "()"
 
 fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> Fay ()) -- ^ callback
+             -> ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> Fay ()) -- ^ callback
               -> R.CrmRouter
              -> Fay ()
 fetchUpkeeps = XCU.list maxCount

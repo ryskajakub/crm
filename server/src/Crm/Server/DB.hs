@@ -123,7 +123,9 @@ module Crm.Server.DB (
   PhotoMetaMapped ,
   ExtraFieldSettingsMapped ,
   ExtraFieldMapped ,
-  MachineMapped ) where
+  MachineMapped ,
+  -- types
+  MachineRecord' ) where
 
 import           Control.Arrow                        (returnA, (^<<))
 import           Control.Applicative                  ((<*>), pure)
@@ -798,7 +800,7 @@ nextServiceUpkeepSequencesQuery (M.MachineId machineId) = proc () -> do
   returnA -< upkeepSequenceRow
 
 expandedUpkeepsByCompanyQuery :: C.CompanyId -> Query 
-  (UpkeepsTable, UpkeepMachinesTable, MachineTypesTable)
+  (UpkeepsTable, UpkeepMachinesTable, MachinesTable, MachineTypesTable)
 expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
     upkeepRow @ (upkeepPK,_,_,_,_,_) <- upkeepsQuery -< ()
@@ -806,8 +808,8 @@ expandedUpkeepsByCompanyQuery companyId = let
     machine <- joinMachine -< M.MachineId . $(proj 6 2) $ upkeepMachineRow
     machineType <- join machineTypesQuery -< _machineTypeFK machine
     restrict -< _companyFK machine .=== fmap pgInt4 companyId
-    returnA -< (upkeepRow, upkeepMachineRow, machineType)
-  orderedUpkeepsWithMachines = orderBy (desc (\(u,_,_) -> $(proj 6 1) u) <> desc (\(u,_,_) -> $(proj 6 0) u)) upkeepsWithMachines
+    returnA -< (upkeepRow, upkeepMachineRow, machine, machineType)
+  orderedUpkeepsWithMachines = orderBy (desc (\(u,_,_,_) -> $(proj 6 1) u) <> desc (\(u,_,_,_) -> $(proj 6 0) u)) upkeepsWithMachines
   in orderedUpkeepsWithMachines
 
 singleEmployeeQuery :: Int -> Query (EmployeeTable)

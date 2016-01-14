@@ -142,7 +142,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
       B.panel [
         h3 [
           R.link
-            (MT.machineTypeName machineType)
+            (displayMachine machine' machineType)
             (R.machineDetail machineId')
             router ,
           span' (class' "quick-upkeep-link") $

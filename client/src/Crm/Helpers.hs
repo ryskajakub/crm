@@ -3,7 +3,7 @@
 
 module Crm.Helpers where
 
-import           Data.Text                            as T (Text, showInt, fromString, (<>), length)
+import           Data.Text                            as T (Text, showInt, fromString, (<>), length, empty, null)
 import           Prelude                              as P hiding (div, span, id)
 import           FFI                                  (Nullable, ffi, Defined(Defined, Undefined))
 import           Data.Nullable                        (fromNullable)
@@ -12,6 +12,8 @@ import qualified Crm.Shared.YearMonthDay              as YMD
 import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.Employee                  as E
 import qualified Crm.Shared.ServerRender              as SR
+import qualified Crm.Shared.Machine                   as M
+import qualified Crm.Shared.MachineType               as MT
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
@@ -63,7 +65,7 @@ encodeB64 = ffi " btoa(%1) "
 validationHtml :: (Renderable a) => [a] -> DOMElement
 validationHtml validationMessages = let
   validationMessagesHtml = map (\message -> p message) validationMessages
-  in if null validationMessages
+  in if P.null validationMessages
     then text2DOM ""
     else B.grid $ B.row $ B.col (B.mkColProps 12) (A.alert A.Danger validationMessagesHtml)
 
@@ -126,6 +128,11 @@ displayDate (YMD.YearMonthDay y m d precision) = let
   in format dateAsMoment (case precision of
     YMD.MonthPrecision -> "MMMM YYYY"
     _ -> "LL")
+
+displayMachine :: M.Machine -> MT.MachineType -> Text
+displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.null . M.note $ machine)
+  then ""
+  else "-" <> M.note machine)
 
 showCompanyId :: C.CompanyId -> Text
 showCompanyId = showInt . C.getCompanyId

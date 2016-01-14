@@ -324,9 +324,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
 
   mkFormGroup = div' (class' "form-group")
   
-  noteRow = textareaRow'
-    5
-    editing
+  noteRow = inputRowEditing
     "Další specifikace"
     (SetValue . M.note $ machine')
     (\str -> setMachine $ machine' { M.note = str })

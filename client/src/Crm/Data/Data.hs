@@ -46,7 +46,7 @@ data NavigationState =
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {
-    companyUpkeeps :: [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] ,
+    companyUpkeeps :: [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] ,
     companyId :: C.CompanyId ,
     deletable :: Bool } |
   PlannedUpkeeps { 
