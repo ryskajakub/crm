@@ -77,8 +77,11 @@ updation = mkInputHandler' jsonI $ \allSettings -> do
             return newExtraFieldsSettingId
           EF.Assigned assignedId -> do
             let extraFieldId = EF.getExtraFieldId assignedId
-            withResource pool $ \connection -> 
-              prepareUpdate extraFieldSettingsTable (const $ allFields) extraFieldId connection
+            withResource pool $ \connection -> do
+              let
+                rToW fields = 
+                   $(updateAtN 4 0) (const . Just . $(proj 4 0) $ fields) allFields 
+              prepareUpdate extraFieldSettingsTable rToW extraFieldId connection
             return extraFieldId
       in forM ([0..] `zip` extraFields) insertField
   keepIdsNested <- forM allSettings insertSetting
