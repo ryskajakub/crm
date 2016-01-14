@@ -97,7 +97,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       employee = B.col (B.mkColProps 2) . mkColours $ employees
       descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
       description = B.col (B.mkColProps 4) $ U.workDescription upkeep
-      noteHeader = B.col (B.mkColProps 2) $ strong "Poznámka"
+      noteHeader = B.col (B.mkColProps 2) $ strong "Poznámky"
       note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
       in [
         B.row $ [stateLabel, date] ++ (if includeMths then [mthHeader, mth] else []) ++ [
@@ -327,7 +327,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
   noteRow = textareaRow'
     5
     editing
-    "Poznámky"
+    "Další specifikace"
     (SetValue . M.note $ machine')
     (\str -> setMachine $ machine' { M.note = str })
   labelRow = inputRowEditing
