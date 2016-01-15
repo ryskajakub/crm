@@ -21,6 +21,8 @@ import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Tag.Image                as IMG
 import           HaskellReact.Bootstrap.Carousel       (carousel)
 import qualified HaskellReact.BackboneRouter           as BR
+import qualified HaskellReact.Bootstrap.Nav            as BN
+import qualified HaskellReact.Bootstrap.Glyphicon      as G
 import qualified JQuery                                as JQ
 
 import qualified Crm.Shared.Machine                    as M
@@ -74,7 +76,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
-      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields, fetchPhotos)
+      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields 
+      companyId router, fetchPhotos)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
@@ -211,6 +214,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
     datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
     Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
+    companyId router
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   machineTypeEither = case machineTypeId of
@@ -279,10 +283,12 @@ machineDisplay ::
   Maybe M.MachineId ->
   [(M.MachineId, M.Machine)] ->
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] ->
+  C.CompanyId ->
+  R.CrmRouter ->
   DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage)
     (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
-    contactPersons validation otherMachineId otherMachines extraFields = mkGrid where
+    contactPersons validation otherMachineId otherMachines extraFields companyId router = mkGrid where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -458,7 +464,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     div $ [
       (form' (mkAttrs { className = Defined "form-horizontal" }) $
         B.grid $ [
-          (B.row $ B.col (B.mkColProps 12) $ h2 pageHeader),
+          (B.row $ B.col (B.mkColProps 12) $ h2 pageHeader) ,
+          (B.fullRow $ BN.nav $ [
+            R.link [G.arrowLeft , text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ]) ,
           B.row formInputs]) :
       validationErrorsGrid ++ 
       (case extraGrid of
