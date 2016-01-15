@@ -151,7 +151,7 @@ upkeepDetail ::
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v dnf =
   upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployees v dnf
+    machines submitButton True employees selectedEmployees v dnf companyId
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -172,16 +172,17 @@ upkeepNew ::
   DP.DatePickerData -> 
   [UM.UpkeepMachine'] -> 
   [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> -- ^ machine ids -> machines  
-  Either C.CompanyId U.UpkeepId -> 
+  Maybe U.UpkeepId -> 
+  C.CompanyId ->
   [E.Employee'] -> 
   [Maybe E.EmployeeId] -> 
   V.Validation -> 
   DOMElement
-upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice where
+upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification companyId es se v = 
+  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice companyId where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
-      Left _ -> let
+      Nothing -> let
         newUpkeepHandler = createUpkeep
           (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
@@ -190,7 +191,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
           [G.plus , text2DOM " Naplánovat"]
           newUpkeepHandler
         in ("Naplánovat servis", button)
-      Right (upkeepId) -> let
+      Just upkeepId -> let
         replanUpkeepHandler = updateUpkeep
           (upkeepId, upkeepU, upkeepMachines)
           (mapMaybe Prelude.id se)
@@ -220,9 +221,10 @@ upkeepForm ::
   [Maybe E.EmployeeId] ->
   V.Validation ->
   DisplayedNote ->
+  C.CompanyId ->
   DOMElement
 upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' uncheckedMachines 
-    machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag = let
+    machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag companyId = let
   rawUpkeepDate = DP.rawText upkeepDatePicker'
   upkeepFormRows = 
     [companyNameHeader] ++

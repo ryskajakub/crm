@@ -23,12 +23,12 @@ data UpkeepData = UpkeepData {
   employees :: [Employee'] ,
   selectedEmployees :: [Maybe EmployeeId] ,
   validation :: V.Validation ,
+  companyId :: CompanyId ,
   upkeepPageMode :: Either UpkeepClose UpkeepNew }
 
 data UpkeepNew = UpkeepNew {
-  upkeepIdentification :: Either CompanyId UpkeepId }
+  upkeepIdentification :: Maybe UpkeepId }
 
 data UpkeepClose = UpkeepClose {
   upkeepId :: UpkeepId ,
-  companyId :: CompanyId , 
   displayedNote :: DisplayedNote }

@@ -75,7 +75,7 @@ startRouter appVar = startedRouter where
             in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, [(UM.newUpkeepMachine, machineId)])
               ud notCheckedUpkeepMachines
               newDatePickerData employees
-              [] V.new (Right . UD.UpkeepNew . Left $ companyId)) crmRouter ) crmRouter 
+              [] V.new companyId (Right . UD.UpkeepNew $ Nothing)) crmRouter ) crmRouter 
         _ -> modify' D.NotFound) ,
     ("daily-plan/:date/employee/:employee", \router params -> let
       crmRouter = CrmRouter router
@@ -185,7 +185,7 @@ startRouter appVar = startedRouter where
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
             ud notCheckedUpkeepMachines
             newDatePickerData employees 
-            [] V.new (Right $ UD.UpkeepNew $ Left companyId)) router ) router ,
+            [] V.new companyId (Right . UD.UpkeepNew $ Nothing)) router ) router ,
     contactPersonList' $-> \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList data'
@@ -220,7 +220,7 @@ startRouter appVar = startedRouter where
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
-            (map Just employeeIds) V.new (Left $ UD.UpkeepClose upkeepId companyId Note) ) router ) router ,
+            (map Just employeeIds) V.new companyId (Left $ UD.UpkeepClose upkeepId Note) ) router ) router ,
     machineTypesList' $-> ( const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ) ,
     machineTypeEdit' $-> \machineTypeId ->
@@ -228,12 +228,12 @@ startRouter appVar = startedRouter where
         let upkeepSequences' = map ((\us -> (us, showInt . US.repetition $ us ))) upkeepSequences
         in modify' $ D.MachineTypeEdit machineTypeId machinesCount (machineType, upkeepSequences')) . fromJust) ,
     replanUpkeep' $-> \upkeepId router ->
-      fetchUpkeep upkeepId ( \(_, (upkeep, upkeepMachines, employeeIds), machines) ->
-        fetchEmployees ( \employees ->
+      fetchUpkeep upkeepId (\(companyId, (upkeep, upkeepMachines, employeeIds), machines) ->
+        fetchEmployees (\employees ->
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) 
             (DP.DatePickerData (U.upkeepDate upkeep) False (displayDate . U.upkeepDate $ upkeep))
-            employees (map Just employeeIds) V.new (Right $ UD.UpkeepNew $ Right upkeepId) ) router ) router ,
+            employees (map Just employeeIds) V.new companyId (Right . UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
