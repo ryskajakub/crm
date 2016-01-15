@@ -107,7 +107,8 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
         pgInt4 $ M.getMachineId upkeepMachineId ,
         pgInt4 $ UM.recordedMileage upkeepMachine' , 
         pgBool $ UM.warrantyUpkeep upkeepMachine' ,
-        pgStrictText $ UM.endNote upkeepMachine' )
+        pgStrictText $ UM.endNote upkeepMachine' ,
+        pgBool $ UM.repair upkeepMachine' )
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
@@ -139,7 +140,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
         pgStrictText $ U.workHours upkeep, 
         pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
     in runUpdate conn upkeepsTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> $(proj 6 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> $(proj 7 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 3 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertEmployees conn upkeepId employeeIds

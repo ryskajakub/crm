@@ -31,11 +31,12 @@ getMaybe (Planned a) = Just a
 getMaybe (Computed a) = Just a
 getMaybe Inactive = Nothing
 
-nextServiceDate :: M.Machine -- ^ machine for which the next service date is computed
-                -> (US.UpkeepSequence, [US.UpkeepSequence]) -- ^ upkeep sequences belonging to the machine - must be at least one element
-                -> [U.Upkeep] -- ^ upkeeps belonging to this machine
-                -> Day -- ^ today
-                -> NextServiceDate Day -- ^ computed next service date for this machine
+nextServiceDate :: 
+  M.Machine -> -- ^ machine for which the next service date is computed
+  (US.UpkeepSequence, [US.UpkeepSequence]) -> -- ^ upkeep sequences belonging to the machine - must be at least one element
+  [(U.Upkeep, UM.UpkeepMachine)] -> -- ^ upkeeps belonging to this machine
+  Day -> -- ^ today
+  NextServiceDate Day -- ^ computed next service date for this machine
 nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
@@ -56,16 +57,16 @@ nextServiceDate machine sequences upkeeps today = let
         []    -> nonEmptySequences
       in computeBasedOnPrevious intoOperationDate filteredSequences
     nonEmptyUpkeeps -> let
-      lastServiceDate = ymdToDay $ maximum $ fmap U.upkeepDate nonEmptyUpkeeps
+      lastServiceDate = ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
     where
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
 
-  openUpkeeps = filter (not . U.upkeepClosed) upkeeps
+  openUpkeeps = filter (not . U.upkeepClosed . fst) upkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
-      let nextOpenUpkeep' = fmap ymdToDay $ minimumMay $ fmap U.upkeepDate openUpkeeps, 
+      let nextOpenUpkeep' = fmap ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> Planned nextOpenUpkeep
     _ -> Computed computedUpkeep 
   in if M.archived machine

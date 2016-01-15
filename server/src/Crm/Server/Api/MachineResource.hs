@@ -12,6 +12,7 @@ import           Data.Pool                   (withResource)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
+import           Control.Arrow               (first, second)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -134,7 +135,7 @@ machineSingle = mkConstHandler' jsonO $ do
           in intermediate)
         $ upkeepRows
       :: [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
-    upkeeps = fmap $(proj 4 1) upkeepsData
+    upkeeps = fmap (second $(proj 4 2) . first $(proj 4 1) . (\a -> (a,a))) upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)

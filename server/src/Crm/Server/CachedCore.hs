@@ -105,20 +105,22 @@ getCacheContent :: Cache -> IO (Map.Map C.CompanyId (C.Company, Maybe YMD.YearMo
 getCacheContent (Cache cache) = readIORef cache
 
 
-addNextDates :: (a -> M.MachineId)
-             -> (a -> M.Machine)
-             -> a
-             -> Connection
-             -> IO (NextServiceDate YMD.YearMonthDay)
+addNextDates :: 
+  (a -> M.MachineId) -> 
+  (a -> M.Machine) -> 
+  a -> 
+  Connection -> 
+  IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
-  upkeepRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
+  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
-    upkeeps = convert upkeepRows :: [UpkeepMapped] 
+    convertFullUpkeeps = fmap $ \(u, um) -> 
+      ($(proj 2 1) (convert u :: UpkeepMapped), $(proj 3 2) (convert um :: UpkeepMachineMapped))
     upkeepSequences = fmap (\r -> $(proj 2 1) (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x, xs)
-    nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (fmap $(proj 2 1) upkeeps) today'
+    nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (convertFullUpkeeps fullUpkeepDataRows) today'
   return (fmap dayToYmd nextServiceDay)

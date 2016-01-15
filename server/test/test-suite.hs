@@ -64,7 +64,8 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there are upkeep sequences and a past upkeep, then the smallest repeated in taken" pickSmallestRepeatedSequence ,
   testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
   testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ,
-  testCase "When the machine is inactive, nothing else is looked at and no date is computed" inactiveCompany ]
+  testCase "When the machine is inactive, nothing else is looked at and no date is computed" inactiveMachine ,
+  testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ]
 
 unitTests' :: TestTree
 unitTests' = testGroup "Next service type hint : Unit tests" [
@@ -76,6 +77,9 @@ machine = M.Machine {
   M.machineOperationStartDate = Just $ dayToYmd $ fromGregorian 2000 1 1 ,
   M.archived = False ,
   M.mileagePerYear = 5000 }
+
+upkeepMachine :: UM.UpkeepMachine
+upkeepMachine = UM.newUpkeepMachine
 
 upkeepSequence :: US.UpkeepSequence
 upkeepSequence = US.UpkeepSequence {
@@ -182,8 +186,19 @@ missingOperationStartDate = let
   in assertEqual "Date must be +2 years from today, that is: 2016 12 31"
     expectedResult result
 
-inactiveCompany :: Assertion
-inactiveCompany = let
+repairUpkeep :: Assertion
+repairUpkeep = let
+  upkeepMachine' = upkeepMachine { UM.repair = True }
+  later = upkeep {
+    U.upkeepDate = fromGregorian 2016 1 1 }
+  earlier = upkeep {
+    U.upkeepDate = fromGregorian 2015 1 1 }
+  expectedResult = Computed $ fromGregorian 2016 12 31
+  result = nextServiceDate machine (upkeepSequence, []) [(earlier, upkeepMachine), (later, upkeepMachine')] undefined
+  in assertEqual "Repair must be skipped" expectedResult result
+
+inactiveMachine :: Assertion
+inactiveMachine = let
   machine' = machine {
     M.archived = True }
   result = nextServiceDate machine' undefined undefined undefined
