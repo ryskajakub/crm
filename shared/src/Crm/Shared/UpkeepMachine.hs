@@ -22,10 +22,11 @@ data UpkeepMachineGen upkeepMachineNote endNote = UpkeepMachine {
   upkeepMachineNote :: upkeepMachineNote , 
   recordedMileage :: Int ,
   warrantyUpkeep :: Bool ,
-  endNote :: endNote }
+  endNote :: endNote ,
+  repair :: Bool }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
 
 newUpkeepMachine :: UpkeepMachine
-newUpkeepMachine = UpkeepMachine (pack "") 0 False (pack "")
+newUpkeepMachine = UpkeepMachine (pack "") 0 False (pack "") False

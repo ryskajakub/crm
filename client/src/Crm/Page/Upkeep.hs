@@ -360,9 +360,11 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
           updateUpkeepMachine $ ((fst machine) { UM.recordedMileage = i })) 
         (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation })
 
-    warranty = B.col (B.ColProps 1 nextFieldOffset) $ 
-      checkbox editing (UM.warrantyUpkeep $ fst machine) $ \warrantyUpkeep' ->
+    warrantyRepair = B.col (B.ColProps 1 nextFieldOffset) [warranty, repair] where
+      warranty = checkbox editing (UM.warrantyUpkeep . fst $ machine) $ \warrantyUpkeep' ->
         updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
+      repair = div' (class' "repair") $ checkbox editing (UM.repair . fst $ machine) $ \repair' ->
+        updateUpkeepMachine $ (fst machine) { UM.repair = repair' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
@@ -372,7 +374,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       "Další servis: " <> US.label_ nextUpkeepSequence
 
     in mkRow $ if closeUpkeep'
-      then [machineToggleCheckedLink] ++ (if showMileage then [recordedMileage] else []) ++ [warranty, note]
+      then [machineToggleCheckedLink] ++ (if showMileage then [recordedMileage] else []) ++ [warrantyRepair, note]
       else [machineToggleCheckedLink, nextUpkeepSequenceField, note]
 
   datePicker = let
@@ -394,7 +396,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
       B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
     B.col (B.mkColProps 2) $ strong "Motohodiny" ,
-    B.col (B.mkColProps 1) $ strong "Záruka" ] else [
+    B.col (B.mkColProps 1) $ strong "Záruka, Oprava*" ] else [
       B.col (B.mkColProps 2) $ strong "Typ servisu" ]) ++ [
     B.col (B.mkColProps noteColsSize) noteHeaders]
 
