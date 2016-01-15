@@ -47,7 +47,9 @@ nextServiceDate machine sequences upkeeps today = let
     daysToNextService  = truncate $ yearsToNextService * 365
     nextServiceDay     = addDays daysToNextService referenceDay
 
-  computedUpkeep = case upkeeps of
+  nonRepairUpkeeps = filter (not . UM.repair . snd) upkeeps
+
+  computedUpkeep = case nonRepairUpkeeps of
     [] -> let 
       intoOperationDate = case M.machineOperationStartDate machine of 
         Just operationStartDate' -> ymdToDay operationStartDate'
@@ -63,7 +65,7 @@ nextServiceDate machine sequences upkeeps today = let
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
 
-  openUpkeeps = filter (not . U.upkeepClosed . fst) upkeeps
+  openUpkeeps = filter (not . U.upkeepClosed . fst) $ nonRepairUpkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = fmap ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 
