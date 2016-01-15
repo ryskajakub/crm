@@ -208,11 +208,11 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
           BTN.button' (BTN.buttonProps {
             BTN.disabled = Defined $ if null machines' then True else False ,
             BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
-            [G.plus, text2DOM "Naplánovat servis" ] ,
+            [G.plus, text2DOM " Naplánovat servis" ] ,
         form' (class' "navbar-form") $
           BTN.button' (BTN.buttonProps {
             BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
-            [G.plus, text2DOM "Přidat kontaktní osobu" ] ,
+            [G.plus, text2DOM " Přidat kontaktní osobu" ] ,
         R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
         R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
           : contactPersonsHtml : (lastUpkeepRecommendation ++ machineBoxItemsHtml) ]]
