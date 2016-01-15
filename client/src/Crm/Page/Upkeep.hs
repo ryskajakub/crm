@@ -19,6 +19,7 @@ import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink       as A
+import qualified HaskellReact.Bootstrap.Nav       as BN
 
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Machine               as M
@@ -150,7 +151,7 @@ upkeepDetail ::
   DOMElement
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v dnf =
-  upkeepForm appState "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
+  upkeepForm appState router "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
     machines submitButton True employees selectedEmployees v dnf companyId
       where
         (_,upkeep,upkeepMachines) = upkeep3
@@ -179,7 +180,8 @@ upkeepNew ::
   V.Validation -> 
   DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification companyId es se v = 
-  upkeepForm appState pageHeader upkeep datePicker notCheckedMachines machines submitButton False es se v NoChoice companyId where
+  upkeepForm appState router pageHeader upkeep datePicker notCheckedMachines 
+      machines submitButton False es se v NoChoice companyId where
     (upkeepU, upkeepMachines) = upkeep
     (pageHeader, submitButton) = case upkeepIdentification of 
       Nothing -> let
@@ -210,6 +212,7 @@ mapEither _ (Right b) = Right b
 
 upkeepForm :: 
   Var D.AppState -> 
+  R.CrmRouter ->
   Text -> -- ^ page header
   (U.Upkeep, [(UM.UpkeepMachine')]) ->
   DP.DatePickerData ->
@@ -223,17 +226,18 @@ upkeepForm ::
   DisplayedNote ->
   C.CompanyId ->
   DOMElement
-upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' uncheckedMachines 
+upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker' uncheckedMachines 
     machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag companyId = let
   rawUpkeepDate = DP.rawText upkeepDatePicker'
   upkeepFormRows = 
-    [companyNameHeader] ++
-    [formHeader] ++
-    map upkeepMachineRow machines ++ 
+    (B.fullRow (BN.nav [ R.link [G.arrowLeft , text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ])) :
+    upkeepPageHeader : 
+    formHeader :
+    (map upkeepMachineRow machines ++ 
     [dateRow] ++ 
     employeeSelectRows ++
     closeUpkeepRows ++ 
-    [submitButtonRow]
+    [submitButtonRow])
 
   modify' :: (UD.UpkeepData -> UD.UpkeepData) -> Fay ()
   modify' fun = modify appState $ \appState' -> let
@@ -394,7 +398,7 @@ upkeepForm appState pageHeader (upkeep, upkeepMachines) upkeepDatePicker' unchec
       B.col (B.mkColProps 2) $ strong "Typ servisu" ]) ++ [
     B.col (B.mkColProps noteColsSize) noteHeaders]
 
-  companyNameHeader =  B.row $ pageInfo 
+  upkeepPageHeader = B.row $ pageInfo 
     pageHeader 
     (Just $ p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. ", text2DOM basicMarkupInfo ])
   validationMessages'' = V.messages validation
