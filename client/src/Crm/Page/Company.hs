@@ -7,6 +7,7 @@ module Crm.Page.Company (
   companyNew ) where
 
 import           Data.Text                        (fromString, length, (<>))
+import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id, length)
 import           Data.Var                         (Var, modify)
 import           Data.Maybe                       (onJust)
@@ -138,6 +139,12 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
     (nextServiceRow, healthColor) = maybe ([], "#000") (\nextService' -> 
       ([dt "Další servis" , dd $ displayDate nextService'], "#" <> computeColor nextService')) nextService
 
+    mkNonEmptyListElement label value = if T.null value
+      then []
+      else [
+        dt label ,
+        dd value ]
+
     in B.col (B.mkColProps 4) $
       B.panel [
         h3 [
@@ -151,19 +158,15 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
               (R.newMaintanceViaQuickLink companyId machineId')
               router ,
           span' ((class' "health") { style = Defined . Style $ healthColor }) "•" ] ,
-        dl $ [
-          dt "Druh" ,
-          dd . MK.kindToStringRepr . MT.kind $ machineType ,
-          dt "Uvedení do provozu" , 
-          dd $ maybe "" displayDate (M.machineOperationStartDate machine') ,
-          dt "Výrobní číslo" ,
-          dd $ M.serialNumber machine' ,
-          dt "Označení" ,
-          dd . M.label_ $ machine' ,
-          dt "Rok výroby" ,
-          dd $ M.yearOfManufacture machine' ,
-          dt "Kontaktní osoba" ,
-          dd $ maybe "" CP.name contactPerson] ++ nextServiceRow]
+        dl $ 
+          (mkNonEmptyListElement "Označení" (M.label_ $ machine')) ++ 
+          (mkNonEmptyListElement "Druh" (MK.kindToStringRepr . MT.kind $ machineType)) ++
+          (mkNonEmptyListElement "Uvedení do provozu" (maybe "" displayDate (M.machineOperationStartDate machine'))) ++
+          (mkNonEmptyListElement "Výrobní číslo" (M.serialNumber machine')) ++
+          (mkNonEmptyListElement "Označení" (M.label_ machine')) ++
+          (mkNonEmptyListElement "Rok výroby" (M.yearOfManufacture machine')) ++
+          (mkNonEmptyListElement "Kontaktní osoba" (maybe "" CP.name contactPerson)) ++
+          nextServiceRow ]
   machineBoxes = map mkMachineBox machines'
 
   deleteButton = BTN.button' (BTN.buttonProps {
