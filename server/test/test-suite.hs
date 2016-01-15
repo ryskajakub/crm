@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TupleSections #-}
 {-# OPTIONS_GHC -fno-warn-missing-fields #-}
 
 module Main where
@@ -190,9 +190,9 @@ repairUpkeep :: Assertion
 repairUpkeep = let
   upkeepMachine' = upkeepMachine { UM.repair = True }
   later = upkeep {
-    U.upkeepDate = fromGregorian 2016 1 1 }
+    U.upkeepDate = dayToYmd $ fromGregorian 2016 1 1 }
   earlier = upkeep {
-    U.upkeepDate = fromGregorian 2015 1 1 }
+    U.upkeepDate = dayToYmd $ fromGregorian 2015 1 1 }
   expectedResult = Computed $ fromGregorian 2016 12 31
   result = nextServiceDate machine (upkeepSequence, []) [(earlier, upkeepMachine), (later, upkeepMachine')] undefined
   in assertEqual "Repair must be skipped" expectedResult result
@@ -226,7 +226,7 @@ pickSmallestRepeatedSequence = let
   oneTimeUpkeepSequence = US.UpkeepSequence {
     US.repetition = 1000 ,
     US.oneTime = True }
-  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [upkeep] undefined
+  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [(upkeep, UM.newUpkeepMachine)] undefined
   expectedResult = Computed $ fromGregorian 2000 7 1
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
@@ -245,7 +245,7 @@ planned = let
   upkeep4 = U.Upkeep {
     U.upkeepClosed = True ,
     U.upkeepDate = dayToYmd $ fromGregorian 1999 1 1 }
-  result = nextServiceDate undefined undefined [upkeep4, upkeep2, upkeep1, upkeep3] undefined
+  result = nextServiceDate undefined undefined (fmap (,UM.newUpkeepMachine) [upkeep4, upkeep2, upkeep1, upkeep3]) undefined
   expectedResult = Planned date
   in assertEqual "Date must be minimum from planned: 2000 1 1" 
     expectedResult result
@@ -264,7 +264,7 @@ closedUpkeeps = let
     U.upkeepDate = dayToYmd $ fromGregorian 2000 1 1 }
   upkeep2 = upkeep1 {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
-  result = nextServiceDate machine (upkeepSequence, []) [upkeep1, upkeep2] undefined
+  result = nextServiceDate machine (upkeepSequence, []) (fmap (,UM.newUpkeepMachine) [upkeep1, upkeep2]) undefined
   expectedResult = Computed $ fromGregorian 2007 1 1
   in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
@@ -363,7 +363,7 @@ plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
   closedUpkeeps' = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
-  upkeeps = (plannedUpkeeps ++ closedUpkeeps')
+  upkeeps = fmap (,UM.newUpkeepMachine) (plannedUpkeeps ++ closedUpkeeps')
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
   nonArchivedMachine = M.Machine { M.archived = False }
