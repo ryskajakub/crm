@@ -188,7 +188,7 @@ startRouter appVar = startedRouter where
             [] V.new companyId (Right . UD.UpkeepNew $ Nothing)) router ) router ,
     contactPersonList' $-> \companyId ->
       fetchContactPersons companyId $ \data' -> let
-        ns = D.ContactPersonList data'
+        ns = D.ContactPersonList companyId data'
         in modify' ns ,
     maintenances' $-> \companyId ->
       fetchUpkeeps companyId $ \upkeepsData -> let

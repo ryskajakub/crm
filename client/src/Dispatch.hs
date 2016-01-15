@@ -93,7 +93,8 @@ main' = do
         emptyCallback $ newEmployeeForm router employee appVar' takenColours
       D.ContactPersonPage contactPerson identification companyId -> n $
         emptyCallback $ contactPersonForm router contactPerson identification companyId appVar'
-      D.ContactPersonList contactPersons -> n $ emptyCallback $ contactPersonsList router contactPersons
+      D.ContactPersonList companyId contactPersons -> n $ emptyCallback $ 
+        contactPersonsList companyId router contactPersons
       D.ExtraFields _ showSuccess editedKind allSettings -> n $ 
         emptyCallback $ machineKindSettings appVar' showSuccess editedKind allSettings router
       D.MachinesSchema machines -> n $ schema machines

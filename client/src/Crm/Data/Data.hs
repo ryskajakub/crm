@@ -71,6 +71,7 @@ data NavigationState =
     identification :: Maybe CP.ContactPersonId ,
     companyId :: C.CompanyId } |
   ContactPersonList {
+    companyId :: C.CompanyId ,
     contactPersons :: [CP.ContactPerson'] } |
   ExtraFields {
     series :: Int ,

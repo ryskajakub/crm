@@ -6,28 +6,31 @@ module Crm.Page.ContactPerson (
   contactPersonsList' ,
   contactPersonForm ) where
 
-import           Data.Text                     (fromString, length)
-import           Prelude                       hiding (div, length)
-import           Data.Var                      (Var, modify)
-import           FFI                           (Defined (Defined))
+import           Data.Text                        (fromString, length)
+import           Prelude                          hiding (div, length)
+import           Data.Var                         (Var, modify)
+import           FFI                              (Defined (Defined))
 
-import           HaskellReact                  hiding (form)
-import qualified HaskellReact.Bootstrap        as B
-import qualified HaskellReact.Bootstrap.Button as BTN
+import           HaskellReact                     hiding (form)
+import qualified HaskellReact.Bootstrap           as B
+import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Nav       as BN
 
-import qualified Crm.Shared.Company            as C
-import qualified Crm.Shared.ContactPerson      as CP
+import qualified Crm.Shared.Company               as C
+import qualified Crm.Shared.ContactPerson         as CP
 
 import           Crm.Component.Form
-import           Crm.Helpers                   (pageInfo, validationHtml)
-import           Crm.Server                    (createContactPerson, updateContactPerson, deleteContactPerson)
-import qualified Crm.Data.Data                 as D
-import qualified Crm.Router                    as R
+import           Crm.Helpers                      (pageInfo, validationHtml)
+import           Crm.Server                       (createContactPerson, updateContactPerson, deleteContactPerson)
+import qualified Crm.Data.Data                    as D
+import qualified Crm.Router                       as R
 
 
-contactPersonsList' :: R.CrmRouter
-                    -> [(CP.ContactPersonId, CP.ContactPerson)]
-                    -> DOMElement
+contactPersonsList' :: 
+  R.CrmRouter -> 
+  [(CP.ContactPersonId, CP.ContactPerson)] -> 
+  DOMElement
 contactPersonsList' router contactPersons = mkTable where
   mkTable = B.row [
     B.col (B.mkColProps 12) $ h2 "Kontakní osoby" ,
@@ -43,18 +46,23 @@ contactPersonsList' router contactPersons = mkTable where
     td $ CP.position contactPerson ]
 
 
-contactPersonsList :: R.CrmRouter
-                   -> [(CP.ContactPersonId, CP.ContactPerson)]
-                   -> DOMElement
-contactPersonsList p1 p2 = B.grid $
-  contactPersonsList' p1 p2
+contactPersonsList :: 
+  C.CompanyId ->
+  R.CrmRouter -> 
+  [(CP.ContactPersonId, CP.ContactPerson)] -> 
+  DOMElement
+contactPersonsList companyId router persons = B.grid [
+  B.fullRow $ BN.nav [ R.link [G.arrowLeft, text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ] ,
+  contactPersonsList' router persons ]
 
-contactPersonForm :: R.CrmRouter 
-                  -> CP.ContactPerson
-                  -> Maybe CP.ContactPersonId
-                  -> C.CompanyId
-                  -> Var D.AppState
-                  -> DOMElement
+
+contactPersonForm :: 
+  R.CrmRouter -> 
+  CP.ContactPerson -> 
+  Maybe CP.ContactPersonId -> 
+  C.CompanyId -> 
+  Var D.AppState -> 
+  DOMElement
 contactPersonForm router contactPerson identification companyId appVar = mkForm where
 
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ form : validations
@@ -87,7 +95,8 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
         (R.navigate (R.contactPersonList companyId) router)
         router, [deleteButton'])
 
-  form = div' (class' "contact-person") $ B.grid $ (B.row $ pageInfo') : [
+  backToCompany = BN.nav [R.link [G.arrowLeft, text2DOM " Zpět na firmu"] (R.companyDetail companyId) router]
+  form = div' (class' "contact-person") $ B.grid $ (B.fullRow backToCompany) : (B.row $ pageInfo') : [
     inputRow'
       "Jméno" 
       (SetValue $ CP.name contactPerson)
