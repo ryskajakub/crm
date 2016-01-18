@@ -118,7 +118,7 @@ singleCompany = mkConstHandler' jsonO $ do
   companies <- withResource pool $ \connection -> liftIO $ runQuery connection (companyByIdCompanyQuery companyId)
   (company :: C.Company) <- singleRowOrColumn companies
   machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery companyId connection
-  let machinesMyMaybe = fmap ($(updateAtN 8 5) toMyMaybe) machines
+  let machinesMyMaybe = fmap ($(updateAtN 8 5) toMyMaybe . $(updateAtN 8 7) toMyMaybe) machines
   nextServiceDates <- withResource pool $ \connection -> liftIO $ forM machinesMyMaybe $ 
     \machine -> addNextDates $(proj 8 0) $(proj 8 1) machine connection
   cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery companyId

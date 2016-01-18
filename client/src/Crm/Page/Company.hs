@@ -166,6 +166,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
           (mkNonEmptyListElement "Označení" (M.label_ machine')) ++
           (mkNonEmptyListElement "Rok výroby" (M.yearOfManufacture machine')) ++
           (mkNonEmptyListElement "Kontaktní osoba" (maybe "" CP.name contactPerson)) ++
+          (mkNonEmptyListElement "Poslední servis" (maybe "" (displayDate . U.upkeepDate) lastUpkeep)) ++
           nextServiceRow ]
   machineBoxes = map mkMachineBox machines'
 

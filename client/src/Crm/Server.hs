@@ -321,7 +321,7 @@ fetchCompany companyId callback =
     companyId
     (callback . (\(a0, a1, a2) -> 
       (a0, a1, (map (\((a,b,c,d,e,f,M.MachineId linkageId,g),h) -> 
-        (a,b,c,d,e,toMaybe f,swapMaybe M.MachineId linkageId,toMaybe h,g))) a2)))
+        (a,b,c,d,e,toMaybe f,swapMaybe M.MachineId linkageId,toMaybe h,toMaybe g))) a2)))
 
 swapMaybe :: 
   (a -> b) ->

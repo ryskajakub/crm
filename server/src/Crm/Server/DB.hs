@@ -675,16 +675,23 @@ machinesInCompanyQuery companyId = let
     (machinesQ companyId)
     contactPersonsQuery 
     (\((machineRow,_), cpRow) -> _contactPersonFK machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
-  lastUpkeepForMachineQ = limit 1 $ orderBy (desc ($(proj 6 1) . fst)) $ proc () -> do
+  lastUpkeepForMachineQ = AGG.aggregate (p2(AGG.max, AGG.groupBy)) $ proc () -> do
     umRow <- queryTable upkeepMachinesTable -< ()
     uRow <- join . queryTable $ upkeepsTable -< $(proj 7 0) umRow
-    returnA -< (uRow, umRow)
+    returnA -< ($(proj 6 1) uRow, $(proj 7 2) umRow)
+  lastUpkeepsQ = proc () -> do
+    (upkeepDate, upkeepMachineFK) <- lastUpkeepForMachineQ -< ()
+    umRow <- queryTable upkeepMachinesTable -< ()
+    restrict -< $(proj 7 2) umRow .=== upkeepMachineFK
+    upkeepRow <- join . queryTable $ upkeepsTable -< $(proj 7 0) umRow
+    restrict -< $(proj 6 1) upkeepRow .== upkeepDate
+    returnA -< (upkeepRow, upkeepMachineFK)
   withLastUpkeep = leftJoin
     machinesContactPersonsQ
-    lastUpkeepForMachineQ
-    (\(machine, upkeep) -> (_machinePK . fst . fst $ machine) .=== (M.MachineId . $(proj 7 2) . snd $ upkeep))
+    lastUpkeepsQ
+    (\(machine, upkeep) -> (_machinePK . fst . fst $ machine) .=== (M.MachineId . snd $ upkeep))
   in proc () -> do
-    (((a,b),c),(d,_::UpkeepMachinesLeftJoinTable)) <- withLastUpkeep -< ()
+    (((a,b),c),(d,_::MBInt)) <- withLastUpkeep -< ()
     returnA -< (a,b,c,d)
 
 machinesInCompanyQuery' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable)
