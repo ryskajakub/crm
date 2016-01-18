@@ -188,15 +188,24 @@ type DBText = Column PGText
 type DBDate = Column PGDate
 type DBBool = Column PGBool
 
+type MBInt = Column (Nullable PGInt4)
+type MBInt8 = Column (Nullable PGInt8)
+type MBText = Column (Nullable PGText)
+type MBDate = Column (Nullable PGDate)
+type MBBool = Column (Nullable PGBool)
+
 type ContactPersonsTable = (DBInt, DBInt, DBText, DBText, DBText)
 type ContactPersonsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGInt4), 
   Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
 type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
 type UpkeepsTable = (DBInt, DBDate, DBBool, DBText, DBText, DBText)
+type UpkeepsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGDate), Column (Nullable PGBool), 
+  Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
 type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, DBText, DBText, DBText)
 
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText, DBBool)
+type UpkeepMachinesLeftJoinTable = (MBInt, MBText, MBInt, MBInt, MBBool, MBText, MBBool)
 
 type EmployeeTable = (DBInt, DBText, DBText, DBText, DBText)
 type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText), Column (Nullable PGText),
@@ -446,6 +455,7 @@ type ContactPersonMapped = (CP.ContactPersonId, C.CompanyId, CP.ContactPerson)
 type MaybeContactPersonMapped = (Maybe CP.ContactPersonId, Maybe C.CompanyId, Maybe CP.ContactPerson)
 type MaybeEmployeeMapped = (Maybe E.EmployeeId, Maybe E.Employee)  
 type UpkeepMapped = (U.UpkeepId, U.Upkeep)
+type MaybeUpkeepMapped = (Maybe U.UpkeepId, Maybe U.Upkeep)
 type EmployeeMapped = (E.EmployeeId, E.Employee)
 type UpkeepSequenceMapped = (MT.MachineTypeId, US.UpkeepSequence)
 type UpkeepMachineMapped = (U.UpkeepId, M.MachineId, UM.UpkeepMachine)
@@ -481,6 +491,10 @@ instance ColumnToRecord (Int, Day, Bool, Text, Text, Text) UpkeepMapped where
   convert tuple = let
     (_,a,b,c,d,e) = tuple
     in (U.UpkeepId $ $(proj 6 0) tuple, U.Upkeep (dayToYmd a) b c d e)
+instance ColumnToRecord (Maybe Int, Maybe Day, Maybe Bool, Maybe Text, Maybe Text, Maybe Text) MaybeUpkeepMapped where
+  convert tuple = let
+    (_,a,b,c,d,e) = tuple
+    in (U.UpkeepId `fmap` $(proj 6 0) tuple, pure U.Upkeep <*> (dayToYmd `fmap` a) <*> b <*> c <*> d <*> e)
 instance ColumnToRecord (Int, Text, Text, Text, Text) EmployeeMapped where
   convert tuple = (E.EmployeeId $ $(proj 5 0) tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
@@ -655,15 +669,23 @@ machinesQ companyId = orderBy (asc(\(machine, _) -> C.getCompanyId . _companyFK 
 
 machinesInCompanyQuery :: 
   C.CompanyId -> 
-  Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable)
+  Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable, UpkeepsLeftJoinTable)
 machinesInCompanyQuery companyId = let
-  joined = leftJoin 
+  machinesContactPersonsQ = leftJoin 
     (machinesQ companyId)
     contactPersonsQuery 
     (\((machineRow,_), cpRow) -> _contactPersonFK machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
+  lastUpkeepForMachineQ = limit 1 $ orderBy (desc ($(proj 6 1) . fst)) $ proc () -> do
+    umRow <- queryTable upkeepMachinesTable -< ()
+    uRow <- join . queryTable $ upkeepsTable -< $(proj 7 0) umRow
+    returnA -< (uRow, umRow)
+  withLastUpkeep = leftJoin
+    machinesContactPersonsQ
+    lastUpkeepForMachineQ
+    (\(machine, upkeep) -> (_machinePK . fst . fst $ machine) .=== (M.MachineId . $(proj 7 2) . snd $ upkeep))
   in proc () -> do
-    ((a,b),c) <- joined -< ()
-    returnA -< (a,b,c)
+    (((a,b),c),(d,_::UpkeepMachinesLeftJoinTable)) <- withLastUpkeep -< ()
+    returnA -< (a,b,c,d)
 
 machinesInCompanyQuery' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable)
 machinesInCompanyQuery' (U.UpkeepId upkeepId) = let
@@ -971,17 +993,21 @@ companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = distinct $ proc () -> do
   returnA -< C._companyCore companyRow
 
 runMachinesInCompanyQuery :: C.CompanyId -> Connection -> 
-  IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType, Maybe CP.ContactPerson, M.MachineId' (Maybe Int))]
+  IO [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+    MT.MachineType, Maybe CP.ContactPerson, M.MachineId' (Maybe Int), Maybe U.Upkeep)]
 runMachinesInCompanyQuery companyId connection = do
   rows <- runQuery connection (machinesInCompanyQuery companyId)
   let 
     mapRow row = let
-      (machineType :: MachineTypeMapped, contactPerson :: MaybeContactPersonMapped) = 
-        (convert . (\(_,x,_) -> x) $ row, convert . (\(_,_,x) -> x) $ row)
+      (machineType :: MachineTypeMapped, contactPerson :: MaybeContactPersonMapped, 
+          upkeepMapped :: MaybeUpkeepMapped) = 
+        (convert . (\(_,x,_,_) -> x) $ row, 
+          convert . (\(_,_,x,_) -> x) $ row,
+          convert . (\(_,_,_,x) -> x) $ row)
       (machineRecord :: MachineRecord) = 
-        over (machine . M.operationStartDateL) (fmap dayToYmd) $ (\(x,_,_) -> x) row
+        over (machine . M.operationStartDateL) (fmap dayToYmd) $ (\(x,_,_,_) -> x) row
       in (_machinePK machineRecord, _machine machineRecord, _companyFK machineRecord, sel1 machineType, 
-        sel2 machineType, sel3 contactPerson, _linkageFK machineRecord)
+        sel2 machineType, sel3 contactPerson, _linkageFK machineRecord, $(proj 2 1) upkeepMapped)
   return $ fmap mapRow rows
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 

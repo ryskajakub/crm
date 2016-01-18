@@ -86,7 +86,7 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   let (company :: C.CompanyRecord) = over C.companyCoords C.mapCoordinates companyRow
   machines <- liftIO $ runMachinesInCompanyQuery companyId connection
   nextDays <- liftIO $ forM machines $ \machine -> do
-    nextServiceDay <- addNextDates $(proj 7 0) $(proj 7 1) machine connection
+    nextServiceDay <- addNextDates $(proj 8 0) $(proj 8 1) machine connection
     return $ case nextServiceDay of
       Planned _  -> Nothing
       Computed d -> Just d
