@@ -131,7 +131,7 @@ import           Control.Arrow                        (returnA, (^<<))
 import           Control.Applicative                  ((<*>), pure)
 import           Control.Monad                        (forM_)
 import           Control.Lens                         (view, _2, over, makeLenses, _1, mapped)
-import           Data.List                            (intersperse)
+import           Data.List                            (intersperse, nubBy)
 import           Data.Monoid                          ((<>))
 
 import           Control.Monad.Error.Class            (throwError)
@@ -1015,7 +1015,7 @@ runMachinesInCompanyQuery companyId connection = do
         over (machine . M.operationStartDateL) (fmap dayToYmd) $ (\(x,_,_,_) -> x) row
       in (_machinePK machineRecord, _machine machineRecord, _companyFK machineRecord, sel1 machineType, 
         sel2 machineType, sel3 contactPerson, _linkageFK machineRecord, $(proj 2 1) upkeepMapped)
-  return $ fmap mapRow rows
+  return . nubBy (\a0 a1 -> $(proj 8 0) a0 == $(proj 8 0) a1) . fmap mapRow $ rows
 
 runExpandedMachinesQuery' :: Maybe Int -> Connection 
   -> IO [(MachineRecord, (Int, Int, Text, Text))]
