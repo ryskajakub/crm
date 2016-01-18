@@ -121,7 +121,7 @@ companyDetail ::
   [CP.ContactPerson'] ->
   (C.CompanyId, C.Company) -> -- ^ company, which data are displayed on this screen
   [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-    MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay)] -> -- ^ machines of the company
+    MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay, Maybe U.Upkeep)] -> -- ^ machines of the company
   Maybe U.Upkeep ->
   DOMElement -- ^ company detail page fraction
 companyDetail editing' router var contactPersons (companyId, company') machines' lastUpkeep' = let
@@ -135,7 +135,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
       cd @ (D.CompanyDetail {}) -> cd { D.company = modifiedCompany }
       _ -> D.navigation appState })
 
-  mkMachineBox (machineId', machine', _, _, machineType, contactPerson, nextService) = let 
+  mkMachineBox (machineId', machine', _, _, machineType, contactPerson, nextService, lastUpkeep) = let 
     (nextServiceRow, healthColor) = maybe ([], "#000") (\nextService' -> 
       ([dt "Další servis" , dd $ displayDate nextService'], "#" <> computeColor nextService')) nextService
 

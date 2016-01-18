@@ -313,15 +313,15 @@ fetchContactPersons = XCCP.list maxCount
 
 fetchCompany :: C.CompanyId -- ^ company id
              -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay)]) -> Fay ()) -- ^ callback
+                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay, Maybe U.Upkeep)]) -> Fay ()) -- ^ callback
               -> R.CrmRouter
              -> Fay ()
 fetchCompany companyId callback = 
   XC.bySingle
     companyId
     (callback . (\(a0, a1, a2) -> 
-      (a0, a1, (map (\((a,b,c,d,e,f,M.MachineId linkageId),h) -> 
-        (a,b,c,d,e,toMaybe f,swapMaybe M.MachineId linkageId,toMaybe h))) a2)))
+      (a0, a1, (map (\((a,b,c,d,e,f,M.MachineId linkageId,g),h) -> 
+        (a,b,c,d,e,toMaybe f,swapMaybe M.MachineId linkageId,toMaybe h,g))) a2)))
 
 swapMaybe :: 
   (a -> b) ->

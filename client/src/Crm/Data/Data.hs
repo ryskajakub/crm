@@ -37,7 +37,7 @@ data NavigationState =
     contactPersons :: [CP.ContactPerson'] ,
     editing :: InputState , 
     companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-      MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay)] ,
+      MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay, Maybe U.Upkeep)] ,
     lastUpkeep :: Maybe U.Upkeep } | 
   CompanyNew {
     company :: C.Company } | 

@@ -47,7 +47,7 @@ startRouter appVar = startedRouter where
   modify' newState = modify appVar (\appState -> appState { D.navigation = newState })
   withCompany' :: C.CompanyId
                -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId,
-                  MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay)]) -> D.NavigationState)
+                  MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay, Maybe U.Upkeep)]) -> D.NavigationState)
                -> CrmRouter
                -> Fay ()
   withCompany' companyId newStateFun = 
@@ -140,7 +140,7 @@ startRouter appVar = startedRouter where
           fetchRecommendation companyId (\(lastUpkeep') -> let
             lastUpkeep = snd `onJust` lastUpkeep'
             in fetchCompany companyId (\(company, contactPersons, machines) -> let
-              ignoreLinkage = map $ \(a,b,c,d,e,f,_,g) -> (a,b,c,d,e,f,g)
+              ignoreLinkage = map $ \(a,b,c,d,e,f,_,g,h) -> (a,b,c,d,e,f,g,h)
               in modify appVar $ \appState -> appState {
                 D.navigation = D.CompanyDetail 
                   companyId company contactPersons Display (ignoreLinkage machines) lastUpkeep } ) router ) router ,
@@ -157,7 +157,7 @@ startRouter appVar = startedRouter where
       withCompany'
         companyId $
         \(_, _, machines) -> let
-          pickMachines = map $ \(a,b,_,_,c,_,d,_) -> (a,b,c,d)
+          pickMachines = map $ \(a,b,_,_,c,_,d,_,_) -> (a,b,c,d)
           in D.MachinesSchema $ pickMachines machines ,
     newMachinePhase2' $-> \companyId router -> do
       appState <- get appVar
