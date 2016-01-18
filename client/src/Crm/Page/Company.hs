@@ -196,7 +196,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
 
   lastUpkeepRecommendation :: [DOMElement]
   lastUpkeepRecommendation = maybe [] (\lastUpkeep -> (:[]) . B.row $ B.col (B.mkColProps 12) [
-    h2 "Doporučení z posledního servisu" ,
+    h2 $ "Doporučení z posledního servisu - " <> (displayDate . U.upkeepDate $ lastUpkeep) ,
     p . U.recommendation $ lastUpkeep ]) lastUpkeep'
 
   contactPersonsHtml = contactPersonsList' router contactPersons
