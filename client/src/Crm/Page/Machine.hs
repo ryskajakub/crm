@@ -52,6 +52,18 @@ import           Crm.Helpers
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
 
+machineTypeLabel :: Text
+machineTypeLabel = "Typ zařízení" 
+
+machineTypeDisplayRow :: 
+  MT.MachineType -> 
+  DOMElement
+machineTypeDisplayRow machineType =
+  inputRow
+    Display
+    machineTypeLabel
+    (SetValue . MT.machineTypeName $ machineType) 
+    (const . return $ ())
 
 machineDetail :: 
   InputState -> 
@@ -76,10 +88,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields =
 
-  rmap (\x -> x >> fetchPhotos) (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
+  (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields 
-      companyId router)
+      companyId router machineTypeInputRow, fetchPhotos >> machineTypeCB)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
@@ -200,6 +212,22 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     Nothing
     router
 
+  (machineTypeInputRow, machineTypeCB) = let
+    (machineTypeAutocomplete, cb) = 
+      autocompleteInput
+        inputNormalAttrs
+        (const . return $ ())
+        (const . return $ ())
+        (\a b -> fetchMachineTypesAutocomplete a b router)
+        "machine-type-edit-autocomplete"
+        (I.mkInputAttrs { I.defaultValue = Defined . MT.machineTypeName . fst $ machineTypeTuple })
+    changeInputRow = oneElementRow
+      machineTypeLabel
+      machineTypeAutocomplete
+    in case editing of
+      Editing -> (changeInputRow, cb)
+      Display -> (machineTypeDisplayRow . fst $ machineTypeTuple, return ())
+
 
 machineNew :: 
   R.CrmRouter -> 
@@ -218,10 +246,10 @@ machineNew ::
   DOMElement
 machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId machineTypeTuple machineTypeId 
     (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
-  fst $ machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
+  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
     datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
     Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
-    companyId router
+    companyId router (machineTypeDisplayRow (fst machineTypeTuple))
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   machineTypeEither = case machineTypeId of
@@ -292,10 +320,11 @@ machineDisplay ::
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] ->
   C.CompanyId ->
   R.CrmRouter ->
-  (DOMElement, Fay ())
-machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage)
-    (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
-    contactPersons validation otherMachineId otherMachines extraFields companyId router = (mkGrid, machineTypeCB) where
+  DOMElement ->
+  DOMElement
+machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage) (machineType, 
+    upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight) contactPersons 
+    validation otherMachineId otherMachines extraFields companyId router machineTypeRow = mkGrid where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -418,35 +447,13 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     MK.VacuumPump -> usageRows
     _ -> []
 
-  (machineTypeInputRow, machineTypeCB) = let
-    machineTypeLabel = "Typ zařízení" 
-    displayInputRow = inputRow
-      Display
-      machineTypeLabel
-      (SetValue . MT.machineTypeName $ machineType) 
-      (const . return $ ())
-    (machineTypeAutocomplete, cb) = 
-      autocompleteInput
-        inputNormalAttrs
-        (const . return $ ())
-        (const . return $ ())
-        (\a b -> fetchMachineTypesAutocomplete a b router)
-        "machine-type-edit-autocomplete"
-        (I.mkInputAttrs { I.defaultValue = Defined . MT.machineTypeName $ machineType })
-    changeInputRow = oneElementRow
-      machineTypeLabel
-      machineTypeAutocomplete
-    in case editing of
-      Editing -> (changeInputRow, cb)
-      Display -> (displayInputRow, return ())
-
   formInputs = [
     inputRow
       Display
       "Druh zařízení"
       (SetValue . MK.kindToStringRepr . MT.kind $ machineType)
       (const . return $ ()) ,
-    machineTypeInputRow ,
+    machineTypeRow ,
     inputRow
       Display
       "Výrobce"
