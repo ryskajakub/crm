@@ -19,6 +19,7 @@ import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny                    as J
 import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Tag.Image                as IMG
+import qualified HaskellReact.Tag.Input                as I
 import           HaskellReact.Bootstrap.Carousel       (carousel)
 import qualified HaskellReact.BackboneRouter           as BR
 import qualified HaskellReact.Bootstrap.Nav            as BN
@@ -44,6 +45,7 @@ import qualified Crm.Data.MachineData                  as MD
 import qualified Crm.Data.Data                         as D
 import qualified Crm.Component.DatePicker              as DP
 import           Crm.Component.Form
+import           Crm.Component.Autocomplete
 import           Crm.Server 
 import qualified Crm.Runtime                           as Runtime
 import           Crm.Helpers 
@@ -74,10 +76,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields =
 
-  (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
+  rmap (\x -> x >> fetchPhotos) (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields 
-      companyId router, fetchPhotos)
+      companyId router)
   where
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
@@ -216,7 +218,7 @@ machineNew ::
   DOMElement
 machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId machineTypeTuple machineTypeId 
     (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
-  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
+  fst $ machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
     datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
     Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
     companyId router
@@ -290,10 +292,10 @@ machineDisplay ::
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] ->
   C.CompanyId ->
   R.CrmRouter ->
-  DOMElement
+  (DOMElement, Fay ())
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage)
     (machineType, upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight)
-    contactPersons validation otherMachineId otherMachines extraFields companyId router = mkGrid where
+    contactPersons validation otherMachineId otherMachines extraFields companyId router = (mkGrid, machineTypeCB) where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -416,17 +418,35 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     MK.VacuumPump -> usageRows
     _ -> []
 
+  (machineTypeInputRow, machineTypeCB) = let
+    machineTypeLabel = "Typ zařízení" 
+    displayInputRow = inputRow
+      Display
+      machineTypeLabel
+      (SetValue . MT.machineTypeName $ machineType) 
+      (const . return $ ())
+    (machineTypeAutocomplete, cb) = 
+      autocompleteInput
+        inputNormalAttrs
+        (const . return $ ())
+        (const . return $ ())
+        (\a b -> fetchMachineTypesAutocomplete a b router)
+        "machine-type-edit-autocomplete"
+        (I.mkInputAttrs { I.defaultValue = Defined . MT.machineTypeName $ machineType })
+    changeInputRow = oneElementRow
+      machineTypeLabel
+      machineTypeAutocomplete
+    in case editing of
+      Editing -> (changeInputRow, cb)
+      Display -> (displayInputRow, return ())
+
   formInputs = [
     inputRow
       Display
       "Druh zařízení"
       (SetValue . MK.kindToStringRepr . MT.kind $ machineType)
       (const . return $ ()) ,
-    inputRow
-      Display
-      "Typ zařízení" 
-      (SetValue $ MT.machineTypeName machineType) 
-      (const $ return ()) ,
+    machineTypeInputRow ,
     inputRow
       Display
       "Výrobce"
