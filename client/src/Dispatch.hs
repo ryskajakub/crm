@@ -58,16 +58,16 @@ main' = do
       D.CompanyDetail companyId' company' contactPersons editing' machines' lastUpkeep -> n $
         emptyCallback (companyDetail editing' router appVar' contactPersons (companyId', company') machines' lastUpkeep)
       D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')
-      D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar 
-          companyPersonId companyPersons v otherMachineId otherMachines extraFields machinePageMode) ->
+      D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar companyPersonId 
+          companyPersons v otherMachineId otherMachines extraFields machineTypeId machinePageMode) ->
         n $ case machinePageMode of
-          Left (MD.MachineDetail machineId nextService editing _ photos upkeeps companyId) ->
+          Left (MD.MachineDetail machineId nextService editing photos upkeeps companyId) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine 
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons v 
-              otherMachineId otherMachines extraFields
-          Right (MD.MachineNew companyId maybeMachineTypeId (contactPerson, contactPersonActiveRow)) -> 
+              otherMachineId otherMachines extraFields machineTypeId
+          Right (MD.MachineNew companyId (contactPerson, contactPersonActiveRow)) -> 
             emptyCallback $ machineNew router appVar' operationStartCalendar machine
-              companyId machineTypeTuple maybeMachineTypeId (contactPerson, companyPersonId, 
+              companyId machineTypeTuple machineTypeId (contactPerson, companyPersonId, 
               contactPersonActiveRow) companyPersons v otherMachineId otherMachines extraFields
       D.UpkeepScreen (UD.UpkeepData (upkeep @ (u2,u3)) machines notCheckedMachines
         upkeepDatePicker employees selectedEmployees validation companyId upkeepPageMode) -> n $

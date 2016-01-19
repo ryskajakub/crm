@@ -83,10 +83,11 @@ machineDetail ::
   Maybe M.MachineId -> 
   [(M.MachineId, M.Machine)] -> 
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
+  Maybe MT.MachineTypeId ->
   (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v otherMachineId om extraFields =
+    contactPersonId contactPersons v otherMachineId om extraFields machineTypeId' =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
@@ -185,8 +186,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   setEditing :: InputState -> Fay ()
   setEditing editing' = modify appVar (\appState -> appState {
     D.navigation = case D.navigation appState of
-      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e _ f g i j))) ->
-        D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 (Left (MD.MachineDetail d e editing' f g i j)))
+      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (MD.MachineDetail d e _ f g i))) ->
+        D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (MD.MachineDetail d e editing' f g i)))
       _ -> D.navigation appState })
   editButtonRow =
     div' (class' "col-md-3") $
@@ -297,7 +298,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
   changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
   changeNavigationState f = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
+      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
         D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
       _ -> D.navigation appState }
 

@@ -174,9 +174,9 @@ startRouter appVar = startedRouter where
         fetchExtraFieldSettings (\efSettings -> let
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
-          in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineTypeTuple
-            (DP.DatePickerData nowYMD False "") Nothing cps V.new Nothing otherMachines extraFieldsAdapted 
-              (Right $ MD.MachineNew companyId maybeMachineTypeId (CP.newContactPerson, MD.ById))) router ) router ) router ,
+          in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineTypeTuple (DP.DatePickerData 
+            nowYMD False "") Nothing cps V.new Nothing otherMachines extraFieldsAdapted maybeMachineTypeId 
+              (Right $ MD.MachineNew companyId (CP.newContactPerson, MD.ById))) router ) router ) router ,
     newMaintenance' $-> \companyId router -> 
       fetchUpkeepData companyId (\ud ->
         fetchEmployees (\employees -> let
@@ -202,12 +202,12 @@ startRouter appVar = startedRouter where
             let 
               machineTriple = (machine, showInt . M.mileagePerYear $ machine)
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
-            in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId ( \otherMachines -> 
+            in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId (\otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
                 machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
-                  contactPersonId cps V.new otherMachineId otherMachines extraFields''
+                  contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
                     (Left $ MD.MachineDetail machineId machineNextService 
-                      Display machineTypeId photos upkeeps companyId) ) router ) router ) router ) router ,
+                      Display photos upkeeps companyId)) router ) router ) router ) router ,
     plannedUpkeeps' $-> ( const $
       fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''

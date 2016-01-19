@@ -34,18 +34,17 @@ data MachineData = MachineData {
   otherMachineId :: Maybe MachineId ,
   otherMachines :: [(MachineId, Machine)] ,
   extraFields :: [(ExtraFieldId, MachineKindSpecific, Text)] ,
+  machineTypeId :: Maybe MachineTypeId ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {
   machineId :: MachineId ,
   machineNextService :: Maybe YearMonthDay ,
   formState :: InputState ,
-  machineTypeId :: MachineTypeId ,
   photos :: [(PhotoId, PhotoMeta)] ,
   upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, [Employee])] ,
   companyId' :: CompanyId }
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,
-  maybeMachineTypeId :: Maybe MachineTypeId ,
   contactPersonNew :: (ContactPerson, ContactPersonInMachine) }
