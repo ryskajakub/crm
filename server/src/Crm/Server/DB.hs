@@ -1008,11 +1008,11 @@ runMachinesInCompanyQuery companyId connection = do
     mapRow row = let
       (machineType :: MachineTypeMapped, contactPerson :: MaybeContactPersonMapped, 
           upkeepMapped :: MaybeUpkeepMapped) = 
-        (convert . (\(_,x,_,_) -> x) $ row, 
-          convert . (\(_,_,x,_) -> x) $ row,
-          convert . (\(_,_,_,x) -> x) $ row)
+        (convert . $(proj 4 1) $ row, 
+          convert . $(proj 4 2) $ row,
+          convert . $(proj 4 3) $ row)
       (machineRecord :: MachineRecord) = 
-        over (machine . M.operationStartDateL) (fmap dayToYmd) $ (\(x,_,_,_) -> x) row
+        over (machine . M.operationStartDateL) (fmap dayToYmd) $ $(proj 4 0) row
       in (_machinePK machineRecord, _machine machineRecord, _companyFK machineRecord, sel1 machineType, 
         sel2 machineType, sel3 contactPerson, _linkageFK machineRecord, $(proj 2 1) upkeepMapped)
   return . nubBy (\a0 a1 -> $(proj 8 0) a0 == $(proj 8 0) a1) . fmap mapRow $ rows
