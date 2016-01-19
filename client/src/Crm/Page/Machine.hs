@@ -224,7 +224,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     (machineTypeAutocomplete, cb) = 
       autocompleteInput
         inputNormalAttrs
-        (const . return $ ())
+        (const $ changeNavigationState $ \md -> let
+          emptyMachineType = (fst machineTypeTuple) {
+            MT.machineTypeManufacturer = "???" }
+          in md {
+            MD.machineTypeTuple = (emptyMachineType, snd machineTypeTuple) ,
+            MD.machineTypeId = Nothing })
         (\text -> if text /= "" 
           then fetchMachineType text (\maybeTuple -> case maybeTuple of
             Just (machineTypeId', machineType', _, sequences) -> do

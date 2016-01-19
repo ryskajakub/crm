@@ -14,7 +14,7 @@ data ValidationFail =
   MthNumber M.MachineId |
   MachineUsageNumber |
   MachineInitialMileageNumber |
-  MachineTypeSelected
+  MachineTypeNotSelected
   deriving Eq
 
 
