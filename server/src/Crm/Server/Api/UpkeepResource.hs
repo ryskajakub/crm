@@ -65,9 +65,10 @@ import           TupleTH                     (proj, catTuples, dropTuple)
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
 
-addUpkeep :: Connection
-          -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId])
-          -> IO U.UpkeepId -- ^ id of the upkeep
+addUpkeep :: 
+  Connection -> 
+  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId]) -> 
+  IO U.UpkeepId -- ^ id of the upkeep
 addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
   upkeepIds <- runInsertReturning
     connection
@@ -127,11 +128,12 @@ updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, empl
       updateUpkeep connection upkeepId upkeepTuple employeeIds
     recomputeWhole pool cache
 
-updateUpkeep :: Connection
-             -> U.UpkeepId
-             -> (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])
-             -> [E.EmployeeId]
-             -> IO ()
+updateUpkeep :: 
+  Connection -> 
+  U.UpkeepId -> 
+  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)]) -> 
+  [E.EmployeeId] -> 
+  IO ()
 updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
   _ <- let
     condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
@@ -194,10 +196,11 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map 
     (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
 
-loadNextServiceTypeHint :: (MonadIO m)
-                        => [(MachineRecord, MachineTypeMapped)] 
-                        -> Connection 
-                        -> ExceptT (Reason Text) m [(MachineRecord, MachineTypeMapped, US.UpkeepSequence)]
+loadNextServiceTypeHint :: 
+  (MonadIO m) => 
+  [(MachineRecord, MachineTypeMapped)] -> 
+  Connection -> 
+  ExceptT (Reason Text) m [(MachineRecord, MachineTypeMapped, US.UpkeepSequence)]
 loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) -> do
   upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
   pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (_machinePK machine))
@@ -208,11 +211,12 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
     _ -> throwError . CustomReason . DomainReason . pack $ "Db in invalid state"
   return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
 
-printDailyPlanListing' :: (MonadIO m, Functor m) 
-                       => Maybe E.EmployeeId
-                       -> Connection
-                       -> Day
-                       -> ExceptT (Reason r) m [(U.UpkeepMarkup, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
+printDailyPlanListing' ::   
+  (MonadIO m, Functor m) => 
+  Maybe E.EmployeeId -> 
+  Connection -> 
+  Day -> 
+  ExceptT (Reason r) m [(U.UpkeepMarkup, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
 printDailyPlanListing' employeeId connection day = do
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do

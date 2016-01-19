@@ -64,14 +64,15 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
   return machineId
     
 
-addMachine :: Connection
-           -> M.Machine
-           -> Int
-           -> MT.MyEither
-           -> Maybe CP.ContactPersonId
-           -> Maybe M.MachineId
-           -> [(EF.ExtraFieldId, Text)]
-           -> ExceptT (Reason r) (IdDependencies' C.CompanyId) M.MachineId -- ^ id of newly created machine
+addMachine :: 
+  Connection -> 
+  M.Machine -> 
+  Int -> 
+  MT.MyEither -> 
+  Maybe CP.ContactPersonId -> 
+  Maybe M.MachineId -> 
+  [(EF.ExtraFieldId, Text)] -> 
+  ExceptT (Reason r) (IdDependencies' C.CompanyId) M.MachineId -- ^ id of newly created machine
 addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
   machineTypeId <- liftIO $ case machineType of
     MT.MyInt id' -> return $ id'

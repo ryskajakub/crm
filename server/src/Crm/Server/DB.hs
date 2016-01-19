@@ -520,8 +520,9 @@ instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
 
 -- todo rather do two queries
-mapUpkeeps :: [((Int, Day, Bool, Text, Text, Text), (Int, Text, Int, Int, Bool, Text, Bool))] 
-           -> [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
+mapUpkeeps :: 
+  [((Int, Day, Bool, Text, Text, Text), (Int, Text, Int, Int, Bool, Text, Bool))] -> 
+  [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
     upkeepToAdd = convert upkeepCols :: UpkeepMapped
@@ -536,9 +537,10 @@ mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   ) [] rows
 
 -- | joins table according with the id in
-join :: (Sel1 a DBInt)
-     => Query a
-     -> QueryArr DBInt a
+join :: 
+  (Sel1 a DBInt) => 
+  Query a -> 
+  QueryArr DBInt a
 join tableQuery = proc id' -> do
   table <- tableQuery -< ()
   restrict -< sel1 table .== id'
@@ -916,8 +918,9 @@ extraFieldsForMachineQuery (M.MachineId machineId) = orderBy (asc $ $(proj 4 2) 
   extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
   returnA -< (extraFieldRow, extraFieldSettingRow)
 
-mainEmployeesInDayQ :: Day
-                    -> Query EmployeeTable
+mainEmployeesInDayQ :: 
+  Day -> 
+  Query EmployeeTable
 mainEmployeesInDayQ day = distinct $ proc () -> do
   upkeepRow <- upkeepsQuery -< ()
   restrict -< $(proj 6 1) upkeepRow .== pgDay day
@@ -1017,14 +1020,18 @@ runMachinesInCompanyQuery companyId connection = do
         sel2 machineType, sel3 contactPerson, _linkageFK machineRecord, $(proj 2 1) upkeepMapped)
   return . nubBy (\a0 a1 -> $(proj 8 0) a0 == $(proj 8 0) a1) . fmap mapRow $ rows
 
-runExpandedMachinesQuery' :: Maybe Int -> Connection 
-  -> IO [(MachineRecord, (Int, Int, Text, Text))]
+runExpandedMachinesQuery' :: 
+  Maybe Int -> 
+  Connection -> 
+  IO [(MachineRecord, (Int, Int, Text, Text))]
 runExpandedMachinesQuery' machineId connection = do
   rows <- runQuery connection (expandedMachinesQuery machineId)
   let rowsMapped = over (mapped . _1 . machine . M.operationStartDateL . mapped) dayToYmd rows
   return rowsMapped
 
-runCompanyUpkeepsQuery :: Int -> Connection -> 
+runCompanyUpkeepsQuery :: 
+  Int -> 
+  Connection -> 
   IO [(Int, Day, Bool, Text, Text, Text)]
 runCompanyUpkeepsQuery companyId connection = 
   runQuery connection (companyUpkeepsQuery companyId)
@@ -1037,7 +1044,10 @@ convertExpanded (row1, row2) = let
   (m :: MachineRecord) = row1
   in (_machinePK m, _machine m, _companyFK m, sel1 mt, sel2 mt)
 
-runExpandedMachinesQuery :: Maybe Int -> Connection -> IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]
+runExpandedMachinesQuery :: 
+  Maybe Int -> 
+  Connection -> 
+  IO[(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType)]
 runExpandedMachinesQuery machineId connection = do
   rows <- runExpandedMachinesQuery' machineId connection
   return $ fmap convertExpanded rows
@@ -1045,7 +1055,9 @@ runExpandedMachinesQuery machineId connection = do
 runMachineTypesQuery' :: String -> Connection -> IO[Text]
 runMachineTypesQuery' mid connection = runQuery connection (machineTypesQuery' mid)
 
-runMachinesInCompanyByUpkeepQuery :: Int -> Connection -> 
+runMachinesInCompanyByUpkeepQuery :: 
+  Int -> 
+  Connection -> 
   IO[(C.CompanyId, (M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)

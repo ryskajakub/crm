@@ -78,9 +78,10 @@ nextServiceDate machine sequences upkeeps today = let
 compareRepetition :: US.UpkeepSequence -> US.UpkeepSequence -> Ordering
 compareRepetition this that = US.repetition this `compare` US.repetition that
 
-nextServiceTypeHint :: (US.UpkeepSequence, [US.UpkeepSequence])
-                    -> [UM.UpkeepMachine]
-                    -> US.UpkeepSequence
+nextServiceTypeHint :: 
+  (US.UpkeepSequence, [US.UpkeepSequence]) -> 
+  [UM.UpkeepMachine] -> 
+  US.UpkeepSequence
 nextServiceTypeHint (seq', seqs) [] = fromMaybe
   (minimumBy compareRepetition (seq':seqs))
   (find (US.oneTime) (seq':seqs))
