@@ -228,12 +228,14 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           emptyMachineType = (fst machineTypeTuple) {
             MT.machineTypeManufacturer = "???" }
           in md {
+            MD.validation = V.add V.MachineTypeNotSelected (MD.validation md) ,
             MD.machineTypeTuple = (emptyMachineType, snd machineTypeTuple) ,
             MD.machineTypeId = Nothing })
         (\text -> if text /= "" 
           then fetchMachineType text (\maybeTuple -> case maybeTuple of
             Just (machineTypeId', machineType', _, sequences) -> do
               changeNavigationState $ \md -> md {
+                MD.validation = V.remove V.MachineTypeNotSelected (MD.validation md) ,
                 MD.machineTypeTuple = (machineType', sequences) ,
                 MD.machineTypeId = Just machineTypeId' }
             Nothing -> return ()) router

@@ -23,6 +23,7 @@ message validationFail = case validationFail of
   MthNumber companyId -> "Do motohodin se můžou vyplňovat pouze čísla (u stroje s id: " <> (showInt $ M.getMachineId companyId) <> ")"
   MachineUsageNumber -> "Provoz musí být kladné číslo"
   MachineInitialMileageNumber -> "Úvodní stav motodin musí být číslo"
+  MachineTypeNotSelected -> "Pro editaci musí být vybrán typ zařízení"
 
 messages :: Validation -> [Text]
 messages (Validation validation) = map message validation
