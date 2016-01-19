@@ -200,8 +200,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
         "Jdi do editačního módu"
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
-  editMachineAction = updateMachine machineId machine otherMachineId contactPersonId
-    extraFieldsForServer (setEditing Display) router
+  editMachineAction = case machineTypeId' of
+    Just (machineTypeId) -> updateMachine machineId machineTypeId machine otherMachineId 
+      contactPersonId extraFieldsForServer (setEditing Display) router
+    Nothing -> return ()
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
 

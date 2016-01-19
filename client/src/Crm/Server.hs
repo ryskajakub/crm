@@ -508,18 +508,20 @@ updateTask ::
   Fay ()
 updateTask tId t callback = XT.saveByTaskId tId t (const callback)
 
-updateMachine :: M.MachineId -- ^ machine id
-              -> M.Machine
-              -> Maybe M.MachineId -- ^ linked machine id
-              -> Maybe CP.ContactPersonId
-              -> [(EF.ExtraFieldId, Text)]
-              -> Fay ()
-              -> R.CrmRouter
-              -> Fay ()
-updateMachine machineId machine linkedMachineId contactPersonId machineSpecificData cb = 
+updateMachine :: 
+  M.MachineId -> 
+  MT.MachineTypeId ->
+  M.Machine -> 
+  Maybe M.MachineId -> -- ^ linked machine id
+  Maybe CP.ContactPersonId -> 
+  [(EF.ExtraFieldId, Text)] -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
+updateMachine machineId machineTypeId machine linkedMachineId contactPersonId machineSpecificData cb = 
   XM.saveByMachineId
     machineId
-    (machine, toMyMaybe linkedMachineId, toMyMaybe contactPersonId, machineSpecificData)
+    (machine, machineTypeId, toMyMaybe linkedMachineId, toMyMaybe contactPersonId, machineSpecificData)
     (const cb)
 
 

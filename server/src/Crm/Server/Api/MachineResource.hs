@@ -60,7 +60,7 @@ machineDelete = mkConstHandler' jsonO $ do
 
 
 machineUpdate :: Handler (IdDependencies' M.MachineId)
-machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, contactPersonId, extraFields) -> do
+machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', machineTypeId, linkedMachineId, contactPersonId, extraFields) -> do
   ((cache, pool), machineId :: M.MachineId) <- ask
 
   let 
@@ -68,6 +68,7 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', linkedMachineId, c
     machineReadToWrite machineRow =
       (machineRow {
         _machinePK = fmap (Just . pgInt4) machineId ,
+        _machineTypeFK = pgInt4 . MT.getMachineTypeId $ machineTypeId ,
         _contactPersonFK =
           (maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId) ,
         _linkageFK = 
