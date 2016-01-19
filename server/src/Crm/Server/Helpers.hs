@@ -64,33 +64,36 @@ parseMarkupOrPlain text = either
   (const . (:[]) . SR.PlainText $ text) (id)
   . parseMarkup $ text
 
-prepareUpdate :: (Sel1 columnsR (Column PGInt4))
-              => Table columnsW columnsR
-              -> (columnsR -> columnsW)
-              -> Int
-              -> Connection
-              -> IO ()
+prepareUpdate :: 
+  (Sel1 columnsR (Column PGInt4)) => 
+  Table columnsW columnsR -> 
+  (columnsR -> columnsW) -> 
+  Int -> 
+  Connection -> 
+  IO ()
 prepareUpdate table readToWrite theId connection = runUpdate
   connection
   table
   readToWrite
   (\row -> sel1 row .== pgInt4 theId) >> return ()
 
-createDeletion' :: (read -> (Column PGInt4))
-                -> Table write read
-                -> Int
-                -> Connection
-                -> IO ()
+createDeletion' :: 
+  (read -> (Column PGInt4)) -> 
+  Table write read -> 
+  Int -> 
+  Connection -> 
+  IO ()
 createDeletion' select table pk connection = runDelete
   connection
   table
   (\row -> select row .== pgInt4 pk) >> return ()
 
-createDeletion :: (Sel1 read (Column PGInt4))
-               => Table write read
-               -> Int
-               -> Connection
-               -> IO ()
+createDeletion :: 
+  (Sel1 read (Column PGInt4)) => 
+  Table write read -> 
+  Int -> 
+  Connection -> 
+  IO ()
 createDeletion = createDeletion' sel1
 
 today :: IO Day
@@ -106,13 +109,15 @@ dayToYmd day = ymd where
   (year, month, day') = toGregorian day
   ymd = YMD.YearMonthDay (fromIntegral year) (month - 1) day' YMD.DayPrecision
 
-prepareReaderIdentity :: ReaderT (b, c) IO a
-                      -> ReaderT c (ReaderT (b, c) IO) a
+prepareReaderIdentity :: 
+  ReaderT (b, c) IO a -> 
+  ReaderT c (ReaderT (b, c) IO) a
 prepareReaderIdentity = prepareReader (\c (b, _) -> (b, c))
 
-prepareReader :: (c -> d -> b)
-              -> ReaderT b IO a
-              -> ReaderT c (ReaderT d IO) a
+prepareReader :: 
+  (c -> d -> b) -> 
+  ReaderT b IO a -> 
+  ReaderT c (ReaderT d IO) a
 prepareReader constructB reader = 
   mapReaderT (\cIdentity -> let
     cc = runIdentity cIdentity
@@ -124,14 +129,16 @@ prepareReader constructB reader =
   where
     outerReader = ask
 
-prepareReaderTuple :: ReaderT (c, b) IO a
-                   -> ReaderT b (ReaderT c IO) a
+prepareReaderTuple :: 
+  ReaderT (c, b) IO a -> 
+  ReaderT b (ReaderT c IO) a
 prepareReaderTuple = prepareReader (\b c -> (c, b))
 
-maybeId :: Monad m
-        => Either String Int 
-        -> (Int -> ExceptT (Reason r) m a)
-        -> ExceptT (Reason r) m a
+maybeId :: 
+  Monad m => 
+  Either String Int -> 
+  (Int -> ExceptT (Reason r) m a) -> 
+  ExceptT (Reason r) m a
 maybeId maybeInt onSuccess = case maybeInt of
   Right(int) -> onSuccess int
   Left(string) -> throwError $ IdentError $ ParseError
@@ -171,12 +178,13 @@ maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable (Just a) = toNullable a
 maybeToNullable Nothing = COL.null
 
-mapResultsToList :: Eq bId
-                 => (b -> bId)
-                 -> (a -> b)
-                 -> (a -> c)
-                 -> [a]
-                 -> [(b, [c])]
+mapResultsToList :: 
+  Eq bId => 
+  (b -> bId) -> 
+  (a -> b) -> 
+  (a -> c) -> 
+  [a] -> 
+  [(b, [c])]
 mapResultsToList rowIdentification mapSingle mapMultiple rows =
   reverse . foldl (\bcElements aElement -> 
     case bcElements of
