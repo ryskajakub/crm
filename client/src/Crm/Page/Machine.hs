@@ -94,6 +94,11 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields 
       companyId router machineTypeInputRow, fetchPhotos >> machineTypeCB)
   where
+  changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
+  changeNavigationState fun = modify appVar $ \appState -> appState {
+    D.navigation = case D.navigation appState of 
+      D.MachineScreen md -> D.MachineScreen $ fun md
+      _ -> D.navigation appState }
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
   upkeepHistoryHtml = let
@@ -218,7 +223,14 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       autocompleteInput
         inputNormalAttrs
         (const . return $ ())
-        (const . return $ ())
+        (\text -> if text /= "" 
+          then fetchMachineType text (\maybeTuple -> case maybeTuple of
+            Just (machineTypeId', machineType', _, sequences) -> do
+              changeNavigationState $ \md -> md {
+                MD.machineTypeTuple = (machineType', sequences) ,
+                MD.machineTypeId = Just machineTypeId' }
+            Nothing -> return ()) router
+          else return ())
         (\a b -> fetchMachineTypesAutocomplete a b router)
         "machine-type-edit-autocomplete"
         (I.mkInputAttrs { I.defaultValue = Defined . MT.machineTypeName . fst $ machineTypeTuple })
