@@ -109,11 +109,12 @@ navigate :: CrmRoute
          -> Fay ()
 navigate (CrmRoute route) (CrmRouter router) = BR.navigate route router
 
-link :: Renderable a
-     => a
-     -> CrmRoute
-     -> CrmRouter
-     -> DOMElement
+link :: 
+  Renderable a => 
+  a -> 
+  CrmRoute -> 
+  CrmRouter -> 
+  DOMElement
 link children (CrmRoute route) (CrmRouter router) = 
   BR.link children route router
 

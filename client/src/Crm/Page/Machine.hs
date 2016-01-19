@@ -83,11 +83,16 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
   upkeepHistoryHtml = let
     mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
-    mkUpkeepRows (_, upkeep, upkeepMachine, employees) = let
-      (labelClass, labelText) = if U.upkeepClosed upkeep
-        then ("label-success", "Uzavřený")
-        else ("label-warning", "Naplánovaný")
-      stateLabel = B.col (B.mkColProps 1) $ span' (class'' ["label", labelClass]) labelText
+    mkUpkeepRows (upkeepId, upkeep, upkeepMachine, employees) = let
+      (labelClass, labelText, containingElement) = if U.upkeepClosed upkeep
+        then let
+          reopenLink attrs children = let
+            doReopen = reopenUpkeep upkeepId goEditUpkeep router
+            goEditUpkeep = R.navigate (R.upkeepDetail upkeepId) router
+            in A.a''' (attrs { onClick = Defined $ const $ doReopen }) children
+          in ("label-success", "Uzavřený", reopenLink)
+        else ("label-warning", "Naplánovaný", span')
+      stateLabel = B.col (B.mkColProps 1) $ containingElement (class'' ["label", labelClass]) labelText
       (postMthOffset, includeMths) = case MT.kind . fst $ machineTypeTuple of
         MK.RotaryScrewCompressor | U.upkeepClosed upkeep -> (Undefined, True)
         _ -> (Defined 4, False)
