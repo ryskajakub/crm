@@ -38,11 +38,12 @@ import           Crm.Helpers
 import           Crm.Page.ContactPerson           (contactPersonsList')
 
 
-companiesList :: R.CrmRouter
-              -> C.OrderType
-              -> DIR.Direction
-              -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)]
-              -> DOMElement
+companiesList :: 
+  R.CrmRouter -> 
+  C.OrderType -> 
+  DIR.Direction -> 
+  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> 
+  DOMElement
 companiesList router orderType direction companies' = let
 
   mkOrderingLink :: C.OrderType -> DIR.Direction -> DOMElement -> DOMElement
@@ -221,13 +222,14 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
         R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
           : contactPersonsHtml : (lastUpkeepRecommendation ++ machineBoxItemsHtml) ]]
 
-companyForm :: InputState -- ^ is the page editing mode
-            -> Var D.AppState -- ^ app state var, where the editing result can be set
-            -> (C.Company -> Fay ()) -- ^ modify the edited company data
-            -> C.Company -- ^ company, whose data are displayed on this screen
-            -> Fay () -- ^ handler called when the user hits save
-            -> [DOMElement] -- ^ delete button
-            -> [DOMElement] -- ^ company detail page fraction
+companyForm :: 
+  InputState -> -- ^ is the page editing mode
+  Var D.AppState -> -- ^ app state var, where the editing result can be set
+  (C.Company -> Fay ()) -> -- ^ modify the edited company data
+  C.Company -> -- ^ company, whose data are displayed on this screen
+  Fay () -> -- ^ handler called when the user hits save
+  [DOMElement] -> -- ^ delete button
+  [DOMElement] -- ^ company detail page fraction
 companyForm editing' var setCompany company' saveHandler' deleteButton = let
   editButton = let
     editButtonBody = [G.pencil, HR.text2DOM " Editovat"]

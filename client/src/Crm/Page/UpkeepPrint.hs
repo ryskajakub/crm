@@ -37,12 +37,12 @@ import qualified Crm.Shared.Task              as T
 upkeepPrint :: 
   R.CrmRouter ->
   Var D.AppState ->
-            (YMD.YearMonthDay, DP.DatePickerData)
-            -> Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)])
-            -> [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, 
-               MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])]
-            -> [(E.EmployeeId, E.Employee)]
-            -> DOMElement
+  (YMD.YearMonthDay, DP.DatePickerData) -> 
+  Maybe (E.EmployeeId, [(T.TaskId, T.TaskMarkup)]) -> 
+  [(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
+    Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> 
+  [(E.EmployeeId, E.Employee)] -> 
+  DOMElement
 upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees = let
   simpleDateControls = [
     R.link "<< včera" (R.dailyPlan (plusDays (-1) date) Nothing) router ,

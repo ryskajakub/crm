@@ -119,34 +119,39 @@ maxCount = [("count", "1000")]
 
 -- deletions
 
-deleteCompany :: C.CompanyId
-              -> Fay ()
-              -> R.CrmRouter
-              -> Fay ()
+deleteCompany :: 
+  C.CompanyId -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 deleteCompany ident cb = XC.remove ident (const cb)
 
-deleteUpkeep :: U.UpkeepId
-             -> Fay ()
-              -> R.CrmRouter
-             -> Fay ()
+deleteUpkeep :: 
+  U.UpkeepId -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 deleteUpkeep ident cb = XU.remove ident $ const cb
 
-deleteMachine :: M.MachineId
-              -> Fay ()
-              -> R.CrmRouter
-              -> Fay ()
+deleteMachine :: 
+  M.MachineId -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 deleteMachine ident cb = XM.remove ident $ const cb
 
-deletePhoto :: P.PhotoId
-            -> Fay ()
-              -> R.CrmRouter
-            -> Fay ()
+deletePhoto :: 
+  P.PhotoId -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 deletePhoto ident cb = XP.remove ident $ const cb
 
-deleteContactPerson :: CP.ContactPersonId
-                    -> Fay ()
-              -> R.CrmRouter
-                    -> Fay ()
+deleteContactPerson :: 
+  CP.ContactPersonId -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 deleteContactPerson ident cb = XCP.remove ident $ const cb
 
 
@@ -176,115 +181,132 @@ fetchTask ::
   Fay ()
 fetchTask = XT.byTaskId
 
-fetchDailyPlanEmployees :: YMD.YearMonthDay
-                        -> ([E.Employee'] -> Fay ())
-              -> R.CrmRouter
-                        -> Fay ()
+fetchDailyPlanEmployees :: 
+  YMD.YearMonthDay -> 
+  ([E.Employee'] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchDailyPlanEmployees day = XPP.list (maxCount ++ dayParam day)
 
-fetchDailyPlanData :: YMD.YearMonthDay
-                   -> Maybe E.EmployeeId
-                   -> ([(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
-                      Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ())
-              -> R.CrmRouter
-                   -> Fay ()
+fetchDailyPlanData :: 
+  YMD.YearMonthDay -> 
+  Maybe E.EmployeeId -> 
+  ([(U.UpkeepMarkup, C.Company, [E.Employee'], [(M.Machine, MT.MachineType, 
+    Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] -> Fay ()) ->
+  R.CrmRouter -> 
+  Fay ()
 fetchDailyPlanData day employeeId cb = remoteCall $ cb . map (\(a,b,c,d) -> (a,b,c,map
   (\(a1,a2,a3,(a4',a4'')) -> (a1,a2,toMaybe a3,(a4',toMaybe a4''))) d))
   where
     allParams = maxCount ++ dayParam day
     remoteCall = maybe (XU.listPrint allParams) (XEU.listPrint allParams) employeeId
 
-fetchPhoto :: P.PhotoId
-           -> Text
+fetchPhoto :: 
+  P.PhotoId -> 
+  Text
 fetchPhoto photoId = apiRoot <> (pack $ A.photos ++ "/" ++ (show $ P.getPhotoId photoId))
 
-fetchMachineTypesManufacturer :: Text -- ^ the string user typed
-                              -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
-              -> R.CrmRouter
-                              -> Fay ()
+fetchMachineTypesManufacturer :: 
+  Text -> -- ^ the string user typed
+  ([Text] -> Fay ()) -> -- callback filled with option that the user can pick
+  R.CrmRouter -> 
+  Fay ()
 fetchMachineTypesManufacturer text = 
   XMT.listByAutocompleteManufacturer
     maxCount
     (unpack . encodeURIComponent $ text)
   
-fetchMachineTypesAutocomplete :: Text -- ^ the string user typed
-                              -> ([Text] -> Fay ()) -- callback filled with option that the user can pick
-              -> R.CrmRouter
-                              -> Fay ()
+fetchMachineTypesAutocomplete :: 
+  Text -> -- ^ the string user typed
+  ([Text] -> Fay ()) -> -- callback filled with option that the user can pick
+  R.CrmRouter ->
+  Fay ()
 fetchMachineTypesAutocomplete text = 
   XMT.listByAutocomplete 
     maxCount
     (unpack . encodeURIComponent $ text)
 
-fetchMachineTypes :: ([(MT.MachineType', Int)] -> Fay ()) 
-              -> R.CrmRouter
-  -> Fay ()
+fetchMachineTypes :: 
+  ([(MT.MachineType', Int)] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
 fetchMachineTypes = XMT.list maxCount
 
-fetchMachineTypeById :: MT.MachineTypeId
-                     -> (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ())
-              -> R.CrmRouter
-                     -> Fay ()
+fetchMachineTypeById :: 
+  MT.MachineTypeId -> 
+  (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchMachineTypeById mtId callback = 
   XMT.byById mtId (callback . toMaybe)
 
-fetchMachineType :: Text -- ^ machine type exact match
-                 -> (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ()) -- ^ callback
-              -> R.CrmRouter
-                 -> Fay ()
+fetchMachineType :: 
+  Text -> -- ^ machine type exact match
+  (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ()) -> -- ^ callback
+  R.CrmRouter ->
+  Fay ()
 fetchMachineType machineTypeName callback = 
   XMT.byByName 
     (unpack . encodeURIComponent $ machineTypeName)
     (callback . toMaybe)
 
-fetchEmployees :: ([E.Employee'] -> Fay ())
-              -> R.CrmRouter
-               -> Fay ()
+fetchEmployees :: 
+  ([E.Employee'] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchEmployees = XE.list maxCount
 
-fetchUpkeep :: U.UpkeepId -- ^ upkeep id
-            -> ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]), 
-               [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)]) -> Fay ()) 
-              -> R.CrmRouter
-            -> Fay ()
+fetchUpkeep :: 
+  U.UpkeepId -> -- ^ upkeep id
+  ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]), 
+    [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)]) -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
 fetchUpkeep = XU.bySingle 
 
-fetchUpkeepData :: C.CompanyId
-                -> ([(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> Fay ())
-              -> R.CrmRouter
-                -> Fay ()
+fetchUpkeepData :: 
+  C.CompanyId -> 
+  ([(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchUpkeepData companyId = XCU.bySingle companyId "()"
 
-fetchUpkeeps :: C.CompanyId -- ^ company id
-             -> ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> Fay ()) -- ^ callback
-              -> R.CrmRouter
-             -> Fay ()
+fetchUpkeeps :: 
+  C.CompanyId -> -- ^ company id
+  ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], 
+    [E.Employee'], [P.PhotoId])] -> Fay ()) -> -- ^ callback
+  R.CrmRouter -> 
+  Fay ()
 fetchUpkeeps = XCU.list maxCount
   
-fetchMachinePhotos :: M.MachineId
-                   -> ([(P.PhotoId, PM.PhotoMeta)] -> Fay ())
-              -> R.CrmRouter
-                   -> Fay ()
+fetchMachinePhotos :: 
+  M.MachineId -> 
+  ([(P.PhotoId, PM.PhotoMeta)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchMachinePhotos = XMP.list maxCount
 
-fetchMachinesInCompany :: C.CompanyId
-                       -> ([(M.MachineId, M.Machine)] -> Fay ())
-              -> R.CrmRouter
-                       -> Fay ()
+fetchMachinesInCompany :: 
+  C.CompanyId -> 
+  ([(M.MachineId, M.Machine)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchMachinesInCompany = XCM.list maxCount
 
-fetchExtraFieldSettings :: ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ())
-              -> R.CrmRouter
-                        -> Fay ()
+fetchExtraFieldSettings :: 
+  ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchExtraFieldSettings = XMK.byString "()"
 
-fetchMachine :: M.MachineId -- ^ machine id
-             -> ((C.CompanyId, M.Machine, MT.MachineTypeId,
-                (MT.MachineType, [US.UpkeepSequence]), Maybe YMD.YearMonthDay, Maybe CP.ContactPersonId,
-                [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])], Maybe M.MachineId, 
-                MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -- ^ callback
-              -> R.CrmRouter
-             -> Fay ()
+fetchMachine :: 
+  M.MachineId -> -- ^ machine id
+  ((C.CompanyId, M.Machine, MT.MachineTypeId,
+    (MT.MachineType, [US.UpkeepSequence]), Maybe YMD.YearMonthDay, Maybe CP.ContactPersonId,
+    [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])], Maybe M.MachineId, 
+    MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -> -- ^ callback
+  R.CrmRouter ->
+  Fay ()
 fetchMachine machineId callback =  
   XM.byMachineId 
     machineId
@@ -293,29 +315,33 @@ fetchMachine machineId callback =
         swapMaybe M.MachineId g2,f,l)
       in callback . fun)
 
-fetchEmployee :: E.EmployeeId
-              -> (E.Employee -> Fay ())
-              -> R.CrmRouter
-              -> Fay ()
+fetchEmployee :: 
+  E.EmployeeId -> 
+  (E.Employee -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchEmployee = XE.bySingle
 
-fetchContactPerson :: CP.ContactPersonId
-                   -> ((CP.ContactPerson, C.CompanyId) -> Fay ())
-              -> R.CrmRouter
-                   -> Fay ()
+fetchContactPerson :: 
+  CP.ContactPersonId -> 
+  ((CP.ContactPerson, C.CompanyId) -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchContactPerson = XCP.byContactPersonId
 
-fetchContactPersons :: C.CompanyId
-                    -> ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ())
-              -> R.CrmRouter
-                    -> Fay ()
+fetchContactPersons :: 
+  C.CompanyId -> 
+  ([(CP.ContactPersonId, CP.ContactPerson)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchContactPersons = XCCP.list maxCount
 
-fetchCompany :: C.CompanyId -- ^ company id
-             -> ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
-                MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay, Maybe U.Upkeep)]) -> Fay ()) -- ^ callback
-              -> R.CrmRouter
-             -> Fay ()
+fetchCompany :: 
+  C.CompanyId -> -- ^ company id
+  ((C.Company, [CP.ContactPerson'], [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
+    MT.MachineType, Maybe CP.ContactPerson, Maybe M.MachineId, Maybe YMD.YearMonthDay, Maybe U.Upkeep)]) -> Fay ()) -> -- ^ callback
+  R.CrmRouter -> 
+  Fay ()
 fetchCompany companyId callback = 
   XC.bySingle
     companyId
@@ -330,11 +356,12 @@ swapMaybe ::
 swapMaybe putIntoNewtype value =
   maybe Nothing (\lId -> Just . putIntoNewtype $ lId) value
 
-fetchFrontPageData :: C.OrderType
-                   -> DIR.Direction
-                   -> ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ())
-                   -> R.CrmRouter
-                   -> Fay ()
+fetchFrontPageData :: 
+  C.OrderType -> 
+  DIR.Direction -> 
+  ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 fetchFrontPageData order direction callback router = 
   let
     lMb [] = []
@@ -352,15 +379,16 @@ fetchFrontPageData order direction callback router =
     Nothing
     router
 
-fetchPlannedUpkeeps :: ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], 
-                         [(E.EmployeeId, E.Employee)])]] -> Fay ())
-              -> R.CrmRouter
-                    -> Fay ()
+fetchPlannedUpkeeps :: 
+  ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [(E.EmployeeId, E.Employee)])]] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
 fetchPlannedUpkeeps = XU.listPlanned maxCount
 
-fetchCompaniesForMap :: ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ())
-              -> R.CrmRouter
-                     -> Fay ()
+fetchCompaniesForMap :: 
+  ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
 fetchCompaniesForMap callback = 
   XC.listMap 
     maxCount
@@ -382,51 +410,56 @@ fetchTakenColours = XE.listColours maxCount
 
 -- creations
 
-createCompany :: C.Company
-              -> Maybe C.Coordinates
-              -> (C.CompanyId -> Fay ())
-              -> R.CrmRouter
-              -> Fay ()
+createCompany :: 
+  C.Company -> 
+  Maybe C.Coordinates -> 
+  (C.CompanyId -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 createCompany company coordinates = XC.create (company, toMyMaybe coordinates) 
 
-createMachine :: M.Machine 
-              -> C.CompanyId
-              -> MT.MyEither
-              -> Maybe M.ContactPersonForMachine
-              -> Maybe M.MachineId
-              -> [(EF.ExtraFieldId, Text)]
-              -> Fay ()
-              -> R.CrmRouter
-              -> Fay ()
+createMachine :: 
+  M.Machine -> 
+  C.CompanyId -> 
+  MT.MyEither -> 
+  Maybe M.ContactPersonForMachine -> 
+  Maybe M.MachineId -> 
+  [(EF.ExtraFieldId, Text)] -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = 
   XCM.create 
     companyId 
     (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
     (const callback)
 
-createUpkeep :: (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId])
-             -> Fay ()
-              -> R.CrmRouter
-             -> Fay ()
+createUpkeep :: 
+  (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]) -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 createUpkeep (newUpkeep, upkeepMachines, se) callback = 
   XU.create
     (newUpkeep, upkeepMachines, se)
     (const callback)
     
-createEmployee :: E.Employee
-               -> Fay ()
-              -> R.CrmRouter
-               -> Fay ()
+createEmployee :: 
+  E.Employee -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 createEmployee employee callback =
   XE.create
     employee
     (const callback)
 
-createContactPerson :: C.CompanyId
-                    -> CP.ContactPerson
-                    -> Fay ()
-              -> R.CrmRouter
-                    -> Fay ()
+createContactPerson :: 
+  C.CompanyId -> 
+  CP.ContactPerson -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 createContactPerson companyId contactPerson callback = 
   XCCP.create
     companyId
@@ -445,55 +478,60 @@ createEmployeeTask employeeId employeeTask callback =
 
 -- updations
 
-updateEmployee :: E.EmployeeId
-               -> E.Employee
-               -> Fay ()
-              -> R.CrmRouter
-               -> Fay ()
+updateEmployee :: 
+  E.EmployeeId -> 
+  E.Employee -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 updateEmployee employeeId employee callback = 
   XE.saveBySingle
     employeeId
     employee
     (const callback)
 
-updateContactPerson :: CP.ContactPersonId
-                    -> CP.ContactPerson
-                    -> Fay ()
-              -> R.CrmRouter
-                    -> Fay ()
+updateContactPerson :: 
+  CP.ContactPersonId -> 
+  CP.ContactPerson -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 updateContactPerson cpId cp callback =
   XCP.saveByContactPersonId
     cpId
     cp
     (const callback)
 
-updateCompany :: C.CompanyId
-              -> C.Company
-              -> Maybe C.Coordinates
-              -> Fay ()
-              -> R.CrmRouter
-              -> Fay ()
+updateCompany :: 
+  C.CompanyId -> 
+  C.Company -> 
+  Maybe C.Coordinates -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 updateCompany companyId company coordinates cb = 
   XC.saveBySingle
     companyId
     (company, toMyMaybe coordinates)
     (const cb)
 
-updateUpkeep :: U.Upkeep'
-             -> [E.EmployeeId]
-             -> Fay ()
-              -> R.CrmRouter
-             -> Fay ()
+updateUpkeep :: 
+  U.Upkeep' -> 
+  [E.EmployeeId] -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 updateUpkeep (upkeepId, upkeep, upkeepMachines) employeeIds cb = 
   XU.saveBySingle
     upkeepId
     (upkeep, upkeepMachines, employeeIds)
     (const cb)
 
-updateMachineType :: (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence])
-                  -> Fay ()
-              -> R.CrmRouter
-                  -> Fay ()
+updateMachineType :: 
+  (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 updateMachineType (machineTypeId, machineType, upkeepSequences) cb = 
   XMT.saveByById 
     machineTypeId
@@ -527,10 +565,11 @@ updateMachine machineId machineTypeId machine linkedMachineId contactPersonId ma
 
 -- others
 
-saveExtraFieldSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
-                       -> Fay ()
-              -> R.CrmRouter
-                       -> Fay ()
+saveExtraFieldSettings :: 
+  [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] -> 
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 saveExtraFieldSettings data' cb = 
   XMK.saveByString "()" data' (const cb)
 
@@ -571,21 +610,23 @@ uploadUpkeepPhotoData ::
   Fay ()
 uploadUpkeepPhotoData upkeepId = uploadPhotoData (A.upkeep ++ "/" ++ A.single) (U.getUpkeepId $ upkeepId)
 
-uploadPhotoMeta :: PM.PhotoMeta
-                -> P.PhotoId
-                -> Fay ()
-              -> R.CrmRouter
-                -> Fay ()
+uploadPhotoMeta :: 
+  PM.PhotoMeta ->   
+  P.PhotoId ->  
+  Fay () -> 
+  R.CrmRouter -> 
+  Fay ()
 uploadPhotoMeta photoMeta photoId cb = 
   XPM.saveByPhotoId photoId photoMeta (const cb)
 
 
 -- | just ping the server if it works
-testEmployeesPage :: Text
-                  -> Fay ()
-                  -> (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())
-              -> R.CrmRouter
-                  -> Fay ()
+testEmployeesPage :: 
+  Text -> 
+  Fay () -> 
+  (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
 testEmployeesPage password' success error' = passwordAjax 
   (pack A.employees)
   (const success)

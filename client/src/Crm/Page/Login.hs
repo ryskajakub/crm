@@ -22,11 +22,12 @@ import           Crm.Server             (testEmployeesPage, status)
 enter :: Int
 enter = 13
 
-login :: Var D.AppState
-      -> CrmRouter
-      -> Text 
-      -> Bool
-      -> DOMElement
+login :: 
+  Var D.AppState -> 
+  CrmRouter -> 
+  Text -> 
+  Bool -> 
+  DOMElement
 login appVar router password wrongPassword = formWrapper $ B.grid $ [headerRow, passwordRow, submitRow] ++ errorRow where
   modify' f = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 

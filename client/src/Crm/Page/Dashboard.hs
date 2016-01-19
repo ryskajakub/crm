@@ -20,9 +20,10 @@ import           Crm.Helpers
 import qualified Crm.Router              as R
 
 
-dashboard :: R.CrmRouter
-          -> [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] 
-          -> (DOMElement, Fay ())
+dashboard :: 
+  R.CrmRouter -> 
+  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> 
+  (DOMElement, Fay ())
 dashboard router companies = (element, constructMap) where
 
   constructMap = do

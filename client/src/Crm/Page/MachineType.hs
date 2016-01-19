@@ -43,12 +43,13 @@ mkSetMachineType appVar modifiedMachineType =
   D.modifyState appVar $
     \navig -> navig { D.machineTypeTuple = lmap (const modifiedMachineType) (D.machineTypeTuple navig) }
 
-machineTypePhase1Form :: Maybe MT.MachineTypeId
-                      -> (MT.MachineType, [(US.UpkeepSequence, Text)])
-                      -> Var D.AppState
-                      -> R.CrmRouter
-                      -> C.CompanyId
-                      -> (DOMElement, Fay ())
+machineTypePhase1Form :: 
+  Maybe MT.MachineTypeId -> 
+  (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
+  Var D.AppState -> 
+  R.CrmRouter -> 
+  C.CompanyId -> 
+  (DOMElement, Fay ())
 machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRouter companyId = let
 
   setMachineTypeId :: Maybe MT.MachineTypeId -> Fay ()
@@ -129,18 +130,19 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing crmRouter
   in (result, callback >> afterRenderCallback)
 
-machineTypeForm' :: MachineTypeForm
-                 -> Maybe DOMElement -- ^ substitute the manufacturer autocomplete with another field
-                 -> Maybe MT.MachineTypeId
-                 -> (MT.MachineType, [(US.UpkeepSequence, Text)])
-                 -> Var D.AppState
-                 -> (MT.MachineType -> Fay ()) -- ^ set machine type
-                 -> DOMElement -- ^ first row input field
-                 -> DOMElement -- ^ submit button label
-                 -> Fay () -- ^ submit button handler
-                 -> Maybe DOMElement -- ^ delete button
-                 -> R.CrmRouter
-                 -> (DOMElement, Fay ())
+machineTypeForm' :: 
+  MachineTypeForm -> 
+  Maybe DOMElement -> -- ^ substitute the manufacturer autocomplete with another field
+  Maybe MT.MachineTypeId -> 
+  (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
+  Var D.AppState -> 
+  (MT.MachineType -> Fay ()) -> -- ^ set machine type
+  DOMElement -> -- ^ first row input field
+  DOMElement -> -- ^ submit button label
+  Fay () -> -- ^ submit button handler
+  Maybe DOMElement -> -- ^ delete button
+  R.CrmRouter -> 
+  (DOMElement, Fay ())
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
     submitButtonHandler deleteButtonM router = let
@@ -325,12 +327,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
       in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)])
   in (div result, autocompleteManufacturerCb)
 
-machineTypeForm :: R.CrmRouter
-                -> Var D.AppState
-                -> MT.MachineTypeId
-                -> (MT.MachineType, [(US.UpkeepSequence, Text)])
-                -> Int
-                -> (DOMElement, Fay ())
+machineTypeForm :: 
+  R.CrmRouter -> 
+  Var D.AppState -> 
+  MT.MachineTypeId -> 
+  (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
+  Int -> 
+  (DOMElement, Fay ())
 machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machinesCount = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
@@ -351,9 +354,10 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) router
 
-machineTypesList :: R.CrmRouter
-                 -> [(MT.MachineType', Int)]
-                 -> DOMElement
+machineTypesList :: 
+  R.CrmRouter -> 
+  [(MT.MachineType', Int)] -> 
+  DOMElement
 machineTypesList router machineTypes = let
   head' =
     thead $ tr [

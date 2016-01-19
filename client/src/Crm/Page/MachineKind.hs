@@ -25,12 +25,13 @@ import           Crm.Component.Form
 import           Crm.Router                   (CrmRouter)
 
 
-machineKindSettings :: Var D.AppState
-                    -> Bool
-                    -> MK.MachineKindEnum
-                    -> [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
-                    -> CrmRouter
-                    -> DOMElement
+machineKindSettings :: 
+  Var D.AppState -> 
+  Bool -> 
+  MK.MachineKindEnum -> 
+  [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] -> 
+  CrmRouter -> 
+  DOMElement
 machineKindSettings appVar showSuccess editedEnum allSettings router = mkGrid where
 
   machineKindName = fromJust $ lookup editedEnum MK.machineKinds

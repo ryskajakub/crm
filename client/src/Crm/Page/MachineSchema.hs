@@ -18,8 +18,9 @@ import qualified Crm.Shared.MachineType as MT
 import           Crm.Component.Viz
 import           Crm.Helpers
 
-schema :: [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)]
-       -> (DOMElement, Fay ())
+schema :: 
+  [(M.MachineId, M.Machine, MT.MachineType, Maybe M.MachineId)] -> 
+  (DOMElement, Fay ())
 schema machines = (page, appendElement) where
 
   page = B.grid $ B.row $ pageInfo' ++ [canvas] where

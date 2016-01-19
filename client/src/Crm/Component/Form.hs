@@ -131,12 +131,13 @@ textarea' rows' = textInput rowsTextarea where
   rowsTextarea attributes inputAttributes = I.textarea attributes rowsInputAttributes where
     rowsInputAttributes = inputAttributes { I.rows = Defined rows' }
 
-textInput :: (Attributes -> I.InputAttributes -> DOMElement) 
-          -> InputState
-          -> Bool 
-          -> DisplayValue 
-          -> (Text -> Fay ()) 
-          -> DOMElement
+textInput :: 
+  (Attributes -> I.InputAttributes -> DOMElement) -> 
+  InputState -> 
+  Bool -> 
+  DisplayValue -> 
+  (Text -> Fay ()) -> 
+  DOMElement
 textInput mkInput editing' displayPlain displayValue onChange' = let
   inputAttrs = let
     commonInputAttrs = case displayValue of
@@ -151,11 +152,12 @@ textInput mkInput editing' displayPlain displayValue onChange' = let
     then text2DOM $ joinEither displayValue
     else mkInput inputNormalAttrs inputAttrs
 
-dropdown :: [(a, b)] -- key value list
-         -> (b -> DOMElement) -- format the b value for the user to see
-         -> b -- the displayed element in the closed dropdown
-         -> (a -> Fay ()) -- selection handler
-         -> DOMElement
+dropdown :: 
+  [(a, b)] -> -- key value list
+  (b -> DOMElement) -> -- format the b value for the user to see
+  b -> -- the displayed element in the closed dropdown
+  (a -> Fay ()) -> -- selection handler
+  DOMElement
 dropdown elements display currentElement setId = element where
   element = BD.buttonDropdown buttonLabel elementsToBeSelected
   selectLink theId label = let
@@ -164,12 +166,13 @@ dropdown elements display currentElement setId = element where
   elementsToBeSelected = map (\(theId, label) -> li $ selectLink theId label) elements
   buttonLabel = [display currentElement, text2DOM " " , span' (class' "caret") ""]
 
-nullDropdown :: Eq a
-             => [(a, b)]
-             -> (b -> DOMElement)
-             -> Maybe a
-             -> (Maybe a -> Fay ())
-             -> (DOMElement, DOMElement)
+nullDropdown :: 
+  Eq a => 
+  [(a, b)] -> 
+  (b -> DOMElement) -> 
+  Maybe a -> 
+  (Maybe a -> Fay ()) -> 
+  (DOMElement, DOMElement)
 nullDropdown elements display currentElement' setId = 
   (dd, display' currentElement)
   where
@@ -185,40 +188,45 @@ nullDropdown elements display currentElement' setId =
 
 -- row elements
 
-row' :: Renderable a
-     => Defined Text -- ^ key of the element
-     -> a -- ^ label of the label field
-     -> [DOMElement] -- ^ other columns
-     -> DOMElement
+row' :: 
+  Renderable a => 
+  Defined Text -> -- ^ key of the element
+  a -> -- ^ label of the label field
+  [DOMElement] -> -- ^ other columns
+  DOMElement
 row' key' formFieldLabel otherColumns =
   div' ((class' "form-group") { key = key' }) [
     (label' (class'' ["control-label", "col-md-3"]) formFieldLabel) : otherColumns]
 
-row :: Renderable a
-    => a -- ^ label of the label field
-    -> [DOMElement] -- ^ other columns
-    -> DOMElement
+row :: 
+  Renderable a => 
+  a -> -- ^ label of the label field
+  [DOMElement] -> -- ^ other columns
+  DOMElement
 row formFieldLabel otherColumns = row' Undefined formFieldLabel otherColumns
 
 -- | Row containing a label and another element in ratio of size 1:3
-oneElementRow :: (Renderable a, Renderable b)
-              => a -- ^ label of field
-              -> b -- ^ the other field
-              -> DOMElement
+oneElementRow :: 
+  (Renderable a, Renderable b) => 
+  a -> -- ^ label of field 
+  b -> -- ^ the other field 
+  DOMElement
 oneElementRow formFieldLabel col2 = 
   row formFieldLabel [div' (class' "col-md-9") col2]
 
-buttonRow :: Renderable a
-          => a -- ^ label of the button
-          -> Fay () -- ^ button on click handler
-          -> DOMElement
+buttonRow :: 
+  Renderable a => 
+  a -> -- ^ label of the button
+  Fay () -> -- ^ button on click handler
+  DOMElement
 buttonRow = buttonRow' Enabled
 
-buttonRow' :: Renderable a
-           => ButtonState
-           -> a -- ^ label of the button
-           -> Fay () -- ^ button on click handler
-           -> DOMElement
+buttonRow' :: 
+  Renderable a => 
+  ButtonState -> 
+  a -> -- ^ label of the button 
+  Fay () -> -- ^ button on click handler 
+  DOMElement
 buttonRow' enabled buttonLabel clickHandler = 
   div' (class'' ["col-md-9", "col-md-offset-3"]) $
     BTN.button' (let
@@ -231,11 +239,12 @@ buttonRow' enabled buttonLabel clickHandler =
       buttonLabel
 
 -- | Row that has two modes, editing and display each having different css classes for different display
-editableRow :: (Renderable a, Renderable b)
-            => InputState -- ^ editing
-            -> a -- ^ label of field
-            -> b -- ^ the other field
-            -> DOMElement
+editableRow :: 
+  (Renderable a, Renderable b) => 
+  InputState -> -- ^ editing
+  a -> -- ^ label of field
+  b -> -- ^ the other field 
+  DOMElement
 editableRow editing labelText otherField = let
   classes = "col-md-9" : case editing of
     Editing -> []
@@ -243,21 +252,23 @@ editableRow editing labelText otherField = let
   in row labelText [div' (class'' classes) otherField]
 
 -- | Row having an input field in editing mode, just display in the display mode
-inputRow :: InputState -- ^ editing/display mode
-         -> Text -- ^ label to display on the left of the input
-         -> DisplayValue -- ^ value to display or to set in the form
-         -> (Text -> Fay ()) -- ^ event to handle on input change
-         -> DOMElement -- ^ rendered element
+inputRow :: 
+  InputState -> -- ^ editing/display mode
+  Text -> -- ^ label to display on the left of the input
+  DisplayValue -> -- ^ value to display or to set in the form
+  (Text -> Fay ()) -> -- ^ event to handle on input change
+  DOMElement -- ^ rendered element
 inputRow editing' labelText value' onChange' = let
   input' = input editing' True value' onChange'
   in editableRow editing' labelText input'
 
 -- | Similar to inputRow, only renders textarea
-textareaRow :: InputState
-            -> Text
-            -> DisplayValue
-            -> (Text -> Fay ())
-            -> DOMElement
+textareaRow :: 
+  InputState -> 
+  Text -> 
+  DisplayValue -> 
+  (Text -> Fay ()) -> 
+  DOMElement
 textareaRow editing label value onChange = editableRow editing label textarea'' where
   textarea'' = textarea editing True value onChange
 
@@ -273,14 +284,15 @@ textareaRow' rows editing label value onChange = editableRow editing label texta
   textarea'' = textarea' rows editing True value onChange
 
 -- | Dropdown component
-dropdownRow :: (Renderable label)
-            => InputState 
-            -> label -- label for the row
-            -> [(a, b)] -- key value list
-            -> (b -> DOMElement) -- format the b value for the user to see
-            -> b -- the displayed element in the closed dropdown
-            -> (a -> Fay ()) -- selection handler
-            -> DOMElement
+dropdownRow :: 
+  (Renderable label) => 
+  InputState -> 
+  label -> -- label for the row
+  [(a, b)] -> -- key value list
+  (b -> DOMElement) -> -- format the b value for the user to see
+  b -> -- the displayed element in the closed dropdown
+  (a -> Fay ()) -> -- selection handler
+  DOMElement
 dropdownRow inputState rowLabel elements display currentElement setId = 
   row rowLabel [element] 
   where
@@ -289,14 +301,15 @@ dropdownRow inputState rowLabel elements display currentElement setId =
   
 
 -- | Dropdown component with a null value
-nullDropdownRow :: (Renderable label, Eq a)
-                => InputState
-                -> label
-                -> [(a, b)]
-                -> (b -> DOMElement)
-                -> Maybe a
-                -> (Maybe a -> Fay ())
-                -> DOMElement
+nullDropdownRow :: 
+  (Renderable label, Eq a) => 
+  InputState -> 
+  label -> 
+  [(a, b)] -> 
+  (b -> DOMElement) -> 
+  Maybe a -> 
+  (Maybe a -> Fay ()) -> 
+  DOMElement
 nullDropdownRow inputState rowLabel elements display currentElement setId = 
   row rowLabel [element]
   where
@@ -304,16 +317,17 @@ nullDropdownRow inputState rowLabel elements display currentElement setId =
   (dropdownElement, currentElementText) = nullDropdown elements display currentElement setId
 
 
-multipleInputs :: forall a.
-                  Text
-               -> [Text]
-               -> Text
-               -> OrderingControls
-               -> ([a] -> Fay ())
-               -> (a -> (a -> Fay ()) -> DOMElement) -- | the inputlike element
-               -> [a] 
-               -> a
-               -> [DOMElement]
+multipleInputs :: 
+  forall a. 
+  Text -> 
+  [Text] -> 
+  Text -> 
+  OrderingControls -> 
+  ([a] -> Fay ()) -> 
+  (a -> (a -> Fay ()) -> DOMElement) -> -- | the inputlike element 
+  [a] ->
+  a -> 
+  [DOMElement]
 multipleInputs fieldLabel' overrideFieldLabels addNewButtonLabel orderingControlsFlag 
     setList inputControl elems newField = 
 

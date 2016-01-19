@@ -91,45 +91,51 @@ verifyPassword connection (Password inputPassword) = do
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason . pack
 
-mkConstHandler' :: HasConnection a
-                => Modifier () p Nothing o Nothing
-                -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)
-                -> Handler (ReaderT a IO)
+mkConstHandler' :: 
+  HasConnection a => 
+  Modifier () p Nothing o Nothing -> 
+  ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o) -> 
+  Handler (ReaderT a IO)
 mkConstHandler' d a = mkGenHandler' d (const a)
 
-mkInputHandler' :: HasConnection a
-                => Modifier () p (Just i) o Nothing
-                -> (i -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o))
-                -> Handler (ReaderT a IO)
+mkInputHandler' :: 
+  HasConnection a => 
+  Modifier () p (Just i) o Nothing -> 
+  (i -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
+  Handler (ReaderT a IO)
 mkInputHandler' d a = mkGenHandler' d (a . input)
 
-mkIdHandler' :: (HasConnection a)
-             => Modifier () p (Just i) o Nothing
-             -> (i -> a -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o))
-             -> Handler (ReaderT a IO)
+mkIdHandler' :: 
+  (HasConnection a) => 
+  Modifier () p (Just i) o Nothing -> 
+  (i -> a -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
+  Handler (ReaderT a IO)
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
 
-mkListing' :: HasConnection a
-           => Modifier () () Nothing o Nothing
-           -> (Range -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o])
-           -> ListHandler (ReaderT a IO)
+mkListing' :: 
+  HasConnection a => 
+  Modifier () () Nothing o Nothing -> 
+  (Range -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
+  ListHandler (ReaderT a IO)
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 
-mkOrderedListing' :: HasConnection a
-                  => Modifier () () Nothing o Nothing
-                  -> ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o])
-                  -> ListHandler (ReaderT a IO)
+mkOrderedListing' :: 
+  HasConnection a => 
+  Modifier () () Nothing o Nothing -> 
+  ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
+  ListHandler (ReaderT a IO)
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode Text where
   toResponseCode = const 401
 
-updateRows' :: forall record columnsW columnsR.
-               (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
-            => Table columnsW columnsR 
-            -> (record -> columnsR -> columnsW) 
-            -> (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, Either String Int) IO) ())
-            -> Handler (ReaderT (GlobalBindings, Either String Int) IO)
+updateRows' :: 
+  forall record columnsW columnsR.
+    (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record) => 
+  Table columnsW columnsR -> 
+  (record -> columnsR -> columnsW) -> 
+  (Int -> Connection -> Cache -> ExceptT (Reason Void) (ReaderT (GlobalBindings, Either String Int) IO) ()) -> 
+  Handler (ReaderT (GlobalBindings, Either String Int) IO)
 updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(record :: record) -> let
   doUpdation = withConnId' $ \conn cache recordId -> do
     let condition row = pgInt4 recordId .== sel1 row
@@ -137,11 +143,12 @@ updateRows' table readToWrite postUpdate = mkInputHandler' (jsonI . jsonO) $ \(r
     postUpdate recordId conn cache
   in withExceptT (const . CustomReason . DomainReason . pack $ "updation failed") doUpdation
 
-updateRows :: forall record columnsW columnsR.
-              (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record)
-           => Table columnsW columnsR 
-           -> (record -> columnsR -> columnsW) 
-           -> Handler (ReaderT (GlobalBindings, Either String Int) IO)
+updateRows :: 
+  forall record columnsW columnsR.  
+    (Sel1 columnsR (Column PGInt4), JSONSchema record, FromJSON record, Typeable record) => 
+  Table columnsW columnsR -> 
+  (record -> columnsR -> columnsW) -> 
+  Handler (ReaderT (GlobalBindings, Either String Int) IO)
 updateRows table readToWrite = updateRows' table readToWrite (const . const . const . return $ ())
 
 deleteRows' :: [Int -> Connection -> IO ()] -> Handler IdDependencies

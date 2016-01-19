@@ -17,9 +17,10 @@ import qualified Crm.Shared.YearMonthDay          as YMD
 
 import           Crm.Router 
 
-navigation' :: CrmRouter 
-            -> (DOMElement, Fay ())
-            -> Fay ()
+navigation' :: 
+  CrmRouter -> 
+  (DOMElement, Fay ()) -> 
+  Fay ()
 navigation' router (body, callbacks) = do
   let
     moment = M.requireMoment
@@ -42,8 +43,9 @@ navigation' router (body, callbacks) = do
       li $ A.a''' (click logout) [G.logOut, text2DOM " Odhlášení"]] ,
     div body ]) callbacks 
 
-navigation :: CrmRouter
-           -> DOMElement
-           -> Fay ()
+navigation :: 
+  CrmRouter -> 
+  DOMElement -> 
+  Fay ()
 navigation router body =
   navigation' router (body, return ())

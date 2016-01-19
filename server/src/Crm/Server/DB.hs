@@ -1109,17 +1109,19 @@ addPhoto connection photo = do
   let ints = map (\(Only id') -> id') newIds
   return ints
 
-deletePhoto :: Connection
-            -> Int
-            -> IO ()
+deletePhoto :: 
+  Connection -> 
+  Int -> 
+  IO ()
 deletePhoto connection photoId = do
   let q = " delete from photos where id = ? "
   _ <- execute connection q (Only photoId)
   return ()
 
-singleRowOrColumn :: Monad m
-                  => [a] 
-                  -> ExceptT (Reason r) m a
+singleRowOrColumn :: 
+  Monad m => 
+  [a] -> 
+  ExceptT (Reason r) m a
 singleRowOrColumn result = case result of
   row : xs | null xs -> return row
   [] -> throwError $ InputError $ ParseError "no record"

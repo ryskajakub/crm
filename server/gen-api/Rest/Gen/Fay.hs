@@ -56,9 +56,12 @@ mkRes ctx node = H.prettyPrint $ buildHaskellModule ctx node pragmas Nothing
     _warningText = "Warning!! This is automatically generated code, do not modify!"
 
 
-buildHaskellModule :: HaskellContext -> ApiResource ->
-                      [H.ModulePragma] -> Maybe H.WarningText ->
-                      H.Module
+buildHaskellModule :: 
+  HaskellContext -> 
+  ApiResource -> 
+  [H.ModulePragma] -> 
+  Maybe H.WarningText -> 
+  H.Module
 buildHaskellModule ctx node pragmas warningText =
   rewriteModuleNames (rewrites ctx) $
     H.Module noLoc name pragmas warningText exportSpecs importDecls decls
