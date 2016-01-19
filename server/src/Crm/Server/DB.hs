@@ -817,7 +817,7 @@ upkeepsDataForMachine (M.MachineId machineId) = let
   ljQ :: Query ((UpkeepsTable, UpkeepMachinesTable), (
     (Column (Nullable PGInt4), Column (Nullable PGInt4), Column (Nullable PGInt4)), EmployeeLeftJoinTable))
   ljQ = leftJoin upkeepQ upkeepEQ (\((u, _), (ue, _)) -> $(proj 6 0) u .== $(proj 3 0) ue)
-  in proc () -> do
+  in orderBy (asc ($(proj 6 1) . $(proj 3 0))) $ proc () -> do
     ((u, um), (_, e)) <- ljQ -< ()
     returnA -< (u, um, e)
 

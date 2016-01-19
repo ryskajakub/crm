@@ -26,6 +26,7 @@ module Crm.Server.Helpers (
 
 import           Data.Functor.Identity       (runIdentity)
 import           Data.Text                   (Text)
+import           Data.List                   (reverse)
 
 import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
 import           Control.Monad.Trans.Class   (lift)
@@ -177,7 +178,7 @@ mapResultsToList :: Eq bId
                  -> [a]
                  -> [(b, [c])]
 mapResultsToList rowIdentification mapSingle mapMultiple rows =
-  foldl (\bcElements aElement -> 
+  reverse . foldl (\bcElements aElement -> 
     case bcElements of
       -- first element
       [] -> [(mapSingle aElement, [mapMultiple aElement])]
@@ -189,4 +190,4 @@ mapResultsToList rowIdentification mapSingle mapMultiple rows =
             newCElement = mapMultiple aElement
       -- single is different, so add new single and multiple
       _ -> (mapSingle aElement, [mapMultiple aElement]) : bcElements
-    ) [] rows
+    ) [] $ rows
