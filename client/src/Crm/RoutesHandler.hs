@@ -190,10 +190,12 @@ startRouter appVar = startedRouter where
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList companyId data'
         in modify' ns ,
-    maintenances' $-> \companyId ->
-      fetchUpkeeps companyId $ \upkeepsData -> let
-        ns = D.UpkeepHistory upkeepsData companyId False
-        in modify' ns ,
+    maintenances' $-> \companyId router ->
+      fetchUpkeeps companyId (\upkeepsData -> fetchCompany companyId (\companyData -> let
+        (_, _, machinesInCompany) = companyData
+        pickMachine (machineId, machine, _, machineTypeId, machineType, _, _, _, _) = (machineId, machine, machineTypeId, machineType)
+        ns = D.UpkeepHistory upkeepsData (map pickMachine machinesInCompany) companyId False
+        in modify' ns) router) router ,
     machineDetail' $-> \machineId router ->
       fetchMachine machineId
         (\(companyId, machine, machineTypeId, machineTypeTuple, 

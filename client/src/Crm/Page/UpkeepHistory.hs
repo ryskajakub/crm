@@ -38,12 +38,13 @@ import qualified Crm.Runtime                   as Runtime
 
 upkeepHistory :: 
   [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
+  [(M.MachineId, M.Machine, MT.MachineTypeId, MT.MachineType)] ->
   C.CompanyId -> 
   Bool ->
   Var D.AppState ->
   CrmRouter -> 
   (DOMElement, Fay ())
-upkeepHistory upkeepsInfo companyId deletable var router = let
+upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
 
   basicDeleteButtonProps = BTN.buttonProps {
     BTN.disabled = Defined . not $ deletable }
@@ -142,7 +143,6 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
 
   upkeepsHtml = map upkeepRenderHtml upkeepsInfo
   flattenedUpkeepsHtml = foldl (++) [] . map fst $ upkeepsHtml
-  allFetchPhotos = foldl (>>) (return ()) . map snd $ upkeepsHtml
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $
@@ -158,4 +158,4 @@ upkeepHistory upkeepsInfo companyId deletable var router = let
             _ -> D.navigation appState }
         label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
         in BTN.button' buttonProps label ]
-  in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), allFetchPhotos)
+  in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), return ())
