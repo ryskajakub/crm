@@ -57,18 +57,23 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
   basicDeleteButtonProps = BTN.buttonProps {
     BTN.disabled = Defined . not $ deletable }
 
-  upkeepRenderHtml3 ((upkeep1:restUpkeeps)) = 
+  upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     ([header] ++ map mkMachineRow machinesInCompany) where
 
-    mkMachineRow (_, machine, _, machineType) = B.row [
-      B.colSize 3 $ MT.machineTypeName machineType ]
-      
+    mkMachineRow (machineId, machine, _, machineType) = B.row (
+      (B.colSize 3 $ MT.machineTypeName machineType) : 
+      let
+        mkUpkeepMachineInfo (_, ums) = let
+          um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
+          result = maybe (text2DOM "") (\(upkeepMachine,_,_,_) -> text2DOM "figuroval") um
+          in B.colSize 3 result
+        in map mkUpkeepMachineInfo oneToThreeUpkeeps)
 
     header = B.row ([
-      B.col ((B.mkColProps 3) { B.mdOffset = Defined 3 }) . displayDate . U.upkeepDate $ upkeep1 ] ++ 
-      map (B.colSize 3 . displayDate . U.upkeepDate) restUpkeeps)
+      B.col ((B.mkColProps 3) { B.mdOffset = Defined 3 }) . displayDate . U.upkeepDate . fst $ upkeep1 ] ++ 
+      map (B.colSize 3 . displayDate . U.upkeepDate . fst) restUpkeeps)
 
-  upkeepsHtml = map upkeepRenderHtml3 . byThrees . map (\(_,u2,_,_,_) -> u2) $ upkeepsInfo
+  upkeepsHtml = map upkeepRenderHtml3 . byThrees . map (\(_,u2,um,_,_) -> (u2, um)) $ upkeepsInfo
   flattenedUpkeepsHtml = foldl (++) [] upkeepsHtml
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
