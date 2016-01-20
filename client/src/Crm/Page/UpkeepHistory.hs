@@ -65,7 +65,15 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
       let
         mkUpkeepMachineInfo (_, ums) = let
           um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
-          result = maybe (text2DOM "") (\(upkeepMachine,_,_,_) -> text2DOM "figuroval") um
+          result = maybe (text2DOM "") (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
+          displayUM upkeepMachine = let
+            panel = if UM.repair upkeepMachine
+              then (\x -> B.panel' "panel-danger" [span' (class'' ["label, label-danger"]) "O",text2DOM x])
+              else (\x -> B.panel' "panel-info" [span' (class'' ["label, label-info"]) "S",text2DOM x])
+            content = if UM.recordedMileage upkeepMachine == 0
+              then ""
+              else showInt . UM.recordedMileage $ upkeepMachine
+            in panel content
           in B.colSize 3 result
         in map mkUpkeepMachineInfo oneToThreeUpkeeps)
 
