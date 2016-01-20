@@ -58,7 +58,11 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     BTN.disabled = Defined . not $ deletable }
 
   upkeepRenderHtml3 ((upkeep1:restUpkeeps)) = 
-    ([header]) where
+    ([header] ++ map mkMachineRow machinesInCompany) where
+
+    mkMachineRow (_, machine, _, machineType) = B.row [
+      B.colSize 3 $ MT.machineTypeName machineType ]
+      
 
     header = B.row ([
       B.col ((B.mkColProps 3) { B.mdOffset = Defined 3 }) . displayDate . U.upkeepDate $ upkeep1 ] ++ 
