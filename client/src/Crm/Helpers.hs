@@ -134,6 +134,16 @@ displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.
   then ""
   else "-" <> M.note machine)
 
+displayFullMachine :: M.Machine -> MT.MachineType -> Text
+displayFullMachine machine machineType =
+  note' <> (displayMachine machine machineType) <> serialNumber' where
+    note' = if T.null . M.label_ $ machine
+      then ""
+      else M.label_ machine <> " - "
+    serialNumber' = if T.null . M.serialNumber $ machine
+      then ""
+      else " - " <> M.serialNumber machine
+
 showCompanyId :: C.CompanyId -> Text
 showCompanyId = showInt . C.getCompanyId
 

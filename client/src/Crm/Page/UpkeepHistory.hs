@@ -30,7 +30,7 @@ import qualified Crm.Shared.Photo              as P
 import qualified Crm.Shared.Api                as A
 
 import qualified Crm.Data.Data                    as D
-import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayMachine)
+import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayFullMachine)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
 import qualified Crm.Runtime                   as Runtime
@@ -79,7 +79,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
         in td' (class' "col-md-3") result
       in tr (
         (th' (class' "col-md-3") (link 
-            (MT.machineTypeName machineType)
+            (displayFullMachine machine machineType)
             (machineDetail machineId)
             router)) :
           map mkUpkeepMachineInfo oneToThreeUpkeeps ++ 

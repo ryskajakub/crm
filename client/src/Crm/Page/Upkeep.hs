@@ -326,13 +326,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       _ -> (Defined 2, False)
 
     machineToggleCheckedLink = let
-      linkText = note' <> (displayMachine machine' machineType) <> serialNumber' where
-        note' = if T.null . M.label_ $ machine'
-          then ""
-          else M.label_ machine' <> " - "
-        serialNumber' = if T.null . M.serialNumber $ machine'
-          then ""
-          else " - " <> M.serialNumber machine'
+      linkText = displayFullMachine machine' machineType
       clickHandler = let
         (newCheckedMachines, newUncheckedMachines) = toggle (
           upkeepMachines ,
