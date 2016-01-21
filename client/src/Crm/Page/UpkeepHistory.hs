@@ -58,31 +58,38 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     BTN.disabled = Defined . not $ deletable }
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
-    ([header] ++ map mkMachineRow machinesInCompany) where
+    (B.table [thead header, tbody bodyCells]) where
+    
+    cellsToPad = [0..(2 - length oneToThreeUpkeeps)]
+    bodyCells = map mkMachineRow machinesInCompany
 
-    mkMachineRow (machineId, machine, _, machineType) = B.row (
-      (B.colSize 3 $ MT.machineTypeName machineType) : 
-      let
-        mkUpkeepMachineInfo (_, ums) = let
-          um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
-          result = maybe (text2DOM "") (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
-          displayUM upkeepMachine = let
-            panel = if UM.repair upkeepMachine
-              then (\x -> B.panel' "panel-danger" [span' (class'' ["label, label-danger"]) "O",text2DOM x])
-              else (\x -> B.panel' "panel-info" [span' (class'' ["label, label-info"]) "S",text2DOM x])
-            content = if UM.recordedMileage upkeepMachine == 0
-              then ""
-              else showInt . UM.recordedMileage $ upkeepMachine
-            in panel content
-          in B.colSize 3 result
-        in map mkUpkeepMachineInfo oneToThreeUpkeeps)
+    mkMachineRow (machineId, machine, _, machineType) = let 
+      paddingCells = map (const $ td' (class' "col-md-3") "") cellsToPad
+      mkUpkeepMachineInfo (_, ums) = let
+        um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
+        result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
+        displayUM upkeepMachine = let
+          panel = if UM.repair upkeepMachine
+            then (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM x])
+            else (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM x])
+          content = if UM.recordedMileage upkeepMachine == 0
+            then ""
+            else showInt . UM.recordedMileage $ upkeepMachine
+          in panel content
+        in td' (class' "col-md-3") result
+      in tr (
+        (td' (class' "col-md-3") (MT.machineTypeName machineType)) :
+          map mkUpkeepMachineInfo oneToThreeUpkeeps ++ 
+          paddingCells)
 
-    header = B.row ([
-      B.col ((B.mkColProps 3) { B.mdOffset = Defined 3 }) . displayDate . U.upkeepDate . fst $ upkeep1 ] ++ 
-      map (B.colSize 3 . displayDate . U.upkeepDate . fst) restUpkeeps)
+    header = tr ([
+      th' (class' "col-md-3") "" ,
+      th' (class' "col-md-3") (displayDate . U.upkeepDate . fst $ upkeep1) ] ++
+      map (th' (class' "col-md-3") . displayDate . U.upkeepDate . fst) restUpkeeps ++ 
+      map (const $ th' (class' "col-md-3") "") cellsToPad)
 
   upkeepsHtml = map upkeepRenderHtml3 . byThrees . map (\(_,u2,um,_,_) -> (u2, um)) $ upkeepsInfo
-  flattenedUpkeepsHtml = foldl (++) [] upkeepsHtml
+  flattenedUpkeepsHtml = upkeepsHtml
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $

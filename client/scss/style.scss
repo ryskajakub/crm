@@ -13,6 +13,10 @@ div.panel-body h3 {
   right: 0px;
   top: 0px; }
 
+table {
+  table-layout: fixed;
+  th, td {word-wrap: break-word; }}
+
 div.colours {
   height: 20px;
   white-space: nowrap;

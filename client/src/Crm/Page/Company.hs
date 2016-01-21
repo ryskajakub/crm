@@ -98,10 +98,11 @@ companiesList router orderType direction companies' = let
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements
 
-companyNew :: R.CrmRouter
-           -> Var D.AppState
-           -> C.Company
-           -> DOMElement
+companyNew :: 
+  R.CrmRouter -> 
+  Var D.AppState -> 
+  C.Company -> 
+  DOMElement
 companyNew router var company' = let
   saveHandler =
     computeCoordinates (C.companyAddress company') $ \coordinates ->
