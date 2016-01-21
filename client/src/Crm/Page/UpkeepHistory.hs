@@ -78,7 +78,10 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
           in panel content
         in td' (class' "col-md-3") result
       in tr (
-        (td' (class' "col-md-3") (MT.machineTypeName machineType)) :
+        (th' (class' "col-md-3") (link 
+            (MT.machineTypeName machineType)
+            (machineDetail machineId)
+            router)) :
           map mkUpkeepMachineInfo oneToThreeUpkeeps ++ 
           paddingCells)
 
