@@ -5,6 +5,7 @@ module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
 import           Data.Text                     (fromString, showInt, (<>), intercalate, pack)
+import qualified Data.Text                     as T
 import           Prelude                       hiding (div, span, id, intercalate)
 import           FFI                           (Defined(Defined))
 import           Data.Var                         (Var, modify)
@@ -28,6 +29,7 @@ import qualified Crm.Shared.Employee           as E
 import qualified Crm.Shared.Company            as C
 import qualified Crm.Shared.Photo              as P
 import qualified Crm.Shared.Api                as A
+import qualified Crm.Shared.ServerRender       as SR
 
 import qualified Crm.Data.Data                    as D
 import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayFullMachine)
@@ -61,10 +63,20 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     (B.table [thead header, tbody bodyCells]) where
     
     cellsToPad = [0..(2 - length oneToThreeUpkeeps)]
-    bodyCells = map mkMachineRow machinesInCompany
+    paddingCells = map (const $ td' (class' "col-md-3") "") cellsToPad
 
+    isEmptyMarkup (SR.PlainText pt:_) = T.null pt
+    isEmptyMarkup _ = True
+
+    mkTextualCell pick upkeep = td' (class' "col-md-3") (renderMarkup . pick . fst $ upkeep)
+    renderTextualRow pick header = if length (takeWhile (isEmptyMarkup . pick . fst) oneToThreeUpkeeps) == length oneToThreeUpkeeps
+      then []
+      else [tr $ (th' (class' "col-md-3") header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
+
+    bodyCells = map mkMachineRow machinesInCompany ++
+      renderTextualRow U.workDescription "Popis práce" ++
+      renderTextualRow U.recommendation "Doporučení"
     mkMachineRow (machineId, machine, _, machineType) = let 
-      paddingCells = map (const $ td' (class' "col-md-3") "") cellsToPad
       mkUpkeepMachineInfo (_, ums) = let
         um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
         result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
