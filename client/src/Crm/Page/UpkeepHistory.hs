@@ -105,9 +105,9 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     bodyCells = map mkMachineRow machinesInCompany ++
       renderTextualRow U.workDescription "Popis práce" ++
       renderTextualRow U.recommendation "Doporučení" ++
-      [tr $ emptyCell : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
-      [tr $ emptyCell : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells] ++
-      [tr $ emptyCell : map (td . mkDeleteButton . getUpkeepId) oneToThreeUpkeeps ++ paddingCells]
+      [tr $ th "Servisáci" : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
+      [tr $ th "Změna stavu" : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells] ++
+      [tr $ th "Smazat" : map (td . mkDeleteButton . getUpkeepId) oneToThreeUpkeeps ++ paddingCells]
       
     mkMachineRow (machineId, machine, _, machineType) = let 
       mkUpkeepMachineInfo upkeep = let
