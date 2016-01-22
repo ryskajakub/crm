@@ -76,6 +76,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     getUpkeep (u1,u2,u3,u4,u5) = u2
     getUpkeepMachines (u1,u2,u3,u4,u5) = u3
     getEmployees (u1,u2,u3,u4,u5) = u4
+    getPhotos (u1,u2,u3,u4,u5) = u5
 
     mkTextualCell pick upkeep = td (renderMarkup . pick . getUpkeep $ upkeep)
 
@@ -105,7 +106,16 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
         BTN.onClick = Defined $ const clickHandler }
       in BTN.button' buttonProps "Smazat"
 
+    mkPhotosDisplayButton photoIds = let
+      clickHandler = return ()
+      buttonProps = BTN.buttonProps {
+        BTN.onClick = Defined $ const clickHandler }
+      in BTN.button' buttonProps G.picture
+
     ifNonEmptyEmployees code = if isRowEmpty (null . getEmployees)
+      then []
+      else code
+    ifNonEmptyPhotos code = if isRowEmpty (null . getPhotos)
       then []
       else code
 
@@ -114,6 +124,8 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
       renderTextualRow U.recommendation "Doporučení" ++
       ifNonEmptyEmployees 
         [tr $ th "Servisáci" : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
+      ifNonEmptyPhotos
+        [tr $ th "Fotky" : map (td . mkPhotosDisplayButton . getPhotos) oneToThreeUpkeeps ++ paddingCells] ++
       [tr $ th "Změna stavu" : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells] ++
       [tr $ th "Smazat" : map (td . mkDeleteButton . getUpkeepId) oneToThreeUpkeeps ++ paddingCells]
       
