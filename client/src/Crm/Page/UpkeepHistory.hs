@@ -4,38 +4,39 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import           Data.Text                     (fromString, showInt, (<>), intercalate, pack)
-import qualified Data.Text                     as T
-import           Prelude                       hiding (div, span, id, intercalate)
-import           FFI                           (Defined(Defined))
-import           Data.Var                         (Var, modify)
+import           Data.Text                        (fromString, showInt, (<>), intercalate, pack)
+import qualified Data.Text                        as T
+import           Prelude                          hiding (div, span, id, intercalate)
+import           FFI                              (Defined(Defined))
+import           Data.Var                            (Var, modify)
 
-import qualified JQuery                        as JQ
+import qualified JQuery                           as JQ
 
 import           HaskellReact
-import qualified HaskellReact.Bootstrap        as B
-import qualified HaskellReact.Bootstrap.Nav    as BN
-import qualified HaskellReact.Bootstrap.Button as BTN
-import qualified HaskellReact.BackboneRouter   as BR
-import qualified HaskellReact.Tag.Image        as IMG
+import qualified HaskellReact.Bootstrap           as B
+import qualified HaskellReact.Bootstrap.Nav       as BN
+import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.BackboneRouter      as BR
+import qualified HaskellReact.Tag.Image           as IMG
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 
-import qualified Crm.Shared.Upkeep             as U
-import qualified Crm.Shared.UpkeepMachine      as UM
-import qualified Crm.Shared.Machine            as M
-import qualified Crm.Shared.MachineType        as MT
-import qualified Crm.Shared.MachineKind        as MK
-import qualified Crm.Shared.Employee           as E
-import qualified Crm.Shared.Company            as C
-import qualified Crm.Shared.Photo              as P
-import qualified Crm.Shared.Api                as A
-import qualified Crm.Shared.ServerRender       as SR
+import qualified Crm.Shared.Upkeep                as U
+import qualified Crm.Shared.UpkeepMachine         as UM
+import qualified Crm.Shared.Machine               as M
+import qualified Crm.Shared.MachineType           as MT
+import qualified Crm.Shared.MachineKind           as MK
+import qualified Crm.Shared.Employee              as E
+import qualified Crm.Shared.Company               as C
+import qualified Crm.Shared.Photo                 as P
+import qualified Crm.Shared.Api                   as A
+import qualified Crm.Shared.ServerRender          as SR
 
 import qualified Crm.Data.Data                    as D
-import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayFullMachine, mkColours)
+import           Crm.Helpers                      (displayDate, renderMarkup, reload, displayFullMachine, mkColours)
 import           Crm.Router
-import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
-import qualified Crm.Runtime                   as Runtime
+import           Crm.Server                       (deleteUpkeep, reopenUpkeep, deletePhoto)
+import qualified Crm.Runtime                      as Runtime
+import qualified Crm.Component.Navigation         as N
 
 
 byThrees :: [a] -> [[a]]
@@ -141,7 +142,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
   linkToCompany = B.row $ B.col (B.mkColProps 12) $
     BN.nav [ 
-      link "Zpátky na firmu" (companyDetail companyId) router ,
+      N.backToCompany companyId router ,
       let 
         buttonProps = (BTN.buttonProps {
           BTN.bsStyle = Defined "danger" ,

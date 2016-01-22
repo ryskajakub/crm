@@ -37,6 +37,7 @@ import qualified Crm.Validation                   as V
 import qualified Crm.Router                       as R
 import           Crm.Server                       (createUpkeep, updateUpkeep)
 import           Crm.Component.Form
+import           Crm.Component.Navigation         as N
 import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
@@ -230,7 +231,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag companyId = let
   rawUpkeepDate = DP.rawText upkeepDatePicker'
   upkeepFormRows = 
-    (B.fullRow (BN.nav [ R.link [G.arrowLeft , text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ])) :
+    (B.fullRow (BN.nav [ N.backToCompany companyId router ])) :
     upkeepPageHeader : 
     formHeader :
     (map upkeepMachineRow machines ++ 

@@ -21,6 +21,7 @@ import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.ContactPerson         as CP
 
 import           Crm.Component.Form
+import           Crm.Component.Navigation         as N
 import           Crm.Helpers                      (pageInfo, validationHtml)
 import           Crm.Server                       (createContactPerson, updateContactPerson, deleteContactPerson)
 import qualified Crm.Data.Data                    as D
@@ -52,7 +53,7 @@ contactPersonsList ::
   [(CP.ContactPersonId, CP.ContactPerson)] -> 
   DOMElement
 contactPersonsList companyId router persons = B.grid [
-  B.fullRow $ BN.nav [ R.link [G.arrowLeft, text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ] ,
+  B.fullRow $ BN.nav [ N.backToCompany companyId router ] ,
   contactPersonsList' router persons ]
 
 
@@ -95,7 +96,7 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
         (R.navigate (R.contactPersonList companyId) router)
         router, [deleteButton'])
 
-  backToCompany = BN.nav [R.link [G.arrowLeft, text2DOM " Zpět na firmu"] (R.companyDetail companyId) router]
+  backToCompany = BN.nav [ N.backToCompany companyId router ]
   form = div' (class' "contact-person") $ B.grid $ (B.fullRow backToCompany) : (B.row $ pageInfo') : [
     inputRow'
       "Jméno" 
