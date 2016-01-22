@@ -111,9 +111,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       _ -> D.navigation appState }
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
+
   upkeepHistoryHtml = let
-    mkUpkeepRows :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
-    mkUpkeepRows (upkeepId, upkeep, upkeepMachine, employees) = let
+    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
+    mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees) = let
       (labelClass, labelText, containingElement) = if U.upkeepClosed upkeep
         then let
           reopenLink attrs children = let
@@ -137,15 +138,16 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       description = B.col (B.mkColProps 4) $ U.workDescription upkeep
       noteHeader = B.col (B.mkColProps 2) $ strong "Poznámky"
       note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
-      in [
-        B.row $ [stateLabel, date] ++ (if includeMths then [mthHeader, mth] else []) ++ [
-          warrantyHeader, warranty, employeeHeader, employee] ,
-        div' (class'' ["row", "last"]) [descriptionHeader, description, noteHeader, note]]
-    rows = (map mkUpkeepRows upkeeps)
+      in (:[]) . tr . map td $ [displayDate . U.upkeepDate $ upkeep, "", "", "", "", "", "", "", ""]
+    rows = map mkUpkeepRow upkeeps
     flattenedRows = foldl (++) [] rows
+    mkTable bodyRows = table [
+      thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
+        th "Doporučení", th "Poznámka", th "Koncová poznámka"] , 
+      tbody bodyRows]
     in if null flattenedRows
       then []
-      else (B.row (B.col (B.mkColProps 12) $ h3 "Předchozí servisy")) : flattenedRows
+      else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ flattenedRows) : []
   extraGrid = (if editing == Editing && (not $ null upkeeps) 
     then Nothing 
     else (Just $ B.grid upkeepHistoryHtml))
@@ -514,7 +516,6 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
         maybe [] (\mkButtonRow -> [
           mkFormGroup (mkButtonRow $ (buttonStateFromBool . V.ok) validation)]) buttonRow''
  
-
   mkGrid = let
     headerSection = let
       button = BTN.button'
