@@ -66,6 +66,15 @@ machineTypeDisplayRow machineType =
     (SetValue . MT.machineTypeName $ machineType) 
     (const . return $ ())
 
+
+setEditing :: Var D.AppState -> InputState -> Fay ()
+setEditing appVar' editing' = modify appVar' $ \appState -> appState {
+  D.navigation = case D.navigation appState of
+    D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (md @ MD.MachineDetail {}))) ->
+      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (md { MD.formState = editing' })))
+    _ -> D.navigation appState }
+
+
 machineDetail :: 
   InputState -> 
   Var D.AppState -> 
@@ -189,24 +198,13 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     _ -> [photoCarouselRow]) ++ extraRow ++ (if editing == Editing && null upkeeps && null photos
       then [deleteMachineRow]
       else [])
-  setEditing :: InputState -> Fay ()
-  setEditing editing' = modify appVar (\appState -> appState {
-    D.navigation = case D.navigation appState of
-      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (MD.MachineDetail d e _ f g i))) ->
-        D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (MD.MachineDetail d e editing' f g i)))
-      _ -> D.navigation appState })
-  editButtonRow =
-    div' (class' "col-md-3") $
-      BTN.button'
-        (BTN.buttonProps { BTN.onClick = Defined $ const $ setEditing Editing })
-        "Jdi do editačního módu"
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   editMachineAction = case machineTypeId' of
     Just (machineTypeId) -> updateMachine machineId machineTypeId machine otherMachineId 
-      contactPersonId extraFieldsForServer (setEditing Display) router
+      contactPersonId extraFieldsForServer (setEditing appVar Display) router
     Nothing -> return ()
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
-  button = case editing of Editing -> buttonRow'' ; _ -> (const editButtonRow)
+  button = case editing of Editing -> Just buttonRow'' ; _ -> Nothing
 
   fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
     (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
@@ -269,7 +267,7 @@ machineNew ::
   DOMElement
 machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId machineTypeTuple machineTypeId 
     (contactPerson, contactPersonId, contactPersonActiveRow) contactPersons v otherMachineId om extraFields = 
-  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" buttonRow'' appVar 
+  machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" (Just buttonRow'') appVar 
     datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
     Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
     companyId router (machineTypeDisplayRow (fst machineTypeTuple))
@@ -328,7 +326,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
 machineDisplay :: 
   InputState -> 
   Text -> -- ^ header of the page
-  (ButtonState -> DOMElement) ->
+  Maybe (ButtonState -> DOMElement) ->
   Var D.AppState ->
   DP.DatePickerData ->
   (M.Machine, Text) -> -- ^ machine, text of the datepicker
@@ -512,15 +510,22 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     editableRow
       editing
       ("Datum uvedení do provozu") 
-      datePicker ] ++ computationRows ++ [labelRow, archivedRow, noteRow] ++ kindSpecificRows ++ extraRows ++ [
-      mkFormGroup (buttonRow'' $ (buttonStateFromBool . V.ok) validation) ]
+      datePicker ] ++ computationRows ++ [labelRow, archivedRow, noteRow] ++ kindSpecificRows ++ extraRows ++ 
+        maybe [] (\mkButtonRow -> [
+          mkFormGroup (mkButtonRow $ (buttonStateFromBool . V.ok) validation)]) buttonRow''
+ 
 
-  mkGrid = 
-    div $ [
+  mkGrid = let
+    goEditButton =
+      form' (class' "navbar-form") $
+        BTN.button'
+          (BTN.buttonProps { BTN.onClick = Defined . const . setEditing appVar $ Editing })
+          "Jdi do editačního módu"
+    in div $ [
       (form' (mkAttrs { className = Defined "form-horizontal" }) $
         B.grid $ [
           (B.row $ B.col (B.mkColProps 12) $ h2 pageHeader) ,
-          (B.fullRow . BN.nav . (:[]) . N.backToCompany companyId $ router) ,
+          (B.fullRow $ BN.nav [N.backToCompany companyId router, goEditButton]) ,
           B.row formInputs]) :
       validationErrorsGrid ++ 
       (case extraGrid of
