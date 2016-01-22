@@ -152,5 +152,6 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
             dh @ (D.UpkeepHistory {}) -> dh { D.deletable = not deletable }
             _ -> D.navigation appState }
         label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
-        in BTN.button' buttonProps label ]
+        button = BTN.button' buttonProps label
+        in form' (class' "navbar-form") button ]
   in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), return ())
