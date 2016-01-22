@@ -79,11 +79,25 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     renderTextualRow pick header = if length (takeWhile (isEmptyMarkup . pick . getUpkeep) oneToThreeUpkeeps) == length oneToThreeUpkeeps
       then []
       else [tr $ (th header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
+    mkUpkeepLink (upkeepId, upkeepData, _, _, _) = if U.upkeepClosed upkeepData
+      then let
+        buttonProps = (BTN.buttonProps {
+          BTN.bsStyle = Defined "primary" ,
+          BTN.onClick = Defined $ const clickHandler })
+        clickHandler = reopenUpkeep upkeepId goEditUpkeep router
+        goEditUpkeep = navigate (upkeepDetail upkeepId) router
+        in BTN.button' buttonProps "Otevřít"
+      else let
+        buttonProps = (BTN.buttonProps {
+          BTN.onClick = Defined $ const clickHandler })
+        clickHandler = navigate (upkeepDetail upkeepId) router
+        in BTN.button' buttonProps "Uzavřít"
 
     bodyCells = map mkMachineRow machinesInCompany ++
       renderTextualRow U.workDescription "Popis práce" ++
       renderTextualRow U.recommendation "Doporučení" ++
-      [tr $ emptyCell : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells]
+      [tr $ emptyCell : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
+      [tr $ emptyCell : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells]
       
     mkMachineRow (machineId, machine, _, machineType) = let 
       mkUpkeepMachineInfo upkeep = let
@@ -91,8 +105,8 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
         result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
         displayUM upkeepMachine = let
           panel = if UM.repair upkeepMachine
-            then (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM x])
-            else (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM x])
+            then (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM $ " " <> x])
+            else (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM $ " " <> x])
           content = if UM.recordedMileage upkeepMachine == 0
             then ""
             else showInt . UM.recordedMileage $ upkeepMachine
