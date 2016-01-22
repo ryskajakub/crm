@@ -10,14 +10,17 @@ module HaskellReact.Tag.Image (
 
 import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
+import "fay-base" FFI (Defined (Undefined))
 
 import HaskellReact
 
 data ImageAttributes = ImageAttributes {
-  src :: Text }
+  src :: Text ,
+  width :: Defined Int ,
+  height :: Defined Int }
 
 mkImageAttrs :: Text -> ImageAttributes
-mkImageAttrs src' = ImageAttributes src'
+mkImageAttrs src' = ImageAttributes src' Undefined Undefined
 
 image' :: Attributes -> ImageAttributes -> DOMElement
 image' attrs imgAttrs = constructDOMElement "img" attrs imgAttrs ([]::[DOMElement])

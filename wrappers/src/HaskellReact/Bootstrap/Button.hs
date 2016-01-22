@@ -27,6 +27,14 @@ buttonProps = ButtonProps {
   disabled = Undefined ,
   onClick = Undefined }
 
+data ExtraButtonProps = ExtraButtonProps {
+  data_toggle :: Defined Text ,
+  data_target :: Defined Text }
+
+extraButtonProps = ExtraButtonProps {
+  data_toggle = Undefined ,
+  data_target = Undefined }
+
 button' :: 
   HR.Renderable a => 
   ButtonProps -> 
@@ -54,17 +62,25 @@ expressSize NormalButton = ""
 expressSize SmallButton = "sm"
 expressSize ExtraSmallButton = "xs"
 
-buttonP :: 
+buttonP ::
   HR.Renderable a =>
   ButtonSize ->
   ButtonStyle ->
   (SyntheticMouseEvent -> Fay ()) ->
   a ->
   HR.DOMElement
-buttonP buttonSize buttonStyle clickHandler title =
-  HC.button' buttonAttributes title 
+buttonP = buttonP' extraButtonProps
+
+buttonP' :: 
+  HR.Renderable a =>
+  ExtraButtonProps ->
+  ButtonSize ->
+  ButtonStyle ->
+  (SyntheticMouseEvent -> Fay ()) ->
+  a ->
+  HR.DOMElement
+buttonP' extraProps buttonSize buttonStyle clickHandler title =
+  HR.constructDOMElement "button" buttonAttributes extraProps title
   where
   buttonAttributes = (HR.class'' ["btn", "btn-" <> expressSize buttonSize, "btn-" <> expressStyle buttonStyle]) {
     HR.onClick = Defined clickHandler }
-
-

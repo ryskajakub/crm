@@ -11,7 +11,9 @@ module HaskellReact.Tag.Table (
   thead , thead' ,
   tbody , tbody' ,
   th , th' ,
-  td , td' , td''
+  td , td' , td'' ,
+  colgroup' , colgroup ,
+  col' , col
   ) where
 
 import "fay-base" Prelude hiding (div, span)
@@ -66,3 +68,15 @@ tbody = tbody' defaultAttributes
 
 tbody' :: (Renderable a) => Attributes -> a -> DOMElement
 tbody' = constructSimple "tbody"
+
+colgroup' :: (Renderable a) => Attributes -> a -> DOMElement
+colgroup' = constructSimple "colgroup"
+
+colgroup :: (Renderable a) => a -> DOMElement
+colgroup = colgroup' defaultAttributes
+
+col' :: (Renderable a) => Attributes -> a -> DOMElement
+col' = constructSimple "col"
+
+col :: (Renderable a) => a -> DOMElement
+col = col' defaultAttributes

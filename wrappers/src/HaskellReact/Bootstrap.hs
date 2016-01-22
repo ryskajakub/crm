@@ -9,7 +9,7 @@ import "fay-base" FFI (ffi, Automatic, Defined(Defined, Undefined), Nullable(Nul
 import "fay-base" Data.Text (fromString, Text, showInt, (<>))
 import "fay-base" Prelude
 
-import HaskellReact
+import HaskellReact hiding (row, col', col)
 
 data ReactBootstrap
 instance CommonJSModule ReactBootstrap
@@ -124,7 +124,28 @@ col :: Renderable a
     -> DOMElement
 col props children = col' props Undefined children
 
-panel :: Renderable a
-      => Automatic a
-      -> DOMElement
-panel = reactBootstrap "Panel" Null
+colSize ::
+  Renderable a =>
+  Int ->
+  a ->
+  DOMElement
+colSize size = col (mkColProps size) 
+
+fullCol :: Renderable a => a -> DOMElement
+fullCol = col (mkColProps 12)
+
+fullRow :: Renderable a => a -> DOMElement
+fullRow = row . fullCol
+
+panel' ::
+  Renderable a => 
+  Text ->
+  a ->
+  DOMElement
+panel' style children = div' (class'' ["panel", style]) (div' (class' "panel-body") children)
+
+panel ::
+  Renderable a =>
+  a ->
+  DOMElement
+panel = panel' "panel-default"
