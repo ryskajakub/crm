@@ -113,7 +113,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
 
   upkeepHistoryHtml = let
-    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> [DOMElement]
+    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> DOMElement
     mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees) = let
       (labelClass, labelText, containingElement) = if U.upkeepClosed upkeep
         then let
@@ -124,30 +124,30 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           in ("label-success", "Uzavřený", reopenLink)
         else ("label-warning", "Naplánovaný", span')
       stateLabel = B.col (B.mkColProps 1) $ containingElement (class'' ["label", labelClass]) labelText
-      (postMthOffset, includeMths) = case MT.kind . fst $ machineTypeTuple of
-        MK.RotaryScrewCompressor | U.upkeepClosed upkeep -> (Undefined, True)
-        _ -> (Defined 4, False)
       date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
-      mthHeader = B.col (B.mkColProps 3) $ strong "Naměřené motohodiny"
-      mth = B.col (B.mkColProps 1) $ showInt $ UM.recordedMileage upkeepMachine
-      warrantyHeader = B.col (B.ColProps 1 postMthOffset) $ strong "Záruka"
-      warranty = B.col (B.mkColProps 1) (if UM.warrantyUpkeep upkeepMachine then "Ano" else "Ne")
-      employeeHeader = B.col (B.mkColProps 1) $ strong "Servisáci"
-      employee = B.col (B.mkColProps 2) . mkColours $ employees
+      mth = showInt . UM.recordedMileage $ upkeepMachine
+      warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
+      repair = let
+        (labelClass, labelText) = if UM.repair upkeepMachine 
+          then ("label-danger", "O")
+          else ("label-info", "S")
+        in span' (class'' [labelClass, "label"]) labelText
+      employeeCol = mkColours employees
       descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
       description = B.col (B.mkColProps 4) $ U.workDescription upkeep
       noteHeader = B.col (B.mkColProps 2) $ strong "Poznámky"
       note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
-      in (:[]) . tr . map td $ [displayDate . U.upkeepDate $ upkeep, "", "", "", "", "", "", "", ""]
+      in tr [td . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
+        td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, 
+        td . UM.upkeepMachineNote $ upkeepMachine, td . UM.endNote $ upkeepMachine]
     rows = map mkUpkeepRow upkeeps
-    flattenedRows = foldl (++) [] rows
     mkTable bodyRows = table [
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
         th "Doporučení", th "Poznámka", th "Koncová poznámka"] , 
       tbody bodyRows]
-    in if null flattenedRows
+    in if null rows
       then []
-      else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ flattenedRows) : []
+      else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ rows) : []
   extraGrid = (if editing == Editing && (not $ null upkeeps) 
     then Nothing 
     else (Just $ B.grid upkeepHistoryHtml))
