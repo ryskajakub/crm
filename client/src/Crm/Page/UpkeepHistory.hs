@@ -19,6 +19,7 @@ import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.BackboneRouter      as BR
 import qualified HaskellReact.Tag.Image           as IMG
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Modal     as BM
 
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.UpkeepMachine         as UM
@@ -66,6 +67,8 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
     D.navigation = case D.navigation appState of
       uh @ (D.UpkeepHistory {}) -> uh { D.photosInModal = photoIds }
       _ -> D.navigation appState }
+
+  BM.ModalPair modalButtonProps modalElement = BM.mkModalPair 
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (B.table [cols, thead header, tbody bodyCells]) where
@@ -115,11 +118,10 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
 
     mkPhotosDisplayButton photoIds = let
       clickHandler = setPhotosInModal photoIds
-      buttonProps = BTN.buttonProps {
-        BTN.onClick = Defined $ const clickHandler }
       in case photoIds of
         [] -> []
-        _ -> [BTN.button' buttonProps [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
+        _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
+          [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
 
     ifNonEmptyEmployees code = if isRowEmpty (null . getEmployees)
       then []
@@ -183,4 +185,4 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
         button = BTN.button' buttonProps label
         in form' (class' "navbar-form") button ]
-  in (div $ B.grid (header : linkToCompany : flattenedUpkeepsHtml), return ())
+  in (div $ B.grid (modalElement : header : linkToCompany : flattenedUpkeepsHtml), return ())
