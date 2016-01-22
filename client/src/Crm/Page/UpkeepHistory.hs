@@ -69,7 +69,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       _ -> D.navigation appState }
 
   BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
-  modalElement = modalElementBase . div . map mkPhotoRegion $ photosInModal
+  modalElement = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ photosInModal
     where
     mkPhotoRegion photoId = IMG.image' 
       (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})

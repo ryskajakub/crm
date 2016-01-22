@@ -105,6 +105,12 @@ form.upkeep-sequence-form input[type=checkbox] {
   position: absolute;
   right: 15px; }
 
+.upkeep-photos {
+  img {
+    margin-bottom: 15px; }
+  img:last-child {
+    margin-bottom: 0px; }}
+
 /* my carousel */
 #my-carousel {
   min-height: 600px; }
