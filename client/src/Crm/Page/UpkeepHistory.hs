@@ -20,6 +20,7 @@ import qualified HaskellReact.BackboneRouter      as BR
 import qualified HaskellReact.Tag.Image           as IMG
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Modal     as BM
+import qualified HaskellReact.Bootstrap.Table     as BT
 
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.UpkeepMachine         as UM
@@ -89,7 +90,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
     router
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
-    (B.table [cols, thead header, tbody bodyCells]) where
+    (BT.table' (class' "break-words") Nothing [cols, thead header, tbody bodyCells]) where
     
     cols = colgroup $ map (const $ col' (class' "col-md-3") "") [(1::Int)..4]
 

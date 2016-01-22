@@ -132,11 +132,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             BTN.onClick = Defined . const $ doReopen }
           in BTN.button' buttonProps "Otevřít"
         else text2DOM ""
-      in tr [td . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
+      in tr [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, 
         td . UM.upkeepMachineNote $ upkeepMachine, td . UM.endNote $ upkeepMachine, td action]
     rows = map mkUpkeepRow upkeeps
     mkTable bodyRows = B.table [
+      colgroup $ col' (class' "nowrap") "" : map (const . col $ "") [(1::Int)..9] ,
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
         th "Doporučení", th "Poznámka", th "Koncová poznámka", th "Akce"] , 
       tbody bodyRows]
