@@ -194,7 +194,7 @@ startRouter appVar = startedRouter where
       fetchUpkeeps companyId (\upkeepsData -> fetchCompany companyId (\companyData -> let
         (_, _, machinesInCompany) = companyData
         pickMachine (machineId, machine, _, machineTypeId, machineType, _, _, _, _) = (machineId, machine, machineTypeId, machineType)
-        ns = D.UpkeepHistory upkeepsData (map pickMachine machinesInCompany) companyId False
+        ns = D.UpkeepHistory upkeepsData (map pickMachine machinesInCompany) companyId False []
         in modify' ns) router) router ,
     machineDetail' $-> \machineId router ->
       fetchMachine machineId

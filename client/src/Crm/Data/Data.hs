@@ -49,7 +49,8 @@ data NavigationState =
     companyUpkeeps :: [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] ,
     companyMachines' :: [(M.MachineId, M.Machine, MT.MachineTypeId, MT.MachineType)] ,
     companyId :: C.CompanyId ,
-    deletable :: Bool } |
+    deletable :: Bool ,
+    photosInModal :: [P.PhotoId] } |
   PlannedUpkeeps { 
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] } |
   MachineTypeList {

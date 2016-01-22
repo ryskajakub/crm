@@ -52,13 +52,20 @@ upkeepHistory ::
   [(M.MachineId, M.Machine, MT.MachineTypeId, MT.MachineType)] ->
   C.CompanyId -> 
   Bool ->
+  [P.PhotoId] ->
   Var D.AppState ->
   CrmRouter -> 
   (DOMElement, Fay ())
-upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
+upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal var router = let
 
   basicDeleteButtonProps = BTN.buttonProps {
     BTN.disabled = Defined . not $ deletable }
+
+  setPhotosInModal :: [P.PhotoId] -> Fay ()
+  setPhotosInModal photoIds = modify var $ \appState -> appState {
+    D.navigation = case D.navigation appState of
+      uh @ (D.UpkeepHistory {}) -> uh { D.photosInModal = photoIds }
+      _ -> D.navigation appState }
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (B.table [cols, thead header, tbody bodyCells]) where
@@ -107,7 +114,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
       in BTN.button' buttonProps "Smazat"
 
     mkPhotosDisplayButton photoIds = let
-      clickHandler = return ()
+      clickHandler = setPhotosInModal photoIds
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const clickHandler }
       in case photoIds of
