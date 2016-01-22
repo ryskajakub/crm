@@ -96,7 +96,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
         buttonProps = (BTN.buttonProps {
           BTN.onClick = Defined $ const clickHandler })
         clickHandler = navigate (upkeepDetail upkeepId) router
-        in BTN.button' buttonProps "Uzavřít"
+        in BTN.button' buttonProps "Uzavření"
 
     mkDeleteButton upkeepId = let
       clickHandler = deleteUpkeep upkeepId BR.refresh router
