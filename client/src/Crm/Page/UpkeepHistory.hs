@@ -32,7 +32,7 @@ import qualified Crm.Shared.Api                as A
 import qualified Crm.Shared.ServerRender       as SR
 
 import qualified Crm.Data.Data                    as D
-import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayFullMachine)
+import           Crm.Helpers                   (displayDate, renderMarkup, reload, displayFullMachine, mkColours)
 import           Crm.Router
 import           Crm.Server                    (deleteUpkeep, reopenUpkeep, deletePhoto)
 import qualified Crm.Runtime                   as Runtime
@@ -63,22 +63,29 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     (B.table [thead header, tbody bodyCells]) where
     
     cellsToPad = [0..(2 - length oneToThreeUpkeeps)]
-    paddingCells = map (const $ td' (class' "col-md-3") "") cellsToPad
+    emptyCell = td' (class' "col-md-3") ""
+    paddingCells = map (const emptyCell) cellsToPad
 
     isEmptyMarkup (SR.PlainText pt:_) = T.null pt
     isEmptyMarkup _ = True
 
-    mkTextualCell pick upkeep = td' (class' "col-md-3") (renderMarkup . pick . fst $ upkeep)
-    renderTextualRow pick header = if length (takeWhile (isEmptyMarkup . pick . fst) oneToThreeUpkeeps) == length oneToThreeUpkeeps
+    getUpkeep (u1,u2,u3,u4,u5) = u2
+    getUpkeepMachines (u1,u2,u3,u4,u5) = u3
+    getEmployees (u1,u2,u3,u4,u5) = u4
+
+    mkTextualCell pick upkeep = td' (class' "col-md-3") (renderMarkup . pick . getUpkeep $ upkeep)
+    renderTextualRow pick header = if length (takeWhile (isEmptyMarkup . pick . getUpkeep) oneToThreeUpkeeps) == length oneToThreeUpkeeps
       then []
       else [tr $ (th' (class' "col-md-3") header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
 
     bodyCells = map mkMachineRow machinesInCompany ++
       renderTextualRow U.workDescription "Popis práce" ++
-      renderTextualRow U.recommendation "Doporučení"
+      renderTextualRow U.recommendation "Doporučení" ++
+      [tr $ emptyCell : map (td' (class' "col-md-3") . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells]
+      
     mkMachineRow (machineId, machine, _, machineType) = let 
-      mkUpkeepMachineInfo (_, ums) = let
-        um = find (\(_,_,_,machineId') -> machineId' == machineId) ums
+      mkUpkeepMachineInfo upkeep = let
+        um = find (\(_,_,_,machineId') -> machineId' == machineId) (getUpkeepMachines upkeep)
         result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
         displayUM upkeepMachine = let
           panel = if UM.repair upkeepMachine
@@ -99,11 +106,11 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
 
     header = tr ([
       th' (class' "col-md-3") "" ,
-      th' (class' "col-md-3") (displayDate . U.upkeepDate . fst $ upkeep1) ] ++
-      map (th' (class' "col-md-3") . displayDate . U.upkeepDate . fst) restUpkeeps ++ 
+      th' (class' "col-md-3") (displayDate . U.upkeepDate . getUpkeep $ upkeep1) ] ++
+      map (th' (class' "col-md-3") . displayDate . U.upkeepDate . getUpkeep) restUpkeeps ++ 
       map (const $ th' (class' "col-md-3") "") cellsToPad)
 
-  upkeepsHtml = map upkeepRenderHtml3 . byThrees . map (\(_,u2,um,_,_) -> (u2, um)) $ upkeepsInfo
+  upkeepsHtml = map upkeepRenderHtml3 . byThrees $ upkeepsInfo
   flattenedUpkeepsHtml = upkeepsHtml
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
