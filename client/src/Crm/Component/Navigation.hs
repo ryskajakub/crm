@@ -14,6 +14,7 @@ import qualified HaskellReact.Tag.Hyperlink       as A
 import qualified Moment                           as M
 
 import qualified Crm.Shared.YearMonthDay          as YMD
+import qualified Crm.Shared.Company               as C
 
 import           Crm.Router 
 
@@ -49,3 +50,10 @@ navigation ::
   Fay ()
 navigation router body =
   navigation' router (body, return ())
+
+backToCompany :: 
+  C.CompanyId ->
+  CrmRouter ->
+  DOMElement
+backToCompany companyId router =
+  link [G.arrowLeft , text2DOM " Zpět na firmu"] (companyDetail companyId) router

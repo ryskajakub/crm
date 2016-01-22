@@ -46,6 +46,7 @@ import qualified Crm.Data.Data                         as D
 import qualified Crm.Component.DatePicker              as DP
 import           Crm.Component.Form
 import           Crm.Component.Autocomplete
+import           Crm.Component.Navigation              as N
 import           Crm.Server 
 import qualified Crm.Runtime                           as Runtime
 import           Crm.Helpers 
@@ -519,8 +520,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
       (form' (mkAttrs { className = Defined "form-horizontal" }) $
         B.grid $ [
           (B.row $ B.col (B.mkColProps 12) $ h2 pageHeader) ,
-          (B.fullRow $ BN.nav $ [
-            R.link [G.arrowLeft , text2DOM " Zpět na firmu"] (R.companyDetail companyId) router ]) ,
+          (B.fullRow . BN.nav . (:[]) . N.backToCompany companyId $ router) ,
           B.row formInputs]) :
       validationErrorsGrid ++ 
       (case extraGrid of
