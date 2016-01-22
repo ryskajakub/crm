@@ -71,6 +71,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     isEmptyMarkup (SR.PlainText pt:_) = T.null pt
     isEmptyMarkup _ = True
 
+    getUpkeepId (u1,u2,u3,u4,u5) = u1
     getUpkeep (u1,u2,u3,u4,u5) = u2
     getUpkeepMachines (u1,u2,u3,u4,u5) = u3
     getEmployees (u1,u2,u3,u4,u5) = u4
@@ -93,11 +94,19 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
         clickHandler = navigate (upkeepDetail upkeepId) router
         in BTN.button' buttonProps "Uzavřít"
 
+    mkDeleteButton upkeepId = let
+      clickHandler = deleteUpkeep upkeepId BR.refresh router
+      buttonProps = basicDeleteButtonProps {
+        BTN.bsStyle = Defined "danger" ,
+        BTN.onClick = Defined $ const clickHandler }
+      in BTN.button' buttonProps "Smazat"
+
     bodyCells = map mkMachineRow machinesInCompany ++
       renderTextualRow U.workDescription "Popis práce" ++
       renderTextualRow U.recommendation "Doporučení" ++
       [tr $ emptyCell : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
-      [tr $ emptyCell : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells]
+      [tr $ emptyCell : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells] ++
+      [tr $ emptyCell : map (td . mkDeleteButton . getUpkeepId) oneToThreeUpkeeps ++ paddingCells]
       
     mkMachineRow (machineId, machine, _, machineType) = let 
       mkUpkeepMachineInfo upkeep = let
