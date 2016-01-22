@@ -68,7 +68,25 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       uh @ (D.UpkeepHistory {}) -> uh { D.photosInModal = photoIds }
       _ -> D.navigation appState }
 
-  BM.ModalPair modalButtonProps modalElement = BM.mkModalPair 
+  BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
+  modalElement = modalElementBase . div . map mkPhotoRegion $ photosInModal
+    where
+    mkPhotoRegion photoId = IMG.image' 
+      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
+      (IMG.mkImageAttrs "")
+
+  fetchPhotos = forM_ photosInModal $ \photoId -> Runtime.passwordAjax
+    (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
+    (\imageData -> do
+      let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
+      photoHtmlElement <- JQ.select photoHTMLId
+      _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
+      return ())
+    Nothing
+    Runtime.get
+    Nothing
+    Nothing
+    router
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (B.table [cols, thead header, tbody bodyCells]) where
@@ -171,7 +189,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
   flattenedUpkeepsHtml = upkeepsHtml
   
   header = B.row $ B.col (B.mkColProps 12) (h2 "Historie servisů")
-  linkToCompany = B.row $ B.col (B.mkColProps 12) $
+  navigation = B.row $ B.col (B.mkColProps 12) $
     BN.nav [ 
       N.backToCompany companyId router ,
       let 
@@ -185,4 +203,4 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
         button = BTN.button' buttonProps label
         in form' (class' "navbar-form") button ]
-  in (div $ B.grid (modalElement : header : linkToCompany : flattenedUpkeepsHtml), return ())
+  in (div $ B.grid (header : navigation : modalElement : flattenedUpkeepsHtml), fetchPhotos)

@@ -159,6 +159,11 @@ form.upkeep-sequence-form input[type=checkbox] {
   right: 0px;
 }
 
+/* bootstrap hacks */
+.modal-extra-lg {
+  @media (min-width: 1232px) {
+    width: 1140px; }}
+
 /* button dropdown bootstrap */
 .scrollable-menu ul.dropdown-menu{
   height: auto;
