@@ -16,17 +16,17 @@ import HaskellReact.Bootstrap.Button
 
 data ModalPair = ModalPair {
   baseButtonProps :: ExtraButtonProps ,
-  modal :: DOMElement }
+  modal :: DOMElement -> DOMElement }
 
 mkModalPair :: ModalPair
 mkModalPair = let
   baseButtonProps' = extraButtonProps {
     data_toggle = Defined "modal" ,
     data_target = Defined "#photosModal" }
-  modalElement = div' ((class'' ["modal", "fade"]) { id = Defined "photosModal" }) $
-    div' (class' "modal-dialog") $
+  modalElement modalBody = div' ((class'' ["modal", "fade"]) { id = Defined "photosModal" }) $
+    div' (class'' ["modal-dialog", "modal-extra-lg"]) $
       div' (class' "modal-content") $
-        div' (class' "modal-body") "AHOJ"
+        div' (class' "modal-body") modalBody
   in ModalPair {
     baseButtonProps = baseButtonProps' ,
     modal = modalElement }
