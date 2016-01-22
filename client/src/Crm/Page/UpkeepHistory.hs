@@ -60,10 +60,12 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     BTN.disabled = Defined . not $ deletable }
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
-    (B.table [thead header, tbody bodyCells]) where
+    (B.table [cols, thead header, tbody bodyCells]) where
     
+    cols = colgroup $ map (const $ col' (class' "col-md-3") "") [(1::Int)..4]
+
     cellsToPad = [0..(2 - length oneToThreeUpkeeps)]
-    emptyCell = td' (class' "col-md-3") ""
+    emptyCell = td ""
     paddingCells = map (const emptyCell) cellsToPad
 
     isEmptyMarkup (SR.PlainText pt:_) = T.null pt
@@ -73,15 +75,15 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
     getUpkeepMachines (u1,u2,u3,u4,u5) = u3
     getEmployees (u1,u2,u3,u4,u5) = u4
 
-    mkTextualCell pick upkeep = td' (class' "col-md-3") (renderMarkup . pick . getUpkeep $ upkeep)
+    mkTextualCell pick upkeep = td (renderMarkup . pick . getUpkeep $ upkeep)
     renderTextualRow pick header = if length (takeWhile (isEmptyMarkup . pick . getUpkeep) oneToThreeUpkeeps) == length oneToThreeUpkeeps
       then []
-      else [tr $ (th' (class' "col-md-3") header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
+      else [tr $ (th header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
 
     bodyCells = map mkMachineRow machinesInCompany ++
       renderTextualRow U.workDescription "Popis práce" ++
       renderTextualRow U.recommendation "Doporučení" ++
-      [tr $ emptyCell : map (td' (class' "col-md-3") . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells]
+      [tr $ emptyCell : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells]
       
     mkMachineRow (machineId, machine, _, machineType) = let 
       mkUpkeepMachineInfo upkeep = let
@@ -95,9 +97,9 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
             then ""
             else showInt . UM.recordedMileage $ upkeepMachine
           in panel content
-        in td' (class' "col-md-3") result
+        in td result
       in tr (
-        (th' (class' "col-md-3") (link 
+        (th (link 
             (displayFullMachine machine machineType)
             (machineDetail machineId)
             router)) :
@@ -105,10 +107,10 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
           paddingCells)
 
     header = tr ([
-      th' (class' "col-md-3") "" ,
-      th' (class' "col-md-3") (displayDate . U.upkeepDate . getUpkeep $ upkeep1) ] ++
-      map (th' (class' "col-md-3") . displayDate . U.upkeepDate . getUpkeep) restUpkeeps ++ 
-      map (const $ th' (class' "col-md-3") "") cellsToPad)
+      th "" ,
+      th (displayDate . U.upkeepDate . getUpkeep $ upkeep1) ] ++
+      map (th . displayDate . U.upkeepDate . getUpkeep) restUpkeeps ++ 
+      map (const $ th "") cellsToPad)
 
   upkeepsHtml = map upkeepRenderHtml3 . byThrees $ upkeepsInfo
   flattenedUpkeepsHtml = upkeepsHtml
