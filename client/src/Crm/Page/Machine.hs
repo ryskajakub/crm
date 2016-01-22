@@ -366,7 +366,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     machineOpStart = maybe YMD.new (\x -> x) (M.machineOperationStartDate machine')
     in DP.datePicker' editing operationStartCalendarDpd setDpd machineOpStart setMachineOpStart
 
-  validationErrorsGrid = case validation of
+  validationErrorsSection = case validation of
     V.Validation [] -> []
     validation' -> [validationHtml $ V.messages validation']
   
@@ -516,18 +516,20 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
  
 
   mkGrid = let
-    goEditButton =
-      form' (class' "navbar-form") $
-        BTN.button'
-          (BTN.buttonProps { BTN.onClick = Defined . const . setEditing appVar $ Editing })
-          "Jdi do editačního módu"
-    in div $ [
-      (form' (mkAttrs { className = Defined "form-horizontal" }) $
-        B.grid $ [
-          (B.row $ B.col (B.mkColProps 12) $ h2 pageHeader) ,
-          (B.fullRow $ BN.nav [N.backToCompany companyId router, goEditButton]) ,
-          B.row formInputs]) :
-      validationErrorsGrid ++ 
-      (case extraGrid of
+    headerSection = let
+      button = BTN.button'
+        BTN.buttonProps { BTN.onClick = Defined . const . setEditing appVar $ Editing }
+        "Jdi do editačního módu"
+      goEditButton = case editing of
+        Editing -> []
+        _ -> [form' (class' "navbar-form") button]
+      in B.grid [
+        B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
+        B.fullRow $ BN.nav $ N.backToCompany companyId router : goEditButton]
+    formSection = form' (mkAttrs { className = Defined "form-horizontal" }) $
+      B.grid . B.row $ formInputs
+    extraSection = 
+      case extraGrid of
         Just extraGrid' -> [extraGrid']
-        Nothing -> [])]
+        Nothing -> []
+    in div $ headerSection : formSection : validationErrorsSection ++ extraSection
