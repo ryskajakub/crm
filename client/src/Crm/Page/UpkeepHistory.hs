@@ -110,7 +110,9 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable var router = let
       clickHandler = return ()
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const clickHandler }
-      in BTN.button' buttonProps G.picture
+      in case photoIds of
+        [] -> []
+        _ -> [BTN.button' buttonProps [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
 
     ifNonEmptyEmployees code = if isRowEmpty (null . getEmployees)
       then []
