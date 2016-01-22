@@ -115,16 +115,6 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   upkeepHistoryHtml = let
     mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> DOMElement
     mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees) = let
-      (labelClass, labelText, containingElement) = if U.upkeepClosed upkeep
-        then let
-          reopenLink attrs children = let
-            doReopen = reopenUpkeep upkeepId goEditUpkeep router
-            goEditUpkeep = R.navigate (R.upkeepDetail upkeepId) router
-            in A.a''' (attrs { onClick = Defined $ const $ doReopen }) children
-          in ("label-success", "Uzavřený", reopenLink)
-        else ("label-warning", "Naplánovaný", span')
-      stateLabel = B.col (B.mkColProps 1) $ containingElement (class'' ["label", labelClass]) labelText
-      date = B.col (B.mkColProps 2) $ displayDate $ U.upkeepDate upkeep
       mth = showInt . UM.recordedMileage $ upkeepMachine
       warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
       repair = let
@@ -133,17 +123,22 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           else ("label-info", "S")
         in span' (class'' [labelClass, "label"]) labelText
       employeeCol = mkColours employees
-      descriptionHeader = B.col (B.mkColProps 2) $ strong "Popis práce"
-      description = B.col (B.mkColProps 4) $ U.workDescription upkeep
-      noteHeader = B.col (B.mkColProps 2) $ strong "Poznámky"
-      note = B.col (B.mkColProps 4) $ UM.upkeepMachineNote upkeepMachine
+      action = if U.upkeepClosed upkeep
+        then let
+          doReopen = reopenUpkeep upkeepId goEditUpkeep router
+          goEditUpkeep = R.navigate (R.upkeepDetail upkeepId) router
+          buttonProps = BTN.buttonProps {
+            BTN.bsStyle = Defined "primary" ,
+            BTN.onClick = Defined . const $ doReopen }
+          in BTN.button' buttonProps "Otevřít"
+        else text2DOM ""
       in tr [td . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, 
-        td . UM.upkeepMachineNote $ upkeepMachine, td . UM.endNote $ upkeepMachine]
+        td . UM.upkeepMachineNote $ upkeepMachine, td . UM.endNote $ upkeepMachine, td action]
     rows = map mkUpkeepRow upkeeps
-    mkTable bodyRows = table [
+    mkTable bodyRows = B.table [
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
-        th "Doporučení", th "Poznámka", th "Koncová poznámka"] , 
+        th "Doporučení", th "Poznámka", th "Koncová poznámka", th "Akce"] , 
       tbody bodyRows]
     in if null rows
       then []
