@@ -177,6 +177,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
     BTN.disabled = if null machines' then Undefined else Defined True ,
     BTN.bsStyle = Defined "danger" }) "Smazat"
 
+  companyFormSection :: [DOMElement]
   companyFormSection = companyForm editing' var setCompany company' saveHandler [deleteButton]
   machineBoxItems = machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
@@ -202,26 +203,27 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
     h2 $ "Doporučení z posledního servisu - " <> (displayDate . U.upkeepDate $ lastUpkeep) ,
     p . U.recommendation $ lastUpkeep ]) lastUpkeep'
 
+  contactPersonsHtml :: DOMElement
   contactPersonsHtml = contactPersonsList' router contactPersons
 
-  in section $ (
-    (B.grid $ B.row $ B.col (B.mkColProps 12) $ 
-      h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma")) :
-    companyFormSection) ++ [ B.grid [
-      (B.row $ B.col (B.mkColProps 12) $ BN.nav [
-        R.link "Historie servisů" (R.maintenances companyId) router ,
-        form' (class' "navbar-form") $
-          BTN.button' (BTN.buttonProps {
-            BTN.disabled = Defined $ if null machines' then True else False ,
-            BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
-            [G.plus, text2DOM " Naplánovat servis" ] ,
-        form' (class' "navbar-form") $
-          BTN.button' (BTN.buttonProps {
-            BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
-            [G.plus, text2DOM " Přidat kontaktní osobu" ] ,
-        R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
-        R.link "Schéma zapojení" (R.machinesSchema companyId) router ]) 
-          : contactPersonsHtml : (lastUpkeepRecommendation ++ machineBoxItemsHtml) ]]
+  headerNavigSection :: DOMElement
+  headerNavigSection = B.grid [ B.row $ B.col (B.mkColProps 12) $ 
+    h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma") ,
+    (B.row $ B.col (B.mkColProps 12) $ BN.nav [
+      R.link "Historie servisů" (R.maintenances companyId) router ,
+      form' (class' "navbar-form") $
+        BTN.button' (BTN.buttonProps {
+          BTN.disabled = Defined $ if null machines' then True else False ,
+          BTN.onClick = Defined $ const $ R.navigate (R.newMaintenance companyId) router })
+          [G.plus, text2DOM " Naplánovat servis" ] ,
+      form' (class' "navbar-form") $
+        BTN.button' (BTN.buttonProps {
+          BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
+          [G.plus, text2DOM " Přidat kontaktní osobu" ] ,
+      R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
+      R.link "Schéma zapojení" (R.machinesSchema companyId) router ])]
+
+  in div $ headerNavigSection : companyFormSection ++ [B.grid $ contactPersonsHtml : lastUpkeepRecommendation ++ machineBoxItemsHtml ]
 
 companyForm :: 
   InputState -> -- ^ is the page editing mode
