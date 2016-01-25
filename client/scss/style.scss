@@ -129,9 +129,13 @@ form.upkeep-sequence-form input[type=checkbox] {
 .relative {
   position: relative;
 }
+
+tbody.past-services {
+  tr {
+    th { white-space: nowrap; } } }
+
 .nowrap {
-  white-space: nowrap;
-}
+  white-space: nowrap; }
 .same-line {
   position: absolute;
   width: 100%;

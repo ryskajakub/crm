@@ -140,7 +140,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       colgroup $ col' (class' "nowrap") "" : map (const . col $ "") [(1::Int)..9] ,
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
         th "Doporučení", th "Poznámka", th "Koncová poznámka", th "Akce"] , 
-      tbody bodyRows]
+      tbody' (class' "past-services") bodyRows]
     in if null rows
       then []
       else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ rows) : []
