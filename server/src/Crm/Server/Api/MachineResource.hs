@@ -10,6 +10,7 @@ import           Data.Maybe                  (catMaybes)
 import           Data.Tuple.All              (sel2, sel1, sel3)
 import           Data.Pool                   (withResource)
 
+import           Control.Monad               (forM)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Arrow               (first, second)
@@ -27,6 +28,7 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.UpkeepMachine    as UM
 import qualified Crm.Shared.Employee         as E
+import qualified Crm.Shared.Photo            as P
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers 
@@ -141,9 +143,14 @@ machineSingle = mkConstHandler' jsonO $ do
       [] -> undefined
       x : xs -> (x,xs)
     nextServiceYmd = getMaybe $ nextServiceDate machine upkeepSequenceTuple upkeeps today'
+  upkeepsDataWithPhotos <- forM upkeepsData $ \data' -> do
+    let upkeepId = $(proj 4 0) data'
+    photosFromDb <- withResource pool $ \connection -> liftIO $ runQuery connection $ photosInUpkeepQuery upkeepId
+    let photoIds = P.PhotoId `fmap` photosFromDb
+    return $ $(catTuples 4 1) data' photoIds
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (toMyMaybe $ dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsData, otherMachineId, MT.kind machineType, extraFields'))
+    (toMyMaybe $ dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsDataWithPhotos, otherMachineId, MT.kind machineType, extraFields'))
 
 
 machineListing :: ListHandler Dependencies

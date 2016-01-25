@@ -273,7 +273,7 @@ fetchUpkeepData companyId = XCU.bySingle companyId "()"
 
 fetchUpkeeps :: 
   C.CompanyId -> -- ^ company id
-  ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], 
+  ([(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachine, M.Machine, MT.MachineType, M.MachineId)], 
     [E.Employee'], [P.PhotoId])] -> Fay ()) -> -- ^ callback
   R.CrmRouter -> 
   Fay ()
@@ -303,7 +303,7 @@ fetchMachine ::
   M.MachineId -> -- ^ machine id
   ((C.CompanyId, M.Machine, MT.MachineTypeId,
     (MT.MachineType, [US.UpkeepSequence]), Maybe YMD.YearMonthDay, Maybe CP.ContactPersonId,
-    [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])], Maybe M.MachineId, 
+    [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])], Maybe M.MachineId, 
     MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -> -- ^ callback
   R.CrmRouter ->
   Fay ()

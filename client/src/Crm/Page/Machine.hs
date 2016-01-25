@@ -24,6 +24,7 @@ import           HaskellReact.Bootstrap.Carousel       (carousel)
 import qualified HaskellReact.BackboneRouter           as BR
 import qualified HaskellReact.Bootstrap.Nav            as BN
 import qualified HaskellReact.Bootstrap.Glyphicon      as G
+import qualified HaskellReact.Bootstrap.Modal          as BM
 import qualified JQuery                                as JQ
 
 import qualified Crm.Shared.Machine                    as M
@@ -86,7 +87,7 @@ machineDetail ::
   M.MachineId -> 
   Maybe YMD.YearMonthDay -> 
   [(P.PhotoId, PM.PhotoMeta)] -> 
-  [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])] -> 
+  [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])] -> 
   Maybe CP.ContactPersonId -> 
   [(CP.ContactPersonId, CP.ContactPerson)] -> 
   V.Validation -> 
@@ -94,15 +95,16 @@ machineDetail ::
   [(M.MachineId, M.Machine)] -> 
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
   Maybe MT.MachineTypeId ->
+  [(P.PhotoId)] ->
   (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v otherMachineId om extraFields machineTypeId' =
+    contactPersonId contactPersons v otherMachineId om extraFields machineTypeId' upkeepPhotoIds =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
-      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields 
-      companyId router machineTypeInputRow, fetchPhotos >> machineTypeCB)
+      (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
+      companyId router machineTypeInputRow, fetchMachinePhotos >> machineTypeCB >> fetchUpkeepPhotos)
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -112,9 +114,21 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
 
+  setPhotosInModal :: [P.PhotoId] -> Fay ()
+  setPhotosInModal photoIds = changeNavigationState $ \md -> case MD.machinePageMode md of 
+    (Left (mdt @ MD.MachineDetail {})) -> md { MD.machinePageMode = Left (mdt { MD.upkeepPhotoIds = photoIds }) }
+    _ -> md
+
+  BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
+  modalElement = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ upkeepPhotoIds
+    where
+    mkPhotoRegion photoId = IMG.image' 
+      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
+      (IMG.mkImageAttrs "")
+
   upkeepHistoryHtml = let
-    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee]) -> DOMElement
-    mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees) = let
+    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId]) -> DOMElement
+    mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees, photoIds) = let
       mth = showInt . UM.recordedMileage $ upkeepMachine
       warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
       repair = let
@@ -132,21 +146,28 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             BTN.onClick = Defined . const $ doReopen }
           in BTN.button' buttonProps "Otevřít"
         else text2DOM ""
+      displayPhotos = let
+        clickHandler = setPhotosInModal photoIds
+        in case photoIds of
+          [] -> []
+          _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
+            [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
+
       in tr [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
-        td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, 
-        td . UM.upkeepMachineNote $ upkeepMachine, td . UM.endNote $ upkeepMachine, td action]
+        td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $ 
+        upkeepMachine, td . UM.endNote $ upkeepMachine, td action, td displayPhotos]
     rows = map mkUpkeepRow upkeeps
     mkTable bodyRows = B.table [
       colgroup $ col' (class' "nowrap") "" : map (const . col $ "") [(1::Int)..9] ,
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
-        th "Doporučení", th "Poznámka", th "Koncová poznámka", th "Akce"] , 
+        th "Doporučení", th "Poznámka", th "Koncová poznámka", th "Akce", th "Listy"] , 
       tbody' (class' "past-services") bodyRows]
     in if null rows
       then []
       else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ rows) : []
   extraGrid = (if editing == Editing && (not $ null upkeeps) 
     then Nothing 
-    else (Just $ B.grid upkeepHistoryHtml))
+    else (Just $ div [ B.grid upkeepHistoryHtml , modalElement ]))
   
   editableRowEditing = editableRow editing
 
@@ -204,7 +225,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> Just buttonRow'' ; _ -> Nothing
 
-  fetchPhotos = forM_ photos $ \(photoId, _) -> Runtime.passwordAjax
+  fetchPhotos photoIds = forM_ photoIds $ \photoId -> Runtime.passwordAjax
     (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
     (\imageData -> do
       let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
@@ -216,6 +237,9 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     Nothing
     Nothing
     router
+
+  fetchMachinePhotos = fetchPhotos (map fst photos)
+  fetchUpkeepPhotos = fetchPhotos upkeepPhotoIds
 
   (machineTypeInputRow, machineTypeCB) = let
     (machineTypeAutocomplete, cb) = 

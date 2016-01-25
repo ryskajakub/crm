@@ -50,7 +50,7 @@ byThrees list = let
   in go list []
 
 upkeepHistory :: 
-  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachineMarkup, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
+  [(U.UpkeepId, U.Upkeep2Markup, [(UM.UpkeepMachine, M.Machine, MT.MachineType, M.MachineId)], [E.Employee'], [P.PhotoId])] -> 
   [(M.MachineId, M.Machine, MT.MachineTypeId, MT.MachineType)] ->
   C.CompanyId -> 
   Bool ->
