@@ -48,6 +48,7 @@ import qualified Crm.Component.DatePicker              as DP
 import           Crm.Component.Form
 import           Crm.Component.Autocomplete
 import           Crm.Component.Navigation              as N
+import qualified Crm.Component.Photos                  as PH
 import           Crm.Server 
 import qualified Crm.Runtime                           as Runtime
 import           Crm.Helpers 
@@ -104,7 +105,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow, fetchMachinePhotos >> machineTypeCB >> fetchUpkeepPhotos)
+      companyId router machineTypeInputRow, fetchMachinePhotos >> machineTypeCB >> (photoFetch router))
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -126,6 +127,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
       (IMG.mkImageAttrs "")
 
+  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal upkeepPhotoIds
+
   upkeepHistoryHtml = let
     mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId]) -> DOMElement
     mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees, photoIds) = let
@@ -146,13 +149,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             BTN.onClick = Defined . const $ doReopen }
           in BTN.button' buttonProps "Otevřít"
         else text2DOM ""
-      displayPhotos = let
-        clickHandler = setPhotosInModal photoIds
-        in case photoIds of
-          [] -> []
-          _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
-            [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
-
+      displayPhotos = mkPhotoModalButton photoIds setPhotosInModal
       in tr [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $ 
         upkeepMachine, td . UM.endNote $ upkeepMachine, td action, td displayPhotos]
@@ -167,7 +164,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       else (B.fullRow . h3 $ "Předchozí servisy") : (B.fullRow . mkTable $ rows) : []
   extraGrid = (if editing == Editing && (not $ null upkeeps) 
     then Nothing 
-    else (Just $ div [ B.grid upkeepHistoryHtml , modalElement ]))
+    else (Just $ div [ B.grid upkeepHistoryHtml , photoModalElement ]))
   
   editableRowEditing = editableRow editing
 
@@ -225,21 +222,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> Just buttonRow'' ; _ -> Nothing
 
-  fetchPhotos photoIds = forM_ photoIds $ \photoId -> Runtime.passwordAjax
-    (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
-    (\imageData -> do
-      let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
-      photoHtmlElement <- JQ.select photoHTMLId
-      _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
-      return ())
-    Nothing
-    Runtime.get
-    Nothing
-    Nothing
-    router
-
-  fetchMachinePhotos = fetchPhotos (map fst photos)
-  fetchUpkeepPhotos = fetchPhotos upkeepPhotoIds
+  fetchMachinePhotos = PH.fetchPhotos (map fst photos) router
+  fetchUpkeepPhotos = PH.fetchPhotos upkeepPhotoIds router
 
   (machineTypeInputRow, machineTypeCB) = let
     (machineTypeAutocomplete, cb) = 
