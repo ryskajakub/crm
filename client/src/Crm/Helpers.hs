@@ -213,3 +213,6 @@ mkColours' employees = let
 
 mkColours :: [E.Employee] -> DOMElement
 mkColours = fst . mkColours'
+
+inNav :: DOMElement -> DOMElement
+inNav = form' (class' "navbar-form")

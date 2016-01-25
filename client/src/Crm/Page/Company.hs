@@ -84,13 +84,14 @@ companiesList router orderType direction companies' = let
     p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,
     p "Klikem na šipky v záhlaví tabulky můžeš řadit tabulku" ]
   pageInfo' = pageInfo "Seznam firem, další servis" $ Just advice
-  in main' (class' "container") $ B.row $ (pageInfo' ++ withSection [
+  in B.grid $ B.row $ (pageInfo' ++ withSection [
     let
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
-      in BTN.button' buttonProps [
+      button = BTN.button' buttonProps [
         G.plus , 
-        text2DOM "Přidat firmu" ] ,
+        text2DOM " Přidat firmu" ]
+      in BN.nav . (:[]) . inNav $ button ,
     B.table [
       head' , 
       body ]])
