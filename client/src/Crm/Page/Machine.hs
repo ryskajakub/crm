@@ -105,7 +105,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow, fetchMachinePhotos >> machineTypeCB >> (photoFetch router))
+      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos >> machineTypeCB >> (photoFetch router))
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -114,6 +114,12 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       _ -> D.navigation appState }
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
+
+  extraNavigation =
+    form' (class' "navbar-form") $
+      BTN.button' (BTN.buttonProps {
+        BTN.onClick = Defined . const . R.navigate (R.newMaintanceViaQuickLink companyId machineId) $ router })
+        [G.plus, text2DOM " Naplánovat servis" ]
 
   setPhotosInModal :: [P.PhotoId] -> Fay ()
   setPhotosInModal photoIds = changeNavigationState $ \md -> case MD.machinePageMode md of 
@@ -276,7 +282,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
   machineDisplay Editing "Nový stroj - fáze 2 - specifické údaje o stroji" (Just buttonRow'') appVar 
     datePickerCalendar (machine', usageSetMode) machineTypeTuple [] Nothing (contactPersonId, 
     Just (newContactPersonRow, setById), byIdHighlight) contactPersons v otherMachineId om extraFields
-    companyId router (machineTypeDisplayRow (fst machineTypeTuple))
+    companyId router (machineTypeDisplayRow (fst machineTypeTuple)) []
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   machineTypeEither = case machineTypeId of
@@ -348,10 +354,11 @@ machineDisplay ::
   C.CompanyId ->
   R.CrmRouter ->
   DOMElement ->
+  [DOMElement] ->
   DOMElement
 machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage) (machineType, 
     upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight) contactPersons 
-    validation otherMachineId otherMachines extraFields companyId router machineTypeRow = mkGrid where
+    validation otherMachineId otherMachines extraFields companyId router machineTypeRow extraNavigation = mkGrid where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {
@@ -530,7 +537,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
         _ -> [form' (class' "navbar-form") button]
       in B.grid [
         B.row $ B.col (B.mkColProps 12) $ h2 pageHeader ,
-        B.fullRow $ BN.nav $ N.backToCompany companyId router : goEditButton]
+        B.fullRow $ BN.nav $ N.backToCompany companyId router : goEditButton ++ extraNavigation]
     formSection = form' (mkAttrs { className = Defined "form-horizontal" }) $
       B.grid . B.row $ formInputs
     extraSection = 
