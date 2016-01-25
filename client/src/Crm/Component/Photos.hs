@@ -46,7 +46,7 @@ mkPhotoModal photoIds = let
     in case differentPhotoIds of
       [] -> []
       _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
-        [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
+        [G.picture, span $ " (" <> (showInt . length $ differentPhotoIds) <> ")" ]]
 
   in PhotoModal photoModalElement displayPhotos (fetchPhotos photoIds)
 

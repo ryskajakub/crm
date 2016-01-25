@@ -39,6 +39,7 @@ import           Crm.Router
 import           Crm.Server                       (deleteUpkeep, reopenUpkeep, deletePhoto)
 import qualified Crm.Runtime                      as Runtime
 import qualified Crm.Component.Navigation         as N
+import qualified Crm.Component.Photos             as PH
 
 
 byThrees :: [a] -> [[a]]
@@ -69,25 +70,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       uh @ (D.UpkeepHistory {}) -> uh { D.photosInModal = photoIds }
       _ -> D.navigation appState }
 
-  BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
-  modalElement = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ photosInModal
-    where
-    mkPhotoRegion photoId = IMG.image' 
-      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-      (IMG.mkImageAttrs "")
-
-  fetchPhotos = forM_ photosInModal $ \photoId -> Runtime.passwordAjax
-    (pack A.photos <> "/" <> (showInt . P.getPhotoId $ photoId))
-    (\imageData -> do
-      let photoHTMLId = ((<>) "#photo-" . showInt . P.getPhotoId $ photoId)
-      photoHtmlElement <- JQ.select photoHTMLId
-      _ <- JQ.setAttr "src" ("data:image/jpeg;base64," <> imageData) photoHtmlElement 
-      return ())
-    Nothing
-    Runtime.get
-    Nothing
-    Nothing
-    router
+  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal photosInModal
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (BT.table' (class' "break-words") Nothing [cols, thead header, tbody bodyCells]) where
@@ -135,13 +118,6 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         BTN.onClick = Defined $ const clickHandler }
       in BTN.button' buttonProps "Smazat"
 
-    mkPhotosDisplayButton photoIds = let
-      clickHandler = setPhotosInModal photoIds
-      in case photoIds of
-        [] -> []
-        _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
-          [G.picture, span $ " (" <> (showInt . length $ photoIds) <> ")" ]]
-
     ifNonEmptyEmployees code = if isRowEmpty (null . getEmployees)
       then []
       else code
@@ -155,7 +131,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       ifNonEmptyEmployees 
         [tr $ th "Servisáci" : map (td . mkColours . map snd . getEmployees) oneToThreeUpkeeps ++ paddingCells] ++
       ifNonEmptyPhotos
-        [tr $ th "Fotky" : map (td . mkPhotosDisplayButton . getPhotos) oneToThreeUpkeeps ++ paddingCells] ++
+        [tr $ th "Fotky" : map (td . ((flip mkPhotoModalButton) setPhotosInModal) . getPhotos) oneToThreeUpkeeps ++ paddingCells] ++
       [tr $ th "Změna stavu" : map (td . mkUpkeepLink) oneToThreeUpkeeps ++ paddingCells] ++
       [tr $ th "Smazat" : map (td . mkDeleteButton . getUpkeepId) oneToThreeUpkeeps ++ paddingCells]
       
@@ -204,4 +180,4 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
         button = BTN.button' buttonProps label
         in form' (class' "navbar-form") button ]
-  in (div $ B.grid (header : navigation : modalElement : flattenedUpkeepsHtml), fetchPhotos)
+  in (div $ B.grid (header : navigation : photoModalElement : flattenedUpkeepsHtml), photoFetch router)
