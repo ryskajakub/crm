@@ -6,19 +6,19 @@ module Crm.Component.Photos where
 import           Prelude                          hiding (span, div, elem, id)
 import           Data.Text                        (fromString, showInt, (<>), pack)
 import           Data.LocalStorage                (removeLocalStorage)
-import           FFI                                   (Defined(..))
+import           FFI                              (Defined(..))
 
 import           HaskellReact
 import           HaskellReact.Bootstrap           (navBar, nav)
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Tag.Hyperlink       as A
-import qualified HaskellReact.Bootstrap.Button         as BTN
-import qualified HaskellReact.Tag.Image                as IMG
-import qualified HaskellReact.Bootstrap.Modal          as BM
+import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.Tag.Image           as IMG
+import qualified HaskellReact.Bootstrap.Modal     as BM
 import qualified Moment                           as M
-import qualified JQuery                                as JQ
-import qualified Crm.Runtime                           as Runtime
-import qualified Crm.Shared.Api                        as A
+import qualified JQuery                           as JQ
+import qualified Crm.Runtime                      as Runtime
+import qualified Crm.Shared.Api                   as A
 
 import qualified Crm.Shared.YearMonthDay          as YMD
 import qualified Crm.Shared.Photo                 as P
