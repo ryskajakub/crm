@@ -199,11 +199,6 @@ type ContactPersonsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable P
   Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
 type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
-type UpkeepsTable = (DBInt, DBDate, DBBool, DBText, DBText, DBText)
-type UpkeepsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGDate), Column (Nullable PGBool), 
-  Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
-type UpkeepsWriteTable = (Maybe DBInt, DBDate, DBBool, DBText, DBText, DBText)
-
 type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText, DBBool)
 type UpkeepMachinesLeftJoinTable = (MBInt, MBText, MBInt, MBInt, MBBool, MBText, MBBool)
 
@@ -353,14 +348,34 @@ machineTypesTable = Table "machine_types" $ p4 (
   required "name" ,
   required "manufacturer" )
 
+
+
+data UpkeepRow'' upkeepPK upkeep = UpkeepRow {
+  _upkeepPK :: upkeepPK ,
+  _upkeep :: upkeep }
+
+type UpkeepPK = U.UpkeepId' DBInt
+type UpkeepRow' upkeepPK = UpkeepRow'' upkeepPK 
+  (U.UpkeepGen'' DBDate DBBool DBText DBText DBText)
+type UpkeepsTable = UpkeepRow' UpkeepPK
+type UpkeepsWriteTable = UpkeepRow' (U.UpkeepId' (Maybe DBInt))
+type UpkeepsLeftJoinTable = UpkeepRow'' 
+  MBInt
+  (U.UpkeepGen'' MBDate MBBool MBText MBText MBText)
+
+makeAdaptorAndInstance' ''U.UpkeepGen''
+makeAdaptorAndInstance' ''U.UpkeepId'
+makeAdaptorAndInstance' ''UpkeepRow''
+
 upkeepsTable :: Table UpkeepsWriteTable UpkeepsTable
-upkeepsTable = Table "upkeeps" $ p6 (
-  optional "id" ,
-  required "date_" ,
-  required "closed" ,
-  required "work_hours" ,
-  required "work_description" ,
-  required "recommendation" )
+upkeepsTable = Table "upkeeps" $ (pUpkeepRow UpkeepRow {
+  _upkeepPK = pUpkeepId ( U.UpkeepId . optional $ "id" ) ,
+  _upkeep = pUpkeep U.Upkeep {
+    U.upkeepDate = required "date_" ,
+    U.upkeepClosed = required "closed" ,
+    U.workHours = required "work_hours" ,
+    U.workDescription = required "work_description" ,
+    U.recommendation = required "recommendation" }})
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ p7 (
@@ -423,9 +438,6 @@ machinePhotosQuery = queryTable machinePhotosTable
 
 machineTypesQuery :: Query MachineTypesTable
 machineTypesQuery = queryTable machineTypesTable
-
-upkeepsQuery :: Query UpkeepsTable
-upkeepsQuery = queryTable upkeepsTable
 
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
@@ -585,7 +597,7 @@ pastUpkeepMachinesQ :: M.MachineId -> Query UpkeepMachinesTable
 pastUpkeepMachinesQ machineId = proc () -> do
   upkeepMachineRow <- upkeepMachinesQuery -< ()
   restrict -< (M.MachineId . $(proj 7 2) $ upkeepMachineRow) .=== fmap pgInt4 machineId
-  upkeepRow <- join upkeepsQuery -< $(proj 7 0) upkeepMachineRow
+  upkeepRow <- join . queryTable $ upkeepsTable -< $(proj 7 0) upkeepMachineRow
   restrict -< $(proj 6 2) upkeepRow
   returnA -< upkeepMachineRow
 
@@ -718,7 +730,7 @@ companyUpkeepsQuery companyId = let
     (upkeepFK,_,machineFK,_,_,_,_) <- upkeepMachinesQuery -< ()
     machineRow <- queryTable machinesTable -< ()
     restrict -< _machinePK machineRow .=== M.MachineId machineFK
-    upkeep @ (_,_,closed,_,_,_) <- join upkeepsQuery -< upkeepFK
+    upkeep @ (_,_,closed,_,_,_) <- join . queryTable $ upkeepsQuery -< upkeepFK
     restrict -< (closed .== pgBool True)
     restrict -< (_companyFK machineRow .=== (C.CompanyId . pgInt4 $ companyId))
     returnA -< upkeep
