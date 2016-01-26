@@ -14,6 +14,7 @@ import           Control.Monad               (forM)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Arrow               (first, second)
+import           Control.Lens                (over)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -130,10 +131,10 @@ machineSingle = mkConstHandler' jsonO $ do
           $(takeTuple 4 3)
           $(proj 4 3)
         . fmap (\(upkeep', upkeepMachine', employee') -> let
-          upkeep = convert upkeep' :: UpkeepMapped
+          upkeep'' = over (upkeep . U.upkeepDateL) dayToYmd upkeep'
           upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
           employee = convert employee' :: MaybeEmployeeMapped
-          intermediate = (($(proj 2 0) upkeep, $(proj 2 1) upkeep, $(proj 3 2) upkeepMachine, $(proj 2 1) employee)
+          intermediate = ((_upkeepPK upkeep'', _upkeep upkeep'', $(proj 3 2) upkeepMachine, $(proj 2 1) employee)
             :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))
           in intermediate)
         $ upkeepRows

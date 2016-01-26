@@ -46,7 +46,7 @@ data UpkeepGen'' upkeepDate upkeepClosed workHours workDescription recommendatio
   recommendation :: recommendation }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
-makeLensesFor [("upkeepDate", "upkeepDateL")] ''UpkeepGen''
+makeLensesFor [("upkeepDate", "upkeepDateL"), ("upkeepClosed", "upkeepClosedL")] ''UpkeepGen''
 #endif
 type UpkeepGen' = UpkeepGen'' D.YearMonthDay Bool Text
 type Upkeep = UpkeepGen' Text Text

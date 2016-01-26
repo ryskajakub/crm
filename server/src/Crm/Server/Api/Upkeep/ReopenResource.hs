@@ -6,7 +6,7 @@
 module Crm.Server.Api.Upkeep.ReopenResource ( 
   resource ) where
 
-import           Opaleye                     (runUpdate, runInsert, pgInt4, (.==), pgBool)
+import           Opaleye                     (runUpdate, runInsert, pgInt4, (.==), pgBool, (.===))
 
 import           Data.Pool                   (withResource)
 import           Data.ByteString.Lazy        (fromStrict, toStrict, ByteString)
@@ -18,6 +18,7 @@ import           Rest.Handler                (Handler, ListHandler)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
+import           Control.Lens                (over, set)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Photo            as P
@@ -39,9 +40,9 @@ resource = mkResourceId {
 
 reopen :: Handler (IdDependencies' U.UpkeepId)
 reopen = mkInputHandler' jsonI $ \(str :: Double) -> do 
-  ((_, pool), U.UpkeepId upkeepId) <- ask
+  ((_, pool), upkeepId) <- ask
   let
-    reopenTable upkeep = $(updateAtN 6 2) (const . pgBool $ False) . $(updateAtN 6 0) Just $ upkeep
-    condition = ((pgInt4 upkeepId) .==) . $(proj 6 0)
+    reopenTable = set (upkeep . U.upkeepClosedL) (pgBool False) . over upkeepPK (fmap Just)
+    condition = ((fmap pgInt4 upkeepId) .===) . _upkeepPK
   _ <- withResource pool $ \conn -> liftIO $ runUpdate conn upkeepsTable reopenTable condition
   return ()

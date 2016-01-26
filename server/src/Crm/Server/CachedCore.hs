@@ -12,6 +12,7 @@ import           Control.Lens               (over, mapped)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 import           Data.Pool                  (withResource)
+import           Data.Text                  (Text)
 
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Except (mapExceptT, runExceptT)
@@ -25,6 +26,8 @@ import           Safe                       (minimumMay)
 
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
+import qualified Crm.Shared.Upkeep          as U
+import qualified Crm.Shared.UpkeepMachine   as UM
 import qualified Crm.Shared.YearMonthDay    as YMD
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
@@ -112,12 +115,14 @@ addNextDates ::
   Connection -> 
   IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
-  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery $ M.getMachineId $ getMachineId a)
+  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery . M.getMachineId . getMachineId $ a)
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
-    convertFullUpkeeps = fmap $ \(u, um) -> 
-      ($(proj 2 1) (convert u :: UpkeepMapped), $(proj 3 2) (convert um :: UpkeepMachineMapped))
+    convertFullUpkeeps = fmap $ \(u', um) -> let 
+      u :: UpkeepRow
+      u = over (upkeep . U.upkeepDateL) dayToYmd u'
+      in (_upkeep u, $(proj 3 2) (convert um :: UpkeepMachineMapped))
     upkeepSequences = fmap (\r -> $(proj 2 1) (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined

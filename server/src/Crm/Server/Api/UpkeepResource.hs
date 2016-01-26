@@ -7,7 +7,7 @@ module Crm.Server.Api.UpkeepResource (
   printDailyPlanListing' ,
   upkeepResource ) where
 
-import           Opaleye.Operators           ((.==))
+import           Opaleye.Operators           ((.==), (.===))
 import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning, runInsert)
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
 import           Opaleye                     (runQuery)
@@ -22,6 +22,7 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
+import           Control.Lens                (over, view, mapped, _1)
 
 import           Data.Tuple.All              (sel1, sel2, sel3, uncurryN)
 import           Data.List                   (nub)
@@ -50,7 +51,7 @@ import qualified Crm.Shared.ServerRender     as SR
 import qualified Crm.Shared.Company          as C
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, ymdToDay, catchError)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, createDeletion', ymdToDay, catchError, dayToYmd)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -72,11 +73,17 @@ addUpkeep ::
 addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
   upkeepIds <- runInsertReturning
     connection
-    upkeepsTable (Nothing, pgDay $ ymdToDay $ U.upkeepDate upkeep,
-      pgBool $ U.upkeepClosed upkeep, pgStrictText $ U.workHours upkeep, 
-      pgStrictText $ U.workDescription upkeep , pgStrictText $ U.recommendation upkeep)
-    sel1
-  let upkeepId = U.UpkeepId $ head upkeepIds
+    upkeepsTable 
+    (UpkeepRow
+      (U.UpkeepId Nothing)
+      (U.Upkeep
+        (pgDay . ymdToDay . U.upkeepDate $ upkeep)
+        (pgBool . U.upkeepClosed $ upkeep)
+        (pgStrictText . U.workHours $ upkeep)
+        (pgStrictText . U.workDescription $ upkeep)
+        (pgStrictText . U.recommendation $ upkeep)))
+    (view upkeepPK)
+  let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
   insertEmployees connection upkeepId (nub employeeIds)
   return upkeepId
@@ -116,7 +123,10 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
 removeUpkeep :: Handler (IdDependencies' U.UpkeepId)
 removeUpkeep = mkConstHandler' jsonO $ do
   ((_, connection), U.UpkeepId upkeepIdInt) <- ask
-  deleteRows'' [createDeletion upkeepEmployeesTable, createDeletion upkeepMachinesTable, createDeletion upkeepsTable]
+  deleteRows'' [
+    createDeletion upkeepEmployeesTable ,
+    createDeletion upkeepMachinesTable , 
+    createDeletion' (U.getUpkeepId . view upkeepPK) upkeepsTable ]
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
@@ -136,11 +146,16 @@ updateUpkeep ::
   IO ()
 updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
   _ <- let
-    condition upkeepRow = $(proj 6 0) upkeepRow .== pgInt4 (U.getUpkeepId upkeepId)
+    condition upkeepRow = view upkeepPK upkeepRow .=== fmap pgInt4 upkeepId
     readToWrite u =
-      (Just . $(proj 6 0) $ u, pgDay $ ymdToDay $ U.upkeepDate upkeep, pgBool $ U.upkeepClosed upkeep, 
-        pgStrictText $ U.workHours upkeep, 
-        pgStrictText $ U.workDescription upkeep, pgStrictText $ U.recommendation upkeep)
+      UpkeepRow 
+        (Just `fmap` (view upkeepPK $ u))
+        (U.Upkeep {
+          U.upkeepDate = pgDay . ymdToDay . U.upkeepDate $ upkeep ,
+          U.upkeepClosed = pgBool . U.upkeepClosed $ upkeep ,
+          U.workHours = pgStrictText . U.workHours $ upkeep ,
+          U.workDescription = pgStrictText . U.workDescription $ upkeep , 
+          U.recommendation = pgStrictText . U.recommendation $ upkeep})
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> $(proj 7 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
@@ -152,7 +167,7 @@ upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO $ const $ do
   (_, pool) <- ask 
   rows <- withResource pool $ \connection -> liftIO $ runQuery connection expandedUpkeepsQuery
-  return . mapUpkeeps $ rows
+  return . mapUpkeeps . over (mapped . _1 . upkeep . U.upkeepDateL) dayToYmd $ rows
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
@@ -160,15 +175,14 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
   (upkeeps' :: [(MK.MachineKindEnum, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
       liftIO $ forM rows $ \(upkeepRowPart, machineKind, (companyId :: C.CompanyId, company :: C.Company)) -> do
-    let (u :: UpkeepMapped) = convert upkeepRowPart
-    let upkeepId = $(proj 2 0) u
-    notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . U.getUpkeepId $ upkeepId)
-    return (MK.dbReprToKind machineKind, upkeepId, $(proj 2 1) u, companyId, 
+    let u = over (upkeep . U.upkeepDateL) dayToYmd upkeepRowPart
+    notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
+    return (MK.dbReprToKind machineKind, view upkeepPK u, view upkeep u, companyId, 
       company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
     (employeesInUpkeeps (fmap $(proj 6 1) upkeeps'))
   let 
-    (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (U.UpkeepId uId, convert e)) `fmap` employeeRows
+    (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (uId, convert e)) `fmap` employeeRows
     upkeepsWithEmployees = map (\tuple -> let
       employee = map snd . filter (($(proj 6 1) tuple ==) . fst) $ employees
       in $(catTuples 6 1) tuple employee) upkeeps'
@@ -179,13 +193,11 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
   ((_, pool), upkeepId) <- ask
-  let U.UpkeepId upkeepIdInt = upkeepId
-  upkeeps <- withResource pool $ \connection -> liftIO $ fmap mapUpkeeps (runQuery connection $ expandedUpkeepsQuery2 upkeepIdInt)
+  upkeeps <- withResource pool $ \connection -> liftIO $ 
+    fmap (mapUpkeeps . over (mapped . _1 . upkeep . U.upkeepDateL) dayToYmd) (runQuery connection $ expandedUpkeepsQuery2 upkeepId)
   upkeep <- singleRowOrColumn upkeeps
-
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
-  
-  employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepIdInt)
+  employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepId)
   let machines = map (\(m, mt) -> (mapMachineDate m, convert mt :: MachineTypeMapped)) (allMachines)
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
 
@@ -221,10 +233,10 @@ printDailyPlanListing' employeeId connection day = do
   dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeepMapped, es) -> do
     let 
-      upkeep = convert upkeepMapped :: UpkeepMapped
+      upkeep' = over (upkeep . U.upkeepDateL) dayToYmd upkeepMapped
       listifyNote (um @ (UM.UpkeepMachine {})) = 
         (um, catchError . parseMarkup . UM.upkeepMachineNote $ um) where
-      upkeepRaw = $(proj 2 1) upkeep
+      upkeepRaw = view upkeep upkeep'
       upkeepMarkup = upkeepRaw {
         U.workDescription = maybe ((:[]) . SR.PlainText . U.workDescription $ upkeepRaw) (\x -> x) . 
           catchError . parseMarkup . U.workDescription $ upkeepRaw }
@@ -237,9 +249,9 @@ printDailyPlanListing' employeeId connection day = do
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
       toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 
-      liftIO $ runQuery connection (machinesInUpkeepQuery'' ($(proj 2 0) upkeep))
+      liftIO $ runQuery connection (machinesInUpkeepQuery'' (view upkeepPK upkeep'))
     (company :: C.Company) <-
-      singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . $(proj 2 0) $ upkeep))
+      singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . view upkeepPK $ upkeep'))
     return (upkeepMarkup, company, employees, machines)
   return dailyPlanUpkeeps
 

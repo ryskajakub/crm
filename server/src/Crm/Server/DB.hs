@@ -122,6 +122,7 @@ module Crm.Server.DB (
   ExtraFieldSettingsMapped ,
   ExtraFieldMapped ,
   MachineMapped ,
+  UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK , 
   -- types
   MachineRecord' ) where
 
@@ -917,12 +918,12 @@ machineIdsHavingKind machineTypeKind = proc () -> do
   restrict -< $(proj 4 0) machineTypeRow .== _machineTypeFK machineRow
   returnA -< _machinePK machineRow
 
-employeeIdsInUpkeep :: Int -> Query DBInt
+employeeIdsInUpkeep :: U.UpkeepId -> Query DBInt
 employeeIdsInUpkeep upkeepId = proc () -> do
-  (_, employeeId, _) <- join . queryTable $ upkeepEmployeesTable -< pgInt4 upkeepId
+  (_, employeeId, _) <- join . queryTable $ upkeepEmployeesTable -< pgInt4 . U.getUpkeepId $ upkeepId
   returnA -< employeeId
 
-employeesInUpkeep :: Int -> Query EmployeeTable
+employeesInUpkeep :: U.UpkeepId -> Query EmployeeTable
 employeesInUpkeep upkeepId = proc () -> do
   employeeId <- employeeIdsInUpkeep upkeepId -< ()
   employeeRow <- join employeesQuery -< employeeId

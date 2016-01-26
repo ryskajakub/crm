@@ -9,6 +9,7 @@ import           Opaleye.RunQuery              (runQuery)
 import           Control.Monad.IO.Class        (liftIO)
 import           Control.Monad.Reader          (ask)
 import           Control.Monad                 (forM)
+import           Control.Lens                  (view, _1, mapped, over)
 
 import           Data.Tuple.All                (sel1, sel2, sel3)
 import           Data.Pool                     (withResource)
@@ -39,17 +40,18 @@ import           TupleTH                       (proj, catTuples)
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
-  rows <- liftIO $ withResource pool $ \connection -> runQuery 
+  rows' <- liftIO $ withResource pool $ \connection -> runQuery 
     connection (expandedUpkeepsByCompanyQuery companyId)
   let
+    rows = over (mapped . _1 . upkeep . U.upkeepDateL) dayToYmd rows'
     mappedResults = mapResultsToList
-      sel1
-      (\(upkeepCols,_,_,_) -> let
-        (uId, upkeep) = convert upkeepCols :: UpkeepMapped
-        upkeepMarkup = upkeep {
-          U.recommendation = parseMarkupOrPlain . U.recommendation $ upkeep ,
-          U.workDescription = parseMarkupOrPlain . U.workDescription $ upkeep }
-        in (uId, upkeepMarkup))
+      fst
+      (\(upkeepCols :: UpkeepRow,_,_,_) -> let
+        u = view upkeep upkeepCols
+        upkeepMarkup = u {
+          U.recommendation = parseMarkupOrPlain . U.recommendation $ u ,
+          U.workDescription = parseMarkupOrPlain . U.workDescription $ u }
+        in (view upkeepPK upkeepCols, upkeepMarkup))
       (\(_, upkeepMachine', machine' :: MachineRecord', machineType') -> let
         upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
         upkeepMachine = sel3 upkeepMachineMapped
@@ -65,7 +67,7 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
       (upkeepId, upkeep, upkeepMachines)) mappedResults
   withEmployeesAndPhotos <- withResource pool $ \connection -> liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
-    employeeResults <- runQuery connection (employeesInUpkeep $ U.getUpkeepId upkeepId)
+    employeeResults <- runQuery connection (employeesInUpkeep upkeepId)
     let mappedEmployees = fmap (\row -> convert row) employeeResults :: [EmployeeMapped]
     photoIdsRaw <- runQuery connection (photosInUpkeepQuery upkeepId)
     let photoIds = fmap P.PhotoId photoIdsRaw

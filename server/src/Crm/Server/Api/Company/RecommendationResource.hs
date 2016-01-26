@@ -1,13 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 
 module Crm.Server.Api.Company.RecommendationResource ( 
   resource ) where
 
+import           Control.Lens                (over, mapped, view)
 import           Control.Monad               (forM_)
-
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Reader        (ask)
+
 import           Data.Tuple.All              (sel1)
 import           Data.Text                   (Text)
 import           Data.Pool                   (withResource)
@@ -23,6 +25,7 @@ import           Rest.Handler                (Handler)
 import           Rest.Types.Error            (Reason)
 
 import qualified Crm.Shared.UpkeepSequence   as US
+import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.MachineType      as MT
 import qualified Crm.Shared.MachineKind      as MK
 import qualified Crm.Shared.Machine          as M
@@ -32,7 +35,7 @@ import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe          (toMaybe, toMyMaybe)
 
-import           Crm.Server.Helpers          (ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (ymdToDay, maybeToNullable, dayToYmd)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -47,7 +50,9 @@ getter :: Handler (IdDependencies' C.CompanyId)
 getter = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   lastUpkeep <- liftIO . withResource pool $ \connection -> runQuery connection (lastRecommendationQuery companyId)
-  let lastUpkeepMapped = convert `fmap` headMay lastUpkeep :: Maybe UpkeepMapped
+  let _ = lastUpkeep :: [UpkeepRow'' U.UpkeepId _]
+  let lastUpkeepMapped = headMay . fmap (view upkeep) . over (mapped . upkeep . U.upkeepDateL) dayToYmd $ lastUpkeep
+  let _ = lastUpkeepMapped :: Maybe U.Upkeep
   return . toMyMaybe $ lastUpkeepMapped
 
 resource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) () Void Void
