@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Shared.Upkeep where
 
@@ -13,6 +14,7 @@ import Crm.Shared.ServerRender  as SR
 import GHC.Generics
 import Data.Data
 import Rest.Info                (Info(..))
+import Control.Lens.TH          (makeLensesFor)
 #endif
 import Data.Text                (Text, pack)
 
@@ -31,8 +33,10 @@ newtype UpkeepId' upkeepId = UpkeepId { getUpkeepId :: upkeepId }
 #endif
 type UpkeepId = UpkeepId' Int
 
-type Upkeep'' = (UpkeepId, Upkeep)
-type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
+#ifndef FAY
+instance Functor UpkeepId' where
+  f `fmap` (UpkeepId mId) = UpkeepId . f $ mId
+#endif
 
 data UpkeepGen'' upkeepDate upkeepClosed workHours workDescription recommendation = Upkeep {
   upkeepDate :: upkeepDate ,
@@ -42,11 +46,15 @@ data UpkeepGen'' upkeepDate upkeepClosed workHours workDescription recommendatio
   recommendation :: recommendation }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
+makeLensesFor [("upkeepDate", "upkeepDateL")] ''UpkeepGen''
 #endif
 type UpkeepGen' = UpkeepGen'' D.YearMonthDay Bool Text
 type Upkeep = UpkeepGen' Text Text
 type UpkeepMarkup = UpkeepGen' [SR.Markup] Text
 type Upkeep2Markup = UpkeepGen' [SR.Markup] [SR.Markup]
+
+type Upkeep'' = (UpkeepId, Upkeep)
+type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
 newUpkeep :: D.YearMonthDay -> Upkeep
 newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")
