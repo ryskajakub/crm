@@ -16,7 +16,7 @@ import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
-import           Crm.Helpers                  (displayDate, plusDays, renderMarkup)
+import           Crm.Helpers                  (displayDate, plusDays, renderMarkup, displayMachine)
 import           Crm.Component.Form           (nullDropdown, InputState(Editing))
 import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
@@ -79,7 +79,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
         Just (markup) -> div . renderMarkup $ markup
         Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
       in BT.table (Just BT.Bordered) [
-        tr [th "Zařízení", td . text2DOM . MT.machineTypeName $ machineType ] ,
+        tr [th "Zařízení", td $ displayMachine machine machineType ] ,
         tr [th "Sériové číslo", td . text2DOM . M.serialNumber $ machine ] ,
         tr [th "Označení", td . text2DOM . M.label_ $ machine ] ,
         tr [th "Kontaktní osoba", td . text2DOM . (maybe "---" CP.name) $ contactPerson ] ,
