@@ -59,7 +59,9 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     \eId -> R.navigate (R.dailyPlan date eId) router
   header = h2 $ "Denní akce - " <> displayDate date
   renderTasks = map $ \(_, task) -> li . renderMarkup . T.description $ task
-  tasks = maybe [text2DOM ""] (\(_, tasks') -> (h3 "Další úkoly":) . (:[]) . ul . renderTasks $ tasks') employeeTasks
+  ifNonEmpty [] _ _ = []
+  ifNonEmpty _ prepend list = prepend : list
+  tasks = maybe [text2DOM ""] (\(_, tasks') -> ifNonEmpty tasks' (h3 "Další úkoly") . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
     B.col (B.mkColProps 12) (
       upkeepPrintDataHeader ++
