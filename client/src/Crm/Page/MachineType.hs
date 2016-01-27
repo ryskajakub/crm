@@ -355,8 +355,16 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
       BTN.bsStyle = Defined "danger" ,
       BTN.onClick = Defined . const $ handler }
     handler = return ()
+  mkMachineRow ((machineId, machine), (companyId, company)) = let
+    company' = td . C.companyName $ company
+    machine' = td $ displayFullMachine machine machineType
+    in tr [ company', machine' ]
+  machinesTable = B.table [
+    thead $ tr [ th "Firma", th "Zařízení" ] ,
+    tbody . map mkMachineRow $ machines ]
   machinesWithType = B.grid $ [
-    B.fullRow . h2 $ "Zařízení s tímto typem" ]
+    B.fullRow . h2 $ "Zařízení s tímto typem" ,
+    B.fullRow machinesTable ]
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) (Just machinesWithType) router
 
