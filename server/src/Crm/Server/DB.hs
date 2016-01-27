@@ -669,8 +669,8 @@ machinesInUpkeepQuery'' (U.UpkeepId upkeepIdInt) = let
   joined = leftJoin
     (machinesInUpkeepQuery''' upkeepIdInt)
     contactPersonsQuery
-    (\((machineRow,_,_), contactPersonRow) -> _machinePK machineRow .=== 
-      (M.MachineId . $(proj 5 1) $ contactPersonRow))
+    (\((machineRow,_,_), contactPersonRow) -> 
+      _contactPersonFK machineRow .== (maybeToNullable . Just . $(proj 5 0) $ contactPersonRow))
   in proc () -> do
     ((a,b,c), contactPersons) <- joined -< ()
     returnA -< (a,b,contactPersons,c)
@@ -689,7 +689,7 @@ machinesInCompanyQuery companyId = let
   machinesContactPersonsQ = leftJoin 
     (machinesQ companyId)
     contactPersonsQuery 
-    (\((machineRow,_), cpRow) -> _contactPersonFK machineRow .== (maybeToNullable $ Just $ sel1 cpRow))
+    (\((machineRow,_), cpRow) -> _contactPersonFK machineRow .== (maybeToNullable . Just . sel1 $ cpRow))
   lastUpkeepForMachineQ = AGG.aggregate (p2(AGG.max, AGG.groupBy)) $ proc () -> do
     umRow <- queryTable upkeepMachinesTable -< ()
     uRow <- queryTable $ upkeepsTable -< ()
