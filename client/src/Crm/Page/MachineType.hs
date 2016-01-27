@@ -126,8 +126,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
     R.navigate (R.newMachinePhase2 companyId) crmRouter
   submitButtonLabel = text2DOM "Dále"
 
-  (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, upkeepSequences) 
-    appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing crmRouter
+  (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, upkeepSequences)
+    appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing Nothing crmRouter
   in (result, callback >> afterRenderCallback)
 
 machineTypeForm' :: 
@@ -141,11 +141,12 @@ machineTypeForm' ::
   DOMElement -> -- ^ submit button label
   Fay () -> -- ^ submit button handler
   Maybe DOMElement -> -- ^ delete button
+  Maybe DOMElement -> -- machines having that type
   R.CrmRouter -> 
   (DOMElement, Fay ())
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
-    submitButtonHandler deleteButtonM router = let
+    submitButtonHandler deleteButtonM machinesWithType router = let
 
   setOneUpkeepSequence :: Int -> Fay ()
   setOneUpkeepSequence repetition = let
@@ -324,7 +325,8 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     then []
     else let
       validationMessagesHtml = map (\message -> p message) validationMessages
-      in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)])
+      in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)]) ++
+    (maybe [] (:[]) machinesWithType)
   in (div result, autocompleteManufacturerCb)
 
 machineTypeForm :: 
@@ -351,8 +353,10 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
       BTN.bsStyle = Defined "danger" ,
       BTN.onClick = Defined . const $ handler }
     handler = return ()
+  machinesWithType = B.grid $ [
+    B.fullRow . h2 $ "Zařízení s tímto typem" ]
   in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
-    setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) router
+    setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) (Just machinesWithType) router
 
 machineTypesList :: 
   R.CrmRouter -> 
