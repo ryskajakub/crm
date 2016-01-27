@@ -356,8 +356,8 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
       BTN.onClick = Defined . const $ handler }
     handler = return ()
   mkMachineRow ((machineId, machine), (companyId, company)) = let
-    company' = td . C.companyName $ company
-    machine' = td $ displayFullMachine machine machineType
+    company' = td $ R.link (C.companyName company) (R.companyDetail companyId) router
+    machine' = td $ R.link (displayFullMachine machine machineType) (R.machineDetail machineId) router
     in tr [ company', machine' ]
   machinesTable = B.table [
     thead $ tr [ th "Firma", th "Zařízení" ] ,
