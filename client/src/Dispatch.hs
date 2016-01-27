@@ -83,8 +83,8 @@ main' = do
       D.PlannedUpkeeps plannedUpkeeps' -> n $ 
         (plannedUpkeeps router plannedUpkeeps')
       D.MachineTypeList machineTypes -> n $ emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineTypeId machinesCount machineType machines -> n $
-        machineTypeForm router appVar' machineTypeId machineType machines machinesCount
+      D.MachineTypeEdit machineTypeId machineType machines -> n $
+        machineTypeForm router appVar' machineTypeId machineType machines
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> n $ machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> n $ emptyCallback $ employeePage router employees

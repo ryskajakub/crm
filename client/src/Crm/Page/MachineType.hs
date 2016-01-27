@@ -93,8 +93,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
         setMachineTypeId Nothing)
       (\text -> if text /= "" 
         then fetchMachineType text (\maybeTuple -> case maybeTuple of
-          Just (machineTypeId', machineType', _, sequences) -> do
-            setMachineWhole (machineType', map (\x -> (x, showInt $ US.repetition x)) sequences)
+          Just (machineTypeId', machineType', sequences) -> do
+            setMachineWhole (machineType', map (\x -> (x, showInt . US.repetition $ x)) sequences)
             setMachineTypeId $ Just machineTypeId'
           Nothing -> return ()) crmRouter
         else return ())
@@ -336,9 +336,9 @@ machineTypeForm ::
   MT.MachineTypeId -> 
   (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
   [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ->
-  Int -> 
   (DOMElement, Fay ())
-machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines machinesCount = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines = let
+  machinesCount = length machines
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
     Editing

@@ -639,26 +639,13 @@ machineTypesWithCountQuery = let
   orderedQuery = orderBy (asc(\( (_,_,_,m),_) -> m) <> asc(\((_,_,name',_),_) -> name')) aggregatedQuery
   in orderedQuery
 
-singleMachineTypeQuery :: Either String Int -> Query (MachineTypesTable, Column PGInt8)
-singleMachineTypeQuery machineTypeSid = let
-  machineTypeQ = proc () -> do
-    machineTypeNameRow @ (mtId',_,name',_) <- machineTypesQuery -< ()
-    restrict -< case machineTypeSid of
-      Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
-      Left(machineTypeName) -> (name' .== pgString machineTypeName)
-    returnA -< machineTypeNameRow
-  machineTIdQ = proc () -> do
-    machineRow <- queryTable machinesTable -< ()
-    returnA -< _machineTypeFK machineRow
-  withMachinesQ :: Query (MachineTypesTable, Column (Nullable PGInt4))
-  withMachinesQ = leftJoin machineTypeQ machineTIdQ $ \(mt, m) -> 
-    $(proj 4 0) mt .== m
-  essentialWithMQ = proc () -> do
-    (mt, m) <- withMachinesQ -< ()
-    returnA -< (mt, m)
-  withCountQ = AGG.aggregate aggregator essentialWithMQ where
-    aggregator = p2 (p4 (AGG.min, AGG.min, AGG.min, AGG.min), AGG.count)
-  in withCountQ
+singleMachineTypeQuery :: Either String Int -> Query MachineTypesTable
+singleMachineTypeQuery machineTypeSid = proc () -> do
+  machineTypeNameRow @ (mtId',_,name',_) <- machineTypesQuery -< ()
+  restrict -< case machineTypeSid of
+    Right(machineTypeId) -> (mtId' .== pgInt4 machineTypeId)
+    Left(machineTypeName) -> (name' .== pgString machineTypeName)
+  returnA -< machineTypeNameRow
 
 machinesInUpkeepQuery''' :: Int -> Query (MachinesTable, MachineTypesTable, UpkeepMachinesTable)
 machinesInUpkeepQuery''' upkeepId = proc () -> do

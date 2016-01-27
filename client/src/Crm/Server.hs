@@ -236,7 +236,7 @@ fetchMachineTypes = XMT.list maxCount
 
 fetchMachineTypeById :: 
   MT.MachineTypeId -> 
-  (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ()) -> 
+  (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -> 
   R.CrmRouter -> 
   Fay ()
 fetchMachineTypeById mtId callback = 
@@ -244,7 +244,7 @@ fetchMachineTypeById mtId callback =
 
 fetchMachineType :: 
   Text -> -- ^ machine type exact match
-  (Maybe (MT.MachineTypeId, MT.MachineType, Int, [US.UpkeepSequence]) -> Fay ()) -> -- ^ callback
+  (Maybe (MT.MachineTypeId, MT.MachineType, [US.UpkeepSequence]) -> Fay ()) -> -- ^ callback
   R.CrmRouter ->
   Fay ()
 fetchMachineType machineTypeName callback = 
