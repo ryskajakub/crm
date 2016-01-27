@@ -59,7 +59,8 @@ data Machine' machineOperationStartDate initialMileage mileagePerYear
   furtherSpecification :: furtherSpecification }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
-makeLensesFor [("machineOperationStartDate", "operationStartDateL")] ''Machine'
+makeLensesFor [("machineOperationStartDate", "operationStartDateL"),
+  ("serialNumber", "serialNumberL")] ''Machine'
 #endif
 
 type Machine = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool Text

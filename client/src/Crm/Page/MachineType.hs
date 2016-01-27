@@ -355,13 +355,14 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
       BTN.bsStyle = Defined "danger" ,
       BTN.onClick = Defined . const $ handler }
     handler = return ()
-  mkMachineRow ((machineId, machine), (companyId, company)) = let
+  mkMachineRow (index, ((machineId, machine), (companyId, company))) = let
     company' = td $ R.link (C.companyName company) (R.companyDetail companyId) router
     machine' = td $ R.link (displayFullMachine machine machineType) (R.machineDetail machineId) router
-    in tr [ company', machine' ]
+    usage = td . showInt . M.mileagePerYear $ machine
+    in tr [ td . showInt $ index , company', machine' , usage ]
   machinesTable = B.table [
-    thead $ tr [ th "Firma", th "Zařízení" ] ,
-    tbody . map mkMachineRow $ machines ]
+    thead $ tr [ th "" , th "Firma" , th "Zařízení" , th "Zatížení (mth/rok)" ] ,
+    tbody . map mkMachineRow $ ([1..] `zip` machines) ]
   machinesWithType = B.grid $ [
     B.fullRow . h2 $ "Zařízení s tímto typem" ,
     B.fullRow machinesTable ]

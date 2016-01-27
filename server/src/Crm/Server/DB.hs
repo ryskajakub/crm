@@ -1029,12 +1029,14 @@ companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = distinct $ proc () -> do
 machinesForTypeQ :: 
   MachineTypeSid -> 
   Query (MachinesTable, CompanyRead)
-machinesForTypeQ (MachineTypeById machineTypeId) = proc () -> do
-  machineRow <- queryTable machinesTable -< ()
-  restrict -< (MT.MachineTypeId . _machineTypeFK $ machineRow) .=== fmap pgInt4 machineTypeId
-  companyRow <- queryTable companiesTable -< ()
-  restrict -< _companyFK machineRow .=== C._companyPK companyRow
-  returnA -< (machineRow, companyRow)
+machinesForTypeQ (MachineTypeById machineTypeId) =
+  orderBy (asc (C.companyName . C._companyCore . snd) <> asc (view (_1 . machine . M.serialNumberL))) $ 
+    proc () -> do
+      machineRow <- queryTable machinesTable -< ()
+      restrict -< (MT.MachineTypeId . _machineTypeFK $ machineRow) .=== fmap pgInt4 machineTypeId
+      companyRow <- queryTable companiesTable -< ()
+      restrict -< _companyFK machineRow .=== C._companyPK companyRow
+      returnA -< (machineRow, companyRow)
 
 runMachinesInCompanyQuery :: 
   C.CompanyId -> 
