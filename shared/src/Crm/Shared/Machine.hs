@@ -48,7 +48,7 @@ instance Functor MachineId' where
 #endif
 
 data Machine' machineOperationStartDate initialMileage mileagePerYear 
-    label serialNumber yearOfManufacture archived note = Machine {
+    label serialNumber yearOfManufacture archived furtherSpecification = Machine {
   machineOperationStartDate :: machineOperationStartDate ,
   initialMileage :: initialMileage ,
   mileagePerYear :: mileagePerYear ,
@@ -56,7 +56,7 @@ data Machine' machineOperationStartDate initialMileage mileagePerYear
   serialNumber :: serialNumber ,
   yearOfManufacture :: yearOfManufacture ,
   archived :: archived ,
-  note :: note }
+  furtherSpecification :: furtherSpecification }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 makeLensesFor [("machineOperationStartDate", "operationStartDateL")] ''Machine'
@@ -74,7 +74,7 @@ newMachine' ymd = Machine {
   serialNumber = (pack "") ,
   yearOfManufacture = (pack "") ,
   archived = False ,
-  note = pack "" }
+  furtherSpecification = pack "" }
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = newMachine' $ Just ymd

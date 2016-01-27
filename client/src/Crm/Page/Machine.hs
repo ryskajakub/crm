@@ -402,8 +402,8 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
   
   noteRow = inputRowEditing
     "Další specifikace"
-    (SetValue . M.note $ machine')
-    (\str -> setMachine $ machine' { M.note = str })
+    (SetValue . M.furtherSpecification $ machine')
+    (\str -> setMachine $ machine' { M.furtherSpecification = str })
   labelRow = inputRowEditing
     "Označení"
     (SetValue $ M.label_ machine') 

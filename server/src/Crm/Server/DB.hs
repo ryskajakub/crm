@@ -331,7 +331,7 @@ machinesTable = Table "machines" $ pMachineRow MachineRow {
     M.serialNumber = required "serial_number" ,
     M.yearOfManufacture = required "year_of_manufacture" ,
     M.archived = required "archived" ,
-    M.note = required "note" })}
+    M.furtherSpecification = required "note" })}
 
 
 contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable

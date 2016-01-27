@@ -130,14 +130,14 @@ displayDate (YMD.YearMonthDay y m d precision) = let
     _ -> "LL")
 
 displayMachine :: M.Machine -> MT.MachineType -> Text
-displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.null . M.note $ machine)
+displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.null . M.furtherSpecification $ machine)
   then ""
-  else "-" <> M.note machine)
+  else "-" <> M.furtherSpecification machine)
 
 displayFullMachine :: M.Machine -> MT.MachineType -> Text
 displayFullMachine machine machineType =
-  note' <> (displayMachine machine machineType) <> serialNumber' where
-    note' = if T.null . M.label_ $ machine
+  label' <> (displayMachine machine machineType) <> serialNumber' where
+    label' = if T.null . M.label_ $ machine
       then ""
       else M.label_ machine <> " - "
     serialNumber' = if T.null . M.serialNumber $ machine
