@@ -155,5 +155,5 @@ machineSingle = mkConstHandler' jsonO $ do
 
 
 machineListing :: ListHandler Dependencies
-machineListing = mkListing' (jsonO) (const $
+machineListing = mkListing' jsonO (const $
   ask >>= \(_, pool) -> withResource pool $ \connection -> liftIO $ runExpandedMachinesQuery Nothing connection)

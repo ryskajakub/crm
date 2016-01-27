@@ -26,6 +26,7 @@ module Crm.Server (
   fetchMachine , 
   fetchMachinePhotos ,
   fetchMachinesInCompany ,
+  fetchMachinesForType ,
   fetchUpkeeps , 
   fetchPlannedUpkeeps , 
   fetchFrontPageData , 
@@ -93,6 +94,7 @@ import qualified Crm.Client.Machines                 as XM
 import qualified Crm.Client.Photos                   as XP
 import qualified Crm.Client.PhotoMeta                as XPM
 import qualified Crm.Client.MachineTypes             as XMT
+import qualified Crm.Client.MachineTypes.Machines    as XMTM
 import qualified Crm.Client.ContactPersons           as XCP
 import qualified Crm.Client.MachineKind              as XMK
 import qualified Crm.Client.Companies.Machines       as XCM
@@ -292,6 +294,14 @@ fetchMachinesInCompany ::
   R.CrmRouter -> 
   Fay ()
 fetchMachinesInCompany = XCM.list maxCount
+
+fetchMachinesForType ::
+  MT.MachineTypeId ->
+  ([((M.MachineId, M.Machine), (C.CompanyId, C.Company))] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchMachinesForType =
+  XMTM.list maxCount
 
 fetchExtraFieldSettings :: 
   ([(MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific)])] -> Fay ()) -> 

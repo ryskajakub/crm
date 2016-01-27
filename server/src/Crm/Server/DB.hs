@@ -94,6 +94,7 @@ module Crm.Server.DB (
   machinesInCompanyQuery' ,
   takenColoursQuery ,
   photosInUpkeepQuery ,
+  machinesForTypeQ ,
   -- manipulations
   insertExtraFields ,
   -- helpers
@@ -103,7 +104,7 @@ module Crm.Server.DB (
   initiateConnection ,
   mapMachineDate ,
   -- tables
-  MachineRow'' (..) ,
+  MachineRow'' (..), machine, machinePK ,
   -- mappings
   MachineRecord ,
   ColumnToRecordDeep ,
@@ -180,6 +181,7 @@ import qualified Crm.Shared.PhotoMeta                 as PM
 import qualified Crm.Shared.Photo                     as P
 import qualified Crm.Shared.ExtraField                as EF
 
+import           Crm.Server.Types
 import           Crm.Server.Helpers                   (dayToYmd, maybeToNullable)
 
 
@@ -341,6 +343,8 @@ contactPersonsTable = Table "contact_persons" $ p5 (
   required "name" ,
   required "phone" ,
   required "position" )
+
+makeAdaptorAndInstance' ''MT.MachineTypeId'
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" $ p4 (
@@ -1021,6 +1025,16 @@ companyInUpkeepQuery (U.UpkeepId upkeepIdInt) = distinct $ proc () -> do
   companyRow <- queryTable companiesTable -< ()
   restrict -< C._companyPK companyRow .=== _companyFK machineRow
   returnA -< C._companyCore companyRow
+
+machinesForTypeQ :: 
+  MachineTypeSid -> 
+  Query (MachinesTable, CompanyRead)
+machinesForTypeQ (MachineTypeById machineTypeId) = proc () -> do
+  machineRow <- queryTable machinesTable -< ()
+  restrict -< (MT.MachineTypeId . _machineTypeFK $ machineRow) .=== fmap pgInt4 machineTypeId
+  companyRow <- queryTable companiesTable -< ()
+  restrict -< _companyFK machineRow .=== C._companyPK companyRow
+  returnA -< (machineRow, companyRow)
 
 runMachinesInCompanyQuery :: 
   C.CompanyId -> 

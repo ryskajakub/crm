@@ -43,6 +43,7 @@ Library
     Crm.Server.Api.MachineResource ,
     Crm.Server.Api.Machine.PhotoResource ,
     Crm.Server.Api.MachineTypeResource ,
+    Crm.Server.Api.MachineType.MachineResource ,
     Crm.Server.Api.UpkeepResource ,
     Crm.Server.Api.Upkeep.PhotoResource ,
     Crm.Server.Api.Upkeep.ReopenResource ,

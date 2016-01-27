@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Crm.Shared.MachineType where
 
@@ -24,11 +25,17 @@ instance Read MachineTypeId where
   readsPrec i = fmap (\(a,b) -> (MachineTypeId a, b)) `fmap` readsPrec i
 #endif
 
-newtype MachineTypeId = MachineTypeId { getMachineTypeId :: Int }
+newtype MachineTypeId' machineTypeId = MachineTypeId { getMachineTypeId :: machineTypeId }
 #ifdef FAY
   deriving Eq
 #else
   deriving (Generic, Typeable, Data, Show)
+#endif
+type MachineTypeId = MachineTypeId' Int
+
+#ifndef FAY
+instance Functor MachineTypeId' where
+  f `fmap` (MachineTypeId mtId) = MachineTypeId . f $ mtId
 #endif
 
 type MachineType' = (MachineTypeId, MachineType)

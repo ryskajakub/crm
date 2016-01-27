@@ -21,6 +21,7 @@ import qualified HaskellReact.Bootstrap.Alert          as A
 import qualified HaskellReact.Tag.Hyperlink            as AA
 import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 
+import qualified Crm.Shared.Machine                    as M
 import qualified Crm.Shared.MachineType                as MT
 import qualified Crm.Shared.UpkeepSequence             as US
 import qualified Crm.Shared.Company                    as C
@@ -334,9 +335,10 @@ machineTypeForm ::
   Var D.AppState -> 
   MT.MachineTypeId -> 
   (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
+  [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ->
   Int -> 
   (DOMElement, Fay ())
-machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machinesCount = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines machinesCount = let
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
     Editing
