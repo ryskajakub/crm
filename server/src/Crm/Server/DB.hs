@@ -202,8 +202,8 @@ type ContactPersonsLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable P
   Column (Nullable PGText), Column (Nullable PGText), Column (Nullable PGText))
 type ContactPersonsWriteTable = (Maybe DBInt, DBInt, DBText, DBText, DBText)
 
-type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText, DBBool)
-type UpkeepMachinesLeftJoinTable = (MBInt, MBText, MBInt, MBInt, MBBool, MBText, MBBool)
+type UpkeepMachinesTable = (DBInt, DBText, DBInt, DBInt, DBBool, DBText, DBInt)
+type UpkeepMachinesLeftJoinTable = (MBInt, MBText, MBInt, MBInt, MBBool, MBText, MBInt)
 
 type EmployeeTable = (DBInt, DBText, DBText, DBText, DBText)
 type EmployeeLeftJoinTable = (Column (Nullable PGInt4), Column (Nullable PGText), Column (Nullable PGText),
@@ -400,7 +400,7 @@ upkeepMachinesTable = Table "upkeep_machines" $ p7 (
   required "recorded_mileage" ,
   required "warranty" ,
   required "end_note" ,
-  required "repair" )
+  required "upkeep_type" )
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
 employeesTable = Table "employees" $ p5 (
@@ -520,8 +520,8 @@ instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text, Maybe Te
     in (E.EmployeeId `fmap` $(proj 5 0) tuple, maybeE)
 instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
-instance ColumnToRecord (Int, Text, Int, Int, Bool, Text, Bool) UpkeepMachineMapped where
-  convert (a,b,c,d,e,f,g) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e f g)
+instance ColumnToRecord (Int, Text, Int, Int, Bool, Text, Int) UpkeepMachineMapped where
+  convert (a,b,c,d,e,f,g) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e f (UM.upkeepTypeDecode g))
 instance ColumnToRecord (Int, Text, Text) PhotoMetaMapped where
   convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
 instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
@@ -538,7 +538,7 @@ instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
 
 -- todo rather do two queries
 mapUpkeeps :: 
-  [(UpkeepRow, (Int, Text, Int, Int, Bool, Text, Bool))] -> 
+  [(UpkeepRow, (Int, Text, Int, Int, Bool, Text, Int))] -> 
   [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let

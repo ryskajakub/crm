@@ -41,15 +41,15 @@ nextServiceDate machine sequences upkeeps today = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = nextServiceDay where
-    upkeepRepetition   = minimum $ fmap US.repetition filteredSequences
+    upkeepRepetition   = minimum . fmap US.repetition $ filteredSequences
     mileagePerYear     = M.mileagePerYear machine
     yearsToNextService = (fromIntegral upkeepRepetition / fromIntegral mileagePerYear) :: Double
     daysToNextService  = truncate $ yearsToNextService * 365
     nextServiceDay     = addDays daysToNextService referenceDay
 
-  nonRepairUpkeeps = filter (not . UM.repair . snd) upkeeps
+  regularUpkeeps = filter ((UM.Regular ==) . UM.upkeepType . snd) upkeeps
 
-  computedUpkeep = case nonRepairUpkeeps of
+  computedUpkeep = case regularUpkeeps of
     [] -> let 
       intoOperationDate = case M.machineOperationStartDate machine of 
         Just operationStartDate' -> ymdToDay operationStartDate'
@@ -65,7 +65,7 @@ nextServiceDate machine sequences upkeeps today = let
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
 
-  openUpkeeps = filter (not . U.upkeepClosed . fst) $ nonRepairUpkeeps
+  openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = fmap ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 

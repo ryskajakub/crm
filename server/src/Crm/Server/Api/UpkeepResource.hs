@@ -116,7 +116,7 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
         pgInt4 $ UM.recordedMileage upkeepMachine' , 
         pgBool $ UM.warrantyUpkeep upkeepMachine' ,
         pgStrictText $ UM.endNote upkeepMachine' ,
-        pgBool $ UM.repair upkeepMachine' )
+        pgInt4 . UM.upkeepTypeEncode . UM.upkeepType $ upkeepMachine' )
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 

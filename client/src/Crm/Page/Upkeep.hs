@@ -358,8 +358,8 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     warrantyRepair = B.col (B.ColProps 1 nextFieldOffset) [warranty, repair] where
       warranty = checkbox editing (UM.warrantyUpkeep . fst $ machine) $ \warrantyUpkeep' ->
         updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
-      repair = div' (class' "repair") $ checkbox editing (UM.repair . fst $ machine) $ \repair' ->
-        updateUpkeepMachine $ (fst machine) { UM.repair = repair' }
+      repair = div' (class' "repair") $ checkbox editing (UM.upkeepType . fst $ machine) $ \repair' ->
+        updateUpkeepMachine $ (fst machine) { UM.upkeepType = repair' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->

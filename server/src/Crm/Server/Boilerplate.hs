@@ -44,7 +44,7 @@ instance (ToJSON a, Data a) => ToJSON (MyMaybe a) where
 instance (JS.JSONSchema a) => JS.JSONSchema (MyMaybe a) where
   schema = gSchema
 
-mkFayTransferables [''SR.Markup, ''M.ContactPersonForMachine, ''L.Login, ''MK.MachineKindSpecific, ''EF.ExtraFieldId,
+mkFayTransferables [''UM.UpkeepType, ''SR.Markup, ''M.ContactPersonForMachine, ''L.Login, ''MK.MachineKindSpecific, ''EF.ExtraFieldId,
   ''EF.ExtraFieldIdentification, ''C.Coordinates, ''U.UpkeepId, ''P.PhotoId, ''MT.MachineTypeId, ''M.MachineId, 
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
   ''U.Upkeep, ''U.UpkeepMarkup, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, 

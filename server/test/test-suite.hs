@@ -188,7 +188,7 @@ missingOperationStartDate = let
 
 repairUpkeep :: Assertion
 repairUpkeep = let
-  upkeepMachine' = upkeepMachine { UM.repair = True }
+  upkeepMachine' = upkeepMachine { UM.upkeepType = UM.Repair }
   later = upkeep {
     U.upkeepDate = dayToYmd $ fromGregorian 2016 1 1 }
   earlier = upkeep {

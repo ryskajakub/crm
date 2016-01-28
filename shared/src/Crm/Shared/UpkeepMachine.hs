@@ -34,7 +34,7 @@ newUpkeepMachine = UpkeepMachine (pack "") 0 False (pack "") Regular
 data UpkeepType =
   Regular | Repair | Check
 #ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
+  deriving (Generic, Typeable, Data, Show, Eq)
 #endif
 
 upkeepTypeEncode ::
