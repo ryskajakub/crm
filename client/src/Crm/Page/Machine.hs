@@ -141,9 +141,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       mth = showInt . UM.recordedMileage $ upkeepMachine
       warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
       repair = let
-        (labelClass, labelText) = if UM.repair upkeepMachine 
-          then ("label-danger", "O")
-          else ("label-info", "S")
+        (labelClass, labelText) = case UM.upkeepType upkeepMachine of
+          UM.Repair -> ("label-danger", "O")
+          UM.Regular -> ("label-info", "S")
+          UM.Check -> ("label-default", "K")
         in span' (class'' [labelClass, "label"]) labelText
       employeeCol = mkColours employees
       action = if U.upkeepClosed upkeep

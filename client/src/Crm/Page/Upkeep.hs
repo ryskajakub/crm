@@ -355,11 +355,18 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
           updateUpkeepMachine $ ((fst machine) { UM.recordedMileage = i })) 
         (const $ modify' $ \ud -> ud { UD.validation = V.add (V.MthNumber machineId) validation })
 
-    warrantyRepair = B.col (B.ColProps 1 nextFieldOffset) [warranty, repair] where
+    warrantyRepair = B.col (B.ColProps 1 nextFieldOffset) [warranty, upkeepTypeDropdown] where
       warranty = checkbox editing (UM.warrantyUpkeep . fst $ machine) $ \warrantyUpkeep' ->
         updateUpkeepMachine $ (fst machine) { UM.warrantyUpkeep = warrantyUpkeep' }
-      repair = div' (class' "repair") $ checkbox editing (UM.upkeepType . fst $ machine) $ \repair' ->
-        updateUpkeepMachine $ (fst machine) { UM.upkeepType = repair' }
+      displayUpkeepType upkeepType = text2DOM $ case upkeepType of
+        UM.Regular -> "S"
+        UM.Repair -> "O"
+        UM.Check -> "K"
+      upkeepTypeDropdown = div' (class' "repair") $ dropdown 
+        (UM.allUpkeepTypes `zip` UM.allUpkeepTypes)
+        displayUpkeepType
+        (UM.upkeepType . fst $ machine) $
+        \upkeepType' -> updateUpkeepMachine $ (fst machine) { UM.upkeepType = upkeepType' }
 
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
@@ -397,7 +404,8 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
 
   upkeepPageHeader = B.row $ pageInfo 
     pageHeader 
-    (Just $ p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. ", text2DOM basicMarkupInfo ])
+    (Just $ [p [ text2DOM "Políčka ", strong "Popis servisu", text2DOM " a ", strong "Poznámka", text2DOM " umožňují jednoduché formátování. ", text2DOM basicMarkupInfo ] , 
+     p [text2DOM "Popis typů servisu: Pravidelný ", strong "S", text2DOM "ervis, ", strong "O", text2DOM "prava, ", strong "K", text2DOM "ontrola." ]])
   validationMessages'' = V.messages validation
   validationMessages' = if (null upkeepMachines)
     then ["V servisu musí figurovat alespoň jeden stroj."]

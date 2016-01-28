@@ -50,3 +50,6 @@ upkeepTypeDecode ::
 upkeepTypeDecode 1 = Repair
 upkeepTypeDecode 2 = Check
 upkeepTypeDecode _ = Regular
+
+allUpkeepTypes :: [UpkeepType]
+allUpkeepTypes = [Regular, Repair, Check]

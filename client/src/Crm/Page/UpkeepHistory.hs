@@ -140,9 +140,13 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         um = find (\(_,_,_,machineId') -> machineId' == machineId) (getUpkeepMachines upkeep)
         result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
         displayUM upkeepMachine = let
-          panel = if UM.repair upkeepMachine
-            then (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM $ " " <> x])
-            else (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM $ " " <> x])
+          mkCellContent labelType upkeepT content =
+            [span' (class'' ["label", "label-" <> labelType]) upkeepT, text2DOM $ " " <> content]
+          panel = case UM.upkeepType upkeepMachine of
+
+            UM.Repair -> mkCellContent "danger" "O" -- (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM $ " " <> x])
+            UM.Regular -> mkCellContent "info" "S" -- (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM $ " " <> x])
+            UM.Check -> mkCellContent "default" "K" -- (\x -> [span' (class'' ["label", "label-default"]) "K", text2DOM $ " " <> x])
           content = if UM.recordedMileage upkeepMachine == 0
             then ""
             else showInt . UM.recordedMileage $ upkeepMachine
