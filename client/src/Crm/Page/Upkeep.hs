@@ -362,11 +362,13 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         UM.Regular -> "S"
         UM.Repair -> "O"
         UM.Check -> "K"
-      upkeepTypeDropdown = div' (class' "repair") $ dropdown 
-        (UM.allUpkeepTypes `zip` UM.allUpkeepTypes)
-        displayUpkeepType
-        (UM.upkeepType . fst $ machine) $
-        \upkeepType' -> updateUpkeepMachine $ (fst machine) { UM.upkeepType = upkeepType' }
+      upkeepTypeDropdown = div' (class' "repair") $ case editing of
+        Editing -> dropdown
+          (UM.allUpkeepTypes `zip` UM.allUpkeepTypes)
+          displayUpkeepType
+          (UM.upkeepType . fst $ machine) $
+          \upkeepType' -> updateUpkeepMachine $ (fst machine) { UM.upkeepType = upkeepType' }
+        Display -> text2DOM ""
 
     note = B.col (B.mkColProps noteColsSize) $ 
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
