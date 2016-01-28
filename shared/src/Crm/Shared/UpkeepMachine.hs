@@ -23,7 +23,7 @@ data UpkeepMachineGen upkeepMachineNote endNote = UpkeepMachine {
   recordedMileage :: Int ,
   warrantyUpkeep :: Bool ,
   endNote :: endNote ,
-  repair :: UpkeepType }
+  upkeepType :: UpkeepType }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif

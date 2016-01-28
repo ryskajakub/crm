@@ -79,7 +79,7 @@ create table upkeep_machines (
   recorded_mileage integer not null ,
   warranty boolean not null ,
   end_note varchar (5000) not null ,
-  repair smallint not null ,
+  upkeep_type smallint not null ,
   primary key (upkeep_id, machine_id) );
 
 create table upkeep_sequences (
