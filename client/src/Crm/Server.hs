@@ -54,6 +54,7 @@ module Crm.Server (
   deleteUpkeep ,
   deleteCompany ,
   deleteMachine ,
+  deleteMachineType ,
   deletePhoto ,
   deleteContactPerson ,
 
@@ -134,6 +135,13 @@ deleteUpkeep ::
   R.CrmRouter -> 
   Fay ()
 deleteUpkeep ident cb = XU.remove ident $ const cb
+
+deleteMachineType ::
+  MT.MachineTypeId ->
+  Fay () ->
+  R.CrmRouter ->
+  Fay ()
+deleteMachineType ident cb = XMT.remove ident $ const cb
 
 deleteMachine :: 
   M.MachineId -> 

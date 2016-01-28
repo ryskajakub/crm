@@ -350,11 +350,11 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
     updateMachineType (machineTypeId, machineType, map fst upkeepSequences) 
       (R.navigate R.machineTypesList router) router
   deleteButton = BTN.button' deleteButtonProps "Smaž" where
+    handler = deleteMachineType machineTypeId (R.navigate R.machineTypesList router) router
     deleteButtonProps = BTN.buttonProps {
       BTN.disabled = Defined $ if machinesCount <= 0 then False else True ,
       BTN.bsStyle = Defined "danger" ,
       BTN.onClick = Defined . const $ handler }
-    handler = return ()
   mkMachineRow (index, ((machineId, machine), (companyId, company))) = let
     company' = td $ R.link (C.companyName company) (R.companyDetail companyId) router
     machine' = td $ R.link (displayFullMachine machine machineType) (R.machineDetail machineId) router

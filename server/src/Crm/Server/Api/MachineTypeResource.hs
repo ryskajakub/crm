@@ -6,7 +6,7 @@ module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye.Operators           ((.==))
+import           Opaleye.Operators           ((.==), (.===))
 import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgBool)
 import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete)
 
@@ -22,7 +22,7 @@ import           Data.Pool                   (withResource)
 
 import           Rest.Types.Error            (Reason(NotFound, UnsupportedRoute))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
-                                             mkResourceReaderWith, get, update)
+                                             mkResourceReaderWith, get, update, remove)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
@@ -49,7 +49,25 @@ machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   list = machineTypesListing ,
   update = Just updateMachineType ,
   get = Just machineTypesSingle ,
+  remove = Just removeHandler ,
   schema = autocompleteSchema }
+
+removeHandler :: Handler MachineTypeDependencies
+removeHandler = mkConstHandler' jsonO $ do
+  ((_, pool), machineTypeSid) <- ask
+  case machineTypeSid of
+    MachineTypeById (machineTypeId) ->
+      liftIO $ withResource pool $ \connection -> do
+        runDelete
+          connection
+          upkeepSequencesTable
+          $ \row -> (MT.MachineTypeId . $(proj 5 3) $ row) .=== fmap pgInt4 machineTypeId
+        runDelete
+          connection
+          machineTypesTable
+          $ \row -> (MT.MachineTypeId . $(proj 4 0) $ row) .=== fmap pgInt4 machineTypeId
+        return ()
+    _ -> return ()
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
 machineTypesListing (Autocomplete mid) = mkListing' jsonO $ const $ 
