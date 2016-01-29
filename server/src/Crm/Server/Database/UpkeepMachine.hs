@@ -15,9 +15,11 @@
 
 module Crm.Server.Database.UpkeepMachine where
 
-import           Opaleye.Table              (required, optional, Table (..), )
+import           Opaleye                    --(required, optional, Table (..), queryRunnerColumn,
+                                            --  PGInt4, QueryRunnerColumn)
 import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
-import           Control.Lens               (makeLenses)
+import           Data.Profunctor.Product.Default (Default(def))
+import           Control.Lens               (makeLenses, over)
 
 import qualified Crm.Shared.UpkeepMachine             as UM
 import qualified Crm.Shared.Machine                   as M
@@ -38,11 +40,14 @@ type UpkeepMachinesLeftJoinTable = UpkeepMachineRow'
   (U.UpkeepId' MBInt)
   (M.MachineId' MBInt)
   (UM.UpkeepMachineGen' MBText MBInt MBBool MBText MBInt)
-type UpkeepMachineRowRaw = UpkeepMachineRow' U.UpkeepId M.MachineId (UM.UpkeepMachine)
 type UpkeepMachineRow = UpkeepMachineRow' U.UpkeepId M.MachineId UM.UpkeepMachine
 
 makeAdaptorAndInstance' ''UM.UpkeepMachineGen'
 makeAdaptorAndInstance' ''UpkeepMachineRow'
+
+instance QueryRunnerColumnDefault PGInt4 UM.UpkeepType where
+  queryRunnerColumnDefault = 
+    queryRunnerColumn id UM.upkeepTypeDecode fieldQueryRunnerColumn
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ pUpkeepMachineRow UpkeepMachineRow {
@@ -54,8 +59,3 @@ upkeepMachinesTable = Table "upkeep_machines" $ pUpkeepMachineRow UpkeepMachineR
     UM.warrantyUpkeep = required "warranty" ,
     UM.endNote = required "end_note" ,
     UM.upkeepType = required "upkeep_type" }}
-
-convert ::
-  UpkeepMachinesTable ->
-  UpkeepMachineRow
-convert = over (upkeepMachine . UM.upkeepTypeL) UM.upkeepTypeDecode

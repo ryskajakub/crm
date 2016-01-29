@@ -512,12 +512,11 @@ instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
 
 -- todo rather do two queries
 mapUpkeeps :: 
-  [(UpkeepRow, (Int, Text, Int, Int, Bool, Text, Int))] -> 
+  [(UpkeepRow, UMD.UpkeepMachineRow)] -> 
   [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
-    upkeepMachineToAdd' = convert upkeepMachineCols :: UpkeepMachineMapped
-    upkeepMachineToAdd = (sel3 upkeepMachineToAdd', sel2 upkeepMachineToAdd')
+    upkeepMachineToAdd = (view UMD.upkeepMachine upkeepMachineCols, view UMD.machineFK upkeepMachineCols)
     addUpkeep' = (_upkeepPK upkeepCols, _upkeep upkeepCols, [upkeepMachineToAdd])
     in case acc of
       [] -> [addUpkeep']
@@ -629,7 +628,9 @@ machinesInUpkeepQuery''' upkeepId = proc () -> do
   machineTypeRow <- join machineTypesQuery -< _machineTypeFK machineRow
   returnA -< (machineRow, machineTypeRow, upkeepMachineRow)
 
-machinesInUpkeepQuery'' :: U.UpkeepId -> Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable, UpkeepMachinesTable)
+machinesInUpkeepQuery'' :: 
+  U.UpkeepId -> 
+  Query (MachinesTable, MachineTypesTable, ContactPersonsLeftJoinTable, UpkeepMachinesTable)
 machinesInUpkeepQuery'' upkeepId = let
   joined = leftJoin
     (machinesInUpkeepQuery''' upkeepId)

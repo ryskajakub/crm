@@ -56,10 +56,11 @@ import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', 
-                                             mkGenHandler', mkDayParam, getDayParam)
+                                               mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 import           Crm.Server.Parsers          (parseMarkup)
+import qualified Crm.Server.Database.UpkeepMachine as UMD
 
 import           TupleTH                     (proj, catTuples, dropTuple)
 
@@ -109,14 +110,16 @@ insertUpkeepMachines connection upkeepId upkeepMachines = let
   insertUpkeepMachine (upkeepMachine', upkeepMachineId) = do
     _ <- runInsert
       connection
-      upkeepMachinesTable (
-        pgInt4 $ U.getUpkeepId upkeepId ,
-        pgStrictText $ UM.upkeepMachineNote upkeepMachine' ,
-        pgInt4 $ M.getMachineId upkeepMachineId ,
-        pgInt4 $ UM.recordedMileage upkeepMachine' , 
-        pgBool $ UM.warrantyUpkeep upkeepMachine' ,
-        pgStrictText $ UM.endNote upkeepMachine' ,
-        pgInt4 . UM.upkeepTypeEncode . UM.upkeepType $ upkeepMachine' )
+      upkeepMachinesTable $
+      UMD.UpkeepMachineRow {
+        UMD._upkeepFK = pgInt4 `fmap` upkeepId ,
+        UMD._machineFK = pgInt4 `fmap` upkeepMachineId ,
+        UMD._upkeepMachine = UM.UpkeepMachine {
+          UM.recordedMileage = pgInt4 . UM.recordedMileage $ upkeepMachine' , 
+          UM.upkeepMachineNote = pgStrictText . UM.upkeepMachineNote $ upkeepMachine' ,
+          UM.warrantyUpkeep = pgBool . UM.warrantyUpkeep $ upkeepMachine' ,
+          UM.endNote = pgStrictText . UM.endNote $ upkeepMachine' ,
+          UM.upkeepType = pgInt4 . UM.upkeepTypeEncode . UM.upkeepType $ upkeepMachine' }}
     return ()
   in forM_ upkeepMachines insertUpkeepMachine
 
@@ -125,7 +128,7 @@ removeUpkeep = mkConstHandler' jsonO $ do
   ((_, connection), U.UpkeepId upkeepIdInt) <- ask
   deleteRows'' [
     createDeletion upkeepEmployeesTable ,
-    createDeletion upkeepMachinesTable , 
+    createDeletion' (U.getUpkeepId . view UMD.upkeepFK) upkeepMachinesTable , 
     createDeletion' (U.getUpkeepId . view upkeepPK) upkeepsTable ]
     upkeepIdInt connection
 
@@ -157,7 +160,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
           U.workDescription = pgStrictText . U.workDescription $ upkeep , 
           U.recommendation = pgStrictText . U.recommendation $ upkeep})
     in runUpdate conn upkeepsTable readToWrite condition
-  _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> $(proj 7 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> UMD._upkeepFK upkeepRow .=== (pgInt4 `fmap` upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
   _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 3 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertEmployees conn upkeepId employeeIds
@@ -178,7 +181,7 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
     let u = over (upkeep . U.upkeepDateL) dayToYmd upkeepRowPart
     notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
     return (MK.dbReprToKind machineKind, view upkeepPK u, view upkeep u, companyId, 
-      company, fmap (\(a,b,c) -> (M.MachineId a,b,c)) notes :: [(M.MachineId, Text, Text)])
+      company, notes :: [(M.MachineId, Text, Text)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
     (employeesInUpkeeps (fmap $(proj 6 1) upkeeps'))
   let 
@@ -217,7 +220,7 @@ loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) 
   upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
   pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (_machinePK machine))
   let upkeepSequences = map (\x -> ($(proj 2 1)) $ (convert x :: UpkeepSequenceMapped)) upkeepSequences'
-  let pastUpkeepMachines = map (\x -> ($(proj 3 2)) $ (convert x :: UpkeepMachineMapped)) pastUpkeepMachines'
+  let pastUpkeepMachines = map (view UMD.upkeepMachine) (pastUpkeepMachines' :: [UMD.UpkeepMachineRow])
   uss <- case upkeepSequences of
     (us' : uss') -> return (us', uss')
     _ -> throwError . CustomReason . DomainReason . pack $ "Db in invalid state"
@@ -244,11 +247,11 @@ printDailyPlanListing' employeeId connection day = do
       employee = (convert e :: EmployeeMapped) 
       in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
-    machines <- fmap (map $ \(m, mt, cp, um) -> (
+    machines <- fmap (map $ \(m, mt, cp, (um :: UMD.UpkeepMachineRow)) -> (
       _machine . mapMachineDate $ m , 
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
       toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
-      second toMyMaybe . listifyNote . $(proj 3 2) $ (convert um :: UpkeepMachineMapped))) $ 
+      second toMyMaybe . listifyNote . view UMD.upkeepMachine $ um)) $ 
       liftIO $ runQuery connection (machinesInUpkeepQuery'' (view upkeepPK upkeep'))
     (company :: C.Company) <-
       singleRowOrColumn =<< (liftIO $ runQuery connection (companyInUpkeepQuery . view upkeepPK $ upkeep'))

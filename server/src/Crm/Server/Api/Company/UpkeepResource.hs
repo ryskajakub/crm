@@ -34,6 +34,8 @@ import           Crm.Server.DB
 import           Crm.Server.Handler            (mkListing', mkConstHandler')
 import           Crm.Server.Api.UpkeepResource (loadNextServiceTypeHint)
 
+import qualified Crm.Server.Database.UpkeepMachine as UMD
+
 import           TupleTH                       (proj, catTuples)
 
 
@@ -52,15 +54,14 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
           U.recommendation = parseMarkupOrPlain . U.recommendation $ u ,
           U.workDescription = parseMarkupOrPlain . U.workDescription $ u }
         in (view upkeepPK upkeepCols, upkeepMarkup))
-      (\(_, upkeepMachine', machine' :: MachineRecord', machineType') -> let
-        upkeepMachineMapped = convert upkeepMachine' :: UpkeepMachineMapped
-        upkeepMachine = sel3 upkeepMachineMapped
+      (\(_, (upkeepMachineMapped :: UMD.UpkeepMachineRow), machine' :: MachineRecord', machineType') -> let
+        upkeepMachine = view UMD.upkeepMachine upkeepMachineMapped
         upkeepMachineMarkup = upkeepMachine {
           UM.endNote = UM.endNote upkeepMachine ,
           UM.upkeepMachineNote = UM.upkeepMachineNote upkeepMachine }
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
         machine = _machine machine'
-        machineId = sel2 upkeepMachineMapped
+        machineId = view UMD.machineFK upkeepMachineMapped
         in (upkeepMachineMarkup, machine { M.machineOperationStartDate = fmap dayToYmd . M.machineOperationStartDate $ machine } ,
           machineType, machineId))
       rows
