@@ -14,7 +14,7 @@ import           Control.Monad               (forM)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Arrow               (first, second)
-import           Control.Lens                (over)
+import           Control.Lens                (over, view)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -36,6 +36,7 @@ import           Crm.Server.Helpers
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
+import qualified Crm.Server.Database.UpkeepMachine as UMD
 import           Crm.Server.Core             (nextServiceDate, getMaybe)
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeWhole)
@@ -132,9 +133,10 @@ machineSingle = mkConstHandler' jsonO $ do
           $(proj 4 3)
         . fmap (\(upkeep', upkeepMachine', employee') -> let
           upkeep'' = over (upkeep . U.upkeepDateL) dayToYmd upkeep'
-          upkeepMachine = convert upkeepMachine' :: UpkeepMachineMapped
+          upkeepMachine :: UMD.UpkeepMachineRow
+          upkeepMachine = over (UMD.upkeepMachine . UM.upkeepTypeL) UM.upkeepTypeDecode $ upkeepMachine'
           employee = convert employee' :: MaybeEmployeeMapped
-          intermediate = ((_upkeepPK upkeep'', _upkeep upkeep'', $(proj 3 2) upkeepMachine, $(proj 2 1) employee)
+          intermediate = ((_upkeepPK upkeep'', _upkeep upkeep'', view UMD.upkeepMachine upkeepMachine, $(proj 2 1) employee)
             :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))
           in intermediate)
         $ upkeepRows

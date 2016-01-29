@@ -7,7 +7,7 @@ import           Control.Monad              (forM, forM_)
 import           Control.Concurrent         (forkIO)
 import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
 import           Control.Concurrent.Async   (async, wait, Async)
-import           Control.Lens               (over, mapped)
+import           Control.Lens               (over, mapped, view)
 
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
@@ -34,6 +34,7 @@ import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..
 import           Crm.Server.DB
 import           Crm.Server.Helpers         (today, dayToYmd)
 import           Crm.Server.Types 
+import qualified Crm.Server.Database.UpkeepMachine as UMD
 
 
 recomputeWhole' ::
@@ -119,10 +120,12 @@ addNextDates getMachineId getMachine a = \conn -> do
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
-    convertFullUpkeeps = fmap $ \(u', um) -> let 
+    convertFullUpkeeps = fmap $ \(u', um') -> let 
       u :: UpkeepRow
       u = over (upkeep . U.upkeepDateL) dayToYmd u'
-      in (_upkeep u, $(proj 3 2) (convert um :: UpkeepMachineMapped))
+      um :: UMD.UpkeepMachineRow
+      um = over (UMD.upkeepMachine . UM.upkeepTypeL) UM.upkeepTypeDecode um'
+      in (_upkeep u, view UMD.upkeepMachine um)
     upkeepSequences = fmap (\r -> $(proj 2 1) (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined

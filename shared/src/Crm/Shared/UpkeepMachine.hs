@@ -1,41 +1,45 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Shared.UpkeepMachine where
 
-import qualified Crm.Shared.Machine      as M
-import qualified Crm.Shared.ServerRender as SR
+import qualified Crm.Shared.Machine         as M
+import qualified Crm.Shared.ServerRender    as SR
 
 #ifndef FAY
-import GHC.Generics
-import Data.Data
+import           GHC.Generics
+import           Data.Data
+import           Control.Lens.TH            (makeLensesFor)
 #endif
-import Data.Text                         (Text, pack)
-
-type UpkeepMachine' = (UpkeepMachine, M.MachineId)
-
-type UpkeepMachine = UpkeepMachineGen Text Text
-type UpkeepMachineMarkup = UpkeepMachineGen [SR.Markup] [SR.Markup]
-
-data UpkeepMachineGen upkeepMachineNote endNote = UpkeepMachine {
-  upkeepMachineNote :: upkeepMachineNote , 
-  recordedMileage :: Int ,
-  warrantyUpkeep :: Bool ,
-  endNote :: endNote ,
-  upkeepType :: UpkeepType }
-#ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
-#endif
-
-newUpkeepMachine :: UpkeepMachine
-newUpkeepMachine = UpkeepMachine (pack "") 0 False (pack "") Regular
+import           Data.Text                  (Text, pack)
 
 data UpkeepType =
   Regular | Repair | Check
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show, Eq)
 #endif
+
+type UpkeepMachine' = (UpkeepMachine, M.MachineId)
+
+type UpkeepMachineGen upkeepMachineNote endNote = UpkeepMachineGen' upkeepMachineNote Int Bool endNote UpkeepType
+type UpkeepMachine = UpkeepMachineGen Text Text
+type UpkeepMachineMarkup = UpkeepMachineGen [SR.Markup] [SR.Markup]
+
+data UpkeepMachineGen' upkeepMachineNote recordedMileage warrantyUpkeep endNote upkeepType = UpkeepMachine {
+  upkeepMachineNote :: upkeepMachineNote , 
+  recordedMileage :: recordedMileage ,
+  warrantyUpkeep :: warrantyUpkeep ,
+  endNote :: endNote ,
+  upkeepType :: upkeepType }
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show)
+makeLensesFor [("upkeepType", "upkeepTypeL")] ''UpkeepMachineGen'
+#endif
+
+newUpkeepMachine :: UpkeepMachine
+newUpkeepMachine = UpkeepMachine (pack "") 0 False (pack "") Regular
 
 upkeepTypeEncode ::
   UpkeepType ->
