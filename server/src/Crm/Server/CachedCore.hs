@@ -116,7 +116,7 @@ addNextDates ::
   Connection -> 
   IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
-  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery . M.getMachineId . getMachineId $ a)
+  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery . getMachineId $ a)
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
