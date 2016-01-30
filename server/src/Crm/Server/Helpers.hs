@@ -10,8 +10,6 @@ module Crm.Server.Helpers (
   createDeletion' ,
   prepareUpdate ,
   today ,
-  ymdToDay ,
-  dayToYmd ,
   maybeId ,
   withConnId ,
   withConnId' ,
@@ -21,7 +19,8 @@ module Crm.Server.Helpers (
   prepareReader , 
   prepareReaderIdentity ,
   prepareReaderTuple ,
-  catchError ) where
+  catchError ,
+  module YMD ) where
 
 
 import           Data.Functor.Identity       (runIdentity)
@@ -98,16 +97,6 @@ createDeletion = createDeletion' sel1
 
 today :: IO Day
 today = fmap utctDay getCurrentTime
-
-ymdToDay :: YMD.YearMonthDay -> Day
-ymdToDay ymd = day where 
-  YMD.YearMonthDay year month day' _  = ymd
-  day = fromGregorian (toInteger year) (month + 1) day'
-
-dayToYmd :: Day -> YMD.YearMonthDay
-dayToYmd day = ymd where
-  (year, month, day') = toGregorian day
-  ymd = YMD.YearMonthDay (fromIntegral year) (month - 1) day' YMD.DayPrecision
 
 prepareReaderIdentity :: 
   ReaderT (b, c) IO a -> 
