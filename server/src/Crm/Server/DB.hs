@@ -132,7 +132,7 @@ import           Prelude                              hiding (not)
 import           Control.Arrow                        (returnA, (^<<))
 import           Control.Applicative                  ((<*>), pure)
 import           Control.Monad                        (forM_)
-import           Control.Lens                         (view, _2, over, makeLenses, _1, mapped)
+import           Control.Lens                         (view, _2, over, makeLenses, _1, mapped, Getting)
 import           Data.List                            (intersperse, nubBy)
 import           Data.Monoid                          ((<>))
 
@@ -163,7 +163,10 @@ import           Opaleye                              (runInsert, QueryRunnerCol
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
 import qualified Opaleye.Internal.Aggregate           as IAGG
+import           Opaleye.Internal.Operators           (EqPP)
+import           Opaleye.Internal.TableMaker          (ColumnMaker)
 import           Data.Profunctor.Product.TH
+import           Data.Profunctor.Product.Default      (Default)
 
 import           Rest.Types.Error                     (DataError(ParseError), Reason(InputError))
 import           TupleTH
@@ -579,10 +582,8 @@ upkeepSequencesByIdQuery machineTypeId = proc () -> do
 
 pastUpkeepMachinesQ :: M.MachineId -> Query UpkeepMachinesTable
 pastUpkeepMachinesQ machineId = proc () -> do
-  upkeepMachineRow <- upkeepMachinesQuery -< ()
-  restrict -< UMD._machineFK upkeepMachineRow .=== fmap pgInt4 machineId
-  upkeepRow <- queryTable upkeepsTable -< ()
-  restrict -< UMD._upkeepFK upkeepMachineRow .=== _upkeepPK upkeepRow
+  upkeepMachineRow <- joinL upkeepMachinesTable UMD.machineFK -< fmap pgInt4 machineId
+  upkeepRow <- joinL upkeepsTable upkeepPK -< UMD._upkeepFK upkeepMachineRow
   restrict -< U.upkeepClosed . _upkeep $ upkeepRow
   returnA -< upkeepMachineRow
 
@@ -787,11 +788,18 @@ joinMachine = proc machinePK -> do
   restrict -< _machinePK machineRow .=== machinePK
   returnA -< machineRow
 
-join' :: 
-  QueryArr 
-    (Table a _)
-    (Table b _)
-join' = undefined
+joinL :: 
+  (Default EqPP aKey aKey,
+    Default ColumnMaker a a)
+  =>
+  (Table b a) ->
+  Getting aKey a aKey ->
+  QueryArr aKey a
+joinL table getKey = proc aKey -> do
+  aRows <- queryTable table -< ()
+  restrict -< view getKey aRows .=== aKey
+  returnA -< aRows
+
 
 nextServiceUpkeepsQuery :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
 nextServiceUpkeepsQuery machineId = proc () -> do
