@@ -131,9 +131,7 @@ machineSingle = mkConstHandler' jsonO $ do
           $(proj 3 0)
           $(takeTuple 4 3)
           $(proj 4 3)
-        . fmap (\(upkeep'', upkeepMachine', employee') -> let
-          upkeepMachine :: UMD.UpkeepMachineRow
-          upkeepMachine = over (UMD.upkeepMachine . UM.upkeepTypeL) UM.upkeepTypeDecode $ upkeepMachine'
+        . fmap (\(upkeep'', upkeepMachine :: UMD.UpkeepMachineRow, employee') -> let
           employee = convert employee' :: MaybeEmployeeMapped
           intermediate = ((_upkeepPK upkeep'', _upkeep upkeep'', view UMD.upkeepMachine upkeepMachine, $(proj 2 1) employee)
             :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))

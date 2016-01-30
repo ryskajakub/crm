@@ -120,10 +120,8 @@ addNextDates getMachineId getMachine a = \conn -> do
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   today' <- today
   let
-    convertFullUpkeeps = fmap $ \(u :: UpkeepRow, um') -> let 
-      um :: UMD.UpkeepMachineRow
-      um = over (UMD.upkeepMachine . UM.upkeepTypeL) UM.upkeepTypeDecode um'
-      in (_upkeep u, view UMD.upkeepMachine um)
+    convertFullUpkeeps = fmap $ \(u :: UpkeepRow, um :: UMD.UpkeepMachineRow) ->
+      (view upkeep u, view UMD.upkeepMachine um)
     upkeepSequences = fmap (\r -> $(proj 2 1) (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined

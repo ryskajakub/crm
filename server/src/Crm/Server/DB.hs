@@ -102,7 +102,6 @@ module Crm.Server.DB (
   singleRowOrColumn ,
   mapUpkeeps ,
   initiateConnection ,
-  mapMachineDate ,
   -- tables
   MachineRow'' (..), machine, machinePK ,
   -- mappings
@@ -1030,8 +1029,7 @@ runMachinesInCompanyQuery companyId connection = do
     mapRow row = let
       (machineType :: MachineTypeMapped, contactPerson :: MaybeContactPersonMapped) =
         (convert . $(proj 4 1) $ row, convert . $(proj 4 2) $ row)
-      (machineRecord :: MachineRecord) = 
-        over (machine . M.operationStartDateL) (fmap dayToYmd) $ $(proj 4 0) row
+      (machineRecord :: MachineRecord) = $(proj 4 0) row
       in (_machinePK machineRecord, _machine machineRecord, _companyFK machineRecord, sel1 machineType, 
         sel2 machineType, sel3 contactPerson, _linkageFK machineRecord, fmap _upkeep . mapMaybeUpkeep . $(proj 4 3) $ row)
   return . nubBy (\a0 a1 -> $(proj 8 0) a0 == $(proj 8 0) a1) . fmap mapRow $ rows
@@ -1040,10 +1038,8 @@ runExpandedMachinesQuery' ::
   Maybe Int -> 
   Connection -> 
   IO [(MachineRecord, (Int, Int, Text, Text))]
-runExpandedMachinesQuery' machineId connection = do
-  rows <- runQuery connection (expandedMachinesQuery machineId)
-  let rowsMapped = over (mapped . _1 . machine . M.operationStartDateL . mapped) dayToYmd rows
-  return rowsMapped
+runExpandedMachinesQuery' machineId connection = 
+  runQuery connection $ expandedMachinesQuery machineId
 
 runCompanyUpkeepsQuery :: 
   Int -> 
@@ -1078,12 +1074,7 @@ runMachinesInCompanyByUpkeepQuery ::
   IO[(C.CompanyId, (M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, MT.MachineType))]
 runMachinesInCompanyByUpkeepQuery upkeepId connection = do
   rows <- runQuery connection (machinesInCompanyByUpkeepQuery upkeepId)
-  return $ map (\(companyId,a,b) -> (C.CompanyId companyId, convertExpanded (mapMachineDate a,b))) rows 
-
-mapMachineDate ::
-  MachineRecord' ->
-  MachineRecord
-mapMachineDate machinesTable = over (machine . M.operationStartDateL) (fmap dayToYmd) machinesTable
+  return $ map (\(companyId,a,b) -> (C.CompanyId companyId, convertExpanded (a,b))) rows 
 
 initiateConnection :: IO Connection 
 initiateConnection = let 

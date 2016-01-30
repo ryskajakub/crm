@@ -40,9 +40,7 @@ listing :: ListHandler MachineTypeDependencies
 listing = mkListing' jsonO $ const $ do
   ((_, pool), machineTypeSid) <- ask
   rows' <- liftIO $ withResource pool $ \connection -> runQuery connection (machinesForTypeQ machineTypeSid)
-  let rows = over (mapped . _1 . machine . M.operationStartDateL . _Just) dayToYmd
-        . over (mapped . _2 . C.companyCoords) (\co -> pure C.Coordinates <*> C.latitude co <*> C.longitude co)
-        $ rows'
+  let rows = over (mapped . _2 . C.companyCoords) (\co -> pure C.Coordinates <*> C.latitude co <*> C.longitude co) $ rows'
         :: [(MachineRecord, C.CompanyRecord)]
   return $ over mapped (
       over _2 (\company' -> (view C.companyPK company', view C.companyCore company'))
