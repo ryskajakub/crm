@@ -42,10 +42,9 @@ import           TupleTH                       (proj, catTuples)
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
-  rows' <- liftIO $ withResource pool $ \connection -> runQuery 
+  rows <- liftIO $ withResource pool $ \connection -> runQuery 
     connection (expandedUpkeepsByCompanyQuery companyId)
   let
-    rows = over (mapped . _1 . upkeep . U.upkeepDateL) dayToYmd rows'
     mappedResults = mapResultsToList
       fst
       (\(upkeepCols :: UpkeepRow,_,_,_) -> let

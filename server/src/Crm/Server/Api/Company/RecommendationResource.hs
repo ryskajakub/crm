@@ -51,7 +51,7 @@ getter = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   lastUpkeep <- liftIO . withResource pool $ \connection -> runQuery connection (lastRecommendationQuery companyId)
   let _ = lastUpkeep :: [UpkeepRow'' U.UpkeepId _]
-  let lastUpkeepMapped = headMay . fmap (\u -> (view upkeepPK u, view upkeep u)) . over (mapped . upkeep . U.upkeepDateL) dayToYmd $ lastUpkeep
+  let lastUpkeepMapped = headMay . fmap (\u -> (view upkeepPK u, view upkeep u)) $ lastUpkeep
   let _ = lastUpkeepMapped :: Maybe (U.UpkeepId, U.Upkeep)
   return . toMyMaybe $ lastUpkeepMapped
 

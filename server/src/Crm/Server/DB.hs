@@ -158,7 +158,8 @@ import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, P
 import qualified Opaleye.Aggregate                    as AGG
 import           Opaleye.Join                         (leftJoin)
 import           Opaleye.Distinct                     (distinct)
-import           Opaleye                              (runInsert)
+import           Opaleye                              (runInsert, QueryRunnerColumnDefault(..), 
+                                                        queryRunnerColumn, fieldQueryRunnerColumn)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
 import qualified Opaleye.Internal.Aggregate           as IAGG
@@ -180,6 +181,7 @@ import qualified Crm.Shared.UpkeepMachine             as UM
 import qualified Crm.Shared.PhotoMeta                 as PM
 import qualified Crm.Shared.Photo                     as P
 import qualified Crm.Shared.ExtraField                as EF
+import qualified Crm.Shared.YearMonthDay              as YMD
 
 import           Crm.Server.Types
 import           Crm.Server.Helpers                   (dayToYmd, maybeToNullable)
@@ -375,6 +377,11 @@ upkeepsTable = Table "upkeeps" $ (pUpkeepRow UpkeepRow {
     U.workHours = required "work_hours" ,
     U.workDescription = required "work_description" ,
     U.recommendation = required "recommendation" }})
+
+instance QueryRunnerColumnDefault PGDate YMD.YearMonthDay where
+  queryRunnerColumnDefault = 
+    queryRunnerColumn id dayToYmd fieldQueryRunnerColumn
+
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
 employeesTable = Table "employees" $ p5 (
@@ -1044,7 +1051,7 @@ runCompanyUpkeepsQuery ::
   IO [UpkeepRow]
 runCompanyUpkeepsQuery companyId connection = do
   rows <- runQuery connection (companyUpkeepsQuery companyId)
-  return $ over (mapped . upkeep . U.upkeepDateL) dayToYmd rows
+  return rows
 
 convertExpanded :: 
   (MachineRecord, (Int, Int, Text, Text)) -> 
