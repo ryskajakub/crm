@@ -200,7 +200,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   upkeep <- singleRowOrColumn upkeeps
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
   employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepId)
-  let machines = map (\(m, mt) -> (mapMachineDate m, convert mt :: MachineTypeMapped)) (allMachines)
+  let machines = map (\(m, mt) -> (m :: MachineRecord, convert mt :: MachineTypeMapped)) (allMachines)
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
 
   companyId <- case machines of
@@ -245,8 +245,8 @@ printDailyPlanListing' employeeId connection day = do
       employee = (convert e :: EmployeeMapped) 
       in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
-    machines <- fmap (map $ \(m, mt, cp, (um :: UMD.UpkeepMachineRow)) -> (
-      _machine . mapMachineDate $ m , 
+    machines <- fmap (map $ \(m :: MachineRecord, mt, cp, (um :: UMD.UpkeepMachineRow)) -> (
+      _machine m , 
       $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
       toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . view UMD.upkeepMachine $ um)) $ 

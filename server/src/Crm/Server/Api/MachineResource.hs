@@ -106,7 +106,7 @@ machineSingle = mkConstHandler' jsonO $ do
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
     (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let
-      (m :: MachineRecord) = mapMachineDate . sel1 $ row
+      (m :: MachineRecord) = sel1 row
       mt = convert $ sel2 row :: MachineTypeMapped
       cp = convert $ sel3 row :: MaybeContactPersonMapped
       in (_machinePK m, _machine m, _companyFK m, sel1 mt, sel2 mt, toMyMaybe . sel1 $ cp, _linkageFK m)

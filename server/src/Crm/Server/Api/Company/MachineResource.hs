@@ -120,8 +120,7 @@ listing = mkListing' jsonO $ const $ do
   otherMachines <- liftIO $ withResource pool $ \connection -> runQuery 
     connection (otherMachinesInCompanyQuery companyId)
   let 
-    machinesMapped = fmap mapMachineDate otherMachines
-    result = fmap (\mm -> (_machinePK mm, _machine mm)) machinesMapped
+    result = fmap (\(mm :: MachineRecord) -> (_machinePK mm, _machine mm)) otherMachines
   return result
 
 machineResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void

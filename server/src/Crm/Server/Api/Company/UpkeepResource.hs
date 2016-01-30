@@ -79,7 +79,7 @@ newUpkeepData = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   machines' <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (machinesQ companyId)
-  let machines = map (\(m, mt) -> (mapMachineDate m, convert mt :: MachineTypeMapped)) machines'
+  let machines = map (\(m, mt) -> (m :: MachineRecord, convert mt :: MachineTypeMapped)) machines'
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
   return $ map (\(m, mt, nextUpkeepSequence) -> 
     (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines''

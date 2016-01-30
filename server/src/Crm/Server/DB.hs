@@ -11,6 +11,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE PartialTypeSignatures #-}
 
 module Crm.Server.DB (
   -- tables
@@ -785,6 +786,12 @@ joinMachine = proc machinePK -> do
   machineRow <- queryTable machinesTable -< ()
   restrict -< _machinePK machineRow .=== machinePK
   returnA -< machineRow
+
+join' :: 
+  QueryArr 
+    (Table a _)
+    (Table b _)
+join' = undefined
 
 nextServiceUpkeepsQuery :: Int -> Query (UpkeepsTable, UpkeepMachinesTable)
 nextServiceUpkeepsQuery machineId = proc () -> do
