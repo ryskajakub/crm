@@ -798,12 +798,9 @@ upkeepsDataForMachine machineId = let
     returnA -< (upkeepEmployeeRow, employeeRow)
   upkeepQ :: Query (UpkeepsTable, UpkeepMachinesTable)
   upkeepQ = proc () -> do
-    machineRow <- queryTable machinesTable -< ()
-    restrict -< _machinePK machineRow .=== (pgInt4 `fmap` machineId)
-    upkeepMachineRow <- upkeepMachinesQuery -< ()
-    restrict -< UMD._machineFK upkeepMachineRow .=== _machinePK machineRow
-    upkeepRow <- queryTable upkeepsTable -< ()
-    restrict -< _upkeepPK upkeepRow .=== UMD._upkeepFK upkeepMachineRow
+    machineRow <- joinL machinesTable machinePK -< fmap pgInt4 machineId
+    upkeepMachineRow <- joinL upkeepMachinesTable UMD.machineFK -< _machinePK machineRow
+    upkeepRow <- joinL upkeepsTable upkeepPK -< UMD._upkeepFK upkeepMachineRow
     returnA -< (upkeepRow, upkeepMachineRow)
   ljQ :: Query ((UpkeepsTable, UpkeepMachinesTable), (
     (Column (Nullable PGInt4), Column (Nullable PGInt4), Column (Nullable PGInt4)), EmployeeLeftJoinTable))
@@ -825,8 +822,7 @@ expandedUpkeepsByCompanyQuery :: C.CompanyId -> Query
 expandedUpkeepsByCompanyQuery companyId = let
   upkeepsWithMachines = proc () -> do
     upkeepRow <- queryTable upkeepsTable -< ()
-    upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
-    restrict -< _upkeepPK upkeepRow .=== UMD._upkeepFK upkeepMachineRow
+    upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
     machine <- joinMachine -< UMD._machineFK upkeepMachineRow
     machineType <- join machineTypesQuery -< _machineTypeFK machine
     restrict -< _companyFK machine .=== fmap pgInt4 companyId
@@ -851,12 +847,10 @@ groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow <- queryTable upkeepsTable -< ()
     restrict -< not . U.upkeepClosed . _upkeep $ upkeepRow
-    upkeepMachinesRow <- queryTable upkeepMachinesTable -< ()
-    restrict -< UMD._upkeepFK upkeepMachinesRow .=== _upkeepPK upkeepRow
+    upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
     machineRow <- joinMachine -< UMD._machineFK upkeepMachinesRow
-    companyRow <- queryTable companiesTable -< ()
     machineTypeRow <- join . queryTable $ machineTypesTable -< _machineTypeFK machineRow
-    restrict -< C._companyPK companyRow .=== _companyFK machineRow
+    companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
     returnA -< (upkeepRow, $(proj 4 1) machineTypeRow , (C._companyPK companyRow, C._companyCore companyRow))
   in orderBy (asc(\(UpkeepRow _ upkeep, _, _) -> U.upkeepDate upkeep)) $
     AGG.aggregate (p3 (pUpkeepRow $ UpkeepRow (pUpkeepId . U.UpkeepId $ AGG.groupBy)
@@ -872,10 +866,8 @@ singleContactPersonQuery contactPersonId = proc () -> do
   returnA -< (contactPersonRow, companyRow)
 
 machinesInUpkeepQuery :: U.UpkeepId -> Query UpkeepMachinesTable
-machinesInUpkeepQuery upkeepId = proc () -> do
-  upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
-  restrict -< pgInt4 `fmap` upkeepId .=== UMD._upkeepFK upkeepMachineRow
-  returnA -< upkeepMachineRow
+machinesInUpkeepQuery upkeepId = 
+  joinL upkeepMachinesTable UMD.upkeepFK <<< arr (const $ fmap pgInt4 upkeepId)
 
 extraFieldsPerKindQuery :: Int -> Query ExtraFieldSettingsTable
 extraFieldsPerKindQuery machineKind = orderBy (asc $ $(proj 4 2)) $ proc () -> do
@@ -949,14 +941,11 @@ getTaskQuery (T.TaskId taskIdInt) = proc () -> do
   returnA -< taskRow
 
 lastRecommendationQuery :: C.CompanyId -> Query UpkeepsTable
-lastRecommendationQuery (C.CompanyId companyId) = 
+lastRecommendationQuery companyId = 
   limit 1 . orderBy (desc (U.upkeepDate . _upkeep)) $ proc () -> do
-    machineRow <- queryTable machinesTable -< ()
-    restrict -< _companyFK machineRow .=== (C.CompanyId . pgInt4 $ companyId)
-    upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
-    restrict -< UMD._machineFK upkeepMachineRow .=== _machinePK machineRow
+    machineRow <- joinL machinesTable companyFK -< fmap pgInt4 companyId
+    upkeepMachineRow <- joinL upkeepMachinesTable UMD.machineFK -< _machinePK machineRow
     upkeepRow <- queryTable upkeepsTable -< ()
-    restrict -< UMD._upkeepFK upkeepMachineRow .=== _upkeepPK upkeepRow
     restrict -< U.upkeepClosed . _upkeep $ upkeepRow
     returnA -< upkeepRow
 
@@ -970,14 +959,13 @@ aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
 notesForUpkeep :: U.UpkeepId -> Query (MachinePK, DBText, DBText)
 notesForUpkeep upkeepId = proc () -> do
-  upkeepMachinesRow <- queryTable upkeepMachinesTable -< ()
-  restrict -< UMD._upkeepFK upkeepMachinesRow .=== pgInt4 `fmap` upkeepId
-  machinesRow <- joinMachine -< UMD._machineFK upkeepMachinesRow
+  upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
+  machinesRow <- joinMachine -< UMD._machineFK upkeepMachineRow
   machineTypesRow <- join machineTypesQuery -< _machineTypeFK machinesRow
   returnA -< (
-    UMD._machineFK upkeepMachinesRow ,
+    UMD._machineFK upkeepMachineRow ,
     $(proj 4 2) machineTypesRow ,
-    UM.upkeepMachineNote . UMD._upkeepMachine $ upkeepMachinesRow )
+    UM.upkeepMachineNote . UMD._upkeepMachine $ upkeepMachineRow )
 
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do
@@ -993,11 +981,9 @@ photosInUpkeepQuery (U.UpkeepId upkeepId) = proc () -> do
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery upkeepId = distinct $ proc () -> do
-  upkeepMachineRow <- queryTable upkeepMachinesTable -< ()
-  restrict -< UMD._upkeepFK upkeepMachineRow .=== pgInt4 `fmap` upkeepId
-  machineRow <- joinMachine -< UMD._machineFK upkeepMachineRow
-  companyRow <- queryTable companiesTable -< ()
-  restrict -< C._companyPK companyRow .=== _companyFK machineRow
+  upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
+  machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
+  companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
   returnA -< C._companyCore companyRow
 
 machinesForTypeQ :: 
@@ -1008,8 +994,7 @@ machinesForTypeQ (MachineTypeById machineTypeId) =
     proc () -> do
       machineRow <- queryTable machinesTable -< ()
       restrict -< (MT.MachineTypeId . _machineTypeFK $ machineRow) .=== fmap pgInt4 machineTypeId
-      companyRow <- queryTable companiesTable -< ()
-      restrict -< _companyFK machineRow .=== C._companyPK companyRow
+      companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
       returnA -< (machineRow, companyRow)
 
 runMachinesInCompanyQuery :: 
