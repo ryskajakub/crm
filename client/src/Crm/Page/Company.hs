@@ -142,10 +142,10 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
     (nextServiceRow, healthColor) = maybe ([], "#000") (\nextService' -> 
       ([dt "Další servis" , dd $ displayDate nextService'], "#" <> computeColor nextService')) nextService
 
-    mkNonEmptyListElement label value = if T.null value
+    mkNonEmptyListElement term value = if T.null value
       then []
       else [
-        dt label ,
+        dt term ,
         dd value ]
 
     in B.col (B.mkColProps 4) $

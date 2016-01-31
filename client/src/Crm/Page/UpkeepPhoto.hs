@@ -5,14 +5,11 @@ module Crm.Page.UpkeepPhoto (
   addPhotoToUpkeepList ,
   upkeepPhotos ) where
 
-import           Data.Text                        (fromString, Text, showInt, (<>), empty)
-import qualified Data.Text                        as T
+import           Data.Text                        (fromString, Text)
 import           Prelude                          hiding (div, span, id)
-import qualified Prelude                          as Prelude
-import           FFI                              (ffi, Defined(..))
+import           FFI                              (Defined(..))
 
 import           HaskellReact                     as HR
-import qualified HaskellReact.BackboneRouter      as BR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
 import qualified HaskellReact.Jasny               as J
@@ -35,7 +32,7 @@ addPhotoToUpkeepList ::
   DOMElement
 addPhotoToUpkeepList router upkeeps = let
   pageInfo' = pageInfo "Aktuální servisy - přidej fotky" $ (Nothing :: Maybe DOMElement)
-  table = B.table [head', body] where
+  table'' = B.table [head', body] where
     head' = thead $ tr [
       th "Název firmy" ,
       th "Přidat fotky" ,
@@ -51,7 +48,7 @@ addPhotoToUpkeepList router upkeeps = let
     body = tbody $ map renderUpkeepRow (concat upkeeps)
   in (B.grid $ B.row $
     pageInfo' ++
-    [B.col (B.mkColProps 12) $ main table])
+    [B.col (B.mkColProps 12) $ main table''])
 
 upkeepPhotos ::
   R.CrmRouter ->

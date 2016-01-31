@@ -174,9 +174,9 @@ nullDropdown ::
   (Maybe a -> Fay ()) -> 
   (DOMElement, DOMElement)
 nullDropdown elements display currentElement' setId = 
-  (dd, display' currentElement)
+  (dd', display' currentElement)
   where
-  dd = dropdown elements' display' currentElement setId
+  dd' = dropdown elements' display' currentElement setId
   currentElement = joinMaybe $ (\e -> lookup e elements) `onJust` currentElement'
   elements' = let
     notNullElements = map (\(a,b) -> (Just a, Just b)) elements

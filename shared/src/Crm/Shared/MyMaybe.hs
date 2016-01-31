@@ -10,12 +10,10 @@ import Data.Data
 #endif
 
 data MyMaybe a = MyJust a | MyNothing
-#ifndef FAY
-  deriving (Generic, Typeable, Data, Show)
-#endif
-
 #ifdef FAY
-instance Eq a => Eq (MyMaybe a)
+  deriving (Eq)
+#else
+  deriving (Generic, Typeable, Data, Show, Eq)
 #endif
 
 toMaybe :: MyMaybe a -> Maybe a

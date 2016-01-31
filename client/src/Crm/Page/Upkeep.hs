@@ -6,8 +6,7 @@ module Crm.Page.Upkeep (
   upkeepDetail ,
   plannedUpkeeps ) where
 
-import           Data.Text                        (fromString, Text, showInt, (<>), empty)
-import qualified Data.Text                        as T
+import           Data.Text                        (fromString, Text, showInt, (<>))
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
@@ -256,7 +255,6 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       UD.upkeep = (upkeep, checkedMachines) ,
       UD.notCheckedMachines = notCheckedMachines' }
 
-  textareaRowEditing = textareaRow Editing
   textareaRowEditing' int = textareaRow' int Editing
   inputRowEditing = inputRow Editing
 

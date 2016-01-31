@@ -3,7 +3,7 @@
 
 module Crm.Helpers where
 
-import           Data.Text                            as T (Text, showInt, fromString, (<>), length, empty, null)
+import           Data.Text                            as T (Text, showInt, fromString, (<>), length, null)
 import           Prelude                              as P hiding (div, span, id)
 import           FFI                                  (Nullable, ffi, Defined(Defined, Undefined))
 import           Data.Nullable                        (fromNullable)
@@ -136,8 +136,8 @@ displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.
 
 displayFullMachine :: M.Machine -> MT.MachineType -> Text
 displayFullMachine machine machineType =
-  label' <> (displayMachine machine machineType) <> serialNumber' where
-    label' = if T.null . M.label_ $ machine
+  label'' <> (displayMachine machine machineType) <> serialNumber' where
+    label'' = if T.null . M.label_ $ machine
       then ""
       else M.label_ machine <> " - "
     serialNumber' = if T.null . M.serialNumber $ machine

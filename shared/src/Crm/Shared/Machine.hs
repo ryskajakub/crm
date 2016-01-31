@@ -13,13 +13,13 @@ import           GHC.Generics
 import           Data.Data
 import           Prelude
 import           Rest.Info                  (Info(..))
+import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 #endif
 import           Data.Text                  (Text, pack)
 
 import           Crm.Shared.YearMonthDay    (YearMonthDay)
 import qualified Crm.Shared.ContactPerson   as CP
 import qualified Crm.Shared.ServerRender    as SR
-import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 
 #ifndef FAY
 instance Info MachineId where

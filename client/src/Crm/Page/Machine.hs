@@ -5,7 +5,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import           Data.Text                             (fromString, (<>), Text, showInt, pack, putStrLn)
+import           Data.Text                             (fromString, (<>), Text, showInt)
 import           Prelude                               hiding (div, span, id, putStrLn)
 import qualified Prelude                 
 import           Data.Var                              (Var, modify)
@@ -15,16 +15,13 @@ import           FFI                                   (Defined(..))
 import           HaskellReact                          hiding (row)
 import qualified HaskellReact.Bootstrap                as B
 import qualified HaskellReact.Bootstrap.Button         as BTN
-import qualified HaskellReact.Bootstrap.ButtonDropdown as BD
 import qualified HaskellReact.Jasny                    as J
-import qualified HaskellReact.Tag.Hyperlink            as A
 import qualified HaskellReact.Tag.Image                as IMG
 import qualified HaskellReact.Tag.Input                as I
 import           HaskellReact.Bootstrap.Carousel       (carousel)
 import qualified HaskellReact.BackboneRouter           as BR
 import qualified HaskellReact.Bootstrap.Nav            as BN
 import qualified HaskellReact.Bootstrap.Glyphicon      as G
-import qualified HaskellReact.Bootstrap.Modal          as BM
 import qualified JQuery                                as JQ
 
 import qualified Crm.Shared.Machine                    as M
@@ -39,7 +36,6 @@ import qualified Crm.Shared.Upkeep                     as U
 import qualified Crm.Shared.UpkeepMachine              as UM
 import qualified Crm.Shared.ExtraField                 as EF
 import qualified Crm.Shared.MachineKind                as MK
-import qualified Crm.Shared.Api                        as A
 import qualified Crm.Shared.Employee                   as E
 
 import qualified Crm.Data.MachineData                  as MD
@@ -50,7 +46,6 @@ import           Crm.Component.Autocomplete
 import           Crm.Component.Navigation              as N
 import qualified Crm.Component.Photos                  as PH
 import           Crm.Server 
-import qualified Crm.Runtime                           as Runtime
 import           Crm.Helpers 
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
@@ -105,7 +100,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos >> machineTypeCB >> (photoFetch router))
+      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos' >> machineTypeCB >> (photoFetch router))
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -125,13 +120,6 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   setPhotosInModal photoIds = changeNavigationState $ \md -> case MD.machinePageMode md of 
     (Left (mdt @ MD.MachineDetail {})) -> md { MD.machinePageMode = Left (mdt { MD.upkeepPhotoIds = photoIds }) }
     _ -> md
-
-  BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
-  modalElement = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ upkeepPhotoIds
-    where
-    mkPhotoRegion photoId = IMG.image' 
-      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-      (IMG.mkImageAttrs "")
 
   PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal upkeepPhotoIds
 
@@ -229,8 +217,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> Just buttonRow'' ; _ -> Nothing
 
-  fetchMachinePhotos = PH.fetchPhotos (map fst photos) router
-  fetchUpkeepPhotos = PH.fetchPhotos upkeepPhotoIds router
+  fetchMachinePhotos' = PH.fetchPhotos (map fst photos) router
 
   (machineTypeInputRow, machineTypeCB) = let
     (machineTypeAutocomplete, cb) = 
@@ -245,11 +232,11 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             MD.machineTypeId = Nothing })
         (\text -> if text /= "" 
           then fetchMachineType text (\maybeTuple -> case maybeTuple of
-            Just (machineTypeId', machineType', sequences) -> do
+            Just (machineTypeId'', machineType', sequences) -> do
               changeNavigationState $ \md -> md {
                 MD.validation = V.remove V.MachineTypeNotSelected (MD.validation md) ,
                 MD.machineTypeTuple = (machineType', sequences) ,
-                MD.machineTypeId = Just machineTypeId' }
+                MD.machineTypeId = Just machineTypeId'' }
             Nothing -> return ()) router
           else return ())
         (\a b -> fetchMachineTypesAutocomplete a b router)
@@ -385,7 +372,6 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     validation' -> [validationHtml $ V.messages validation']
   
   inputRowEditing = inputRow editing
-  textareaRowEditing = textareaRow editing
   mkInputRow (efId, efDescription, theValue) = let
     setExtraField string = changeNavigationState $ \machineData -> let
       updateTheExtraField (theSame @ (efId', efDescription', _)) = if efId == efId'
@@ -470,10 +456,9 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
           text2DOM
           (fst `onJust` buttonLabelMaybe)
           selectAction
-        dd = case editing of
+        in case editing of
           Editing -> div' (class' "col-md-3") operationTypesDropdown
-          Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel 
-        in dd )]]
+          Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
 
 
   -- rows that ore used in the computation by mth

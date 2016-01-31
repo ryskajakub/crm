@@ -14,7 +14,6 @@ import           FFI                              (Defined (Defined))
 import           HaskellReact                     hiding (form)
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BTN
-import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav       as BN
 
 import qualified Crm.Shared.Company               as C
@@ -96,8 +95,8 @@ contactPersonForm router contactPerson identification companyId appVar = mkForm 
         (R.navigate (R.contactPersonList companyId) router)
         router, [deleteButton'])
 
-  backToCompany = BN.nav [ N.backToCompany companyId router ]
-  form = div' (class' "contact-person") $ B.grid $ (B.fullRow backToCompany) : (B.row $ pageInfo') : [
+  backToCompany' = BN.nav [ N.backToCompany companyId router ]
+  form = div' (class' "contact-person") $ B.grid $ (B.fullRow backToCompany') : (B.row $ pageInfo') : [
     inputRow'
       "Jméno" 
       (SetValue $ CP.name contactPerson)

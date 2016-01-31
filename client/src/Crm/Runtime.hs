@@ -11,17 +11,15 @@ module Crm.Runtime (
   get ) where
 
 import           FFI                       (ffi, Automatic, Defined(Defined))
-import           Data.Text                 (Text, (<>), pack, unpack)
+import           Data.Text                 (Text, (<>), pack)
 import           Data.LocalStorage
-import           Data.Defined              (fromDefined, toDefined)
+import           Data.Defined              (fromDefined)
 
 import qualified JQuery                    as JQ
 
 import           Crm.Helpers               (encodeB64)
 import           Crm.Router                (CrmRouter)
 import qualified Crm.Router                as R
-
-import Debug.Trace
 
 
 data Items
@@ -48,12 +46,6 @@ items = ffi " %1['items'] "
 
 status :: JQ.JQXHR -> Int
 status = ffi " %1['status'] "
-
-count1000' :: String
-count1000' = "count=1000"
-
-count1000 :: String
-count1000 = "?" ++ count1000'
 
 apiRoot :: Text
 apiRoot = pack "/api/v1.0.0/"

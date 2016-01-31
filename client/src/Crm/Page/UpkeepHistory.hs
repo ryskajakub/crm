@@ -4,40 +4,32 @@
 module Crm.Page.UpkeepHistory (
   upkeepHistory ) where
 
-import           Data.Text                        (fromString, showInt, (<>), intercalate, pack)
+import           Data.Text                        (fromString, showInt, (<>))
 import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id, intercalate)
 import           FFI                              (Defined(Defined))
 import           Data.Var                            (Var, modify)
-
-import qualified JQuery                           as JQ
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Nav       as BN
 import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.BackboneRouter      as BR
-import qualified HaskellReact.Tag.Image           as IMG
-import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Bootstrap.Modal     as BM
 import qualified HaskellReact.Bootstrap.Table     as BT
 
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.UpkeepMachine         as UM
 import qualified Crm.Shared.Machine               as M
 import qualified Crm.Shared.MachineType           as MT
-import qualified Crm.Shared.MachineKind           as MK
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Photo                 as P
-import qualified Crm.Shared.Api                   as A
 import qualified Crm.Shared.ServerRender          as SR
 
 import qualified Crm.Data.Data                    as D
-import           Crm.Helpers                      (displayDate, renderMarkup, reload, displayFullMachine, mkColours)
+import           Crm.Helpers                      (displayDate, renderMarkup, displayFullMachine, mkColours)
 import           Crm.Router
-import           Crm.Server                       (deleteUpkeep, reopenUpkeep, deletePhoto)
-import qualified Crm.Runtime                      as Runtime
+import           Crm.Server                       (deleteUpkeep, reopenUpkeep)
 import qualified Crm.Component.Navigation         as N
 import qualified Crm.Component.Photos             as PH
 
@@ -73,7 +65,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
   PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal photosInModal
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
-    (BT.table' (class' "break-words") Nothing [cols, thead header, tbody bodyCells]) where
+    (BT.table' (class' "break-words") Nothing [cols, thead header', tbody bodyCells]) where
     
     cols = colgroup $ map (const $ col' (class' "col-md-3") "") [(1::Int)..4]
 
@@ -84,19 +76,19 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
     isEmptyMarkup (SR.PlainText pt:_) = T.null pt
     isEmptyMarkup _ = True
 
-    getUpkeepId (u1,u2,u3,u4,u5) = u1
-    getUpkeep (u1,u2,u3,u4,u5) = u2
-    getUpkeepMachines (u1,u2,u3,u4,u5) = u3
-    getEmployees (u1,u2,u3,u4,u5) = u4
-    getPhotos (u1,u2,u3,u4,u5) = u5
+    getUpkeepId (u1,_,_,_,_) = u1
+    getUpkeep (_,u2,_,_,_) = u2
+    getUpkeepMachines (_,_,u3,_,_) = u3
+    getEmployees (_,_,_,u4,_) = u4
+    getPhotos (_,_,_,_,u5) = u5
 
     mkTextualCell pick upkeep = td (renderMarkup . pick . getUpkeep $ upkeep)
 
     isRowEmpty isUpkeepAspectEmpty = length (takeWhile isUpkeepAspectEmpty oneToThreeUpkeeps) == length oneToThreeUpkeeps
 
-    renderTextualRow pick header = if isRowEmpty (isEmptyMarkup . pick . getUpkeep)
+    renderTextualRow pick header'' = if isRowEmpty (isEmptyMarkup . pick . getUpkeep)
       then []
-      else [tr $ (th header) : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
+      else [tr $ (th header'') : map (mkTextualCell pick) oneToThreeUpkeeps ++ paddingCells]
     mkUpkeepLink (upkeepId, upkeepData, _, _, _) = if U.upkeepClosed upkeepData
       then let
         buttonProps = (BTN.buttonProps {
@@ -140,8 +132,8 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         um = find (\(_,_,_,machineId') -> machineId' == machineId) (getUpkeepMachines upkeep)
         result = maybe ([text2DOM ""]) (\(upkeepMachine,_,_,_) -> displayUM upkeepMachine) um
         displayUM upkeepMachine = let
-          mkCellContent labelType upkeepT content =
-            [span' (class'' ["label", "label-" <> labelType]) upkeepT, text2DOM $ " " <> content]
+          mkCellContent labelType upkeepT content' =
+            [span' (class'' ["label", "label-" <> labelType]) upkeepT, text2DOM $ " " <> content']
           panel = case UM.upkeepType upkeepMachine of
 
             UM.Repair -> mkCellContent "danger" "O" -- (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM $ " " <> x])
@@ -160,7 +152,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
           map mkUpkeepMachineInfo oneToThreeUpkeeps ++ 
           paddingCells)
 
-    header = tr ([
+    header' = tr ([
       th "" ,
       th (displayDate . U.upkeepDate . getUpkeep $ upkeep1) ] ++
       map (th . displayDate . U.upkeepDate . getUpkeep) restUpkeeps ++ 
@@ -181,7 +173,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
           D.navigation = case D.navigation appState of
             dh @ (D.UpkeepHistory {}) -> dh { D.deletable = not deletable }
             _ -> D.navigation appState }
-        label = if deletable then "Zakázat smazávání" else "Povolit smazávání"
-        button = BTN.button' buttonProps label
+        label'' = if deletable then "Zakázat smazávání" else "Povolit smazávání"
+        button = BTN.button' buttonProps label''
         in form' (class' "navbar-form") button ]
   in (div $ B.grid (header : navigation : photoModalElement : flattenedUpkeepsHtml), photoFetch router)

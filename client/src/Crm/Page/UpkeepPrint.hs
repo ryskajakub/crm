@@ -5,7 +5,7 @@ module Crm.Page.UpkeepPrint (
   upkeepPrint ) where
 
 
-import           Data.Text                    (fromString, (<>), intercalate)
+import           Data.Text                    (fromString, (<>))
 import qualified Data.Text                    as T
 import           Data.Maybe                   (onJust)
 import           Prelude                      hiding (div)
@@ -16,7 +16,7 @@ import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
-import           Crm.Helpers                  (displayDate, plusDays, renderMarkup, displayMachine)
+import           Crm.Helpers                  (displayDate, renderMarkup, displayMachine)
 import           Crm.Component.Form           (nullDropdown, InputState(Editing))
 import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
@@ -44,10 +44,6 @@ upkeepPrint ::
   [(E.EmployeeId, E.Employee)] -> 
   DOMElement
 upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees = let
-  simpleDateControls = [
-    R.link "<< včera" (R.dailyPlan (plusDays (-1) date) Nothing) router ,
-    text2DOM " " ,
-    R.link "zítra >>" (R.dailyPlan (plusDays (1) date) Nothing) router ]
   plansDatePicker = let 
     modifyDay newDay = modify appVar $ \appState -> appState {
       D.navigation = case D.navigation appState of

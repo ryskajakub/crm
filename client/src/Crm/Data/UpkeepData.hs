@@ -1,7 +1,5 @@
 module Crm.Data.UpkeepData where
 
-import           Data.Text (Text)
-
 import           Crm.Shared.Company
 import           Crm.Shared.Machine
 import           Crm.Shared.MachineType

@@ -6,8 +6,10 @@
 module Crm.Shared.YearMonthDay (
   YearMonthDay(..) ,
   Precision(..) ,
-  new ,
-  ymdToDay, dayToYmd ) where
+#ifndef FAY
+  ymdToDay, dayToYmd ,
+#endif
+  new ) where
 
 #ifndef FAY
 import GHC.Generics

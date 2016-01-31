@@ -86,10 +86,12 @@ startRouter appVar = startedRouter where
           employeeId = onJust E.EmployeeId . parseSafely . head . tail $ params
           in fetchDailyPlanData ymd employeeId (\data' ->
             fetchDailyPlanEmployees ymd (\dpe -> let
-              day = (ymd, DP.DatePickerData ymd False (displayDate ymd))
-              modifyAppvar employeeTasks = modify appVar $ \appState -> appState { D.navigation = D.DailyPlan day employeeTasks data' dpe }
+              day' = (ymd, DP.DatePickerData ymd False (displayDate ymd))
+              modifyAppvar employeeTasks'' = modify appVar $ \appState -> 
+                appState { D.navigation = D.DailyPlan day' employeeTasks'' data' dpe }
               in case employeeId of
-                Just employeeId' -> fetchMarkupTasks employeeId' (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
+                Just employeeId' -> fetchMarkupTasks employeeId' 
+                  (\tasks -> modifyAppvar $ Just (employeeId', tasks)) crmRouter
                 Nothing -> modifyAppvar Nothing
                   ) crmRouter ) crmRouter
         Nothing -> modify' D.NotFound) ,
@@ -118,12 +120,12 @@ startRouter appVar = startedRouter where
       fetchCompaniesForMap $ \companiesTriple -> 
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple }) ,
     upkeepPhotos' $-> (const $
-      fetchPlannedUpkeeps $ \plannedUpkeeps -> let
-        navig = D.AddPhotoToUpkeepList plannedUpkeeps
+      fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
+        navig = D.AddPhotoToUpkeepList plannedUpkeeps''
         in modify appVar $ \appState ->
           appState { D.navigation = navig } ) ,
     upkeepPhotoAdd' $-> (\upkeepId ->
-      fetchUpkeep upkeepId $ \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> let
+      fetchUpkeep upkeepId $ \(_, (upkeep, _, _), _) -> let
         navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "")
         in modify appVar $ \appState ->
           appState { D.navigation = navig }) ,
@@ -199,7 +201,7 @@ startRouter appVar = startedRouter where
     machineDetail' $-> \machineId router ->
       fetchMachine machineId
         (\(companyId, machine, machineTypeId, machineTypeTuple, 
-            machineNextService, contactPersonId, upkeeps, otherMachineId, machineSpecificData, extraFields'') ->
+            machineNextService, contactPersonId, upkeeps, otherMachineId, _, extraFields'') ->
           fetchMachinePhotos machineId (\photos ->
             let 
               machineTriple = (machine, showInt . M.mileagePerYear $ machine)

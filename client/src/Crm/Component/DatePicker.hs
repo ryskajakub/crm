@@ -9,7 +9,7 @@ module Crm.Component.DatePicker (
   DatePickerData (..) ) where
 
 import           Prelude                              hiding (putStrLn)
-import           Data.Text                            (fromString, Text, unpack, putStrLn)
+import           Data.Text                            (fromString, Text)
 
 import qualified HaskellReact.Bootstrap.CalendarInput as CI
 import           HaskellReact
@@ -17,8 +17,6 @@ import           HaskellReact
 import qualified Crm.Shared.YearMonthDay              as YMD
 import           Crm.Helpers                          (displayPrecision, displayDate)
 import           Crm.Component.Form
-
-import           Debug.Trace
 
 type DatePicker = (YMD.YearMonthDay, Bool)
 
@@ -35,17 +33,17 @@ datePicker' ::
   (YMD.YearMonthDay -> Fay ()) ->
   [DOMElement]
 datePicker' inputState datePickerData setDatePickerData date setDate = let
-  DatePickerData calendarDate open rawText = datePickerData
+  DatePickerData calendarDate' open' rawText' = datePickerData
   setDatePickerDate ymd = setDatePickerData $ datePickerData { calendarDate = ymd }
-  setOpen open' = setDatePickerData $ datePickerData { open = open' }
-  displayed = if (rawText ==) . displayDate $ date
+  setOpen open'' = setDatePickerData $ datePickerData { open = open'' }
+  displayed = if (rawText' ==) . displayDate $ date
     then Right date
-    else Left rawText
+    else Left rawText'
   setDisplayed (Left text) = setDatePickerData $ datePickerData { rawText = text }
   setDisplayed (Right newDate) = do
     setDate newDate
     setDatePickerData $ datePickerData { rawText = displayDate newDate, open = False } -- todo should be automatic close be underlying datePicker
-  in datePicker inputState (calendarDate, open) setDatePickerDate setOpen displayed setDisplayed
+  in datePicker inputState (calendarDate', open') setDatePickerDate setOpen displayed setDisplayed
 
 datePicker :: 
   InputState -> -- ^ editing 

@@ -10,7 +10,6 @@ module Crm.Page.Employee (
 
 import           Data.Text                        (fromString, Text, length, (<>), unpack)
 import           Prelude                          hiding (div, span, id, length)
-import qualified Prelude                          as P
 import           FFI                              (Defined (Defined))
 import           Data.Var                         (Var, modify)
 
@@ -27,7 +26,7 @@ import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.EmployeeData            as ED
 import           Crm.Router                       (CrmRouter, navigate, newEmployee)
 import qualified Crm.Router                       as R
-import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, rmap, lmap, nowYMD, basicMarkupInfo)
+import           Crm.Helpers                      (pageInfo, validationHtml, displayDate, nowYMD, basicMarkupInfo)
 
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.Task                  as T
@@ -144,8 +143,8 @@ employeeForm pageInfo' (buttonLabel, buttonAction) employee appVar takenColours 
     employeeColour = case E.colour employee of
       colour | all ('0' ==) (unpack colour) -> Nothing
       colour                                -> Just colour
-    renderColour (colour, label) =
-      span $ [span' colourStyle $ "• " <> label] ++ takenLabel
+    renderColour (colour, label'') =
+      span $ [span' colourStyle $ "• " <> label''] ++ takenLabel
       where
       takenLabel = if elem colour takenColours
         then [span " (Zabraná)"]
@@ -168,8 +167,8 @@ employeeTasks ::
   CrmRouter ->
   DOMElement
 employeeTasks employeeId openTasks closedTasks router = let
-  mkTasksTable open tasks = let
-    (mkTaskActionLinks, taskActionHeaders) = if open
+  mkTasksTable open' tasks = let
+    (mkTaskActionLinks, taskActionHeaders) = if open'
       then let
         mkTaskActionLinks' taskId = 
           [td $ R.link G.edit (R.editEmployeeTask taskId) router, td $ R.link G.check (R.employeeTask taskId) router]
@@ -180,7 +179,7 @@ employeeTasks employeeId openTasks closedTasks router = let
       th "Datum" ,
       th "Činnost" ] ++ 
       taskActionHeaders
-    mkBody = map $ \(taskId, T.Task startDate task endDate) ->
+    mkBody = map $ \(taskId, T.Task startDate task _) ->
       tr $ [
         td . displayDate $ startDate ,
         td task ] ++ 
@@ -203,10 +202,9 @@ employeeTask ::
   CrmRouter ->
   ED.EmployeeTaskData ->
   DOMElement
-employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker taskIdentification) = mkForm where
+employeeTask appVar router (ED.EmployeeTaskData employeeTask' taskDatePicker taskIdentification) = mkForm where
   mkForm = form' (mkAttrs { className = Defined "form-horizontal" }) $ 
     B.grid $ (B.row $ (div $ pageInfo (pageHeader <> " úkol") (Just [text2DOM "Políčko ", strong "popis", text2DOM " umožňuje jednoduché formátování. ", text2DOM basicMarkupInfo])) : inputRows)
-  inputRowEditing = inputRow Editing
   inputRows = [dateRow, descriptionRow, submitRow]
 
   modify' :: (ED.EmployeeTaskData -> ED.EmployeeTaskData) -> Fay ()
@@ -217,26 +215,26 @@ employeeTask appVar router (ED.EmployeeTaskData employeeTask taskDatePicker task
 
   startDatePicker = let
     setDatePickerData dpd = modify' $ \etd -> etd { ED.taskDatePicker = dpd }
-    setDate date = modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.startDate = date } }
-    in DP.datePicker' Editing taskDatePicker setDatePickerData (T.startDate employeeTask) setDate
+    setDate date = modify' $ \etd -> etd { ED.employeeTask = employeeTask' { T.startDate = date } }
+    in DP.datePicker' Editing taskDatePicker setDatePickerData (T.startDate employeeTask') setDate
 
   dateRow = oneElementRow "Datum" startDatePicker
   descriptionRow = textareaRow'
     10
     Editing 
     "Popis"
-    (SetValue . T.description $ employeeTask)
-    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask { T.description = t }})
+    (SetValue . T.description $ employeeTask')
+    (\t -> modify' $ \etd -> etd { ED.employeeTask = employeeTask' { T.description = t }})
 
   (buttonLabel, pageHeader, buttonAction) = case taskIdentification of
     ED.Close taskId -> let
-      employeeTask' = employeeTask { T.endDate = Just nowYMD }
+      employeeTask'' = employeeTask' { T.endDate = Just nowYMD }
       in ("Uzavři", "Uzavřít",
-        updateTask taskId employeeTask' (navigate R.employeePage router) router)
+        updateTask taskId employeeTask'' (navigate R.employeePage router) router)
     ED.New employeeId -> ("Vytvoř", "Nový",
-      createEmployeeTask employeeId employeeTask (navigate R.employeePage router) router)
+      createEmployeeTask employeeId employeeTask' (navigate R.employeePage router) router)
     ED.Edit taskId -> ("Uprav", "Editovat",
-      updateTask taskId employeeTask (navigate R.employeePage router) router)
+      updateTask taskId employeeTask' (navigate R.employeePage router) router)
       
 
   submitRow = div' (class' "form-group") $ buttonRow buttonLabel buttonAction

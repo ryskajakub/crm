@@ -7,7 +7,6 @@ module Crm.Page.MachineKind (machineKindSettings) where
 
 import           Data.Text                    (fromString)
 import           Prelude                      hiding (div, span, id)
-import qualified Prelude                      
 import           Data.Var                     (Var, modifyWith)
 import           Data.Maybe                   (fromJust)
 
