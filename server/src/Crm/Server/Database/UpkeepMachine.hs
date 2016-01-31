@@ -15,15 +15,13 @@
 
 module Crm.Server.Database.UpkeepMachine where
 
-import           Opaleye                    --(required, optional, Table (..), queryRunnerColumn,
-                                            --  PGInt4, QueryRunnerColumn)
-import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
-import           Data.Profunctor.Product.Default (Default(def))
-import           Control.Lens               (makeLenses, over)
+import           Opaleye                        (required, Table(..))     
+import           Data.Profunctor.Product.TH     (makeAdaptorAndInstance')
+import           Control.Lens                   (makeLenses)
 
-import qualified Crm.Shared.UpkeepMachine             as UM
-import qualified Crm.Shared.Machine                   as M
-import qualified Crm.Shared.Upkeep                    as U
+import qualified Crm.Shared.UpkeepMachine        as UM
+import qualified Crm.Shared.Machine              as M
+import qualified Crm.Shared.Upkeep               as U
 import           Crm.Server.Database.PrimaryKeys
 import           Crm.Server.Database.Types
 
@@ -42,18 +40,13 @@ type UpkeepMachinesLeftJoinTable = UpkeepMachineRow'
   (UM.UpkeepMachineGen' MBText MBInt MBBool MBText MBInt)
 type UpkeepMachineRow = UpkeepMachineRow' U.UpkeepId M.MachineId UM.UpkeepMachine
 
-makeAdaptorAndInstance' ''UM.UpkeepMachineGen'
 makeAdaptorAndInstance' ''UpkeepMachineRow'
-
-instance QueryRunnerColumnDefault PGInt4 UM.UpkeepType where
-  queryRunnerColumnDefault = 
-    queryRunnerColumn id UM.upkeepTypeDecode fieldQueryRunnerColumn
 
 upkeepMachinesTable :: Table UpkeepMachinesTable UpkeepMachinesTable
 upkeepMachinesTable = Table "upkeep_machines" $ pUpkeepMachineRow UpkeepMachineRow {
-  _upkeepFK = pUpkeepId (U.UpkeepId . required $ "upkeep_id") ,
-  _machineFK = pMachineId (M.MachineId . required $ "machine_id" ) ,
-  _upkeepMachine = pUpkeepMachine UM.UpkeepMachine {
+  _upkeepFK = U.pUpkeepId (U.UpkeepId . required $ "upkeep_id") ,
+  _machineFK = M.pMachineId (M.MachineId . required $ "machine_id" ) ,
+  _upkeepMachine = UM.pUpkeepMachine UM.UpkeepMachine {
     UM.upkeepMachineNote = required "note" ,
     UM.recordedMileage = required "recorded_mileage" ,
     UM.warrantyUpkeep = required "warranty" ,

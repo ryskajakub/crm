@@ -12,7 +12,8 @@ module Crm.Shared.YearMonthDay (
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Opaleye (QueryRunnerColumnDefault(..), queryRunnerColumn, fieldQueryRunnerColumn, PGDate)
+import Opaleye            (QueryRunnerColumnDefault(..), queryRunnerColumn, 
+                            fieldQueryRunnerColumn, PGDate)
 import Data.Time.Calendar (fromGregorian, Day, toGregorian)
 #endif
 
@@ -48,4 +49,16 @@ dayToYmd :: Day -> YearMonthDay
 dayToYmd day'' = ymd where
   (year', month', day') = toGregorian day''
   ymd = YearMonthDay (fromIntegral year') (month' - 1) day' DayPrecision
+
+instance Eq YearMonthDay where
+  YearMonthDay y m d _ == YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
+instance Ord YearMonthDay where
+  ymd1 `compare` ymd2 = let
+    YearMonthDay y m d _ = ymd1
+    YearMonthDay y' m' d' _ = ymd2
+    comp comparison nextComparison = case comparison of
+      GT -> GT
+      LT -> LT
+      EQ -> nextComparison
+    in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
 #endif

@@ -4,17 +4,16 @@ module Crm.Server.Api.Upkeep.PhotoResource (
 import           Graphics.GD                 (loadJpegByteString, saveJpegByteString,
                                              rotateImage, resizeImage, imageSize, Image)
 
-import           Opaleye.RunQuery            (runQuery)
 import           Opaleye.Manipulation        (runInsert)
 import           Opaleye.PGTypes             (pgInt4)
 
 import           Data.Pool                   (withResource)
 import           Data.ByteString.Lazy        (fromStrict, toStrict, ByteString)
 
-import           Rest.Resource               (Resource, Void, schema, name, create, mkResourceId, list)
+import           Rest.Resource               (Resource, Void, schema, name, create, mkResourceId)
 import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (fileI, jsonO)
-import           Rest.Handler                (Handler, ListHandler)
+import           Rest.Handler                (Handler)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
@@ -26,7 +25,7 @@ import qualified Crm.Shared.Upkeep           as U
 import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Boilerplate      ()
-import           Crm.Server.Handler          (mkInputHandler', mkListing')
+import           Crm.Server.Handler          (mkInputHandler')
 
 
 resource :: Resource (IdDependencies' U.UpkeepId) (IdDependencies' U.UpkeepId) Void Void Void

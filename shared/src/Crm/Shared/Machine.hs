@@ -3,21 +3,23 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Shared.Machine where
 
 #ifndef FAY
-import           Control.Lens.TH          (makeLensesFor)
+import           Control.Lens.TH            (makeLensesFor)
 import           GHC.Generics
 import           Data.Data
 import           Prelude
-import           Rest.Info                (Info(..))
+import           Rest.Info                  (Info(..))
 #endif
-import           Data.Text                (Text, pack)
+import           Data.Text                  (Text, pack)
 
-import           Crm.Shared.YearMonthDay  (YearMonthDay)
-import qualified Crm.Shared.ContactPerson as CP
-import qualified Crm.Shared.ServerRender  as SR
+import           Crm.Shared.YearMonthDay    (YearMonthDay)
+import qualified Crm.Shared.ContactPerson   as CP
+import qualified Crm.Shared.ServerRender    as SR
+import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 
 #ifndef FAY
 instance Info MachineId where
@@ -79,3 +81,8 @@ newMachine' ymd = Machine {
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = newMachine' $ Just ymd
+
+#ifndef FAY
+makeAdaptorAndInstance' ''MachineId'
+makeAdaptorAndInstance' ''Machine'
+#endif

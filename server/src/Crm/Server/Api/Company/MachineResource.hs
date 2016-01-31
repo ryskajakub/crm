@@ -31,9 +31,10 @@ import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Api              as A
+import qualified Crm.Shared.YearMonthDay     as YMD
 import           Crm.Shared.MyMaybe          (toMaybe)
 
-import           Crm.Server.Helpers          (ymdToDay, maybeToNullable)
+import           Crm.Server.Helpers          (maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -101,7 +102,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       _machineTypeFK = pgInt4 machineTypeId ,
       _linkageFK = M.MachineId $ maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId ,
       _machine = M.Machine {
-        M.machineOperationStartDate = maybeToNullable $ fmap (pgDay . ymdToDay) machineOperationStartDate' ,
+        M.machineOperationStartDate = maybeToNullable $ fmap (pgDay . YMD.ymdToDay) machineOperationStartDate' ,
         M.initialMileage = pgInt4 initialMileage ,
         M.mileagePerYear = pgInt4 mileagePerYear ,
         M.label_ = pgStrictText label ,

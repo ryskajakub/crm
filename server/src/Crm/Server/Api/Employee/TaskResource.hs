@@ -11,12 +11,9 @@ import           Data.Pool                   (withResource)
 import           Data.Tuple.All              (sel1)
 import           Data.Text                   (pack, append)
 import qualified Data.Text                   as TT
-import           Data.Aeson.Types            (ToJSON)
-import           Data.Typeable               (Typeable)
-import           Data.JSON.Schema            (JSONSchema)
 import           Data.Maybe                  (isJust)
 
-import           Opaleye                     (runQuery, pgBool, runInsert, pgDay, pgString, pgStrictText,
+import           Opaleye                     (runQuery, runInsert, pgDay, pgStrictText,
                                              runInsertReturning, pgInt4)
 
 import           Rest.Resource               (Resource, Void, schema, name, create,
@@ -25,16 +22,16 @@ import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO, jsonI)
 import           Rest.Handler                (ListHandler, Handler)
 
-import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Task             as T
 import qualified Crm.Shared.ServerRender     as SR
+import qualified Crm.Shared.YearMonthDay     as YMD
 
 import           Crm.Server.DB
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.Handler
-import           Crm.Server.Helpers          (ymdToDay, maybeToNullable, catchError)
+import           Crm.Server.Helpers          (maybeToNullable, catchError)
 import           Crm.Server.Parsers          (parseMarkup)
 
 
@@ -86,12 +83,12 @@ tasksListing = mkConstHandler' jsonO $ do
 createHandler :: Handler (IdDependencies' E.EmployeeId)
 createHandler = mkInputHandler' (jsonO . jsonI) $ \newTask -> do
   ((_, pool), (E.EmployeeId employeeId)) <- ask
-  withResource pool $ \connection -> do
+  _ <- withResource pool $ \connection -> do
     taskIds <- liftIO $ runInsertReturning
       connection
       tasksTable
-      (Nothing, pgDay . ymdToDay . T.startDate $ newTask,
-        pgStrictText . T.description $ newTask, maybeToNullable . fmap (pgDay . ymdToDay) . T.endDate $ newTask)
+      (Nothing, pgDay . YMD.ymdToDay . T.startDate $ newTask,
+        pgStrictText . T.description $ newTask, maybeToNullable . fmap (pgDay . YMD.ymdToDay) . T.endDate $ newTask)
       sel1
     (taskId :: Int) <- singleRowOrColumn taskIds
     liftIO $ runInsert

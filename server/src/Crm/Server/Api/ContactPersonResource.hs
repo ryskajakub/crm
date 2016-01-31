@@ -49,8 +49,8 @@ getHandler = mkConstHandler' jsonO $ do
   ((_, pool), contactPersonId) <- ask
   rows <- liftIO $ withResource pool $ \connection -> 
     runQuery connection (singleContactPersonQuery $ CP.getContactPersonId contactPersonId)
-  (cp, company :: C.CompanyRecord) <- over (_2 . C.companyCoords) C.mapCoordinates `fmap` singleRowOrColumn rows
-  return (sel3 (convert cp :: ContactPersonMapped), C._companyPK company)
+  (cp, company :: CompanyRecord) <- over (_2 . companyCoords) C.mapCoordinates `fmap` singleRowOrColumn rows
+  return (sel3 (convert cp :: ContactPersonMapped), _companyPK company)
 
 updateHandler :: Handler (IdDependencies' CP.ContactPersonId)
 updateHandler = let

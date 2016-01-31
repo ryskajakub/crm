@@ -17,7 +17,6 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad.Trans.Except  (ExceptT, withExceptT)
 import           Control.Monad.Reader        (ask, ReaderT)
 import           Control.Monad.IO.Class      (liftIO, MonadIO)
-import           Control.Monad.Reader.Class  (MonadReader)
 import qualified Crypto.Scrypt               as CS
 import           Data.Aeson.Types            (FromJSON)
 import           Data.JSON.Schema.Types      (JSONSchema)
@@ -62,7 +61,7 @@ instance HasConnection ConnectionPool where
 
 mkGenHandler' :: 
   HasConnection a => 
-  Modifier () p i o Nothing -> 
+  Modifier () p i o 'Nothing -> 
   (Env SessionId p (FromMaybe () i) -> ExceptT (Reason Text) (ReaderT a IO) (Apply f (FromMaybe () o))) -> 
   GenHandler (ReaderT a IO) f
 mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
@@ -93,35 +92,35 @@ verifyPassword connection (Password inputPassword) = do
 
 mkConstHandler' :: 
   HasConnection a => 
-  Modifier () p Nothing o Nothing -> 
+  Modifier () p 'Nothing o 'Nothing -> 
   ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o) -> 
   Handler (ReaderT a IO)
 mkConstHandler' d a = mkGenHandler' d (const a)
 
 mkInputHandler' :: 
   HasConnection a => 
-  Modifier () p (Just i) o Nothing -> 
+  Modifier () p ('Just i) o 'Nothing -> 
   (i -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
   Handler (ReaderT a IO)
 mkInputHandler' d a = mkGenHandler' d (a . input)
 
 mkIdHandler' :: 
   (HasConnection a) => 
-  Modifier () p (Just i) o Nothing -> 
+  Modifier () p ('Just i) o 'Nothing -> 
   (i -> a -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
   Handler (ReaderT a IO)
 mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
 
 mkListing' :: 
   HasConnection a => 
-  Modifier () () Nothing o Nothing -> 
+  Modifier () () 'Nothing o 'Nothing -> 
   (Range -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
   ListHandler (ReaderT a IO)
 mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
 
 mkOrderedListing' :: 
   HasConnection a => 
-  Modifier () () Nothing o Nothing -> 
+  Modifier () () 'Nothing o 'Nothing -> 
   ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
   ListHandler (ReaderT a IO)
 mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)

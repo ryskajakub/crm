@@ -123,7 +123,8 @@ module Crm.Server.DB (
   ExtraFieldSettingsMapped ,
   ExtraFieldMapped ,
   MachineMapped ,
-  UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK , 
+  UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK ,
+  CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..),
   -- types
   MachineRecord' ) where
 
@@ -157,8 +158,7 @@ import           Opaleye.PGTypes                      (pgInt4, PGDate, PGBool, P
 import qualified Opaleye.Aggregate                    as AGG
 import           Opaleye.Join                         (leftJoin)
 import           Opaleye.Distinct                     (distinct)
-import           Opaleye                              (runInsert, QueryRunnerColumnDefault(..), 
-                                                        queryRunnerColumn, fieldQueryRunnerColumn)
+import           Opaleye                              (runInsert)
 import qualified Opaleye.Internal.HaskellDB.PrimQuery as HPQ
 import qualified Opaleye.Internal.Column              as C
 import qualified Opaleye.Internal.Aggregate           as IAGG
@@ -186,7 +186,7 @@ import qualified Crm.Shared.ExtraField                as EF
 import qualified Crm.Shared.YearMonthDay              as YMD
 
 import           Crm.Server.Types
-import           Crm.Server.Helpers                   (dayToYmd, maybeToNullable)
+import           Crm.Server.Helpers                   (maybeToNullable)
 
 import           Crm.Server.Database.UpkeepMachine    as UMD
 import           Crm.Server.Database.PrimaryKeys
@@ -259,25 +259,29 @@ upkeepPhotosTable = Table "upkeep_photos" $ p2 (
   required "upkeep_id" )
 
 
+data CompanyTable' companyPK companyCore companyCoords = CompanyTable {
+  _companyPK :: companyPK ,
+  _companyCore :: companyCore ,
+  _companyCoords :: companyCoords }
+makeLenses ''CompanyTable'
+
 type CompanyCore = C.Company' DBText DBText DBText
 type CompanyCoords = C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8))
-type CompanyRead = C.CompanyTable' (C.CompanyId' DBInt) CompanyCore CompanyCoords
-type CompanyWrite = C.CompanyTable' (C.CompanyId' (Maybe DBInt)) CompanyCore CompanyCoords
+type CompanyRead = CompanyTable' (C.CompanyId' DBInt) CompanyCore CompanyCoords
+type CompanyWrite = CompanyTable' (C.CompanyId' (Maybe DBInt)) CompanyCore CompanyCoords
+type CompanyRecord = CompanyTable' C.CompanyId C.Company (Maybe C.Coordinates)
 
-makeAdaptorAndInstance' ''C.Company'
-makeAdaptorAndInstance' ''C.Coordinates'
-makeAdaptorAndInstance' ''C.CompanyId'
-makeAdaptorAndInstance' ''C.CompanyTable'
+makeAdaptorAndInstance' ''CompanyTable'
 
 companiesTable :: Table CompanyWrite CompanyRead
-companiesTable = Table "companies" $ pCompanyTable C.CompanyTable {
-  C._companyPK = (pCompanyId C.CompanyId {
+companiesTable = Table "companies" $ pCompanyTable CompanyTable {
+  _companyPK = (C.pCompanyId C.CompanyId {
     C.getCompanyId = optional "id" }) ,
-  C._companyCore = (pCompany C.Company {
+  _companyCore = (C.pCompany C.Company {
     C.companyName = required "name" ,
     C.companyNote = required "note" ,
     C.companyAddress = required "address" }) ,
-  C._companyCoords = (pCoordinates C.Coordinates {
+  _companyCoords = (C.pCoordinates C.Coordinates {
     C.latitude = required "latitude" ,
     C.longitude = required "longitude" })}
 
@@ -302,20 +306,19 @@ type MachineRecord = MachineRow'' M.MachineId C.CompanyId (Maybe Int) Int (M.Mac
 type MachineRecord' = MachineRow'' M.MachineId C.CompanyId (Maybe Int) Int (M.MachineId' (Maybe Int))
   (M.Machine' (Maybe Day) Int Int Text Text Text Bool Text)
 
-makeAdaptorAndInstance' ''M.Machine'
 makeAdaptorAndInstance' ''MachineRow''
 
 machinesTable :: Table MachinesWrite MachinesTable
 machinesTable = Table "machines" $ pMachineRow MachineRow {
-  _machinePK = (pMachineId M.MachineId { 
+  _machinePK = (M.pMachineId M.MachineId { 
     M.getMachineId = optional "id" }) ,
-  _companyFK = (pCompanyId C.CompanyId {
+  _companyFK = (C.pCompanyId C.CompanyId {
     C.getCompanyId = required "company_id" }) ,
   _contactPersonFK = required "contact_person_id" ,
   _machineTypeFK = required "machine_type_id" ,
-  _linkageFK = (pMachineId M.MachineId {
+  _linkageFK = (M.pMachineId M.MachineId {
     M.getMachineId = required "linkage_id" }) ,
-  _machine = (pMachine M.Machine {
+  _machine = (M.pMachine M.Machine {
     M.machineOperationStartDate = required "operation_start" ,
     M.initialMileage = required "initial_mileage" ,
     M.mileagePerYear = required "mileage_per_year" ,
@@ -333,8 +336,6 @@ contactPersonsTable = Table "contact_persons" $ p5 (
   required "name" ,
   required "phone" ,
   required "position" )
-
-makeAdaptorAndInstance' ''MT.MachineTypeId'
 
 machineTypesTable :: Table MachineTypesWriteTable MachineTypesTable
 machineTypesTable = Table "machine_types" $ p4 (
@@ -363,17 +364,16 @@ mapMaybeUpkeep ::
   Maybe UpkeepRow
 mapMaybeUpkeep (UpkeepRow uId' u') = let
   uId = fmap U.UpkeepId (U.getUpkeepId uId')
-  u = pure U.Upkeep <*> fmap dayToYmd (U.upkeepDate u') <*> U.upkeepClosed u' <*> 
+  u = pure U.Upkeep <*> fmap YMD.dayToYmd (U.upkeepDate u') <*> U.upkeepClosed u' <*> 
     U.workHours u' <*> U.workDescription u' <*> U.recommendation u'
   in pure UpkeepRow <*> uId <*> u
 
-makeAdaptorAndInstance' ''U.UpkeepGen''
 makeAdaptorAndInstance' ''UpkeepRow''
 
 upkeepsTable :: Table UpkeepsWriteTable UpkeepsTable
 upkeepsTable = Table "upkeeps" $ (pUpkeepRow UpkeepRow {
-  _upkeepPK = pUpkeepId ( U.UpkeepId . optional $ "id" ) ,
-  _upkeep = pUpkeep U.Upkeep {
+  _upkeepPK = U.pUpkeepId ( U.UpkeepId . optional $ "id" ) ,
+  _upkeep = U.pUpkeep U.Upkeep {
     U.upkeepDate = required "date_" ,
     U.upkeepClosed = required "closed" ,
     U.workHours = required "work_hours" ,
@@ -477,7 +477,7 @@ instance ColumnToRecord
     (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, Text, Text, Text, Bool, Text)
     MachineMapped where
   convert tuple = let
-    machineTuple = $(updateAtN 13 5) (fmap dayToYmd) tuple
+    machineTuple = $(updateAtN 13 5) (fmap YMD.dayToYmd) tuple
     in (M.MachineId $ $(proj 13 0) tuple, C.CompanyId $ $(proj 13 1) tuple, CP.ContactPersonId `fmap` $(proj 13 2) tuple, 
       MT.MachineTypeId $ $(proj 13 3) tuple, M.MachineId `fmap` $(proj 13 4) tuple,
       (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
@@ -510,7 +510,7 @@ instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
 instance ColumnToRecord (Int, Day, Text, Maybe Day) TaskMapped where
   convert tuple = let
     (id', startDate, description, endDate) = tuple
-    in (T.TaskId id', T.Task (dayToYmd startDate) description (dayToYmd `fmap` endDate))
+    in (T.TaskId id', T.Task (YMD.dayToYmd startDate) description (YMD.dayToYmd `fmap` endDate))
 
 instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
   convert rows = fmap convert rows
@@ -595,12 +595,12 @@ machineTypesQuery' mid = autocomplete $ proc () -> do
 companyByIdQuery :: C.CompanyId -> Query CompanyRead
 companyByIdQuery companyId = proc () -> do
   companyRow <- queryTable companiesTable -< ()
-  restrict -< (C.getCompanyId (C._companyPK companyRow :: C.CompanyId' DBInt))
+  restrict -< (C.getCompanyId (_companyPK companyRow :: C.CompanyId' DBInt))
     .== (C.getCompanyId (fmap pgInt4 companyId :: C.CompanyId' DBInt))
   returnA -< companyRow
 
 companyByIdCompanyQuery :: C.CompanyId -> Query CompanyCore
-companyByIdCompanyQuery companyId = C._companyCore ^<< companyByIdQuery companyId
+companyByIdCompanyQuery companyId = _companyCore ^<< companyByIdQuery companyId
 
 machineTypesWithCountQuery :: Query (MachineTypesTable, DBInt8)
 machineTypesWithCountQuery = let 
@@ -655,7 +655,7 @@ machinesInCompanyQuery companyId = let
     (machinesQ companyId)
     contactPersonsQuery 
     (\((machineRow,_), cpRow) -> view contactPersonFK machineRow .== (maybeToNullable . Just . sel1 $ cpRow))
-  lastUpkeepForMachineQ = AGG.aggregate (p2(AGG.max, pMachineId (M.MachineId AGG.groupBy))) $ proc () -> do
+  lastUpkeepForMachineQ = AGG.aggregate (p2(AGG.max, M.pMachineId (M.MachineId AGG.groupBy))) $ proc () -> do
     umRow <- queryTable upkeepMachinesTable -< ()
     upkeepRow <- joinL upkeepsTable upkeepPK -< UMD._upkeepFK umRow
     returnA -< (U.upkeepDate . _upkeep $ upkeepRow, UMD._machineFK umRow)
@@ -678,8 +678,8 @@ machinesInCompanyQuery' upkeepId = let
   companyPKQ = distinct $ proc () -> do
     upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
-    companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
-    returnA -< C._companyPK companyRow
+    companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
+    returnA -< _companyPK companyRow
   in proc () -> do
     companyId <- companyPKQ -< ()
     machineRow <- joinL machinesTable companyFK -< companyId
@@ -694,8 +694,8 @@ companyUpkeepsQuery companyId = let
     upkeepRow <- joinL upkeepsTable upkeepPK -< UMD._upkeepFK upkeepMachinesRow
     restrict -< U.upkeepClosed . _upkeep $ upkeepRow
     returnA -< upkeepRow
-  aggregatedUpkeepsQuery = AGG.aggregate (pUpkeepRow $ UpkeepRow (pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)) upkeepsQuery'
+  aggregatedUpkeepsQuery = AGG.aggregate (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)) upkeepsQuery'
   orderedUpkeepQuery = orderBy (asc(\u -> U.upkeepDate . _upkeep $ u)) $ aggregatedUpkeepsQuery
   in orderedUpkeepQuery
 
@@ -728,10 +728,10 @@ machinesInCompanyByUpkeepQuery upkeepId = let
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
     returnA -< _companyFK machineRow
   in proc () -> do
-    companyPK <- companyPKQuery -< ()
-    machineRow <- joinL machinesTable companyFK -< companyPK
+    companyPK' <- companyPKQuery -< ()
+    machineRow <- joinL machinesTable companyFK -< companyPK'
     mt <- join machineTypesQuery -< _machineTypeFK machineRow
-    returnA -< (C.getCompanyId companyPK, machineRow, mt)
+    returnA -< (C.getCompanyId companyPK', machineRow, mt)
 
 expandedUpkeepsQuery2 :: U.UpkeepId -> Query (UpkeepsTable, UpkeepMachinesTable)
 expandedUpkeepsQuery2 upkeepId = let
@@ -839,19 +839,19 @@ groupedPlannedUpkeepsQuery = let
     upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachinesRow
     machineTypeRow <- join . queryTable $ machineTypesTable -< _machineTypeFK machineRow
-    companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
-    returnA -< (upkeepRow, $(proj 4 1) machineTypeRow , (C._companyPK companyRow, C._companyCore companyRow))
+    companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
+    returnA -< (upkeepRow, $(proj 4 1) machineTypeRow , (_companyPK companyRow, _companyCore companyRow))
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
-    AGG.aggregate (p3 (pUpkeepRow $ UpkeepRow (pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min), AGG.min,
-      p2(pCompanyId . C.CompanyId $ AGG.min, pCompany $ C.Company AGG.min AGG.min AGG.min)))
+    AGG.aggregate (p3 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min), AGG.min,
+      p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min)))
     plannedUpkeepsQuery
 
 singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompanyRead)
 singleContactPersonQuery contactPersonId = proc () -> do
   contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
   companyRow <- queryTable companiesTable -< ()
-  restrict -< (C.getCompanyId . C._companyPK) companyRow .== $(proj 5 1) contactPersonRow
+  restrict -< (C.getCompanyId . _companyPK) companyRow .== $(proj 5 1) contactPersonRow
   returnA -< (contactPersonRow, companyRow)
 
 machinesInUpkeepQuery :: U.UpkeepId -> Query UpkeepMachinesTable
@@ -914,8 +914,8 @@ dailyPlanQuery employeeId' day = let
     restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
     upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
     returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
-  in AGG.aggregate (p2(pUpkeepRow (UpkeepRow (pUpkeepId . U.UpkeepId $ AGG.groupBy) 
-    (pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)), p1(aggrArray))) q
+  in AGG.aggregate (p2(pUpkeepRow (UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy) 
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)), aggrArray)) q
 
 tasksForEmployeeQuery :: E.EmployeeId -> Query TasksTable
 tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
@@ -972,18 +972,18 @@ companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery upkeepId = distinct $ proc () -> do
   upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
   machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
-  companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
-  returnA -< C._companyCore companyRow
+  companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
+  returnA -< _companyCore companyRow
 
 machinesForTypeQ :: 
   MachineTypeSid -> 
   Query (MachinesTable, CompanyRead)
 machinesForTypeQ (MachineTypeById machineTypeId) =
-  orderBy (asc (C.companyName . C._companyCore . snd) <> asc (view (_1 . machine . M.serialNumberL))) $ 
+  orderBy (asc (C.companyName . _companyCore . snd) <> asc (view (_1 . machine . M.serialNumberL))) $ 
     proc () -> do
       machineRow <- queryTable machinesTable -< ()
       restrict -< (MT.MachineTypeId . _machineTypeFK $ machineRow) .=== fmap pgInt4 machineTypeId
-      companyRow <- joinL companiesTable C.companyPK -< _companyFK machineRow
+      companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
       returnA -< (machineRow, companyRow)
 machinesForTypeQ (MachineTypeByName _) = undefined
 

@@ -49,9 +49,10 @@ import qualified Crm.Shared.UpkeepSequence   as US
 import qualified Crm.Shared.ContactPerson    as CP
 import qualified Crm.Shared.ServerRender     as SR
 import qualified Crm.Shared.Company          as C
+import qualified Crm.Shared.YearMonthDay     as YMD
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, createDeletion', ymdToDay, catchError, dayToYmd)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, createDeletion', catchError)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
@@ -78,7 +79,7 @@ addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
     (UpkeepRow
       (U.UpkeepId Nothing)
       (U.Upkeep
-        (pgDay . ymdToDay . U.upkeepDate $ upkeep)
+        (pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep)
         (pgBool . U.upkeepClosed $ upkeep)
         (pgStrictText . U.workHours $ upkeep)
         (pgStrictText . U.workDescription $ upkeep)
@@ -154,7 +155,7 @@ updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
       UpkeepRow 
         (Just `fmap` (view upkeepPK $ u))
         (U.Upkeep {
-          U.upkeepDate = pgDay . ymdToDay . U.upkeepDate $ upkeep ,
+          U.upkeepDate = pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep ,
           U.upkeepClosed = pgBool . U.upkeepClosed $ upkeep ,
           U.workHours = pgStrictText . U.workHours $ upkeep ,
           U.workDescription = pgStrictText . U.workDescription $ upkeep , 

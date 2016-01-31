@@ -6,7 +6,6 @@ import           Text.Parsec
 import           Data.Text hiding        (foldr)
 import qualified Data.Text as            T
 
-import           Control.Applicative     ((<*), (<$>), (*>))
 import           Control.Monad           (liftM3)
 
 import           Crm.Shared.ServerRender (Markup(..))

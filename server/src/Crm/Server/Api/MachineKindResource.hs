@@ -58,7 +58,7 @@ updation :: Handler Dependencies
 updation = mkInputHandler' jsonI $ \allSettings -> do
   (_, pool) <- ask 
   let
-    s = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
+    _ = allSettings :: [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])]
     insertSetting (machineKindEnum, extraFields) = let
       insertField (index, (fieldId, field)) = liftIO $ let
         machineKindDbRepr = MK.kindToDbRepr machineKindEnum

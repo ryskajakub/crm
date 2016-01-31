@@ -19,20 +19,18 @@ module Crm.Server.Helpers (
   prepareReader , 
   prepareReaderIdentity ,
   prepareReaderTuple ,
-  catchError ,
-  module YMD ) where
+  catchError ) where
 
 
 import           Data.Functor.Identity       (runIdentity)
 import           Data.Text                   (Text)
-import           Data.List                   (reverse)
 
-import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT, MonadReader)
+import           Control.Monad.Reader        (ReaderT, ask, runReaderT, mapReaderT)
 import           Control.Monad.Trans.Class   (lift)
-import           Control.Monad.Trans.Except  (ExceptT, runExceptT)
+import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Error.Class   (throwError)
-import           Data.Time.Calendar          (fromGregorian, Day, toGregorian)
-import           Data.Time.Clock             (utctDay, UTCTime, getCurrentTime)
+import           Data.Time.Calendar          (Day)
+import           Data.Time.Clock             (utctDay, getCurrentTime)
 import           Data.Tuple.All              (sel1, Sel1)
 import           Data.Pool                   (withResource)
 import           Database.PostgreSQL.Simple  (Connection)
@@ -150,18 +148,6 @@ readMay' string = passStringOnNoRead $ readMay string
   where
     passStringOnNoRead (Just parsed) = Right parsed
     passStringOnNoRead _ = Left string
-
-instance Eq YMD.YearMonthDay where
-  YMD.YearMonthDay y m d _ == YMD.YearMonthDay y' m' d' _ = y == y' && m == m' && d == d'
-instance Ord YMD.YearMonthDay where
-  ymd1 `compare` ymd2 = let
-    YMD.YearMonthDay y m d _ = ymd1
-    YMD.YearMonthDay y' m' d' _ = ymd2
-    comp comparison nextComparison = case comparison of
-      GT -> GT
-      LT -> LT
-      EQ -> nextComparison
-    in comp (y `compare` y') $ comp (m `compare` m') $ comp (d `compare` d') EQ
 
 maybeToNullable :: Maybe (Column a) -> Column (Nullable a)
 maybeToNullable (Just a) = toNullable a

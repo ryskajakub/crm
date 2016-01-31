@@ -10,8 +10,7 @@ import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine  as UM
 import qualified Crm.Shared.Upkeep         as U
-
-import           Crm.Server.Helpers        (ymdToDay)
+import qualified Crm.Shared.YearMonthDay   as YMD
 
 
 -- | Signs, if the next service date is computed from the past upkeeps, or if the next planned service is taken.
@@ -52,14 +51,14 @@ nextServiceDate machine sequences upkeeps today = let
   computedUpkeep = case regularUpkeeps of
     [] -> let 
       intoOperationDate = case M.machineOperationStartDate machine of 
-        Just operationStartDate' -> ymdToDay operationStartDate'
+        Just operationStartDate' -> YMD.ymdToDay operationStartDate'
         Nothing                  -> today
       filteredSequences = case oneTimeSequences of
         x : _ -> [x]
         []    -> nonEmptySequences
       in computeBasedOnPrevious intoOperationDate filteredSequences
     nonEmptyUpkeeps -> let
-      lastServiceDate = ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
+      lastServiceDate = YMD.ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
     where
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
@@ -68,7 +67,7 @@ nextServiceDate machine sequences upkeeps today = let
   openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
-      let nextOpenUpkeep' = fmap ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 
+      let nextOpenUpkeep' = fmap YMD.ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> Planned nextOpenUpkeep
     _ -> Computed computedUpkeep 
   in if M.archived machine

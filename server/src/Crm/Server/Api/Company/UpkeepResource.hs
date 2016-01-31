@@ -4,39 +4,40 @@
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where
 
-import           Opaleye.RunQuery              (runQuery)
+import           Opaleye.RunQuery                  (runQuery)
 
-import           Control.Monad.IO.Class        (liftIO)
-import           Control.Monad.Reader          (ask)
-import           Control.Monad                 (forM)
-import           Control.Lens                  (view, _1, mapped, over)
+import           Control.Monad.IO.Class            (liftIO)
+import           Control.Monad.Reader              (ask)
+import           Control.Monad                     (forM)
+import           Control.Lens                      (view, _1, mapped, over)
 
-import           Data.Tuple.All                (sel1, sel2, sel3)
-import           Data.Pool                     (withResource)
+import           Data.Tuple.All                    (sel1, sel2, sel3)
+import           Data.Pool                         (withResource)
 
-import           Rest.Resource                 (Resource, Void, schema, name, get, 
-                                               list, mkResourceId)
-import qualified Rest.Schema                   as S
-import           Rest.Dictionary.Combinators   (jsonO)
-import           Rest.Handler                  (ListHandler, Handler)
+import           Rest.Resource                     (Resource, Void, schema, name, get, 
+                                                   list, mkResourceId)
+import qualified Rest.Schema                       as S
+import           Rest.Dictionary.Combinators       (jsonO)
+import           Rest.Handler                      (ListHandler, Handler)
 
-import qualified Crm.Shared.Api                as A
-import qualified Crm.Shared.Company            as C
-import qualified Crm.Shared.Upkeep             as U
-import qualified Crm.Shared.UpkeepMachine      as UM
-import qualified Crm.Shared.Photo              as P
-import qualified Crm.Shared.Machine            as M
+import qualified Crm.Shared.Api                    as A
+import qualified Crm.Shared.Company                as C
+import qualified Crm.Shared.Upkeep                 as U
+import qualified Crm.Shared.UpkeepMachine          as UM
+import qualified Crm.Shared.Photo                  as P
+import qualified Crm.Shared.Machine                as M
+import qualified Crm.Shared.YearMonthDay           as YMD
 
 import           Crm.Server.Helpers 
-import           Crm.Server.Boilerplate        ()
+import           Crm.Server.Boilerplate            ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler            (mkListing', mkConstHandler')
-import           Crm.Server.Api.UpkeepResource (loadNextServiceTypeHint)
+import           Crm.Server.Handler                (mkListing', mkConstHandler')
+import           Crm.Server.Api.UpkeepResource     (loadNextServiceTypeHint)
 
 import qualified Crm.Server.Database.UpkeepMachine as UMD
 
-import           TupleTH                       (proj, catTuples)
+import           TupleTH                           (proj, catTuples)
 
 
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
@@ -61,7 +62,7 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
         machineType = sel2 (convert machineType' :: MachineTypeMapped)
         machine = _machine machine'
         machineId = view UMD.machineFK upkeepMachineMapped
-        in (upkeepMachineMarkup, machine { M.machineOperationStartDate = fmap dayToYmd . M.machineOperationStartDate $ machine } ,
+        in (upkeepMachineMarkup, machine { M.machineOperationStartDate = fmap YMD.dayToYmd . M.machineOperationStartDate $ machine } ,
           machineType, machineId))
       rows
     flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->

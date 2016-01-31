@@ -3,25 +3,17 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Shared.Company where
 
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Rest.Info    (Info(..))
-import Control.Lens.TH (makeLenses)
-import Control.Applicative ((<*>), pure)
+import Rest.Info                  (Info(..))
+import Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 #endif
-import Data.Text    (Text, pack)
-
-data CompanyTable' companyPK companyCore companyCoords = CompanyTable {
-  _companyPK :: companyPK ,
-  _companyCore :: companyCore ,
-  _companyCoords :: companyCoords }
-#ifndef FAY
-makeLenses ''CompanyTable'
-#endif
+import Data.Text                  (Text, pack)
 
 newtype CompanyId' id = CompanyId { getCompanyId :: id }
 #ifdef FAY
@@ -63,7 +55,6 @@ data Company' name note address = Company {
   deriving (Generic, Typeable, Data)
 #endif
 type Company = Company' Text Text Text
-type CompanyRecord = CompanyTable' CompanyId Company (Maybe Coordinates)
 
 mkCoordinates :: (Double, Double) -> Coordinates
 mkCoordinates (lat, lng) = Coordinates lat lng
@@ -74,4 +65,8 @@ newCompany = Company (pack "") (pack "") (pack "")
 #ifndef FAY
 mapCoordinates :: Coordinates' (Maybe a) (Maybe b) -> Maybe (Coordinates' a b) 
 mapCoordinates coordinates = pure Coordinates <*> latitude coordinates <*> longitude coordinates
+
+makeAdaptorAndInstance' ''Company'
+makeAdaptorAndInstance' ''Coordinates'
+makeAdaptorAndInstance' ''CompanyId'
 #endif

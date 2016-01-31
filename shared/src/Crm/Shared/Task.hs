@@ -5,8 +5,6 @@
 module Crm.Shared.Task where
 
 import Crm.Shared.YearMonthDay  as YMD
-import Crm.Shared.UpkeepMachine as UM
-import Crm.Shared.MyMaybe
 import Crm.Shared.ServerRender  as SR
 
 #ifndef FAY

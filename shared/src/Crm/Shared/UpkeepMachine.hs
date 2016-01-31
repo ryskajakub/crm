@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Shared.UpkeepMachine where
 
@@ -12,6 +14,9 @@ import qualified Crm.Shared.ServerRender    as SR
 import           GHC.Generics
 import           Data.Data
 import           Control.Lens.TH            (makeLensesFor)
+import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
+import           Opaleye                    (queryRunnerColumn, PGInt4,
+                                              QueryRunnerColumnDefault(..), fieldQueryRunnerColumn)
 #endif
 import           Data.Text                  (Text, pack)
 
@@ -57,3 +62,11 @@ upkeepTypeDecode _ = Regular
 
 allUpkeepTypes :: [UpkeepType]
 allUpkeepTypes = [Regular, Repair, Check]
+
+#ifndef FAY
+makeAdaptorAndInstance' ''UpkeepMachineGen'
+
+instance QueryRunnerColumnDefault PGInt4 UpkeepType where
+  queryRunnerColumnDefault = 
+    queryRunnerColumn id upkeepTypeDecode fieldQueryRunnerColumn
+#endif

@@ -3,20 +3,22 @@
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Shared.Upkeep where
 
-import Crm.Shared.YearMonthDay  as D
-import Crm.Shared.UpkeepMachine as UM
-import Crm.Shared.ServerRender  as SR
+import Crm.Shared.YearMonthDay    as D
+import Crm.Shared.UpkeepMachine   as UM
+import Crm.Shared.ServerRender    as SR
 
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Rest.Info                (Info(..))
-import Control.Lens.TH          (makeLensesFor)
+import Rest.Info                  (Info(..))
+import Control.Lens.TH            (makeLensesFor)
+import Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 #endif
-import Data.Text                (Text, pack)
+import Data.Text                  (Text, pack)
 
 #ifndef FAY
 instance Info UpkeepId where
@@ -58,3 +60,8 @@ type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
 newUpkeep :: D.YearMonthDay -> Upkeep
 newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")
+
+#ifndef FAY
+makeAdaptorAndInstance' ''UpkeepId'
+makeAdaptorAndInstance' ''UpkeepGen''
+#endif

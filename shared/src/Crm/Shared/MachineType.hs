@@ -2,6 +2,8 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Crm.Shared.MachineType where
 
@@ -9,11 +11,12 @@ module Crm.Shared.MachineType where
 import GHC.Generics
 import Data.Data
 import Fay.FFI
-import Rest.Info    (Info(..))
+import Rest.Info                           (Info(..))
+import Data.Profunctor.Product.TH          (makeAdaptorAndInstance')
 #else
 import FFI
 #endif
-import Data.Text    (Text, pack)
+import Data.Text                           (Text, pack)
 
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.MachineKind    as MK
@@ -57,4 +60,8 @@ data MyEither =
   | MyInt Int
 #ifndef FAY
   deriving (Generic, Typeable, Data)
+#endif
+
+#ifndef FAY
+makeAdaptorAndInstance' ''MachineTypeId'
 #endif

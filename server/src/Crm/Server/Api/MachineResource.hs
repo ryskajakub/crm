@@ -30,6 +30,7 @@ import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.UpkeepMachine    as UM
 import qualified Crm.Shared.Employee         as E
 import qualified Crm.Shared.Photo            as P
+import qualified Crm.Shared.YearMonthDay     as YMD
 import           Crm.Shared.MyMaybe
 
 import           Crm.Server.Helpers 
@@ -80,7 +81,7 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', machineTypeId, lin
             (maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` (toMaybe linkedMachineId)) ,
         _machine = M.Machine {
           M.machineOperationStartDate =
-            (maybeToNullable $ fmap (pgDay . ymdToDay) (M.machineOperationStartDate machine')) ,
+            (maybeToNullable $ fmap (pgDay . YMD.ymdToDay) (M.machineOperationStartDate machine')) ,
           M.initialMileage = pgInt4 . M.initialMileage $ machine' ,
           M.mileagePerYear = pgInt4 . M.mileagePerYear $ machine' ,
           M.label_ = pgStrictText . M.label_ $ machine' ,
@@ -150,7 +151,7 @@ machineSingle = mkConstHandler' jsonO $ do
     return $ $(catTuples 4 1) data' photoIds
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (toMyMaybe $ dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsDataWithPhotos, otherMachineId, MT.kind machineType, extraFields'))
+    (toMyMaybe $ YMD.dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsDataWithPhotos, otherMachineId, MT.kind machineType, extraFields'))
 
 
 machineListing :: ListHandler Dependencies

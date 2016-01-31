@@ -57,7 +57,7 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
   ids <- withResource pool $ \connection -> liftIO $ runInsertReturning 
     connection 
     companiesTable
-    (C.CompanyTable
+    (CompanyTable
       (C.CompanyId Nothing)
       (C.Company 
         (pgStrictText . C.companyName $ newCompany) 
@@ -66,7 +66,7 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
       (C.Coordinates
         (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
         (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates))))
-    (C.getCompanyId . C._companyPK)
+    (C.getCompanyId . _companyPK)
   id' <- singleRowOrColumn ids
   let companyId = C.CompanyId id'
   mapExceptT lift $ withResource pool $ \connection -> recomputeSingle companyId connection cache
@@ -133,8 +133,8 @@ updateCompany = let
   readToWrite (company, coordinates') = let 
     coordinates = toMaybe coordinates'
     in \companyRow ->
-      C.CompanyTable
-        (Just `fmap` C._companyPK companyRow)
+      CompanyTable
+        (Just `fmap` _companyPK companyRow)
         (C.Company 
           (pgStrictText . C.companyName $ company) 
           (pgStrictText . C.companyNote $ company)
@@ -144,7 +144,7 @@ updateCompany = let
           (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))
   recomputeCache cId connection cache = 
     mapExceptT lift $ recomputeSingle cId connection cache
-  condition companyId companyRow = C._companyPK companyRow .=== fmap pgInt4 companyId
+  condition companyId companyRow = _companyPK companyRow .=== fmap pgInt4 companyId
   in mkInputHandler' (jsonO . jsonI) $ \companyData -> do
     ((cache, pool), companyId :: C.CompanyId) <- ask
     _ <- liftIO $ withResource pool $ \connection -> runUpdate
@@ -165,7 +165,7 @@ deleteCompany = mkConstHandler' jsonO $ do
       runDelete
         connection
         companiesTable
-        (\row -> C._companyPK row .=== fmap pgInt4 companyId) >> return ()] $ \f -> f theId connection
+        (\row -> _companyPK row .=== fmap pgInt4 companyId) >> return ()] $ \f -> f theId connection
   recomputeWhole pool cache
 
 companyResource :: Resource Dependencies (IdDependencies' C.CompanyId) C.CompanyId MachineMid Void

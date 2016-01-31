@@ -32,7 +32,7 @@ import qualified Crm.Shared.YearMonthDay    as YMD
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
 import           Crm.Server.DB
-import           Crm.Server.Helpers         (today, dayToYmd)
+import           Crm.Server.Helpers         (today)
 import           Crm.Server.Types 
 import qualified Crm.Server.Database.UpkeepMachine as UMD
 
@@ -45,8 +45,8 @@ recomputeWhole' ::
   ExceptT (Reason r) m (MVar ())
 recomputeWhole' pool (cache @ (Cache c)) = do
   companiesRows <- liftIO $ withResource pool $ \connection -> runQuery connection (queryTable companiesTable)
-  let (companies :: [C.CompanyRecord]) = over (mapped . C.companyCoords) C.mapCoordinates companiesRows
-  let companyIds = over mapped C._companyPK companies
+  let (companies :: [CompanyRecord]) = over (mapped . companyCoords) C.mapCoordinates companiesRows
+  let companyIds = over mapped _companyPK companies
   _ <- liftIO $ atomicModifyIORef' c $ const (Map.empty, ())
   daemon <- liftIO $ newEmptyMVar 
   _ <- liftIO $ forkIO $ do
@@ -79,15 +79,16 @@ recomputeWhole pool cache = do
   return ()
 
 
-recomputeSingle :: (MonadIO m)
-                => C.CompanyId 
-                -> Connection 
-                -> Cache 
-                -> ExceptT (Reason r) m ()
+recomputeSingle :: 
+  (MonadIO m) => 
+  C.CompanyId -> 
+  Connection -> 
+  Cache -> 
+  ExceptT (Reason r) m ()
 recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   companyRows <- liftIO $ runQuery connection (companyByIdQuery companyId)
   companyRow <- singleRowOrColumn companyRows
-  let (company :: C.CompanyRecord) = over C.companyCoords C.mapCoordinates companyRow
+  let (company :: CompanyRecord) = over companyCoords C.mapCoordinates companyRow
   machines <- liftIO $ runMachinesInCompanyQuery companyId connection
   nextDays <- liftIO $ forM machines $ \machine -> do
     nextServiceDay <- addNextDates $(proj 8 0) $(proj 8 1) machine connection
@@ -97,7 +98,7 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
       Inactive   -> Nothing
   let 
     nextDay = minimumMay $ mapMaybe id nextDays
-    value = (C._companyCore company, nextDay, C._companyCoords company)
+    value = (_companyCore company, nextDay, _companyCoords company)
     modify mapCache = Map.insert companyId value mapCache
   _ <- liftIO $ atomicModifyIORef' cache $ \a -> let 
     modifiedA = modify a
@@ -127,4 +128,4 @@ addNextDates getMachineId getMachine a = \conn -> do
       [] -> undefined
       x : xs -> (x, xs)
     nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (convertFullUpkeeps fullUpkeepDataRows) today'
-  return (fmap dayToYmd nextServiceDay)
+  return (fmap YMD.dayToYmd nextServiceDay)

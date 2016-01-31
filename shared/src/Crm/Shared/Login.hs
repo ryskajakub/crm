@@ -7,7 +7,6 @@ module Crm.Shared.Login where
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Prelude
 #endif
 import Data.Text (Text)
 
