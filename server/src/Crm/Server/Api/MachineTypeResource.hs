@@ -6,7 +6,7 @@ module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye.Operators           ((.==), (.===))
+import           Opaleye.Operators           ((.===))
 import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgBool)
 import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete)
 
@@ -14,8 +14,8 @@ import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_)
+import           Control.Lens                (over)
 
-import           Data.Tuple.All              (sel1, sel2, sel4)
 import           Data.Int                    (Int64)
 import           Data.Text                   (Text)
 import           Data.Pool                   (withResource)
@@ -40,7 +40,9 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
-import           TupleTH                     (proj)
+import           Crm.Server.Database.MachineType
+import qualified Crm.Server.Database.UpkeepSequence as USD
+import           Crm.Server.Database.UpkeepSequence
 
 
 machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
@@ -58,14 +60,14 @@ removeHandler = mkConstHandler' jsonO $ do
   case machineTypeSid of
     MachineTypeById (machineTypeId) ->
       liftIO $ withResource pool $ \connection -> do
-        runDelete
+        _ <- runDelete
           connection
           upkeepSequencesTable
-          $ \row -> (MT.MachineTypeId . $(proj 5 3) $ row) .=== fmap pgInt4 machineTypeId
-        runDelete
+          $ \row -> USD._machineTypeFK row .=== fmap pgInt4 machineTypeId
+        _ <- runDelete
           connection
           machineTypesTable
-          $ \row -> (MT.MachineTypeId . $(proj 4 0) $ row) .=== fmap pgInt4 machineTypeId
+          $ \row -> _machineTypePK row .=== fmap pgInt4 machineTypeId
         return ()
     _ -> return ()
 
@@ -78,28 +80,37 @@ machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO $ const $
 machineTypesListing CountListing = mkListing' jsonO $ const $ do
   rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ runQuery connection machineTypesWithCountQuery 
   let 
-    mapRow :: ((Int,Int,Text,Text),Int64) -> ((MT.MachineTypeId, MT.MachineType), Int)
-    mapRow (mtRow, count) = (convert mtRow :: MachineTypeMapped, fromIntegral count)
+    mapRow (mtRow :: MachineTypeRecord, count :: Int64) = 
+      ((_machineTypePK mtRow, _machineType mtRow), fromIntegral count :: Int)
     mappedRows = map mapRow rows
   return mappedRows
 
 updateMachineType :: Handler MachineTypeDependencies
-updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType, upkeepSequences :: [US.UpkeepSequence]) -> do
+updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType', upkeepSequences :: [US.UpkeepSequence]) -> do
   ((cache, pool), sid) <- ask
   case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> do 
+    MachineTypeById machineTypeId -> do 
       liftIO $ do
         let 
-          readToWrite row = (Just . $(proj 4 0) $ row, pgInt4 . MK.kindToDbRepr . MT.kind $ machineType, 
-            pgStrictText $ MT.machineTypeName machineType, pgStrictText $ MT.machineTypeManufacturer machineType)
-          condition machineTypeRow = sel1 machineTypeRow .== pgInt4 machineTypeIdInt
+          readToWrite row = (over machineTypePK (fmap Just) row) {
+            _machineType = MT.MachineType {
+              MT.kind = pgInt4 . MK.kindToDbRepr . MT.kind $ machineType' ,
+              MT.machineTypeName = pgStrictText . MT.machineTypeName $ machineType' ,
+              MT.machineTypeManufacturer = pgStrictText . MT.machineTypeManufacturer $ machineType' } }
+          condition machineTypeRow = _machineTypePK machineTypeRow .=== fmap pgInt4 machineTypeId
         _ <- withResource pool $ \connection -> runUpdate connection machineTypesTable readToWrite condition
         _ <- withResource pool $ \connection -> 
-          runDelete connection upkeepSequencesTable (\table -> sel4 table .== pgInt4 machineTypeIdInt)
+          runDelete connection upkeepSequencesTable (\table -> USD._machineTypeFK table .=== fmap pgInt4 machineTypeId)
         forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) -> 
-          withResource pool $ \connection -> runInsert connection upkeepSequencesTable (pgInt4 displayOrder,
-            pgStrictText label, pgInt4 repetition, pgInt4 machineTypeIdInt, pgBool oneTime)
+          withResource pool $ \connection -> runInsert connection upkeepSequencesTable $
+            UpkeepSequenceRow {
+              USD._machineTypeFK = fmap pgInt4 machineTypeId ,
+              USD._upkeepSequence = US.UpkeepSequence {
+                US.displayOrdering = pgInt4 displayOrder ,
+                US.label_ = pgStrictText label ,
+                US.repetition = pgInt4 repetition ,
+                US.oneTime = pgBool oneTime }}
       recomputeWhole pool cache
 
 machineTypesSingle :: Handler MachineTypeDependencies
@@ -116,11 +127,11 @@ machineTypesSingle = mkConstHandler' jsonO $ do
   rows <- result
   case rows of
     x:xs | null xs -> do 
-      let mt = convert x :: MachineTypeMapped
+      let mt = x :: MachineTypeRecord
       upkeepSequences <- withResource pool $ \connection -> liftIO $ 
-        runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId $ sel1 mt)
-      let mappedUpkeepSequences = fmap (\row -> sel2 (convert row :: UpkeepSequenceMapped)) upkeepSequences
-      return $ MyJust (sel1 mt, sel2 mt, mappedUpkeepSequences)
+        runQuery connection (upkeepSequencesByIdQuery . _machineTypePK $ mt)
+      let us = fmap (\(row :: UpkeepSequenceRecord) -> _upkeepSequence row) upkeepSequences
+      return $ MyJust (_machineTypePK mt, _machineType mt, us)
     [] -> onEmptyResult
     _ -> throwError NotFound
 

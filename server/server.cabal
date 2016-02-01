@@ -62,6 +62,8 @@ Library
     Crm.Server.Database.PrimaryKeys ,
     Crm.Server.Database.Types ,
     Crm.Server.Database.UpkeepMachine ,
+    Crm.Server.Database.UpkeepSequence ,
+    Crm.Server.Database.MachineType ,
     Crm.Server.DB ,
     Crm.Server.Helpers ,
     Crm.Server.Types ,

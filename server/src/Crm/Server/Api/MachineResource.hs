@@ -14,7 +14,7 @@ import           Control.Monad               (forM)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Arrow               (first, second)
-import           Control.Lens                (over, view)
+import           Control.Lens                (view)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -42,6 +42,9 @@ import           Crm.Server.Core             (nextServiceDate, getMaybe)
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeWhole)
 
+import qualified Crm.Server.Database.UpkeepSequence as USD
+import           Crm.Server.Database.MachineType
+
 import           TupleTH
 
 
@@ -58,9 +61,10 @@ machineResource = (mkResourceReaderWith prepareReaderTuple) {
 machineDelete :: Handler (IdDependencies' M.MachineId)
 machineDelete = mkConstHandler' jsonO $ do
   ((cache, pool), machineId) <- ask
-  _ <- liftIO $ withResource pool $ \connection -> do
-    runDelete connection extraFieldsTable (((.==) (pgInt4 . M.getMachineId $ machineId)) . $(proj 3 1))
-    runDelete connection machinesTable (((.===) (fmap pgInt4 machineId)) . _machinePK)
+  liftIO $ withResource pool $ \connection -> do
+    _ <- runDelete connection extraFieldsTable (((.==) (pgInt4 . M.getMachineId $ machineId)) . $(proj 3 1))
+    _ <- runDelete connection machinesTable (((.===) (fmap pgInt4 machineId)) . _machinePK)
+    return ()
   recomputeWhole pool cache
 
 
@@ -73,7 +77,7 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', machineTypeId, lin
     machineReadToWrite machineRow =
       (machineRow {
         _machinePK = fmap (Just . pgInt4) machineId ,
-        _machineTypeFK = pgInt4 . MT.getMachineTypeId $ machineTypeId ,
+        _machineTypeFK = fmap pgInt4 machineTypeId ,
         _contactPersonFK =
           (maybeToNullable $ (pgInt4 . CP.getContactPersonId) `fmap` toMaybe contactPersonId) ,
         _linkageFK = 
@@ -106,13 +110,13 @@ machineSingle = mkConstHandler' jsonO $ do
   rows <- withResource pool $ \connection -> liftIO $ runQuery connection (machineDetailQuery machineId')
   row @ (_,_,_) <- singleRowOrColumn rows
   let 
-    (machineId, machine, companyId, machineTypeId, machineType, contactPersonId, otherMachineId) = let
+    (machineId, machine', companyId, machineTypeId, machineType', contactPersonId, otherMachineId) = let
       (m :: MachineRecord) = sel1 row
-      mt = convert $ sel2 row :: MachineTypeMapped
+      (mt :: MachineTypeRecord) = sel2 row
       cp = convert $ sel3 row :: MaybeContactPersonMapped
-      in (_machinePK m, _machine m, _companyFK m, sel1 mt, sel2 mt, toMyMaybe . sel1 $ cp, _linkageFK m)
+      in (_machinePK m, _machine m, _companyFK m, _machineTypePK mt, _machineType mt, toMyMaybe . sel1 $ cp, _linkageFK m)
   upkeepSequenceRows <- withResource pool $ \connection -> liftIO $ 
-    runQuery connection (upkeepSequencesByIdQuery $ pgInt4 $ MT.getMachineTypeId machineTypeId)
+    runQuery connection (upkeepSequencesByIdQuery machineTypeId)
   upkeepRows <- withResource pool $ \connection -> 
     liftIO $ runQuery connection (upkeepsDataForMachine machineId)
   today' <- liftIO today
@@ -124,7 +128,7 @@ machineSingle = mkConstHandler' jsonO $ do
       efs = convert $ efs' :: ExtraFieldSettingsMapped
       in ($(proj 3 0) ef, snd efs, $(proj 3 2) ef)
     extraFields' = extraFieldsConvert `fmap` extraFields
-    upkeepSequences = fmap (\row' -> sel2 $ (convert row' :: UpkeepSequenceMapped)) upkeepSequenceRows
+    upkeepSequences = fmap (\(row' :: USD.UpkeepSequenceRecord) -> USD._upkeepSequence row') upkeepSequenceRows
     upkeepsData = 
           fmap (\x -> $(catTuples 3 1) ($(takeTuple 4 3) x) (catMaybes . $(proj 4 3) $ x))
         . fmap (\(b, c) -> $(catTuples 3 1) b c)
@@ -143,15 +147,16 @@ machineSingle = mkConstHandler' jsonO $ do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)
-    nextServiceYmd = getMaybe $ nextServiceDate machine upkeepSequenceTuple upkeeps today'
+    nextServiceYmd = getMaybe $ nextServiceDate machine' upkeepSequenceTuple upkeeps today'
   upkeepsDataWithPhotos <- forM upkeepsData $ \data' -> do
     let upkeepId = $(proj 4 0) data'
     photosFromDb <- withResource pool $ \connection -> liftIO $ runQuery connection $ photosInUpkeepQuery upkeepId
     let photoIds = P.PhotoId `fmap` photosFromDb
     return $ $(catTuples 4 1) data' photoIds
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
-    ((companyId, machine, machineTypeId, (machineType, upkeepSequences)),
-    (toMyMaybe $ YMD.dayToYmd `fmap` nextServiceYmd, contactPersonId, upkeepsDataWithPhotos, otherMachineId, MT.kind machineType, extraFields'))
+    ((companyId, machine', machineTypeId, (machineType', upkeepSequences)),
+    (toMyMaybe $ YMD.dayToYmd `fmap` nextServiceYmd, contactPersonId, 
+      upkeepsDataWithPhotos, otherMachineId, MT.kind machineType', extraFields'))
 
 
 machineListing :: ListHandler Dependencies

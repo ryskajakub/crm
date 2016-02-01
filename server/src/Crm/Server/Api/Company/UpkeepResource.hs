@@ -9,9 +9,8 @@ import           Opaleye.RunQuery                  (runQuery)
 import           Control.Monad.IO.Class            (liftIO)
 import           Control.Monad.Reader              (ask)
 import           Control.Monad                     (forM)
-import           Control.Lens                      (view, _1, mapped, over)
+import           Control.Lens                      (view)
 
-import           Data.Tuple.All                    (sel1, sel2, sel3)
 import           Data.Pool                         (withResource)
 
 import           Rest.Resource                     (Resource, Void, schema, name, get, 
@@ -25,8 +24,6 @@ import qualified Crm.Shared.Company                as C
 import qualified Crm.Shared.Upkeep                 as U
 import qualified Crm.Shared.UpkeepMachine          as UM
 import qualified Crm.Shared.Photo                  as P
-import qualified Crm.Shared.Machine                as M
-import qualified Crm.Shared.YearMonthDay           as YMD
 
 import           Crm.Server.Helpers 
 import           Crm.Server.Boilerplate            ()
@@ -36,6 +33,7 @@ import           Crm.Server.Handler                (mkListing', mkConstHandler')
 import           Crm.Server.Api.UpkeepResource     (loadNextServiceTypeHint)
 
 import qualified Crm.Server.Database.UpkeepMachine as UMD
+import           Crm.Server.Database.MachineType
 
 import           TupleTH                           (proj, catTuples)
 
@@ -54,19 +52,18 @@ companyUpkeepsListing = mkListing' jsonO $ const $ do
           U.recommendation = parseMarkupOrPlain . U.recommendation $ u ,
           U.workDescription = parseMarkupOrPlain . U.workDescription $ u }
         in (view upkeepPK upkeepCols, upkeepMarkup))
-      (\(_, (upkeepMachineMapped :: UMD.UpkeepMachineRow), machine' :: MachineRecord', machineType') -> let
+      (\(_, upkeepMachineMapped :: UMD.UpkeepMachineRow, machine' :: MachineRecord, machineType' :: MachineTypeRecord) -> let
         upkeepMachine = view UMD.upkeepMachine upkeepMachineMapped
         upkeepMachineMarkup = upkeepMachine {
           UM.endNote = UM.endNote upkeepMachine ,
           UM.upkeepMachineNote = UM.upkeepMachineNote upkeepMachine }
-        machineType = sel2 (convert machineType' :: MachineTypeMapped)
-        machine = _machine machine'
+        machineTypeBody = _machineType machineType'
+        machineBody = _machine machine'
         machineId = view UMD.machineFK upkeepMachineMapped
-        in (upkeepMachineMarkup, machine { M.machineOperationStartDate = fmap YMD.dayToYmd . M.machineOperationStartDate $ machine } ,
-          machineType, machineId))
+        in (upkeepMachineMarkup, machineBody, machineTypeBody, machineId))
       rows
-    flattened = fmap (\((upkeepId, upkeep), upkeepMachines) ->
-      (upkeepId, upkeep, upkeepMachines)) mappedResults
+    flattened = fmap (\((upkeepId, upkeep'), upkeepMachines) ->
+      (upkeepId, upkeep', upkeepMachines)) mappedResults
   withEmployeesAndPhotos <- withResource pool $ \connection -> liftIO $ forM flattened $ \(r @ (upkeepId, _, _)) -> do
     employeeResults <- runQuery connection (employeesInUpkeep upkeepId)
     let mappedEmployees = fmap (\row -> convert row) employeeResults :: [EmployeeMapped]
@@ -80,7 +77,7 @@ newUpkeepData = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
   machines' <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (machinesQ companyId)
-  let machines = map (\(m, mt) -> (m :: MachineRecord, convert mt :: MachineTypeMapped)) machines'
+  let machines = map (\(m, mt) -> (m :: MachineRecord, mt :: MachineTypeRecord)) machines'
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
   return $ map (\(m, mt, nextUpkeepSequence) -> 
     (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines''

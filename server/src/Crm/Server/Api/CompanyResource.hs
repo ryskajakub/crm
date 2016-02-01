@@ -6,17 +6,17 @@
 module Crm.Server.Api.CompanyResource where
 
 import           Opaleye.RunQuery            (runQuery)
-import           Opaleye                     (pgDouble, pgStrictText, PGFloat8, Nullable, Column, runDelete, pgInt4, (.==), (.===), PGInt8)
+import           Opaleye                     (pgDouble, pgStrictText, runDelete, pgInt4, (.===))
 import           Opaleye.Manipulation        (runInsertReturning, runUpdate)
 
 import           Control.Monad.Trans.Class   (lift)
 import           Control.Monad.Trans.Except  (ExceptT, mapExceptT)
 import           Control.Monad.Reader        (ask)
-import           Control.Monad.IO.Class      (liftIO, MonadIO)
+import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad               (forM, forM_)
 
 import           Data.List                   (sortBy)
-import           Data.Tuple.All              (sel1, sel2, sel3)
+import           Data.Tuple.All              (sel2, sel3)
 import qualified Data.Text.ICU               as I
 import qualified Data.Map                    as M
 import           Data.Pool                   (withResource)
@@ -37,13 +37,11 @@ import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
 
-import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, 
-                                             createDeletion', maybeToNullable)
+import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion', maybeToNullable)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', 
-                                             mkListing', updateRows'')
+import           Crm.Server.Handler          (mkConstHandler', mkInputHandler', mkOrderedListing', mkListing')
 import           Crm.Server.CachedCore       (addNextDates, getCacheContent, recomputeSingle, recomputeWhole)
 import           Crm.Server.Core             (getMaybe)
 
@@ -121,7 +119,7 @@ singleCompany = mkConstHandler' jsonO $ do
   machines <- withResource pool $ \connection -> liftIO $ runMachinesInCompanyQuery companyId connection
   let machinesMyMaybe = fmap ($(updateAtN 8 5) toMyMaybe . $(updateAtN 8 7) toMyMaybe) machines
   nextServiceDates <- withResource pool $ \connection -> liftIO $ forM machinesMyMaybe $ 
-    \machine -> addNextDates $(proj 8 0) $(proj 8 1) machine connection
+    \machine' -> addNextDates $(proj 8 0) $(proj 8 1) machine' connection
   cpRows <- withResource pool $ \connection -> liftIO $ runQuery connection $ contactPersonsByIdQuery companyId
   return (
     company ,

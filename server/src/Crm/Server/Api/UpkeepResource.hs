@@ -12,8 +12,6 @@ import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, r
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
 import           Opaleye                     (runQuery)
 
-import qualified Text.Parsec as P
-
 import           Database.PostgreSQL.Simple  (Connection)
 
 import           Control.Monad.Reader        (ask)
@@ -22,21 +20,20 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
-import           Control.Lens                (over, view, mapped, _1)
+import           Control.Lens                (view)
 
-import           Data.Tuple.All              (sel1, sel2, sel3, uncurryN)
+import           Data.Tuple.All              (sel2, sel3)
 import           Data.List                   (nub)
-import           Data.Text                   (intercalate, pack, Text)
-import           Data.Time.Calendar          (fromGregorian, Day)
+import           Data.Text                   (pack, Text)
+import           Data.Time.Calendar          (Day)
 import           Data.Pool                   (withResource)
 
-import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason), DataError(ParseError, MissingField))
+import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove, create)
 import qualified Rest.Schema                 as S
-import           Rest.Dictionary.Combinators (jsonO, jsonI, mkPar)
-import           Rest.Dictionary.Types       (Dict, Param(..))
-import           Rest.Handler                (ListHandler, Handler, Env(param))
+import           Rest.Dictionary.Combinators (jsonO, jsonI)
+import           Rest.Handler                (ListHandler, Handler)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Upkeep           as U
@@ -62,6 +59,8 @@ import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
 import           Crm.Server.Parsers          (parseMarkup)
 import qualified Crm.Server.Database.UpkeepMachine as UMD
+import qualified Crm.Server.Database.UpkeepSequence as USD
+import           Crm.Server.Database.MachineType
 
 import           TupleTH                     (proj, catTuples, dropTuple)
 
@@ -72,18 +71,18 @@ addUpkeep ::
   Connection -> 
   (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId]) -> 
   IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep, upkeepMachines, employeeIds) = do
+addUpkeep connection (upkeep', upkeepMachines, employeeIds) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable 
     (UpkeepRow
       (U.UpkeepId Nothing)
       (U.Upkeep
-        (pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep)
-        (pgBool . U.upkeepClosed $ upkeep)
-        (pgStrictText . U.workHours $ upkeep)
-        (pgStrictText . U.workDescription $ upkeep)
-        (pgStrictText . U.recommendation $ upkeep)))
+        (pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep')
+        (pgBool . U.upkeepClosed $ upkeep')
+        (pgStrictText . U.workHours $ upkeep')
+        (pgStrictText . U.workDescription $ upkeep')
+        (pgStrictText . U.recommendation $ upkeep')))
     (view upkeepPK)
   let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
@@ -134,8 +133,8 @@ removeUpkeep = mkConstHandler' jsonO $ do
     upkeepIdInt connection
 
 updateUpkeepHandler :: Handler (IdDependencies' U.UpkeepId)
-updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep, machines, employeeIds) -> let 
-  upkeepTuple = (upkeep, machines)
+updateUpkeepHandler = mkInputHandler' (jsonO . jsonI) $ \(upkeep', machines, employeeIds) -> let 
+  upkeepTuple = (upkeep', machines)
   in do 
     ((cache, pool), upkeepId) <- ask
     withResource pool $ \connection -> liftIO $ 
@@ -148,18 +147,18 @@ updateUpkeep ::
   (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)]) -> 
   [E.EmployeeId] -> 
   IO ()
-updateUpkeep conn upkeepId (upkeep, upkeepMachines) employeeIds = do
+updateUpkeep conn upkeepId (upkeep', upkeepMachines) employeeIds = do
   _ <- let
     condition upkeepRow = view upkeepPK upkeepRow .=== fmap pgInt4 upkeepId
     readToWrite u =
       UpkeepRow 
         (Just `fmap` (view upkeepPK $ u))
         (U.Upkeep {
-          U.upkeepDate = pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep ,
-          U.upkeepClosed = pgBool . U.upkeepClosed $ upkeep ,
-          U.workHours = pgStrictText . U.workHours $ upkeep ,
-          U.workDescription = pgStrictText . U.workDescription $ upkeep , 
-          U.recommendation = pgStrictText . U.recommendation $ upkeep})
+          U.upkeepDate = pgDay . YMD.ymdToDay . U.upkeepDate $ upkeep' ,
+          U.upkeepClosed = pgBool . U.upkeepClosed $ upkeep' ,
+          U.workHours = pgStrictText . U.workHours $ upkeep' ,
+          U.workDescription = pgStrictText . U.workDescription $ upkeep' ,
+          U.recommendation = pgStrictText . U.recommendation $ upkeep'})
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> UMD._upkeepFK upkeepRow .=== (pgInt4 `fmap` upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
@@ -198,33 +197,32 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
   ((_, pool), upkeepId) <- ask
   upkeeps <- withResource pool $ \connection -> liftIO $ 
     fmap mapUpkeeps $ runQuery connection $ expandedUpkeepsQuery2 upkeepId
-  upkeep <- singleRowOrColumn upkeeps
+  upkeep' <- singleRowOrColumn upkeeps
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
   employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepId)
-  let machines = map (\(m, mt) -> (m :: MachineRecord, convert mt :: MachineTypeMapped)) (allMachines)
+  let machines = fmap (\(m, mt) -> (m :: MachineRecord, mt :: MachineTypeRecord)) allMachines
   machines'' <- withResource pool $ \connection -> loadNextServiceTypeHint machines connection
-
   companyId <- case machines of
     [] -> throwError NotAllowed
     (machineMapped,_) : _ -> return . _companyFK $ machineMapped
 
-  return (companyId, (sel2 upkeep, sel3 upkeep, fmap E.EmployeeId employeeIds), map 
+  return (companyId, (sel2 upkeep', sel3 upkeep', fmap E.EmployeeId employeeIds), map 
     (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
 
 loadNextServiceTypeHint :: 
   (MonadIO m) => 
-  [(MachineRecord, MachineTypeMapped)] -> 
+  [(MachineRecord, MachineTypeRecord)] -> 
   Connection -> 
-  ExceptT (Reason Text) m [(MachineRecord, MachineTypeMapped, US.UpkeepSequence)]
-loadNextServiceTypeHint machines conn = forM machines $ \(machine, machineType) -> do
-  upkeepSequences' <- liftIO $ runQuery conn (upkeepSequencesByIdQuery (pgInt4 . MT.getMachineTypeId . $(proj 2 0) $ machineType))
-  pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (_machinePK machine))
-  let upkeepSequences = map (\x -> ($(proj 2 1)) $ (convert x :: UpkeepSequenceMapped)) upkeepSequences'
-  let pastUpkeepMachines = map (view UMD.upkeepMachine) (pastUpkeepMachines' :: [UMD.UpkeepMachineRow])
+  ExceptT (Reason Text) m [(MachineRecord, (MT.MachineTypeId, MT.MachineType), US.UpkeepSequence)]
+loadNextServiceTypeHint machines conn = forM machines $ \(machine', machineType') -> do
+  upkeepSequences' <- liftIO $ runQuery conn $ upkeepSequencesByIdQuery $ _machineTypePK machineType'
+  pastUpkeepMachines' <- liftIO $ runQuery conn (pastUpkeepMachinesQ (_machinePK machine'))
+  let upkeepSequences = fmap (\(x :: USD.UpkeepSequenceRecord) -> USD._upkeepSequence x) upkeepSequences'
+  let pastUpkeepMachines = fmap (view UMD.upkeepMachine) (pastUpkeepMachines' :: [UMD.UpkeepMachineRow])
   uss <- case upkeepSequences of
     (us' : uss') -> return (us', uss')
     _ -> throwError . CustomReason . DomainReason . pack $ "Db in invalid state"
-  return (machine, machineType, nextServiceTypeHint uss pastUpkeepMachines)
+  return (machine', (_machineTypePK machineType', _machineType machineType'), nextServiceTypeHint uss pastUpkeepMachines)
 
 printDailyPlanListing' ::   
   (MonadIO m, Functor m) => 
@@ -246,9 +244,9 @@ printDailyPlanListing' employeeId connection day = do
       employee = (convert e :: EmployeeMapped) 
       in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
-    machines <- fmap (map $ \(m :: MachineRecord, mt, cp, (um :: UMD.UpkeepMachineRow)) -> (
+    machines <- fmap (map $ \(m :: MachineRecord, mt :: MachineTypeRecord, cp, um :: UMD.UpkeepMachineRow) -> (
       _machine m , 
-      $(proj 2 1) $ (convert mt :: MachineTypeMapped) ,
+      _machineType mt ,
       toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . view UMD.upkeepMachine $ um)) $ 
       liftIO . runQuery connection . machinesInUpkeepQuery'' . view upkeepPK $ upkeep'

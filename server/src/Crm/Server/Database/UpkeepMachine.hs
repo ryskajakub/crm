@@ -25,11 +25,10 @@ import qualified Crm.Shared.Upkeep               as U
 import           Crm.Server.Database.PrimaryKeys
 import           Crm.Server.Database.Types
 
-data UpkeepMachineRow' upkeepFK machineFK upkeepMachine = 
-  UpkeepMachineRow {
-    _upkeepFK :: upkeepFK ,
-    _machineFK :: machineFK ,
-    _upkeepMachine :: upkeepMachine }
+data UpkeepMachineRow' upkeepFK machineFK upkeepMachine = UpkeepMachineRow {
+  _upkeepFK :: upkeepFK ,
+  _machineFK :: machineFK ,
+  _upkeepMachine :: upkeepMachine }
 makeLenses ''UpkeepMachineRow'
 
 type UpkeepMachineDB = UM.UpkeepMachineGen' DBText DBInt DBBool DBText DBInt
