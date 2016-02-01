@@ -17,24 +17,33 @@ import qualified Crm.Runtime                      as Runtime
 import qualified Crm.Shared.Api                   as A
 
 import qualified Crm.Shared.Photo                 as P
+import           Crm.Server                       (deletePhoto)
+import           Crm.Helpers                      (reload)
 
 import           Crm.Router 
 
 data PhotoModal = PhotoModal {
   photoModalElement :: DOMElement ,
   mkPhotoModalDisplayButton :: [P.PhotoId] -> ([P.PhotoId] -> Fay ()) -> [DOMElement] ,
-  fetchPhotosToModal :: CrmRouter -> Fay () }
+  fetchPhotosToModal :: Fay () }
 
-mkPhotoModal :: [P.PhotoId] -> PhotoModal
-mkPhotoModal photoIds = let
+mkPhotoModal :: [P.PhotoId] -> CrmRouter -> PhotoModal
+mkPhotoModal photoIds router = let
   
   BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
 
   photoModalElement' = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ photoIds
     where
-    mkPhotoRegion photoId = IMG.image' 
-      (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-      (IMG.mkImageAttrs "")
+    mkPhotoRegion photoId = div [
+      let
+        buttonProps = (BTN.buttonProps {
+          BTN.bsStyle = Defined "danger" ,
+          BTN.onClick = Defined $ const clickHandler })
+        clickHandler = deletePhoto photoId reload router
+        in BTN.button' buttonProps [G.arrowDown, text2DOM " Smazat fotku"] ,
+      IMG.image' 
+        (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
+        (IMG.mkImageAttrs "") ]
   
   displayPhotos differentPhotoIds setPhotosInModal = let
     clickHandler = setPhotosInModal differentPhotoIds
@@ -43,7 +52,7 @@ mkPhotoModal photoIds = let
       _ -> [BTN.buttonP' modalButtonProps BTN.NormalButton BTN.DefaultButton (const clickHandler)
         [G.picture, span $ " (" <> (showInt . length $ differentPhotoIds) <> ")" ]]
 
-  in PhotoModal photoModalElement' displayPhotos (fetchPhotos photoIds)
+  in PhotoModal photoModalElement' displayPhotos (fetchPhotos photoIds router)
 
 fetchPhotos :: [P.PhotoId] -> CrmRouter -> Fay ()
 fetchPhotos photoIds router = forM_ photoIds $ \photoId -> Runtime.passwordAjax

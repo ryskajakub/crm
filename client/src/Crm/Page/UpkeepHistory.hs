@@ -62,7 +62,8 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       uh @ (D.UpkeepHistory {}) -> uh { D.photosInModal = photoIds }
       _ -> D.navigation appState }
 
-  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal photosInModal
+  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = 
+    PH.mkPhotoModal photosInModal router
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (BT.table' (class' "break-words") Nothing [cols, thead header', tbody bodyCells]) where
@@ -176,4 +177,4 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
         label'' = if deletable then "Zakázat smazávání" else "Povolit smazávání"
         button = BTN.button' buttonProps label''
         in form' (class' "navbar-form") button ]
-  in (div $ B.grid (header : navigation : photoModalElement : flattenedUpkeepsHtml), photoFetch router)
+  in (div $ B.grid (header : navigation : photoModalElement : flattenedUpkeepsHtml), photoFetch)

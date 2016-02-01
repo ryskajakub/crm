@@ -101,7 +101,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos' >> machineTypeCB >> (photoFetch router))
+      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos' >> machineTypeCB >> (photoFetch ))
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -122,7 +122,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     (Left (mdt @ MD.MachineDetail {})) -> md { MD.machinePageMode = Left (mdt { MD.upkeepPhotoIds = photoIds }) }
     _ -> md
 
-  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal upkeepPhotoIds
+  PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal upkeepPhotoIds router
 
   upkeepHistoryHtml = let
     mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId]) -> DOMElement
