@@ -41,16 +41,16 @@ instance Functor MachineTypeId' where
   f `fmap` (MachineTypeId mtId) = MachineTypeId . f $ mtId
 #endif
 
-type MachineType' = (MachineTypeId, MachineType)
-
 -- | Machine type can be either an id or the machine type object
-data MachineType = MachineType {
-  kind :: Automatic MK.MachineKindEnum ,
-  machineTypeName :: Text ,
-  machineTypeManufacturer :: Text }
+data MachineType' kind name manufacturer = MachineType {
+  kind :: kind ,
+  machineTypeName :: name ,
+  machineTypeManufacturer :: manufacturer }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 #endif
+
+type MachineType = MachineType' MK.MachineKindEnum Text Text
 
 newMachineType :: MachineType
 newMachineType = MachineType MK.RotaryScrewCompressor (pack "") (pack "")
@@ -64,4 +64,5 @@ data MyEither =
 
 #ifndef FAY
 makeAdaptorAndInstance' ''MachineTypeId'
+makeAdaptorAndInstance' ''MachineType'
 #endif
