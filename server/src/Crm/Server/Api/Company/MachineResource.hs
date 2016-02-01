@@ -9,7 +9,6 @@ import           Control.Monad               (forM_)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Monad.Reader        (ask)
-import           Data.Tuple.All              (sel1)
 import           Data.Text                   (Text)
 import           Data.Pool                   (withResource)
 import           Database.PostgreSQL.Simple  (Connection)
@@ -41,12 +40,15 @@ import           Crm.Server.DB
 import           Crm.Server.Handler          (mkInputHandler', mkListing')
 import           Crm.Server.CachedCore       (recomputeSingle)
 
+import qualified Crm.Server.Database.UpkeepSequence as USD
+import           Crm.Server.Database.MachineType
+
 import           TupleTH                     (proj)
 
 
 createMachineHandler :: Handler (IdDependencies' C.CompanyId)
 createMachineHandler = mkInputHandler' (jsonO . jsonI) $
-    \(newMachine, machineType, contactPersonIdentification', linkedMachineId, machineSpecificData) -> do
+    \(newMachine, machineType', contactPersonIdentification', linkedMachineId, machineSpecificData) -> do
   ((cache, pool), companyId) <- ask
   let contactPersonIdentification = toMaybe contactPersonIdentification'
   contactPersonId' <- case contactPersonIdentification of
@@ -60,7 +62,7 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
       return . Just . CP.ContactPersonId $ contactPersonNewId
     Nothing -> return Nothing
   machineId <- withResource pool $ \connection -> addMachine connection newMachine 
-    (C.getCompanyId companyId) machineType contactPersonId' (toMaybe linkedMachineId) machineSpecificData
+    (C.getCompanyId companyId) machineType' contactPersonId' (toMaybe linkedMachineId) machineSpecificData
   withResource pool $ \connection -> recomputeSingle companyId connection cache
   return machineId
     
@@ -74,24 +76,37 @@ addMachine ::
   Maybe M.MachineId -> 
   [(EF.ExtraFieldId, Text)] -> 
   ExceptT (Reason r) (IdDependencies' C.CompanyId) M.MachineId -- ^ id of newly created machine
-addMachine connection machine companyId' machineType contactPersonId linkedMachineId extraFields = do
-  machineTypeId <- liftIO $ case machineType of
-    MT.MyInt id' -> return $ id'
+addMachine connection machine' companyId' machineType' contactPersonId linkedMachineId extraFields = do
+  machineTypeId <- case machineType' of
+    MT.MyInt id' -> return . MT.MachineTypeId $ id'
     MT.MyMachineType (MT.MachineType kind name' manufacturer, upkeepSequences) -> do
-      newMachineTypeId <- runInsertReturning
+      newMachineTypeIds <- liftIO $ runInsertReturning
         connection
-        machineTypesTable (Nothing, pgInt4 $ MK.kindToDbRepr kind, pgStrictText name', pgStrictText manufacturer)
-        sel1
-      let machineTypeId = head newMachineTypeId -- todo safe
-      forM_ upkeepSequences (\(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
+        machineTypesTable 
+        (MachineTypeRow {
+          _machineTypePK = MT.MachineTypeId Nothing ,
+          _machineType = MT.MachineType {
+            MT.kind = pgInt4 . MK.kindToDbRepr $ kind ,
+            MT.machineTypeName = pgStrictText name' ,
+            MT.machineTypeManufacturer = pgStrictText manufacturer }})
+        _machineTypePK
+      newMachineTypeId <- singleRowOrColumn newMachineTypeIds
+      let _ = newMachineTypeId :: MT.MachineTypeId
+      liftIO $ forM_ upkeepSequences $ \(US.UpkeepSequence displayOrdering label repetition oneTime) -> runInsert
         connection
         upkeepSequencesTable 
-        (pgInt4 displayOrdering, pgStrictText label, 
-          pgInt4 repetition, pgInt4 machineTypeId, pgBool oneTime))
-      return machineTypeId
+        (USD.UpkeepSequenceRow {
+          USD._machineTypeFK = fmap pgInt4 newMachineTypeId ,
+          USD._upkeepSequence = US.UpkeepSequence {
+            US.displayOrdering = pgInt4 displayOrdering ,
+            US.label_ = pgStrictText label ,
+            US.repetition = pgInt4 repetition ,
+            US.oneTime = pgBool oneTime }})
+      return newMachineTypeId
   let
+    _ = machineTypeId :: MT.MachineTypeId
     M.Machine machineOperationStartDate' initialMileage mileagePerYear label
-      serialNumber yearOfManufacture archived furtherSpecification = machine
+      serialNumber yearOfManufacture archived furtherSpecification = machine'
   machineIds <- liftIO $ runInsertReturning
     connection
     machinesTable 
@@ -99,7 +114,7 @@ addMachine connection machine companyId' machineType contactPersonId linkedMachi
       _machinePK = M.MachineId Nothing ,
       _companyFK = C.CompanyId . pgInt4 $ companyId' ,
       _contactPersonFK = maybeToNullable $ fmap (pgInt4 . CP.getContactPersonId) contactPersonId ,
-      _machineTypeFK = pgInt4 machineTypeId ,
+      _machineTypeFK = fmap pgInt4 machineTypeId ,
       _linkageFK = M.MachineId $ maybeToNullable $ (pgInt4 . M.getMachineId) `fmap` linkedMachineId ,
       _machine = M.Machine {
         M.machineOperationStartDate = maybeToNullable $ fmap (pgDay . YMD.ymdToDay) machineOperationStartDate' ,

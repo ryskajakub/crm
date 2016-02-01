@@ -12,7 +12,6 @@ import           Control.Lens               (over, mapped, view)
 import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 import           Data.Pool                  (withResource)
-import           Data.Text                  (Text)
 
 import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Except (mapExceptT, runExceptT)
@@ -26,8 +25,6 @@ import           Safe                       (minimumMay)
 
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
-import qualified Crm.Shared.Upkeep          as U
-import qualified Crm.Shared.UpkeepMachine   as UM
 import qualified Crm.Shared.YearMonthDay    as YMD
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
@@ -35,6 +32,7 @@ import           Crm.Server.DB
 import           Crm.Server.Helpers         (today)
 import           Crm.Server.Types 
 import qualified Crm.Server.Database.UpkeepMachine as UMD
+import           Crm.Server.Database.UpkeepSequence
 
 
 recomputeWhole' ::
@@ -90,8 +88,8 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   companyRow <- singleRowOrColumn companyRows
   let (company :: CompanyRecord) = over companyCoords C.mapCoordinates companyRow
   machines <- liftIO $ runMachinesInCompanyQuery companyId connection
-  nextDays <- liftIO $ forM machines $ \machine -> do
-    nextServiceDay <- addNextDates $(proj 8 0) $(proj 8 1) machine connection
+  nextDays <- liftIO $ forM machines $ \machine' -> do
+    nextServiceDay <- addNextDates $(proj 8 0) $(proj 8 1) machine' connection
     return $ case nextServiceDay of
       Planned _  -> Nothing
       Computed d -> Just d
@@ -123,7 +121,7 @@ addNextDates getMachineId getMachine a = \conn -> do
   let
     convertFullUpkeeps = fmap $ \(u :: UpkeepRow, um :: UMD.UpkeepMachineRow) ->
       (view upkeep u, view UMD.upkeepMachine um)
-    upkeepSequences = fmap (\r -> $(proj 2 1) (convert r :: UpkeepSequenceMapped)) upkeepSequenceRows
+    upkeepSequences = fmap (\(usr :: UpkeepSequenceRecord) -> _upkeepSequence usr) upkeepSequenceRows
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x, xs)

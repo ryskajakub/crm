@@ -5,7 +5,7 @@ import           Data.IORef                 (newIORef)
 import qualified Data.Map                   as M
 import           Data.Profunctor            (lmap)
 
-import           Control.Monad.Reader       (ReaderT, runReaderT)
+import           Control.Monad.Reader       (runReaderT)
 import           Control.Monad.Trans.Except (runExceptT)
 import           Control.Concurrent.MVar    (takeMVar)
 

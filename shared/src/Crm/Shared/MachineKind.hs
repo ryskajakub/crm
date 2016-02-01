@@ -3,14 +3,17 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Crm.Shared.MachineKind where
 
 #ifndef FAY
 import GHC.Generics
 import Data.Data
+import Opaleye      (queryRunnerColumn, PGInt4,
+                      QueryRunnerColumnDefault(..), fieldQueryRunnerColumn)
 #endif
-import Data.Text (Text, pack)
+import Data.Text    (Text, pack)
 
 -- | For the machines, that need to be serviced 1/year, set this repetition and usage
 hoursInYear :: Int
@@ -69,3 +72,9 @@ data MachineKindSpecific = MachineKindSpecific {
 
 newMachineKindSpecific :: MachineKindSpecific
 newMachineKindSpecific = MachineKindSpecific (pack "")
+
+#ifndef FAY
+instance QueryRunnerColumnDefault PGInt4 MachineKindEnum where
+  queryRunnerColumnDefault = 
+    queryRunnerColumn id dbReprToKind fieldQueryRunnerColumn
+#endif
