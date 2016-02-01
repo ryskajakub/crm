@@ -75,8 +75,9 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
 mapListing :: ListHandler Dependencies
 mapListing = mkListing' jsonO (const $ unsortedResult)
 
-unsortedResult :: ExceptT (Reason a) Dependencies 
-                  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
+unsortedResult :: 
+  ExceptT (Reason a) Dependencies 
+  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
 unsortedResult = do 
   (cache, _) <- ask
   content <- liftIO $ getCacheContent cache

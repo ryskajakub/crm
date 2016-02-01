@@ -208,7 +208,7 @@ startRouter appVar = startedRouter where
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
             in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId (\otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
-                machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
+                machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False (displayDate startDateInCalendar))
                   contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display photos upkeeps companyId [])) router ) router ) router ) router ,

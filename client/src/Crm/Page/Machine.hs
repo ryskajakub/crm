@@ -50,6 +50,7 @@ import           Crm.Helpers
 import qualified Crm.Router                            as R
 import qualified Crm.Validation                        as V
 
+
 machineTypeLabel :: Text
 machineTypeLabel = "Typ zařízení" 
 
