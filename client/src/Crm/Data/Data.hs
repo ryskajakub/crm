@@ -54,7 +54,7 @@ data NavigationState =
   PlannedUpkeeps { 
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] } |
   MachineTypeList {
-    machineTypes :: [(MT.MachineType',Int)] } |
+    machineTypes :: [((MT.MachineTypeId, MT.MachineType),Int)] } |
   MachineTypeEdit {
     machineTypeId :: MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) ,

@@ -10,11 +10,8 @@ module Crm.Shared.MachineType where
 #ifndef FAY
 import GHC.Generics
 import Data.Data
-import Fay.FFI
 import Rest.Info                           (Info(..))
 import Data.Profunctor.Product.TH          (makeAdaptorAndInstance')
-#else
-import FFI
 #endif
 import Data.Text                           (Text, pack)
 

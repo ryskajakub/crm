@@ -237,7 +237,7 @@ fetchMachineTypesAutocomplete text =
     (unpack . encodeURIComponent $ text)
 
 fetchMachineTypes :: 
-  ([(MT.MachineType', Int)] -> Fay ()) ->
+  ([((MT.MachineTypeId, MT.MachineType), Int)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
 fetchMachineTypes = XMT.list maxCount

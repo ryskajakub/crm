@@ -371,7 +371,7 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
 
 machineTypesList :: 
   R.CrmRouter -> 
-  [(MT.MachineType', Int)] -> 
+  [((MT.MachineTypeId, MT.MachineType), Int)] -> 
   DOMElement
 machineTypesList router machineTypes = let
   head' =
