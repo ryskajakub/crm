@@ -5,6 +5,7 @@ import           Data.Maybe                (fromMaybe)
 
 import           Data.Time.Calendar        (Day, addDays)
 import           Safe.Foldable             (minimumMay)
+import           Safe                      (headMay)
 
 import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
@@ -47,12 +48,14 @@ nextServiceDate machine sequences upkeeps today = let
     nextServiceDay     = addDays daysToNextService referenceDay
 
   regularUpkeeps = filter ((UM.Regular ==) . UM.upkeepType . snd) upkeeps
+  installationUpkeep' = headMay . filter ((UM.Installation ==) . UM.upkeepType . snd) $ upkeeps
 
   computedUpkeep = case regularUpkeeps of
     [] -> let 
-      intoOperationDate = case M.machineOperationStartDate machine of 
-        Just operationStartDate' -> YMD.ymdToDay operationStartDate'
-        Nothing                  -> today
+      intoOperationDate = case (installationUpkeep', M.machineOperationStartDate machine) of 
+        (Just installationUpkeep, _)  -> YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep
+        (_, Just operationStartDate') -> YMD.ymdToDay operationStartDate'
+        (_, Nothing)                  -> today
       filteredSequences = case oneTimeSequences of
         x : _ -> [x]
         []    -> nonEmptySequences

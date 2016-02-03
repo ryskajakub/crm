@@ -33,6 +33,7 @@ import qualified Crm.Shared.Machine        as M
 import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.UpkeepMachine  as UM
 import qualified Crm.Shared.ServerRender   as SR
+import           Crm.Shared.YearMonthDay   (dayToYmd)
 
 main :: IO ()
 main = defaultMain tests
@@ -65,7 +66,9 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When there is a non-repeat upkeep sequence and no past upkeeps, then it is taken" firstUpkeep ,
   testCase "When the operation start date is not specified in machine, today is taken" missingOperationStartDate ,
   testCase "When the machine is inactive, nothing else is looked at and no date is computed" inactiveMachine ,
-  testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ]
+  testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ,
+  testCase "When the machine upkeep is installation, then the next service is first" installationUpkeep ,
+  testCase "When there is an installation, then it is taken instead of the into operation as base for computing the first service" installationSupercedesIntoOperation ]
 
 unitTests' :: TestTree
 unitTests' = testGroup "Next service type hint : Unit tests" [
@@ -85,6 +88,10 @@ upkeepSequence :: US.UpkeepSequence
 upkeepSequence = US.UpkeepSequence {
   US.oneTime = False ,
   US.repetition = 10000 }
+
+oneTimeUpkeepSequence = US.UpkeepSequence {
+  US.repetition = 1000 ,
+  US.oneTime = True }
 
 upkeepDate :: Day
 upkeepDate = fromGregorian 2000 1 1
@@ -197,6 +204,22 @@ repairUpkeep = let
   result = nextServiceDate machine (upkeepSequence, []) [(earlier, upkeepMachine), (later, upkeepMachine')] undefined
   in assertEqual "Repair must be skipped" expectedResult result
 
+installationUpkeep :: Assertion
+installationUpkeep = let
+  upkeepMachine' = upkeepMachine { UM.upkeepType = UM.Installation }
+  result = nextServiceDate machine (upkeepSequence, [oneTimeUpkeepSequence]) [(upkeep, upkeepMachine')] undefined
+  expectedResult = Computed $ fromGregorian 2000 3 14
+  in assertEqual "Installation must not be counted as a first service" expectedResult result
+
+installationSupercedesIntoOperation :: Assertion
+installationSupercedesIntoOperation = let
+  upkeepMachine' = upkeepMachine { UM.upkeepType = UM.Installation }
+  upkeepLater = upkeep {
+    U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
+  result = nextServiceDate machine (upkeepSequence, []) [(upkeepLater, upkeepMachine')] undefined
+  expectedResult = Computed $ fromGregorian 2007 1 1 
+  in assertEqual "Installation must be taken instead of into operation field" expectedResult result
+
 inactiveMachine :: Assertion
 inactiveMachine = let
   machine' = machine {
@@ -223,9 +246,6 @@ pickSmallestRepeatedSequence = let
     US.repetition = 2500 }
   upkeepSequence3 = upkeepSequence {
     US.repetition = 20000 }
-  oneTimeUpkeepSequence = US.UpkeepSequence {
-    US.repetition = 1000 ,
-    US.oneTime = True }
   result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [(upkeep, UM.newUpkeepMachine)] undefined
   expectedResult = Computed $ fromGregorian 2000 7 1
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
