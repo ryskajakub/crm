@@ -63,7 +63,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
       _ -> D.navigation appState }
 
   PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = 
-    PH.mkPhotoModal photosInModal router
+    PH.mkPhotoModal photosInModal deletable router
 
   upkeepRenderHtml3 (oneToThreeUpkeeps @ (upkeep1:restUpkeeps)) = 
     (BT.table' (class' "break-words") Nothing [cols, thead header', tbody bodyCells]) where
@@ -136,7 +136,6 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
           mkCellContent labelType upkeepT content' =
             [span' (class'' ["label", "label-" <> labelType]) upkeepT, text2DOM $ " " <> content']
           panel = case UM.upkeepType upkeepMachine of
-
             UM.Repair -> mkCellContent "danger" "O"
             UM.Regular -> mkCellContent "info" "S"
             UM.Check -> mkCellContent "default" "K"

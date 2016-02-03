@@ -27,18 +27,19 @@ data PhotoModal = PhotoModal {
   mkPhotoModalDisplayButton :: [P.PhotoId] -> ([P.PhotoId] -> Fay ()) -> [DOMElement] ,
   fetchPhotosToModal :: Fay () }
 
-mkPhotoModal :: [P.PhotoId] -> CrmRouter -> PhotoModal
-mkPhotoModal photoIds router = let
-  
+mkPhotoModal :: [P.PhotoId] -> Bool -> CrmRouter -> PhotoModal
+mkPhotoModal photoIds deletable router = let
+
   BM.ModalPair modalButtonProps modalElementBase = BM.mkModalPair 
 
   photoModalElement' = modalElementBase . div' (class' "upkeep-photos") . map mkPhotoRegion $ photoIds
     where
     mkPhotoRegion photoId = div [
       let
-        buttonProps = (BTN.buttonProps {
+        buttonProps = BTN.buttonProps {
+          BTN.disabled = Defined . not $ deletable ,
           BTN.bsStyle = Defined "danger" ,
-          BTN.onClick = Defined $ const clickHandler })
+          BTN.onClick = Defined $ const clickHandler }
         clickHandler = deletePhoto photoId reload router
         in BTN.button' buttonProps [G.arrowDown, text2DOM " Smazat fotku"] ,
       IMG.image' 
