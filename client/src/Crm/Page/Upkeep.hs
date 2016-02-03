@@ -360,6 +360,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         UM.Regular -> "S"
         UM.Repair -> "O"
         UM.Check -> "K"
+        UM.Installation -> "I"
       upkeepTypeDropdown = div' (class' "repair") $ case editing of
         Editing -> dropdown
           (UM.allUpkeepTypes `zip` UM.allUpkeepTypes)

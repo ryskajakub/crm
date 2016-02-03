@@ -137,9 +137,10 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
             [span' (class'' ["label", "label-" <> labelType]) upkeepT, text2DOM $ " " <> content']
           panel = case UM.upkeepType upkeepMachine of
 
-            UM.Repair -> mkCellContent "danger" "O" -- (\x -> [span' (class'' ["label", "label-danger"]) "O", text2DOM $ " " <> x])
-            UM.Regular -> mkCellContent "info" "S" -- (\x -> [span' (class'' ["label", "label-info"]) "S", text2DOM $ " " <> x])
-            UM.Check -> mkCellContent "default" "K" -- (\x -> [span' (class'' ["label", "label-default"]) "K", text2DOM $ " " <> x])
+            UM.Repair -> mkCellContent "danger" "O"
+            UM.Regular -> mkCellContent "info" "S"
+            UM.Check -> mkCellContent "default" "K"
+            UM.Installation -> mkCellContent "default" "I"
           content = if UM.recordedMileage upkeepMachine == 0
             then ""
             else showInt . UM.recordedMileage $ upkeepMachine
