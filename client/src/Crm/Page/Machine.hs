@@ -131,6 +131,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
       repair = let
         (labelClass, labelText) = case UM.upkeepType upkeepMachine of
+          UM.Installation -> ("label-info", "I")
           UM.Repair -> ("label-danger", "O")
           UM.Regular -> ("label-info", "S")
           UM.Check -> ("label-default", "K")
