@@ -40,17 +40,18 @@ instance Functor UpkeepId' where
   f `fmap` (UpkeepId mId) = UpkeepId . f $ mId
 #endif
 
-data UpkeepGen'' upkeepDate upkeepClosed workHours workDescription recommendation = Upkeep {
+data UpkeepGen'' upkeepDate upkeepClosed workHours setDate workDescription recommendation = Upkeep {
   upkeepDate :: upkeepDate ,
   upkeepClosed :: upkeepClosed ,
   workHours :: workHours ,
   workDescription :: workDescription ,
-  recommendation :: recommendation }
+  recommendation :: recommendation ,
+  setDate :: setDate }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 makeLensesFor [("upkeepDate", "upkeepDateL"), ("upkeepClosed", "upkeepClosedL")] ''UpkeepGen''
 #endif
-type UpkeepGen' = UpkeepGen'' D.YearMonthDay Bool Text
+type UpkeepGen' = UpkeepGen'' D.YearMonthDay Bool Text Bool
 type Upkeep = UpkeepGen' Text Text
 type UpkeepMarkup = UpkeepGen' [SR.Markup] Text
 type Upkeep2Markup = UpkeepGen' [SR.Markup] [SR.Markup]
@@ -59,7 +60,7 @@ type Upkeep'' = (UpkeepId, Upkeep)
 type Upkeep' = (UpkeepId, Upkeep, [UM.UpkeepMachine'])
 
 newUpkeep :: D.YearMonthDay -> Upkeep
-newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "")
+newUpkeep ymd = Upkeep ymd False (pack "0") (pack "") (pack "") False
 
 #ifndef FAY
 makeAdaptorAndInstance' ''UpkeepId'

@@ -234,6 +234,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     upkeepPageHeader : 
     formHeader :
     (map upkeepMachineRow machines ++ 
+    [setDateCheckboxRow] ++
     [dateRow] ++ 
     employeeSelectRows ++
     closeUpkeepRows ++ 
@@ -385,6 +386,10 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
     setDate date' = setUpkeep $ (upkeep { U.upkeepDate = date' }, upkeepMachines)
     in DP.datePicker' Editing upkeepDatePicker' modifyDatepickerDate (U.upkeepDate upkeep) setDate
 
+  setDateCheckbox = let
+    mkContainer = div' (class' "editing-checkbox")
+    in mkContainer $ checkbox Editing (U.setDate upkeep) (\b -> setUpkeep $ (upkeep { U.setDate = b }, upkeepMachines))
+  setDateCheckboxRow = oneElementRow "Jenom nastavit datum" setDateCheckbox
   dateRow = oneElementRow "Datum" datePicker
 
   employeeSelectRows = 

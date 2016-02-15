@@ -82,7 +82,8 @@ addUpkeep connection (upkeep', upkeepMachines, employeeIds) = do
         (pgBool . U.upkeepClosed $ upkeep')
         (pgStrictText . U.workHours $ upkeep')
         (pgStrictText . U.workDescription $ upkeep')
-        (pgStrictText . U.recommendation $ upkeep')))
+        (pgStrictText . U.recommendation $ upkeep')
+        (pgBool . U.setDate $ upkeep')))
     (view upkeepPK)
   let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
@@ -158,7 +159,8 @@ updateUpkeep conn upkeepId (upkeep', upkeepMachines) employeeIds = do
           U.upkeepClosed = pgBool . U.upkeepClosed $ upkeep' ,
           U.workHours = pgStrictText . U.workHours $ upkeep' ,
           U.workDescription = pgStrictText . U.workDescription $ upkeep' ,
-          U.recommendation = pgStrictText . U.recommendation $ upkeep'})
+          U.recommendation = pgStrictText . U.recommendation $ upkeep' ,
+          U.setDate = pgBool . U.setDate $ upkeep' })
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> UMD._upkeepFK upkeepRow .=== (pgInt4 `fmap` upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines

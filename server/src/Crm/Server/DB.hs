@@ -339,21 +339,21 @@ data UpkeepRow'' upkeepPK upkeep = UpkeepRow {
 makeLenses ''UpkeepRow''
 
 type UpkeepRow' upkeepPK = UpkeepRow'' upkeepPK 
-  (U.UpkeepGen'' DBDate DBBool DBText DBText DBText)
+  (U.UpkeepGen'' DBDate DBBool DBText DBBool DBText DBText)
 type UpkeepsTable = UpkeepRow' UpkeepPK
 type UpkeepsWriteTable = UpkeepRow' (U.UpkeepId' (Maybe DBInt))
 type UpkeepsLeftJoinTable = UpkeepRow'' 
   (U.UpkeepId' MBInt)
-  (U.UpkeepGen'' MBDate MBBool MBText MBText MBText)
+  (U.UpkeepGen'' MBDate MBBool MBText MBBool MBText MBText)
 type UpkeepRow = UpkeepRow'' U.UpkeepId U.Upkeep
 
 mapMaybeUpkeep ::
-  UpkeepRow'' (U.UpkeepId' (Maybe Int)) (U.UpkeepGen'' (Maybe Day) (Maybe Bool) (Maybe Text) (Maybe Text) (Maybe Text)) ->
+  UpkeepRow'' (U.UpkeepId' (Maybe Int)) (U.UpkeepGen'' (Maybe Day) (Maybe Bool) (Maybe Text) (Maybe Bool) (Maybe Text) (Maybe Text)) ->
   Maybe UpkeepRow
 mapMaybeUpkeep (UpkeepRow uId' u') = let
   uId = fmap U.UpkeepId (U.getUpkeepId uId')
   u = pure U.Upkeep <*> fmap YMD.dayToYmd (U.upkeepDate u') <*> U.upkeepClosed u' <*> 
-    U.workHours u' <*> U.workDescription u' <*> U.recommendation u'
+    U.workHours u' <*> U.workDescription u' <*> U.recommendation u' <*> U.setDate u'
   in pure UpkeepRow <*> uId <*> u
 
 makeAdaptorAndInstance' ''UpkeepRow''
@@ -366,7 +366,8 @@ upkeepsTable = Table "upkeeps" $ (pUpkeepRow UpkeepRow {
     U.upkeepClosed = required "closed" ,
     U.workHours = required "work_hours" ,
     U.workDescription = required "work_description" ,
-    U.recommendation = required "recommendation" }})
+    U.recommendation = required "recommendation" ,
+    U.setDate = required "set_date" }})
 
 
 employeesTable :: Table EmployeeWriteTable EmployeeTable
@@ -685,7 +686,7 @@ companyUpkeepsQuery companyId = let
     restrict -< U.upkeepClosed . _upkeep $ upkeepRow
     returnA -< upkeepRow
   aggregatedUpkeepsQuery = AGG.aggregate (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)) upkeepsQuery'
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr)) upkeepsQuery'
   orderedUpkeepQuery = orderBy (asc(\u -> U.upkeepDate . _upkeep $ u)) $ aggregatedUpkeepsQuery
   in orderedUpkeepQuery
 
@@ -836,7 +837,7 @@ groupedPlannedUpkeepsQuery = let
       (_companyPK companyRow, _companyCore companyRow))
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
     AGG.aggregate (p3 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min), AGG.min,
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr), AGG.min,
       p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min)))
     plannedUpkeepsQuery
 
@@ -907,7 +908,7 @@ dailyPlanQuery employeeId' day = let
     upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
     returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
   in AGG.aggregate (p2(pUpkeepRow (UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy) 
-    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min)), aggrArray)) q
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr)), aggrArray)) q
 
 tasksForEmployeeQuery :: E.EmployeeId -> Query TasksTable
 tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do

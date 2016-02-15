@@ -70,7 +70,8 @@ create table upkeeps (
   closed boolean not null ,
   work_hours varchar (500) not null ,
   work_description varchar (5000) not null ,
-  recommendation varchar (5000) not null );
+  recommendation varchar (5000) not null ,
+  set_date boolean not null );
 
 create table upkeep_machines (
   upkeep_id integer not null references upkeeps (id) ,
