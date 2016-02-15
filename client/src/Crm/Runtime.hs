@@ -56,9 +56,10 @@ notAuthorized = 401
 serverDown :: Int
 serverDown = 502
 
-withPassword :: Maybe Text
-             -> (JQ.AjaxSettings a b -> Fay ())
-             -> Fay ()
+withPassword :: 
+  Maybe Text -> 
+  (JQ.AjaxSettings a b -> Fay ()) -> 
+  Fay ()
 withPassword maybePassword callback = do
   password' <- case maybePassword of
     Just password -> return $ Defined password
@@ -73,14 +74,15 @@ withPassword maybePassword callback = do
       JQ.headers = Defined (JQ.makeRqObj (pack "Authorization") (encodeB64 password)) }
   callback passwordSettings
 
-passwordAjax :: Text
-             -> (Automatic a -> Fay ())
-             -> Maybe b
-             -> Text
-             -> (Maybe (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ()))
-             -> Maybe Text
-             -> CrmRouter
-             -> Fay ()
+passwordAjax :: 
+  Text -> 
+  (Automatic a -> Fay ()) -> 
+  Maybe b -> 
+  Text -> 
+  (Maybe (JQ.JQXHR -> Maybe Text -> Maybe Text -> Fay ())) -> 
+  Maybe Text -> 
+  CrmRouter -> 
+  Fay ()
 passwordAjax url callback' inputData method' onError maybePassword router = 
   withPassword maybePassword $ \passwordSettings -> let
     commonSettings = passwordSettings {
