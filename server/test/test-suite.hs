@@ -68,7 +68,8 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When the machine is inactive, nothing else is looked at and no date is computed" inactiveMachine ,
   testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ,
   testCase "When the machine upkeep is installation, then the next service is first" installationUpkeep ,
-  testCase "When there is an installation, then it is taken instead of the into operation as base for computing the first service" installationSupercedesIntoOperation ]
+  testCase "When there is an installation, then it is taken instead of the into operation as base for computing the first service" installationSupercedesIntoOperation ,
+  testCase "When there is a planned call, then the earliest is taken as computed" plannedCallUpkeep ]
 
 unitTests' :: TestTree
 unitTests' = testGroup "Next service type hint : Unit tests" [
@@ -99,7 +100,8 @@ upkeepDate = fromGregorian 2000 1 1
 upkeep :: U.Upkeep
 upkeep = U.Upkeep {
   U.upkeepDate = dayToYmd upkeepDate ,
-  U.upkeepClosed = True }
+  U.upkeepClosed = True ,
+  U.setDate = False }
 
 noNewlineAtTheEnd :: Assertion
 noNewlineAtTheEnd = let
@@ -210,6 +212,22 @@ installationUpkeep = let
   result = nextServiceDate machine (upkeepSequence, [oneTimeUpkeepSequence]) [(upkeep, upkeepMachine')] undefined
   expectedResult = Computed $ fromGregorian 2000 3 14
   in assertEqual "Installation must not be counted as a first service" expectedResult result
+
+plannedCallUpkeep :: Assertion
+plannedCallUpkeep = let
+  resultDate = fromGregorian 2005 1 1
+  upkeep' = upkeep {
+    U.upkeepClosed = False ,
+    U.upkeepDate = dayToYmd resultDate ,
+    U.setDate = True }
+  upkeep2' = upkeep' {
+    U.upkeepDate = dayToYmd $ fromGregorian 2006 1 1 }
+  upkeepClosed = upkeep {
+    U.upkeepDate = dayToYmd $ fromGregorian 2003 1 1 }
+  result = nextServiceDate machine (upkeepSequence, [])
+    [(upkeep', upkeepMachine), (upkeep2', upkeepMachine), (upkeepClosed, upkeepMachine)] undefined
+  expectedResult = Computed resultDate
+  in assertEqual "The earliest planned call must be taken" expectedResult result
 
 installationSupercedesIntoOperation :: Assertion
 installationSupercedesIntoOperation = let
@@ -381,8 +399,8 @@ instance Arbitrary SR.Markup where
 
 plannedUpkeepsProperty :: QCGen -> NonEmptyList Day -> [Day] -> Bool
 plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
-  plannedUpkeeps = fmap (\day -> U.Upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
-  closedUpkeeps' = fmap (\day -> U.Upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
+  plannedUpkeeps = fmap (\day -> upkeep { U.upkeepClosed = False , U.upkeepDate = dayToYmd $ day }) (getNonEmpty plannedUpkeepDays)
+  closedUpkeeps' = fmap (\day -> upkeep { U.upkeepClosed = True , U.upkeepDate = dayToYmd $ day }) closedUpkeepDays
   upkeeps = fmap (,UM.newUpkeepMachine) (plannedUpkeeps ++ closedUpkeeps')
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)

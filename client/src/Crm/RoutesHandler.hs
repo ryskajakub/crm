@@ -212,7 +212,7 @@ startRouter appVar = startedRouter where
                   contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display photos upkeeps companyId [])) router ) router ) router ) router ,
-    plannedUpkeeps' $-> ( const $
+    plannedUpkeeps' $-> (const $
       fetchPlannedUpkeeps $ \plannedUpkeeps'' -> let
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 

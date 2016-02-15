@@ -4,7 +4,7 @@ import           Data.List                 (partition, minimumBy, find, maximumB
 import           Data.Maybe                (fromMaybe)
 
 import           Data.Time.Calendar        (Day, addDays)
-import           Safe.Foldable             (minimumMay)
+import           Safe.Foldable             (minimumByMay)
 import           Safe                      (headMay)
 
 import qualified Crm.Shared.Machine        as M
@@ -70,9 +70,13 @@ nextServiceDate machine sequences upkeeps today = let
   openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
-      let nextOpenUpkeep' = fmap YMD.ymdToDay . minimumMay . fmap (U.upkeepDate . fst) $ openUpkeeps, 
-      Just nextOpenUpkeep <- nextOpenUpkeep' -> Planned nextOpenUpkeep
-    _ -> Computed computedUpkeep 
+      let nextOpenUpkeep' = minimumByMay (\a b -> U.upkeepDate a `compare` U.upkeepDate b) . fmap fst $ openUpkeeps, 
+      Just nextOpenUpkeep <- nextOpenUpkeep' -> let
+        process = YMD.ymdToDay . U.upkeepDate
+        in if U.setDate nextOpenUpkeep
+          then Computed . process $ nextOpenUpkeep
+          else Planned . process $ nextOpenUpkeep
+    _ -> Computed computedUpkeep
   in if M.archived machine
     then Inactive
     else activeMachineResult

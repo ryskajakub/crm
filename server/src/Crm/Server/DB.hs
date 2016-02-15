@@ -829,6 +829,7 @@ groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow <- queryTable upkeepsTable -< ()
     restrict -< not . U.upkeepClosed . _upkeep $ upkeepRow
+    restrict -< not . U.setDate . _upkeep $ upkeepRow
     upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachinesRow
     machineTypeRow <- joinL MTD.machineTypesTable MTD.machineTypePK -< _machineTypeFK machineRow
@@ -939,7 +940,9 @@ takenColoursQuery = distinct $ proc () -> do
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
-notesForUpkeep :: U.UpkeepId -> Query (MachinePK, DBText, DBText)
+notesForUpkeep :: 
+  U.UpkeepId -> 
+  Query (MachinePK, DBText, DBText)
 notesForUpkeep upkeepId = proc () -> do
   upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
   machinesRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
