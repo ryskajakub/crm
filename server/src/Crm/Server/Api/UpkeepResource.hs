@@ -190,8 +190,9 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
     upkeepsWithEmployees = map (\tuple -> let
       employee = map snd . filter (($(proj 6 1) tuple ==) . fst) $ employees
       in $(catTuples 6 1) tuple employee) upkeeps'
-    screw = filter (\t -> (MK.RotaryScrewCompressor ==) $ $(proj 7 0) t) upkeepsWithEmployees
-    others = filter (\t -> (MK.RotaryScrewCompressor /=) $ $(proj 7 0) t) upkeepsWithEmployees
+    filterMain machineType' = machineType' == MK.RotaryScrewCompressor || machineType' == MK.VacuumPump
+    screw = filter (filterMain . $(proj 7 0)) upkeepsWithEmployees
+    others = filter (not . filterMain . $(proj 7 0)) upkeepsWithEmployees
   return [fmap $(dropTuple 7 1) screw, fmap $(dropTuple 7 1) others]
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
