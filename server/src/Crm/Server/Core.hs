@@ -52,14 +52,15 @@ nextServiceDate machine sequences upkeeps today = let
 
   computedUpkeep = case regularUpkeeps of
     [] -> let 
-      intoOperationDate = case (installationUpkeep', M.machineOperationStartDate machine) of 
-        (Just installationUpkeep, _)  -> YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep
-        (_, Just operationStartDate') -> YMD.ymdToDay operationStartDate'
-        (_, Nothing)                  -> today
       filteredSequences = case oneTimeSequences of
         x : _ -> [x]
         []    -> nonEmptySequences
-      in computeBasedOnPrevious intoOperationDate filteredSequences
+      in case (installationUpkeep', M.machineOperationStartDate machine) of 
+        (Just installationUpkeep, _) -> 
+          computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
+        (_, Just operationStartDate') -> 
+          computeBasedOnPrevious (YMD.ymdToDay operationStartDate') filteredSequences
+        (_, Nothing) -> today
     nonEmptyUpkeeps -> let
       lastServiceDate = YMD.ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
