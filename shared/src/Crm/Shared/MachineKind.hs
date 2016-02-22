@@ -62,6 +62,12 @@ dbReprToKind int = fst $ machineKinds !! int
 kindToStringRepr :: MachineKindEnum -> Text
 kindToStringRepr = snd . (\i -> machineKinds !! i) . kindToDbRepr
 
+isUpkeepByUs :: MachineKindEnum -> Bool
+isUpkeepByUs CoolingUnit = False
+isUpkeepByUs AdsorptionDryer = False
+isUpkeepByUs CondensationDryer = False
+isUpkeepByUs _ = True
+
 data MachineKindSpecific = MachineKindSpecific {
   name :: Text }
 #ifdef FAY

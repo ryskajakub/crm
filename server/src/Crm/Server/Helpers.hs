@@ -43,7 +43,6 @@ import           Opaleye.Table               (Table)
 import           Rest.Types.Error            (DataError(ParseError), Reason(IdentError))
 import           Safe                        (readMay)
 
-import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.ServerRender     as SR
 
 import           Crm.Server.Types            (GlobalBindings, Cache)

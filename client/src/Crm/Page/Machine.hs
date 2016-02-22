@@ -400,6 +400,26 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
   archivedRow = editableRow editing "Archivován" archivedCheckbox where
     archivedCheckbox = div' (if editing == Editing then class' "editing-checkbox" else mkAttrs) $
       checkbox editing (M.archived machine') (\archived -> setMachine $ machine' { M.archived = archived })
+  upkeepByRow = editableRow editing "Kdo servisuje" upkeepByValue where
+    upkeepByValue = case editing of
+      Editing -> upkeepBySelect
+      Display -> text2DOM upkeepByMessage
+    standardLabel = if MK.isUpkeepByUs . MT.kind $ machineType
+      then "Servisujeme my - standartně"
+      else "Servisuje jiná firma - standartně"
+    upkeepByMessage = case M.upkeepBy machine' of
+      M.UpkeepByDefault -> standardLabel
+      M.UpkeepByThem -> "Servisuje jiná firma - nastaveno"
+      M.UpkeepByWe -> "Servisujeme my - nastaveno"
+    displayUpkeepBy M.UpkeepByDefault = standardLabel
+    displayUpkeepBy M.UpkeepByThem = "Servisuje jiná firma - nastavit"
+    displayUpkeepBy M.UpkeepByWe = "Servisujeme my - nastavit"
+    upkeepBySelect = dropdown
+      [(M.UpkeepByDefault, displayUpkeepBy M.UpkeepByDefault), 
+        (M.UpkeepByThem, displayUpkeepBy M.UpkeepByThem), (M.UpkeepByWe, displayUpkeepBy M.UpkeepByWe)]
+      text2DOM
+      (displayUpkeepBy . M.upkeepBy $ machine')
+      (\uBy -> setMachine $ machine' { M.upkeepBy = uBy })
 
   rotaryScrewCompressorInputs = [
     inputRowEditing
@@ -511,7 +531,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     editableRow
       editing
       ("Datum uvedení do provozu") 
-      datePicker ] ++ computationRows ++ [labelRow, archivedRow, noteRow] ++ kindSpecificRows ++ extraRows ++ 
+      datePicker ] ++ computationRows ++ [labelRow, archivedRow, upkeepByRow, noteRow] ++ kindSpecificRows ++ extraRows ++ 
         maybe [] (\mkButtonRow -> [
           mkFormGroup (mkButtonRow $ (buttonStateFromBool . V.ok) validation)]) buttonRow''
  
