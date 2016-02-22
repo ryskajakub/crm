@@ -175,7 +175,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         type' <- fileType file
         name <- fileName file
         uploadMachinePhotoData machineId file $ \photoId ->
-          uploadPhotoMeta (PM.PhotoMeta type' name) photoId BR.refresh router
+          uploadPhotoMeta (PM.PhotoMeta type' name PM.Unknown) photoId BR.refresh router
       imageUploadLabel = "Přidej fotku"
       photoList = map (\(photoId, photoMeta) -> let
         deletePhotoHandler = const $ deletePhoto photoId BR.refresh router

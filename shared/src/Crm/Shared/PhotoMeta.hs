@@ -2,7 +2,6 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE PackageImports #-}
-{-# LANGUAGE NoImplicitPrelude #-}
 
 module Crm.Shared.PhotoMeta where
 
@@ -14,7 +13,13 @@ import Data.Text (Text)
 
 data PhotoMeta = PhotoMeta {
   mimeType :: Text ,
-  fileName :: Text }
+  fileName :: Text ,
+  source :: PhotoSource }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
+#endif
+
+data PhotoSource = IPhone | Other | Unknown
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show, Eq)
 #endif

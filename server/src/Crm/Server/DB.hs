@@ -43,6 +43,7 @@ module Crm.Server.DB (
   -- manipulations
   addPhoto ,
   deletePhoto ,
+  updatePhoto ,
   -- runs
   runExpandedMachinesQuery ,
   runMachinesInCompanyQuery ,
@@ -470,7 +471,7 @@ instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
 instance ColumnToRecord (Int, Text, Int, Int, Bool, Text, Int) UpkeepMachineMapped where
   convert (a,b,c,d,e,f,g) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e f (UM.upkeepTypeDecode g))
 instance ColumnToRecord (Int, Text, Text) PhotoMetaMapped where
-  convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple)
+  convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple PM.Unknown)
 instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
   convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
 instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
@@ -1079,6 +1080,16 @@ deletePhoto ::
 deletePhoto connection photoId = do
   let q = " delete from photos where id = ? "
   _ <- execute connection q (Only photoId)
+  return ()
+
+updatePhoto ::
+  Connection ->
+  Int ->
+  ByteString ->
+  IO ()
+updatePhoto connection photoId photo = do
+  let q = " update photos set data = ? where id = ? "
+  _ <- execute connection q (Binary photo, photoId)
   return ()
 
 singleRowOrColumn :: 

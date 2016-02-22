@@ -49,4 +49,4 @@ mkFayTransferables [''UM.UpkeepType, ''SR.Markup, ''M.ContactPersonForMachine, '
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
   ''U.Upkeep, ''U.UpkeepMarkup, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, 
   ''E.Employee, ''PM.PhotoMeta, ''CP.ContactPerson, ''T.Task, ''T.TaskId, ''T.TaskMarkup, ''U.Upkeep2Markup, 
-  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy ]
+  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy, ''PM.PhotoSource ]

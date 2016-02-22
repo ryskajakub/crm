@@ -7,7 +7,7 @@ module Crm.Page.UpkeepPhoto (
 
 import           Data.Text                        (fromString, Text)
 import           Prelude                          hiding (div, span, id)
-import           FFI                              (Defined(..))
+import           FFI                              (Defined(..), ffi)
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
@@ -67,8 +67,12 @@ upkeepPhotos router upkeepId upkeep company = let
       file <- fileListElem 0 files
       type' <- fileType file
       name <- fileName file
+      let 
+        photoSource = if isIPhone
+          then PM.IPhone
+          else PM.Other
       uploadUpkeepPhotoData upkeepId file $ \photoId ->
-        uploadPhotoMeta (PM.PhotoMeta type' name) photoId reload router
+        uploadPhotoMeta (PM.PhotoMeta type' name photoSource) photoId reload router
     imageUploadLabel = "Nahraj fotku"
     in div [
       J.fileUploadI18n "Vyber obrázek" "Dej jiný obrázek" ,
@@ -78,3 +82,6 @@ upkeepPhotos router upkeepId upkeep company = let
           BB.onClick = Defined imageUploadHandler })
         imageUploadLabel ]
   in (B.grid $ B.row rows)
+
+isIPhone :: Bool
+isIPhone = ffi "/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream"
