@@ -62,7 +62,7 @@ import qualified Crm.Server.Database.UpkeepMachine as UMD
 import qualified Crm.Server.Database.UpkeepSequence as USD
 import           Crm.Server.Database.MachineType
 
-import           TupleTH                     (proj, catTuples, dropTuple)
+import           TupleTH                     (proj, catTuples, dropTuple, takeTuple)
 
 
 data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
@@ -178,22 +178,25 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
-  (upkeeps' :: [(MK.MachineKindEnum, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
-      liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, (companyId :: C.CompanyId, company :: C.Company)) -> do
-    notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
-    return (MK.dbReprToKind machineKind, view upkeepPK u, view upkeep u, companyId, 
-      company, notes :: [(M.MachineId, Text, Text)])
+  (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
+    liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, machineUpkeepBy, (companyId :: C.CompanyId, company :: C.Company)) -> do
+      notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
+      return (MK.dbReprToKind machineKind, M.upkeepByDecode machineUpkeepBy, view upkeepPK u, view upkeep u, companyId, 
+        company, notes :: [(M.MachineId, Text, Text)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
-    (employeesInUpkeeps (fmap $(proj 6 1) upkeeps'))
+    (employeesInUpkeeps (fmap $(proj 7 2) upkeeps'))
   let 
     (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (uId, convert e)) `fmap` employeeRows
     upkeepsWithEmployees = map (\tuple -> let
-      employee = map snd . filter (($(proj 6 1) tuple ==) . fst) $ employees
-      in $(catTuples 6 1) tuple employee) upkeeps'
-    filterMain machineType' = machineType' == MK.RotaryScrewCompressor || machineType' == MK.VacuumPump
-    screw = filter (filterMain . $(proj 7 0)) upkeepsWithEmployees
-    others = filter (not . filterMain . $(proj 7 0)) upkeepsWithEmployees
-  return [fmap $(dropTuple 7 1) screw, fmap $(dropTuple 7 1) others]
+      employee = map snd . filter (($(proj 7 2) tuple ==) . fst) $ employees
+      in $(catTuples 7 1) tuple employee) upkeeps'
+    areWeDoingUpkeep (machineKind, machineUpkeepBy) = case machineUpkeepBy of
+      M.UpkeepByDefault -> MK.isUpkeepByUs machineKind
+      M.UpkeepByThem    -> False
+      M.UpkeepByWe      -> True
+    byUs = filter (areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
+    byThem = filter (not . areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
+  return [fmap $(dropTuple 8 2) byUs, fmap $(dropTuple 8 2) byThem]
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do

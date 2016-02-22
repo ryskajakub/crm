@@ -817,7 +817,7 @@ employeesInUpkeeps upkeepIds = proc () -> do
   employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
   returnA -< (_upkeepPK upkeepRow, employeeRow)
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, DBInt, (C.CompanyId' DBInt, CompanyCore))
+groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
 groupedPlannedUpkeepsQuery = let
   plannedUpkeepsQuery = proc () -> do
     upkeepRow <- queryTable upkeepsTable -< ()
@@ -827,11 +827,11 @@ groupedPlannedUpkeepsQuery = let
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachinesRow
     machineTypeRow <- joinL MTD.machineTypesTable MTD.machineTypePK -< _machineTypeFK machineRow
     companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
-    returnA -< (upkeepRow, MT.kind . MTD._machineType $ machineTypeRow , 
+    returnA -< (upkeepRow, MT.kind . MTD._machineType $ machineTypeRow, M.upkeepBy . _machine $ machineRow , 
       (_companyPK companyRow, _companyCore companyRow))
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
-    AGG.aggregate (p3 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr), AGG.min,
+    AGG.aggregate (p4 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr), AGG.min, AGG.min,
       p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min)))
     plannedUpkeepsQuery
 
