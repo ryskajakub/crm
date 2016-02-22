@@ -106,7 +106,7 @@ addMachine connection machine' companyId' machineType' contactPersonId linkedMac
   let
     _ = machineTypeId :: MT.MachineTypeId
     M.Machine machineOperationStartDate' initialMileage mileagePerYear label
-      serialNumber yearOfManufacture archived furtherSpecification = machine'
+      serialNumber yearOfManufacture archived furtherSpecification upkeepBy = machine'
   machineIds <- liftIO $ runInsertReturning
     connection
     machinesTable 
@@ -124,7 +124,8 @@ addMachine connection machine' companyId' machineType' contactPersonId linkedMac
         M.serialNumber = pgStrictText serialNumber ,
         M.yearOfManufacture = pgStrictText yearOfManufacture , 
         M.archived = pgBool archived , 
-        M.furtherSpecification = pgStrictText furtherSpecification }})
+        M.furtherSpecification = pgStrictText furtherSpecification ,
+        M.upkeepBy = pgInt4 . M.upkeepByEncode $ upkeepBy }})
     _machinePK      
   let (machineId :: M.MachineId) = head machineIds -- todo safe
   liftIO $ insertExtraFields machineId extraFields connection

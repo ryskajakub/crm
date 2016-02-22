@@ -14,6 +14,8 @@ import           Data.Data
 import           Prelude
 import           Rest.Info                  (Info(..))
 import           Data.Profunctor.Product.TH (makeAdaptorAndInstance')
+import           Opaleye                    (queryRunnerColumn, PGInt4,
+                                              QueryRunnerColumnDefault(..), fieldQueryRunnerColumn)
 #endif
 import           Data.Text                  (Text, pack)
 
@@ -49,8 +51,8 @@ instance Functor MachineId' where
   f `fmap` (MachineId mId) = MachineId . f $ mId
 #endif
 
-data Machine' machineOperationStartDate initialMileage mileagePerYear 
-    label serialNumber yearOfManufacture archived furtherSpecification = Machine {
+data Machine' machineOperationStartDate initialMileage mileagePerYear label serialNumber 
+    yearOfManufacture archived furtherSpecification upkeepBy = Machine {
   machineOperationStartDate :: machineOperationStartDate ,
   initialMileage :: initialMileage ,
   mileagePerYear :: mileagePerYear ,
@@ -58,31 +60,52 @@ data Machine' machineOperationStartDate initialMileage mileagePerYear
   serialNumber :: serialNumber ,
   yearOfManufacture :: yearOfManufacture ,
   archived :: archived ,
-  furtherSpecification :: furtherSpecification }
+  furtherSpecification :: furtherSpecification ,
+  upkeepBy :: upkeepBy }
 #ifndef FAY
   deriving (Generic, Typeable, Data)
 makeLensesFor [("machineOperationStartDate", "operationStartDateL"),
   ("serialNumber", "serialNumberL")] ''Machine'
 #endif
 
-type Machine = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool Text
-type MachineMarkup = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool [SR.Markup]
+type Machine = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool Text UpkeepBy
+type MachineMarkup = Machine' (Maybe YearMonthDay) Int Int Text Text Text Bool [SR.Markup] UpkeepBy
 
 newMachine' :: Maybe YearMonthDay -> Machine
 newMachine' ymd = Machine {
   machineOperationStartDate = ymd ,
   initialMileage = 0 ,
-  label_ = (pack "") ,
+  label_ = pack "" ,
   mileagePerYear = 365 * 24 ,
-  serialNumber = (pack "") ,
-  yearOfManufacture = (pack "") ,
+  serialNumber = pack "" ,
+  yearOfManufacture = pack "" ,
   archived = False ,
-  furtherSpecification = pack "" }
+  furtherSpecification = pack "" ,
+  upkeepBy = UpkeepByDefault }
 
 newMachine :: YearMonthDay -> Machine
 newMachine ymd = newMachine' $ Just ymd
 
+data UpkeepBy = UpkeepByDefault | UpkeepByWe | UpkeepByThem
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Show, Eq)
+#endif
+
+upkeepByDecode :: Int -> UpkeepBy
+upkeepByDecode 1 = UpkeepByWe
+upkeepByDecode 2 = UpkeepByThem
+upkeepByDecode _ = UpkeepByDefault
+
+upkeepByEncode :: UpkeepBy -> Int
+upkeepByEncode UpkeepByDefault = 0
+upkeepByEncode UpkeepByWe = 1
+upkeepByEncode UpkeepByThem = 2
+
 #ifndef FAY
 makeAdaptorAndInstance' ''MachineId'
 makeAdaptorAndInstance' ''Machine'
+
+instance QueryRunnerColumnDefault PGInt4 UpkeepBy where
+  queryRunnerColumnDefault = 
+    queryRunnerColumn id upkeepByDecode fieldQueryRunnerColumn
 #endif

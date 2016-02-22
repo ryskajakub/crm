@@ -92,7 +92,8 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', machineTypeId, lin
           M.serialNumber = pgStrictText . M.serialNumber $ machine' ,
           M.yearOfManufacture = pgStrictText . M.yearOfManufacture $ machine' ,
           M.archived = pgBool . M.archived $ machine' ,
-          M.furtherSpecification = pgStrictText . M.furtherSpecification $ machine' }})
+          M.furtherSpecification = pgStrictText . M.furtherSpecification $ machine' ,
+          M.upkeepBy = pgInt4 . M.upkeepByEncode . M.upkeepBy $ machine' }})
 
   _ <- withResource pool $ \connection -> liftIO $ runUpdate connection machinesTable machineReadToWrite 
     (((.===) (fmap pgInt4 machineId)) . _machinePK)

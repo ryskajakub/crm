@@ -295,7 +295,7 @@ makeLenses ''MachineRow''
 type MachineRow' machinePK = MachineRow'' 
   machinePK 
     (C.CompanyId' DBInt) (Column (Nullable PGInt4)) MachineTypePK (M.MachineId' (Column (Nullable PGInt4)))
-  (M.Machine' (Column (Nullable PGDate)) DBInt DBInt DBText DBText DBText DBBool DBText)
+  (M.Machine' (Column (Nullable PGDate)) DBInt DBInt DBText DBText DBText DBBool DBText DBInt)
 type MachinesTable = MachineRow' MachinePK
 type MachinesWrite = MachineRow' (M.MachineId' (Maybe DBInt))
 type MachineRecord = MachineRow'' M.MachineId C.CompanyId (Maybe Int) MT.MachineTypeId (M.MachineId' (Maybe Int)) 
@@ -321,7 +321,8 @@ machinesTable = Table "machines" $ pMachineRow MachineRow {
     M.serialNumber = required "serial_number" ,
     M.yearOfManufacture = required "year_of_manufacture" ,
     M.archived = required "archived" ,
-    M.furtherSpecification = required "note" })}
+    M.furtherSpecification = required "note" ,
+    M.upkeepBy = required "upkeep_by" })}
 
 
 contactPersonsTable :: Table ContactPersonsWriteTable ContactPersonsTable
@@ -448,14 +449,6 @@ instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) Comp
     company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
     coordinates = pure C.Coordinates <*> $(proj 6 4) tuple <*> $(proj 6 5) tuple
     in (C.CompanyId $ $(proj 6 0) tuple, company, coordinates)
-instance ColumnToRecord 
-    (Int, Int, Maybe Int, Int, Maybe Int, Maybe Day, Int, Int, Text, Text, Text, Bool, Text)
-    MachineMapped where
-  convert tuple = let
-    machineTuple = $(updateAtN 13 5) (fmap YMD.dayToYmd) tuple
-    in (M.MachineId $ $(proj 13 0) tuple, C.CompanyId $ $(proj 13 1) tuple, CP.ContactPersonId `fmap` $(proj 13 2) tuple, 
-      MT.MachineTypeId $ $(proj 13 3) tuple, M.MachineId `fmap` $(proj 13 4) tuple,
-      (uncurryN $ const $ const $ const $ const $ const M.Machine) machineTuple)
 instance ColumnToRecord (Int, Int, Text, Text) MachineTypeMapped where
   convert tuple = (MT.MachineTypeId $ $(proj 4 0) tuple, (uncurryN $ const MT.MachineType) 
     (upd2 (MK.dbReprToKind $ $(proj 4 1) tuple) tuple))

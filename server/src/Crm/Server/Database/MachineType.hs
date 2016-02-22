@@ -12,7 +12,7 @@
 
 module Crm.Server.Database.MachineType where
 
-import           Opaleye                         (required, Table(..), Column, Nullable, PGInt4, optional)
+import           Opaleye                         (required, Table(..), optional)
 import           Data.Profunctor.Product.TH      (makeAdaptorAndInstance')
 import           Control.Lens                    (makeLenses)
 
