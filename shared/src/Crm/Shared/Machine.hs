@@ -93,13 +93,13 @@ data UpkeepBy = UpkeepByDefault | UpkeepByWe | UpkeepByThem
 
 upkeepByDecode :: Int -> UpkeepBy
 upkeepByDecode 1 = UpkeepByWe
-upkeepByDecode 2 = UpkeepByThem
+upkeepByDecode (-1) = UpkeepByThem
 upkeepByDecode _ = UpkeepByDefault
 
 upkeepByEncode :: UpkeepBy -> Int
 upkeepByEncode UpkeepByDefault = 0
 upkeepByEncode UpkeepByWe = 1
-upkeepByEncode UpkeepByThem = 2
+upkeepByEncode UpkeepByThem = (-1)
 
 #ifndef FAY
 makeAdaptorAndInstance' ''MachineId'

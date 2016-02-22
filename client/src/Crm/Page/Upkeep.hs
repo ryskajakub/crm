@@ -89,10 +89,10 @@ plannedUpkeeps router upkeepCompanies = let
   compressorsTable = mkTable . head $ upkeepCompanies
   othersTable = mkTable . head . tail $ upkeepCompanies
   pills = ul' (class'' ["nav", "nav-pills"]) [
-    li' (class' "active") . B.pill (click (return ())) "screw" $ "Šroubové kompresory, vývěvy" ,
-    li . B.pill (click (return ())) "others" $ "Ostatní" ]
+    li' (class' "active") . B.pill (click (return ())) "we" $ "Servisujeme my" ,
+    li . B.pill (click (return ())) "others" $ "Servisují jiné firmy" ]
   tables = div' (class' "tab-content") [
-    div' (mkAttrs { id = Defined "screw" , className = Defined "tab-pane active" }) compressorsTable ,
+    div' (mkAttrs { id = Defined "we" , className = Defined "tab-pane active" }) compressorsTable ,
     div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ]
   in (B.grid $ B.row $
     pageInfo' ++

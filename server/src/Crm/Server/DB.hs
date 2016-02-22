@@ -831,7 +831,7 @@ groupedPlannedUpkeepsQuery = let
       (_companyPK companyRow, _companyCore companyRow))
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
     AGG.aggregate (p4 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
-    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr), AGG.min, AGG.min,
+    (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr), AGG.min, AGG.max,
       p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min)))
     plannedUpkeepsQuery
 
