@@ -103,6 +103,8 @@ Library
     wai ,
     warp ,
 
+    process ,
+    unix-time ,
     regular ,
     async ,
     parsec ,
@@ -148,6 +150,8 @@ Test-Suite tests
     wai ,
     warp ,
 
+    process ,
+    unix-time ,
     regular ,
     async ,
     resource-pool ,

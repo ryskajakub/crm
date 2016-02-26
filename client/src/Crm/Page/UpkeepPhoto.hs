@@ -68,7 +68,7 @@ upkeepPhotos router upkeepId upkeep company = let
       file <- fileListElem 0 files
       type' <- fileType file
       name <- fileName file
-      let 
+      let
         photoSource = if isIPhone
           then PM.IPhone
           else PM.Other

@@ -1,5 +1,10 @@
+{-# LANGUAGE MultiWayIf #-}
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module Crm.Server.Api.PhotoMetaResource ( 
   photoMetaResource ) where
+
+import           Prelude                     hiding (writeFile)
 
 import           Graphics.GD                 (loadJpegByteString, saveJpegByteString,
                                              rotateImage, resizeImage, imageSize, Image)
@@ -8,7 +13,11 @@ import           Opaleye.Manipulation        (runInsert)
 import           Opaleye.PGTypes             (pgInt4, pgStrictText)
 
 import           Data.Pool                   (withResource)
-import           Data.ByteString.Lazy        (fromStrict, toStrict, ByteString)
+import           Data.ByteString.Lazy        (fromStrict, toStrict, ByteString, writeFile)
+import           Data.UnixTime               (getUnixTime, UnixTime(utMicroSeconds, utSeconds))
+import           Data.Text                   (pack)
+
+import           System.Process              (system)
 
 import           Rest.Resource               (Resource, Void, schema, name, 
                                              mkResourceReaderWith, update)
@@ -37,13 +46,24 @@ photoMetaResource = (mkResourceReaderWith prepareReaderTuple) {
 setPhotoMetaDataHandler :: Handler (IdDependencies' P.PhotoId)
 setPhotoMetaDataHandler = mkInputHandler' jsonI $ \photoMeta -> do
   ((_, pool), photoId) <- ask
-  let photoIdInt = P.getPhotoId $ photoId
+  let photoIdInt = P.getPhotoId photoId
+  let mimeType = PM.mimeType photoMeta
   _ <- liftIO $ withResource pool $ \connection -> runInsert connection photosMetaTable 
-    (pgInt4 photoIdInt, pgStrictText . PM.mimeType $ photoMeta, pgStrictText . PM.fileName $ photoMeta)
+    (pgInt4 photoIdInt, pgStrictText mimeType, pgStrictText . PM.fileName $ photoMeta)
   photoData <- liftIO $ withResource pool $ \connection -> getPhoto connection photoIdInt
-  editedPhoto <- liftIO $ editPhoto (PM.source photoMeta == PM.IPhone) photoData
-  _ <- liftIO $ withResource pool $ \connection -> updatePhoto connection photoIdInt editedPhoto
-  return ()
+  if 
+    | mimeType == pack "application/pdf" -> liftIO $ do
+      now <- getUnixTime
+      let randomHash = (show . utSeconds $ now) ++ (show . utMicroSeconds $ now)
+      let pdfFileName = "/tmp/" ++ randomHash ++ ".pdf"
+      let jpegFileName = "/tmp/" ++ randomHash ++ ".jpeg"
+      writeFile pdfFileName photoData
+      _ <- system $ "convert " ++ pdfFileName ++ " " ++ jpegFileName
+      return ()
+    | mimeType == pack "image/jpeg" -> do
+      editedPhoto <- liftIO $ editPhoto (PM.source photoMeta == PM.IPhone) photoData
+      _ <- liftIO $ withResource pool $ \connection -> updatePhoto connection photoIdInt editedPhoto
+      return ()
 
 editPhoto :: Bool -> ByteString -> IO ByteString
 editPhoto rotateFlag =
