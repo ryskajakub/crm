@@ -18,8 +18,7 @@ import qualified Crm.Shared.YearMonthDay   as YMD
 data NextServiceDate a = 
   Planned a | -- ^ day taken from next planned service
   Computed a | -- ^ day computed from the past upkeeps and into operation
-  Inactive | -- ^ day not returned, machine is marked inactive
-  Unknown -- ^ there is no past data on which to base the next service date
+  Inactive -- ^ day not returned, machine is marked inactive
   deriving (Eq, Show)
 
 instance Functor NextServiceDate where
@@ -36,9 +35,8 @@ nextServiceDate ::
   M.Machine -> -- ^ machine for which the next service date is computed
   (US.UpkeepSequence, [US.UpkeepSequence]) -> -- ^ upkeep sequences belonging to the machine - must be at least one element
   [(U.Upkeep, UM.UpkeepMachine)] -> -- ^ upkeeps belonging to this machine
-  Day -> -- ^ today
   NextServiceDate Day -- ^ computed next service date for this machine
-nextServiceDate machine sequences upkeeps _ = let
+nextServiceDate machine sequences upkeeps = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = nextServiceDay where
@@ -58,13 +56,13 @@ nextServiceDate machine sequences upkeeps _ = let
         []    -> nonEmptySequences
       in case (installationUpkeep', M.machineOperationStartDate machine) of 
         (Just installationUpkeep, _) -> 
-          Just $ computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
+          computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
         (_, Just operationStartDate') -> 
           computeBasedOnPrevious (YMD.ymdToDay operationStartDate') filteredSequences
         (_, Nothing) -> fromGregorian 1970 1 1
     nonEmptyUpkeeps -> let
       lastServiceDate = YMD.ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
-      in Just $ computeBasedOnPrevious lastServiceDate repeatedSequences
+      in computeBasedOnPrevious lastServiceDate repeatedSequences
     where
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
@@ -78,9 +76,7 @@ nextServiceDate machine sequences upkeeps _ = let
         in if U.setDate nextOpenUpkeep
           then Computed . process $ nextOpenUpkeep
           else Planned . process $ nextOpenUpkeep
-    _ -> case computedUpkeep of
-      Just computed -> Computed computed
-      Nothing -> Unknown
+    _ -> Computed computedUpkeep
   in if M.archived machine
     then Inactive
     else activeMachineResult

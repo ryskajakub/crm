@@ -189,8 +189,7 @@ missingOperationStartDate :: Assertion
 missingOperationStartDate = let
   machine' = machine {
     M.machineOperationStartDate = Nothing }
-  today = fromGregorian 2015 1 1
-  result = nextServiceDate machine' (upkeepSequence, []) [] today
+  result = nextServiceDate machine' (upkeepSequence, []) []
   expectedResult = Computed $ fromGregorian 1970 1 1
   in assertEqual "Date must be 1970 1 1"
     expectedResult result
@@ -203,13 +202,13 @@ repairUpkeep = let
   earlier = upkeep {
     U.upkeepDate = dayToYmd $ fromGregorian 2015 1 1 }
   expectedResult = Computed $ fromGregorian 2016 12 31
-  result = nextServiceDate machine (upkeepSequence, []) [(earlier, upkeepMachine), (later, upkeepMachine')] undefined
+  result = nextServiceDate machine (upkeepSequence, []) [(earlier, upkeepMachine), (later, upkeepMachine')]
   in assertEqual "Repair must be skipped" expectedResult result
 
 installationUpkeep :: Assertion
 installationUpkeep = let
   upkeepMachine' = upkeepMachine { UM.upkeepType = UM.Installation }
-  result = nextServiceDate machine (upkeepSequence, [oneTimeUpkeepSequence]) [(upkeep, upkeepMachine')] undefined
+  result = nextServiceDate machine (upkeepSequence, [oneTimeUpkeepSequence]) [(upkeep, upkeepMachine')]
   expectedResult = Computed $ fromGregorian 2000 3 14
   in assertEqual "Installation must not be counted as a first service" expectedResult result
 
@@ -225,7 +224,7 @@ plannedCallUpkeep = let
   upkeepClosed = upkeep {
     U.upkeepDate = dayToYmd $ fromGregorian 2003 1 1 }
   result = nextServiceDate machine (upkeepSequence, [])
-    [(upkeep', upkeepMachine), (upkeep2', upkeepMachine), (upkeepClosed, upkeepMachine)] undefined
+    [(upkeep', upkeepMachine), (upkeep2', upkeepMachine), (upkeepClosed, upkeepMachine)]
   expectedResult = Computed resultDate
   in assertEqual "The earliest planned call must be taken" expectedResult result
 
@@ -234,7 +233,7 @@ installationSupercedesIntoOperation = let
   upkeepMachine' = upkeepMachine { UM.upkeepType = UM.Installation }
   upkeepLater = upkeep {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
-  result = nextServiceDate machine (upkeepSequence, []) [(upkeepLater, upkeepMachine')] undefined
+  result = nextServiceDate machine (upkeepSequence, []) [(upkeepLater, upkeepMachine')]
   expectedResult = Computed $ fromGregorian 2007 1 1 
   in assertEqual "Installation must be taken instead of into operation field" expectedResult result
 
@@ -242,7 +241,7 @@ inactiveMachine :: Assertion
 inactiveMachine = let
   machine' = machine {
     M.archived = True }
-  result = nextServiceDate machine' undefined undefined undefined
+  result = nextServiceDate machine' undefined undefined
   expectedResult = Inactive
   in assertEqual "Inactive should be returned" expectedResult result
 
@@ -253,7 +252,7 @@ firstUpkeep = let
     US.repetition = 5000 }
   upkeepSequence2 = US.UpkeepSequence {
     US.repetition = 1000 }
-  result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) [] undefined
+  result = nextServiceDate machine (upkeepSequence, [firstUpkeepSequence, upkeepSequence2]) []
   expectedResult = Computed $ fromGregorian 2000 12 31
   in assertEqual "Date must be +1 years, that is: 2000 12 31"
     expectedResult result
@@ -264,7 +263,7 @@ pickSmallestRepeatedSequence = let
     US.repetition = 2500 }
   upkeepSequence3 = upkeepSequence {
     US.repetition = 20000 }
-  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [(upkeep, UM.newUpkeepMachine)] undefined
+  result = nextServiceDate machine (upkeepSequence, [upkeepSequence2, upkeepSequence3, oneTimeUpkeepSequence]) [(upkeep, UM.newUpkeepMachine)] 
   expectedResult = Computed $ fromGregorian 2000 7 1
   in assertEqual "Date must be +1/2 year, that is: 2000 7 1"
     expectedResult result
@@ -283,14 +282,14 @@ planned = let
   upkeep4 = U.Upkeep {
     U.upkeepClosed = True ,
     U.upkeepDate = dayToYmd $ fromGregorian 1999 1 1 }
-  result = nextServiceDate undefined undefined (fmap (,UM.newUpkeepMachine) [upkeep4, upkeep2, upkeep1, upkeep3]) undefined
+  result = nextServiceDate undefined undefined (fmap (,UM.newUpkeepMachine) [upkeep4, upkeep2, upkeep1, upkeep3])
   expectedResult = Planned date
   in assertEqual "Date must be minimum from planned: 2000 1 1" 
     expectedResult result
 
 noUpkeeps :: Assertion
 noUpkeeps = let
-  result = nextServiceDate machine (upkeepSequence, []) [] undefined
+  result = nextServiceDate machine (upkeepSequence, []) []
   expectedResult = Computed $ fromGregorian 2001 12 31
   in assertEqual "Date must be +2 years from into service: 2001 12 31"
     expectedResult result
@@ -302,7 +301,7 @@ closedUpkeeps = let
     U.upkeepDate = dayToYmd $ fromGregorian 2000 1 1 }
   upkeep2 = upkeep1 {
     U.upkeepDate = dayToYmd $ fromGregorian 2005 1 1 }
-  result = nextServiceDate machine (upkeepSequence, []) (fmap (,UM.newUpkeepMachine) [upkeep1, upkeep2]) undefined
+  result = nextServiceDate machine (upkeepSequence, []) (fmap (,UM.newUpkeepMachine) [upkeep1, upkeep2])
   expectedResult = Computed $ fromGregorian 2007 1 1
   in assertEqual "Date must be +2 year from the last service: 2007 1 1"
     expectedResult result
@@ -405,7 +404,7 @@ plannedUpkeepsProperty random plannedUpkeepDays closedUpkeepDays = let
   upkeepsShuffled = shuffle' upkeeps (length upkeeps) random
   earliestDay = minimum (getNonEmpty plannedUpkeepDays)
   nonArchivedMachine = M.Machine { M.archived = False }
-  in nextServiceDate nonArchivedMachine undefined upkeepsShuffled undefined == Planned earliestDay
+  in nextServiceDate nonArchivedMachine undefined upkeepsShuffled == Planned earliestDay
 
 propertyTests' :: TestTree
 propertyTests' = let

@@ -29,7 +29,6 @@ import qualified Crm.Shared.YearMonthDay    as YMD
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
 import           Crm.Server.DB
-import           Crm.Server.Helpers         (today)
 import           Crm.Server.Types 
 import qualified Crm.Server.Database.UpkeepMachine as UMD
 import           Crm.Server.Database.UpkeepSequence
@@ -117,7 +116,6 @@ addNextDates ::
 addNextDates getMachineId getMachine a = \conn -> do
   fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery . getMachineId $ a)
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
-  today' <- today
   let
     convertFullUpkeeps = fmap $ \(u :: UpkeepRow, um :: UMD.UpkeepMachineRow) ->
       (view upkeep u, view UMD.upkeepMachine um)
@@ -125,5 +123,5 @@ addNextDates getMachineId getMachine a = \conn -> do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x, xs)
-    nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (convertFullUpkeeps fullUpkeepDataRows) today'
+    nextServiceDay = nextServiceDate (getMachine a) upkeepSequenceTuple (convertFullUpkeeps fullUpkeepDataRows)
   return (fmap YMD.dayToYmd nextServiceDay)

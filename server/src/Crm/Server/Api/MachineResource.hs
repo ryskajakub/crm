@@ -120,7 +120,6 @@ machineSingle = mkConstHandler' jsonO $ do
     runQuery connection (upkeepSequencesByIdQuery machineTypeId)
   upkeepRows <- withResource pool $ \connection -> 
     liftIO $ runQuery connection (upkeepsDataForMachine machineId)
-  today' <- liftIO today
   extraFields <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (extraFieldsForMachineQuery machineId)
   let 
@@ -148,7 +147,7 @@ machineSingle = mkConstHandler' jsonO $ do
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)
-    nextServiceYmd = getMaybe $ nextServiceDate machine' upkeepSequenceTuple upkeeps today'
+    nextServiceYmd = getMaybe $ nextServiceDate machine' upkeepSequenceTuple upkeeps
   upkeepsDataWithPhotos <- forM upkeepsData $ \data' -> do
     let upkeepId = $(proj 4 0) data'
     photosFromDb <- withResource pool $ \connection -> liftIO $ runQuery connection $ photosInUpkeepQuery upkeepId
