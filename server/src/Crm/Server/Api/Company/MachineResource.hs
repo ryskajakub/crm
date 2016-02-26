@@ -56,7 +56,7 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
     Just (M.ContactPersonForMachine contactPerson) -> do
       contactPersonNewIds <- liftIO $ withResource pool $ \connection -> runInsertReturning connection contactPersonsTable
         (Nothing, pgInt4 . C.getCompanyId $ companyId, pgStrictText . CP.name $ contactPerson,
-          pgStrictText . CP.name $ contactPerson, pgStrictText . CP.name $ contactPerson)
+          pgStrictText . CP.phone $ contactPerson, pgStrictText . CP.position $ contactPerson)
         $(proj 5 0)
       contactPersonNewId <- singleRowOrColumn contactPersonNewIds
       return . Just . CP.ContactPersonId $ contactPersonNewId
