@@ -93,6 +93,7 @@ module Crm.Server.DB (
   machinesInCompanyQuery' ,
   takenColoursQuery ,
   photosInUpkeepQuery ,
+  upkeepForPhotoQ ,
   machinesForTypeQ ,
   -- manipulations
   insertExtraFields ,
@@ -958,6 +959,12 @@ photosInUpkeepQuery (U.UpkeepId upkeepId) = proc () -> do
   upkeepPhotosRow <- queryTable upkeepPhotosTable -< ()
   restrict -< $(proj 2 1) upkeepPhotosRow .== pgInt4 upkeepId
   returnA -< $(proj 2 0) upkeepPhotosRow
+
+upkeepForPhotoQ :: P.PhotoId -> Query DBInt
+upkeepForPhotoQ (P.PhotoId pInt) = proc () -> do
+  upkeepPhotosRow <- queryTable upkeepPhotosTable -< ()
+  restrict -< $(proj 2 0) upkeepPhotosRow .== pgInt4 pInt
+  returnA -< $(proj 2 1) upkeepPhotosRow
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery upkeepId = distinct $ proc () -> do

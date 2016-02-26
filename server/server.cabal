@@ -103,6 +103,7 @@ Library
     wai ,
     warp ,
 
+    filemanip ,
     process ,
     unix-time ,
     regular ,
@@ -150,6 +151,7 @@ Test-Suite tests
     wai ,
     warp ,
 
+    filemanip ,
     process ,
     unix-time ,
     regular ,
