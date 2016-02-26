@@ -44,7 +44,7 @@ mkPhotoModal photoIds deletable router = let
         in BTN.button' buttonProps [G.arrowDown, text2DOM " Smazat fotku"] ,
       IMG.image' 
         (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId})
-        (IMG.mkImageAttrs "") ]
+        ((IMG.mkImageAttrs "") { IMG.width = Defined 1140 } ) ]
   
   displayPhotos differentPhotoIds setPhotosInModal = let
     clickHandler = setPhotosInModal differentPhotoIds
