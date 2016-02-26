@@ -59,7 +59,7 @@ setPhotoMetaDataHandler = mkInputHandler' jsonI $ \photoMeta -> do
       let pdfFileName = "/tmp/" ++ randomHash ++ ".pdf"
       let jpegFileName = "/tmp/" ++ randomHash ++ ".jpeg"
       liftIO $ writeFile pdfFileName photoData
-      _ <- liftIO . system $ "convert " ++ pdfFileName ++ " " ++ jpegFileName
+      _ <- liftIO . system $ "convert -resize 1140 " ++ pdfFileName ++ " " ++ jpegFileName
       images <- liftIO . namesMatching $ "/tmp/" ++ randomHash ++ "*.jpeg"
       upkeepIdInt' <- withResource pool $ \connection -> do
         upkeepIdInts <- liftIO $ runQuery connection (upkeepForPhotoQ photoId)
