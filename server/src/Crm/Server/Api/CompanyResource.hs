@@ -105,9 +105,9 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (MyJust (date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
-        -- when the date is missing, the results will always go to the bottom
-        (MyNothing,MyNothing) -> EQ
-        (MyNothing,_) -> GT
+          -- when the date is missing, the results will always go to the bottom
+        (MyNothing, MyNothing) -> EQ
+        (MyNothing, _) -> GT
         _ -> LT
       ) unsortedResult')
 

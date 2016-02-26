@@ -70,7 +70,11 @@ companiesList router orderType direction companies' = let
       th "Adresa" , 
       th [text2DOM "Další servis ", nextServiceOrdering ]]
   body = tbody $ map (\idCompany ->
-    let (id', company', nextServiceDate) = idCompany
+    let 
+      (id', company', nextServiceDate) = idCompany
+      displayDate' (d' @ (YMD.YearMonthDay y m d _)) = if d == 1 && m == 0 && y == 1970
+        then "Nedá se určit"
+        else displayDate d'
     in tr [
       td $
         R.link
@@ -78,7 +82,7 @@ companiesList router orderType direction companies' = let
           (R.companyDetail id')
           router ,
       td $ C.companyAddress company' , 
-      td $ maybe "" displayDate nextServiceDate
+      td $ maybe "" displayDate' nextServiceDate
     ]) companies'
   advice = [ 
     p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,
