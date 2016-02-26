@@ -18,7 +18,8 @@ import qualified Crm.Shared.YearMonthDay   as YMD
 data NextServiceDate a = 
   Planned a | -- ^ day taken from next planned service
   Computed a | -- ^ day computed from the past upkeeps and into operation
-  Inactive -- ^ day not returned, machine is marked inactive
+  Inactive | -- ^ day not returned, machine is marked inactive
+  Unknown -- ^ there is no past data on which to base the next service date
   deriving (Eq, Show)
 
 instance Functor NextServiceDate where
@@ -57,13 +58,13 @@ nextServiceDate machine sequences upkeeps _ = let
         []    -> nonEmptySequences
       in case (installationUpkeep', M.machineOperationStartDate machine) of 
         (Just installationUpkeep, _) -> 
-          computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
+          Just $ computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
         (_, Just operationStartDate') -> 
           computeBasedOnPrevious (YMD.ymdToDay operationStartDate') filteredSequences
         (_, Nothing) -> fromGregorian 1970 1 1
     nonEmptyUpkeeps -> let
       lastServiceDate = YMD.ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
-      in computeBasedOnPrevious lastServiceDate repeatedSequences
+      in Just $ computeBasedOnPrevious lastServiceDate repeatedSequences
     where
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
@@ -77,7 +78,9 @@ nextServiceDate machine sequences upkeeps _ = let
         in if U.setDate nextOpenUpkeep
           then Computed . process $ nextOpenUpkeep
           else Planned . process $ nextOpenUpkeep
-    _ -> Computed computedUpkeep
+    _ -> case computedUpkeep of
+      Just computed -> Computed computed
+      Nothing -> Unknown
   in if M.archived machine
     then Inactive
     else activeMachineResult
