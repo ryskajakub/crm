@@ -178,11 +178,12 @@ upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
-  (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)])]) <- 
+  (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
+      [(M.MachineId, Text, Text, MK.MachineKindEnum)])]) <- 
     liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, machineUpkeepBy, (companyId :: C.CompanyId, company :: C.Company)) -> do
       notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
       return (MK.dbReprToKind machineKind, M.upkeepByDecode machineUpkeepBy, view upkeepPK u, view upkeep u, companyId, 
-        company, notes :: [(M.MachineId, Text, Text)])
+        company, notes :: [(M.MachineId, Text, Text, MK.MachineKindEnum)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
     (employeesInUpkeeps (fmap $(proj 7 2) upkeeps'))
   let 

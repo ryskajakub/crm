@@ -37,7 +37,7 @@ nextServiceDate ::
   [(U.Upkeep, UM.UpkeepMachine)] -> -- ^ upkeeps belonging to this machine
   Day -> -- ^ today
   NextServiceDate Day -- ^ computed next service date for this machine
-nextServiceDate machine sequences upkeeps today = let
+nextServiceDate machine sequences upkeeps _ = let
 
   computeBasedOnPrevious :: Day -> [US.UpkeepSequence] -> Day
   computeBasedOnPrevious referenceDay filteredSequences = nextServiceDay where

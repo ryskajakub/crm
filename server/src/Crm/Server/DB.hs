@@ -936,7 +936,7 @@ aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
 
 notesForUpkeep :: 
   U.UpkeepId -> 
-  Query (MachinePK, DBText, DBText)
+  Query (MachinePK, DBText, DBText, DBInt)
 notesForUpkeep upkeepId = proc () -> do
   upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< fmap pgInt4 upkeepId
   machinesRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachineRow
@@ -944,7 +944,8 @@ notesForUpkeep upkeepId = proc () -> do
   returnA -< (
     UMD._machineFK upkeepMachineRow ,
     MT.machineTypeName . MTD._machineType $ machineTypesRow ,
-    UM.upkeepMachineNote . UMD._upkeepMachine $ upkeepMachineRow )
+    UM.upkeepMachineNote . UMD._upkeepMachine $ upkeepMachineRow ,
+    MT.kind . MTD._machineType $ machineTypesRow )
 
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do

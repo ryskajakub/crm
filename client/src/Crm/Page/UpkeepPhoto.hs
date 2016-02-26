@@ -13,14 +13,15 @@ import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
 import qualified HaskellReact.Jasny               as J
+import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified JQuery                           as JQ
 
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Machine               as M
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.Employee              as E
-import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified Crm.Shared.PhotoMeta             as PM
+import qualified Crm.Shared.MachineKind           as MK
 
 import qualified Crm.Router                       as R
 import           Crm.Helpers
@@ -28,7 +29,7 @@ import           Crm.Server
 
 addPhotoToUpkeepList :: 
   R.CrmRouter -> 
-  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] -> 
+  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   DOMElement
 addPhotoToUpkeepList router upkeeps = let
   pageInfo' = pageInfo "Aktuální servisy - přidej fotky" $ (Nothing :: Maybe DOMElement)

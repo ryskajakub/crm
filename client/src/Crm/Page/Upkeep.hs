@@ -43,7 +43,7 @@ import           Crm.Types                        (DisplayedNote (..))
 
 plannedUpkeeps :: 
   R.CrmRouter -> 
-  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text)], [E.Employee'])]] -> 
+  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
 plannedUpkeeps router upkeepCompanies = let
   mkTable data' = B.table [head', body] where
@@ -56,10 +56,16 @@ plannedUpkeeps router upkeepCompanies = let
       th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
       th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
     body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
-      mkNote = map $ \(machineId, machineTypeName, note) -> li $ [
+      mkNote = map $ \(machineId, machineTypeName, note, _) -> li $ [
         R.link machineTypeName (R.machineDetail machineId) router ,
         text2DOM " : " , text2DOM note]
-      in tr [
+      rowBackgroundColor = case notes of
+        ((_,_,_,mk):_) -> case mk of
+          MK.RotaryScrewCompressor -> class' "bg-success"
+          MK.VacuumPump -> class' "bg-warning"
+          _ -> mkAttrs
+        _ -> mkAttrs
+      in tr' rowBackgroundColor [
         td . mkColours . map snd $ employees ,
         td $ R.link
           (C.companyName company)
@@ -96,7 +102,7 @@ plannedUpkeeps router upkeepCompanies = let
     div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ]
   in (B.grid $ B.row $
     pageInfo' ++
-    [B.col (B.mkColProps 12) . main $ [pills, tables]] , tooltipInitializer)
+    [B.col (B.mkColProps 12) . main $ [pills, tables], B.fullCol "zelená - šroubové, žlutá - vývěvy"] , tooltipInitializer)
 
 
 initializeTooltip :: Fay ()
