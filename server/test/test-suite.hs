@@ -191,8 +191,8 @@ missingOperationStartDate = let
     M.machineOperationStartDate = Nothing }
   today = fromGregorian 2015 1 1
   result = nextServiceDate machine' (upkeepSequence, []) [] today
-  expectedResult = Computed $ fromGregorian 2015 1 1
-  in assertEqual "Date must be today 2015 1 1"
+  expectedResult = Computed $ fromGregorian 1970 1 1
+  in assertEqual "Date must be 1970 1 1"
     expectedResult result
 
 repairUpkeep :: Assertion

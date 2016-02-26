@@ -3,7 +3,7 @@ module Crm.Server.Core where
 import           Data.List                 (partition, minimumBy, find, maximumBy)
 import           Data.Maybe                (fromMaybe)
 
-import           Data.Time.Calendar        (Day, addDays)
+import           Data.Time.Calendar        (Day, addDays, fromGregorian)
 import           Safe.Foldable             (minimumByMay)
 import           Safe                      (headMay)
 
@@ -60,7 +60,7 @@ nextServiceDate machine sequences upkeeps today = let
           computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
         (_, Just operationStartDate') -> 
           computeBasedOnPrevious (YMD.ymdToDay operationStartDate') filteredSequences
-        (_, Nothing) -> today
+        (_, Nothing) -> fromGregorian 1970 1 1
     nonEmptyUpkeeps -> let
       lastServiceDate = YMD.ymdToDay . maximum . fmap (U.upkeepDate . fst) $ nonEmptyUpkeeps
       in computeBasedOnPrevious lastServiceDate repeatedSequences
