@@ -28,6 +28,16 @@ data FileList
 data File
 data FileContents
 
+
+displayDate' :: 
+  YMD.YearMonthDay -> 
+  Text
+displayDate' (d' @ (YMD.YearMonthDay y m d _)) = 
+  if d == 1 && m == 0 && y == 1970
+  then "Nedá se určit"
+  else displayDate d'
+
+
 renderMarkup :: [SR.Markup] -> [DOMElement]
 renderMarkup = let
   renderItem :: SR.Markup -> DOMElement

@@ -6,7 +6,7 @@ module Crm.Page.Company (
   companyDetail , 
   companyNew ) where
 
-import           Data.Text                        (fromString, length, (<>), Text)
+import           Data.Text                        (fromString, length, (<>))
 import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id, length)
 import           Data.Var                         (Var, modify)
@@ -36,12 +36,6 @@ import           Crm.Server                       (createCompany, updateCompany,
 import qualified Crm.Router                       as R
 import           Crm.Helpers
 import           Crm.Page.ContactPerson           (contactPersonsList')
-
-
-displayDate' :: YMD.YearMonthDay -> Text
-displayDate' (d' @ (YMD.YearMonthDay y m d _)) = if d == 1 && m == 0 && y == 1970
-  then "Nedá se určit"
-  else displayDate d'
 
 
 companiesList :: 

@@ -5,50 +5,50 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import           Data.Text                             (fromString, (<>), Text, showInt)
-import           Prelude                               hiding (div, span, id, putStrLn)
+import           Data.Text                        (fromString, (<>), Text, showInt)
+import           Prelude                          hiding (div, span, id, putStrLn)
 import qualified Prelude                 
-import           Data.Var                              (Var, modify)
-import           Data.Maybe                            (onJust, maybeToList)
-import           FFI                                   (Defined(..))
+import           Data.Var                         (Var, modify)
+import           Data.Maybe                       (onJust, maybeToList)
+import           FFI                              (Defined(..))
 
-import           HaskellReact                          hiding (row)
-import qualified HaskellReact.Bootstrap                as B
-import qualified HaskellReact.Bootstrap.Button         as BTN
-import qualified HaskellReact.Jasny                    as J
-import qualified HaskellReact.Tag.Image                as IMG
-import qualified HaskellReact.Tag.Input                as I
-import           HaskellReact.Bootstrap.Carousel       (carousel)
-import qualified HaskellReact.BackboneRouter           as BR
-import qualified HaskellReact.Bootstrap.Nav            as BN
-import qualified HaskellReact.Bootstrap.Glyphicon      as G
-import qualified JQuery                                as JQ
+import           HaskellReact                     hiding (row)
+import qualified HaskellReact.Bootstrap           as B
+import qualified HaskellReact.Bootstrap.Button    as BTN
+import qualified HaskellReact.Jasny               as J
+import qualified HaskellReact.Tag.Image           as IMG
+import qualified HaskellReact.Tag.Input           as I
+import           HaskellReact.Bootstrap.Carousel  (carousel)
+import qualified HaskellReact.BackboneRouter      as BR
+import qualified HaskellReact.Bootstrap.Nav       as BN
+import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified JQuery                           as JQ
 
-import qualified Crm.Shared.Machine                    as M
-import qualified Crm.Shared.YearMonthDay               as YMD
-import qualified Crm.Shared.MachineType                as MT
-import qualified Crm.Shared.Company                    as C
-import qualified Crm.Shared.ContactPerson              as CP
-import qualified Crm.Shared.UpkeepSequence             as US
-import qualified Crm.Shared.PhotoMeta                  as PM
-import qualified Crm.Shared.Photo                      as P
-import qualified Crm.Shared.Upkeep                     as U
-import qualified Crm.Shared.UpkeepMachine              as UM
-import qualified Crm.Shared.ExtraField                 as EF
-import qualified Crm.Shared.MachineKind                as MK
-import qualified Crm.Shared.Employee                   as E
+import qualified Crm.Shared.Machine               as M
+import qualified Crm.Shared.YearMonthDay          as YMD
+import qualified Crm.Shared.MachineType           as MT
+import qualified Crm.Shared.Company               as C
+import qualified Crm.Shared.ContactPerson         as CP
+import qualified Crm.Shared.UpkeepSequence        as US
+import qualified Crm.Shared.PhotoMeta             as PM
+import qualified Crm.Shared.Photo                 as P
+import qualified Crm.Shared.Upkeep                as U
+import qualified Crm.Shared.UpkeepMachine         as UM
+import qualified Crm.Shared.ExtraField            as EF
+import qualified Crm.Shared.MachineKind           as MK
+import qualified Crm.Shared.Employee              as E
 
-import qualified Crm.Data.MachineData                  as MD
-import qualified Crm.Data.Data                         as D
-import qualified Crm.Component.DatePicker              as DP
+import qualified Crm.Data.MachineData             as MD
+import qualified Crm.Data.Data                    as D
+import qualified Crm.Component.DatePicker         as DP
 import           Crm.Component.Form
 import           Crm.Component.Autocomplete
-import           Crm.Component.Navigation              as N
-import qualified Crm.Component.Photos                  as PH
+import           Crm.Component.Navigation         as N
+import qualified Crm.Component.Photos             as PH
 import           Crm.Server 
 import           Crm.Helpers 
-import qualified Crm.Router                            as R
-import qualified Crm.Validation                        as V
+import qualified Crm.Router                       as R
+import qualified Crm.Validation                   as V
 
 
 machineTypeLabel :: Text
@@ -109,7 +109,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       D.MachineScreen md -> D.MachineScreen $ fun md
       _ -> D.navigation appState }
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
-  extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate nextService')]) nextService
+  extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate' nextService')]) nextService
 
   extraNavigation =
     form' (class' "navbar-form") $
