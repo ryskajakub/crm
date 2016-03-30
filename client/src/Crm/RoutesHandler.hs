@@ -208,7 +208,7 @@ startRouter appVar = startedRouter where
               startDateInCalendar = maybe nowYMD id (M.machineOperationStartDate machine)
             in fetchContactPersons companyId (\cps -> fetchMachinesInCompany companyId (\otherMachines -> 
               modify' $ D.MachineScreen $ MD.MachineData
-                machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False (displayDate startDateInCalendar))
+                machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
                   contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
                     (Left $ MD.MachineDetail machineId machineNextService 
                       Display photos upkeeps companyId [])) router ) router ) router ) router ,
@@ -225,7 +225,7 @@ startRouter appVar = startedRouter where
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
             (map Just employeeIds) V.new companyId (Left $ UD.UpkeepClose upkeepId Note) ) router ) router ,
-    machineTypesList' $-> ( const $ 
+    machineTypesList' $-> (const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ) ,
     machineTypeEdit' $-> \machineTypeId router ->
       fetchMachinesForType machineTypeId (\machines ->
