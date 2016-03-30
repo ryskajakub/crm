@@ -72,14 +72,15 @@ companiesList router orderType direction companies' = let
   body = tbody $ map (\idCompany ->
     let 
       (id', company', nextServiceDate, machineKinds) = idCompany
-      kindsAsLetters = T.intercalate ", " . map (T.take 1 . MK.kindToStringRepr) $ machineKinds
+      kindsAsLetters = intersperse (text2DOM " ") . map 
+        (span' (class'' ["label", "label-default"]) . T.take 1 . MK.kindToStringRepr) $ machineKinds
     in tr [
       td [
         R.link
           (C.companyName company')
           (R.companyDetail id')
           router , 
-        span' (class' "goRight") kindsAsLetters ] ,
+        div' (class' "goRight") kindsAsLetters ] ,
       td $ C.companyAddress company' , 
       td $ maybe "" displayDate' nextServiceDate
     ]) companies'
