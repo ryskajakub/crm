@@ -26,6 +26,7 @@ import           Safe                       (minimumMay)
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
 import qualified Crm.Shared.YearMonthDay    as YMD
+import qualified Crm.Shared.MachineType     as MT
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
 import           Crm.Server.DB
@@ -94,8 +95,9 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
       Computed d -> Just d
       Inactive   -> Nothing
   let 
+    machineKind = map (MT.kind . $(proj 8 4)) machines
     nextDay = minimumMay $ mapMaybe id nextDays
-    value = (_companyCore company, nextDay, _companyCoords company)
+    value = (_companyCore company, nextDay, _companyCoords company, machineKind)
     modify mapCache = Map.insert companyId value mapCache
   _ <- liftIO $ atomicModifyIORef' cache $ \a -> let 
     modifiedA = modify a
@@ -103,7 +105,8 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   return ()
 
 
-getCacheContent :: Cache -> IO (Map.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates))
+getCacheContent :: Cache -> 
+  IO (Map.Map C.CompanyId CacheContent)
 getCacheContent (Cache cache) = readIORef cache
 
 

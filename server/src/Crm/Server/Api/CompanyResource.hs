@@ -29,10 +29,11 @@ import           Rest.Handler                (ListHandler, Handler)
 import           Rest.Types.Error            (Reason(..))
 
 import           Safe                        (readMay)
-import           TupleTH                     (updateAtN, proj, takeTuple)
+import           TupleTH                     (updateAtN, proj, takeTuple, catTuples)
 
 import qualified Crm.Shared.Company          as C
 import qualified Crm.Shared.Direction        as DIR
+import qualified Crm.Shared.MachineKind      as MK
 import qualified Crm.Shared.YearMonthDay     as YMD
 import qualified Crm.Shared.Api              as A
 import           Crm.Shared.MyMaybe
@@ -75,11 +76,11 @@ mapListing = mkListing' jsonO (const $ unsortedResult)
 
 unsortedResult :: 
   ExceptT (Reason a) Dependencies 
-  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates)]
+  [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, MyMaybe C.Coordinates, [MK.MachineKindEnum])]
 unsortedResult = do 
   (cache, _) <- ask
   content <- liftIO $ getCacheContent cache
-  let asList = map (\(a,(b,c,d)) -> (a,b, toMyMaybe c, toMyMaybe d)) . M.toList
+  let asList = map (\(a,(b,c,d,e)) -> (a,b,toMyMaybe c,toMyMaybe d,e)) . M.toList
   return . asList $ content
 
 listing :: ListHandler Dependencies
@@ -97,14 +98,15 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
         GT -> LT
         EQ -> EQ
   unsortedResult'' <- unsortedResult
-  let unsortedResult' = ($(takeTuple 4 3)) `fmap` unsortedResult''
+  let unsortedResult' = (\x -> $(catTuples 3 1) ($(takeTuple 5 3) x) ($(proj 5 4) x)) `fmap` unsortedResult''
+        :: [(C.CompanyId, C.Company, MyMaybe YMD.YearMonthDay, [MK.MachineKindEnum])]
   return $ sortBy (\r1 r2 -> case order of
     Nothing -> EQ
     Just C.CompanyName ->
       orderingByDirection $ I.compare [I.CompareIgnoreCase] (C.companyName $ sel2 r1) (C.companyName $ sel2 r2)
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
-        (MyJust (date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
+        (MyJust(date1'), MyJust(date2')) -> orderingByDirection $ date1' `compare` date2'
           -- when the date is missing, the results will always go to the bottom
         (MyNothing, MyNothing) -> EQ
         (MyNothing, _) -> GT

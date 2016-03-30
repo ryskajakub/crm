@@ -42,7 +42,7 @@ companiesList ::
   R.CrmRouter -> 
   C.OrderType -> 
   DIR.Direction -> 
-  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] -> 
+  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> 
   DOMElement
 companiesList router orderType direction companies' = let
 
@@ -71,13 +71,15 @@ companiesList router orderType direction companies' = let
       th [text2DOM "Další servis ", nextServiceOrdering ]]
   body = tbody $ map (\idCompany ->
     let 
-      (id', company', nextServiceDate) = idCompany
+      (id', company', nextServiceDate, machineKinds) = idCompany
+      kindsAsLetters = T.intercalate ", " . map (T.take 1 . MK.kindToStringRepr) $ machineKinds
     in tr [
-      td $
+      td [
         R.link
           (C.companyName company')
           (R.companyDetail id')
-          router ,
+          router , 
+        span' (class' "goRight") kindsAsLetters ] ,
       td $ C.companyAddress company' , 
       td $ maybe "" displayDate' nextServiceDate
     ]) companies'

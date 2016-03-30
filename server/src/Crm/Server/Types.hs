@@ -11,12 +11,16 @@ import           Database.PostgreSQL.Simple (Connection)
 
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.MachineType     as MT
+import qualified Crm.Shared.MachineKind     as MK
 import qualified Crm.Shared.YearMonthDay    as YMD
+
+
+type CacheContent = (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates, [MK.MachineKindEnum])
 
 data MachineTypeMid = Autocomplete String | AutocompleteManufacturer String | CountListing
 data MachineTypeSid = MachineTypeByName String | MachineTypeById MT.MachineTypeId
 
-newtype Cache = Cache (IORef (M.Map C.CompanyId (C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)))
+newtype Cache = Cache (IORef (M.Map C.CompanyId CacheContent))
 type GlobalBindings = (Cache, ConnectionPool)
 
 type Dependencies = (ReaderT GlobalBindings IO :: * -> *)

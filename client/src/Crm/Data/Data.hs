@@ -30,7 +30,7 @@ data NavigationState =
   Dashboard { companies :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] } |
   FrontPage {
     ordering :: (C.OrderType, DIR.Direction) ,
-    companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay)] } | 
+    companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] } | 
   CompanyDetail {
     companyId :: C.CompanyId , 
     company :: C.Company , 

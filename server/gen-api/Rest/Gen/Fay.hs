@@ -31,7 +31,6 @@ import Rest.Gen.Types
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 import qualified Data.Generics.Uniplate.Data    as U
 
-import Debug.Trace
 
 rewriteModuleNames :: [(H.ModuleName, H.ModuleName)] -> H.Module -> H.Module
 rewriteModuleNames rews = U.transformBi $ \m -> lookupJustDef m m rews
