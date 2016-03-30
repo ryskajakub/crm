@@ -390,11 +390,11 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
   mkFormGroup = div' (class' "form-group")
   
   noteRow = inputRowEditing
-    "Další specifikace"
+    "Další specifikace (např. T-10-270D)"
     (SetValue . M.furtherSpecification $ machine')
     (\str -> setMachine $ machine' { M.furtherSpecification = str })
   labelRow = inputRowEditing
-    "Označení"
+    "Označení (např. K12)"
     (SetValue $ M.label_ machine') 
     (\str -> setMachine $ machine' { M.label_ = str })
   archivedRow = editableRow editing "Archivován" archivedCheckbox where
