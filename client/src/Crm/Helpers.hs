@@ -33,6 +33,10 @@ initializeTooltip :: Fay ()
 initializeTooltip = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
 
 
+contains :: Text -> Text -> Bool
+contains = ffi "%1.indexOf(%2, 0) != -1"
+
+
 displayDate' :: 
   YMD.YearMonthDay -> 
   Text

@@ -38,6 +38,7 @@ import           Crm.Helpers
 import           Crm.Page.ContactPerson           (contactPersonsList')
 
 
+
 companiesList :: 
   T.Text ->
   R.CrmRouter -> 
@@ -46,7 +47,13 @@ companiesList ::
   DIR.Direction -> 
   [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> 
   (DOMElement, Fay ())
-companiesList filterText router var orderType direction companies' = let
+companiesList filterText router var orderType direction companies'' = let
+
+  filterFun (_, C.Company name _ address, _, _) = 
+    contains (T.toLower name) (T.toLower filterText) || 
+    contains (T.toLower address) (T.toLower filterText)
+    
+  companies' = filter filterFun companies''
 
   setCompaniesList text = modify var $ \appState -> appState {
     D.navigation = case D.navigation appState of
