@@ -482,13 +482,6 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
           Editing -> div' (class' "col-md-3") operationTypesDropdown
           Display -> div' (class'' ["col-md-3", "control-label", "my-text-left"]) buttonLabel )]]
 
-
-  -- rows that ore used in the computation by mth
-  computationRows = case MT.kind machineType of
-    MK.RotaryScrewCompressor -> rotaryScrewCompressorInputs ++ usageRows
-    MK.VacuumPump -> usageRows
-    _ -> []
-
   formInputs = [
     inputRow
       Display
@@ -531,7 +524,7 @@ machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (
     editableRow
       editing
       ("Datum uvedení do provozu") 
-      datePicker ] ++ computationRows ++ [labelRow, archivedRow, upkeepByRow, noteRow] ++ kindSpecificRows ++ extraRows ++ 
+      datePicker ] ++ usageRows ++ [labelRow, archivedRow, upkeepByRow, noteRow] ++ kindSpecificRows ++ extraRows ++ 
         maybe [] (\mkButtonRow -> [
           mkFormGroup (mkButtonRow $ (buttonStateFromBool . V.ok) validation)]) buttonRow''
  
