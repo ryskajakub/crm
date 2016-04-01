@@ -51,7 +51,7 @@ main' = do
     n = Navigation.navigation' router
     in case D.navigation appState of
       D.Dashboard companies -> n $ dashboard router companies
-      D.FrontPage ordering data' -> n $ companiesList router (fst ordering) (snd ordering) data'
+      D.FrontPage ordering data' f -> n $ companiesList f router appVar' (fst ordering) (snd ordering) data'
       D.NotFound -> n $ emptyCallback $ notFound
       D.ServerDown -> n $ emptyCallback $ serverDown
       D.CompanyDetail companyId' company' contactPersons editing' machines' lastUpkeep -> n $

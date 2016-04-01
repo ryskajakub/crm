@@ -62,7 +62,7 @@ startRouter appVar = startedRouter where
     ("", \router _ -> let
       crmRouter = CrmRouter router
       in fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
-        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' }) crmRouter ) ,
+        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' "" }) crmRouter ) ,
     ("companies/:companyId/new-maintenance/:machineId", \router params -> let
       crmRouter = CrmRouter router
       companyIdText = head $ params
@@ -107,7 +107,7 @@ startRouter appVar = startedRouter where
       crmRouter = CrmRouter router
       in fetchFrontPageData order direction (\data' ->
         modify appVar $ \appState -> appState { D.navigation = 
-          D.FrontPage (order, direction) data' }) crmRouter )]
+          D.FrontPage (order, direction) data' "" }) crmRouter )]
 
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
 

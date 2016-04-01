@@ -39,12 +39,19 @@ import           Crm.Page.ContactPerson           (contactPersonsList')
 
 
 companiesList :: 
+  T.Text ->
   R.CrmRouter -> 
+  Var D.AppState -> 
   C.OrderType -> 
   DIR.Direction -> 
   [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> 
   (DOMElement, Fay ())
-companiesList router orderType direction companies' = let
+companiesList filterText router var orderType direction companies' = let
+
+  setCompaniesList text = modify var $ \appState -> appState {
+    D.navigation = case D.navigation appState of
+      cd @ (D.FrontPage {}) -> cd { D.filterText = text }
+      _ -> D.navigation appState }
 
   mkOrderingLink :: C.OrderType -> DIR.Direction -> DOMElement -> DOMElement
   mkOrderingLink orderType' direction' icon = 
@@ -100,7 +107,10 @@ companiesList router orderType direction companies' = let
       button = BTN.button' buttonProps [
         G.plus , 
         text2DOM " Přidat firmu" ]
-      in BN.nav . (:[]) . inNav $ button ,
+      setFilterText filterText' = setCompaniesList filterText'
+      nameAddressFiltering = 
+        div [text2DOM "Filtace: ", F.input F.Editing False (SetValue filterText) setFilterText]
+      in BN.nav $ [ inNav button , inNav nameAddressFiltering ] ,
     B.table [
       head' , 
       body ]])
