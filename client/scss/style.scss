@@ -13,9 +13,13 @@ div.panel-body h3 {
   right: 0px;
   top: 0px; }
 
+.pointer {
+  cursor: default }
+
 table.break-words {
   table-layout: fixed;
-  th, td {word-wrap: break-word; }}
+  th, td { 
+    word-wrap: break-word; }}
 
 div.colours {
   height: 20px;

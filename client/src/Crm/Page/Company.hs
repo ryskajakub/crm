@@ -43,7 +43,7 @@ companiesList ::
   C.OrderType -> 
   DIR.Direction -> 
   [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> 
-  DOMElement
+  (DOMElement, Fay ())
 companiesList router orderType direction companies' = let
 
   mkOrderingLink :: C.OrderType -> DIR.Direction -> DOMElement -> DOMElement
@@ -71,9 +71,14 @@ companiesList router orderType direction companies' = let
       th [text2DOM "Další servis ", nextServiceOrdering ]]
   body = tbody $ map (\idCompany ->
     let 
+      mkTooltip machineKind = let
+        machineKindStr = MK.kindToStringRepr machineKind
+        in B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined machineKindStr) Undefined)
       (id', company', nextServiceDate, machineKinds) = idCompany
       kindsAsLetters = intersperse (text2DOM " ") . map 
-        (span' (class'' ["label", "label-default"]) . T.take 1 . MK.kindToStringRepr) $ machineKinds
+        (\mk -> mkTooltip mk . span' (class'' ["label", "label-default", "pointer"]) 
+          . T.take 1 . MK.kindToStringRepr $ mk) $
+        machineKinds
     in tr [
       td [
         R.link
@@ -88,7 +93,7 @@ companiesList router orderType direction companies' = let
     p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,
     p "Klikem na šipky v záhlaví tabulky můžeš řadit tabulku" ]
   pageInfo' = pageInfo "Seznam firem, další servis" $ Just advice
-  in B.grid $ B.row $ (pageInfo' ++ withSection [
+  grid = B.grid $ B.row $ (pageInfo' ++ withSection [
     let
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
@@ -99,6 +104,7 @@ companiesList router orderType direction companies' = let
     B.table [
       head' , 
       body ]])
+  in (grid, initializeTooltip)
 
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements

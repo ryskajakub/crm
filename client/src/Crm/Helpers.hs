@@ -29,6 +29,10 @@ data File
 data FileContents
 
 
+initializeTooltip :: Fay ()
+initializeTooltip = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
+
+
 displayDate' :: 
   YMD.YearMonthDay -> 
   Text

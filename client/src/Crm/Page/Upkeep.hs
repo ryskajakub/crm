@@ -11,7 +11,7 @@ import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
 import           Data.Maybe                       (mapMaybe)
-import           FFI (Defined(..), ffi)
+import           FFI (Defined(..))
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
@@ -90,7 +90,6 @@ plannedUpkeeps router upkeepCompanies = let
 
   advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
   pageInfo' = pageInfo "Naplánované servisy" $ Just advice
-  tooltipInitializer = initializeTooltip
 
   compressorsTable = mkTable . head $ upkeepCompanies
   othersTable = mkTable . head . tail $ upkeepCompanies
@@ -102,11 +101,7 @@ plannedUpkeeps router upkeepCompanies = let
     div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ]
   in (B.grid $ B.row $
     pageInfo' ++
-    [B.col (B.mkColProps 12) . main $ [pills, tables], B.fullCol "zelená - šroubové, žlutá - vývěvy"] , tooltipInitializer)
-
-
-initializeTooltip :: Fay ()
-initializeTooltip = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
+    [B.col (B.mkColProps 12) . main $ [pills, tables], B.fullCol "zelená - šroubové, žlutá - vývěvy"] , initializeTooltip)
 
 
 -- | if the element is in the first list, put it in the other one, if the element
