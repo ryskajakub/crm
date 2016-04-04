@@ -5,7 +5,7 @@ module Crm.Page.UpkeepPhoto (
   addPhotoToUpkeepList ,
   upkeepPhotos ) where
 
-import           Data.Text                        (fromString, Text)
+import           Data.Text                        (fromString, Text, showInt)
 import           Prelude                          hiding (div, span, id)
 import           FFI                              (Defined(..), ffi)
 
@@ -35,10 +35,12 @@ addPhotoToUpkeepList router upkeeps = let
   pageInfo' = pageInfo "Aktuální servisy - přidej fotky" $ (Nothing :: Maybe DOMElement)
   table'' = B.table [head', body] where
     head' = thead $ tr [
+      th "Servis č." ,
       th "Název firmy" ,
       th "Přidat fotky" ,
       th "Datum" ]
     renderUpkeepRow (upkeepId, upkeep, _, company, _, _) = tr [
+      td $ R.link (showInt . U.getUpkeepId $ upkeepId) (R.replanUpkeep upkeepId) router ,
       td . C.companyName $ company ,
       td $ BB.buttonP 
         BB.LargeButton
