@@ -116,7 +116,7 @@ companiesList filterText router var orderType direction companies'' = let
         text2DOM " Přidat firmu" ]
       setFilterText filterText' = setCompaniesList filterText'
       nameAddressFiltering = 
-        div [text2DOM "Filtace: ", F.input F.Editing False (SetValue filterText) setFilterText]
+        div [text2DOM "Filtrace: ", F.input F.Editing False (SetValue filterText) setFilterText]
       in BN.nav $ [ inNav button , inNav nameAddressFiltering ] ,
     B.table [
       head' , 
