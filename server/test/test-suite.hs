@@ -190,8 +190,8 @@ missingOperationStartDate = let
   machine' = machine {
     M.machineOperationStartDate = Nothing }
   result = nextServiceDate machine' (upkeepSequence, []) []
-  expectedResult = Computed $ fromGregorian 1970 1 1
-  in assertEqual "Date must be 1970 1 1"
+  expectedResult = CantTell
+  in assertEqual "Result must be Cant't tell."
     expectedResult result
 
 repairUpkeep :: Assertion

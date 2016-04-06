@@ -7,7 +7,7 @@
 
 module Crm.Server.Boilerplate where
 
-import Crm.TH                              (mkFayTransferables, fayInstance)
+import           Crm.TH                    (mkFayTransferables, fayInstance)
 
 import           Data.Aeson.Types          (toJSON, ToJSON, FromJSON, parseJSON)
 import qualified Data.JSON.Schema.Types    as JS (JSONSchema(schema))
@@ -49,4 +49,4 @@ mkFayTransferables [''UM.UpkeepType, ''SR.Markup, ''M.ContactPersonForMachine, '
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
   ''U.Upkeep, ''U.UpkeepMarkup, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, 
   ''E.Employee, ''PM.PhotoMeta, ''CP.ContactPerson, ''T.Task, ''T.TaskId, ''T.TaskMarkup, ''U.Upkeep2Markup, 
-  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy, ''PM.PhotoSource ]
+  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy, ''PM.PhotoSource, ''C.CompanyState ]

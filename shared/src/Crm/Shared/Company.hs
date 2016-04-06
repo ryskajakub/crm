@@ -15,6 +15,8 @@ import Data.Profunctor.Product.TH (makeAdaptorAndInstance')
 #endif
 import Data.Text                  (Text, pack)
 
+import Crm.Shared.YearMonthDay    as YMD
+
 newtype CompanyId' id = CompanyId { getCompanyId :: id }
 #ifdef FAY
   deriving (Show)
@@ -31,12 +33,20 @@ instance Functor CompanyId' where
 #ifndef FAY
 instance Info CompanyId where
   describe _ = "companyId"
-instance Read CompanyId where 
+instance Read CompanyId where
   readsPrec i = fmap (\(a,b) -> (CompanyId a, b)) `fmap` readsPrec i
 #endif
 
 data OrderType = CompanyName | NextService
   deriving (Show, Read)
+
+data CompanyState =
+  CantTellDate |
+  ExactDate YMD.YearMonthDay |
+  NotImportant
+#ifndef FAY
+  deriving (Generic, Typeable, Data, Ord, Eq, Show)
+#endif
 
 data Coordinates' latitude longitude = Coordinates {
   latitude :: latitude ,
@@ -48,7 +58,7 @@ type Coordinates = Coordinates' Double Double
 type CoordinatesJoin = Coordinates' (Maybe Double) (Maybe Double)
 
 data Company' name note address = Company {
-  companyName :: name , 
+  companyName :: name ,
   companyNote :: note ,
   companyAddress :: address }
 #ifndef FAY
