@@ -3,7 +3,7 @@ module Crm.Server.Core where
 import           Data.List                 (partition, minimumBy, find, maximumBy)
 import           Data.Maybe                (fromMaybe)
 
-import           Data.Time.Calendar        (Day, addDays, fromGregorian)
+import           Data.Time.Calendar        (Day, addDays)
 import           Safe.Foldable             (minimumByMay)
 import           Safe                      (headMay)
 
@@ -25,12 +25,14 @@ data NextServiceDate a =
 instance Functor NextServiceDate where
   fmap f (Planned d) = Planned $ f d
   fmap f (Computed d) = Computed $ f d
+  fmap _ CantTell = CantTell
   fmap _ Inactive = Inactive
 
 getMaybe :: NextServiceDate a -> Maybe a
 getMaybe (Planned a) = Just a
 getMaybe (Computed a) = Just a
 getMaybe Inactive = Nothing
+getMaybe CantTell = Nothing
 
 nextServiceDate :: 
   M.Machine -> -- ^ machine for which the next service date is computed

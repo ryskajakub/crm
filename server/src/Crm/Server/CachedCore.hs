@@ -9,7 +9,6 @@ import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
 import           Control.Concurrent.Async   (async, wait, Async)
 import           Control.Lens               (over, mapped, view)
 
-import           Data.Maybe                 (mapMaybe)
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 import           Data.Pool                  (withResource)
 
@@ -21,7 +20,7 @@ import           Opaleye                    (runQuery, queryTable)
 import           TupleTH                    (proj)
 import           Control.Monad.Trans.Except (ExceptT)
 import           Rest.Types.Error           (Reason)
-import           Safe                       (minimumMay)
+import           Safe                       (minimumDef)
 
 import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
@@ -97,7 +96,7 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
       CantTell   -> C.CantTellDate
   let 
     machineKind = map (MT.kind . $(proj 8 4)) machines
-    nextDay = minimumMay $ mapMaybe id nextDays
+    nextDay = minimumDef C.NotImportant nextDays
     value = (_companyCore company, nextDay, _companyCoords company, machineKind)
     modify mapCache = Map.insert companyId value mapCache
   _ <- liftIO $ atomicModifyIORef' cache $ \a -> let 

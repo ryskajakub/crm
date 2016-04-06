@@ -45,7 +45,7 @@ companiesList ::
   Var D.AppState -> 
   C.OrderType -> 
   DIR.Direction -> 
-  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> 
+  [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] -> 
   (DOMElement, Fay ())
 companiesList filterText router var orderType direction companies'' = let
 
@@ -89,6 +89,9 @@ companiesList filterText router var orderType direction companies'' = let
         machineKindStr = MK.kindToStringRepr machineKind
         in B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined machineKindStr) Undefined)
       (id', company', nextServiceDate, machineKinds) = idCompany
+      displayDate'' (C.ExactDate date'') = displayDate' date''
+      displayDate'' C.CantTellDate = "Nedá se určit"
+      displayDate'' C.NotImportant = ""
       kindsAsLetters = intersperse (text2DOM " ") . map 
         (\mk -> mkTooltip mk . span' (class'' ["label", "label-default", "pointer"]) 
           . T.take 1 . MK.kindToStringRepr $ mk) $
@@ -101,7 +104,7 @@ companiesList filterText router var orderType direction companies'' = let
           router , 
         div' (class' "goRight") kindsAsLetters ] ,
       td $ C.companyAddress company' , 
-      td $ maybe "" displayDate' nextServiceDate
+      td $ displayDate'' nextServiceDate
     ]) companies'
   advice = [ 
     p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,

@@ -48,6 +48,10 @@ data CompanyState =
   deriving (Generic, Typeable, Data, Ord, Eq, Show)
 #endif
 
+getDate :: CompanyState -> Maybe YMD.YearMonthDay
+getDate (ExactDate ed) = Just ed
+getDate _ = Nothing
+
 data Coordinates' latitude longitude = Coordinates {
   latitude :: latitude ,
   longitude :: longitude }

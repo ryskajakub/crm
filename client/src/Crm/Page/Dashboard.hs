@@ -15,14 +15,13 @@ import qualified HaskellReact.Bootstrap  as B
 import           GoogleMaps
 
 import qualified Crm.Shared.Company      as C
-import qualified Crm.Shared.YearMonthDay as YMD
 import           Crm.Helpers
 import qualified Crm.Router              as R
 
 
 dashboard :: 
   R.CrmRouter -> 
-  [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> 
+  [(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] -> 
   (DOMElement, Fay ())
 dashboard router companies = (element, constructMap) where
 
@@ -34,7 +33,7 @@ dashboard router companies = (element, constructMap) where
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
     forM_ companiesWithCoords $ \(companyId,_,date,C.Coordinates lat lng) -> do
-      let color' = maybe (pack "777777") computeColor date 
+      let color' = maybe (pack "777777") computeColor (C.getDate date)
       marker <- addMarker lat lng color' googleMap
       let handler = R.navigate (R.companyDetail companyId) router
       addClickListener marker handler

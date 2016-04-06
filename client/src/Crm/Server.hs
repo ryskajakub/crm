@@ -377,20 +377,17 @@ swapMaybe putIntoNewtype value =
 fetchFrontPageData :: 
   C.OrderType -> 
   DIR.Direction -> 
-  ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] -> Fay ()) -> 
+  ([(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] -> Fay ()) -> 
   R.CrmRouter -> 
   Fay ()
 fetchFrontPageData order direction callback router = 
-  let
-    lMb [] = []
-    lMb ((a,b,x,c) : xs) = (a,b,toMaybe x,c) : lMb xs
-  in passwordAjax
+  passwordAjax
     (pack $ A.companies ++ "?count=1000&order=" ++ (case order of
       C.CompanyName -> "CompanyName"
       C.NextService -> "NextService") ++ "&direction=" ++ (case direction of
       DIR.Asc -> "Asc"
       DIR.Desc -> "Desc"))
-    (callback . lMb . items)
+    (callback . items)
     Nothing
     get
     Nothing
@@ -405,13 +402,13 @@ fetchPlannedUpkeeps ::
 fetchPlannedUpkeeps = XU.listPlanned maxCount
 
 fetchCompaniesForMap :: 
-  ([(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] -> Fay ()) ->
+  ([(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
 fetchCompaniesForMap callback = 
   XC.listMap 
     maxCount
-    (callback . (map (\(a,b,c,d,_) -> (a,b,toMaybe c,toMaybe d))))
+    (callback . (map (\(a,b,c,d,_) -> (a,b,c,toMaybe d))))
 
 fetchRecommendation :: 
   C.CompanyId ->

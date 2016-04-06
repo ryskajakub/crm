@@ -27,10 +27,10 @@ import           Crm.Component.DatePicker  as DP
 import           Crm.Component.Form        (InputState)
 
 data NavigationState =
-  Dashboard { companies :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, Maybe C.Coordinates)] } |
+  Dashboard { companies :: [(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] } |
   FrontPage {
     ordering :: (C.OrderType, DIR.Direction) ,
-    companiesNextService :: [(C.CompanyId, C.Company, Maybe YMD.YearMonthDay, [MK.MachineKindEnum])] ,
+    companiesNextService :: [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ,
     filterText :: Text } | 
   CompanyDetail {
     companyId :: C.CompanyId , 
