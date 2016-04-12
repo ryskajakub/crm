@@ -31,8 +31,10 @@ data ContactPerson = ContactPerson {
   name :: Text , 
   phone :: Text ,
   position :: Text }
-#ifndef FAY
-  deriving (Generic, Typeable, Data)
+#ifdef FAY
+  deriving Eq
+#else
+  deriving (Generic, Typeable, Data, Eq)
 #endif
 
 newContactPerson :: ContactPerson

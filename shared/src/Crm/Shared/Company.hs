@@ -41,8 +41,8 @@ data OrderType = CompanyName | NextService
   deriving (Show, Read)
 
 data CompanyState =
-  CantTellDate |
   ExactDate YMD.YearMonthDay |
+  CantTellDate |
   NotImportant
 #ifndef FAY
   deriving (Generic, Typeable, Data, Ord, Eq, Show)
