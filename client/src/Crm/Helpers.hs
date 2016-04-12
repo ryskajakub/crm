@@ -153,8 +153,14 @@ displayMachine machine machineType = (MT.machineTypeName machineType) <> (if (T.
   else "-" <> M.furtherSpecification machine)
 
 displayFullMachine :: M.Machine -> MT.MachineType -> Text
-displayFullMachine machine machineType =
-  label'' <> (displayMachine machine machineType) <> serialNumber' where
+displayFullMachine = displayFullMachine' False
+
+displayFullMachine' :: Bool -> M.Machine -> MT.MachineType -> Text
+displayFullMachine' displayMachineBrand machine machineType =
+  label'' <> brand <> (displayMachine machine machineType) <> serialNumber' where
+    brand = if displayMachineBrand
+      then MT.machineTypeManufacturer machineType <> " "
+      else ""
     label'' = if T.null . M.label_ $ machine
       then ""
       else M.label_ machine <> " - "

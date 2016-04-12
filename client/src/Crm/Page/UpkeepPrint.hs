@@ -9,15 +9,13 @@ import           Data.Text                    (fromString, (<>))
 import qualified Data.Text                    as T
 import           Data.Maybe                   (onJust, joinMaybe, mapMaybe)
 import           Prelude                      hiding (div)
-import qualified Prelude                      as P
-import           FFI                          (Defined(Defined))
 import           Data.Var                     (Var, modify)
 
 import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
-import           Crm.Helpers                  (displayDate, renderMarkup, displayFullMachine)
+import           Crm.Helpers                  (displayDate, renderMarkup, displayFullMachine')
 import           Crm.Component.Form           (nullDropdown, InputState(Editing))
 import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
@@ -56,8 +54,9 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     \eId -> R.navigate (R.dailyPlan date eId) router
   employeeName = joinMaybe ((flip lookup employees . fst) `onJust` employeeTasks)
 
-  dateTable = BT.table (Just BT.Bordered) [
-    tr [th "Datum", td . displayDate $ date] ]
+  machinesTable = B.fullRow $ BT.table (Just BT.Bordered) (
+    (tr [th "Datum", td . displayDate $ date]) :
+    concatMap displayUpkeep data')
 
   pluckContactPersons = nub . mapMaybe (\(_,_,cp',_) -> cp')
 
@@ -66,40 +65,29 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
   ifNonEmpty [] _ _ = []
   ifNonEmpty _ prepend list = prepend : list
   tasks = maybe [text2DOM ""] (\(_, tasks') -> ifNonEmpty tasks' (h3 "Další úkoly") . (:[]) . ul . renderTasks $ tasks') employeeTasks
-  displayUpkeep (upkeep, company, employees', machinesData) = div' (class'' ["row", "print-company"]) $
-    B.col (B.mkColProps 12) (
+  displayUpkeep (upkeep, company, _, machinesData) =
       upkeepPrintDataHeader ++
-      [generalDescription] ++
-      (rdrMachines machinesData))
+      (rdrMachines machinesData) ++
+      [generalDescription]
     where
-    generalDescription = div . renderMarkup . U.workDescription $ upkeep
+    generalDescription = tr [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
     upkeepPrintDataHeader = [
-      BT.table (Just BT.Bordered) [
-        tr [th "Firma", td (text2DOM . C.companyName $ company)] ,
-        tr [th "Adresa", td (text2DOM . C.companyAddress $ company)] ,
-        tr [th "Kontaktní osoba", td . text2DOM . T.intercalate ", " . 
-          map CP.name . pluckContactPersons $ machinesData] ,
-        tr [th "Telefon", td . text2DOM . T.intercalate ", " .
-          map CP.phone . pluckContactPersons $ machinesData] ]]
-    rdrMachines = concatMap $ \(machine, machineType, contactPerson, (upkeepMachine, markup')) -> let
+      tr [th "Firma", td (text2DOM . C.companyName $ company)] ,
+      tr [th "Adresa", td (text2DOM . C.companyAddress $ company)] ,
+      tr [th "Kontaktní osoba", td . text2DOM . T.intercalate ", " . 
+        map CP.name . pluckContactPersons $ machinesData] ,
+      tr [th "Telefon", td . text2DOM . T.intercalate ", " .
+        map CP.phone . pluckContactPersons $ machinesData]]
+    rdrMachines = map $ \(machine, machineType, _, (upkeepMachine, markup')) -> let
       upkeepMachineText = case markup' of
         Just (markup) -> div . renderMarkup $ markup
         Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
-      in [h3 $ displayFullMachine machine machineType, 
-        p upkeepMachineText ]
-
-{-
-BT.table (Just BT.Bordered) [
-        tr [th "Zařízení", td $ displayMachine machine machineType ] ,
-        tr [th "Sériové číslo", td . text2DOM . M.serialNumber $ machine ] ,
-        tr [th "Označení", td . text2DOM . M.label_ $ machine ] ,
-        tr . (td'' mkAttrs (mkTableCellAttributes { colSpan = Defined 2 } )) $ upkeepMachineText ]
--}
+      in tr $ tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, 
+        p upkeepMachineText]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
     (B.row' (const . class' $ "no-print") $ [
       B.col (B.mkColProps 6) employeeSelect ,
       B.col (B.mkColProps 3) plansDatePicker ]) :
-    (B.fullRow dateTable) :
-    map displayUpkeep data' ++
+    machinesTable :
     [B.row . B.col (B.mkColProps 12) $ tasks]
