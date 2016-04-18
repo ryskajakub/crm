@@ -19,6 +19,7 @@ import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Nav       as BN
 import qualified HaskellReact.BackboneRouter      as BR
+import qualified HaskellReact.Tag.Hyperlink       as A
 import           GoogleMaps                       (computeCoordinates)
 
 import qualified Crm.Shared.Company               as C
@@ -36,7 +37,6 @@ import           Crm.Server                       (createCompany, updateCompany,
 import qualified Crm.Router                       as R
 import           Crm.Helpers
 import           Crm.Page.ContactPerson           (contactPersonsList')
-
 
 
 companiesList :: 
@@ -119,15 +119,22 @@ companiesList filterText router var orderType direction companies'' = let
         text2DOM " Přidat firmu" ]
       setFilterText filterText' = setCompaniesList filterText'
       nameAddressFiltering = 
-        div [text2DOM "Filtrace: ", F.input F.Editing False (SetValue filterText) setFilterText]
-      in BN.nav $ [ inNav button , inNav nameAddressFiltering ] ,
-    B.table [
-      head' , 
-      body ]])
+        div [
+          text2DOM "Filtrace: " , 
+          G.filter, F.input F.Editing False (SetValue filterText) setFilterText ]
+      infoLink = A.a "https://github.com/coubeatczech/crm/blob/master/doc/Manuál.md" 
+        [G.infoSign , text2DOM " Návod"]
+      in 
+        BN.nav $ [ inNav button , inNav nameAddressFiltering, infoLink ] ,
+        B.table [
+          head' , 
+          body ]])
   in (grid, initializeTooltip)
+
 
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements
+
 
 companyNew :: 
   R.CrmRouter -> 
@@ -146,6 +153,7 @@ companyNew router var company' = let
   in section $
     (B.grid $ B.row $ B.col (B.mkColProps 12) $ h2 "Nová firma") :
     companyForm Editing var setCompany company' saveHandler []
+
 
 companyDetail :: 
   InputState -> -- ^ is the page editing mode
@@ -255,6 +263,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
       R.link "Schéma zapojení" (R.machinesSchema companyId) router ])]
 
   in div $ headerNavigSection : companyFormSection ++ [B.grid $ contactPersonsHtml : lastUpkeepRecommendation ++ machineBoxItemsHtml ]
+
 
 companyForm :: 
   InputState -> -- ^ is the page editing mode
