@@ -20,6 +20,12 @@ Jdu na obrazovku *Naplánované servisy* - na každém řádku je skoro na konci
 #### Uzavření servisu
 Když se servisáci vrátí ze servisu a já to chci zaznamenat, tak nejprve přidám fotku archivního listu - popsané dole **Přidání servisního listu**. Pak jdu na obrazovku *Naplánované servisy* - na každém řádku je na konci tlačítko se čtverečkem a fajfkou - na to kliknu. Principialně tam můžu vyplnit všechno, co jsem vyplnil při plánování, je tam navíc políčko **Závěry po servisu**, **Doporučení** - kam můžu přidat nějaké zjištění po servisu. Pak kliknu na *Uzavřít* a potom by se u firmy přepočítá, kdy se do ní musí znovu jet. Pak se zobrazí v tom místě na první stránce.
 
+Důležitý je typ servisu, který se zaznamenává, jsou tam tyto možnosti:
+* **(I)nstalace**: úvodní namontování kompresorů, od tohoto servisu se odpočítá další servis. Má smysl samozřejmě mít insalaci pro jeden kompresor jednou.
+* **(O)prava**: oprava kompresoru znamená, že se neměnily spotřební díly, pracovalo se na poruchách sání, řemenů, motoru, atd. Program bude opravu ignorovat a odpočítá další servis z pravidelného servisu nebo instalace
+* **(S)ervis** - pravidelný: znamená, že byly vyměněny spotřební díly - separátor, olejový filtr, vzduchový filtr. Od pravidelného servisu se odpočítá další servis. Pokud bylo v rámci pravidelného servisu uděláno i něco jiného, nevadí, je třeba použít tento, aby se dobře odpočítal další servis.
+* **(K)ontrola**: na kompresoru se nedělal nějaký zásah, jenom se zjistilo, jak běží. Zjistily se údaje o motohodinách atd. Toto také, jako oprava neovlivní výpočet dalšího servisu.
+
 #### Smazání servisu
 Jdu na první stránku, tam vyberu firmu u které chci něco smazat, u ní kliknu na **Historie servisů**. Tam kliknu na políčko **Povolit smazávání**. Tím se aktivuje smazávání servisů - to je pro jistotu, aby jsem se nepřeklikl když nechci smazat servis. Kouknu se na datum nahoře v tabulce a kliknu na *Smazat* - to smaže servis.
 
