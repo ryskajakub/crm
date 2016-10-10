@@ -65,16 +65,16 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
     (C.getCompanyId companyId) machineType' contactPersonId' (toMaybe linkedMachineId) machineSpecificData
   withResource pool $ \connection -> recomputeSingle companyId connection cache
   return machineId
-    
 
-addMachine :: 
-  Connection -> 
-  M.Machine -> 
-  Int -> 
-  MT.MyEither -> 
-  Maybe CP.ContactPersonId -> 
-  Maybe M.MachineId -> 
-  [(EF.ExtraFieldId, Text)] -> 
+
+addMachine ::
+  Connection ->
+  M.Machine ->
+  Int ->
+  MT.MyEither ->
+  Maybe CP.ContactPersonId ->
+  Maybe M.MachineId ->
+  [(EF.ExtraFieldId, Text)] ->
   ExceptT (Reason r) (IdDependencies' C.CompanyId) M.MachineId -- ^ id of newly created machine
 addMachine connection machine' companyId' machineType' contactPersonId linkedMachineId extraFields = do
   machineTypeId <- case machineType' of

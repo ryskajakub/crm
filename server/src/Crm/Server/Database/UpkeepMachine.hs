@@ -1,5 +1,3 @@
-{-# OPTIONS -fno-warn-missing-signatures #-}   
-
 {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
@@ -51,3 +49,6 @@ upkeepMachinesTable = Table "upkeep_machines" $ pUpkeepMachineRow UpkeepMachineR
     UM.warrantyUpkeep = required "warranty" ,
     UM.endNote = required "end_note" ,
     UM.upkeepType = required "upkeep_type" }}
+
+myfun :: Int
+myfun = 8

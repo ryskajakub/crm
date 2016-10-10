@@ -376,11 +376,13 @@ machineTypesList ::
 machineTypesList router machineTypes = let
   head' =
     thead $ tr [
+      th "Druh" ,
       th "Výrobce" , 
       th "Název typu" , 
-      th "Počet zařízení v systému" ]
-  body = tbody $ map (\((machineTypeId,(MT.MachineType _ name manufacturer)), count) ->
+      th "Počet zařízení" ]
+  body = tbody $ map (\((machineTypeId,(MT.MachineType kind name manufacturer)), count) ->
     tr [
+      td . MK.kindToStringRepr $ kind ,
       td manufacturer , 
       td $ R.link name (R.machineTypeEdit machineTypeId) router ,
       td $ showInt count]) machineTypes

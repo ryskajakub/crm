@@ -78,7 +78,8 @@ machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO $ const $
   ask >>= \(_,pool) -> withResource pool $ \connection -> 
     liftIO $ ((runQuery connection (machineManufacturersQuery mid)) :: IO [Text])
 machineTypesListing CountListing = mkListing' jsonO $ const $ do
-  rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ runQuery connection machineTypesWithCountQuery 
+  rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ 
+    runQuery connection machineTypesWithCountQuery 
   let 
     mapRow (mtRow :: MachineTypeRecord, count :: Int64) = 
       ((_machineTypePK mtRow, _machineType mtRow), fromIntegral count :: Int)

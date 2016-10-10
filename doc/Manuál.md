@@ -4,7 +4,7 @@
 
 ### Plánování servisů
 
-Na první stránce se zobrazují firmy standartně seřazené podle toho, kde se má nejdříve jet. Počítají se podle tohoto [algoritmu](Manuál.md). 
+Na první stránce se zobrazují firmy standartně seřazené podle toho, kde se má nejdříve jet. Počítají se podle tohoto [algoritmu](Manuál.md). Firmy v tabulce můžu filtrovat tím, že něco napíšu do políčka **Filtrace**, taky můžu řadit podle názvu, když kliknu na ikonu řazení v záhlaví tabulky.
 
 #### Plánování servisu
 Pokud se rozmyslím, že někam chci naplánovat servis, jdu na první stránku, tam vyberu firmu, u které chci naplánovat servis, kliknu na ní. Na další obrazovce kliknu na *Naplánovat servis* - klikem na položky pod nadpisem *Stroj* vyberu, které stroje budou v servisu zahrnuty. Vyberu **Datum** - kdy se servis odehraje, určím kdo tam pojede za servismany - naklikám to tlačítkem *Další servisman*. Do políček můžu přidat nějaké poznámky k servisu - poznámky společné všem strojům napíšu dolů do políčka **Popis servisu**. Položky ke konrétnímu kompresoru dám přímo na řádek ke kompresoru pod nadpis **Plánované úkony**.
@@ -41,7 +41,7 @@ Když chci smazat jenom obrázek, tak postupuju stejně jako v předchozí situa
 - **Kdo servisuje** - toto ovlivňuje, v které ze sekcí v *Naplánovaných servisech* se bude zařízení objevovat.
 - **Další specifikace** - označení kompresoru - na kolik je nastavený barů, jakou má nádobu atd.
 
-**Speciální pole**: Jdu na položku *Speciální pole* - tam vyberu u kterého druhu zařízení chci přidat políčko - např. u *Adsobční sušičky* - chci aby bylo políčko *Filtr* - které určí, jaký filtr má být před a za *sušičkou*. Potom můžu u každé adsopční sušičky zaznamenávat tento údaj.
+**Speciální pole**: Jdu na položku *Speciální pole* - tam vyberu u kterého druhu zařízení chci přidat políčko - např. u *Adsobční sušičky* - chci aby bylo políčko *Filtr* - které určí, jaký filtr má být před a za *sušičkou*. Potom můžu u každé adsopční sušičky zaznamenávat tento údaj. To mi pomůže, když budu chtít zaznamenávat nějakou informaci mimo poznámku - kam můžu psát veškeré tyto údaje, ale do poznámky se to úplně nehodí, protože by to pak nemělo žádnou strukturu, všechno by bylo v jednom poli.
 
 **Přidání servisního listu (iPhone)**: Přes telefon (prohlížeč chrome) jdu na položku *Fotky servisů* - tam vyberu, ke kterému servisu chci přidávat fotku. Kliknu na *Přidat fotky* a na další obrazovce kliknu na *Vyber obrázek*. Pak v iPhonu kliknu na *Pořídit snímek/video*, vyfotím arch a dám *Nahrát fotku* - modré tlačítko.
 **Přidání servisních listů (sken)**: Naskenuju servisní listy na skenu, takže mi vznikne *.pdf* soubor s mnoha servisními listy. Jdu na položku *Fotky servisů*, dostanu se na daný servis a tam kliknu na *Vyber obrázek* - vyberu vytvořený *.pdf* soubor a kliknu na *Nahrát fotku*. Tím pádem budou u servisu nahrané servisní listy.
@@ -61,3 +61,11 @@ Když chci editovat **Typ zařízení**, musím vybrat nějaký typ, který už 
 #### Úprava typu stroje
 
 Jdu na stránku *Editace typů zařízení*, tam vyberu typ zařízení, který chci editovat. Kliknu na něj a změním údaje. To se promítne u všech zařízení! Např. pokud je **REMEZA BK-20** u 12-ti firem, tak se změna projeví u všech těchto firem.
+
+### Další obrazovky
+
+#### Nástěnka
+
+Nástěnka mi ukazuje všechny zadané firmy v programu, jsou obarvené podle toho, kam se bude muset nejdříve jet. Červená znamená, že se tam musí jet brzy, zelená že je to ok, další barvy na spektru mezi červenou a zelenou znamenají něco mezi tím. Šedá znamená, že se to nemusí řešit, protože je servis buďto naplánovaný, nebo je kompresor odstavený, tím pádem se neservisuje.
+
+#### 

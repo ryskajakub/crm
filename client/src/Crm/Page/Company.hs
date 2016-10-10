@@ -120,8 +120,9 @@ companiesList filterText router var orderType direction companies'' = let
       setFilterText filterText' = setCompaniesList filterText'
       nameAddressFiltering = 
         div [
-          text2DOM "Filtrace: " , 
-          G.filter, F.input F.Editing False (SetValue filterText) setFilterText ]
+          G.filter ,
+          text2DOM " Filtrace:" , 
+          F.input F.Editing False (SetValue filterText) setFilterText ]
       infoLink = A.a "https://github.com/coubeatczech/crm/blob/master/doc/Manuál.md" 
         [G.infoSign , text2DOM " Návod"]
       in 

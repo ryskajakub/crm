@@ -577,7 +577,7 @@ machineTypesWithCountQuery = let
   machineTypeIdQ = proc () -> do
     machineRow <- queryTable machinesTable -< ()
     returnA -< view machineTypeFK machineRow
-  query' :: Query (MachineTypesTable, MT.MachineTypeId' (Column (Nullable PGInt4)))
+  query' :: Query ( MachineTypesTable, MT.MachineTypeId' (Column (Nullable PGInt4)))
   query' = leftJoin (queryTable MTD.machineTypesTable) machineTypeIdQ $
     \(mtRow, mtId) -> MTD._machineTypePK mtRow .=== mtId
   mkAggregatedQuery = AGG.aggregate $ p2 (
