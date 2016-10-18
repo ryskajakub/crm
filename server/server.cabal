@@ -93,11 +93,14 @@ Library
     Crm.Shared.ServerRender
 
   Build-depends:
-    base >= 4.6 && < 4.9 ,
-    mtl >= 2.0 && < 2.3 ,
+                base ,
+-- >= 4.6 && < 4.9 ,
+                mtl ,
+-- >= 2.0 && < 2.3 ,
     template-haskell ,
 
-    rest-core >= 0.36 && < 0.37  ,
+                rest-core ,
+                -- >= 0.36 && < 0.37  ,
     rest-types ,
     rest-wai ,
     wai ,
@@ -106,7 +109,6 @@ Library
     filemanip ,
     process ,
     unix-time ,
-    regular ,
     async ,
     parsec ,
     resource-pool ,
@@ -115,18 +117,23 @@ Library
     HTTP ,
     base64-string ,
     base64-bytestring ,
-    opaleye >= 0.4.2.0 ,
+                opaleye ,
+-- >= 0.4.2.0 ,
     scrypt ,
     tagged ,
-    tuple-th >= 0.2.4 ,
+                tuple-th ,
+                -- >= 0.2.4 ,
     lens ,
     text ,
     transformers ,
     transformers-compat ,
     json-schema ,
-    aeson >= 0.8 && < 0.9 ,
-    fay >= 0.23.1 && < 0.24 ,
-    product-profunctors == 0.6.3.1 ,
+                aeson ,
+                -- >= 0.8 && < 0.9 ,
+                fay ,
+                -- >= 0.23.1 && < 0.24 ,
+                product-profunctors ,
+-- == 0.6.3.1 ,
     postgresql-simple ,
     safe ,
     time ,
@@ -142,10 +149,12 @@ Test-Suite tests
   main-is:           test-suite.hs
   build-depends:
     base ,
-    mtl >= 2.0 && < 2.3 ,
+    mtl ,
+-- >= 2.0 && < 2.3 ,
 
     rest-types ,
-    rest-core >= 0.36 && < 0.37  ,
+    rest-core ,
+-- >= 0.36 && < 0.37  ,
     rest-types ,
     rest-wai ,
     wai ,
@@ -154,7 +163,6 @@ Test-Suite tests
     filemanip ,
     process ,
     unix-time ,
-    regular ,
     async ,
     resource-pool ,
     parsec ,
@@ -170,8 +178,10 @@ Test-Suite tests
     tuple-th ,
     transformers ,
     transformers-compat ,
-    opaleye >= 0.4.2.0 ,
-    tasty >= 0.7 ,
+    opaleye ,
+--  >= 0.4.2.0 ,
+    tasty ,
+--  >= 0.7 ,
     tasty-hunit ,
     tasty-smallcheck ,
     tasty-quickcheck ,
@@ -200,7 +210,8 @@ Executable run-server
   if flag(build-run-server)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.9 ,
+                base ,
+                  -- >= 4.6 && < 4.9 ,
       server
   else
     buildable: False
@@ -213,7 +224,8 @@ Executable insert-pass
   if flag(build-insert-pass)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.9 ,
+      base , 
+ -- >= 4.6 && < 4.9 ,
       haskeline ,
       transformers ,
       opaleye ,
@@ -232,10 +244,12 @@ Executable gen-api
   if flag(build-gen-api)
     buildable: True
     build-depends:
-      base >= 4.6 && < 4.9 ,
+      base ,
+ -- >= 4.6 && < 4.9 ,
       server ,
       rest-core ,
-      haskell-src-exts >= 1.16.0 ,
+      haskell-src-exts ,
+-- >= 1.16.0 ,
       safe ,
       fclabels ,
       semigroups ,
@@ -244,6 +258,7 @@ Executable gen-api
       directory ,
       Cabal ,
       regex-compat ,
-      rest-gen >= 0.17.1
+      rest-gen 
+-- >= 0.17.1
   else
     buildable: False

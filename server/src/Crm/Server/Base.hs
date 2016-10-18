@@ -1,6 +1,6 @@
 module Crm.Server.Base where
 
-import           Rest.Api (Api, mkVersion, Some1(Some1), Router, route, root, compose)
+import           Rest.Api (Api(Versioned), mkVersion, Some1(Some1), Router, route, root, compose)
 
 import           Crm.Server.Types
 import           Crm.Server.Api.CompanyResource (companyResource)
@@ -45,4 +45,4 @@ router' = root `compose` ((((route companyResource `compose` route CMR.machineRe
                `compose` route T.resource
 
 api :: Api Dependencies
-api = [(mkVersion 1 0 0, Some1 router')]
+api = Versioned [(mkVersion 1 0 0, Some1 router')]

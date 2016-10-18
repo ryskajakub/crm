@@ -4,3 +4,13 @@ abc.hs
 tasks.txt
 data/
 server/Session.vim
+
+# -*- mode: gitignore; -*-
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*

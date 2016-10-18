@@ -3,7 +3,7 @@
 module Crm.Page.Dashboard (
   dashboard ) where
 
-import           Data.Text               (pack)
+import           Data.Text               (pack, unpack)
 import           Prelude                 hiding (div, span, id, length)
 import           Data.Maybe              (onJust, mapMaybe)
 import           FFI
@@ -23,7 +23,7 @@ dashboard ::
   R.CrmRouter -> 
   [(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] -> 
   (DOMElement, Fay ())
-dashboard router companies = (element, constructMap) where
+dashboard _ companies = (element, constructMap) where
 
   constructMap = do
     let 
@@ -32,10 +32,12 @@ dashboard router companies = (element, constructMap) where
       companiesWithCoords = mapMaybe (\(a,b,mbYmd,coords) -> (\x -> (a,b,mbYmd,x)) `onJust` coords) companies
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
-    forM_ companiesWithCoords $ \(companyId,_,date,C.Coordinates lat lng) -> do
+    forM_ companiesWithCoords $ \(companyId,company,date,C.Coordinates lat lng) -> do
       let color' = maybe (pack "777777") computeColor (C.getDate date)
+      let theLink = R.routeToText . R.companyDetail $ companyId
       marker <- addMarker lat lng color' googleMap
-      let handler = R.navigate (R.companyDetail companyId) router
+      infoWindow <- mkInfoWindow . pack $ "<h3><a href=\"" ++ unpack theLink ++ "\">" ++ (unpack . C.companyName $ company) ++ "</a></h3>"
+      let handler = openInfoWindow infoWindow googleMap marker
       addClickListener marker handler
     return ()
     

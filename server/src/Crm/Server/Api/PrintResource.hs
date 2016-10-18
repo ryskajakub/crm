@@ -22,7 +22,7 @@ import           Crm.Server.Handler
 resource :: Resource Dependencies Dependencies Void () Void
 resource = mkResourceId {
   name = "print" ,
-  schema = S.withListing () $ S.named [] ,
+  schema = S.withListing () $ S.named [] , 
   list = const printListing }
 
 printListing :: ListHandler Dependencies

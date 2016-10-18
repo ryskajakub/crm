@@ -10,13 +10,14 @@
     "jquery-ui": "~1.10.5"
   },
   "devDependencies": {
-    "webpack": "~1.4.9",
     "gulp": "~3.8.10",
-    "gulp-shell": "~0.2.10",
-    "gulp-concat": "~2.4.1",
     "gulp-clean": "~0.3.1",
+    "gulp-concat": "~2.4.1",
+    "gulp-sass": "^2.3.2",
+    "gulp-shell": "~0.2.10",
     "gulp-webpack": "~1.0.0",
-    "underscore": "~1.7.0"
+    "underscore": "~1.7.0",
+    "webpack": "~1.4.9"
   },
   "name": "crm-client",
   "version": "0.0.0",
