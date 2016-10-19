@@ -90,13 +90,13 @@ recomputeSingle companyId connection (Cache cache) = mapExceptT liftIO $ do
   nextDays <- liftIO $ forM machines $ \machine' -> do
     nextServiceDay <- addNextDates $(proj 8 0) $(proj 8 1) machine' connection
     return $ case nextServiceDay of
-      Planned _  -> C.NotImportant
+      Planned _  -> C.Planned
       Computed d -> C.ExactDate d
-      Inactive   -> C.NotImportant
+      Inactive   -> C.Inactive
       CantTell   -> C.CantTellDate
   let 
     machineKind = map (MT.kind . $(proj 8 4)) machines
-    nextDay = minimumDef C.NotImportant nextDays
+    nextDay = minimumDef C.Inactive nextDays
     value = (_companyCore company, nextDay, _companyCoords company, machineKind)
     modify mapCache = Map.insert companyId value mapCache
   _ <- liftIO $ atomicModifyIORef' cache $ \a -> let 
