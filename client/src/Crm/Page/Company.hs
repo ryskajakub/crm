@@ -91,7 +91,8 @@ companiesList filterText router var orderType direction companies'' = let
       (id', company', nextServiceDate, machineKinds) = idCompany
       displayDate'' (C.ExactDate date'') = displayDate' date''
       displayDate'' C.CantTellDate = "Nedá se určit"
-      displayDate'' C.NotImportant = ""
+      displayDate'' C.Planned = ""
+      displayDate'' C.Inactive = ""
       kindsAsLetters = intersperse (text2DOM " ") . map 
         (\mk -> mkTooltip mk . span' (class'' ["label", "label-default", "pointer"]) 
           . T.take 1 . MK.kindToStringRepr $ mk) $

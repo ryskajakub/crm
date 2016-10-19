@@ -106,10 +106,10 @@ listing = mkOrderedListing' jsonO (\(_, rawOrder, rawDirection) -> do
     Just C.NextService ->
       case (sel3 r1, sel3 r2) of
         (C.ExactDate date1', C.ExactDate date2') -> orderingByDirection $ date1' `compare` date2'
-        (C.ExactDate _, C.NotImportant) -> LT
+        (C.ExactDate _, C.Inactive) -> LT
         (C.ExactDate _, C.CantTellDate) -> GT
-        (C.NotImportant, C.NotImportant) -> EQ
-        (C.NotImportant, _) -> GT
+        (C.Inactive, C.Inactive) -> EQ
+        (C.Inactive, _) -> GT
         (C.CantTellDate, C.CantTellDate) -> EQ
         (C.CantTellDate, _) -> LT
       ) unsortedResult')

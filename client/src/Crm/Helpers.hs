@@ -206,7 +206,7 @@ toHexa int = let
   in if T.length hexa == 1 then "0" <> hexa else hexa
 
 -- | Express the difference between now and the date in colour
-computeColor :: YMD.YearMonthDay -> Text
+ccomputeColor :: YMD.YearMonthDay -> Text
 computeColor (YMD.YearMonthDay y m d _) = let
   moment = M.requireMoment
   today = M.now moment

@@ -33,7 +33,11 @@ dashboard _ companies = (element, constructMap) where
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
     forM_ companiesWithCoords $ \(companyId,company,date,C.Coordinates lat lng) -> do
-      let color' = maybe (pack "777777") computeColor (C.getDate date)
+      let color' = case date of
+           C.ExactDate ymd -> computeColor ymd
+           C.CantTellDate -> pack "777"
+           C.Planned -> pack "fff"
+           C.Inactive -> pack "000"
       let theLink = R.routeToText . R.companyDetail $ companyId
       marker <- addMarker lat lng color' googleMap
       infoWindow <- mkInfoWindow . pack $ "<h3><a href=\"" ++ unpack theLink ++ "\">" ++ (unpack . C.companyName $ company) ++ "</a></h3>"
