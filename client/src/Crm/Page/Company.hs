@@ -188,7 +188,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
         dd value ]
 
     in B.col (B.mkColProps 4) $
-      B.panel [
+      B.panel'' (backgroundForKind . MT.kind $ machineType) [] [
         h3 [
           R.link
             (displayMachine machine' machineType)

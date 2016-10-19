@@ -1,0 +1,3 @@
+;;
+
+(funcall 'fundamental-mode)

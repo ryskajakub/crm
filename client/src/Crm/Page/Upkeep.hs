@@ -60,10 +60,7 @@ plannedUpkeeps router upkeepCompanies = let
         R.link machineTypeName (R.machineDetail machineId) router ,
         text2DOM " : " , text2DOM note]
       rowBackgroundColor = case notes of
-        ((_,_,_,mk):_) -> case mk of
-          MK.RotaryScrewCompressor -> class' "bg-success"
-          MK.VacuumPump -> class' "bg-warning"
-          _ -> mkAttrs
+        ((_,_,_,mk):_) -> class'' . backgroundForKind $ mk
         _ -> mkAttrs
       in tr' rowBackgroundColor [
         td . mkColours . map snd $ employees ,

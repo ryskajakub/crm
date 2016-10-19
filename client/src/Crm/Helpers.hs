@@ -13,6 +13,7 @@ import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.Employee                  as E
 import qualified Crm.Shared.ServerRender              as SR
 import qualified Crm.Shared.Machine                   as M
+import qualified Crm.Shared.MachineKind               as MK
 import qualified Crm.Shared.MachineType               as MT
 
 import           HaskellReact
@@ -27,6 +28,12 @@ import qualified JQuery                               as JQ
 data FileList
 data File
 data FileContents
+
+
+backgroundForKind :: MK.MachineKindEnum -> [Text]
+backgroundForKind MK.RotaryScrewCompressor = ["bg-success"]
+backgroundForKind MK.VacuumPump = ["bg-warning"]
+backgroundForKind _ = []
 
 
 initializeTooltip :: Fay ()
