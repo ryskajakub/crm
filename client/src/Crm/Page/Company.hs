@@ -266,7 +266,21 @@ companyDetail editing' companyTitleDisplay router var contactPersons (companyId,
           BTN.onClick = Defined $ const $ R.navigate (R.newContactPerson companyId) router })
           [G.plus, text2DOM " Přidat kontaktní osobu" ] ,
       R.link "Kontaktní osoby" (R.contactPersonList companyId) router ,
-      R.link "Schéma zapojení" (R.machinesSchema companyId) router ])]
+      R.link "Schéma zapojení" (R.machinesSchema companyId) router ,
+      form' (class' "navbar-form")
+        showCompanyJumbotron ])]
+
+  showCompanyJumbotron = let
+    matchCompanyTitleDisplay a b = case companyTitleDisplay of
+      D.CompanyTitleShown -> a
+      D.CompanyTitleHidden -> b
+    toggle = matchCompanyTitleDisplay D.CompanyTitleHidden D.CompanyTitleShown
+    body = matchCompanyTitleDisplay "Schovat info o firmě" "Zobrazit info o firmě"
+    props = BTN.buttonProps { BTN.onClick = Defined $ const $ modify var $ \appState ->
+      appState { D.navigation = case D.navigation appState of
+        cd @ (D.CompanyDetail {}) -> cd { D.companyTitleDisplay = toggle }
+        _ -> D.navigation appState }}
+    in BTN.button' props body
 
   in div $ headerNavigSection : companyFormSection ++ [B.grid $ contactPersonsHtml : lastUpkeepRecommendation ++ machineBoxItemsHtml ]
 
