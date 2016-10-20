@@ -72,14 +72,14 @@ nextServiceDate machine sequences upkeeps = let
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
 
-  openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
+  openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps -- 
   activeMachineResult = case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = minimumByMay (\a b -> U.upkeepDate a `compare` U.upkeepDate b) . fmap fst $ openUpkeeps, 
       Just nextOpenUpkeep <- nextOpenUpkeep' -> let
         process = YMD.ymdToDay . U.upkeepDate
         in if U.setDate nextOpenUpkeep
-          then Computed . process $ nextOpenUpkeep
+          then Inactive
           else Planned . process $ nextOpenUpkeep
     _ -> computedUpkeep
   in if M.archived machine

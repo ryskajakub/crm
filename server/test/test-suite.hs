@@ -3,6 +3,8 @@
 
 module Main where
 
+import Debug.Trace
+
 import           Control.Monad.Error.Class (Error)
 import           Control.Monad             (forM_)
 import           Data.Monoid               ((<>))
@@ -69,7 +71,7 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ,
   testCase "When the machine upkeep is installation, then the next service is first" installationUpkeep ,
   testCase "When there is an installation, then it is taken instead of the into operation as base for computing the first service" installationSupercedesIntoOperation ,
-  testCase "When there is a planned call, then the earliest is taken as computed" plannedCallUpkeep ]
+  testCase "When there is a planned call, it is marked as inactive" plannedCallUpkeep ]
 
 unitTests' :: TestTree
 unitTests' = testGroup "Next service type hint : Unit tests" [
@@ -98,8 +100,7 @@ upkeepDate :: Day
 upkeepDate = fromGregorian 2000 1 1
 
 upkeep :: U.Upkeep
-upkeep = U.Upkeep {
-  U.upkeepDate = dayToYmd upkeepDate ,
+upkeep = (U.newUpkeep (dayToYmd upkeepDate)) {
   U.upkeepClosed = True ,
   U.setDate = False }
 
@@ -223,10 +224,10 @@ plannedCallUpkeep = let
     U.upkeepDate = dayToYmd $ fromGregorian 2006 1 1 }
   upkeepClosed = upkeep {
     U.upkeepDate = dayToYmd $ fromGregorian 2003 1 1 }
-  result = nextServiceDate machine (upkeepSequence, [])
-    [(upkeep', upkeepMachine), (upkeep2', upkeepMachine), (upkeepClosed, upkeepMachine)]
-  expectedResult = Computed resultDate
-  in assertEqual "The earliest planned call must be taken" expectedResult result
+  thisUpkeepMachines = [(upkeep', upkeepMachine), (upkeep2', upkeepMachine), (upkeepClosed, upkeepMachine)] 
+  result = nextServiceDate machine (upkeepSequence, []) thisUpkeepMachines
+  expectedResult = Inactive
+  in assertEqual "Planned calls won't show up on main page" expectedResult result
 
 installationSupercedesIntoOperation :: Assertion
 installationSupercedesIntoOperation = let
