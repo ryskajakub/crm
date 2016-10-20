@@ -159,6 +159,7 @@ companyNew router var company' = let
 
 companyDetail :: 
   InputState -> -- ^ is the page editing mode
+  D.CompanyTitleDisplay -> -- ^ display jumbotron with company details
   R.CrmRouter -> -- ^ common read data
   Var D.AppState -> -- ^ app state var, where the editing result can be set
   [CP.ContactPerson'] ->
@@ -167,7 +168,7 @@ companyDetail ::
     MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay, Maybe U.Upkeep)] -> -- ^ machines of the company
   Maybe U.Upkeep ->
   DOMElement -- ^ company detail page fraction
-companyDetail editing' router var contactPersons (companyId, company') machines' lastUpkeep' = let
+companyDetail editing' companyTitleDisplay router var contactPersons (companyId, company') machines' lastUpkeep' = let
 
   saveHandler = computeCoordinates (C.companyAddress company') $ \coordinates ->
     updateCompany companyId company' (C.mkCoordinates `onJust` coordinates)
@@ -219,7 +220,10 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
     BTN.bsStyle = Defined "danger" }) "Smazat"
 
   companyFormSection :: [DOMElement]
-  companyFormSection = companyForm editing' var setCompany company' saveHandler [deleteButton]
+  companyFormSection = case companyTitleDisplay of
+    D.CompanyTitleHidden -> [] 
+    D.CompanyTitleShown ->  companyForm editing' var setCompany company' saveHandler [deleteButton]
+  
   machineBoxItems = machineBoxes ++ [ let
     buttonProps = BTN.buttonProps {
       BTN.onClick = Defined $ const $
@@ -249,7 +253,7 @@ companyDetail editing' router var contactPersons (companyId, company') machines'
 
   headerNavigSection :: DOMElement
   headerNavigSection = B.grid [ B.row $ B.col (B.mkColProps 12) $ 
-    h2 (case editing' of Editing -> "Editace firmy"; _ -> "Firma") ,
+    h2 ((case editing' of Editing -> "Editace firmy"; _ -> "Firma") <> ": " <> C.companyName company') ,
     (B.row $ B.col (B.mkColProps 12) $ BN.nav [
       R.link "Historie servisů" (R.maintenances companyId) router ,
       form' (class' "navbar-form") $

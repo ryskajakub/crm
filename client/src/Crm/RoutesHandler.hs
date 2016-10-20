@@ -145,7 +145,7 @@ startRouter appVar = startedRouter where
               ignoreLinkage = map $ \(a,b,c,d,e,f,_,g,h) -> (a,b,c,d,e,f,g,h)
               in modify appVar $ \appState -> appState {
                 D.navigation = D.CompanyDetail 
-                  companyId company contactPersons Display (ignoreLinkage machines) lastUpkeep } ) router ) router ,
+                  companyId company contactPersons D.CompanyTitleHidden Display (ignoreLinkage machines) lastUpkeep } ) router ) router ,
     newMachinePhase1' $-> \companyId ->
       withCompany'
         companyId

@@ -26,6 +26,8 @@ import           Crm.Data.EmployeeData
 import           Crm.Component.DatePicker  as DP
 import           Crm.Component.Form        (InputState)
 
+data CompanyTitleDisplay = CompanyTitleShown | CompanyTitleHidden
+
 data NavigationState =
   Dashboard { companies :: [(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] } |
   FrontPage {
@@ -36,6 +38,7 @@ data NavigationState =
     companyId :: C.CompanyId , 
     company :: C.Company , 
     contactPersons :: [CP.ContactPerson'] ,
+    companyTitleDisplay :: CompanyTitleDisplay ,
     editing :: InputState , 
     companyMachines :: [(M.MachineId, M.Machine, C.CompanyId, MT.MachineTypeId, 
       MT.MachineType, Maybe CP.ContactPerson, Maybe YMD.YearMonthDay, Maybe U.Upkeep)] ,
