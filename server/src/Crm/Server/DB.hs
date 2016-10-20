@@ -123,8 +123,9 @@ module Crm.Server.DB (
   ExtraFieldMapped ,
   MachineMapped ,
   UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK ,
-  CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..)
-  -- types
+  CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..) ,
+  -- types 
+  PlannedUpkeepType (..)
   ) where
 
 import           Prelude                              hiding (not)
@@ -819,17 +820,22 @@ employeesInUpkeeps upkeepIds = proc () -> do
   employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
   returnA -< (_upkeepPK upkeepRow, employeeRow)
 
-groupedPlannedUpkeepsQuery :: Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
-groupedPlannedUpkeepsQuery = let
+data PlannedUpkeepType = ServiceUpkeep | CalledUpkeep
+
+groupedPlannedUpkeepsQuery :: PlannedUpkeepType -> Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
+groupedPlannedUpkeepsQuery plannedUpkeepType = let
+  modifier = case plannedUpkeepType of
+    ServiceUpkeep -> not
+    CalledUpkeep -> id
   plannedUpkeepsQuery = proc () -> do
     upkeepRow <- queryTable upkeepsTable -< ()
     restrict -< not . U.upkeepClosed . _upkeep $ upkeepRow
-    restrict -< not . U.setDate . _upkeep $ upkeepRow
+    restrict -< modifier . U.setDate . _upkeep $ upkeepRow
     upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
     machineRow <- joinL machinesTable machinePK -< UMD._machineFK upkeepMachinesRow
     machineTypeRow <- joinL MTD.machineTypesTable MTD.machineTypePK -< _machineTypeFK machineRow
     companyRow <- joinL companiesTable companyPK -< _companyFK machineRow
-    returnA -< (upkeepRow, MT.kind . MTD._machineType $ machineTypeRow, M.upkeepBy . _machine $ machineRow , 
+    returnA -< (upkeepRow, MT.kind . MTD._machineType $ machineTypeRow, M.upkeepBy . _machine $ machineRow ,
       (_companyPK companyRow, _companyCore companyRow))
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
     AGG.aggregate (p4 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)

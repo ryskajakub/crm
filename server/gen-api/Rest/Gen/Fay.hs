@@ -68,7 +68,7 @@ buildHaskellModule ctx node pragmas warningText =
     name = H.ModuleName $ qualModName $ namespace ctx ++ resId node
     exportSpecs = Nothing
     dataText = H.ImportDecl noLoc (H.ModuleName "Data.Text") False False False Nothing Nothing 
-      (Just (False, [H.IVar H.NoNamespace (H.Ident "pack")]))
+      (Just (False, [H.IVar (H.Ident "pack")]))
     runtimeImports = dataText : []
     importDecls = nub $ runtimeImports 
                      ++ parentImports
@@ -97,8 +97,8 @@ buildHaskellModule ctx node pragmas warningText =
       where importName = qualModName $ namespace ctx ++ p
             importAs' = fmap (H.ModuleName . modName) . lastMay $ p
 
-noBinds :: H.Binds
-noBinds = H.BDecls []
+noBinds :: Maybe a
+noBinds = Nothing
 
 
 use :: H.Name -> H.Exp

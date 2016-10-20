@@ -52,7 +52,7 @@ import           Crm.Shared.MyMaybe
 import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion, createDeletion', catchError)
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
-import           Crm.Server.DB
+import           Crm.Server.DB --
 import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', 
                                                mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
@@ -65,7 +65,11 @@ import           Crm.Server.Database.MachineType
 import           TupleTH                     (proj, catTuples, dropTuple, takeTuple)
 
 
-data UpkeepsListing = UpkeepsAll | UpkeepsPlanned | PrintDailyPlan
+data UpkeepsListing =
+  UpkeepsAll |
+  UpkeepsPlanned |
+  PrintDailyPlan |
+  UpkeepsCalled
 
 addUpkeep :: 
   Connection -> 
@@ -174,10 +178,10 @@ upkeepListing = mkListing' jsonO $ const $ do
   rows <- withResource pool $ \connection -> liftIO $ runQuery connection expandedUpkeepsQuery
   return . mapUpkeeps $ rows
 
-upkeepsPlannedListing :: ListHandler Dependencies
-upkeepsPlannedListing = mkListing' jsonO $ const $ do
+upkeepsPlannedListing :: PlannedUpkeepType -> ListHandler Dependencies
+upkeepsPlannedListing put = mkListing' jsonO $ const $ do
   (_,pool) <- ask
-  rows <- liftIO $ withResource pool $ \connection -> runQuery connection groupedPlannedUpkeepsQuery
+  rows <- liftIO $ withResource pool $ \connection -> runQuery connection $ groupedPlannedUpkeepsQuery put
   (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)])]) <- 
     liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, machineUpkeepBy, (companyId :: C.CompanyId, company :: C.Company)) -> do
@@ -274,7 +278,8 @@ upkeepResource :: Resource Dependencies (IdDependencies' U.UpkeepId) U.UpkeepId 
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \listingType -> case listingType of
     UpkeepsAll -> upkeepListing
-    UpkeepsPlanned -> upkeepsPlannedListing
+    UpkeepsPlanned -> upkeepsPlannedListing ServiceUpkeep
+    UpkeepsCalled -> upkeepsPlannedListing CalledUpkeep
     PrintDailyPlan -> printDailyPlanListing ,
   name = A.upkeep ,
   update = Just updateUpkeepHandler ,
@@ -285,6 +290,7 @@ upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
 
 upkeepSchema :: S.Schema U.UpkeepId UpkeepsListing Void
 upkeepSchema = S.withListing UpkeepsAll (S.named [
+  ("called", S.listing UpkeepsCalled) ,
   (A.planned, S.listing UpkeepsPlanned) ,
   ("print", S.listing PrintDailyPlan) ,
   (A.single, S.singleRead id )])

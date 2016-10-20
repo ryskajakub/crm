@@ -9,21 +9,6 @@ Category:            Web
 Build-type:          Simple
 Cabal-version:       >=1.10
 
-flag build-gen-api
-  description: Run the executable creating typesafe access to the server API.
-  default:     False
-  manual:      True
-
-flag build-insert-pass
-  description: Builds the executable for inserting the password hash into db.
-  default:     False
-  manual:      True
-
-flag build-run-server
-  description: Builds the server executable.
-  default:     False
-  manual:      True
-
 flag profiling
   description: Turns on rtsopts
   default:     False
@@ -93,14 +78,11 @@ Library
     Crm.Shared.ServerRender
 
   Build-depends:
-                base ,
--- >= 4.6 && < 4.9 ,
-                mtl ,
--- >= 2.0 && < 2.3 ,
+    base ,
+    mtl ,
     template-haskell ,
 
-                rest-core ,
-                -- >= 0.36 && < 0.37  ,
+    rest-core ,
     rest-types ,
     rest-wai ,
     wai ,
@@ -117,23 +99,18 @@ Library
     HTTP ,
     base64-string ,
     base64-bytestring ,
-                opaleye ,
--- >= 0.4.2.0 ,
+    opaleye ,
     scrypt ,
     tagged ,
-                tuple-th ,
-                -- >= 0.2.4 ,
+    tuple-th ,
     lens ,
     text ,
     transformers ,
     transformers-compat ,
     json-schema ,
-                aeson ,
-                -- >= 0.8 && < 0.9 ,
-                fay ,
-                -- >= 0.23.1 && < 0.24 ,
-                product-profunctors ,
--- == 0.6.3.1 ,
+    aeson ,
+    fay ,
+    product-profunctors ,
     postgresql-simple ,
     safe ,
     time ,
@@ -150,11 +127,9 @@ Test-Suite tests
   build-depends:
     base ,
     mtl ,
--- >= 2.0 && < 2.3 ,
 
     rest-types ,
     rest-core ,
--- >= 0.36 && < 0.37  ,
     rest-types ,
     rest-wai ,
     wai ,
@@ -179,9 +154,7 @@ Test-Suite tests
     transformers ,
     transformers-compat ,
     opaleye ,
---  >= 0.4.2.0 ,
     tasty ,
---  >= 0.7 ,
     tasty-hunit ,
     tasty-smallcheck ,
     tasty-quickcheck ,
@@ -207,33 +180,23 @@ Executable run-server
     ghc-options:     -O2 -j
   main-is:           Main.hs
   hs-source-dirs:    run-server
-  if flag(build-run-server)
-    buildable: True
-    build-depends:
-                base ,
-                  -- >= 4.6 && < 4.9 ,
-      server
-  else
-    buildable: False
+  build-depends:
+    base ,
+    server
 
 
 Executable insert-pass
   default-language:  Haskell2010
   main-is:           Main.hs
   hs-source-dirs:    insert-pass
-  if flag(build-insert-pass)
-    buildable: True
-    build-depends:
-      base , 
- -- >= 4.6 && < 4.9 ,
-      haskeline ,
-      transformers ,
-      opaleye ,
-      scrypt ,
-      text , 
-      server
-  else
-    buildable: False
+  build-depends:
+    base , 
+    haskeline ,
+    transformers ,
+    opaleye ,
+    scrypt ,
+    text , 
+    server
 
 Executable gen-api
   default-language:  Haskell2010
@@ -241,24 +204,19 @@ Executable gen-api
   hs-source-dirs:    gen-api
   other-modules:
     Rest.Gen.Fay
-  if flag(build-gen-api)
-    buildable: True
-    build-depends:
-      base ,
- -- >= 4.6 && < 4.9 ,
-      server ,
-      rest-core ,
-      haskell-src-exts ,
--- >= 1.16.0 ,
-      safe ,
-      fclabels ,
-      semigroups ,
-      uniplate ,
-      filepath ,
-      directory ,
-      Cabal ,
-      regex-compat ,
-      rest-gen 
--- >= 0.17.1
-  else
-    buildable: False
+
+  buildable: True
+  build-depends:
+    base ,
+    server ,
+    rest-core ,
+    haskell-src-exts ,
+    safe ,
+    fclabels ,
+    semigroups ,
+    uniplate ,
+    filepath ,
+    directory ,
+    Cabal ,
+    regex-compat ,
+    rest-gen 

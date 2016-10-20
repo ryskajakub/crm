@@ -35,6 +35,7 @@ navigation' router (body, callbacks) = do
     navBar $ nav [
       li $ link [G.home, text2DOM " Seznam firem"] defaultFrontPage router ,
       li $ link [G.tasks, text2DOM " Naplánované servisy"] plannedUpkeeps router ,
+      li $ link [G.earphone, text2DOM " Kontaktované firmy"] calledUpkeeps router ,
       li $ link [G.thList, text2DOM " Editace typů zařízení"] machineTypesList router ,
       li $ link [G.user, text2DOM " Servismani"] employeePage router ,
       li $ link [G.dashboard, text2DOM " Nástěnka"] dashboard router ,

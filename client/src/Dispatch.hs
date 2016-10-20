@@ -19,7 +19,7 @@ import           Crm.Page.Company          (companiesList, companyDetail, compan
 import           Crm.Page.ContactPerson    (contactPersonForm, contactPersonsList)
 import           Crm.Page.Machine          (machineNew, machineDetail)
 import           Crm.Page.MachineKind      (machineKindSettings)
-import           Crm.Page.Upkeep           (upkeepNew, plannedUpkeeps, upkeepDetail)
+import           Crm.Page.Upkeep           (upkeepNew, plannedUpkeeps, upkeepDetail, calledUpkeeps)
 import           Crm.Page.UpkeepHistory    (upkeepHistory)
 import           Crm.Page.MachineType      (machineTypesList, machineTypeForm, machineTypePhase1Form)
 import           Crm.Page.Employee         (employeePage, newEmployeeForm, employeeEdit, employeeTasks, employeeTask)
@@ -81,6 +81,7 @@ main' = do
         n $ upkeepHistory upkeeps' machines'' companyId deletable photosInModal appVar' router
       D.PlannedUpkeeps plannedUpkeeps' -> n $ 
         (plannedUpkeeps router plannedUpkeeps')
+      D.CalledUpkeeps calledUpkeeps' -> n $ calledUpkeeps router calledUpkeeps'
       D.MachineTypeList machineTypes -> n $ emptyCallback (machineTypesList router machineTypes)
       D.MachineTypeEdit machineTypeId machineType machines -> n $
         machineTypeForm router appVar' machineTypeId machineType machines

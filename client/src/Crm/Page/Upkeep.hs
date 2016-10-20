@@ -4,6 +4,7 @@
 module Crm.Page.Upkeep (
   upkeepNew ,
   upkeepDetail ,
+  calledUpkeeps ,
   plannedUpkeeps ) where
 
 import           Data.Text                        (fromString, Text, showInt, (<>))
@@ -40,6 +41,12 @@ import           Crm.Component.Navigation         as N
 import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
+
+calledUpkeeps :: 
+  R.CrmRouter -> 
+  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
+  (DOMElement, Fay ())
+calledUpkeeps = plannedUpkeeps
 
 plannedUpkeeps :: 
   R.CrmRouter -> 

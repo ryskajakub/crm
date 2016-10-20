@@ -23,12 +23,13 @@ module Crm.Server (
 
   fetchUpkeepData ,
   fetchExtraFieldSettings ,
-  fetchMachine , 
+  fetchMachine ,
   fetchMachinePhotos ,
   fetchMachinesInCompany ,
   fetchMachinesForType ,
-  fetchUpkeeps , 
-  fetchPlannedUpkeeps , 
+  fetchUpkeeps ,
+  fetchPlannedUpkeeps ,
+  fetchCalledUpkeeps ,
   fetchFrontPageData , 
   fetchMachineType ,
   fetchMachineTypeById ,
@@ -400,6 +401,13 @@ fetchPlannedUpkeeps ::
   R.CrmRouter ->
   Fay ()
 fetchPlannedUpkeeps = XU.listPlanned maxCount
+
+fetchCalledUpkeeps :: 
+  ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
+    [(M.MachineId, Text, Text, MK.MachineKindEnum)], [(E.EmployeeId, E.Employee)])]] -> Fay ()) ->
+  R.CrmRouter ->
+  Fay ()
+fetchCalledUpkeeps = XU.listCalled maxCount
 
 fetchCompaniesForMap :: 
   ([(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] -> Fay ()) ->

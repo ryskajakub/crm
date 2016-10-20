@@ -38,7 +38,9 @@ module Crm.Router (
   editEmployeeTask' ,
   upkeepPhotos' ,
   upkeepPhotoAdd' ,
+  calledUpkeeps' ,
 
+  calledUpkeeps ,
   upkeepPhotoAdd ,
   upkeepPhotos ,
   serverDown ,
@@ -227,6 +229,9 @@ extraFields' = prepareUnitRouteAndMkHandler "extra-fields"
 plannedUpkeeps' :: RouteAndMkHandler ()
 plannedUpkeeps' = prepareUnitRouteAndMkHandler "planned"
 
+calledUpkeeps' :: RouteAndMkHandler ()
+calledUpkeeps' = prepareUnitRouteAndMkHandler "called"
+
 machineTypesList' :: RouteAndMkHandler ()
 machineTypesList' = prepareUnitRouteAndMkHandler "other/machine-types-list"
 
@@ -397,6 +402,9 @@ machineDetail = fst machineDetail'
 
 plannedUpkeeps :: CrmRoute
 plannedUpkeeps = fst plannedUpkeeps' ()
+
+calledUpkeeps :: CrmRoute
+calledUpkeeps = fst calledUpkeeps' ()
 
 replanUpkeep :: U.UpkeepId -> CrmRoute
 replanUpkeep = fst replanUpkeep'
