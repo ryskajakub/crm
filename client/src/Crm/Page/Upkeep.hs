@@ -46,13 +46,22 @@ calledUpkeeps ::
   R.CrmRouter -> 
   [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
-calledUpkeeps = plannedUpkeeps
+calledUpkeeps = plannedUpkeeps'' "Volané servisy" $ p [ text2DOM "Seznam firem, kam bylo voláno a čeká se na kontakt." ]
 
-plannedUpkeeps :: 
+plannedUpkeeps ::
   R.CrmRouter -> 
   [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
-plannedUpkeeps router upkeepCompanies = let
+plannedUpkeeps = plannedUpkeeps'' "Naplánované servisy" $ p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
+
+plannedUpkeeps'' ::
+  Renderable a =>
+  Text ->
+  a ->
+  R.CrmRouter -> 
+  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
+  (DOMElement, Fay ())
+plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
   mkTable data' = B.table [head', body] where
     head' = thead $ tr [
       th G.user ,
@@ -92,8 +101,7 @@ plannedUpkeeps router upkeepCompanies = let
           (R.upkeepDetail upkeepId)
           router ]) data'
 
-  advice = p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
-  pageInfo' = pageInfo "Naplánované servisy" $ Just advice
+  pageInfo' = pageInfo pageTitle $ Just pageAdvice
 
   compressorsTable = mkTable . head $ upkeepCompanies
   othersTable = mkTable . head . tail $ upkeepCompanies
