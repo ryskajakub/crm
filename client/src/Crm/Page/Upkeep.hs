@@ -41,7 +41,6 @@ import           Crm.Component.Navigation         as N
 import           Crm.Helpers
 import           Crm.Types                        (DisplayedNote (..))
 
-
 calledUpkeeps :: 
   R.CrmRouter -> 
   [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
@@ -402,7 +401,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
   setDateCheckbox = let
     mkContainer = div' (class' "editing-checkbox")
     in mkContainer $ checkbox Editing (U.setDate upkeep) (\b -> setUpkeep $ (upkeep { U.setDate = b }, upkeepMachines))
-  setDateCheckboxRow = oneElementRow "Jenom nastavit datum" setDateCheckbox
+  setDateCheckboxRow = oneElementRow "Zavoláno" setDateCheckbox
   dateRow = oneElementRow "Datum" datePicker
 
   employeeSelectRows = 

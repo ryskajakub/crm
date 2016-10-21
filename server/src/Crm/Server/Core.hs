@@ -72,7 +72,7 @@ nextServiceDate machine sequences upkeeps = let
     (oneTimeSequences, repeatedSequences) = partition (US.oneTime) nonEmptySequences
     nonEmptySequences = fst sequences : snd sequences
 
-  openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps -- 
+  openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
   activeMachineResult = case openUpkeeps of
     (_:_) | 
       let nextOpenUpkeep' = minimumByMay (\a b -> U.upkeepDate a `compare` U.upkeepDate b) . fmap fst $ openUpkeeps, 
