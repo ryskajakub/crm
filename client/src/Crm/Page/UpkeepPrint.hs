@@ -70,7 +70,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
       (rdrMachines machinesData) ++
       [generalDescription]
     where
-    generalDescription = tr [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
+    generalDescription = tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
     upkeepPrintDataHeader = [
       tr [th "Firma", td (text2DOM . C.companyName $ company)] ,
       tr [th "Adresa", td (text2DOM . C.companyAddress $ company)] ,
@@ -82,7 +82,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
       upkeepMachineText = case markup' of
         Just (markup) -> div . renderMarkup $ markup
         Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
-      in tr $ tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, 
+      in tr' (class' "indent-cell") $ tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, 
         p upkeepMachineText]
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
