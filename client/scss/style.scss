@@ -21,8 +21,9 @@ table.break-words {
   th, td { 
     word-wrap: break-word; }}
 
-.table tbody tr.indent-cell td {
-  padding-left: 50px; }
+.table tbody {
+  tr.indent-cell td {
+    padding-left: 50px; } }
 
 div.colours {
   height: 20px;
