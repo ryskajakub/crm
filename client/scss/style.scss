@@ -21,6 +21,9 @@ table.break-words {
   th, td { 
     word-wrap: break-word; }}
 
+.pad-left {
+  padding-left: 10px; }
+
 .table tbody {
   tr.empty-row td {
     visibility: hidden;

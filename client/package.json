@@ -1,13 +1,13 @@
 {
   "dependencies": {
-    "react-bootstrap": "~0.13.0",
-    "react": "~0.12.1",
-    "backbone": "~1.1.2",
-    "jquery": "~2.1.1",
-    "q": "~1.1.2",
-    "moment": "~2.8.4",
-    "react-calendar": "~0.3.0",
-    "jquery-ui": "~1.10.5"
+    "react-bootstrap": "0.13.0",
+    "react": "0.12.1",
+    "backbone": "1.1.2",
+    "jquery": "2.1.1",
+    "q": "1.1.2",
+    "moment": "2.8.4",
+    "react-calendar": "0.3.0",
+    "jquery-ui": "1.10.5"
   },
   "devDependencies": {
     "gulp": "~3.8.10",

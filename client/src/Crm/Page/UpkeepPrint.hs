@@ -54,9 +54,11 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     \eId -> R.navigate (R.dailyPlan date eId) router
   employeeName = joinMaybe ((flip lookup employees . fst) `onJust` employeeTasks)
 
-  machinesTable = B.fullRow $ BT.table (Just BT.FullBordered) (
+  machinesTable = B.fullRow $ div [div address , BT.table (Just BT.FullBordered) (
     (tr [th "Datum", td . displayDate $ date]) :
-    concatMap displayUpkeep data')
+    concatMap displayUpkeep data')]
+    where
+    address = map (p' (class' "visible-print-block" )) [[text2DOM "2e plus s.r.o."], [text2DOM "Trabantská 270, Praha 9, 190 15"], text2DOM "Tel: 281 917 430" : span' (class' "pad-left") "Fax: 281 917 435" : span' (class' "pad-left") [text2DOM "e-mail: " : text2DOM "info@2e.cz" : [] ] : [] ]
 
   pluckContactPersons = nub . mapMaybe (\(_,_,cp',_) -> cp')
 
