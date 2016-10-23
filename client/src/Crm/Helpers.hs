@@ -53,6 +53,11 @@ displayDate' (d' @ (YMD.YearMonthDay y m d _)) =
   else displayDate d'
 
 
+isMarkupEmpty :: SR.Markup -> Bool
+isMarkupEmpty (SR.PlainText t) = T.null t
+isMarkupEmpty _ = False
+
+
 renderMarkup :: [SR.Markup] -> [DOMElement]
 renderMarkup = let
   renderItem :: SR.Markup -> DOMElement

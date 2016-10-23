@@ -15,7 +15,7 @@ import           HaskellReact
 import qualified HaskellReact.Bootstrap       as B
 import qualified HaskellReact.Bootstrap.Table as BT
 
-import           Crm.Helpers                  (displayDate, renderMarkup, displayFullMachine')
+import           Crm.Helpers                  (displayDate, renderMarkup, displayFullMachine', isMarkupEmpty)
 import           Crm.Component.Form           (nullDropdown, InputState(Editing))
 import           Crm.Component.DatePicker     as DP
 import qualified Crm.Router                   as R
@@ -68,7 +68,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
   tasks = maybe [text2DOM ""] (\(_, tasks') -> ifNonEmpty tasks' (h3 "Další úkoly") . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, _, machinesData) =
       upkeepPrintDataHeader ++
-      (rdrMachines machinesData) ++
+      (concat . rdrMachines $ machinesData) ++
       [generalDescription]
     where
     generalDescription = tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
@@ -82,11 +82,11 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
         ifNonEmpty' [tr [th "Telefon", td . text2DOM . T.intercalate ", " .
           map CP.phone . pluckContactPersons $ machinesData]]
     rdrMachines = map $ \(machine, machineType, _, (upkeepMachine, markup')) -> let
-      upkeepMachineText = case markup' of
-        Just (markup) -> div . renderMarkup $ markup
-        Nothing -> text2DOM . UM.upkeepMachineNote $ upkeepMachine
-      in tr' (class' "indent-cell") $ tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, 
-        p upkeepMachineText]
+      upkeepMachineText' = case markup' of
+        Just (markup) -> (\m -> if (all isMarkupEmpty m) then Nothing else Just . div . renderMarkup $ m) $ markup
+        Nothing -> (\x -> if T.null x then Nothing else Just . text2DOM $ x) . UM.upkeepMachineNote $ upkeepMachine
+      in maybe [] (\upkeepMachineText -> [tr' (class' "indent-cell") $
+        tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, p upkeepMachineText]]) upkeepMachineText'
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
     (B.row' (const . class' $ "no-print") $ [
