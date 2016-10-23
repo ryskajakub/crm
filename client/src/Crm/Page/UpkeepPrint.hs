@@ -56,6 +56,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
 
   machinesTable = B.fullRow $ BT.table (Just BT.FullBordered) (
     (tr [th "Datum", td . displayDate $ date]) :
+    (tr' (class' "empty-row") . tdColSpan 2 $ "|") :
     concatMap displayUpkeep data')
 
   pluckContactPersons = nub . mapMaybe (\(_,_,cp',_) -> cp')
@@ -72,13 +73,13 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     where
     generalDescription = tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
     upkeepPrintDataHeader = let
-      ifNonEmpty toRender = if (null . pluckContactPersons $ machinesData) then [] else toRender
+      ifNonEmpty' toRender = if (null . pluckContactPersons $ machinesData) then [] else toRender
       in [
         tr [th "Firma", td (text2DOM . C.companyName $ company)] ,
         tr [th "Adresa", td (text2DOM . C.companyAddress $ company)]] ++
-        ifNonEmpty [tr [th "Kontaktní osoba", td . text2DOM . T.intercalate ", " . 
+        ifNonEmpty' [tr [th "Kontaktní osoba", td . text2DOM . T.intercalate ", " . 
           map CP.name . pluckContactPersons $ machinesData]] ++
-        ifNonEmpty [tr [th "Telefon", td . text2DOM . T.intercalate ", " .
+        ifNonEmpty' [tr [th "Telefon", td . text2DOM . T.intercalate ", " .
           map CP.phone . pluckContactPersons $ machinesData]]
     rdrMachines = map $ \(machine, machineType, _, (upkeepMachine, markup')) -> let
       upkeepMachineText = case markup' of

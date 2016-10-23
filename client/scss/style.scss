@@ -22,6 +22,10 @@ table.break-words {
     word-wrap: break-word; }}
 
 .table tbody {
+  tr.empty-row td {
+    visibility: hidden;
+    border-left: none;
+    border-right: none; }
   tr.indent-cell td {
     padding-left: 50px; } }
 
