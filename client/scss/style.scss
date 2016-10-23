@@ -24,6 +24,10 @@ table.break-words {
 .pad-left {
   padding-left: 10px; }
 
+.big-padding-row {
+  padding-top: 20px;
+  padding-bottom: 20px; }
+
 .table tbody {
   tr.empty-row td {
     visibility: hidden;
@@ -346,7 +350,3 @@ tbody.past-services {
   -moz-border-radius: 0px;
   background-image: none;
 }
-
-@media print {
-  .no-print {
-    display: none; } }

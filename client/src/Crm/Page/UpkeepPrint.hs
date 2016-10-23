@@ -93,7 +93,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
         tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, p upkeepMachineText]]) upkeepMachineText'
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
-    (B.row' (const . class' $ "no-print") $ [
+    (B.row'' ["hidden-print", "big-padding-row"] [
       B.col (B.mkColProps 6) employeeSelect ,
       B.col (B.mkColProps 3) plansDatePicker ]) :
     machinesTable :
