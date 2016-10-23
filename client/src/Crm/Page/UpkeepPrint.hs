@@ -54,7 +54,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     \eId -> R.navigate (R.dailyPlan date eId) router
   employeeName = joinMaybe ((flip lookup employees . fst) `onJust` employeeTasks)
 
-  machinesTable = B.fullRow $ div [div address , BT.table (Just BT.FullBordered) (
+  machinesTable = B.fullRow $ div [div address , BT.table (Just BT.FullBordered) $ tbody (
     (tr [th "Datum", td . displayDate $ date]) :
     concatMap displayUpkeep data')]
     where
@@ -90,7 +90,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
         Just (markup) -> (\m -> if (all isMarkupEmpty m) then Nothing else Just . div . renderMarkup $ m) $ markup
         Nothing -> (\x -> if T.null x then Nothing else Just . text2DOM $ x) . UM.upkeepMachineNote $ upkeepMachine
       in maybe [] (\upkeepMachineText -> [tr' (class' "indent-cell") $
-        tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, p upkeepMachineText]]) upkeepMachineText'
+        tdColSpan 2 [p $ strong $ displayFullMachine' True machine machineType, upkeepMachineText]]) upkeepMachineText'
   in B.grid $
     (B.row . B.col (B.mkColProps 12) $ header) :
     (B.row'' ["hidden-print", "big-padding-row"] [
