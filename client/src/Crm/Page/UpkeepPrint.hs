@@ -69,9 +69,11 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
       (tr' (class' "empty-row") . tdColSpan 2 $ "|") :
       upkeepPrintDataHeader ++
       (concat . rdrMachines $ machinesData) ++
-      [generalDescription]
+      generalDescription
     where
-    generalDescription = tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]
+    generalDescription = if (all isMarkupEmpty . U.workDescription $ upkeep)
+      then []
+      else [tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]]
     upkeepPrintDataHeader = let
       ifNonEmpty' toRender = if (null . pluckContactPersons $ machinesData) then [] else toRender
       in [
