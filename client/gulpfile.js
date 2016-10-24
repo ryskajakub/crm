@@ -41,7 +41,7 @@ gulp.task('compile-sass', function () {
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery'], function() {
+gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery', 'copy-images'], function() {
   return gulp.src(['files/*'])
     .pipe(gulp.dest('build/'));
 });
@@ -49,6 +49,11 @@ gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery'], function() {
 gulp.task('copy-bootstrap', function () {
   return gulp.src(['bootstrap/**/*'], {base: 'bootstrap'})
     .pipe(gulp.dest('build/bootstrap'));
+});
+
+gulp.task('copy-images', function () {
+    return gulp.src(['images/*'], {base: 'images'})
+        .pipe(gulp.dest('build/images'));
 });
 
 gulp.task('copy-jasny', function () {

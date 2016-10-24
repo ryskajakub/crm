@@ -5,6 +5,8 @@ module Crm.Page.UpkeepPrint (
   upkeepPrint ) where
 
 
+import           HaskellReact.Tag.Image       (image', mkImageAttrs)
+
 import           Data.Text                    (fromString, (<>))
 import qualified Data.Text                    as T
 import           Data.Maybe                   (onJust, joinMaybe, mapMaybe)
@@ -62,7 +64,16 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
 
   pluckContactPersons = nub . mapMaybe (\(_,_,cp',_) -> cp')
 
-  header = h2 $ "DENNÍ AKCE - " <> maybe "" E.name employeeName
+  
+
+  header = let
+    imagePath = (mkImageAttrs "./images/logo-2e-plus.png")
+    spanText = "DENNÍ AKCE - " <> maybe "" E.name employeeName 
+    in [
+      h2' (class'' ["visible-print-block", "print-header"]) [
+        image' mkAttrs imagePath ,
+        span' mkAttrs spanText ] ,
+      h2' (class' "hidden-print") spanText ]
   renderTasks = map $ \(_, task) -> li . renderMarkup . T.description $ task
   ifNonEmpty [] _ _ = []
   ifNonEmpty _ prepend list = prepend : list

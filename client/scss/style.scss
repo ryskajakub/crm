@@ -36,6 +36,15 @@ table.break-words {
   tr.indent-cell td {
     padding-left: 50px; } }
 
+h2.print-header {
+  position: relative;
+  span {
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    text-align: right;
+    vertical-align: bottom; } }
+
 div.colours {
   height: 20px;
   white-space: nowrap;
