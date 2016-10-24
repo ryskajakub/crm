@@ -26,6 +26,7 @@ import           Data.Tuple.All              (sel2, sel3)
 import           Data.List                   (nub)
 import           Data.Text                   (pack, Text)
 import           Data.Time.Calendar          (Day)
+import           Data.Time.Clock             (getCurrentTime)
 import           Data.Pool                   (withResource)
 
 import           Rest.Types.Error            (Reason(NotAllowed, CustomReason), DomainReason(DomainReason))
@@ -180,8 +181,10 @@ upkeepListing = mkListing' jsonO $ const $ do
 
 upkeepsPlannedListing :: PlannedUpkeepType -> ListHandler Dependencies
 upkeepsPlannedListing put = mkListing' jsonO $ const $ do
+  now0 <- liftIO getCurrentTime
   (_,pool) <- ask
   rows <- liftIO $ withResource pool $ \connection -> runQuery connection $ groupedPlannedUpkeepsQuery put
+  now1 <- liftIO getCurrentTime
   (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)])]) <- 
     liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, machineUpkeepBy, (companyId :: C.CompanyId, company :: C.Company)) -> do
@@ -190,6 +193,7 @@ upkeepsPlannedListing put = mkListing' jsonO $ const $ do
         company, notes :: [(M.MachineId, Text, Text, MK.MachineKindEnum)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
     (employeesInUpkeeps (fmap $(proj 7 2) upkeeps'))
+  now2 <- liftIO getCurrentTime
   let 
     (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (uId, convert e)) `fmap` employeeRows
     upkeepsWithEmployees = map (\tuple -> let
@@ -201,7 +205,10 @@ upkeepsPlannedListing put = mkListing' jsonO $ const $ do
       M.UpkeepByWe      -> True
     byUs = filter (areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
     byThem = filter (not . areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
-  return [fmap $(dropTuple 8 2) byUs, fmap $(dropTuple 8 2) byThem]
+  let toReturn = [fmap $(dropTuple 8 2) byUs, fmap $(dropTuple 8 2) byThem]
+  now3 <- liftIO getCurrentTime
+  liftIO $ putStrLn $ show now0 ++ show now1 ++ " " ++ show now2 ++ show now3  
+  return toReturn
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
