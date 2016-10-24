@@ -7,7 +7,7 @@ module Crm.Page.Upkeep (
   calledUpkeeps ,
   plannedUpkeeps ) where
 
-import           Data.Text                        (fromString, Text, showInt, (<>))
+import           Data.Text                        (fromString, Text, showInt)
 import           Prelude                          hiding (div, span, id)
 import qualified Prelude                          as Prelude
 import           Data.Var (Var, modify)
@@ -285,7 +285,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         textareaRowEditing' 5 "Doporučení" (SetValue . U.recommendation $ upkeep) $
           \es -> modify' $ \ud ->
             ud { UD.upkeep = lmap (const $ upkeep { U.recommendation = es }) (UD.upkeep ud) } ], 5)
-      else ([workDescription], 6)
+      else ([workDescription], 5)
 
   toggleNote = let
     newClose uc = uc { UD.displayedNote = newDisplayedNote } where
@@ -313,7 +313,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         in (UM.upkeepMachineNote, \t um -> um { UM.upkeepMachineNote = t }, onlyNote)
     
   upkeepMachineRow :: (M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence) -> DOMElement
-  upkeepMachineRow (machineId, machine', machineType, nextUpkeepSequence) = let
+  upkeepMachineRow (machineId, machine', machineType, _) = let
 
     mkRow columns = div' (class' "form-group") columns
     findMachineById (_,id') = machineId == id'
@@ -386,12 +386,9 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       textarea' 5 editing False (SetValue . getNote . fst $ machine) $ \es ->
         updateUpkeepMachine $ setNote es (fst machine)
 
-    nextUpkeepSequenceField = B.col (B.mkColProps 2) $ 
-      "Další servis: " <> US.label_ nextUpkeepSequence
-
     in mkRow $ if closeUpkeep'
       then [machineToggleCheckedLink] ++ (if showMileage then [recordedMileage] else []) ++ [warrantyRepair, note]
-      else [machineToggleCheckedLink, nextUpkeepSequenceField, note]
+      else [machineToggleCheckedLink, warrantyRepair, note]
 
   datePicker = let
     modifyDatepickerDate newDpd = modify' $ \ud -> ud { UD.upkeepDatePicker = newDpd }
@@ -412,13 +409,13 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
       elems = selectedEmployees
       newField = Nothing
 
-  formHeader = div' (class' "form-group") $ [
-    B.col (B.mkColProps machineColsSize) $ div $ B.row [B.col (B.mkColProps 2) "", 
-      B.col (B.mkColProps 10) $ strong "Stroj" ]] ++ (if closeUpkeep' then [
-    B.col (B.mkColProps 2) $ strong "Motohodiny" ,
-    B.col (B.mkColProps 1) $ strong "Záruka, Oprava*" ] else [
-      B.col (B.mkColProps 2) $ strong "Typ servisu" ]) ++ [
-    B.col (B.mkColProps noteColsSize) noteHeaders]
+  formHeader = div' (class' "form-group") $
+    (B.col (B.mkColProps machineColsSize) $ div $ B.row [
+      B.col (B.mkColProps 2) "", 
+      B.col (B.mkColProps 10) $ strong "Stroj"]) :
+    [B.col (B.mkColProps 2) $ strong $ if closeUpkeep' then "Motohodiny" else ""] ++
+    [B.col (B.mkColProps 1) $ strong "Záruka, Oprava*"] ++
+    [B.col (B.mkColProps noteColsSize) noteHeaders]
 
   upkeepPageHeader = B.row $ pageInfo 
     pageHeader 
