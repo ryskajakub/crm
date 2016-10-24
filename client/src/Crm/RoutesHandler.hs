@@ -126,7 +126,7 @@ startRouter appVar = startedRouter where
           appState { D.navigation = navig } ) ,
     upkeepPhotoAdd' $-> (\upkeepId ->
       fetchUpkeep upkeepId $ \(_, (upkeep, _, _), _) -> let
-        navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "")
+        navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "") D.NoPhotoAdded
         in modify appVar $ \appState ->
           appState { D.navigation = navig }) ,
     extraFields' $-> (const $

@@ -101,8 +101,9 @@ data NavigationState =
     employees :: [E.Employee'] } |
   AddPhotoToUpkeepList {
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
-  AddPhotoToUpkeep U.UpkeepId U.Upkeep C.Company
+  AddPhotoToUpkeep U.UpkeepId U.Upkeep C.Company ConfirmPhotoAdded
   
+data ConfirmPhotoAdded = ConfirmPhotoAddedOK | NoPhotoAdded
 
 data AppState = AppState {
   navigation :: NavigationState ,

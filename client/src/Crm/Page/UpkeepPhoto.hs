@@ -6,14 +6,18 @@ module Crm.Page.UpkeepPhoto (
   upkeepPhotos ) where
 
 import           Data.Text                        (fromString, Text, showInt)
+import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id)
 import           FFI                              (Defined(..), ffi)
+import           Data.Var                         (Var, modify)
+import qualified DOM
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
 import qualified HaskellReact.Jasny               as J
 import qualified HaskellReact.Bootstrap.Glyphicon as G
+import qualified HaskellReact.Bootstrap.Alert     as A
 import qualified JQuery                           as JQ
 
 import qualified Crm.Shared.Company               as C
@@ -25,7 +29,8 @@ import qualified Crm.Shared.MachineKind           as MK
 
 import qualified Crm.Router                       as R
 import           Crm.Helpers
-import           Crm.Server 
+import           Crm.Server
+import qualified Crm.Data.Data                    as D
 
 addPhotoToUpkeepList :: 
   R.CrmRouter -> 
@@ -53,16 +58,25 @@ addPhotoToUpkeepList router upkeeps = let
     pageInfo' ++
     [B.col (B.mkColProps 12) $ main table''])
 
+
 upkeepPhotos ::
   R.CrmRouter ->
+  Var D.AppState ->  
   U.UpkeepId ->
   U.Upkeep ->
   C.Company ->
+  D.ConfirmPhotoAdded ->
   DOMElement
-upkeepPhotos router upkeepId upkeep company = let
-  rows = [
-    B.fullCol [C.companyName company, displayDate . U.upkeepDate $ upkeep] ,
-    photo ]
+upkeepPhotos router appVar upkeepId upkeep company confirmPhotoAdded = let
+
+  alertDisplayed = case confirmPhotoAdded of
+    D.ConfirmPhotoAddedOK -> [B.fullCol [A.alert A.Info $ p "Obrázek i metadata byly nahrány na server."]]
+    D.NoPhotoAdded -> []
+
+  rows =
+    alertDisplayed ++
+    [B.fullCol [C.companyName company, displayDate . U.upkeepDate $ upkeep]] ++
+    [photo]
   photo = let
     imageUploadHandler = const $ do
       fileUpload <- JQ.select "#file-upload"
@@ -74,10 +88,17 @@ upkeepPhotos router upkeepId upkeep company = let
         photoSource = if isIPhone
           then PM.IPhone
           else PM.Other
-      uploadUpkeepPhotoData upkeepId file $ \photoId ->
-        uploadPhotoMeta (PM.PhotoMeta type' name photoSource) photoId reload router
+      uploadUpkeepPhotoData upkeepId file $ \photoId -> let
+        callback = do
+          T.putStrLn "ahoj"
+          modify appVar $ \appState -> appState {
+            D.navigation = case D.navigation appState of
+              (D.AddPhotoToUpkeep a b c _) -> D.AddPhotoToUpkeep a b c D.ConfirmPhotoAddedOK }
+          _ <- DOM.setTimeout 3000 $ const reload
+          return ()
+        in uploadPhotoMeta (PM.PhotoMeta type' name photoSource) photoId callback router
     imageUploadLabel = "Nahraj fotku"
-    in div [
+    in B.fullCol [
       J.fileUploadI18n "Vyber obrázek" "Dej jiný obrázek" ,
       BB.button'
         (BB.buttonProps {
