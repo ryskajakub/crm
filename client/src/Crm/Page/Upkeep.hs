@@ -180,7 +180,8 @@ upkeepDetail router appState upkeep3 datePicker notCheckedMachines
 
 upkeepNew :: 
   R.CrmRouter -> 
-  Var D.AppState -> 
+  Var D.AppState ->
+  Maybe U.UpkeepId ->
   (U.Upkeep, [UM.UpkeepMachine']) -> 
   DP.DatePickerData -> 
   [UM.UpkeepMachine'] -> 
@@ -191,12 +192,14 @@ upkeepNew ::
   [Maybe E.EmployeeId] -> 
   V.Validation -> 
   DOMElement
-upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification companyId es se v = 
+upkeepNew router appState upkeepSupertaskId upkeep datePicker notCheckedMachines
+    machines upkeepIdentification companyId es se v = 
   upkeepForm appState router pageHeader upkeep datePicker notCheckedMachines 
       machines submitButton False es se v NoChoice companyId addButton where
 
     (upkeepU, upkeepMachines) = upkeep
-    (pageHeader, submitButton, addButton) = case upkeepIdentification of 
+
+    (pageHeader, submitButton, addButton) = case upkeepIdentification of
       Nothing -> let
         newUpkeepHandler = createUpkeep
           (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
@@ -220,7 +223,7 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
           replanUpkeepHandler
-        in ("Přeplánovat servis", button, [addSubtaskButton])
+        in ("Přeplánovat servis", button, maybe [addSubtaskButton] (const []) upkeepSupertaskId)
 
 
 modifyUpkeepClose :: (UD.UpkeepPageMode -> UD.UpkeepPageMode) -> UD.UpkeepPageMode -> UD.UpkeepPageMode

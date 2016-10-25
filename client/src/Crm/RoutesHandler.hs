@@ -75,7 +75,7 @@ startRouter appVar = startedRouter where
             in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, [(UM.newUpkeepMachine, machineId)])
               ud notCheckedUpkeepMachines
               newDatePickerData employees
-              [] V.new companyId (UD.UpkeepNew Nothing)) crmRouter ) crmRouter 
+              [] V.new companyId Nothing (UD.UpkeepNew Nothing)) crmRouter ) crmRouter 
         _ -> modify' D.NotFound) ,
     ("daily-plan/:date/employee/:employee", \router params -> let
       crmRouter = CrmRouter router
@@ -118,7 +118,7 @@ startRouter appVar = startedRouter where
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
-            (map Just employeeIds) V.new companyId (UD.UpkeepClose upkeepId Note) ) router ) router 
+            (map Just employeeIds) V.new companyId Nothing (UD.UpkeepClose upkeepId Note) ) router ) router 
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->
@@ -196,7 +196,7 @@ startRouter appVar = startedRouter where
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
             ud notCheckedUpkeepMachines
             newDatePickerData employees 
-            [] V.new companyId (UD.UpkeepNew Nothing)) router ) router ,
+            [] V.new companyId Nothing (UD.UpkeepNew Nothing)) router ) router ,
     contactPersonList' $-> \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList companyId data'
@@ -245,7 +245,7 @@ startRouter appVar = startedRouter where
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) 
             (DP.DatePickerData (U.upkeepDate upkeep) False (displayDate . U.upkeepDate $ upkeep))
-            employees (map Just employeeIds) V.new companyId (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
+            employees (map Just employeeIds) V.new companyId Nothing (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
