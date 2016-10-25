@@ -4,6 +4,7 @@ abc.hs
 tasks.txt
 data/
 server/Session.vim
+helpers/password.sh
 
 # -*- mode: gitignore; -*-
 *~
