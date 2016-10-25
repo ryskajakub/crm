@@ -78,7 +78,7 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
         ((_,_,_,mk):_) -> class'' . backgroundForKind $ mk
         _ -> mkAttrs
       in tr' rowBackgroundColor [
-        td . mkColours . map snd $ employees ,
+        td' (class'' ["first-cell", ""]) . mkColours . map snd $ employees ,
         td $ R.link
           (C.companyName company)
           (R.companyDetail companyId)
@@ -334,7 +334,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         (uncheckedMachine, const $ return (), Display)
 
     (nextFieldOffset, showMileage) = case MT.kind machineType of
-      MK.RotaryScrewCompressor -> (Undefined, True)
+      MK.RotaryScrewCompressor | closeUpkeep' -> (Undefined, True)
       _ -> (Defined 2, False)
 
     machineToggleCheckedLink = let
