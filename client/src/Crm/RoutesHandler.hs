@@ -111,14 +111,16 @@ startRouter appVar = startedRouter where
 
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
 
-  upkeepRoute upkeepId router =
-      fetchUpkeep upkeepId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> 
+  upkeepRoute supertaskId upkeepId router =
+    let
+      upkeepMode = maybe (UD.UpkeepClose upkeepId Note) (const . UD.UpkeepNew $ Nothing) supertaskId
+      in fetchUpkeep upkeepId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> 
         fetchEmployees ( \employees -> let
           upkeep' = upkeep { U.upkeepClosed = True }
           upkeepDate = U.upkeepDate upkeep
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
-            (map Just employeeIds) V.new companyId Nothing (UD.UpkeepClose upkeepId Note) ) router ) router 
+            (map Just employeeIds) V.new companyId supertaskId upkeepMode) router ) router 
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->
@@ -231,7 +233,7 @@ startRouter appVar = startedRouter where
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation }) ,
-    upkeepDetail' $-> upkeepRoute ,
+    upkeepDetail' $-> upkeepRoute Nothing ,
     machineTypesList' $-> (const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ) ,
     machineTypeEdit' $-> \machineTypeId router ->
@@ -249,7 +251,7 @@ startRouter appVar = startedRouter where
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
-    addUpkeepSubtask' $-> upkeepRoute ,
+    addUpkeepSubtask' $-> \upkeepId -> upkeepRoute (Just upkeepId) upkeepId ,
     employees' $-> ( const $
       fetchEmployees $ \employees -> modify' $ D.EmployeeList employees ) ,
     editEmployee' $-> \employeeId' router -> fetchTakenColours ( \takenColours ->
