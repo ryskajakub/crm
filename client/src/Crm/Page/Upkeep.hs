@@ -164,7 +164,7 @@ upkeepDetail ::
 upkeepDetail router appState upkeep3 datePicker notCheckedMachines 
     machines companyId employees selectedEmployees v dnf =
   upkeepForm appState router "Uzavřít servis" upkeep2 datePicker notCheckedMachines 
-    machines submitButton True employees selectedEmployees v dnf companyId
+    machines submitButton True employees selectedEmployees v dnf companyId []
       where
         (_,upkeep,upkeepMachines) = upkeep3
         upkeep2 = (upkeep,upkeepMachines)
@@ -193,9 +193,10 @@ upkeepNew ::
   DOMElement
 upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepIdentification companyId es se v = 
   upkeepForm appState router pageHeader upkeep datePicker notCheckedMachines 
-      machines submitButton False es se v NoChoice companyId where
+      machines submitButton False es se v NoChoice companyId addButton where
+
     (upkeepU, upkeepMachines) = upkeep
-    (pageHeader, submitButton) = case upkeepIdentification of 
+    (pageHeader, submitButton, addButton) = case upkeepIdentification of 
       Nothing -> let
         newUpkeepHandler = createUpkeep
           (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
@@ -204,23 +205,27 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         button = mkSubmitButton
           [G.plus , text2DOM " Naplánovat"]
           newUpkeepHandler
-        in ("Naplánovat servis", button)
+        in ("Naplánovat servis", button, [])
       Just upkeepId -> let
         replanUpkeepHandler = updateUpkeep
           (upkeepId, upkeepU, upkeepMachines)
           (mapMaybe Prelude.id se)
           (R.navigate R.plannedUpkeeps router)
           router
+        addSubtaskButton =
+          form' (class' "navbar-form") $
+            BTN.button' (BTN.buttonProps {
+              BTN.onClick = Defined $ const $ R.navigate (R.addUpkeepSubtask upkeepId) router })
+            [G.plus, text2DOM " Přidat dílčí úkon servisu" ]
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
           replanUpkeepHandler
-        in ("Přeplánovat servis", button)
+        in ("Přeplánovat servis", button, [addSubtaskButton])
 
 
 mapEither :: (a -> a') -> Either a b -> Either a' b
 mapEither f (Left a) = Left . f $ a
 mapEither _ (Right b) = Right b
-
 
 upkeepForm :: 
   Var D.AppState -> 
@@ -237,13 +242,13 @@ upkeepForm ::
   V.Validation ->
   DisplayedNote ->
   C.CompanyId ->
+  [DOMElement] ->
   DOMElement
 upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker' uncheckedMachines 
-    machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag companyId = let
+    machines button closeUpkeep' employees selectedEmployees validation displayedNoteFlag companyId
+    addUpkeepSubtaskElement = let
   rawUpkeepDate = DP.rawText upkeepDatePicker'
   upkeepFormRows = 
-    (B.fullRow (BN.nav [ N.backToCompany companyId router ])) :
-    upkeepPageHeader : 
     formHeader :
     (map upkeepMachineRow machines ++ 
     [setDateCheckboxRow] ++
@@ -432,7 +437,11 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
   validationGrid = validationHtml validationMessages
   submitButtonRow = oneElementRow "" (button $ null validationMessages)
 
+  myHeader = (B.fullRow (BN.nav $
+    N.backToCompany companyId router : addUpkeepSubtaskElement )) :
+    [upkeepPageHeader]
+
   mkGrid :: [DOMElement] -> DOMElement -> DOMElement
-  mkGrid columns anotherGrid = div $ (form' (class' "form-horizontal") $ B.grid columns) : anotherGrid : []
+  mkGrid columns anotherGrid = div $ [B.grid myHeader] ++ [div' (class'' ["form-horizontal"]) $ B.grid columns] ++ [anotherGrid]
 
   in mkGrid upkeepFormRows validationGrid

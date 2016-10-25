@@ -39,7 +39,9 @@ module Crm.Router (
   upkeepPhotos' ,
   upkeepPhotoAdd' ,
   calledUpkeeps' ,
+  addUpkeepSubtask' ,
 
+  addUpkeepSubtask ,
   calledUpkeeps ,
   upkeepPhotoAdd ,
   upkeepPhotos ,
@@ -299,6 +301,11 @@ machinesSchema' = prepareRouteAndMkHandler
   (mkCompaniesRoute { postfix = Just "schema" })
   companyIdEncodable
 
+addUpkeepSubtask' :: RouteAndMkHandler U.UpkeepId
+addUpkeepSubtask' = prepareRouteAndMkHandler
+  (mkCompaniesRoute { postfix = Just "add-subtask" })
+  upkeepIdEncodable
+
 replanUpkeep' :: RouteAndMkHandler U.UpkeepId
 replanUpkeep' = prepareRouteAndMkHandler 
   (mkUpkeepsRoute { postfix = Just "replan" })
@@ -378,6 +385,9 @@ newCompany = fst companyDetail' leftNew
 
 machinesSchema :: C.CompanyId -> CrmRoute
 machinesSchema = fst machinesSchema'
+
+addUpkeepSubtask :: U.UpkeepId -> CrmRoute
+addUpkeepSubtask = fst addUpkeepSubtask'
 
 companyDetail :: C.CompanyId -> CrmRoute
 companyDetail = fst companyDetail' . Right
