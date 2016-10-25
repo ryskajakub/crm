@@ -22,11 +22,9 @@ data UpkeepData = UpkeepData {
   selectedEmployees :: [Maybe EmployeeId] ,
   validation :: V.Validation ,
   companyId :: CompanyId ,
-  upkeepPageMode :: Either UpkeepClose UpkeepNew }
+  upkeepPageMode :: UpkeepPageMode }
 
-data UpkeepNew = UpkeepNew {
-  upkeepIdentification :: Maybe UpkeepId }
-
-data UpkeepClose = UpkeepClose {
-  upkeepId :: UpkeepId ,
-  displayedNote :: DisplayedNote }
+data UpkeepPageMode =
+  UpkeepNew { upkeepIdentification :: Maybe UpkeepId } |
+  UpkeepClose { upkeepId :: UpkeepId, displayedNote :: DisplayedNote } |
+  UpkeepSubtask { upkeepId :: UpkeepId }

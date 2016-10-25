@@ -75,7 +75,7 @@ startRouter appVar = startedRouter where
             in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, [(UM.newUpkeepMachine, machineId)])
               ud notCheckedUpkeepMachines
               newDatePickerData employees
-              [] V.new companyId (Right . UD.UpkeepNew $ Nothing)) crmRouter ) crmRouter 
+              [] V.new companyId (UD.UpkeepNew Nothing)) crmRouter ) crmRouter 
         _ -> modify' D.NotFound) ,
     ("daily-plan/:date/employee/:employee", \router params -> let
       crmRouter = CrmRouter router
@@ -110,6 +110,15 @@ startRouter appVar = startedRouter where
           D.FrontPage (order, direction) data' "" }) crmRouter )]
 
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
+
+  upkeepRoute upkeepId router =
+      fetchUpkeep upkeepId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> 
+        fetchEmployees ( \employees -> let
+          upkeep' = upkeep { U.upkeepClosed = True }
+          upkeepDate = U.upkeepDate upkeep
+          in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
+            (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
+            (map Just employeeIds) V.new companyId (UD.UpkeepClose upkeepId Note) ) router ) router 
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->
@@ -187,7 +196,7 @@ startRouter appVar = startedRouter where
           in modify' $ D.UpkeepScreen $ UD.UpkeepData (U.newUpkeep nowYMD, []) 
             ud notCheckedUpkeepMachines
             newDatePickerData employees 
-            [] V.new companyId (Right . UD.UpkeepNew $ Nothing)) router ) router ,
+            [] V.new companyId (UD.UpkeepNew Nothing)) router ) router ,
     contactPersonList' $-> \companyId ->
       fetchContactPersons companyId $ \data' -> let
         ns = D.ContactPersonList companyId data'
@@ -222,14 +231,7 @@ startRouter appVar = startedRouter where
         newNavigation = D.PlannedUpkeeps plannedUpkeeps''
         in modify appVar $ \appState -> 
           appState { D.navigation = newNavigation }) ,
-    upkeepDetail' $-> \upkeepId router ->
-      fetchUpkeep upkeepId ( \(companyId,(upkeep, upkeepMachines, employeeIds), machines) -> 
-        fetchEmployees ( \employees -> let
-          upkeep' = upkeep { U.upkeepClosed = True }
-          upkeepDate = U.upkeepDate upkeep
-          in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
-            (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
-            (map Just employeeIds) V.new companyId (Left $ UD.UpkeepClose upkeepId Note) ) router ) router ,
+    upkeepDetail' $-> upkeepRoute ,
     machineTypesList' $-> (const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ) ,
     machineTypeEdit' $-> \machineTypeId router ->
@@ -243,10 +245,11 @@ startRouter appVar = startedRouter where
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines) 
             (DP.DatePickerData (U.upkeepDate upkeep) False (displayDate . U.upkeepDate $ upkeep))
-            employees (map Just employeeIds) V.new companyId (Right . UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
+            employees (map Just employeeIds) V.new companyId (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,
+    addUpkeepSubtask' $-> upkeepRoute ,
     employees' $-> ( const $
       fetchEmployees $ \employees -> modify' $ D.EmployeeList employees ) ,
     editEmployee' $-> \employeeId' router -> fetchTakenColours ( \takenColours ->

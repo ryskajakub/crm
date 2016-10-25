@@ -223,9 +223,10 @@ upkeepNew router appState upkeep datePicker notCheckedMachines machines upkeepId
         in ("Přeplánovat servis", button, [addSubtaskButton])
 
 
-mapEither :: (a -> a') -> Either a b -> Either a' b
-mapEither f (Left a) = Left . f $ a
-mapEither _ (Right b) = Right b
+modifyUpkeepClose :: (UD.UpkeepPageMode -> UD.UpkeepPageMode) -> UD.UpkeepPageMode -> UD.UpkeepPageMode
+modifyUpkeepClose f (uc @ (UD.UpkeepClose {})) = f uc
+modifyUpkeepClose _ x = x
+
 
 upkeepForm :: 
   Var D.AppState -> 
@@ -298,7 +299,7 @@ upkeepForm appState router pageHeader (upkeep, upkeepMachines) upkeepDatePicker'
         Note -> EndNote
         EndNote -> Note
         x -> x
-    in modify' $ \ud -> ud { UD.upkeepPageMode = mapEither newClose (UD.upkeepPageMode ud) }
+    in modify' $ \ud -> ud { UD.upkeepPageMode = modifyUpkeepClose newClose (UD.upkeepPageMode ud) }
   (getNote, setNote, noteHeaders) = let
     noteText = strong "Plánované úkony"
     endNoteText = strong "Závěry po servisu"
