@@ -1,3 +1,6 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -7,7 +10,7 @@ import           Control.Monad              (forM, forM_)
 import           Control.Concurrent         (forkIO)
 import           Control.Concurrent.MVar    (newEmptyMVar, putMVar, MVar)
 import           Control.Concurrent.Async   (async, wait, Async)
-import           Control.Lens               (over, mapped, view)
+import           Control.Lens               (over, mapped, view, _1)
 
 import           Data.IORef                 (atomicModifyIORef', readIORef)
 import           Data.Pool                  (withResource)
@@ -16,7 +19,7 @@ import           Control.Monad.IO.Class     (MonadIO, liftIO)
 import           Control.Monad.Trans.Except (mapExceptT, runExceptT)
 import qualified Data.Map                   as Map
 import           Database.PostgreSQL.Simple (Connection)
-import           Opaleye                    (runQuery, queryTable)
+import           Opaleye                    (runQuery, queryTable, QueryRunnerColumnDefault, Nullable, Column)
 import           TupleTH                    (proj)
 import           Control.Monad.Trans.Except (ExceptT)
 import           Rest.Types.Error           (Reason)
@@ -26,6 +29,7 @@ import qualified Crm.Shared.Company         as C
 import qualified Crm.Shared.Machine         as M
 import qualified Crm.Shared.YearMonthDay    as YMD
 import qualified Crm.Shared.MachineType     as MT
+import qualified Crm.Shared.Upkeep          as U
 
 import           Crm.Server.Core            (nextServiceDate, NextServiceDate(..))
 import           Crm.Server.DB
@@ -109,7 +113,6 @@ getCacheContent :: Cache ->
   IO (Map.Map C.CompanyId CacheContent)
 getCacheContent (Cache cache) = readIORef cache
 
-
 addNextDates :: 
   (a -> M.MachineId) -> 
   (a -> M.Machine) -> 
@@ -117,7 +120,8 @@ addNextDates ::
   Connection -> 
   IO (NextServiceDate YMD.YearMonthDay)
 addNextDates getMachineId getMachine a = \conn -> do
-  fullUpkeepDataRows <- runQuery conn (nextServiceUpkeepsQuery . getMachineId $ a)
+  fullUpkeepDataRows' <- runQuery conn (nextServiceUpkeepsQuery . getMachineId $ a)
+  let fullUpkeepDataRows = over (mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) fullUpkeepDataRows'
   upkeepSequenceRows <- runQuery conn (nextServiceUpkeepSequencesQuery . getMachineId $ a)
   let
     convertFullUpkeeps = fmap $ \(u :: UpkeepRow, um :: UMD.UpkeepMachineRow) ->

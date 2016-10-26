@@ -9,7 +9,7 @@ import           Opaleye.RunQuery                  (runQuery)
 import           Control.Monad.IO.Class            (liftIO)
 import           Control.Monad.Reader              (ask)
 import           Control.Monad                     (forM)
-import           Control.Lens                      (view)
+import           Control.Lens                      (view, mapped, over, _1)
 
 import           Data.Pool                         (withResource)
 
@@ -41,7 +41,8 @@ import           TupleTH                           (proj, catTuples)
 companyUpkeepsListing :: ListHandler (IdDependencies' C.CompanyId)
 companyUpkeepsListing = mkListing' jsonO $ const $ do
   ((_, pool), companyId) <- ask
-  rows <- liftIO $ withResource pool $ \connection -> runQuery 
+  rows <- liftIO $ withResource pool $ \connection ->
+      over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ runQuery 
     connection (expandedUpkeepsByCompanyQuery companyId)
   let
     mappedResults = mapResultsToList

@@ -1,3 +1,4 @@
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
@@ -9,8 +10,8 @@ module Crm.Server.Api.UpkeepResource (
 
 import           Opaleye.Operators           ((.==), (.===))
 import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning, runInsert)
-import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText)
-import           Opaleye                     (runQuery)
+import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText, PGInt4)
+import           Opaleye                     (runQuery, Column, Nullable, maybeToNullable)
 
 import           Database.PostgreSQL.Simple  (Connection)
 
@@ -20,7 +21,7 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
-import           Control.Lens                (view)
+import           Control.Lens                (view, over, mapped, _1)
 
 import           Data.Tuple.All              (sel2, sel3)
 import           Data.List                   (nub)
@@ -72,11 +73,13 @@ data UpkeepsListing =
   PrintDailyPlan |
   UpkeepsCalled
 
+
 addUpkeep :: 
   Connection -> 
-  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId], Maybe U.Upkeep) -> 
+  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId], Maybe U.UpkeepId) -> 
   IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep', upkeepMachines, employeeIds, supertaskId) = do
+addUpkeep connection (upkeep', upkeepMachines, employeeIds, supertaskId') = do
+  let superTaskId = maybeToNullable $ fmap (pgInt4 . U.getUpkeepId) supertaskId'
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable 
@@ -88,7 +91,8 @@ addUpkeep connection (upkeep', upkeepMachines, employeeIds, supertaskId) = do
         (pgStrictText . U.workHours $ upkeep')
         (pgStrictText . U.workDescription $ upkeep')
         (pgStrictText . U.recommendation $ upkeep')
-        (pgBool . U.setDate $ upkeep')))
+        (pgBool . U.setDate $ upkeep'))
+      (U.UpkeepId superTaskId))
     (view upkeepPK)
   let upkeepId = head upkeepIds
   insertUpkeepMachines connection upkeepId upkeepMachines
@@ -166,6 +170,7 @@ updateUpkeep conn upkeepId (upkeep', upkeepMachines) employeeIds = do
           U.workDescription = pgStrictText . U.workDescription $ upkeep' ,
           U.recommendation = pgStrictText . U.recommendation $ upkeep' ,
           U.setDate = pgBool . U.setDate $ upkeep' })
+        (view upkeepSuper u)
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> UMD._upkeepFK upkeepRow .=== (pgInt4 `fmap` upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
@@ -176,14 +181,14 @@ updateUpkeep conn upkeepId (upkeep', upkeepMachines) employeeIds = do
 upkeepListing :: ListHandler Dependencies
 upkeepListing = mkListing' jsonO $ const $ do
   (_, pool) <- ask 
-  rows <- withResource pool $ \connection -> liftIO $ runQuery connection expandedUpkeepsQuery
+  rows <- withResource pool $ \connection -> liftIO . over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ runQuery connection expandedUpkeepsQuery
   return . mapUpkeeps $ rows
 
 upkeepsPlannedListing :: PlannedUpkeepType -> ListHandler Dependencies
 upkeepsPlannedListing put = mkListing' jsonO $ const $ do
   now0 <- liftIO getCurrentTime
   (_,pool) <- ask
-  rows <- liftIO $ withResource pool $ \connection -> runQuery connection $ groupedPlannedUpkeepsQuery put
+  rows <- liftIO $ withResource pool $ \connection -> over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) . runQuery connection $ groupedPlannedUpkeepsQuery put
   now1 <- liftIO getCurrentTime
   (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)])]) <- 
@@ -214,7 +219,7 @@ upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
   ((_, pool), upkeepId) <- ask
   upkeeps <- withResource pool $ \connection -> liftIO $ 
-    fmap mapUpkeeps $ runQuery connection $ expandedUpkeepsQuery2 upkeepId
+    fmap (mapUpkeeps . over (mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x))) $ runQuery connection $ expandedUpkeepsQuery2 upkeepId
   upkeep' <- singleRowOrColumn upkeeps
   allMachines <- withResource pool $ \connection -> liftIO $ runQuery connection (machinesInCompanyQuery' upkeepId)
   employeeIds <- withResource pool $ \connection -> liftIO $ runQuery connection (employeeIdsInUpkeep upkeepId)
@@ -249,7 +254,7 @@ printDailyPlanListing' ::
   Day -> 
   ExceptT (Reason r) m [(U.UpkeepMarkup, C.Company, [(E.EmployeeId, E.Employee)], [(M.Machine, MT.MachineType, MyMaybe CP.ContactPerson, (UM.UpkeepMachine, MyMaybe [SR.Markup]))])]
 printDailyPlanListing' employeeId connection day = do
-  dailyPlanUpkeeps' <- liftIO $ runQuery connection (dailyPlanQuery employeeId day)
+  dailyPlanUpkeeps' :: [(UpkeepRow, [Int])] <- liftIO . fmap (over (mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x))) $ runQuery connection (dailyPlanQuery employeeId day)
   dailyPlanUpkeeps <- forM dailyPlanUpkeeps' $ \(upkeep', es) -> do
     let 
       listifyNote (um @ (UM.UpkeepMachine {})) = 

@@ -1,10 +1,11 @@
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PartialTypeSignatures #-}
 
 module Crm.Server.Api.Company.RecommendationResource ( 
   resource ) where
 
-import           Control.Lens                (view)
+import           Control.Lens                (view, mapped, over)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
 
@@ -30,8 +31,10 @@ import           Safe                        (headMay)
 getter :: Handler (IdDependencies' C.CompanyId)
 getter = mkConstHandler' jsonO $ do
   ((_, pool), companyId) <- ask
-  lastUpkeep <- liftIO . withResource pool $ \connection -> runQuery connection (lastRecommendationQuery companyId)
-  let _ = lastUpkeep :: [UpkeepRow'' U.UpkeepId U.Upkeep]
+  lastUpkeep :: [UpkeepRow] <- liftIO . withResource pool $ \connection ->
+    over (mapped . mapped . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $
+      runQuery connection (lastRecommendationQuery companyId)
+  let _ = lastUpkeep :: [UpkeepRow'' U.UpkeepId U.Upkeep (Maybe U.UpkeepId)]
   let lastUpkeepMapped = headMay . fmap (\u -> (view upkeepPK u, view upkeep u)) $ lastUpkeep
   let _ = lastUpkeepMapped :: Maybe (U.UpkeepId, U.Upkeep)
   return . toMyMaybe $ lastUpkeepMapped

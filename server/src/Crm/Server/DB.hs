@@ -122,7 +122,7 @@ module Crm.Server.DB (
   ExtraFieldSettingsMapped ,
   ExtraFieldMapped ,
   MachineMapped ,
-  UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK ,
+  UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK, upkeepSuper,
   CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..) ,
   -- types 
   PlannedUpkeepType (..)
@@ -364,7 +364,7 @@ mapMaybeUpkeep (UpkeepRow uId' u' suId') = let
   u = pure U.Upkeep <*> fmap YMD.dayToYmd (U.upkeepDate u') <*> U.upkeepClosed u' <*> 
     U.workHours u' <*> U.workDescription u' <*> U.recommendation u' <*> U.setDate u'
   suId = fmap U.UpkeepId (U.getUpkeepId suId')
-  in pure UpkeepRow <*> uId <*> u <*> (Just suId)
+  in pure UpkeepRow <*> uId <*> u <*> Just suId
 
 makeAdaptorAndInstance' ''UpkeepRow''
 

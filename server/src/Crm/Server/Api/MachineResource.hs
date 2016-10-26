@@ -1,3 +1,4 @@
+{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TemplateHaskell #-}
 
@@ -6,6 +7,7 @@ module Crm.Server.Api.MachineResource where
 import           Opaleye                     ((.===), (.==), runUpdate, runDelete, runQuery,
                                                pgInt4, pgStrictText, pgDay, pgBool)
 
+import Data.Text (Text)
 import           Data.Maybe                  (catMaybes)
 import           Data.Tuple.All              (sel2, sel1, sel3)
 import           Data.Pool                   (withResource)
@@ -14,7 +16,7 @@ import           Control.Monad               (forM)
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Arrow               (first, second)
-import           Control.Lens                (view)
+import           Control.Lens                (view, mapped, over, _1)
 
 import           Rest.Resource               (Resource, Void, schema, list, name, 
                                              mkResourceReaderWith, get, update, remove)
@@ -118,8 +120,9 @@ machineSingle = mkConstHandler' jsonO $ do
       in (_machinePK m, _machine m, _companyFK m, _machineTypePK mt, _machineType mt, toMyMaybe . sel1 $ cp, _linkageFK m)
   upkeepSequenceRows <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (upkeepSequencesByIdQuery machineTypeId)
-  upkeepRows <- withResource pool $ \connection -> 
-    liftIO $ runQuery connection (upkeepsDataForMachine machineId)
+  upkeepRows :: [(UpkeepRow, UMD.UpkeepMachineRow, (Maybe Int, Maybe Text, Maybe Text, Maybe Text, Maybe Text))] <-
+    withResource pool $ \connection -> 
+      liftIO $ over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ runQuery connection (upkeepsDataForMachine machineId)
   extraFields <- withResource pool $ \connection -> liftIO $ 
     runQuery connection (extraFieldsForMachineQuery machineId)
   let 
