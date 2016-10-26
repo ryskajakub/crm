@@ -11,14 +11,14 @@ module Crm.Server.Api.UpkeepResource (
 import           Opaleye.Operators           ((.==), (.===))
 import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete, runInsertReturning, runInsert)
 import           Opaleye.PGTypes             (pgDay, pgBool, pgInt4, pgStrictText, PGInt4)
-import           Opaleye                     (runQuery, Column, Nullable, maybeToNullable)
+import           Opaleye                     (runQuery, Column, Nullable, maybeToNullable, showSqlForPostgres)
 
 import           Database.PostgreSQL.Simple  (Connection)
 
 import           Control.Monad.Reader        (ask)
 import           Control.Monad.IO.Class      (MonadIO, liftIO)
 import           Control.Monad.Error.Class   (throwError)
-import           Control.Monad               (forM_, forM)
+import           Control.Monad               (forM_, forM, join)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
 import           Control.Lens                (view, over, mapped, _1)
@@ -184,36 +184,57 @@ upkeepListing = mkListing' jsonO $ const $ do
   rows <- withResource pool $ \connection -> liftIO . over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ runQuery connection expandedUpkeepsQuery
   return . mapUpkeeps $ rows
 
-upkeepsPlannedListing :: PlannedUpkeepType -> ListHandler Dependencies
-upkeepsPlannedListing put = mkListing' jsonO $ const $ do
-  now0 <- liftIO getCurrentTime
+upkeepsCalledListing :: ListHandler Dependencies
+upkeepsCalledListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
-  rows <- liftIO $ withResource pool $ \connection -> over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) . runQuery connection $ groupedPlannedUpkeepsQuery put
-  now1 <- liftIO getCurrentTime
-  (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
+  upkeepsPlanned NormalTasks CalledUpkeep pool
+
+upkeepsPlannedListing :: ListHandler Dependencies
+upkeepsPlannedListing = mkListing' jsonO $ const $ do
+  (_,pool) <- ask
+  res :: [UpkeepRow] <- over (mapped . mapped . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ liftIO $ withResource pool $ \p -> runQuery p (upkeepQuery Subtasks)
+
+  normal <- upkeepsPlanned NormalTasks ServiceUpkeep pool
+  subtasks <- fmap join $ upkeepsPlanned Subtasks ServiceUpkeep pool
+
+  let
+    result = (flip fmap) normal $ \list -> let
+      locateSubtasks tuple = let
+        taskAndSubtasks = tuple : filter (\subtask -> (Just . $(proj 7 0) $ tuple) == $(proj 7 2) subtask) subtasks
+        in fmap (\t -> $(catTuples 2 4) ($(takeTuple 7 2) t) ($(dropTuple 7 3) t)) taskAndSubtasks
+      in foldMap locateSubtasks list
+  return result
+  
+upkeepsPlanned :: MonadIO m => DealWithSubtasks ->
+  PlannedUpkeepType -> ConnectionPool ->
+  m [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company,
+        [(M.MachineId, Text, Text, MK.MachineKindEnum)],
+        [EmployeeMapped])]]
+upkeepsPlanned subtasks put pool = do
+  rows <- liftIO $ withResource pool $ \connection -> over (mapped . mapped . _1 . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) . runQuery connection $ groupedPlannedUpkeepsQuery' subtasks put
+
+  (upkeeps' :: [(MK.MachineKindEnum, M.UpkeepBy, U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)])]) <- 
     liftIO $ forM rows $ \(u :: UpkeepRow, machineKind, machineUpkeepBy, (companyId :: C.CompanyId, company :: C.Company)) -> do
       notes <- withResource pool $ \connection -> runQuery connection (notesForUpkeep . view upkeepPK $ u)
-      return (MK.dbReprToKind machineKind, M.upkeepByDecode machineUpkeepBy, view upkeepPK u, view upkeep u, companyId, 
+      return (MK.dbReprToKind machineKind, M.upkeepByDecode machineUpkeepBy, view upkeepPK u, view upkeep u, view upkeepSuper u, companyId, 
         company, notes :: [(M.MachineId, Text, Text, MK.MachineKindEnum)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
-    (employeesInUpkeeps (fmap $(proj 7 2) upkeeps'))
-  now2 <- liftIO getCurrentTime
+    (employeesInUpkeeps (fmap $(proj 8 2) upkeeps'))
   let 
     (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (uId, convert e)) `fmap` employeeRows
     upkeepsWithEmployees = map (\tuple -> let
-      employee = map snd . filter (($(proj 7 2) tuple ==) . fst) $ employees
-      in $(catTuples 7 1) tuple employee) upkeeps'
+      employee = map snd . filter (($(proj 8 2) tuple ==) . fst) $ employees
+      in $(catTuples 8 1) tuple employee) upkeeps'
     areWeDoingUpkeep (machineKind, machineUpkeepBy) = case machineUpkeepBy of
       M.UpkeepByDefault -> MK.isUpkeepByUs machineKind
       M.UpkeepByThem    -> False
       M.UpkeepByWe      -> True
-    byUs = filter (areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
-    byThem = filter (not . areWeDoingUpkeep . $(takeTuple 8 2)) upkeepsWithEmployees
-  let toReturn = [fmap $(dropTuple 8 2) byUs, fmap $(dropTuple 8 2) byThem]
-  now3 <- liftIO getCurrentTime
-  liftIO $ putStrLn $ show now0 ++ show now1 ++ " " ++ show now2 ++ show now3  
+    byUs = filter (areWeDoingUpkeep . $(takeTuple 9 2)) upkeepsWithEmployees
+    byThem = filter (not . areWeDoingUpkeep . $(takeTuple 9 2)) upkeepsWithEmployees
+  let toReturn = [fmap $(dropTuple 9 2) byUs, fmap $(dropTuple 9 2) byThem]
   return toReturn
+
     
 upkeepCompanyMachines :: Handler (IdDependencies' U.UpkeepId)
 upkeepCompanyMachines = mkConstHandler' jsonO $ do
@@ -290,8 +311,8 @@ upkeepResource :: Resource Dependencies (IdDependencies' U.UpkeepId) U.UpkeepId 
 upkeepResource = (mkResourceReaderWith prepareReaderTuple) {
   list = \listingType -> case listingType of
     UpkeepsAll -> upkeepListing
-    UpkeepsPlanned -> upkeepsPlannedListing ServiceUpkeep
-    UpkeepsCalled -> upkeepsPlannedListing CalledUpkeep
+    UpkeepsPlanned -> upkeepsPlannedListing
+    UpkeepsCalled -> upkeepsCalledListing
     PrintDailyPlan -> printDailyPlanListing ,
   name = A.upkeep ,
   update = Just updateUpkeepHandler ,

@@ -35,7 +35,7 @@ data Employee = Employee {
 #ifdef FAY
   deriving (Eq)
 #else
-  deriving (Generic, Typeable, Data, Eq)
+  deriving (Generic, Typeable, Data, Eq, Show)
 #endif
 
 newEmployee :: Employee

@@ -67,7 +67,7 @@ data Company' name note address = Company {
   companyNote :: note ,
   companyAddress :: address }
 #ifndef FAY
-  deriving (Generic, Typeable, Data)
+  deriving (Generic, Typeable, Data, Show)
 #endif
 type Company = Company' Text Text Text
 

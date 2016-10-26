@@ -40,6 +40,7 @@ module Crm.Server.DB (
   getPhoto ,
   singleEmployeeQuery ,
   contactPersonsQuery ,
+  upkeepQuery ,
   -- manipulations
   addPhoto ,
   deletePhoto ,
@@ -59,6 +60,7 @@ module Crm.Server.DB (
   otherMachinesInCompanyQuery ,
   expandedUpkeepsQuery2 ,
   groupedPlannedUpkeepsQuery ,
+  groupedPlannedUpkeepsQuery' ,
   expandedUpkeepsQuery ,
   companyByIdQuery ,
   companyByIdCompanyQuery ,
@@ -125,7 +127,8 @@ module Crm.Server.DB (
   UpkeepRow, UpkeepRow'' (..), upkeep, upkeepPK, upkeepSuper,
   CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..) ,
   -- types 
-  PlannedUpkeepType (..)
+  PlannedUpkeepType (..) ,
+  DealWithSubtasks (..)
   ) where
 
 import           Prelude                              hiding (not)
@@ -341,6 +344,7 @@ data UpkeepRow'' upkeepPK upkeep upkeepSuper = UpkeepRow {
   _upkeepPK :: upkeepPK ,
   _upkeep :: upkeep ,
   _upkeepSuper :: upkeepSuper }
+  deriving Show
 makeLenses ''UpkeepRow''
 
 type UpkeepRow' upkeepPK upkeepSuper = UpkeepRow'' upkeepPK 
@@ -517,6 +521,16 @@ join tableQuery = proc id' -> do
   table <- tableQuery -< ()
   restrict -< sel1 table .== id'
   returnA -< table
+
+upkeepQuery :: DealWithSubtasks -> Query UpkeepsTable
+upkeepQuery dealWithSubtasks = let
+  modifier = case dealWithSubtasks of
+    NormalTasks -> id
+    Subtasks -> not
+  in proc () -> do
+    rows <- queryTable upkeepsTable -< ()
+    restrict -< modifier . isNull . U.getUpkeepId . _upkeepSuper $ rows 
+    returnA -< rows
 
 -- | query upkeep table of joins
 superUpkeepQuery :: Query UpkeepsTable
@@ -841,14 +855,18 @@ employeesInUpkeeps upkeepIds = proc () -> do
   returnA -< (_upkeepPK upkeepRow, employeeRow)
 
 data PlannedUpkeepType = ServiceUpkeep | CalledUpkeep
+data DealWithSubtasks = NormalTasks | Subtasks
 
 groupedPlannedUpkeepsQuery :: PlannedUpkeepType -> Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
-groupedPlannedUpkeepsQuery plannedUpkeepType = let
+groupedPlannedUpkeepsQuery = groupedPlannedUpkeepsQuery' NormalTasks
+
+groupedPlannedUpkeepsQuery' :: DealWithSubtasks -> PlannedUpkeepType -> Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
+groupedPlannedUpkeepsQuery' dealWithSubtasks plannedUpkeepType = let
   modifier = case plannedUpkeepType of
     ServiceUpkeep -> not
     CalledUpkeep -> id
   plannedUpkeepsQuery = proc () -> do
-    upkeepRow <- superUpkeepQuery -< ()
+    upkeepRow <- upkeepQuery dealWithSubtasks -< ()
     restrict -< not . U.upkeepClosed . _upkeep $ upkeepRow
     restrict -< modifier . U.setDate . _upkeep $ upkeepRow
     upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
