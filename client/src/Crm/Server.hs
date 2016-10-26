@@ -465,7 +465,7 @@ createUpkeep ::
   Fay ()
 createUpkeep (newUpkeep, upkeepMachines, se, supertask) callback = 
   XU.create
-    (newUpkeep, upkeepMachines, se, supertask)
+    (newUpkeep, upkeepMachines, se, toMyMaybe supertask)
     (const callback)
     
 createEmployee :: 

@@ -193,8 +193,8 @@ upkeepNew ::
   V.Validation -> 
   DOMElement
 upkeepNew router appState upkeepSupertaskId upkeep datePicker notCheckedMachines
-    machines upkeepIdentification companyId es se v = 
-  upkeepForm appState router pageHeader upkeep datePicker notCheckedMachines 
+    machines upkeepIdentification companyId es se v =
+  upkeepForm appState router pageHeader upkeep datePicker notCheckedMachines
       machines submitButton False es se v NoChoice companyId addButton where
 
     (upkeepU, upkeepMachines) = upkeep

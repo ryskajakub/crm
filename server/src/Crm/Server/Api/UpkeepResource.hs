@@ -76,10 +76,10 @@ data UpkeepsListing =
 
 addUpkeep :: 
   Connection -> 
-  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId], Maybe U.UpkeepId) -> 
+  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId], MyMaybe U.UpkeepId) -> 
   IO U.UpkeepId -- ^ id of the upkeep
 addUpkeep connection (upkeep', upkeepMachines, employeeIds, supertaskId') = do
-  let superTaskId = maybeToNullable $ fmap (pgInt4 . U.getUpkeepId) supertaskId'
+  let superTaskId = maybeToNullable . fmap (pgInt4 . U.getUpkeepId) . toMaybe $ supertaskId'
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable 
