@@ -74,9 +74,9 @@ data UpkeepsListing =
 
 addUpkeep :: 
   Connection -> 
-  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId]) -> 
+  (U.Upkeep, [(UM.UpkeepMachine, M.MachineId)], [E.EmployeeId], Maybe U.Upkeep) -> 
   IO U.UpkeepId -- ^ id of the upkeep
-addUpkeep connection (upkeep', upkeepMachines, employeeIds) = do
+addUpkeep connection (upkeep', upkeepMachines, employeeIds, supertaskId) = do
   upkeepIds <- runInsertReturning
     connection
     upkeepsTable 

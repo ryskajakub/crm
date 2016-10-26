@@ -21,6 +21,7 @@ import           Crm.Server.Types
 import           Data.Pool                  (createPool)
 import           Database.PostgreSQL.Simple (close)
 
+
 main :: IO ()
 main = do
   putStrLn "Starting warp server on http://localhost:8000"
