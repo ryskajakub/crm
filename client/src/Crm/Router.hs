@@ -303,7 +303,7 @@ machinesSchema' = prepareRouteAndMkHandler
 
 addUpkeepSubtask' :: RouteAndMkHandler U.UpkeepId
 addUpkeepSubtask' = prepareRouteAndMkHandler
-  (mkCompaniesRoute { postfix = Just "add-subtask" })
+  (mkUpkeepsRoute { postfix = Just "add-subtask" })
   upkeepIdEncodable
 
 replanUpkeep' :: RouteAndMkHandler U.UpkeepId

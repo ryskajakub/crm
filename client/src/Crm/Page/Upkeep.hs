@@ -202,7 +202,7 @@ upkeepNew router appState upkeepSupertaskId upkeep datePicker notCheckedMachines
     (pageHeader, submitButton, addButton) = case upkeepIdentification of
       Nothing -> let
         newUpkeepHandler = createUpkeep
-          (upkeepU, upkeepMachines, mapMaybe Prelude.id se)
+          (upkeepU, upkeepMachines, mapMaybe Prelude.id se, upkeepSupertaskId)
           (R.navigate R.plannedUpkeeps router)
           router
         button = mkSubmitButton

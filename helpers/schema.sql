@@ -72,7 +72,8 @@ create table upkeeps (
   work_hours varchar (500) not null ,
   work_description varchar (5000) not null ,
   recommendation varchar (5000) not null ,
-  set_date boolean not null );
+  set_date boolean not null ,
+  supertask_id integer references upkeeps (id) );
 
 create table upkeep_machines (
   upkeep_id integer not null references upkeeps (id) ,
