@@ -62,7 +62,7 @@ startRouter appVar = startedRouter where
     ("", \router _ -> let
       crmRouter = CrmRouter router
       in fetchFrontPageData C.NextService DIR.Asc (\data' -> modify appVar 
-        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' "" }) crmRouter ) ,
+        $ \appState -> appState { D.navigation = D.FrontPage (C.NextService, DIR.Asc) data' "" False }) crmRouter ) ,
     ("companies/:companyId/new-maintenance/:machineId", \router params -> let
       crmRouter = CrmRouter router
       companyIdText = head $ params
@@ -107,20 +107,19 @@ startRouter appVar = startedRouter where
       crmRouter = CrmRouter router
       in fetchFrontPageData order direction (\data' ->
         modify appVar $ \appState -> appState { D.navigation = 
-          D.FrontPage (order, direction) data' "" }) crmRouter )]
+          D.FrontPage (order, direction) data' "" False }) crmRouter )]
 
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
 
-  upkeepRoute supertaskId upkeepId router =
-    let
-      upkeepMode = maybe (UD.UpkeepClose upkeepId Note) (const . UD.UpkeepNew $ Nothing) supertaskId
-      in fetchUpkeep upkeepId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> 
-        fetchEmployees ( \employees -> let
-          upkeep' = upkeep { U.upkeepClosed = True }
-          upkeepDate = U.upkeepDate upkeep
-          in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
-            (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
-            (map Just employeeIds) V.new companyId supertaskId upkeepMode) router ) router 
+  upkeepRoute supertaskId upkeepId router = let
+    upkeepMode = maybe (UD.UpkeepClose upkeepId Note) (const . UD.UpkeepNew $ Nothing) supertaskId
+    in fetchUpkeep upkeepId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) -> 
+      fetchEmployees ( \employees -> let
+        upkeep' = upkeep { U.upkeepClosed = True }
+        upkeepDate = U.upkeepDate upkeep
+        in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
+          (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees 
+          (map Just employeeIds) V.new companyId supertaskId upkeepMode) router ) router 
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->

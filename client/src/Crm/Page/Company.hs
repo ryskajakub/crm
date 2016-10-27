@@ -45,13 +45,18 @@ companiesList ::
   Var D.AppState -> 
   C.OrderType -> 
   DIR.Direction -> 
-  [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] -> 
+  [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ->
+  Bool ->
   (DOMElement, Fay ())
-companiesList filterText router var orderType direction companies'' = let
+companiesList filterText router var orderType direction companies'' renegatesFlag = let
 
-  filterFun (_, C.Company name _ address, _, _) = 
-    contains (T.toLower name) (T.toLower filterText) || 
-    contains (T.toLower address) (T.toLower filterText)
+  filterFun (_, C.Company name _ address, state, _) = let
+    renegatesCondition = case (state, renegatesFlag) of
+      (C.Inactive, True) -> True
+      (_, True) -> False
+      (_, False) -> True
+    in (contains (T.toLower name) (T.toLower filterText) || 
+    contains (T.toLower address) (T.toLower filterText)) && renegatesCondition 
     
   companies' = filter filterFun companies''
 
@@ -111,7 +116,7 @@ companiesList filterText router var orderType direction companies'' = let
     p "Základní stránka aplikace, která ti zodpoví otázku kam jet na servis. Řadí firmy podle toho, kam je třeba jet nejdříve." ,
     p "Klikem na šipky v záhlaví tabulky můžeš řadit tabulku" ]
   pageInfo' = pageInfo "Seznam firem, další servis" $ Just advice
-  grid = B.grid $ B.row $ (pageInfo' ++ withSection [
+  grid = B.grid $ B.row $ ( pageInfo' ++ withSection [
     let
       buttonProps = BTN.buttonProps {
         BTN.onClick = Defined $ const $ R.navigate R.newCompany router }
@@ -119,15 +124,22 @@ companiesList filterText router var orderType direction companies'' = let
         G.plus , 
         text2DOM " Přidat firmu" ]
       setFilterText filterText' = setCompaniesList filterText'
+      renegates = BTN.button' (BTN.buttonProps {
+        BTN.onClick = Defined $ const $ modify var $ \appState ->
+          appState { D.navigation = case D.navigation appState of
+            cd @ (D.FrontPage {}) -> cd { D.renegates = True }
+            _ -> D.navigation appState } } ) [
+        G.piggyBank ,
+        text2DOM " Ukázat odpadlíky" ]
       nameAddressFiltering = 
         div [
           G.filter ,
-          text2DOM " Filtrace:" , 
+          text2DOM " Filtrace: " , 
           F.input F.Editing False (SetValue filterText) setFilterText ]
       infoLink = A.a "https://github.com/coubeatczech/crm/blob/master/doc/Manuál.md" 
         [G.infoSign , text2DOM " Návod"]
       in 
-        BN.nav $ [ inNav button , inNav nameAddressFiltering, infoLink ] ,
+        BN.nav $ [ inNav button , inNav nameAddressFiltering, infoLink, inNav renegates ] ,
         B.table [
           head' , 
           body ]])

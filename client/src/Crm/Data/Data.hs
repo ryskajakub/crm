@@ -33,7 +33,8 @@ data NavigationState =
   FrontPage {
     ordering :: (C.OrderType, DIR.Direction) ,
     companiesNextService :: [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ,
-    filterText :: Text } | 
+    filterText :: Text ,
+    renegates :: Bool } | 
   CompanyDetail {
     companyId :: C.CompanyId , 
     company :: C.Company , 
