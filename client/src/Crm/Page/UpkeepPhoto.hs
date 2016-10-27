@@ -34,7 +34,7 @@ import qualified Crm.Data.Data                    as D
 
 addPhotoToUpkeepList :: 
   R.CrmRouter -> 
-  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
+  [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   DOMElement
 addPhotoToUpkeepList router upkeeps = let
   pageInfo' = pageInfo "Aktuální servisy - přidej fotky" $ (Nothing :: Maybe DOMElement)
@@ -44,7 +44,7 @@ addPhotoToUpkeepList router upkeeps = let
       th "Název firmy" ,
       th "Přidat fotky" ,
       th "Datum" ]
-    renderUpkeepRow (upkeepId, upkeep, _, company, _, _) = tr [
+    renderUpkeepRow (upkeepId, upkeep, _, _, company, _, _) = tr [
       td $ R.link (showInt . U.getUpkeepId $ upkeepId) (R.replanUpkeep upkeepId) router ,
       td . C.companyName $ company ,
       td $ BB.buttonP 

@@ -21,7 +21,7 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM, join)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
-import           Control.Lens                (view, over, mapped, _1)
+import           Control.Lens                (view, over, mapped, _1, _3)
 
 import           Data.Tuple.All              (sel2, sel3)
 import           Data.List                   (nub)
@@ -201,9 +201,7 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
 
   let
     result = (flip fmap) normal $ \list -> let
-      locateSubtasks tuple = let
-        taskAndSubtasks = tuple : filter (\subtask -> (Just . $(proj 7 0) $ tuple) == $(proj 7 2) subtask) subtasks
-        in fmap (\t -> $(catTuples 2 4) ($(takeTuple 7 2) t) ($(dropTuple 7 3) t)) taskAndSubtasks
+      locateSubtasks tuple = over (mapped . _3) toMyMaybe (tuple : filter (\subtask -> (Just . $(proj 7 0) $ tuple) == $(proj 7 2) subtask) subtasks)
       in foldMap locateSubtasks list
   return result
   

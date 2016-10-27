@@ -396,11 +396,13 @@ fetchFrontPageData order direction callback router =
     router
 
 fetchPlannedUpkeeps :: 
-  ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
-    [(M.MachineId, Text, Text, MK.MachineKindEnum)], [(E.EmployeeId, E.Employee)])]] -> Fay ()) ->
+  ([[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company,
+  [(M.MachineId, Text, Text, MK.MachineKindEnum)], [(E.EmployeeId, E.Employee)])]] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchPlannedUpkeeps = XU.listPlanned maxCount
+fetchPlannedUpkeeps fun =
+  let fun' payload = fun $ (flip map) payload $ \outer -> (flip map) outer $ \(a, b, c, d, e, f, g) -> (a, b, toMaybe c, d, e, f, g)
+  in XU.listPlanned maxCount fun'
 
 fetchCalledUpkeeps :: 
   ([[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
@@ -409,12 +411,12 @@ fetchCalledUpkeeps ::
   Fay ()
 fetchCalledUpkeeps = XU.listCalled maxCount
 
-fetchCompaniesForMap :: 
+fetchCompaniesForMap ::
   ([(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchCompaniesForMap callback = 
-  XC.listMap 
+fetchCompaniesForMap callback =
+  XC.listMap
     maxCount
     (callback . (map (\(a,b,c,d,_) -> (a,b,c,toMaybe d))))
 

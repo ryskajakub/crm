@@ -45,11 +45,13 @@ calledUpkeeps ::
   R.CrmRouter -> 
   [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
-calledUpkeeps = plannedUpkeeps'' "Volané servisy" $ p [ text2DOM "Seznam firem, kam bylo voláno a čeká se na kontakt." ]
+calledUpkeeps router upkeeps = let
+  upkeeps' = (flip map) upkeeps $ \outer -> (flip map) outer $ \(a, b, c, d, e, f) -> (a, b, Nothing, c, d, e, f)
+  in plannedUpkeeps'' "Volané servisy" (p [ text2DOM "Seznam firem, kam bylo voláno a čeká se na kontakt." ]) router upkeeps'
 
 plannedUpkeeps ::
   R.CrmRouter -> 
-  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
+  [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
 plannedUpkeeps = plannedUpkeeps'' "Naplánované servisy" $ p [ text2DOM "Seznam naplánovaných servisů. Tady můžeš buď servis ", strong "přeplánovat", text2DOM ", pokud je třeba u naplánovaného změnit datum a podobně, nebo můžeš servis uzavřít, to se dělá potom co je servis fyzicky hotov a přijde ti servisní list." ]
 
@@ -58,7 +60,7 @@ plannedUpkeeps'' ::
   Text ->
   a ->
   R.CrmRouter -> 
-  [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
+  [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] -> 
   (DOMElement, Fay ())
 plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
   mkTable data' = B.table [head', body] where
@@ -70,7 +72,13 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
       th "Datum" ,
       th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
       th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
-    body = tbody $ map (\(upkeepId, upkeep, companyId, company, notes, employees) -> let
+    body = tbody $ map (\(upkeepId, upkeep, superUpkeepId, companyId, company, notes, employees) -> let
+
+      (cName, cAddress) = maybe ([R.link
+        (C.companyName company)
+        (R.companyDetail companyId)
+        router], [C.companyAddress company]) (const ([], [])) superUpkeepId
+
       mkNote = map $ \(machineId, machineTypeName, note, _) -> li $ [
         R.link machineTypeName (R.machineDetail machineId) router ,
         text2DOM " : " , text2DOM note]
@@ -79,11 +87,8 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
         _ -> mkAttrs
       in tr' rowBackgroundColor [
         td' (class'' ["first-cell", ""]) . mkColours . map snd $ employees ,
-        td $ R.link
-          (C.companyName company)
-          (R.companyDetail companyId)
-          router ,
-        td $ C.companyAddress company ,
+        td cName ,
+        td cAddress ,
         td . (ul' (class' "list-unstyled")) . mkNote $ notes ,
         let 
           date = U.upkeepDate upkeep
@@ -223,7 +228,7 @@ upkeepNew router appState upkeepSupertaskId upkeep datePicker notCheckedMachines
         button = mkSubmitButton
           [text2DOM "Přeplánovat"]
           replanUpkeepHandler
-        in ("Přeplánovat servis", button, maybe [addSubtaskButton] (const []) upkeepSupertaskId)
+        in ("Přeplánovat servis", button, maybe (if (not . U.setDate $ upkeepU) then [addSubtaskButton] else []) (const []) upkeepSupertaskId)
 
 
 modifyUpkeepClose :: (UD.UpkeepPageMode -> UD.UpkeepPageMode) -> UD.UpkeepPageMode -> UD.UpkeepPageMode

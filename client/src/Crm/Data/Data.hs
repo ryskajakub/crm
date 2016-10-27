@@ -56,7 +56,7 @@ data NavigationState =
     deletable :: Bool ,
     photosInModal :: [P.PhotoId] } |
   PlannedUpkeeps { 
-    plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
+    plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
   CalledUpkeeps { 
     calledUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, 
@@ -100,7 +100,7 @@ data NavigationState =
       [(M.Machine, MT.MachineType, Maybe CP.ContactPerson, (UM.UpkeepMachine, Maybe [SR.Markup]))])] ,
     employees :: [E.Employee'] } |
   AddPhotoToUpkeepList {
-    plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
+    plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
   AddPhotoToUpkeep U.UpkeepId U.Upkeep C.Company ConfirmPhotoAdded
   
 data ConfirmPhotoAdded = ConfirmPhotoAddedOK | NoPhotoAdded
