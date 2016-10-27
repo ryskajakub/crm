@@ -187,7 +187,9 @@ upkeepListing = mkListing' jsonO $ const $ do
 upkeepsCalledListing :: ListHandler Dependencies
 upkeepsCalledListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
-  upkeepsPlanned NormalTasks CalledUpkeep pool
+  result <- upkeepsPlanned NormalTasks CalledUpkeep pool
+  return $ (flip fmap) result $ \outer -> (flip fmap) outer $ \t ->
+    $(catTuples 2 4) ($(takeTuple 7 2) t) ($(dropTuple 7 3) t) 
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
