@@ -194,8 +194,7 @@ upkeepsCalledListing = mkListing' jsonO $ const $ do
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
-  res :: [UpkeepRow] <- over (mapped . mapped . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ liftIO $ withResource pool $ \p -> runQuery p (upkeepQuery Subtasks)
-
+  res :: [UpkeepRow] <- over (mapped . mapped . upkeepSuper) (\x -> fmap (U.UpkeepId) (U.getUpkeepId x)) $ liftIO $ withResource pool $ \p -> runQuery p (upkeepQuery $ Just Subtasks)
   normal <- upkeepsPlanned NormalTasks ServiceUpkeep pool
   subtasks <- fmap join $ upkeepsPlanned Subtasks ServiceUpkeep pool
 

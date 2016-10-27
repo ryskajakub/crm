@@ -522,22 +522,19 @@ join tableQuery = proc id' -> do
   restrict -< sel1 table .== id'
   returnA -< table
 
-upkeepQuery :: DealWithSubtasks -> Query UpkeepsTable
+upkeepQuery :: Maybe DealWithSubtasks -> Query UpkeepsTable
 upkeepQuery dealWithSubtasks = let
-  modifier = case dealWithSubtasks of
-    NormalTasks -> id
-    Subtasks -> not
+  modifier = (flip fmap) dealWithSubtasks $ \x -> (if x == Subtasks then not else id) . isNull
   in proc () -> do
     rows <- queryTable upkeepsTable -< ()
-    restrict -< modifier . isNull . U.getUpkeepId . _upkeepSuper $ rows 
+    restrict -< case modifier of
+      Just modifier' -> modifier' . U.getUpkeepId . _upkeepSuper $ rows
+      Nothing -> pgBool True
     returnA -< rows
 
 -- | query upkeep table of joins
 superUpkeepQuery :: Query UpkeepsTable
-superUpkeepQuery = proc () -> do
-  rows <- queryTable upkeepsTable -< ()
-  restrict -< isNull . U.getUpkeepId . _upkeepSuper $ rows 
-  returnA -< rows
+superUpkeepQuery = upkeepQuery $ Just NormalTasks
 
 machinePhotosByMachineId :: Int -> Query PhotosMetaTable
 machinePhotosByMachineId machineId = proc () -> do
@@ -753,7 +750,7 @@ expandedUpkeepsQuery2 :: U.UpkeepId -> Query (UpkeepsTable, UpkeepMachinesTable)
 expandedUpkeepsQuery2 upkeepId = let
   upkeepKey = fmap pgInt4 upkeepId
   in proc () -> do
-    upkeepRow <- joinQ superUpkeepQuery upkeepPK -< upkeepKey
+    upkeepRow <- joinQ (upkeepQuery Nothing) upkeepPK -< upkeepKey
     upkeepMachineRow <- joinL upkeepMachinesTable UMD.upkeepFK -< upkeepKey
     returnA -< (upkeepRow, upkeepMachineRow)
 
@@ -796,7 +793,7 @@ joinQ query getKey = proc aKey -> do
 nextServiceUpkeepsQuery :: M.MachineId -> Query (UpkeepsTable, UpkeepMachinesTable)
 nextServiceUpkeepsQuery machineId = proc () -> do
   upkeepMachineRow <- joinL upkeepMachinesTable UMD.machineFK -< fmap pgInt4 machineId
-  upkeepRow <-  joinQ superUpkeepQuery upkeepPK -< UMD._upkeepFK upkeepMachineRow
+  upkeepRow <- joinQ superUpkeepQuery upkeepPK -< UMD._upkeepFK upkeepMachineRow
   returnA -< (upkeepRow, upkeepMachineRow)
 
 upkeepsDataForMachine :: M.MachineId -> Query (UpkeepsTable, UpkeepMachinesTable, EmployeeLeftJoinTable)
@@ -855,7 +852,7 @@ employeesInUpkeeps upkeepIds = proc () -> do
   returnA -< (_upkeepPK upkeepRow, employeeRow)
 
 data PlannedUpkeepType = ServiceUpkeep | CalledUpkeep
-data DealWithSubtasks = NormalTasks | Subtasks
+data DealWithSubtasks = NormalTasks | Subtasks deriving Eq
 
 groupedPlannedUpkeepsQuery :: PlannedUpkeepType -> Query (UpkeepsTable, DBInt, DBInt, (C.CompanyId' DBInt, CompanyCore))
 groupedPlannedUpkeepsQuery = groupedPlannedUpkeepsQuery' NormalTasks
@@ -866,7 +863,7 @@ groupedPlannedUpkeepsQuery' dealWithSubtasks plannedUpkeepType = let
     ServiceUpkeep -> not
     CalledUpkeep -> id
   plannedUpkeepsQuery = proc () -> do
-    upkeepRow <- upkeepQuery dealWithSubtasks -< ()
+    upkeepRow <- upkeepQuery (Just dealWithSubtasks) -< ()
     restrict -< not . U.upkeepClosed . _upkeep $ upkeepRow
     restrict -< modifier . U.setDate . _upkeep $ upkeepRow
     upkeepMachinesRow <- joinL upkeepMachinesTable UMD.upkeepFK -< _upkeepPK upkeepRow
