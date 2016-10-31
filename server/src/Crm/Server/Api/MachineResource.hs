@@ -109,10 +109,10 @@ machineUpdate = mkInputHandler' (jsonI . jsonO) $ \(machine', machineTypeId, lin
 
 machineSingle :: Handler (IdDependencies' M.MachineId)
 machineSingle = mkConstHandler' jsonO $ do
-  ((_,pool), machineId') <- ask 
+  ((_,pool), machineId') <- ask
   rows <- withResource pool $ \connection -> liftIO $ runQuery connection (machineDetailQuery machineId')
   row @ (_,_,_) <- singleRowOrColumn rows
-  let 
+  let
     (machineId, machine', companyId, machineTypeId, machineType', contactPersonId, otherMachineId) = let
       (m :: MachineRecord) = sel1 row
       (mt :: MachineTypeRecord) = sel2 row
@@ -133,32 +133,32 @@ machineSingle = mkConstHandler' jsonO $ do
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\(row' :: USD.UpkeepSequenceRecord) -> USD._upkeepSequence row') upkeepSequenceRows
     upkeepsData = 
-          fmap (\x -> $(catTuples 3 1) ($(takeTuple 4 3) x) (catMaybes . $(proj 4 3) $ x))
-        . fmap (\(b, c) -> $(catTuples 3 1) b c)
+          fmap (\x -> $(catTuples 4 1) ($(takeTuple 5 4) x) (catMaybes . $(proj 5 4) $ x))
+        . fmap (\(b, c) -> $(catTuples 4 1) b c)
         . mapResultsToList
-          $(proj 3 0)
-          $(takeTuple 4 3)
-          $(proj 4 3)
+          $(proj 4 0)
+          $(takeTuple 5 4)
+          $(proj 5 4)
         . fmap (\(upkeep'', upkeepMachine :: UMD.UpkeepMachineRow, employee') -> let
           employee = convert employee' :: MaybeEmployeeMapped
-          intermediate = ((_upkeepPK upkeep'', _upkeep upkeep'', view UMD.upkeepMachine upkeepMachine, $(proj 2 1) employee)
-            :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))
+          intermediate = ((_upkeepPK upkeep'', _upkeepSuper upkeep'' , _upkeep upkeep'', view UMD.upkeepMachine upkeepMachine, $(proj 2 1) employee)
+            :: (U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, UM.UpkeepMachine, Maybe E.Employee))
           in intermediate)
         $ upkeepRows
-      :: [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
-    upkeeps = fmap (second $(proj 4 2) . first $(proj 4 1) . (\a -> (a,a))) upkeepsData
+      :: [(U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee])]
+    upkeeps = fmap (second $(proj 5 3) . first $(proj 5 2) . (\a -> (a,a))) upkeepsData
     upkeepSequenceTuple = case upkeepSequences of
       [] -> undefined
       x : xs -> (x,xs)
     nextServiceYmd = getMaybe $ nextServiceDate machine' upkeepSequenceTuple upkeeps
   upkeepsDataWithPhotos <- forM upkeepsData $ \data' -> do
-    let upkeepId = $(proj 4 0) data'
+    let upkeepId = $(proj 5 0) data'
     photosFromDb <- withResource pool $ \connection -> liftIO $ runQuery connection $ photosInUpkeepQuery upkeepId
     let photoIds = P.PhotoId `fmap` photosFromDb
-    return $ $(catTuples 4 1) data' photoIds
+    return $ $(updateAtN 6 1) toMyMaybe $ $(catTuples 5 1) data' photoIds
   return -- the result needs to be in nested tuples, because there can be max 7-tuple
     ((companyId, machine', machineTypeId, (machineType', upkeepSequences)),
-    (toMyMaybe $ YMD.dayToYmd `fmap` nextServiceYmd, contactPersonId, 
+    (toMyMaybe $ YMD.dayToYmd `fmap` nextServiceYmd, contactPersonId,
       upkeepsDataWithPhotos, otherMachineId, MT.kind machineType', extraFields'))
 
 

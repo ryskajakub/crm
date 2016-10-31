@@ -42,7 +42,7 @@ data MachineDetail = MachineDetail {
   machineNextService :: Maybe YearMonthDay ,
   formState :: InputState ,
   photos :: [(PhotoId, PhotoMeta)] ,
-  upkeeps :: [(UpkeepId, Upkeep, UpkeepMachine, [Employee], [PhotoId])] ,
+  upkeeps :: [(UpkeepId, Maybe UpkeepId, Upkeep, UpkeepMachine, [Employee], [PhotoId])] ,
   companyId' :: CompanyId ,
   upkeepPhotoIds :: [PhotoId] }
 

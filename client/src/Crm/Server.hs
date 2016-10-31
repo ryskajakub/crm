@@ -323,16 +323,17 @@ fetchMachine ::
   M.MachineId -> -- ^ machine id
   ((C.CompanyId, M.Machine, MT.MachineTypeId,
     (MT.MachineType, [US.UpkeepSequence]), Maybe YMD.YearMonthDay, Maybe CP.ContactPersonId,
-    [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])], Maybe M.MachineId, 
+    [(U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])], Maybe M.MachineId, 
     MK.MachineKindEnum, [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)]) -> Fay()) -> -- ^ callback
   R.CrmRouter ->
   Fay ()
-fetchMachine machineId callback =  
+fetchMachine machineId callback =
   XM.byMachineId 
     machineId
     (let
-      fun ((a,b,c,d),(e,e1,g,M.MachineId g2,f,l)) = (a,b,c,d,toMaybe e,toMaybe e1,g,
-        swapMaybe M.MachineId g2,f,l)
+      noFun (ga,gb,gc,gd,ge,gf) = (ga,toMaybe gb,gc,gd,ge,gf)
+      fun ((a,b,c,d),(e,e1,gg,M.MachineId g2,f,l)) =
+        (a,b,c,d,toMaybe e,toMaybe e1,map noFun gg,swapMaybe M.MachineId g2,f,l)
       in callback . fun)
 
 fetchEmployee :: 

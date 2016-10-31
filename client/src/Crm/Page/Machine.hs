@@ -84,7 +84,7 @@ machineDetail ::
   M.MachineId -> 
   Maybe YMD.YearMonthDay -> 
   [(P.PhotoId, PM.PhotoMeta)] -> 
-  [(U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])] -> 
+  [(U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId])] -> 
   Maybe CP.ContactPersonId -> 
   [(CP.ContactPersonId, CP.ContactPerson)] -> 
   V.Validation -> 
@@ -125,8 +125,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   PH.PhotoModal photoModalElement mkPhotoModalButton photoFetch = PH.mkPhotoModal upkeepPhotoIds False router
 
   upkeepHistoryHtml = let
-    mkUpkeepRow :: (U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId]) -> DOMElement
-    mkUpkeepRow (upkeepId, upkeep, upkeepMachine, employees, photoIds) = let
+    mkUpkeepRow :: (U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, UM.UpkeepMachine, [E.Employee], [P.PhotoId]) -> DOMElement
+    mkUpkeepRow (upkeepId, superUpkeepId, upkeep, upkeepMachine, employees, photoIds) = let
       mth = showInt . UM.recordedMileage $ upkeepMachine
       warranty = if UM.warrantyUpkeep upkeepMachine then span' (class'' ["label", "label-danger"]) "Z" else text2DOM ""
       repair = let
@@ -147,7 +147,8 @@ machineDetail editing appVar router companyId calendarOpen (machine,
           in BTN.button' buttonProps "Otevřít"
         else text2DOM ""
       displayPhotos = mkPhotoModalButton photoIds setPhotosInModal
-      in tr [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
+      tableRow = maybe tr (const $ tr' (class' "warning")) superUpkeepId
+      in tableRow [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $ 
         upkeepMachine, td . UM.endNote $ upkeepMachine, td action, td displayPhotos]
     rows = map mkUpkeepRow upkeeps
