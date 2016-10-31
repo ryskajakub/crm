@@ -267,13 +267,14 @@ fetchEmployees ::
   Fay ()
 fetchEmployees = XE.list maxCount
 
-fetchUpkeep :: 
+fetchUpkeep ::
   U.UpkeepId -> -- ^ upkeep id
-  ((C.CompanyId, (U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]), 
+  ((C.CompanyId, (Maybe U.UpkeepId, U.Upkeep, [UM.UpkeepMachine'], [E.EmployeeId]),
     [(M.MachineId, M.Machine, MT.MachineType, US.UpkeepSequence)]) -> Fay ()) ->
   R.CrmRouter ->
   Fay ()
-fetchUpkeep = XU.bySingle 
+fetchUpkeep upkeepId callback =
+  XU.bySingle upkeepId $ \(cId, (muId, a, b, c), d) -> callback (cId, (toMaybe muId, a, b, c), d)
 
 fetchUpkeepData :: 
   C.CompanyId -> 
@@ -455,7 +456,7 @@ createMachine ::
   R.CrmRouter -> 
   Fay ()
 createMachine machine companyId machineType contactPersonId linkedMachineId extraFields callback = 
-  XCM.create 
+  XCM.create
     companyId 
     (machine, machineType, toMyMaybe contactPersonId, toMyMaybe linkedMachineId, extraFields)
     (const callback)

@@ -72,7 +72,7 @@ main' = do
         upkeepDatePicker employees selectedEmployees validation companyId upkeepSupertaskId upkeepPageMode) -> n $
           emptyCallback $ case upkeepPageMode of
             (UD.UpkeepClose upkeepId displayedNote) ->
-              upkeepDetail router appVar' (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
+              upkeepDetail router appVar' upkeepSupertaskId (upkeepId, u2, u3) upkeepDatePicker notCheckedMachines
                 machines companyId employees selectedEmployees validation displayedNote
             (UD.UpkeepNew upkeepIdentification) ->
               upkeepNew router appVar' upkeepSupertaskId upkeep upkeepDatePicker notCheckedMachines machines

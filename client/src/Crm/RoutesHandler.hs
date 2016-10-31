@@ -112,17 +112,17 @@ startRouter appVar = startedRouter where
   newDatePickerData = DP.DatePickerData nowYMD False (displayDate nowYMD)
 
   upkeepRoute upkeepIdent router = let
-    (upkeepMode, closedness, theId, supertaskId) = either 
-      (\supertaskId -> (UD.UpkeepNew Nothing, False, supertaskId, Just supertaskId))
-      (\thisTaskId -> (UD.UpkeepClose thisTaskId Note, True, thisTaskId, Nothing))
+    (upkeepMode, closedness, theId) = either
+      (\supertaskId' -> (UD.UpkeepNew Nothing, False, supertaskId'))
+      (\thisTaskId -> (UD.UpkeepClose thisTaskId Note, True, thisTaskId))
       upkeepIdent
-    in fetchUpkeep theId ( \(companyId, (upkeep, upkeepMachines, employeeIds), machines) ->
+    in fetchUpkeep theId ( \(companyId, (fetchedSupertaskId, upkeep, upkeepMachines, employeeIds), machines) ->
       fetchEmployees ( \employees -> let
         upkeep' = upkeep { U.upkeepClosed = closedness }
         upkeepDate = U.upkeepDate upkeep
         in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
           (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees
-          (map Just employeeIds) V.new companyId supertaskId upkeepMode) router ) router
+          (map Just employeeIds) V.new companyId fetchedSupertaskId upkeepMode) router ) router
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->
@@ -138,7 +138,7 @@ startRouter appVar = startedRouter where
         in modify appVar $ \appState ->
           appState { D.navigation = navig } ) ,
     upkeepPhotoAdd' $-> (\upkeepId ->
-      fetchUpkeep upkeepId $ \(_, (upkeep, _, _), _) -> let
+      fetchUpkeep upkeepId $ \(_, (_, upkeep, _, _), _) -> let
         navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "") D.NoPhotoAdded
         in modify appVar $ \appState ->
           appState { D.navigation = navig }) ,
@@ -244,12 +244,12 @@ startRouter appVar = startedRouter where
           let upkeepSequences' = map ((\us -> (us, showInt . US.repetition $ us ))) upkeepSequences
           in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences') machines) . fromJust) router ) router ,
     replanUpkeep' $-> \upkeepId router ->
-      fetchUpkeep upkeepId (\(companyId, (upkeep, upkeepMachines, employeeIds), machines) ->
+      fetchUpkeep upkeepId (\(companyId, (superUpkeepId, upkeep, upkeepMachines, employeeIds), machines) ->
         fetchEmployees (\employees ->
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
-            (notCheckedMachines' machines upkeepMachines) 
+            (notCheckedMachines' machines upkeepMachines)
             (DP.DatePickerData (U.upkeepDate upkeep) False (displayDate . U.upkeepDate $ upkeep))
-            employees (map Just employeeIds) V.new companyId Nothing (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
+            employees (map Just employeeIds) V.new companyId superUpkeepId (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,

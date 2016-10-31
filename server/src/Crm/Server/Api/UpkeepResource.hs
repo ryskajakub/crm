@@ -23,7 +23,7 @@ import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
 import           Control.Lens                (view, over, mapped, _1, _3)
 
-import           Data.Tuple.All              (sel2, sel3)
+import           Data.Tuple.All              (sel2, sel3, sel4)
 import           Data.List                   (nub)
 import           Data.Text                   (pack, Text)
 import           Data.Time.Calendar          (Day)
@@ -249,7 +249,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
     [] -> throwError NotAllowed
     (machineMapped,_) : _ -> return . _companyFK $ machineMapped
 
-  return (companyId, (sel2 upkeep', sel3 upkeep', fmap E.EmployeeId employeeIds), map 
+  return (companyId, (toMyMaybe . sel2 $ upkeep', sel3 upkeep', sel4 upkeep', fmap E.EmployeeId employeeIds), map
     (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
 
 loadNextServiceTypeHint :: 

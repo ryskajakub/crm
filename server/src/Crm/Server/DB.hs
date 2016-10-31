@@ -500,15 +500,15 @@ instance (ColumnToRecord a b) => ColumnToRecord [a] [b] where
 -- todo rather do two queries
 mapUpkeeps :: 
   [(UpkeepRow, UMD.UpkeepMachineRow)] -> 
-  [(U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
+  [(U.UpkeepId, Maybe U.UpkeepId, U.Upkeep, [(UM.UpkeepMachine, M.MachineId)])]
 mapUpkeeps rows = foldl (\acc (upkeepCols, upkeepMachineCols) ->
   let
     upkeepMachineToAdd = (view UMD.upkeepMachine upkeepMachineCols, view UMD.machineFK upkeepMachineCols)
-    addUpkeep' = (_upkeepPK upkeepCols, _upkeep upkeepCols, [upkeepMachineToAdd])
+    addUpkeep' = (_upkeepPK upkeepCols, _upkeepSuper upkeepCols, _upkeep upkeepCols, [upkeepMachineToAdd])
     in case acc of
       [] -> [addUpkeep']
       row : rest | sel1 row == sel1 addUpkeep' -> 
-        $(updateAtN 3 2) (\ums -> upkeepMachineToAdd : ums) row : rest
+        $(updateAtN 4 3) (\ums -> upkeepMachineToAdd : ums) row : rest
       _ -> addUpkeep' : acc
   ) [] rows
 
@@ -807,7 +807,7 @@ upkeepsDataForMachine machineId = let
   upkeepQ = proc () -> do
     machineRow <- joinL machinesTable machinePK -< fmap pgInt4 machineId
     upkeepMachineRow <- joinL upkeepMachinesTable UMD.machineFK -< _machinePK machineRow
-    upkeepRow <-  joinQ superUpkeepQuery upkeepPK -< UMD._upkeepFK upkeepMachineRow
+    upkeepRow <-  joinQ (upkeepQuery Nothing) upkeepPK -< UMD._upkeepFK upkeepMachineRow
     returnA -< (upkeepRow, upkeepMachineRow)
   ljQ :: Query ((UpkeepsTable, UpkeepMachinesTable), (
     (Column (Nullable PGInt4), Column (Nullable PGInt4), Column (Nullable PGInt4)), EmployeeLeftJoinTable))
