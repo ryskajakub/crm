@@ -31,6 +31,7 @@ module Crm.Server.DB (
   taskEmployeesTable ,
   tasksTable ,
   upkeepPhotosTable ,
+  machineTypePhotosTable ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -77,6 +78,7 @@ module Crm.Server.DB (
   singleContactPersonQuery ,
   machinesInUpkeepQuery ,
   machinePhotosByMachineId ,
+  machineTypePhotosByMachineTypeId ,
   photoMetaQuery ,
   machineManufacturersQuery ,
   employeesInUpkeep ,
@@ -128,7 +130,8 @@ module Crm.Server.DB (
   CompanyRecord, companyPK, companyCoords, companyCore, CompanyTable' (..) ,
   -- types 
   PlannedUpkeepType (..) ,
-  DealWithSubtasks (..)
+  DealWithSubtasks (..) ,
+  PhotosMetaTable
   ) where
 
 import           Prelude                              hiding (not)
@@ -212,7 +215,7 @@ type EmployeeWriteTable = (Maybe DBInt, DBText, DBText, DBText, DBText)
 type PhotosMetaTable = (DBInt, DBText, DBText)
 
 type MachinePhotosTable = (DBInt, DBInt)
-
+type MachineTypePhotosTable = (DBInt, DBInt)
 type UpkeepPhotosTable = (DBInt, DBInt)
 
 type ExtraFieldSettingsTable = (DBInt, DBInt, DBInt, DBText)
@@ -254,6 +257,11 @@ machinePhotosTable :: Table MachinePhotosTable MachinePhotosTable
 machinePhotosTable = Table "machine_photos" $ p2 (
   required "photo_id" ,
   required "machine_id" )
+
+machineTypePhotosTable :: Table MachineTypePhotosTable MachineTypePhotosTable
+machineTypePhotosTable = Table "machine_type_photos" $ p2 (
+  required "photo_id" ,
+  required "machine_type_id" )
 
 upkeepPhotosTable :: Table UpkeepPhotosTable UpkeepPhotosTable
 upkeepPhotosTable = Table "upkeep_photos" $ p2 (
@@ -426,6 +434,9 @@ photosMetaQuery = queryTable photosMetaTable
 machinePhotosQuery :: Query MachinePhotosTable
 machinePhotosQuery = queryTable machinePhotosTable
 
+machineTypePhotosQuery :: Query MachineTypePhotosTable
+machineTypePhotosQuery = queryTable machineTypePhotosTable
+
 upkeepMachinesQuery :: Query UpkeepMachinesTable
 upkeepMachinesQuery = queryTable upkeepMachinesTable
 
@@ -536,10 +547,18 @@ upkeepQuery dealWithSubtasks = let
 superUpkeepQuery :: Query UpkeepsTable
 superUpkeepQuery = upkeepQuery $ Just NormalTasks
 
-machinePhotosByMachineId :: Int -> Query PhotosMetaTable
-machinePhotosByMachineId machineId = proc () -> do
-  (photoId, machineId') <- machinePhotosQuery -< ()
-  restrict -< (machineId' .== pgInt4 machineId)
+machinePhotosByMachineId :: M.MachineId -> Query PhotosMetaTable
+machinePhotosByMachineId (M.MachineId machineId) = 
+  photosById machineId machinePhotosQuery
+
+machineTypePhotosByMachineTypeId :: MT.MachineTypeId -> Query PhotosMetaTable
+machineTypePhotosByMachineTypeId (MT.MachineTypeId machineTypeId) =
+  photosById machineTypeId machineTypePhotosQuery
+
+photosById :: Int -> Query (DBInt, DBInt) -> Query PhotosMetaTable
+photosById int query' = proc () -> do
+  (photoId, dbInt) <- query' -< ()
+  restrict -< (dbInt .== pgInt4 int)
   (_, mimeType, fileName) <- join photosMetaQuery -< photoId
   returnA -< (photoId, mimeType, fileName)
 

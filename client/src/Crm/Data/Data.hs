@@ -22,6 +22,7 @@ import qualified Crm.Shared.Photo          as P
 import           Crm.Data.MachineData
 import           Crm.Data.UpkeepData
 import           Crm.Data.EmployeeData
+import           Crm.Data.CommonData
 
 import           Crm.Component.DatePicker  as DP
 import           Crm.Component.Form        (InputState)
@@ -56,7 +57,7 @@ data NavigationState =
     companyId :: C.CompanyId ,
     deletable :: Bool ,
     photosInModal :: [P.PhotoId] } |
-  PlannedUpkeeps { 
+  PlannedUpkeeps {
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, 
       [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
   CalledUpkeeps { 
@@ -67,7 +68,8 @@ data NavigationState =
   MachineTypeEdit {
     machineTypeId :: MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) ,
-    machinesForType :: [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] } |
+    machinesForType :: [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ,
+    machineTypeImageAdded :: ConfirmPhotoAdded } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) ,
@@ -103,8 +105,6 @@ data NavigationState =
   AddPhotoToUpkeepList {
     plannedUpkeeps :: [[(U.UpkeepId, U.Upkeep, Maybe U.UpkeepId, C.CompanyId, C.Company, [(M.MachineId, Text, Text, MK.MachineKindEnum)], [E.Employee'])]] } |
   AddPhotoToUpkeep U.UpkeepId U.Upkeep C.Company ConfirmPhotoAdded
-  
-data ConfirmPhotoAdded = ConfirmPhotoAddedOK | NoPhotoAdded
 
 data AppState = AppState {
   navigation :: NavigationState ,

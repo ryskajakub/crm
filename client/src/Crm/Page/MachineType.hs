@@ -29,10 +29,12 @@ import qualified Crm.Shared.MachineKind                as MK
 
 import qualified Crm.Router                            as R
 import qualified Crm.Data.Data                         as D
+import qualified Crm.Data.CommonData                   as CD
 import           Crm.Component.Form
 import           Crm.Helpers
 import           Crm.Server 
 import           Crm.Component.Autocomplete            (autocompleteInput)
+import qualified Crm.Component.FileUpload              as FU
 
 
 data MachineTypeForm = Phase1 | Edit
@@ -128,7 +130,8 @@ machineTypePhase1Form machineTypeId (machineType, upkeepSequences) appVar crmRou
   submitButtonLabel = text2DOM "Dále"
 
   (result, callback) = machineTypeForm' Phase1 displayManufacturer machineTypeId (machineType, upkeepSequences)
-    appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing Nothing crmRouter
+    appVar setMachineType machineTypeInput submitButtonLabel submitButtonHandler Nothing Nothing crmRouter 
+    CD.NoPhotoAdded
   in (result, callback >> afterRenderCallback)
 
 machineTypeForm' :: 
@@ -143,11 +146,12 @@ machineTypeForm' ::
   Fay () -> -- ^ submit button handler
   Maybe DOMElement -> -- ^ delete button
   Maybe DOMElement -> -- machines having that type
-  R.CrmRouter -> 
+  R.CrmRouter ->
+  CD.ConfirmPhotoAdded ->
   (DOMElement, Fay ())
 machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machineTypeId
     (machineType, upkeepSequences) appVar setMachineType typeInputField submitButtonLabel
-    submitButtonHandler deleteButtonM machinesWithType router = let
+    submitButtonHandler deleteButtonM machinesWithType router cpa = let
 
   setOneUpkeepSequence :: Int -> Fay ()
   setOneUpkeepSequence repetition = let
@@ -284,6 +288,11 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
 
   deleteButton = maybe [] (\b -> [b]) deleteButtonM
 
+  photos = case machineTypeId of
+    Just machineTypeId' ->
+      [B.grid $ B.row $ [ FU.photo (uploadMachineTypePhotoData machineTypeId') router appVar cpa ]]
+    Nothing -> []
+
   result =
     (B.grid $ B.row $
       case machineTypeFormType of
@@ -321,12 +330,13 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
                 in BTN.button' buttonProps "Přidat servisní řadu")
                (text2DOM "") ,
             div' (class' "form-group") (buttonRow' (buttonStateFromBool . null $ validationMessages)
-              submitButtonLabel submitButtonHandler)] ++ deleteButton)) : (
-    if null validationMessages
+              submitButtonLabel submitButtonHandler)] ++ deleteButton)) : 
+    (if null validationMessages
     then []
     else let
       validationMessagesHtml = map (\message -> p message) validationMessages
       in [B.grid $ B.row $ (B.col (B.mkColProps 12)) (A.alert A.Danger validationMessagesHtml)]) ++
+    photos ++
     (maybe [] (:[]) machinesWithType)
   in (div result, autocompleteManufacturerCb)
 
@@ -336,8 +346,9 @@ machineTypeForm ::
   MT.MachineTypeId -> 
   (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
   [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ->
+  CD.ConfirmPhotoAdded ->
   (DOMElement, Fay ())
-machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines cpa = let
   machinesCount = length machines
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
@@ -366,8 +377,9 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
   machinesWithType = B.grid $ [
     B.fullRow . h2 $ "Zařízení s tímto typem" ,
     B.fullRow machinesTable ]
-  in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar 
-    setMachineType machineTypeInput submitButtonLabel submitButtonHandler (Just deleteButton) (Just machinesWithType) router
+  in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar
+    setMachineType machineTypeInput submitButtonLabel submitButtonHandler
+    (Just deleteButton) (Just machinesWithType) router cpa
 
 machineTypesList :: 
   R.CrmRouter -> 

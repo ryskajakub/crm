@@ -31,6 +31,7 @@ import qualified Crm.Data.MachineData        as MD
 import qualified Crm.Data.Data               as D
 import qualified Crm.Data.UpkeepData         as UD
 import qualified Crm.Data.EmployeeData       as ED
+import qualified Crm.Data.CommonData         as CD
 import           Crm.Server
 import           Crm.Router
 import           Crm.Helpers                 (displayDate, rmap, parseSafely)
@@ -139,7 +140,7 @@ startRouter appVar = startedRouter where
           appState { D.navigation = navig } ) ,
     upkeepPhotoAdd' $-> (\upkeepId ->
       fetchUpkeep upkeepId $ \(_, (_, upkeep, _, _), _) -> let
-        navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "") D.NoPhotoAdded
+        navig = D.AddPhotoToUpkeep upkeepId upkeep (C.Company "" "" "") CD.NoPhotoAdded
         in modify appVar $ \appState ->
           appState { D.navigation = navig }) ,
     extraFields' $-> (const $
@@ -189,9 +190,11 @@ startRouter appVar = startedRouter where
         fetchExtraFieldSettings (\efSettings -> let
           extraFields'' = fromJust $ lookup machineKind efSettings
           extraFieldsAdapted = (\(a,b) -> (a,b, "")) `map` extraFields''
-          in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineTypeTuple (DP.DatePickerData 
-            nowYMD False "") Nothing cps V.new Nothing otherMachines extraFieldsAdapted maybeMachineTypeId 
-              (Right $ MD.MachineNew companyId (CP.newContactPerson, MD.ById))) router ) router ) router ,
+          in modify' $ D.MachineScreen $ MD.MachineData machineTuple machineTypeTuple 
+            (DP.DatePickerData nowYMD False "") Nothing cps V.new Nothing otherMachines 
+              extraFieldsAdapted maybeMachineTypeId CD.NoPhotoAdded
+                (Right $ MD.MachineNew companyId (CP.newContactPerson, MD.ById))) 
+                  router ) router ) router ,
     newMaintenance' $-> \companyId router -> 
       fetchUpkeepData companyId (\ud ->
         fetchEmployees (\employees -> let
@@ -223,7 +226,7 @@ startRouter appVar = startedRouter where
               modify' $ D.MachineScreen $ MD.MachineData
                 machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
                   contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
-                    (Left $ MD.MachineDetail machineId machineNextService 
+                    CD.NoPhotoAdded (Left $ MD.MachineDetail machineId machineNextService 
                       Display photos upkeeps companyId [])) router ) router ) router ) router ,
     calledUpkeeps' $-> (const $
       fetchCalledUpkeeps $ \calledUpkeeps'' -> let
@@ -242,14 +245,16 @@ startRouter appVar = startedRouter where
       fetchMachinesForType machineTypeId (\machines ->
         fetchMachineTypeById machineTypeId ((\(_, machineType, upkeepSequences) ->
           let upkeepSequences' = map ((\us -> (us, showInt . US.repetition $ us ))) upkeepSequences
-          in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences') machines) . fromJust) router ) router ,
+          in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences') 
+            machines CD.NoPhotoAdded) . fromJust) router ) router ,
     replanUpkeep' $-> \upkeepId router ->
       fetchUpkeep upkeepId (\(companyId, (superUpkeepId, upkeep, upkeepMachines, employeeIds), machines) ->
         fetchEmployees (\employees ->
           modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep, upkeepMachines) machines
             (notCheckedMachines' machines upkeepMachines)
             (DP.DatePickerData (U.upkeepDate upkeep) False (displayDate . U.upkeepDate $ upkeep))
-            employees (map Just employeeIds) V.new companyId superUpkeepId (UD.UpkeepNew . Just $ upkeepId) ) router ) router ,
+            employees (map Just employeeIds) V.new companyId superUpkeepId 
+              (UD.UpkeepNew . Just $ upkeepId)) router ) router ,
     contactPersonEdit' $-> \contactPersonId ->
       fetchContactPerson contactPersonId $ \(cp, companyId) -> 
         modify' $ D.ContactPersonPage cp (Just contactPersonId) companyId ,

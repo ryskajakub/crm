@@ -29,7 +29,7 @@ main = do
   cache' <- newIORef M.empty
   let cache = Cache cache'
   daemon <- runExceptT $ recomputeWhole' pool cache
-  either (const . return $ ()) (takeMVar) daemon
+  either (const . return $ ()) takeMVar daemon
   let
     app = apiToApplication (runDependencies pool cache) api
     removeApiPrefix = lmap $ \r -> r { pathInfo = tail . pathInfo $ r }

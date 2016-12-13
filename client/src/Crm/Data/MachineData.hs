@@ -20,6 +20,7 @@ import           Crm.Component.DatePicker
 import qualified Crm.Validation            as V
 
 import           Crm.Component.Form        (InputState)
+import           Crm.Data.CommonData
 
 
 data ContactPersonInMachine = New | ById
@@ -35,6 +36,7 @@ data MachineData = MachineData {
   otherMachines :: [(MachineId, Machine)] ,
   extraFields :: [(ExtraFieldId, MachineKindSpecific, Text)] ,
   machineTypeId :: Maybe MachineTypeId ,
+  photoAdded :: ConfirmPhotoAdded ,
   machinePageMode :: Either MachineDetail MachineNew }
 
 data MachineDetail = MachineDetail {

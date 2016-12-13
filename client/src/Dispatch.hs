@@ -58,7 +58,7 @@ main' = do
         emptyCallback (companyDetail editing' companyTitleDisplay router appVar' contactPersons (companyId', company') machines' lastUpkeep)
       D.CompanyNew company' -> n $ emptyCallback (companyNew router appVar' company')
       D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar companyPersonId 
-          companyPersons v otherMachineId otherMachines extraFields machineTypeId machinePageMode) ->
+          companyPersons v otherMachineId otherMachines extraFields machineTypeId _ machinePageMode) ->
         n $ case machinePageMode of
           Left (MD.MachineDetail machineId nextService editing photos upkeeps companyId upkeepPhotoIds) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine 
@@ -83,8 +83,8 @@ main' = do
         (plannedUpkeeps router plannedUpkeeps')
       D.CalledUpkeeps calledUpkeeps' -> n $ calledUpkeeps router calledUpkeeps'
       D.MachineTypeList machineTypes -> n $ emptyCallback (machineTypesList router machineTypes)
-      D.MachineTypeEdit machineTypeId machineType machines -> n $
-        machineTypeForm router appVar' machineTypeId machineType machines
+      D.MachineTypeEdit machineTypeId machineType machines confirmP -> n $
+        machineTypeForm router appVar' machineTypeId machineType machines confirmP
       D.MachineNewPhase1 maybeMachineTypeId machineType companyId -> n $ machineTypePhase1Form 
         maybeMachineTypeId machineType appVar' router companyId
       D.EmployeeList employees -> n $ emptyCallback $ employeePage router employees

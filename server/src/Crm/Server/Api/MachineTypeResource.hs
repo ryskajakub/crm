@@ -45,7 +45,8 @@ import qualified Crm.Server.Database.UpkeepSequence as USD
 import           Crm.Server.Database.UpkeepSequence
 
 
-machineTypeResource :: Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
+machineTypeResource :: 
+  Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
   list = machineTypesListing ,

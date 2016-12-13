@@ -68,8 +68,8 @@ machineTypeDisplayRow machineType =
 setEditing :: Var D.AppState -> InputState -> Fay ()
 setEditing appVar' editing' = modify appVar' $ \appState -> appState {
   D.navigation = case D.navigation appState of
-    D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (md @ MD.MachineDetail {}))) ->
-      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 (Left (md { MD.formState = editing' })))
+    D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 n (Left (md @ MD.MachineDetail {}))) ->
+      D.MachineScreen (MD.MachineData a b c c1 c2 v' l l2 l3 l4 n (Left (md { MD.formState = editing' })))
     _ -> D.navigation appState }
 
 
@@ -185,7 +185,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             BTN.bsStyle = Defined "danger" ,
             BTN.onClick = Defined deletePhotoHandler })
           "Smaž fotku"
-        in li [text2DOM $ PM.fileName photoMeta, deletePhotoButton] ) photos
+        in li [text2DOM $ PM.fileName photoMeta, deletePhotoButton]) photos
       in div [(ul' (class' "list-unstyled") photoList) : [div [
         J.fileUploadI18n "Vyber obrázek" "Změň" ,
         BTN.button'
@@ -277,7 +277,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
   where
   extraFieldsForServer = (\(a,_,b) -> (a,b)) `map` extraFields
   machineTypeEither = case machineTypeId of
-    Just(machineTypeId') -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
+    Just machineTypeId' -> MT.MyInt $ MT.getMachineTypeId machineTypeId'
     Nothing -> MT.MyMachineType machineTypeTuple
   contactPersonId' = case contactPersonActiveRow of
     MD.New  -> Just . M.ContactPersonForMachine $ contactPerson     
@@ -321,7 +321,7 @@ machineNew router appVar datePickerCalendar (machine', usageSetMode) companyId m
   changeNavigationState :: (MD.MachineNew -> MD.MachineNew) -> Fay ()
   changeNavigationState f = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
-      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
+      D.MachineScreen (md @ (MD.MachineData _ _ _ _ _ _ _ _ _ _ _ (Right (mn @ MD.MachineNew {})))) -> 
         D.MachineScreen (md { MD.machinePageMode = Right . f $ mn })
       _ -> D.navigation appState }
 

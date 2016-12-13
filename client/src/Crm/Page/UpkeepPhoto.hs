@@ -31,6 +31,9 @@ import qualified Crm.Router                       as R
 import           Crm.Helpers
 import           Crm.Server
 import qualified Crm.Data.Data                    as D
+import qualified Crm.Data.CommonData              as CD
+import qualified Crm.Component.FileUpload         as FU
+
 
 addPhotoToUpkeepList :: 
   R.CrmRouter -> 
@@ -65,47 +68,11 @@ upkeepPhotos ::
   U.UpkeepId ->
   U.Upkeep ->
   C.Company ->
-  D.ConfirmPhotoAdded ->
+  CD.ConfirmPhotoAdded ->
   DOMElement
 upkeepPhotos router appVar upkeepId upkeep company confirmPhotoAdded = let
-
-  alertDisplayed = case confirmPhotoAdded of
-    D.ConfirmPhotoAddedOK -> [B.fullCol [A.alert A.Info $ p "Obrázek i metadata byly nahrány na server."]]
-    D.NoPhotoAdded -> []
-
   rows =
-    alertDisplayed ++
-    [B.fullCol [C.companyName company, displayDate . U.upkeepDate $ upkeep]] ++
-    [photo]
-  photo = let
-    imageUploadHandler = const $ do
-      fileUpload <- JQ.select "#file-upload"
-      files <- getFileList fileUpload
-      file <- fileListElem 0 files
-      type' <- fileType file
-      name <- fileName file
-      let
-        photoSource = if isIPhone
-          then PM.IPhone
-          else PM.Other
-      uploadUpkeepPhotoData upkeepId file $ \photoId -> let
-        callback = do
-          T.putStrLn "ahoj"
-          modify appVar $ \appState -> appState {
-            D.navigation = case D.navigation appState of
-              (D.AddPhotoToUpkeep a b c _) -> D.AddPhotoToUpkeep a b c D.ConfirmPhotoAddedOK }
-          _ <- DOM.setTimeout 3000 $ const reload
-          return ()
-        in uploadPhotoMeta (PM.PhotoMeta type' name photoSource) photoId callback router
-    imageUploadLabel = "Nahraj fotku"
-    in B.fullCol [
-      J.fileUploadI18n "Vyber obrázek" "Dej jiný obrázek" ,
-      BB.button'
-        (BB.buttonProps {
-          BB.bsStyle = Defined "primary" ,
-          BB.onClick = Defined imageUploadHandler })
-        imageUploadLabel ]
+    B.fullCol [C.companyName company, displayDate . U.upkeepDate $ upkeep] :
+    photo
+  photo = FU.photo (uploadUpkeepPhotoData upkeepId) router appVar confirmPhotoAdded
   in (B.grid $ B.row rows)
-
-isIPhone :: Bool
-isIPhone = ffi "/iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream"

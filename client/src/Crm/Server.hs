@@ -20,6 +20,7 @@ module Crm.Server (
   uploadPhotoMeta ,
   uploadUpkeepPhotoData ,
   uploadMachinePhotoData ,
+  uploadMachineTypePhotoData ,
 
   fetchUpkeepData ,
   fetchExtraFieldSettings ,
@@ -637,6 +638,14 @@ uploadUpkeepPhotoData ::
   (P.PhotoId -> Fay ()) ->
   Fay ()
 uploadUpkeepPhotoData upkeepId = uploadPhotoData (A.upkeep ++ "/" ++ A.single) (U.getUpkeepId $ upkeepId)
+
+uploadMachineTypePhotoData ::
+  MT.MachineTypeId ->
+  File ->
+  (P.PhotoId -> Fay ()) ->
+  Fay ()
+uploadMachineTypePhotoData machineTypeId = 
+  uploadPhotoData (A.machineTypes ++ "/" ++ A.byId) (MT.getMachineTypeId machineTypeId)
 
 uploadPhotoMeta :: 
   PM.PhotoMeta ->   
