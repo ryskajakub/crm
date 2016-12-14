@@ -5,7 +5,7 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import           Data.Text                        (fromString, (<>), Text, showInt)
+import           Data.Text                        (fromString, Text, showInt)
 import           Prelude                          hiding (div, span, id, putStrLn)
 import qualified Prelude                 
 import           Data.Var                         (Var, modify)
@@ -16,9 +16,7 @@ import           HaskellReact                     hiding (row)
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Jasny               as J
-import qualified HaskellReact.Tag.Image           as IMG
 import qualified HaskellReact.Tag.Input           as I
-import           HaskellReact.Bootstrap.Carousel  (carousel)
 import qualified HaskellReact.BackboneRouter      as BR
 import qualified HaskellReact.Bootstrap.Nav       as BN
 import qualified HaskellReact.Bootstrap.Glyphicon as G
@@ -193,9 +191,6 @@ machineDetail editing appVar router companyId calendarOpen (machine,
             BTN.bsStyle = Defined "primary" ,
             BTN.onClick = Defined imageUploadHandler })
           imageUploadLabel ]]]) 
-  mkPhoto (photoId, _) = IMG.image' 
-    (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
-    (IMG.mkImageAttrs "")
   (carousel', carouselCallback') = PH.carouselWithPhotos (map fst photos) router
   photoCarouselRow = editableRowEditing
     "Fotky" carousel'

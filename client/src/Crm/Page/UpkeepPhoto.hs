@@ -6,25 +6,18 @@ module Crm.Page.UpkeepPhoto (
   upkeepPhotos ) where
 
 import           Data.Text                        (fromString, Text, showInt)
-import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id)
-import           FFI                              (Defined(..), ffi)
-import           Data.Var                         (Var, modify)
-import qualified DOM
+import           Data.Var                         (Var)
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
 import qualified HaskellReact.Bootstrap.Button    as BB
-import qualified HaskellReact.Jasny               as J
 import qualified HaskellReact.Bootstrap.Glyphicon as G
-import qualified HaskellReact.Bootstrap.Alert     as A
-import qualified JQuery                           as JQ
 
 import qualified Crm.Shared.Company               as C
 import qualified Crm.Shared.Machine               as M
 import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.Employee              as E
-import qualified Crm.Shared.PhotoMeta             as PM
 import qualified Crm.Shared.MachineKind           as MK
 
 import qualified Crm.Router                       as R
