@@ -26,6 +26,7 @@ import qualified Crm.Shared.MachineType                as MT
 import qualified Crm.Shared.UpkeepSequence             as US
 import qualified Crm.Shared.Company                    as C
 import qualified Crm.Shared.MachineKind                as MK
+import qualified Crm.Shared.Photo                      as P
 
 import qualified Crm.Router                            as R
 import qualified Crm.Data.Data                         as D
@@ -35,6 +36,7 @@ import           Crm.Helpers
 import           Crm.Server 
 import           Crm.Component.Autocomplete            (autocompleteInput)
 import qualified Crm.Component.FileUpload              as FU
+import qualified Crm.Component.Photos                  as PH
 
 
 data MachineTypeForm = Phase1 | Edit
@@ -340,15 +342,16 @@ machineTypeForm' machineTypeFormType manufacturerAutocompleteSubstitution machin
     (maybe [] (:[]) machinesWithType)
   in (div result, autocompleteManufacturerCb)
 
-machineTypeForm :: 
-  R.CrmRouter -> 
-  Var D.AppState -> 
-  MT.MachineTypeId -> 
-  (MT.MachineType, [(US.UpkeepSequence, Text)]) -> 
+machineTypeForm ::
+  R.CrmRouter ->
+  Var D.AppState ->
+  MT.MachineTypeId ->
+  (MT.MachineType, [(US.UpkeepSequence, Text)]) ->
   [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ->
+  [P.PhotoId] ->
   CD.ConfirmPhotoAdded ->
   (DOMElement, Fay ())
-machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines cpa = let
+machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machines pts cpa = let
   machinesCount = length machines
   setMachineType = mkSetMachineType appVar
   machineTypeInput = input
@@ -374,10 +377,14 @@ machineTypeForm router appVar machineTypeId (machineType, upkeepSequences) machi
   machinesTable = B.table [
     thead $ tr [ th "" , th "Firma" , th "Zařízení" , th "Zatížení (mth/rok)" ] ,
     tbody . map mkMachineRow $ ([1..] `zip` machines) ]
-  machinesWithType = B.grid $ [
-    B.fullRow . h2 $ "Zařízení s tímto typem" ,
-    B.fullRow machinesTable ]
-  in machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar
+  (machinesWithType, photosCallback) = let
+    (car, cb) = PH.carouselWithPhotos pts router
+    in (B.grid $ [
+      B.fullRow . h2 $ "Fotky k typu" ,
+      B.fullRow car ,
+      B.fullRow . h2 $ "Zařízení s tímto typem" ,
+      B.fullRow machinesTable ], cb)
+  in rmap (photosCallback >>) $ machineTypeForm' Edit Nothing (Just machineTypeId) (machineType, upkeepSequences) appVar
     setMachineType machineTypeInput submitButtonLabel submitButtonHandler
     (Just deleteButton) (Just machinesWithType) router cpa
 

@@ -35,6 +35,8 @@ Library
   ghc-options:       -j
   exposed-modules:
     Server ,
+    Crm.Server.Api.MachineType.PhotoResource
+    Crm.Server.Api.MkPhotoResource
     Crm.Server.Api.CompanyResource ,
     Crm.Server.Api.Company.MachineResource ,
     Crm.Server.Api.Company.UpkeepResource ,

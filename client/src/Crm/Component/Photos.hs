@@ -12,6 +12,8 @@ import qualified HaskellReact.Bootstrap.Glyphicon as G
 import qualified HaskellReact.Bootstrap.Button    as BTN
 import qualified HaskellReact.Tag.Image           as IMG
 import qualified HaskellReact.Bootstrap.Modal     as BM
+import           HaskellReact.Bootstrap.Carousel  (carousel)
+
 import qualified JQuery                           as JQ
 import qualified Crm.Runtime                      as Runtime
 import qualified Crm.Shared.Api                   as A
@@ -68,3 +70,13 @@ fetchPhotos photoIds router = forM_ photoIds $ \photoId -> Runtime.passwordAjax
   Nothing
   Nothing
   router
+
+carouselWithPhotos :: [P.PhotoId] -> CrmRouter -> (DOMElement, Fay ())
+carouselWithPhotos [] _ = (p "Žádné fotky", return ())
+carouselWithPhotos photoIds router = let
+  mkPhoto photoId = IMG.image' 
+    (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
+    (IMG.mkImageAttrs "")
+  theCarousel = carousel "my-carousel" (map mkPhoto photoIds)
+  fetchPhotos' = fetchPhotos photoIds router
+  in (theCarousel, fetchPhotos')

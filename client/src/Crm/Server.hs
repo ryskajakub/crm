@@ -26,6 +26,7 @@ module Crm.Server (
   fetchExtraFieldSettings ,
   fetchMachine ,
   fetchMachinePhotos ,
+  fetchMachineTypePhotos ,
   fetchMachinesInCompany ,
   fetchMachinesForType ,
   fetchUpkeeps ,
@@ -105,6 +106,7 @@ import qualified Crm.Client.Companies.ContactPersons as XCCP
 import qualified Crm.Client.Companies.Upkeeps        as XCU
 import qualified Crm.Client.Companies.Recommendation as XCR
 import qualified Crm.Client.Machines.Photos          as XMP
+import qualified Crm.Client.MachineTypes.Photos      as XMTP
 import qualified Crm.Client.Employees.Upkeeps        as XEU
 import qualified Crm.Client.Print                    as XPP
 
@@ -298,6 +300,13 @@ fetchMachinePhotos ::
   R.CrmRouter -> 
   Fay ()
 fetchMachinePhotos = XMP.list maxCount
+
+fetchMachineTypePhotos ::
+  MT.MachineTypeId -> 
+  ([(P.PhotoId, PM.PhotoMeta)] -> Fay ()) -> 
+  R.CrmRouter -> 
+  Fay ()
+fetchMachineTypePhotos = XMTP.list maxCount
 
 fetchMachinesInCompany :: 
   C.CompanyId -> 

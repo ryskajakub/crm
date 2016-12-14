@@ -242,11 +242,12 @@ startRouter appVar = startedRouter where
     machineTypesList' $-> (const $ 
       fetchMachineTypes $ \result -> modify' $ D.MachineTypeList result ) ,
     machineTypeEdit' $-> \machineTypeId router ->
-      fetchMachinesForType machineTypeId (\machines ->
-        fetchMachineTypeById machineTypeId ((\(_, machineType, upkeepSequences) ->
-          let upkeepSequences' = map ((\us -> (us, showInt . US.repetition $ us ))) upkeepSequences
-          in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences') 
-            machines CD.NoPhotoAdded) . fromJust) router ) router ,
+      fetchMachineTypePhotos machineTypeId (\pts ->
+        fetchMachinesForType machineTypeId (\machines ->
+          fetchMachineTypeById machineTypeId ((\(_, machineType, upkeepSequences) ->
+            let upkeepSequences' = map ((\us -> (us, showInt . US.repetition $ us ))) upkeepSequences
+            in modify' $ D.MachineTypeEdit machineTypeId (machineType, upkeepSequences')
+              machines (map fst pts) CD.NoPhotoAdded) . fromJust) router ) router ) router ,
     replanUpkeep' $-> \upkeepId router ->
       fetchUpkeep upkeepId (\(companyId, (superUpkeepId, upkeep, upkeepMachines, employeeIds), machines) ->
         fetchEmployees (\employees ->

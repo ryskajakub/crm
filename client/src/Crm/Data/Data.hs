@@ -69,6 +69,7 @@ data NavigationState =
     machineTypeId :: MT.MachineTypeId ,
     machineTypeTuple :: (MT.MachineType, [(US.UpkeepSequence, Text)]) ,
     machinesForType :: [((M.MachineId, M.Machine), (C.CompanyId, C.Company))] ,
+    photosForMachineType :: [P.PhotoId] ,
     machineTypeImageAdded :: ConfirmPhotoAdded } |
   MachineNewPhase1 {
     maybeMachineTypeId :: Maybe MT.MachineTypeId ,
