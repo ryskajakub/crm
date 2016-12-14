@@ -101,7 +101,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow [extraNavigation], fetchMachinePhotos' >> machineTypeCB >> (photoFetch ))
+      companyId router machineTypeInputRow [extraNavigation], carouselCallback' >> machineTypeCB >> (photoFetch ))
   where
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
@@ -196,9 +196,9 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   mkPhoto (photoId, _) = IMG.image' 
     (mkAttrs { id = Defined . (<>) "photo-" . showInt . P.getPhotoId $ photoId} ) 
     (IMG.mkImageAttrs "")
+  (carousel', carouselCallback') = PH.carouselWithPhotos (map fst photos) router
   photoCarouselRow = editableRowEditing
-    "Fotky"
-    (carousel "my-carousel" (map mkPhoto photos))
+    "Fotky" carousel'
 
   deleteMachineRow = oneElementRow "Smazat" $ BTN.button'
     (BTN.buttonProps { 
@@ -219,8 +219,6 @@ machineDetail editing appVar router companyId calendarOpen (machine,
     Nothing -> return ()
   buttonRow'' validationOk = buttonRow' validationOk "Edituj" editMachineAction
   button = case editing of Editing -> Just buttonRow'' ; _ -> Nothing
-
-  fetchMachinePhotos' = PH.fetchPhotos (map fst photos) router
 
   (machineTypeInputRow, machineTypeCB) = let
     (machineTypeAutocomplete, cb) = 
