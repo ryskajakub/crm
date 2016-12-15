@@ -60,7 +60,7 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
     (tr [th "Datum", td . displayDate $ date]) :
     concatMap displayUpkeep data')]
     where
-    address = map (p' (class' "visible-print-block" )) [[text2DOM "2e plus s.r.o."], [text2DOM "Trabantská 270, Praha 9, 190 15"], text2DOM "Tel: 281 917 430" : span' (class' "pad-left") "Fax: 281 917 435" : span' (class' "pad-left") [text2DOM "e-mail: " : text2DOM "info@2e.cz" : [] ] : [] ]
+    address = map (p' (class' "visible-print-block" )) [[text2DOM "2e plus s.r.o."], [text2DOM "Trabantská 270, Praha 9, 190 15"], text2DOM "Tel: 281 917 430" : span' (class' "pad-left") [text2DOM "e-mail: " : text2DOM "servis@2e.cz," : []] : span' (class' "pad-left") [text2DOM "Hotline: 777 717 558"] : [] ]
 
   pluckContactPersons = nub . mapMaybe (\(_,_,cp',_) -> cp')
 

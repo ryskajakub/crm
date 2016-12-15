@@ -35,14 +35,11 @@ backgroundForKind MK.RotaryScrewCompressor = ["bg-success"]
 backgroundForKind MK.VacuumPump = ["bg-warning"]
 backgroundForKind _ = []
 
-
 initializeTooltip :: Fay ()
 initializeTooltip = ffi " jQuery('[data-toggle=\"tooltip\"]').tooltip() "
 
-
 contains :: Text -> Text -> Bool
 contains = ffi "%1.indexOf(%2, 0) != -1"
-
 
 displayDate' :: 
   YMD.YearMonthDay -> 
@@ -52,11 +49,9 @@ displayDate' (d' @ (YMD.YearMonthDay y m d _)) =
   then "Nedá se určit"
   else displayDate d'
 
-
 isMarkupEmpty :: SR.Markup -> Bool
 isMarkupEmpty (SR.PlainText t) = T.null t
 isMarkupEmpty _ = False
-
 
 renderMarkup :: [SR.Markup] -> [DOMElement]
 renderMarkup = let
