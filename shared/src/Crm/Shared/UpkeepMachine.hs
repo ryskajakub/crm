@@ -21,7 +21,7 @@ import           Opaleye                    (queryRunnerColumn, PGInt4,
 import           Data.Text                  (Text, pack)
 
 data UpkeepType =
-  Regular | Repair | Check | Installation
+  Regular | Repair | Check | Installation | General
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show, Eq)
 #endif
@@ -53,6 +53,7 @@ upkeepTypeEncode Regular = 0
 upkeepTypeEncode Repair = 1
 upkeepTypeEncode Check = 2
 upkeepTypeEncode Installation = 3
+upkeepTypeEncode General = 4
 
 upkeepTypeDecode ::
   Int ->
@@ -60,10 +61,11 @@ upkeepTypeDecode ::
 upkeepTypeDecode 1 = Repair
 upkeepTypeDecode 2 = Check
 upkeepTypeDecode 3 = Installation
+upkeepTypeDecode 4 = General
 upkeepTypeDecode _ = Regular
 
 allUpkeepTypes :: [UpkeepType]
-allUpkeepTypes = [Regular, Repair, Check, Installation]
+allUpkeepTypes = [Regular, Repair, Check, Installation, General]
 
 #ifndef FAY
 makeAdaptorAndInstance' ''UpkeepMachineGen'
