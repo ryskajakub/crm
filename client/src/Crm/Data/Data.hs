@@ -109,14 +109,16 @@ data NavigationState =
 
 data AppState = AppState {
   navigation :: NavigationState ,
+  focus :: Maybe C.CompanyId ,
   machineTypeFromPhase1 :: (MT.MachineType, [US.UpkeepSequence]) ,
   maybeMachineIdFromPhase1 :: Maybe MT.MachineTypeId }
 
 modifyState :: Var AppState -> (NavigationState -> NavigationState) -> Fay ()
-modifyState var fun = modify var (\appState' -> appState' { navigation = fun $ navigation appState' } )
+modifyState var fun = modify var $ \appState' -> appState' { navigation = fun $ navigation appState' }
 
 defaultAppState :: AppState
 defaultAppState = AppState {
   navigation = NotFound ,
+  focus = Nothing ,
   machineTypeFromPhase1 = (MT.newMachineType,[]) ,
   maybeMachineIdFromPhase1 = Nothing }
