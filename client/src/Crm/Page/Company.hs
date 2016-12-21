@@ -11,7 +11,7 @@ import qualified Data.Text                        as T
 import           Prelude                          hiding (div, span, id, length)
 import           Data.Var                         (Var, modify)
 import           Data.Maybe                       (onJust)
-import           FFI                              (Defined(Defined, Undefined))
+import           FFI                              (Defined(Defined, Undefined), ffi)
 
 import           HaskellReact                     as HR
 import qualified HaskellReact.Bootstrap           as B
@@ -40,6 +40,7 @@ import           Crm.Page.ContactPerson           (contactPersonsList')
 
 
 companiesList :: 
+  Maybe C.CompanyId ->
   T.Text ->
   R.CrmRouter -> 
   Var D.AppState -> 
@@ -48,7 +49,7 @@ companiesList ::
   [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ->
   Bool ->
   (DOMElement, Fay ())
-companiesList filterText router var orderType direction companies'' renegatesFlag = let
+companiesList focus filterText router var orderType direction companies'' renegatesFlag = let
 
   filterFun (_, C.Company name _ address, state, _) = let
     renegatesCondition = case (state, renegatesFlag) of
@@ -102,12 +103,13 @@ companiesList filterText router var orderType direction companies'' renegatesFla
         (\mk -> mkTooltip mk . span' (class'' ["label", "label-default", "pointer"]) 
           . T.take 1 . MK.kindToStringRepr $ mk) $
         machineKinds
-    in tr [
+    in tr' (class' . ("row-" <>) . T.showInt . C.getCompanyId $ id') [
       td [
-        R.link
-          (C.companyName company')
-          (R.companyDetail id')
-          router , 
+        A.a'''
+          (click $ do
+            modify var $ \as -> as { D.focus = Just id' }
+            R.navigate (R.companyDetail id') router)
+          (C.companyName company') ,
         div' (class' "goRight") kindsAsLetters ] ,
       td $ C.companyAddress company' , 
       td $ displayDate'' nextServiceDate
@@ -143,12 +145,27 @@ companiesList filterText router var orderType direction companies'' renegatesFla
         B.table [
           head' , 
           body ]])
-  in (grid, initializeTooltip)
-
+  jump = maybe (return ()) (\f -> scrollToElement' . C.getCompanyId $ f) focus
+  in (grid, initializeTooltip >> jump)
 
 withSection :: [DOMElement] -> [DOMElement]
 withSection elements = map (\element -> section' (class' "col-md-12") element) elements
 
+scrollToElement' :: Int -> Fay ()
+scrollToElement' = ffi "\
+\ (function(elementId) { \
+\   var selector = '.row-' + elementId; \
+\   var element = function () { return $(selector); }; \
+\   var i = 0; \
+\   var toRepeat = function () { \
+\     if (element().length && i < 20) { \
+\       element()[0].scrollIntoView(); } \
+\     else { \
+\       i++; \
+\       setTimeout(toRepeat, 200); } }; \
+\   toRepeat(); \
+\ })(%1) \
+\ "
 
 companyNew :: 
   R.CrmRouter -> 

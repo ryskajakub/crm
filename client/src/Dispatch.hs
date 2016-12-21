@@ -5,7 +5,7 @@ module Dispatch where
 
 import           Prelude                   hiding (span, div, elem, id)
 import qualified Prelude                   as P
-import           Data.Var                  (Var, newVar, subscribeAndRead)
+import           Data.Var                  (Var, newVar, subscribeAndRead, modify)
 import           Data.LocalStorage
 import           Data.Defined              (fromDefined)
 import           Data.Text                 (fromString, (<>), showInt)
@@ -51,7 +51,9 @@ main' = do
     n = Navigation.navigation' router
     in case D.navigation appState of
       D.Dashboard companies -> n $ dashboard router companies
-      D.FrontPage ordering data' f renegates -> n $ companiesList f router appVar' (fst ordering) (snd ordering) data' renegates
+      D.FrontPage ordering data' f renegates -> do
+        n $ companiesList (D.focus appState) f router
+          appVar' (fst ordering) (snd ordering) data' renegates
       D.NotFound -> n $ emptyCallback $ notFound
       D.ServerDown -> n $ emptyCallback $ serverDown
       D.CompanyDetail companyId' company' contactPersons companyTitleDisplay editing' machines' lastUpkeep -> n $
