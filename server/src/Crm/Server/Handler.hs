@@ -182,5 +182,9 @@ mkDayParam = mkPar $ Param ["day"] parse
     Right r -> Right r
   parse _ = Left . MissingField $ "day parameter not present"
 
-getDayParam :: Env h (Int, Int, Int) i -> Day
-getDayParam = uncurryN fromGregorian . $(updateAtN 3 0) fromIntegral . $(reverseTuple 3) . param
+type Day1 = Int
+type Month = Int
+type Year = Int
+  
+getDayParam :: Env h (Day1, Month, Year) i -> Day
+getDayParam = uncurryN fromGregorian . (\(a,b,c) -> (fromIntegral c,b,a)) . param

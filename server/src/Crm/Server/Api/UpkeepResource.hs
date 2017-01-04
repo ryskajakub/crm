@@ -21,7 +21,7 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM, join)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
-import           Control.Lens                (view, over, mapped, _1, _3)
+import           Control.Lens                (view, over, mapped, _1, _3, _2)
 
 import           Data.Tuple.All              (sel2, sel3, sel4)
 import           Data.List                   (nub)
@@ -174,7 +174,7 @@ updateUpkeep conn upkeepId (upkeep', upkeepMachines) employeeIds = do
     in runUpdate conn upkeepsTable readToWrite condition
   _ <- runDelete conn upkeepMachinesTable $ \upkeepRow -> UMD._upkeepFK upkeepRow .=== (pgInt4 `fmap` upkeepId)
   insertUpkeepMachines conn upkeepId upkeepMachines
-  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> $(proj 3 0) upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
+  _ <- runDelete conn upkeepEmployeesTable $ \upkeepRow -> view _1 upkeepRow .== (pgInt4 . U.getUpkeepId $ upkeepId)
   insertEmployees conn upkeepId employeeIds
   return ()
 
@@ -188,8 +188,8 @@ upkeepsCalledListing :: ListHandler Dependencies
 upkeepsCalledListing = mkListing' jsonO $ const $ do
   (_,pool) <- ask
   result <- upkeepsPlanned NormalTasks CalledUpkeep pool
-  return $ (flip fmap) result $ \outer -> (flip fmap) outer $ \t ->
-    $(catTuples 2 4) ($(takeTuple 7 2) t) ($(dropTuple 7 3) t) 
+  return $ (flip fmap) result $ \outer -> (flip fmap) outer $ \(a,b,_,c,d,e,f) ->
+    (a,b,c,d,e,f)
 
 upkeepsPlannedListing :: ListHandler Dependencies
 upkeepsPlannedListing = mkListing' jsonO $ const $ do
@@ -200,7 +200,7 @@ upkeepsPlannedListing = mkListing' jsonO $ const $ do
 
   let
     result = (flip fmap) normal $ \list -> let
-      locateSubtasks tuple = over (mapped . _3) toMyMaybe (tuple : filter (\subtask -> (Just . $(proj 7 0) $ tuple) == $(proj 7 2) subtask) subtasks)
+      locateSubtasks tuple = over (mapped . _3) toMyMaybe (tuple : filter (\subtask -> (Just . view _1 $ tuple) == view _3 subtask) subtasks)
       in foldMap locateSubtasks list
   return result
   
@@ -219,19 +219,19 @@ upkeepsPlanned subtasks put pool = do
       return (MK.dbReprToKind machineKind, M.upkeepByDecode machineUpkeepBy, view upkeepPK u, view upkeep u, view upkeepSuper u, companyId, 
         company, notes :: [(M.MachineId, Text, Text, MK.MachineKindEnum)])
   employeeRows <- liftIO $ withResource pool $ \connection -> runQuery connection 
-    (employeesInUpkeeps (fmap $(proj 8 2) upkeeps'))
+    (employeesInUpkeeps (over mapped (view _3) upkeeps'))
   let 
     (employees :: [(U.UpkeepId, EmployeeMapped)]) = (\(uId, e) -> (uId, convert e)) `fmap` employeeRows
-    upkeepsWithEmployees = map (\tuple -> let
-      employee = map snd . filter (($(proj 8 2) tuple ==) . fst) $ employees
-      in $(catTuples 8 1) tuple employee) upkeeps'
+    upkeepsWithEmployees = map (\(a,b,c,d,e,f,g,h) -> let
+      employee = map snd . filter ((c ==) . fst) $ employees
+      in ((a,b),(c,d,e,f,g,h,employee))) upkeeps'
     areWeDoingUpkeep (machineKind, machineUpkeepBy) = case machineUpkeepBy of
       M.UpkeepByDefault -> MK.isUpkeepByUs machineKind
       M.UpkeepByThem    -> False
       M.UpkeepByWe      -> True
-    byUs = filter (areWeDoingUpkeep . $(takeTuple 9 2)) upkeepsWithEmployees
-    byThem = filter (not . areWeDoingUpkeep . $(takeTuple 9 2)) upkeepsWithEmployees
-  let toReturn = [fmap $(dropTuple 9 2) byUs, fmap $(dropTuple 9 2) byThem]
+    byUs = filter (areWeDoingUpkeep . view _1) upkeepsWithEmployees
+    byThem = filter (not . areWeDoingUpkeep . view _1) upkeepsWithEmployees
+  let toReturn = [over mapped (view _2) byUs, over mapped (view _2) byThem]
   return toReturn
 
     
@@ -250,7 +250,7 @@ upkeepCompanyMachines = mkConstHandler' jsonO $ do
     (machineMapped,_) : _ -> return . _companyFK $ machineMapped
 
   return (companyId, (toMyMaybe . sel2 $ upkeep', sel3 upkeep', sel4 upkeep', fmap E.EmployeeId employeeIds), map
-    (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, $(proj 2 1) mt, nextUpkeepSequence)) machines'')
+    (\(m, mt, nextUpkeepSequence) -> (_machinePK m, _machine m, view _2 mt, nextUpkeepSequence)) machines'')
 
 loadNextServiceTypeHint :: 
   (MonadIO m) => 
@@ -285,12 +285,12 @@ printDailyPlanListing' employeeId connection day = do
           catchError . parseMarkup . U.workDescription $ upkeepRaw }
     employees <- fmap (map $ \e -> let 
       employee = (convert e :: EmployeeMapped) 
-      in ($(proj 2 0) employee, $(proj 2 1) employee)) $ 
+      in (view _1 employee, view _2 employee)) $ 
       liftIO $ runQuery connection (multiEmployeeQuery es)
     machines <- fmap (map $ \(m :: MachineRecord, mt :: MachineTypeRecord, cp, um :: UMD.UpkeepMachineRow) -> (
       _machine m , 
       _machineType mt ,
-      toMyMaybe . $(proj 3 2) $ (convert cp :: MaybeContactPersonMapped) ,
+      toMyMaybe . view _3 $ (convert cp :: MaybeContactPersonMapped) ,
       second toMyMaybe . listifyNote . view UMD.upkeepMachine $ um)) $ 
       liftIO . runQuery connection . machinesInUpkeepQuery'' . view upkeepPK $ upkeep'
     (company :: C.Company) <-
