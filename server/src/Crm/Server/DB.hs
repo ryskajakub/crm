@@ -147,7 +147,7 @@ import           Control.Monad.Trans.Except           (ExceptT)
 import           Control.Monad.IO.Class               (MonadIO, liftIO)
 import           Data.Profunctor.Product              (p1, p2, p3, p4, p5)
 import           Data.Time.Calendar                   (Day)
-import           Data.Tuple.All                       (Sel1, sel1, sel2, sel3, uncurryN, upd2)
+import           Data.Tuple.All                       (Sel1, sel1, sel2, sel3, sel4, sel5, sel6, uncurryN, upd2)
 import           Data.ByteString.Lazy                 (ByteString)
 import           Data.Text                            (Text, pack)
 import           Database.PostgreSQL.Simple           (ConnectInfo(..), Connection, defaultConnectInfo, 
@@ -472,34 +472,34 @@ type TaskMapped = (T.TaskId, T.Task)
 instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let 
     company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
-    coordinates = pure C.Coordinates <*> $(proj 6 4) tuple <*> $(proj 6 5) tuple
-    in (C.CompanyId $ $(proj 6 0) tuple, company, coordinates)
+    coordinates = pure C.Coordinates <*> sel5 tuple <*> sel6 tuple
+    in (C.CompanyId $ sel1 tuple, company, coordinates)
 instance ColumnToRecord (Int, Int, Text, Text) MachineTypeMapped where
-  convert tuple = (MT.MachineTypeId $ $(proj 4 0) tuple, (uncurryN $ const MT.MachineType) 
-    (upd2 (MK.dbReprToKind $ $(proj 4 1) tuple) tuple))
+  convert tuple = (MT.MachineTypeId $ sel1 tuple, (uncurryN $ const MT.MachineType) 
+    (upd2 (MK.dbReprToKind $ sel2 tuple) tuple))
 instance ColumnToRecord (Int, Int, Text, Text, Text) ContactPersonMapped where
-  convert tuple = (CP.ContactPersonId $ $(proj 5 0) tuple, C.CompanyId $ $(proj 5 1) tuple, 
+  convert tuple = (CP.ContactPersonId $ sel1 tuple, C.CompanyId $ sel2 tuple, 
     (uncurryN $ const $ const CP.ContactPerson) tuple)
 instance ColumnToRecord (Maybe Int, Maybe Int, Maybe Text, Maybe Text, Maybe Text) MaybeContactPersonMapped where
   convert tuple = let
-    maybeCp = pure CP.ContactPerson <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
-    in (CP.ContactPersonId `fmap` $(proj 5 0) tuple, C.CompanyId `fmap` $(proj 5 1) tuple, maybeCp)
+    maybeCp = pure CP.ContactPerson <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
+    in (CP.ContactPersonId `fmap` sel1 tuple, C.CompanyId `fmap` sel2 tuple, maybeCp)
 instance ColumnToRecord (Int, Text, Text, Text, Text) EmployeeMapped where
-  convert tuple = (E.EmployeeId $ $(proj 5 0) tuple, uncurryN (const E.Employee) $ tuple)
+  convert tuple = (E.EmployeeId $ sel1 tuple, uncurryN (const E.Employee) $ tuple)
 instance ColumnToRecord (Maybe Int, Maybe Text, Maybe Text, Maybe Text, Maybe Text) MaybeEmployeeMapped where
   convert tuple = let
-    maybeE = pure E.Employee <*> $(proj 5 1) tuple <*> $(proj 5 2) tuple <*> $(proj 5 3) tuple <*> $(proj 5 4) tuple
-    in (E.EmployeeId `fmap` $(proj 5 0) tuple, maybeE)
+    maybeE = pure E.Employee <*> sel2 tuple <*> sel3 tuple <*> sel4 tuple <*> sel5 tuple
+    in (E.EmployeeId `fmap` sel1 tuple, maybeE)
 instance ColumnToRecord (Int, Text, Int, Int, Bool) UpkeepSequenceMapped where
   convert (a,b,c,d,e) = (MT.MachineTypeId d, US.UpkeepSequence a b c e)
 instance ColumnToRecord (Int, Text, Int, Int, Bool, Text, Int) UpkeepMachineMapped where
   convert (a,b,c,d,e,f,g) = (U.UpkeepId a, M.MachineId c, UM.UpkeepMachine b d e f (UM.upkeepTypeDecode g))
 instance ColumnToRecord (Int, Text, Text) PhotoMetaMapped where
-  convert tuple = (P.PhotoId $ $(proj 3 0) tuple, (uncurryN $ const PM.PhotoMeta) tuple PM.Unknown)
+  convert tuple = (P.PhotoId $ sel1 tuple, (uncurryN $ const PM.PhotoMeta) tuple PM.Unknown)
 instance ColumnToRecord (Int, Int, Int, Text) ExtraFieldSettingsMapped where
-  convert row = (EF.ExtraFieldId $ $(proj 4 0) row, MK.MachineKindSpecific $ $(proj 4 3) row)
+  convert row = (EF.ExtraFieldId $ sel1 row, MK.MachineKindSpecific $ sel4 row)
 instance ColumnToRecord (Int, Int, Text) ExtraFieldMapped where
-  convert tuple = (EF.ExtraFieldId $ $(proj 3 0) tuple, M.MachineId $ $(proj 3 1) tuple, $(proj 3 2) tuple)
+  convert tuple = (EF.ExtraFieldId $ sel1 tuple, M.MachineId $ sel2 tuple, sel3 tuple)
 instance ColumnToRecord (Int, Day, Text, Maybe Day) TaskMapped where
   convert tuple = let
     (id', startDate, description, endDate) = tuple
@@ -667,7 +667,7 @@ machinesInUpkeepQuery'' upkeepId = let
     (machinesInUpkeepQuery''' upkeepId)
     contactPersonsQuery
     (\((machineRow,_,_), contactPersonRow) -> 
-      view contactPersonFK machineRow .== (maybeToNullable . Just . $(proj 5 0) $ contactPersonRow))
+      view contactPersonFK machineRow .== (maybeToNullable . Just . sel1 $ contactPersonRow))
   in proc () -> do
     ((a,b,c), contactPersons) <- joined -< ()
     returnA -< (a,b,contactPersons,c)
@@ -820,7 +820,7 @@ upkeepsDataForMachine machineId = let
   upkeepEQ :: Query (UpkeepEmployeesTable, EmployeeTable)
   upkeepEQ = proc () -> do
     upkeepEmployeeRow <- queryTable upkeepEmployeesTable -< ()
-    employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
+    employeeRow <- join . queryTable $ employeesTable -< sel2 upkeepEmployeeRow
     returnA -< (upkeepEmployeeRow, employeeRow)
   upkeepQ :: Query (UpkeepsTable, UpkeepMachinesTable)
   upkeepQ = proc () -> do
@@ -830,8 +830,8 @@ upkeepsDataForMachine machineId = let
     returnA -< (upkeepRow, upkeepMachineRow)
   ljQ :: Query ((UpkeepsTable, UpkeepMachinesTable), (
     (Column (Nullable PGInt4), Column (Nullable PGInt4), Column (Nullable PGInt4)), EmployeeLeftJoinTable))
-  ljQ = leftJoin upkeepQ upkeepEQ (\((u, _), (ue, _)) -> _upkeepPK u .=== (U.UpkeepId . $(proj 3 0) $ ue))
-  in orderBy (desc (U.upkeepDate . _upkeep . $(proj 3 0))) $ proc () -> do
+  ljQ = leftJoin upkeepQ upkeepEQ (\((u, _), (ue, _)) -> _upkeepPK u .=== (U.UpkeepId . sel1 $ ue))
+  in orderBy (desc (U.upkeepDate . _upkeep . sel1)) $ proc () -> do
     ((u, um), (_, e)) <- ljQ -< ()
     returnA -< (u, um, e)
 
@@ -867,7 +867,7 @@ employeesInUpkeeps upkeepIds = proc () -> do
   upkeepRow <- superUpkeepQuery -< ()
   restrict -< in_ ((pgInt4 . U.getUpkeepId) `fmap` upkeepIds) (U.getUpkeepId . _upkeepPK $ upkeepRow)
   upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
-  employeeRow <- join . queryTable $ employeesTable -< $(proj 3 1) upkeepEmployeeRow
+  employeeRow <- join . queryTable $ employeesTable -< sel2 upkeepEmployeeRow
   returnA -< (_upkeepPK upkeepRow, employeeRow)
 
 data PlannedUpkeepType = ServiceUpkeep | CalledUpkeep
@@ -901,7 +901,7 @@ singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompanyRead)
 singleContactPersonQuery contactPersonId = proc () -> do
   contactPersonRow <- join contactPersonsQuery -< pgInt4 contactPersonId
   companyRow <- queryTable companiesTable -< ()
-  restrict -< (C.getCompanyId . _companyPK) companyRow .== $(proj 5 1) contactPersonRow
+  restrict -< (C.getCompanyId . _companyPK) companyRow .== sel2 contactPersonRow
   returnA -< (contactPersonRow, companyRow)
 
 machinesInUpkeepQuery :: U.UpkeepId -> Query UpkeepMachinesTable
@@ -909,9 +909,9 @@ machinesInUpkeepQuery upkeepId =
   joinL upkeepMachinesTable UMD.upkeepFK <<< arr (const $ fmap pgInt4 upkeepId)
 
 extraFieldsPerKindQuery :: Int -> Query ExtraFieldSettingsTable
-extraFieldsPerKindQuery machineKind = orderBy (asc $ $(proj 4 2)) $ proc () -> do
+extraFieldsPerKindQuery machineKind = orderBy (asc $ sel3) $ proc () -> do
   extraFieldRow <- extraFieldSettingsQuery -< ()
-  restrict -< pgInt4 machineKind .== $(proj 4 1) extraFieldRow
+  restrict -< pgInt4 machineKind .== sel2 extraFieldRow
   returnA -< extraFieldRow
 
 machineIdsHavingKind :: Int -> Query MachinePK
@@ -933,11 +933,11 @@ employeesInUpkeep upkeepId = proc () -> do
   returnA -< employeeRow
 
 extraFieldsForMachineQuery :: M.MachineId -> Query (ExtraFieldsTable, ExtraFieldSettingsTable)
-extraFieldsForMachineQuery (M.MachineId machineId) = orderBy (asc $ $(proj 4 2) . snd) $ proc () -> do
+extraFieldsForMachineQuery (M.MachineId machineId) = orderBy (asc $ sel3 . snd) $ proc () -> do
   machineRow <- joinL machinesTable machinePK -< (M.MachineId . pgInt4 $ machineId)
   extraFieldRow <- extraFieldsQuery -< ()
-  restrict -< (M.MachineId . $(proj 3 1) $ extraFieldRow) .=== _machinePK machineRow
-  extraFieldSettingRow <- join extraFieldSettingsQuery -< $(proj 3 0) extraFieldRow
+  restrict -< (M.MachineId . sel2 $ extraFieldRow) .=== _machinePK machineRow
+  extraFieldSettingRow <- join extraFieldSettingsQuery -< sel1 extraFieldRow
   returnA -< (extraFieldRow, extraFieldSettingRow)
 
 mainEmployeesInDayQ :: 
@@ -947,8 +947,8 @@ mainEmployeesInDayQ day = distinct $ proc () -> do
   upkeepRow <- superUpkeepQuery -< ()
   restrict -< (U.upkeepDate . _upkeep $ upkeepRow) .== pgDay day
   upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
-  restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
-  employeeRow <- join employeesQuery -< $(proj 3 1) upkeepEmployeeRow
+  restrict -< pgInt4 0 .== sel3 upkeepEmployeeRow
+  employeeRow <- join employeesQuery -< sel2 upkeepEmployeeRow
   returnA -< employeeRow
 
 dailyPlanQuery :: Maybe E.EmployeeId -> Day -> Query (UpkeepsTable, Column (PGArray PGInt4))
@@ -958,19 +958,19 @@ dailyPlanQuery employeeId' day = let
     restrict -< (U.upkeepDate . _upkeep $ upkeepRow) .== pgDay day
     upkeepEmployeeRow <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
     restrict -< case employeeId' of
-      Just (E.EmployeeId employeeId) -> pgInt4 employeeId .== $(proj 3 1) upkeepEmployeeRow
+      Just (E.EmployeeId employeeId) -> pgInt4 employeeId .== sel2 upkeepEmployeeRow
       Nothing -> pgBool False -- todo return no results earlier than here in db query
-    restrict -< pgInt4 0 .== $(proj 3 2) upkeepEmployeeRow
+    restrict -< pgInt4 0 .== sel3 upkeepEmployeeRow
     upkeepEmployeeRowData <- join . queryTable $ upkeepEmployeesTable -< U.getUpkeepId . _upkeepPK $ upkeepRow
-    returnA -< (upkeepRow, $(proj 3 1) upkeepEmployeeRowData)
+    returnA -< (upkeepRow, sel2 upkeepEmployeeRowData)
   in AGG.aggregate (p2(pUpkeepRow (UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy) 
     (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr) (U.pUpkeepId . U.UpkeepId $ AGG.min) ), aggrArray)) q
 
 tasksForEmployeeQuery :: E.EmployeeId -> Query TasksTable
 tasksForEmployeeQuery (E.EmployeeId employeeId) = proc () -> do
   taskRow <- queryTable tasksTable -< ()
-  taskEmployeeRow <- join . queryTable $ taskEmployeesTable -< $(proj 4 0) taskRow
-  restrict -< pgInt4 employeeId .== $(proj 2 1) taskEmployeeRow
+  taskEmployeeRow <- join . queryTable $ taskEmployeesTable -< sel1 taskRow
+  restrict -< pgInt4 employeeId .== sel2 taskEmployeeRow
   returnA -< taskRow
 
 getTaskQuery :: T.TaskId -> Query TasksTable
@@ -990,7 +990,7 @@ lastRecommendationQuery companyId =
 takenColoursQuery :: Query DBText
 takenColoursQuery = distinct $ proc () -> do
   employeeRow <- queryTable employeesTable -< ()
-  returnA -< $(proj 5 4) employeeRow
+  returnA -< sel5 employeeRow
 
 aggrArray :: AGG.Aggregator (Column a) (Column (PGArray a))
 aggrArray = IAGG.makeAggr . HPQ.AggrOther $ "array_agg"
@@ -1011,20 +1011,20 @@ notesForUpkeep upkeepId = proc () -> do
 multiEmployeeQuery :: [Int] -> Query EmployeeTable
 multiEmployeeQuery employeeIds = proc () -> do
   employeeRow <- employeesQuery -< ()
-  restrict -< in_ (pgInt4 `fmap` employeeIds) ($(proj 5 0) employeeRow)
+  restrict -< in_ (pgInt4 `fmap` employeeIds) (sel1 employeeRow)
   returnA -< employeeRow
 
 photosInUpkeepQuery :: U.UpkeepId -> Query DBInt
 photosInUpkeepQuery (U.UpkeepId upkeepId) = proc () -> do
   upkeepPhotosRow <- queryTable upkeepPhotosTable -< ()
-  restrict -< $(proj 2 1) upkeepPhotosRow .== pgInt4 upkeepId
-  returnA -< $(proj 2 0) upkeepPhotosRow
+  restrict -< sel2 upkeepPhotosRow .== pgInt4 upkeepId
+  returnA -< sel1 upkeepPhotosRow
 
 upkeepForPhotoQ :: P.PhotoId -> Query DBInt
 upkeepForPhotoQ (P.PhotoId pInt) = proc () -> do
   upkeepPhotosRow <- queryTable upkeepPhotosTable -< ()
-  restrict -< $(proj 2 0) upkeepPhotosRow .== pgInt4 pInt
-  returnA -< $(proj 2 1) upkeepPhotosRow
+  restrict -< sel1 upkeepPhotosRow .== pgInt4 pInt
+  returnA -< sel2 upkeepPhotosRow
 
 companyInUpkeepQuery :: U.UpkeepId -> Query CompanyCore
 companyInUpkeepQuery upkeepId = distinct $ proc () -> do
