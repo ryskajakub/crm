@@ -1,21 +1,22 @@
 module Crm.Server.Core where
 
-import           Data.List                 (partition, minimumBy, find, maximumBy)
+import           Data.List                 (find, maximumBy, minimumBy,
+                                            partition)
 import           Data.Maybe                (fromMaybe)
 
 import           Data.Time.Calendar        (Day, addDays)
-import           Safe.Foldable             (minimumByMay)
 import           Safe                      (headMay)
+import           Safe.Foldable             (minimumByMay)
 
 import qualified Crm.Shared.Machine        as M
-import qualified Crm.Shared.UpkeepSequence as US
-import qualified Crm.Shared.UpkeepMachine  as UM
 import qualified Crm.Shared.Upkeep         as U
+import qualified Crm.Shared.UpkeepMachine  as UM
+import qualified Crm.Shared.UpkeepSequence as US
 import qualified Crm.Shared.YearMonthDay   as YMD
 
 
 -- | Signs, if the next service date is computed from the past upkeeps, or if the next planned service is taken.
-data NextServiceDate a = 
+data NextServiceDate a =
   Planned a | -- ^ day taken from next planned service
   Computed a | -- ^ day computed from the past upkeeps and into operation
   Inactive | -- ^ day not returned, machine is marked inactive
@@ -23,18 +24,18 @@ data NextServiceDate a =
   deriving (Eq, Show)
 
 instance Functor NextServiceDate where
-  fmap f (Planned d) = Planned $ f d
+  fmap f (Planned d)  = Planned $ f d
   fmap f (Computed d) = Computed $ f d
-  fmap _ CantTell = CantTell
-  fmap _ Inactive = Inactive
+  fmap _ CantTell     = CantTell
+  fmap _ Inactive     = Inactive
 
 getMaybe :: NextServiceDate a -> Maybe a
-getMaybe (Planned a) = Just a
+getMaybe (Planned a)  = Just a
 getMaybe (Computed a) = Just a
-getMaybe Inactive = Nothing
-getMaybe CantTell = Nothing
+getMaybe Inactive     = Nothing
+getMaybe CantTell     = Nothing
 
-nextServiceDate :: 
+nextServiceDate ::
   M.Machine -> -- ^ machine for which the next service date is computed
   (US.UpkeepSequence, [US.UpkeepSequence]) -> -- ^ upkeep sequences belonging to the machine - must be at least one element
   [(U.Upkeep, UM.UpkeepMachine)] -> -- ^ upkeeps belonging to this machine
@@ -53,16 +54,16 @@ nextServiceDate machine sequences upkeeps = let
   installationUpkeep' = headMay . filter ((UM.Installation ==) . UM.upkeepType . snd) $ upkeeps
 
   computedUpkeep = case regularUpkeeps of
-    [] -> let 
+    [] -> let
       filteredSequences = case oneTimeSequences of
         x : _ -> [x]
         []    -> nonEmptySequences
-      in case (installationUpkeep', M.machineOperationStartDate machine) of 
-        (Just installationUpkeep, _) -> 
-          Computed $ 
+      in case (installationUpkeep', M.machineOperationStartDate machine) of
+        (Just installationUpkeep, _) ->
+          Computed $
             computeBasedOnPrevious (YMD.ymdToDay . U.upkeepDate . fst $ installationUpkeep) filteredSequences
-        (_, Just operationStartDate') -> 
-          Computed $ 
+        (_, Just operationStartDate') ->
+          Computed $
             computeBasedOnPrevious (YMD.ymdToDay operationStartDate') filteredSequences
         (_, Nothing) -> CantTell
     nonEmptyUpkeeps -> let
@@ -74,8 +75,8 @@ nextServiceDate machine sequences upkeeps = let
 
   openUpkeeps = filter (not . U.upkeepClosed . fst) regularUpkeeps
   activeMachineResult = case openUpkeeps of
-    (_:_) | 
-      let nextOpenUpkeep' = minimumByMay (\a b -> U.upkeepDate a `compare` U.upkeepDate b) . fmap fst $ openUpkeeps, 
+    (_:_) |
+      let nextOpenUpkeep' = minimumByMay (\a b -> U.upkeepDate a `compare` U.upkeepDate b) . fmap fst $ openUpkeeps,
       Just nextOpenUpkeep <- nextOpenUpkeep' -> let
         process = YMD.ymdToDay . U.upkeepDate
         in if U.setDate nextOpenUpkeep
@@ -89,9 +90,9 @@ nextServiceDate machine sequences upkeeps = let
 compareRepetition :: US.UpkeepSequence -> US.UpkeepSequence -> Ordering
 compareRepetition this that = US.repetition this `compare` US.repetition that
 
-nextServiceTypeHint :: 
-  (US.UpkeepSequence, [US.UpkeepSequence]) -> 
-  [UM.UpkeepMachine] -> 
+nextServiceTypeHint ::
+  (US.UpkeepSequence, [US.UpkeepSequence]) ->
+  [UM.UpkeepMachine] ->
   US.UpkeepSequence
 nextServiceTypeHint (seq', seqs) [] = fromMaybe
   (minimumBy compareRepetition (seq':seqs))
@@ -100,8 +101,8 @@ nextServiceTypeHint (seq', seqs) ums = let
   lastUpkeepMthSeq = maximumBy (\this that -> UM.recordedMileage this `compare` UM.recordedMileage that) ums
   repeatedSeqs = filter (not . US.oneTime) (seq':seqs)
   repeatedSeqsWithNextUpkeepMth = map (\repeatedSeq -> let
-    numberOfPreviousUpkeeps = truncate $ 
-      (fromIntegral . UM.recordedMileage $ lastUpkeepMthSeq :: Double) / 
+    numberOfPreviousUpkeeps = truncate $
+      (fromIntegral . UM.recordedMileage $ lastUpkeepMthSeq :: Double) /
       (fromIntegral . US.repetition $ repeatedSeq)
     numberOfNextUpkeep = numberOfPreviousUpkeeps + 1
     mthOfNextUpkeep = numberOfNextUpkeep * US.repetition repeatedSeq
