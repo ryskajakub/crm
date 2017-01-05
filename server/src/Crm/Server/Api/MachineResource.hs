@@ -1,6 +1,5 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TemplateHaskell       #-}
 
 module Crm.Server.Api.MachineResource where
 
@@ -52,8 +51,6 @@ import           Crm.Server.Types
 
 import           Crm.Server.Database.MachineType
 import qualified Crm.Server.Database.UpkeepSequence as USD
-
-import           TupleTH
 
 
 machineResource :: Resource Dependencies (IdDependencies' M.MachineId) M.MachineId () Void

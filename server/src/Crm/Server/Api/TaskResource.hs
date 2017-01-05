@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 
 module Crm.Server.Api.TaskResource (
   resource ) where
@@ -20,8 +19,8 @@ import           Rest.Resource               (Resource, Void, get,
                                               schema, update)
 import qualified Rest.Schema                 as S
 
-import           TupleTH                           (proj)
-  
+import           TupleTH                     (proj)
+
 import qualified Crm.Shared.Task             as T
 import qualified Crm.Shared.YearMonthDay     as YMD
 

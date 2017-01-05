@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 
 module Crm.Server.Api.Company.UpkeepResource (
   upkeepResource) where

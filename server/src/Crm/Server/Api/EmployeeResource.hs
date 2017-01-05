@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 
 module Crm.Server.Api.EmployeeResource where
 
@@ -31,8 +30,6 @@ import           Crm.Server.Handler          (mkConstHandler', mkInputHandler',
                                               mkListing', updateRows'')
 import           Crm.Server.Helpers          (prepareReaderTuple)
 import           Crm.Server.Types
-
-import           TupleTH                     (proj)
 
 data EmployeeListing = EmployeesListing | ColoursListing
 

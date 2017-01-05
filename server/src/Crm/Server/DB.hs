@@ -189,7 +189,6 @@ import           Opaleye.Table                        (Table (Table), optional,
 
 import           Rest.Types.Error                     (DataError (ParseError),
                                                        Reason (InputError))
-import           TupleTH
 
 import qualified Crm.Shared.Company                   as C
 import qualified Crm.Shared.ContactPerson             as CP

@@ -1,51 +1,55 @@
+{-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE FlexibleContexts #-}
 
 module Crm.Server.Api.MachineTypeResource (
   machineTypeResource) where
 
-import           Opaleye.RunQuery            (runQuery)
-import           Opaleye.Operators           ((.===))
-import           Opaleye.PGTypes             (pgInt4, pgStrictText, pgBool)
-import           Opaleye.Manipulation        (runInsert, runUpdate, runDelete)
+import           Opaleye.Manipulation               (runDelete, runInsert,
+                                                     runUpdate)
+import           Opaleye.Operators                  ((.===))
+import           Opaleye.PGTypes                    (pgBool, pgInt4,
+                                                     pgStrictText)
+import           Opaleye.RunQuery                   (runQuery)
 
-import           Control.Monad.Reader        (ask)
-import           Control.Monad.IO.Class      (liftIO)
-import           Control.Monad.Error.Class   (throwError)
-import           Control.Monad               (forM_)
-import           Control.Lens                (over)
+import           Control.Lens                       (over)
+import           Control.Monad                      (forM_)
+import           Control.Monad.Error.Class          (throwError)
+import           Control.Monad.IO.Class             (liftIO)
+import           Control.Monad.Reader               (ask)
 
-import           Data.Int                    (Int64)
-import           Data.Text                   (Text)
-import           Data.Pool                   (withResource)
+import           Data.Int                           (Int64)
+import           Data.Pool                          (withResource)
+import           Data.Text                          (Text)
 
-import           Rest.Types.Error            (Reason(NotFound, UnsupportedRoute))
-import           Rest.Resource               (Resource, Void, schema, list, name, 
-                                             mkResourceReaderWith, get, update, remove)
-import qualified Rest.Schema                 as S
-import           Rest.Dictionary.Combinators (jsonO, jsonI)
-import           Rest.Handler                (ListHandler, Handler)
+import           Rest.Dictionary.Combinators        (jsonI, jsonO)
+import           Rest.Handler                       (Handler, ListHandler)
+import           Rest.Resource                      (Resource, Void, get, list,
+                                                     mkResourceReaderWith, name,
+                                                     remove, schema, update)
+import qualified Rest.Schema                        as S
+import           Rest.Types.Error                   (Reason (NotFound, UnsupportedRoute))
 
-import qualified Crm.Shared.Api              as A
-import qualified Crm.Shared.MachineType      as MT
-import qualified Crm.Shared.UpkeepSequence   as US
-import qualified Crm.Shared.MachineKind      as MK
+import qualified Crm.Shared.Api                     as A
+import qualified Crm.Shared.MachineKind             as MK
+import qualified Crm.Shared.MachineType             as MT
 import           Crm.Shared.MyMaybe
+import qualified Crm.Shared.UpkeepSequence          as US
 
-import           Crm.Server.Helpers          (prepareReaderTuple)
-import           Crm.Server.Boilerplate      ()
-import           Crm.Server.Types
+import           Crm.Server.Boilerplate             ()
+import           Crm.Server.CachedCore              (recomputeWhole)
 import           Crm.Server.DB
-import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing')
-import           Crm.Server.CachedCore       (recomputeWhole)
+import           Crm.Server.Handler                 (mkConstHandler',
+                                                     mkInputHandler',
+                                                     mkListing')
+import           Crm.Server.Helpers                 (prepareReaderTuple)
+import           Crm.Server.Types
 
 import           Crm.Server.Database.MachineType
-import qualified Crm.Server.Database.UpkeepSequence as USD
 import           Crm.Server.Database.UpkeepSequence
+import qualified Crm.Server.Database.UpkeepSequence as USD
 
 
-machineTypeResource :: 
+machineTypeResource ::
   Resource Dependencies MachineTypeDependencies MachineTypeSid MachineTypeMid Void
 machineTypeResource = (mkResourceReaderWith prepareReaderTuple) {
   name = A.machineTypes ,
@@ -73,16 +77,16 @@ removeHandler = mkConstHandler' jsonO $ do
     _ -> return ()
 
 machineTypesListing :: MachineTypeMid -> ListHandler Dependencies
-machineTypesListing (Autocomplete mid) = mkListing' jsonO $ const $ 
+machineTypesListing (Autocomplete mid) = mkListing' jsonO $ const $
   ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ runMachineTypesQuery' mid connection
 machineTypesListing (AutocompleteManufacturer mid) = mkListing' jsonO $ const $
-  ask >>= \(_,pool) -> withResource pool $ \connection -> 
+  ask >>= \(_,pool) -> withResource pool $ \connection ->
     liftIO $ ((runQuery connection (machineManufacturersQuery mid)) :: IO [Text])
 machineTypesListing CountListing = mkListing' jsonO $ const $ do
-  rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $ 
-    runQuery connection machineTypesWithCountQuery 
-  let 
-    mapRow (mtRow :: MachineTypeRecord, count :: Int64) = 
+  rows <- ask >>= \(_,pool) -> withResource pool $ \connection -> liftIO $
+    runQuery connection machineTypesWithCountQuery
+  let
+    mapRow (mtRow :: MachineTypeRecord, count :: Int64) =
       ((_machineTypePK mtRow, _machineType mtRow), fromIntegral count :: Int)
     mappedRows = map mapRow rows
   return mappedRows
@@ -92,9 +96,9 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType', upkeepSequ
   ((cache, pool), sid) <- ask
   case sid of
     MachineTypeByName _ -> throwError UnsupportedRoute
-    MachineTypeById machineTypeId -> do 
+    MachineTypeById machineTypeId -> do
       liftIO $ do
-        let 
+        let
           readToWrite row = (over machineTypePK (fmap Just) row) {
             _machineType = MT.MachineType {
               MT.kind = pgInt4 . MK.kindToDbRepr . MT.kind $ machineType' ,
@@ -102,9 +106,9 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType', upkeepSequ
               MT.machineTypeManufacturer = pgStrictText . MT.machineTypeManufacturer $ machineType' } }
           condition machineTypeRow = _machineTypePK machineTypeRow .=== fmap pgInt4 machineTypeId
         _ <- withResource pool $ \connection -> runUpdate connection machineTypesTable readToWrite condition
-        _ <- withResource pool $ \connection -> 
+        _ <- withResource pool $ \connection ->
           runDelete connection upkeepSequencesTable (\table -> USD._machineTypeFK table .=== fmap pgInt4 machineTypeId)
-        forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) -> 
+        forM_ upkeepSequences $ \(US.UpkeepSequence displayOrder label repetition oneTime) ->
           withResource pool $ \connection -> runInsert connection upkeepSequencesTable $
             UpkeepSequenceRow {
               USD._machineTypeFK = fmap pgInt4 machineTypeId ,
@@ -118,19 +122,19 @@ updateMachineType = mkInputHandler' (jsonO . jsonI) $ \(machineType', upkeepSequ
 machineTypesSingle :: Handler MachineTypeDependencies
 machineTypesSingle = mkConstHandler' jsonO $ do
   ((_, pool), machineTypeSid) <- ask
-  let 
-    performQuery parameter = withResource pool $ \connection -> 
+  let
+    performQuery parameter = withResource pool $ \connection ->
       liftIO $ runQuery connection (singleMachineTypeQuery parameter)
     (onEmptyResult, result) = case machineTypeSid of
-      MachineTypeById (MT.MachineTypeId machineTypeIdInt) -> 
+      MachineTypeById (MT.MachineTypeId machineTypeIdInt) ->
         (throwError NotFound, performQuery . Right $ machineTypeIdInt)
-      MachineTypeByName (mtName) -> 
+      MachineTypeByName (mtName) ->
         (return MyNothing, performQuery . Left $ mtName)
   rows <- result
   case rows of
-    x:xs | null xs -> do 
+    x:xs | null xs -> do
       let mt = x :: MachineTypeRecord
-      upkeepSequences <- withResource pool $ \connection -> liftIO $ 
+      upkeepSequences <- withResource pool $ \connection -> liftIO $
         runQuery connection (upkeepSequencesByIdQuery . _machineTypePK $ mt)
       let us = fmap (\(row :: UpkeepSequenceRecord) -> _upkeepSequence row) upkeepSequences
       return $ MyJust (_machineTypePK mt, _machineType mt, us)

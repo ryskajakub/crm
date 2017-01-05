@@ -1,29 +1,29 @@
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
 
-module Crm.Server.Api.Company.RecommendationResource ( 
+module Crm.Server.Api.Company.RecommendationResource (
   resource ) where
 
-import           Control.Lens                (view, mapped, over)
+import           Control.Lens                (mapped, over, view)
 import           Control.Monad.IO.Class      (liftIO)
 import           Control.Monad.Reader        (ask)
 
 import           Data.Pool                   (withResource)
 import           Opaleye                     (runQuery)
-import           Rest.Resource               (Resource, Void, schema, name, get, mkResourceId)
-import qualified Rest.Schema                 as S
 import           Rest.Dictionary.Combinators (jsonO)
 import           Rest.Handler                (Handler)
+import           Rest.Resource               (Resource, Void, get, mkResourceId,
+                                              name, schema)
+import qualified Rest.Schema                 as S
 
-import qualified Crm.Shared.Upkeep           as U
 import qualified Crm.Shared.Company          as C
 import           Crm.Shared.MyMaybe          (toMyMaybe)
+import qualified Crm.Shared.Upkeep           as U
 
 import           Crm.Server.Boilerplate      ()
-import           Crm.Server.Types
 import           Crm.Server.DB
 import           Crm.Server.Handler          (mkConstHandler')
+import           Crm.Server.Types
 
 import           Safe                        (headMay)
 

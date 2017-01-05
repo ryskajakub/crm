@@ -1,6 +1,5 @@
 {-# LANGUAGE FlexibleContexts    #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 
 module Crm.Server.Api.MachineKindResource where
 
@@ -34,8 +33,6 @@ import           Crm.Server.Types
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.ExtraField       as EF
 import qualified Crm.Shared.Machine          as M
-
-import           TupleTH
 
 resource :: Resource Dependencies Dependencies () Void Void
 resource = mkResourceId {

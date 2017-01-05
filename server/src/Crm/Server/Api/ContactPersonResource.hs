@@ -1,5 +1,4 @@
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TemplateHaskell     #-}
 
 module Crm.Server.Api.ContactPersonResource (resource) where
 
@@ -30,8 +29,6 @@ import           Crm.Server.Handler          (deleteRows'', mkConstHandler',
 import           Crm.Server.Helpers          (createDeletion,
                                               prepareReaderTuple)
 import           Crm.Server.Types
-
-import           TupleTH                     (proj)
 
 
 resource :: Resource Dependencies (IdDependencies' CP.ContactPersonId) CP.ContactPersonId Void Void
