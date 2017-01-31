@@ -97,7 +97,7 @@ upkeepByDecode (-1) = UpkeepByThem
 upkeepByDecode _ = UpkeepByDefault
 
 upkeepByEncode :: UpkeepBy -> Int
-upkeepByEncode UpkeepByDefault = 0
+upkeepByEncode UpkeepByDefault = -2 
 upkeepByEncode UpkeepByWe = 1
 upkeepByEncode UpkeepByThem = (-1)
 

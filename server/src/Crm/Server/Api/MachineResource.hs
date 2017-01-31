@@ -132,7 +132,7 @@ machineSingle = mkConstHandler' jsonO $ do
     extraFieldsConvert (ef', efs') = let
       ef = convert $ ef' :: ExtraFieldMapped
       efs = convert $ efs' :: ExtraFieldSettingsMapped
-      in (view _1 ef, snd efs, view _2 ef)
+      in (view _1 ef, snd efs, view _3 ef)
     extraFields' = extraFieldsConvert `fmap` extraFields
     upkeepSequences = fmap (\(row' :: USD.UpkeepSequenceRecord) -> USD._upkeepSequence row') upkeepSequenceRows
     upkeepsData =
