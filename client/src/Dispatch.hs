@@ -5,7 +5,7 @@ module Dispatch where
 
 import           Prelude                   hiding (span, div, elem, id)
 import qualified Prelude                   as P
-import           Data.Var                  (Var, newVar, subscribeAndRead, modify)
+import           Data.Var                  (Var, newVar, subscribeAndRead)
 import           Data.LocalStorage
 import           Data.Defined              (fromDefined)
 import           Data.Text                 (fromString, (<>), showInt)

@@ -130,6 +130,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       repair = let
         (labelClass, labelText) = case UM.upkeepType upkeepMachine of
           UM.Installation -> ("label-info", "I")
+          UM.General -> ("label-info", "G")
           UM.Repair -> ("label-danger", "O")
           UM.Regular -> ("label-info", "S")
           UM.Check -> ("label-default", "K")

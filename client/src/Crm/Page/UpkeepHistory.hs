@@ -140,6 +140,7 @@ upkeepHistory upkeepsInfo machinesInCompany companyId deletable photosInModal va
             UM.Regular -> mkCellContent "info" "S"
             UM.Check -> mkCellContent "default" "K"
             UM.Installation -> mkCellContent "default" "I"
+            UM.General -> mkCellContent "default" "G"
           content = if UM.recordedMileage upkeepMachine == 0
             then ""
             else showInt . UM.recordedMileage $ upkeepMachine
