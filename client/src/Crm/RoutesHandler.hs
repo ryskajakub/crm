@@ -117,13 +117,17 @@ startRouter appVar = startedRouter where
       (\supertaskId' -> (UD.UpkeepNew Nothing, False, supertaskId'))
       (\thisTaskId -> (UD.UpkeepClose thisTaskId Note, True, thisTaskId))
       upkeepIdent
-    in fetchUpkeep theId ( \(companyId, (fetchedSupertaskId, upkeep, upkeepMachines, employeeIds), machines) ->
+    in fetchUpkeep theId ( \ (companyId, (fetchedSupertaskId, upkeep, upkeepMachines, employeeIds), machines) ->
       fetchEmployees ( \employees -> let
         upkeep' = upkeep { U.upkeepClosed = closedness }
         upkeepDate = U.upkeepDate upkeep
+        superTaskIdToSet = either
+          (const . Just $ theId)
+          (const fetchedSupertaskId)
+          upkeepIdent
         in modify' $ D.UpkeepScreen $ UD.UpkeepData (upkeep', upkeepMachines) machines
           (notCheckedMachines' machines upkeepMachines) (DP.DatePickerData upkeepDate False (displayDate upkeepDate)) employees
-          (map Just employeeIds) V.new companyId fetchedSupertaskId upkeepMode) router ) router
+          (map Just employeeIds) V.new companyId superTaskIdToSet upkeepMode) router ) router
 
   routes = [
     serverDown' $-> (const . const $ modify appVar $ \appState ->
