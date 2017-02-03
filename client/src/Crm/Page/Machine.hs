@@ -115,7 +115,7 @@ machineDetail editing appVar router companyId calendarOpen (machine,
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate' nextService')]) nextService
 
   isOpenSuperUpkeep upkeepId = elem upkeepId droppedUpkeepIds'
-  isCloseSuperUpkeep upkeepId = elem (Just upkeepId) $ 
+  isCloseSuperUpkeep upkeepId = elem (Just upkeepId) $
     map ( \ (_,superUpkeepId,_,_,_,_) -> superUpkeepId) upkeeps
 
   extraNavigation =
@@ -177,7 +177,9 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       in tableRow [th $ dateLabel : dropDown , td warranty, td repair, td mth, td employeeCol,
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $
         upkeepMachine, td . UM.endNote $ upkeepMachine, td action, td displayPhotos]
-    rows = map mkUpkeepRow upkeeps
+    rows = map mkUpkeepRow . filter ( \ (_, superUpkeepId, _, _, _, _) -> 
+      case superUpkeepId of Just sId' -> isOpenSuperUpkeep sId' ; _ -> True ) $ upkeeps 
+
     mkTable bodyRows = B.table [
       colgroup $ col' (class' "nowrap") "" : map (const . col $ "") [(1::Int)..9] ,
       thead . tr $ [th "Datum", th G.thumbsUp, th G.flash , th "Mth", th G.user, th "Popis práce", 
