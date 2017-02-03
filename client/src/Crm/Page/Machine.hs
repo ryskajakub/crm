@@ -170,9 +170,9 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         in span' (click toggle) icon
       dropDown = case undefined of
         _ | isOpenSuperUpkeep upkeepId -> 
-          [mkDropDown upkeepId G.arrowUp]
-        _ | isCloseSuperUpkeep upkeepId -> 
           [mkDropDown upkeepId G.arrowDown]
+        _ | isCloseSuperUpkeep upkeepId -> 
+          [mkDropDown upkeepId G.arrowUp]
         _ -> []
       in tableRow [th $ dateLabel : dropDown , td warranty, td repair, td mth, td employeeCol,
         td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $
