@@ -91,16 +91,21 @@ machineDetail ::
   [(EF.ExtraFieldId, MK.MachineKindSpecific, Text)] -> 
   Maybe MT.MachineTypeId ->
   [(P.PhotoId)] ->
+  [U.UpkeepId] ->
   (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
-    contactPersonId contactPersons v otherMachineId om extraFields machineTypeId' upkeepPhotoIds =
+    contactPersonId contactPersons v otherMachineId om extraFields 
+    machineTypeId' upkeepPhotoIds droppedUpkeepIds' =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
       (contactPersonId, Nothing, Prelude.id) contactPersons v otherMachineId om extraFields
-      companyId router machineTypeInputRow [extraNavigation], carouselCallback' >> machineTypeCB >> (photoFetch ))
+      companyId router machineTypeInputRow [extraNavigation],  
+        carouselCallback' >> machineTypeCB >> photoFetch)
   where
+  -- isSuperUpkeep upkeepId' =  upkeeps
+
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar $ \appState -> appState {
     D.navigation = case D.navigation appState of 
@@ -108,6 +113,10 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       _ -> D.navigation appState }
   pageHeader = case editing of Editing -> "Editace stroje"; _ -> "Stroj"
   extraRow = maybe [] (\nextService' -> [editableRow Display "Další servis" (displayDate' nextService')]) nextService
+
+  isOpenSuperUpkeep upkeepId = elem upkeepId droppedUpkeepIds'
+  isCloseSuperUpkeep upkeepId = elem (Just upkeepId) $ 
+    map ( \ (_,superUpkeepId,_,_,_,_) -> superUpkeepId) upkeeps
 
   extraNavigation =
     form' (class' "navbar-form") $
@@ -147,8 +156,26 @@ machineDetail editing appVar router companyId calendarOpen (machine,
         else text2DOM ""
       displayPhotos = mkPhotoModalButton photoIds setPhotosInModal
       tableRow = maybe tr (const $ tr' (class' "warning")) superUpkeepId
-      in tableRow [th . displayDate . U.upkeepDate $ upkeep, td warranty, td repair, td mth, td employeeCol, 
-        td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $ 
+      dateLabel = text2DOM . displayDate . U.upkeepDate $ upkeep
+      mkDropDown uId icon = let
+        newDroppedDownIds = if isOpenSuperUpkeep uId
+          then filter ( \ (upkeepId') -> upkeepId' /= uId ) 
+            droppedUpkeepIds'
+          else droppedUpkeepIds' ++ [uId]
+        toggle = changeNavigationState $ \md -> case md of
+          MD.MachineData _ _ _ _ _ _ _ _ _ _ _ (Left detail) ->
+            md { MD.machinePageMode = Left (detail { 
+              MD.droppedUpkeepIds = newDroppedDownIds }) }
+          _ -> md
+        in span' (click toggle) icon
+      dropDown = case undefined of
+        _ | isOpenSuperUpkeep upkeepId -> 
+          [mkDropDown upkeepId G.arrowUp]
+        _ | isCloseSuperUpkeep upkeepId -> 
+          [mkDropDown upkeepId G.arrowDown]
+        _ -> []
+      in tableRow [th $ dateLabel : dropDown , td warranty, td repair, td mth, td employeeCol,
+        td . U.workDescription $ upkeep, td . U.recommendation $ upkeep, td . UM.upkeepMachineNote $
         upkeepMachine, td . UM.endNote $ upkeepMachine, td action, td displayPhotos]
     rows = map mkUpkeepRow upkeeps
     mkTable bodyRows = B.table [
@@ -341,9 +368,11 @@ machineDisplay ::
   DOMElement ->
   [DOMElement] ->
   DOMElement
-machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd (machine', rawUsage) (machineType, 
-    upkeepSequences) extraRows extraGrid (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight) contactPersons 
-    validation otherMachineId otherMachines extraFields companyId router machineTypeRow extraNavigation = mkGrid where
+machineDisplay editing pageHeader buttonRow'' appVar operationStartCalendarDpd 
+    (machine', rawUsage) (machineType, upkeepSequences) extraRows extraGrid 
+    (dropdownContactPersonId, newContactPersonRow, dropdownCPHighlight) 
+    contactPersons validation otherMachineId otherMachines extraFields 
+    companyId router machineTypeRow extraNavigation = mkGrid where
 
   changeNavigationState :: (MD.MachineData -> MD.MachineData) -> Fay ()
   changeNavigationState fun = modify appVar (\appState -> appState {

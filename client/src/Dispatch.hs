@@ -62,10 +62,11 @@ main' = do
       D.MachineScreen (MD.MachineData machine machineTypeTuple operationStartCalendar companyPersonId 
           companyPersons v otherMachineId otherMachines extraFields machineTypeId _ machinePageMode) ->
         n $ case machinePageMode of
-          Left (MD.MachineDetail machineId nextService editing photos upkeeps companyId upkeepPhotoIds) ->
+          Left (MD.MachineDetail machineId nextService editing photos upkeeps companyId upkeepPhotoIds
+            droppedUpkeepIds) ->
             machineDetail editing appVar' router companyId operationStartCalendar machine 
               machineTypeTuple machineId nextService photos upkeeps companyPersonId companyPersons v 
-              otherMachineId otherMachines extraFields machineTypeId upkeepPhotoIds
+              otherMachineId otherMachines extraFields machineTypeId upkeepPhotoIds droppedUpkeepIds
           Right (MD.MachineNew companyId (contactPerson, contactPersonActiveRow)) -> 
             emptyCallback $ machineNew router appVar' operationStartCalendar machine
               companyId machineTypeTuple machineTypeId (contactPerson, companyPersonId, 

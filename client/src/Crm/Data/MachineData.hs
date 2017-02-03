@@ -46,7 +46,8 @@ data MachineDetail = MachineDetail {
   photos :: [(PhotoId, PhotoMeta)] ,
   upkeeps :: [(UpkeepId, Maybe UpkeepId, Upkeep, UpkeepMachine, [Employee], [PhotoId])] ,
   companyId' :: CompanyId ,
-  upkeepPhotoIds :: [PhotoId] }
+  upkeepPhotoIds :: [PhotoId] ,
+  droppedUpkeepIds :: [UpkeepId] }
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,

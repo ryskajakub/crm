@@ -231,7 +231,7 @@ startRouter appVar = startedRouter where
                 machineTriple machineTypeTuple (DP.DatePickerData startDateInCalendar False "")
                   contactPersonId cps V.new otherMachineId otherMachines extraFields'' (Just machineTypeId)
                     CD.NoPhotoAdded (Left $ MD.MachineDetail machineId machineNextService
-                      Display photos upkeeps companyId [])) router ) router ) router ) router ,
+                      Display photos upkeeps companyId [] [])) router ) router ) router ) router ,
     calledUpkeeps' $-> (const $
       fetchCalledUpkeeps $ \calledUpkeeps'' -> let
         newNavigation = D.CalledUpkeeps calledUpkeeps''
