@@ -1,4 +1,4 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TupleSections #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, TupleSections, ScopedTypeVariables, GeneralizedNewtypeDeriving #-}
 {-# OPTIONS_GHC -fno-warn-missing-fields #-}
 
 module Main where
@@ -16,6 +16,7 @@ import           Data.Bits                 (shiftL)
 import           Data.Word                 (Word32)
 import           Data.Text                 (pack, Text)
 import qualified Data.Text                 as Text
+import           Data.List                 (sort, nub)
 
 import           System.Random             (next, mkStdGen, StdGen)
 import           System.Random.Shuffle     (shuffle')
@@ -372,6 +373,10 @@ instance Arbitrary U.Upkeep where
     return $ U.Upkeep {
       U.upkeepClosed = uc ,
       U.upkeepDate = dayToYmd day }
+
+instance Arbitrary UM.UpkeepType where
+  shrink = shrinkNothing
+  arbitrary = elements [UM.Regular, UM.Repair, UM.Check, UM.Installation, UM.General]
     
 instance Arbitrary Day where
   shrink = shrinkNothing
@@ -389,6 +394,33 @@ instance Arbitrary US.UpkeepSequence where
 instance Arbitrary UM.UpkeepMachine where
   shrink = shrinkNothing
   arbitrary = return UM.newUpkeepMachine
+
+newtype T1 = T1 { unT1 :: [(U.Upkeep, UM.UpkeepMachine)] } deriving Show
+newtype OneToTen = OneToTen { unO :: Int } deriving (Integral, Enum, Ord, Num, Real, Eq)
+instance Bounded OneToTen where
+  minBound = 0
+  maxBound = 10
+instance Arbitrary OneToTen where
+  shrink = shrinkNothing
+  arbitrary = do
+    i <- arbitrary
+    return . OneToTen $ i
+instance Arbitrary T1 where
+  shrink = shrinkNothing
+  arbitrary = do
+    oneToTen <- arbitraryBoundedIntegral
+    nums <- vectorOf (unO oneToTen) arbitraryBoundedIntegral
+    let numbers = nub . sort . map unO $ nums
+        mkUpkeep num = do
+          (um :: UM.UpkeepMachine) <- arbitrary
+          upkeepT <- arbitrary
+          let um' = um { UM.upkeepType = upkeepT }
+          let upkeepX = upkeep {
+                U.upkeepDate = dayToYmd $ 
+                  fromGregorian (2000 + fromIntegral num) 1 1 }
+          return (upkeepX, um')
+    t1 <- sequence (mkUpkeep `fmap` numbers)
+    return . T1 $ t1
 
 instance Arbitrary Text where
   shrink = shrinkNothing
@@ -428,7 +460,18 @@ propertyTests' = let
   in localOption option $ testGroup "Next service type hint: Property tests" [
     testProperty "When there are no previous upkeeps, the onetime is preferrably picked" $ noPreviousUpkeeps ,
     testProperty "When there are previous upkeeps, the onetime is not picked" $ previousUpkeeps random ,
+    testProperty "When the repair and check types are removed, the computation is the same" $ repairCheckRemoval ,
     testProperty "The result is element of the input list" $ resultFromInputList random ]
+
+repairCheckRemoval :: T1 -> Bool
+repairCheckRemoval (T1 t1) = let
+  filterCheckRepair (_,UM.UpkeepMachine { UM.upkeepType = UM.Check }) = False
+  filterCheckRepair (_,UM.UpkeepMachine { UM.upkeepType = UM.Repair }) = False
+  filterCheckRepair _ = True
+  upkeepMachinesWithoutCheckRepair = filter filterCheckRepair t1
+  result = nextServiceDate machine (upkeepSequence, []) t1
+  result2 = nextServiceDate machine (upkeepSequence, []) upkeepMachinesWithoutCheckRepair
+  in result == result2
 
 resultFromInputList :: QCGen -> [US.UpkeepSequence] -> [UM.UpkeepMachine] -> Bool
 resultFromInputList random inputSequences upkeepMachines = let
