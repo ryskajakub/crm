@@ -50,7 +50,7 @@ nextServiceDate machine sequences upkeeps = let
     daysToNextService  = truncate $ yearsToNextService * 365
     nextServiceDay     = addDays daysToNextService referenceDay
 
-  regularUpkeeps = filter ((UM.Regular ==) . UM.upkeepType . snd) upkeeps
+  regularUpkeeps = filter ((\x -> UM.Regular == x || UM.General == x) . UM.upkeepType . snd) upkeeps
   installationUpkeep' = headMay . filter ((UM.Installation ==) . UM.upkeepType . snd) $ upkeeps
 
   computedUpkeep = case regularUpkeeps of

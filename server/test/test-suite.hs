@@ -71,6 +71,7 @@ unitTests = testGroup "Next service day : Unit tests" [
   testCase "When the machine upkeep is just a repair, it is skipped in computation of next date" repairUpkeep ,
   testCase "When the machine upkeep is installation, then the next service is first" installationUpkeep ,
   testCase "When there is an installation, then it is taken instead of the into operation as base for computing the first service" installationSupercedesIntoOperation ,
+  testCase "When there is general upkeep, then it is counted as regular one." generalUpkeep ,
   testCase "When there is a planned call, it is marked as inactive" plannedCallUpkeep ]
 
 unitTests' :: TestTree
@@ -293,6 +294,19 @@ noUpkeeps = let
   result = nextServiceDate machine (upkeepSequence, []) []
   expectedResult = Computed $ fromGregorian 2001 12 31
   in assertEqual "Date must be +2 years from into service: 2001 12 31"
+    expectedResult result
+
+generalUpkeep :: Assertion
+generalUpkeep = let
+  upkeep1 = U.Upkeep {
+    U.upkeepClosed = True ,
+    U.upkeepDate = dayToYmd $ fromGregorian 2001 1 1 }
+  upkeepMachine = UM.newUpkeepMachine {
+    UM.upkeepType = UM.General }
+  result = nextServiceDate machine (upkeepSequence, [])
+    [(upkeep1, upkeepMachine)]
+  expectedResult = Computed $ fromGregorian 2003 1 1
+  in assertEqual "Date must be +2 year from the last service:"
     expectedResult result
 
 closedUpkeeps :: Assertion
