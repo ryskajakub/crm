@@ -26,6 +26,6 @@ resource = mkResourceId {
   list = const printListing }
 
 printListing :: ListHandler (IdDependencies' E.EmployeeId)
-printListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
+printListing = mkGenHandler' Read (jsonO . mkDayParam) $ \env -> do
   ((_, pool), employeeId) <- ask
   withResource pool $ \connection -> printDailyPlanListing' (Just employeeId) connection (getDayParam env)

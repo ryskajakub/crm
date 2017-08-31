@@ -1,6 +1,9 @@
 create table password (
   password bytea not null );
 
+create table readonly_password (
+  password bytea not null );
+
 create table photos (
   id serial primary key ,
   data bytea not null );

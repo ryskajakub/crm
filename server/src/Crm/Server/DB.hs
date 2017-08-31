@@ -27,6 +27,7 @@ module Crm.Server.DB (
   extraFieldSettingsTable ,
   extraFieldsTable ,
   passwordTable ,
+  readonlyPasswordTable ,
   upkeepEmployeesTable ,
   taskEmployeesTable ,
   tasksTable ,
@@ -107,6 +108,7 @@ module Crm.Server.DB (
   mapUpkeeps ,
   initiateConnection ,
   -- tables
+  PasswordTable ,
   MachineRow'' (..), machine, machinePK ,
   -- mappings
   MachineRecord ,
@@ -248,6 +250,9 @@ type TasksTable = (DBInt, DBDate, DBText, Column (Nullable PGDate))
 
 passwordTable :: Table PasswordTable PasswordTable
 passwordTable = Table "password" $ p1 ( required "password" )
+
+readonlyPasswordTable :: Table PasswordTable PasswordTable
+readonlyPasswordTable = Table "readonly_password" $ p1 ( required "password" )
 
 extraFieldsTable :: Table ExtraFieldsTable ExtraFieldsTable
 extraFieldsTable = Table "extra_fields" $ p3 (

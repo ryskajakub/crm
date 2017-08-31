@@ -45,6 +45,8 @@ import           Crm.Server.Helpers
 import           TupleTH                     (reverseTuple, updateAtN)
 
 
+data PermissionType = Read | ReadWrite deriving Eq
+
 data SessionId = Password { password :: Text }
 
 class HasConnection a where
@@ -60,32 +62,43 @@ instance HasConnection ConnectionPool where
 
 mkGenHandler' :: 
   HasConnection a => 
+  PermissionType ->
   Modifier () p i o 'Nothing -> 
   (Env SessionId p (FromMaybe () i) -> ExceptT (Reason Text) (ReaderT a IO) (Apply f (FromMaybe () o))) -> 
   GenHandler (ReaderT a IO) f
-mkGenHandler' d a = mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
-  pool <- ask
-  withResource (getConnection pool) $ \connection -> verifyPassword connection (header env)
-  a env
-  where
-  authorizationHeader = mkHeader $ Header ["Authorization"] $ \headers' -> case headers' of
-    [Just authHeader] -> Right . Password . pack . B64.decode $ authHeader
-    _ -> Left . ParseError $ "data not parsed correctly"
+mkGenHandler' pt d a =
+  mkGenHandler (jsonE . authorizationHeader . d) $ \env -> do
+    pool <- ask
+    withResource (getConnection pool) $ 
+      \connection -> verifyPassword pt connection (header env)
+    a env
+    where
+    authorizationHeader = mkHeader $ Header ["Authorization"] $ 
+      \headers' -> case headers' of
+        [Just authHeader] -> Right . Password . pack . 
+          B64.decode $ authHeader
+        _ -> Left . ParseError $ "data not parsed correctly"
 
-verifyPassword :: (Monad m, MonadIO m) => Connection -> SessionId -> ExceptT (Reason Text) m ()
-verifyPassword connection (Password inputPassword) = do
-  dbPasswords <- liftIO $ runQuery connection $ queryTable passwordTable
+verifyPassword :: (Monad m, MonadIO m) => PermissionType -> 
+  Connection -> SessionId -> ExceptT (Reason Text) m ()
+verifyPassword pt connection (pass @ (Password inputPassword)) = do
+  let table = case pt of
+        Read -> readonlyPasswordTable
+        ReadWrite -> passwordTable
+  dbPasswords <- liftIO $ runQuery connection $ queryTable table
   let dbPassword' = headMay dbPasswords
   case dbPassword' of
     Just dbPassword -> 
       if passwordVerified
         then return ()
-        else throwPasswordError "wrong password"
+        else if pt == Read
+          then verifyPassword ReadWrite connection pass
+          else throwPasswordError "wrong password"
       where
       passwordVerified = CS.verifyPass' passwordCandidate password'
       password' = CS.EncryptedPass dbPassword
       passwordCandidate = CS.Pass . encodeUtf8 $ inputPassword
-    Nothing -> throwPasswordError 
+    Nothing -> throwPasswordError
       "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason . pack
 
@@ -94,35 +107,35 @@ mkConstHandler' ::
   Modifier () p 'Nothing o 'Nothing -> 
   ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o) -> 
   Handler (ReaderT a IO)
-mkConstHandler' d a = mkGenHandler' d (const a)
+mkConstHandler' d a = mkGenHandler' Read d (const a)
 
 mkInputHandler' :: 
   HasConnection a => 
   Modifier () p ('Just i) o 'Nothing -> 
   (i -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
   Handler (ReaderT a IO)
-mkInputHandler' d a = mkGenHandler' d (a . input)
+mkInputHandler' d a = mkGenHandler' ReadWrite d (a . input)
 
 mkIdHandler' :: 
   (HasConnection a) => 
   Modifier () p ('Just i) o 'Nothing -> 
   (i -> a -> ExceptT (Reason Text) (ReaderT a IO) (FromMaybe () o)) -> 
   Handler (ReaderT a IO)
-mkIdHandler' d a = mkGenHandler' d (\env -> ask >>= a (input env))
+mkIdHandler' d a = mkGenHandler' ReadWrite d (\env -> ask >>= a (input env))
 
 mkListing' :: 
   HasConnection a => 
   Modifier () () 'Nothing o 'Nothing -> 
   (Range -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
   ListHandler (ReaderT a IO)
-mkListing' d a = mkGenHandler' (mkPar range . d) (a . param)
+mkListing' d a = mkGenHandler' Read (mkPar range . d) (a . param)
 
 mkOrderedListing' :: 
   HasConnection a => 
   Modifier () () 'Nothing o 'Nothing -> 
   ((Range, Maybe String, Maybe String) -> ExceptT (Reason Text) (ReaderT a IO) [FromMaybe () o]) -> 
   ListHandler (ReaderT a IO)
-mkOrderedListing' d a = mkGenHandler' (mkPar orderedRange . d) (a . param)
+mkOrderedListing' d a = mkGenHandler' Read (mkPar orderedRange . d) (a . param)
 
 instance ToResponseCode Text where
   toResponseCode = const 401

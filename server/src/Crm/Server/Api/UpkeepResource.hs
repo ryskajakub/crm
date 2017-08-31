@@ -55,7 +55,7 @@ import           Crm.Server.Helpers          (prepareReaderTuple, createDeletion
 import           Crm.Server.Boilerplate      ()
 import           Crm.Server.Types
 import           Crm.Server.DB --
-import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', 
+import           Crm.Server.Handler          (mkInputHandler', mkConstHandler', mkListing', deleteRows'', PermissionType (Read),
                                                mkGenHandler', mkDayParam, getDayParam)
 import           Crm.Server.CachedCore       (recomputeWhole)
 import           Crm.Server.Core             (nextServiceTypeHint)
@@ -299,7 +299,7 @@ printDailyPlanListing' employeeId connection day = do
   return dailyPlanUpkeeps
 
 printDailyPlanListing :: ListHandler Dependencies
-printDailyPlanListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
+printDailyPlanListing = mkGenHandler' Read (jsonO . mkDayParam) $ \env -> do
   let day = getDayParam env
   (_, pool) <- ask
   withResource pool $ \connection -> printDailyPlanListing' Nothing connection day

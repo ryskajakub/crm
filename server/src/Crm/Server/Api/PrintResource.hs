@@ -26,7 +26,7 @@ resource = mkResourceId {
   list = const printListing }
 
 printListing :: ListHandler Dependencies
-printListing = mkGenHandler' (jsonO . mkDayParam) $ \env -> do
+printListing = mkGenHandler' Read (jsonO . mkDayParam) $ \env -> do
   (_, pool) <- ask
   let day = getDayParam env
   mainEmployees <- withResource pool $ \connection ->
