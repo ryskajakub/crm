@@ -51,7 +51,7 @@ companiesList ::
   (DOMElement, Fay ())
 companiesList focus filterText router var orderType direction companies'' renegatesFlag = let
 
-  filterFun (_, C.Company name _ address, state, _) = let
+  filterFun (_, C.Company name _ address _, state, _) = let
     renegatesCondition = case (state, renegatesFlag) of
       (C.Inactive, True) -> True
       (_, True) -> False
@@ -363,10 +363,13 @@ companyForm editing' var setCompany company' saveHandler' deleteButton = let
   companyBasicInfo = [
     header , 
     dl $ [
-      dt "Adresa (ulice, město, PSČ)" , 
+      dt "Adresa (ulice, město, PSČ)" ,
       dd $ appliedInput
         (SetValue $ C.companyAddress company')
         (\text -> setCompany (company' { C.companyAddress = text })) ,
+      dt "Malá firma (bude se zobrazovat ve třetím panelu v naplánovaných servisech)" ,
+      dd $ F.checkbox editing' (C.smallCompany company') 
+        (\flag -> setCompany (company' { C.smallCompany = flag })) ,
       dt "Poznámka" , 
       dd $ F.textarea' 3 editing' True
         (SetValue $ C.companyNote company') 

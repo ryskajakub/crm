@@ -62,20 +62,21 @@ data Coordinates' latitude longitude = Coordinates {
 type Coordinates = Coordinates' Double Double
 type CoordinatesJoin = Coordinates' (Maybe Double) (Maybe Double)
 
-data Company' name note address = Company {
+data Company' name note address smallCompany = Company {
   companyName :: name ,
   companyNote :: note ,
-  companyAddress :: address }
+  companyAddress :: address ,
+  smallCompany :: smallCompany }
 #ifndef FAY
   deriving (Generic, Typeable, Data, Show)
 #endif
-type Company = Company' Text Text Text
+type Company = Company' Text Text Text Bool
 
 mkCoordinates :: (Double, Double) -> Coordinates
 mkCoordinates (lat, lng) = Coordinates lat lng
 
 newCompany :: Company
-newCompany = Company (pack "") (pack "") (pack "")
+newCompany = Company (pack "") (pack "") (pack "") False
 
 #ifndef FAY
 mapCoordinates :: Coordinates' (Maybe a) (Maybe b) -> Maybe (Coordinates' a b) 

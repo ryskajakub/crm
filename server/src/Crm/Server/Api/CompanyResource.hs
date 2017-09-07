@@ -4,7 +4,7 @@
 
 module Crm.Server.Api.CompanyResource where
 
-import           Opaleye                     (pgDouble, pgInt4, pgStrictText,
+import           Opaleye                     (pgDouble, pgInt4, pgStrictText, pgBool, 
                                               runDelete, (.===))
 import           Opaleye.Manipulation        (runInsertReturning, runUpdate)
 import           Opaleye.RunQuery            (runQuery)
@@ -20,7 +20,7 @@ import           Data.List                   (sortBy)
 import qualified Data.Map                    as M
 import           Data.Pool                   (withResource)
 import qualified Data.Text.ICU               as I
-import           Data.Tuple.All              (sel2, sel3, sel5)
+import           Data.Tuple.All              (sel2, sel3)
 
 import           Rest.Dictionary.Combinators (jsonI, jsonO)
 import           Rest.Handler                (Handler, ListHandler)
@@ -31,8 +31,6 @@ import qualified Rest.Schema                 as S
 import           Rest.Types.Error            (Reason (..))
 
 import           Safe                        (readMay)
-import           TupleTH                     (catTuples, proj, takeTuple,
-                                              updateAtN)
 
 import qualified Crm.Shared.Api              as A
 import qualified Crm.Shared.Company          as C
@@ -66,7 +64,8 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
       (C.Company
         (pgStrictText . C.companyName $ newCompany)
         (pgStrictText . C.companyNote $ newCompany)
-        (pgStrictText . C.companyAddress $ newCompany))
+        (pgStrictText . C.companyAddress $ newCompany)
+        (pgBool . C.smallCompany $ newCompany))
       (C.Coordinates
         (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
         (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates))))
@@ -151,7 +150,8 @@ updateCompany = let
         (C.Company
           (pgStrictText . C.companyName $ company)
           (pgStrictText . C.companyNote $ company)
-          (pgStrictText . C.companyAddress $ company))
+          (pgStrictText . C.companyAddress $ company)
+          (pgBool . C.smallCompany $ company))
         (C.Coordinates
           (maybeToNullable $ ((pgDouble . C.latitude) `fmap` coordinates))
           (maybeToNullable $ ((pgDouble . C.longitude) `fmap` coordinates)))

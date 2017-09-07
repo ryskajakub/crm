@@ -157,7 +157,7 @@ import           Data.Profunctor.Product.TH           (makeAdaptorAndInstance')
 import           Data.Text                            (Text, pack)
 import           Data.Time.Calendar                   (Day)
 import           Data.Tuple.All                       (Sel1, sel1, sel2, sel3,
-                                                       sel4, sel5, sel6,
+                                                       sel4, sel5, sel6, sel7,
                                                        uncurryN, upd2, upd4)
 import           Database.PostgreSQL.Simple           (Binary (..),
                                                        ConnectInfo (..),
@@ -295,7 +295,7 @@ data CompanyTable' companyPK companyCore companyCoords = CompanyTable {
   _companyCoords :: companyCoords }
 makeLenses ''CompanyTable'
 
-type CompanyCore = C.Company' DBText DBText DBText
+type CompanyCore = C.Company' DBText DBText DBText DBBool
 type CompanyCoords = C.Coordinates' (Column (Nullable PGFloat8)) (Column (Nullable PGFloat8))
 type CompanyRead = CompanyTable' (C.CompanyId' DBInt) CompanyCore CompanyCoords
 type CompanyWrite = CompanyTable' (C.CompanyId' (Maybe DBInt)) CompanyCore CompanyCoords
@@ -310,7 +310,8 @@ companiesTable = Table "companies" $ pCompanyTable CompanyTable {
   _companyCore = (C.pCompany C.Company {
     C.companyName = required "name" ,
     C.companyNote = required "note" ,
-    C.companyAddress = required "address" }) ,
+    C.companyAddress = required "address" ,
+    C.smallCompany = required "small_company" }) ,
   _companyCoords = (C.pCoordinates C.Coordinates {
     C.latitude = required "latitude" ,
     C.longitude = required "longitude" })}
@@ -489,10 +490,10 @@ type ExtraFieldSettingsMapped = (EF.ExtraFieldId, MK.MachineKindSpecific)
 type ExtraFieldMapped = (EF.ExtraFieldId, M.MachineId, Text)
 type TaskMapped = (T.TaskId, T.Task)
 
-instance ColumnToRecord (Int, Text, Text, Text, Maybe Double, Maybe Double) CompanyMapped where
+instance ColumnToRecord (Int, Text, Text, Text, Bool, Maybe Double, Maybe Double) CompanyMapped where
   convert tuple = let
-    company = (uncurryN $ const ((fmap . fmap . fmap) (const . const) C.Company)) tuple
-    coordinates = pure C.Coordinates <*> sel5 tuple <*> sel6 tuple
+    company = (uncurryN $ const ((fmap . fmap . fmap . fmap) (const . const) C.Company)) tuple
+    coordinates = pure C.Coordinates <*> sel6 tuple <*> sel7 tuple
     in (C.CompanyId $ sel1 tuple, company, coordinates)
 instance ColumnToRecord (Int, Int, Text, Text) MachineTypeMapped where
   convert tuple = (MT.MachineTypeId $ sel1 tuple, (uncurryN $ const MT.MachineType)
@@ -914,7 +915,7 @@ groupedPlannedUpkeepsQuery' dealWithSubtasks plannedUpkeepType = let
   in orderBy (asc(view (_1 . upkeep . U.upkeepDateL))) $
     AGG.aggregate (p4 (pUpkeepRow $ UpkeepRow (U.pUpkeepId . U.UpkeepId $ AGG.groupBy)
     (U.pUpkeep $ U.Upkeep AGG.min AGG.boolOr AGG.min AGG.min AGG.min AGG.boolOr) (U.pUpkeepId . U.UpkeepId $ AGG.min), AGG.min, AGG.max,
-      p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min)))
+      p2(C.pCompanyId . C.CompanyId $ AGG.min, C.pCompany $ C.Company AGG.min AGG.min AGG.min AGG.min)))
     plannedUpkeepsQuery
 
 singleContactPersonQuery :: Int -> Query (ContactPersonsTable, CompanyRead)
