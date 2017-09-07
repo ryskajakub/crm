@@ -234,10 +234,7 @@ upkeepsPlanned subtasks put pool = do
     byUs = filterNotSmall . filter (areWeDoingUpkeep . view _1) $ upkeepsWithEmployees
     byThem = filterNotSmall . filter (not . areWeDoingUpkeep . view _1) $ upkeepsWithEmployees
     smallCompanies = filter pickSmallCompanies upkeepsWithEmployees
-    toReturn = [
-      over mapped (view _2) byUs, 
-      over mapped (view _2) byThem,
-      over mapped (view _2) smallCompanies]
+    toReturn = over (mapped . mapped) (view _2) [byUs, byThem, smallCompanies]
   return toReturn
 
     

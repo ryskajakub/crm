@@ -107,9 +107,8 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
 
   pageInfo' = pageInfo pageTitle $ Just pageAdvice
 
-  compressorsTable = mkTable . head $ upkeepCompanies
-  othersTable = mkTable . head . tail $ upkeepCompanies
-  smallCompaniesTable = mkTable . head . tail . tail $ upkeepCompanies
+  [compressorsTable, othersTable, smallCompaniesTable] = 
+    map mkTable upkeepCompanies
   pills = ul' (class'' ["nav", "nav-pills"]) [
     li' (class' "active") . B.pill (click (return ())) "we" $ "Servisujeme my" ,
     li . B.pill (click (return ())) "others" $ "Servisují jiné firmy" ,
