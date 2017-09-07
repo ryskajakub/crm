@@ -109,12 +109,15 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
 
   compressorsTable = mkTable . head $ upkeepCompanies
   othersTable = mkTable . head . tail $ upkeepCompanies
+  smallCompaniesTable = mkTable . head . tail . tail $ upkeepCompanies
   pills = ul' (class'' ["nav", "nav-pills"]) [
     li' (class' "active") . B.pill (click (return ())) "we" $ "Servisujeme my" ,
-    li . B.pill (click (return ())) "others" $ "Servisují jiné firmy" ]
+    li . B.pill (click (return ())) "others" $ "Servisují jiné firmy" ,
+    li . B.pill (click (return ())) "small-companies" $ "Malé firmy" ]
   tables = div' (class' "tab-content") [
     div' (mkAttrs { id = Defined "we" , className = Defined "tab-pane active" }) compressorsTable ,
-    div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ]
+    div' (mkAttrs { id = Defined "others" , className = Defined "tab-pane" }) othersTable ,
+    div' (mkAttrs { id = Defined "small-companies" , className = Defined "tab-pane" }) smallCompaniesTable ]
   in (B.grid $ B.row $
     pageInfo' ++
     [B.col (B.mkColProps 12) . main $ [pills, tables], B.fullCol "zelená - šroubové, žlutá - vývěvy"] , initializeTooltip)
