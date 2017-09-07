@@ -21,7 +21,7 @@ import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad               (forM_, forM, join)
 import           Control.Monad.Trans.Except  (ExceptT)
 import           Control.Arrow               (second)
-import           Control.Lens                (view, over, mapped, _1, _3, _2)
+import           Control.Lens                (view, over, mapped, _1, _3, _2, _5)
 
 import           Data.Tuple.All              (sel2, sel3, sel4)
 import           Data.List                   (nub)
@@ -229,9 +229,15 @@ upkeepsPlanned subtasks put pool = do
       M.UpkeepByDefault -> MK.isUpkeepByUs machineKind
       M.UpkeepByThem    -> False
       M.UpkeepByWe      -> True
-    byUs = filter (areWeDoingUpkeep . view _1) upkeepsWithEmployees
-    byThem = filter (not . areWeDoingUpkeep . view _1) upkeepsWithEmployees
-  let toReturn = [over mapped (view _2) byUs, over mapped (view _2) byThem]
+    pickSmallCompanies = C.smallCompany . view _5 . view _2
+    filterNotSmall = filter (not . pickSmallCompanies)
+    byUs = filterNotSmall . filter (areWeDoingUpkeep . view _1) $ upkeepsWithEmployees
+    byThem = filterNotSmall . filter (not . areWeDoingUpkeep . view _1) $ upkeepsWithEmployees
+    smallCompanies = filter pickSmallCompanies upkeepsWithEmployees
+    toReturn = [
+      over mapped (view _2) byUs, 
+      over mapped (view _2) byThem,
+      over mapped (view _2) smallCompanies]
   return toReturn
 
     
