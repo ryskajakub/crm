@@ -47,15 +47,16 @@ companiesList ::
   C.OrderType -> 
   DIR.Direction -> 
   [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ->
-  Bool ->
+  D.CompaniesGroup ->
   (DOMElement, Fay ())
 companiesList focus filterText router var orderType direction companies'' renegatesFlag = let
 
-  filterFun (_, C.Company name _ address _, state, _) = let
-    renegatesCondition = case (state, renegatesFlag) of
-      (C.Inactive, True) -> True
-      (_, True) -> False
-      (_, False) -> True
+  filterFun (_, C.Company name _ address smallCompany, state, _) = let
+    renegatesCondition = case (smallCompany, state, renegatesFlag) of
+      (_, C.Inactive, D.Renegates) -> True
+      (True, _, D.Small) -> True
+      (False, _, D.Main) -> True
+      _ -> False
     in (contains (T.toLower name) (T.toLower filterText) || 
     contains (T.toLower address) (T.toLower filterText)) && renegatesCondition 
     
@@ -126,13 +127,18 @@ companiesList focus filterText router var orderType direction companies'' renega
         G.plus , 
         text2DOM " Přidat firmu" ]
       setFilterText filterText' = setCompaniesList filterText'
-      renegates = BTN.button' (BTN.buttonProps {
-        BTN.onClick = Defined $ const $ modify var $ \appState ->
+
+      mkButton companiesGroup label = BTN.button' (BTN.buttonProps {
+        BTN.onClick = Defined . const . modify var $ \appState ->
           appState { D.navigation = case D.navigation appState of
-            cd @ (D.FrontPage {}) -> cd { D.renegates = True }
+            cd @ (D.FrontPage {}) -> cd { 
+              D.companiesGroup = companiesGroup }
             _ -> D.navigation appState } } ) [
-        G.piggyBank ,
-        text2DOM " Ukázat odpadlíky" ]
+        text2DOM (" " <> label) ]
+      smallCompanies = mkButton D.Small "Ukázat malé firmy"
+      renegates = mkButton D.Renegates "Ukázat odpadlíky"
+      mainCompanies = mkButton D.Main "Ukázat hlavní firmy"
+
       nameAddressFiltering = 
         div [
           G.filter ,
@@ -141,7 +147,7 @@ companiesList focus filterText router var orderType direction companies'' renega
       infoLink = A.a "https://github.com/coubeatczech/crm/blob/master/doc/Manuál.md" 
         [G.infoSign , text2DOM " Návod"]
       in 
-        BN.nav $ [ inNav button , inNav nameAddressFiltering, infoLink, inNav renegates ] ,
+        BN.nav $ [ inNav button , inNav nameAddressFiltering, infoLink, inNav renegates, inNav smallCompanies, inNav mainCompanies ] ,
         B.table [
           head' , 
           body ]])

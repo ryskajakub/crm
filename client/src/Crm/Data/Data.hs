@@ -29,13 +29,15 @@ import           Crm.Component.Form        (InputState)
 
 data CompanyTitleDisplay = CompanyTitleShown | CompanyTitleHidden
 
+data CompaniesGroup = Main | Renegates | Small
+
 data NavigationState =
   Dashboard { companies :: [(C.CompanyId, C.Company, C.CompanyState, Maybe C.Coordinates)] } |
   FrontPage {
     ordering :: (C.OrderType, DIR.Direction) ,
     companiesNextService :: [(C.CompanyId, C.Company, C.CompanyState, [MK.MachineKindEnum])] ,
     filterText :: Text ,
-    renegates :: Bool } | 
+    companiesGroup :: CompaniesGroup } | 
   CompanyDetail {
     companyId :: C.CompanyId , 
     company :: C.Company , 
