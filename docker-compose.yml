@@ -1,0 +1,12 @@
+version: '3'
+services:
+  main:
+    environment:
+      PGPASSWORD: haskell
+    build: .
+  database:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: haskell 
+      POSTGRES_USER: haskell
