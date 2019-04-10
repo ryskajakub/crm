@@ -3,8 +3,11 @@
 module GoogleMaps (
   Map ,
   MapOptions ,
+  InfoWindow ,
   mkMapOptions ,
   LatLng ,
+  mkInfoWindow ,
+  openInfoWindow ,
   mkMap , 
   addMarker ,
   mkLatLng ,
@@ -14,9 +17,8 @@ module GoogleMaps (
 
 
 import FFI
-import "fay-base" Data.Text (Text, pack, (<>))
-import "fay-base" Prelude
-import DOM (Element)
+import Data.Text     (Text, pack, (<>))
+import               DOM (Element)
 import Data.Nullable
 import Data.Maybe
 
@@ -25,6 +27,8 @@ data MapOptions
 data Map
 data MapMarker
 
+data InfoWindow
+  
 data LatLng
 
 data Geocoder
@@ -53,6 +57,12 @@ addMarker lat lng color map' = let
 mkMarker' :: LatLng -> Map -> Text -> Fay MapMarker
 mkMarker' = ffi " new google.maps.Marker({position: %1, map: %2, icon: %3}) "
 
+mkInfoWindow :: Text -> Fay InfoWindow
+mkInfoWindow = ffi " new google.maps.InfoWindow({content: %1}) " 
+
+openInfoWindow :: InfoWindow -> Map -> MapMarker -> Fay ()
+openInfoWindow = ffi " %1['open'](%2, %3) "
+  
 addClickListener :: MapMarker -> Fay () -> Fay ()
 addClickListener = ffi " google.maps.event.addListener(%1, 'click', %2) "
 
