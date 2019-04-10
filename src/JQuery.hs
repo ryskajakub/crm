@@ -3,6 +3,7 @@
 {-# LANGUAGE RankNTypes        #-}
 {-# LANGUAGE RebindableSyntax  #-}
 {-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE PackageImports #-}
 
 module JQuery where
 
@@ -11,9 +12,9 @@ Note that this is very much in flux. Function names, type signatures, and
 data types all subject to drastic change.
 --}
 
-import           Fay.Text
-import           FFI
-import           Prelude hiding (succ)
+import "fay-base" Data.Text
+import            FFI
+import            Prelude hiding (succ)
 
 data JQuery
 
@@ -86,7 +87,7 @@ ajaxPostParam ur rqparam dat succ err = ajax' $ defaultAjaxSettings
   , dataType = Defined "json"
   }
 
-makeRqObj :: Text -> a -> Object
+makeRqObj :: Text -> Automatic a -> Object
 makeRqObj = ffi "(function () { var o = {}; o[%1] = %2; return o; })()"
 
 data AjaxSettings a b = AjaxSettings
@@ -105,7 +106,7 @@ data AjaxSettings a b = AjaxSettings
   , dataType    :: Defined Text
   , error'      :: Defined (JQXHR -> Maybe Text -> Maybe Text -> Fay ())
   , global      :: Defined Bool
-  -- , headers :: Object Text -- need generic objects
+  , headers     :: Defined Object
   , ifModified  :: Defined Bool
   , isLocal     :: Defined Bool
   -- , jsonp -- skipped
@@ -137,6 +138,7 @@ defaultAjaxSettings = AjaxSettings
   , dataType    = Undefined
   , error'      = Undefined
   , global      = Undefined
+  , headers     = Undefined
   , ifModified  = Undefined
   , isLocal     = Undefined
   , mimeType    = Undefined
@@ -159,10 +161,9 @@ ajax' = ffi "\
         \ delete o[p]; \
       \ } \
     \ } \
-    \ o['data'] = JSON.stringify(o['data']); \
-    \ return jQuery.ajax(o); \
+    \ o['data'] = (o['contentType'] == 'application/json' ? JSON.stringify(o['data']) : o['data']); \
+    \ return require('jquery').ajax(o); \
   \ })(%1)"
-
 ----
 ---- Attributes
 ----
@@ -259,7 +260,7 @@ getText = ffi "%1['text']()"
 ----
 
 holdReady :: Bool -> Fay JQuery
-holdReady = ffi "jQuery['holdReady'](%1)"
+holdReady = ffi "require('jquery')['holdReady'](%1)"
 
 -- jQuery()
 -- http://api.jquery.com/jQuery/
@@ -270,24 +271,24 @@ instance Selectable Element
 instance Selectable JQuery
 
 select :: Selectable a => a -> Fay JQuery
-select = ffi "jQuery(Fay$$_(%1))"
+select = ffi "require('jquery')(Fay$$_(%1))"
 
 selectEmpty :: Fay JQuery
-selectEmpty = ffi "jQuery()"
+selectEmpty = ffi "require('jquery')()"
 
 selectInContext :: (Selectable a, Selectable b) => a -> b -> Fay JQuery
-selectInContext = ffi "jQuery(Fay$$_(%1), Fay$$_(%2))"
+selectInContext = ffi "require('jquery')(Fay$$_(%1), Fay$$_(%2))"
 
 ready :: Fay () -> Fay ()
-ready = ffi "jQuery(%1)"
+ready = ffi "require('jquery')(%1)"
 -- end jQuery()
 
 -- is noConflict useful in the context of Fay?
 noConflict :: Fay JQuery
-noConflict = ffi "jQuery['noConflict']()"
+noConflict = ffi "require('jquery')['noConflict']()"
 
 noConflictBool :: Bool -> Fay JQuery
-noConflictBool = ffi "jQuery['noConflict'](%1)"
+noConflictBool = ffi "require('jquery')['noConflict'](%1)"
 
 -- TODO: jQuery['sub']()
 
@@ -438,7 +439,7 @@ animate = ffi "%4[(function () { \
       \ return %2['slot1']; \
     \ } \
   \ })(), function() { \
-     \ %3(jQuery(this)); \
+     \ %3(require('jquery')(this)); \
   \ })"
 
 hide :: Speed -> JQuery -> Fay JQuery
@@ -492,10 +493,10 @@ load :: (Event -> Fay()) -> JQuery -> Fay ()
 load = ffi "%2['load'](%1)"
 
 documentReady :: (Event -> Fay ()) -> Document -> Fay ()
-documentReady = ffi "jQuery(%2)['ready'](%1)"
+documentReady = ffi "require('jquery')(%2)['ready'](%1)"
 
 unload :: (Event -> Fay()) -> Window -> Fay ()
-unload = ffi "jQuery(%2)['unload'](%1)"
+unload = ffi "require('jquery')(%2)['unload'](%1)"
 
 --
 -- Mouse Events
@@ -586,7 +587,7 @@ triggerHandler = ffi "%2['triggerHandler'](%1)"
 data Event
 
 delegateTarget :: Event -> Fay Element
-delegateTarget = ffi "jQuery(%1['delegateTarget'])"
+delegateTarget = ffi "require('jquery')(%1['delegateTarget'])"
 
 isDefaultPrevented :: Event -> Fay Bool
 isDefaultPrevented = ffi "%1['isDefaultPrevented']()"
@@ -608,6 +609,9 @@ pageY = ffi "%1['pageY']"
 
 preventDefault :: Event -> Fay ()
 preventDefault = ffi "%1['preventDefault']()"
+
+stopPropagation :: Event -> Fay ()
+stopPropagation = ffi "%1['stopPropagation']()"
 
 target :: Event -> Fay Element
 target = ffi "%1['target']"
