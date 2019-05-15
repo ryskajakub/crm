@@ -6,7 +6,7 @@ WORKDIR /app/server
 RUN stack setup
 RUN until stack build --only-snapshot ; do : ; done
 # change here
-RUN apt-get update && apt-get install -y postgresql-client postgresql
+RUN apt-get update && apt-get install -y postgresql-client vim net-tools
 WORKDIR /app/server
 COPY . /app
 # RUN stack build --flag server:build-run-server 

@@ -67,7 +67,7 @@ gulp.task('copy-jquery', function () {
 });
 
 gulp.task('compile', function() {
-  var fayCommand = "fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --Wall --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js";
+  var fayCommand = "/Users/ryskaj/.cabal/bin/fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });
@@ -93,7 +93,7 @@ gulp.task('default', ['watch']);
 // playground
 
 gulp.task('playground-compile', function() {
-  var fayCommand = "fay --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js <%= file.path %>";
+  var fayCommand = "/Users/ryskaj/.cabal/bin/fay --Wall --pretty --include " + playgroundSourcesCommaDelimited + " --output tmp/Playground.js <%= file.path %>";
   return gulp.src('playground/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });
