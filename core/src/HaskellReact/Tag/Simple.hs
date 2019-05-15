@@ -13,6 +13,7 @@ module HaskellReact.Tag.Simple (
   section , section' ,
   main , main' ,
   dt , dd , dl ,
+  h2' ,
   h1 , h2 , h3 ,
   h4 , h5 , h6 ,
   form , form' ,
@@ -101,7 +102,10 @@ h1 :: (Renderable a) => a -> DOMElement
 h1 = constructSimple "h1" defaultAttributes
 
 h2 :: (Renderable a) => a -> DOMElement
-h2 = constructSimple "h2" defaultAttributes
+h2 = h2' defaultAttributes
+
+h2' :: (Renderable a) => Attributes -> a -> DOMElement
+h2' attrs = constructSimple "h2" attrs
 
 h3 :: (Renderable a) => a -> DOMElement
 h3 = constructSimple "h3" defaultAttributes

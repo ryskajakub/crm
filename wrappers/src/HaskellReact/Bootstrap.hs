@@ -83,6 +83,13 @@ row' :: Renderable a
      -> DOMElement
 row' modifyAttributes children = div' (modifyAttributes $ class' "row") children
 
+row'' ::
+  Renderable a =>
+  [Text] ->
+  a -> -- ^ children
+  DOMElement
+row'' classes children = div' (class'' $ "row" : classes) children
+
 row :: Renderable a
     => a
     -> DOMElement
@@ -139,13 +146,21 @@ fullRow = row . fullCol
 
 panel' ::
   Renderable a => 
-  Text ->
+  [Text] ->
   a ->
   DOMElement
-panel' style children = div' (class'' ["panel", style]) (div' (class' "panel-body") children)
+panel' = panel'' []
+
+panel'' ::
+  Renderable a =>
+  [Text] ->
+  [Text] ->
+  a ->
+  DOMElement
+panel'' bodyStyles style' children = div' (class'' $ ("panel" : style')) (div' (class'' $ "panel-body" : bodyStyles) children)
 
 panel ::
   Renderable a =>
   a ->
   DOMElement
-panel = panel' "panel-default"
+panel = panel' ["panel-default"]

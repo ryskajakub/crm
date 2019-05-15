@@ -7,7 +7,6 @@ module HaskellReact.Bootstrap.Alert (
   alert , 
   AlertType(..) ) where
 
-import "fay-base" Prelude
 import "fay-base" Data.Text (fromString)
 
 import HaskellReact 

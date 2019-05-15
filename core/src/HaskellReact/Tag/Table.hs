@@ -13,12 +13,12 @@ module HaskellReact.Tag.Table (
   th , th' ,
   td , td' , td'' ,
   colgroup' , colgroup ,
-  col' , col
-  ) where
+  col' , col ,
+  tdColSpan ) where
 
 import "fay-base" Prelude hiding (div, span)
-import "fay-base" Data.Text (Text, fromString)
-import            FFI (Defined(Undefined))
+import "fay-base" Data.Text (fromString)
+import            FFI (Defined(Undefined, Defined))
 
 import HaskellReact.Tag.Construct
 import HaskellReact.Tag.Simple
@@ -29,6 +29,9 @@ data TableCellAttributes = TableCellAttributes {
 
 mkTableCellAttributes :: TableCellAttributes
 mkTableCellAttributes = TableCellAttributes Undefined Undefined
+
+tdColSpan :: (Renderable a) => Int -> a -> DOMElement
+tdColSpan i = td'' mkAttrs (mkTableCellAttributes { colSpan = Defined i })
 
 th :: (Renderable a) => a -> DOMElement
 th = th' defaultAttributes

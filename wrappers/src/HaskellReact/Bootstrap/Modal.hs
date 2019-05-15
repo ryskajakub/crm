@@ -6,11 +6,10 @@
 module HaskellReact.Bootstrap.Modal where
 
 import "fay-base" Prelude hiding (id)
-import "fay-base" Data.Text (Text, fromString)
-import "fay-base" FFI (Defined(Undefined, Defined))
+import "fay-base" Data.Text (fromString)
+import "fay-base" FFI (Defined(Defined))
 
 import HaskellReact
-import HaskellReact.Bootstrap hiding (data_toggle)
 
 import HaskellReact.Bootstrap.Button
 

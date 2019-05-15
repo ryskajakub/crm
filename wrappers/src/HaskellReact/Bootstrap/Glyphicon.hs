@@ -6,7 +6,6 @@
 module HaskellReact.Bootstrap.Glyphicon where
 
 import "fay-base" Data.Text (Text, fromString, (<>))
-import "fay-base" Prelude
 
 import HaskellReact
 
@@ -615,3 +614,6 @@ treeConifer = glyphicon "tree-conifer"
 
 treeDeciduous :: DOMElement
 treeDeciduous = glyphicon "tree-deciduous"
+
+piggyBank :: DOMElement
+piggyBank = glyphicon "piggy-bank"

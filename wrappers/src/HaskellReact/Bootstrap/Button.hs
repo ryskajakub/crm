@@ -10,7 +10,6 @@ import "fay-base" Data.Text (fromString, Text, (<>))
 import "fay-base" FFI (Defined(Undefined, Defined))
 
 import qualified HaskellReact as HR
-import qualified HaskellReact.Tag.Controls as HC
 import HaskellReact.Event (SyntheticMouseEvent)
 import HaskellReact.Bootstrap (reactBootstrap)
 
@@ -31,6 +30,7 @@ data ExtraButtonProps = ExtraButtonProps {
   data_toggle :: Defined Text ,
   data_target :: Defined Text }
 
+extraButtonProps :: ExtraButtonProps
 extraButtonProps = ExtraButtonProps {
   data_toggle = Undefined ,
   data_target = Undefined }
@@ -79,8 +79,8 @@ buttonP' ::
   (SyntheticMouseEvent -> Fay ()) ->
   a ->
   HR.DOMElement
-buttonP' extraProps buttonSize buttonStyle clickHandler title =
-  HR.constructDOMElement "button" buttonAttributes extraProps title
+buttonP' extraProps buttonSize buttonStyle clickHandler title' =
+  HR.constructDOMElement "button" buttonAttributes extraProps title'
   where
   buttonAttributes = (HR.class'' ["btn", "btn-" <> expressSize buttonSize, "btn-" <> expressStyle buttonStyle]) {
     HR.onClick = Defined clickHandler }

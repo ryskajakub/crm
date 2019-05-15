@@ -6,9 +6,11 @@
 module HaskellReact.Tag.Construct where
 
 import "fay-base" FFI (Defined(Defined, Undefined), ffi, Automatic, Nullable)
-import "fay-base" Data.Text 
+import "fay-base" Data.Text hiding (null)
+import qualified "fay-base" Data.Text as T
 import "fay-base" Unsafe.Coerce (unsafeCoerce)
 import "fay-base" Prelude hiding (id, intercalate)
+import "fay-base" Data.Defined (fromDefined)
 
 import HaskellReact.Event
 
@@ -68,6 +70,16 @@ class' className' = mkAttrs {
 -- | create attributes containing only class with multiple values
 class'' :: [Text] -> Attributes
 class'' classNames = class' $ intercalate (pack " ") classNames
+
+addClasses :: 
+  Attributes ->
+  [Text] ->
+  Attributes
+addClasses attrs classes = let
+  classNames' = maybe (pack "") (\x -> x) (fromDefined . className $ attrs)
+  space = pack $ if (not . null $ classes) && (not . T.null $ classNames') then " " else ""
+  in attrs {
+    className = Defined $ classNames' <> space <> intercalate (pack " ") classes }
 
 -- | unsafely create a html tag
 constructDOMElement :: (Renderable a)

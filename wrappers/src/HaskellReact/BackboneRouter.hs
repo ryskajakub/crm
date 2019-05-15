@@ -42,7 +42,7 @@ link :: Renderable a
      -> Text -- ^ url, that will be navigated to after the user clicks the link
      -> BackboneRouter -- ^ router instance where the url will be handled, will create links leading nowhere untile the router is initialized
      -> DOMElement
-link children route router = let
+link children route _ = let
   aAttr = mkAAttrs {
     href = Defined $ pack "/#" <> route }
   attr = mkAttrs 

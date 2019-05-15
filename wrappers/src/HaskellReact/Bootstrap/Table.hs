@@ -5,6 +5,7 @@
 
 module HaskellReact.Bootstrap.Table (
   TableStyle(..) ,
+  table' ,
   table ) where
 
 import "fay-base" Data.Text (fromString, Text)
@@ -12,13 +13,24 @@ import "fay-base" Prelude
 
 import qualified HaskellReact as HR
 import qualified HaskellReact.Tag.Table as T
-import HaskellReact.Bootstrap (reactBootstrap)
 
 
-data TableStyle = Bordered
+data TableStyle = Bordered | FullBordered
 
 styleAsClass :: TableStyle -> Text
 styleAsClass Bordered = "bordered"
+styleAsClass FullBordered = "table-bordered"
+
+
+table' :: 
+  HR.Renderable a =>
+  HR.Attributes ->
+  Maybe TableStyle ->
+  a ->
+  HR.DOMElement
+table' attrs tableStyle' contents = let 
+  tableClasses = ["table"] ++ (maybe [] ((:[]) . styleAsClass) tableStyle')
+  in T.table' (HR.addClasses attrs tableClasses) contents
 
 
 table :: 
@@ -26,6 +38,4 @@ table ::
   Maybe TableStyle ->
   a ->
   HR.DOMElement
-table tableStyle' contents = let 
-  tableClasses = ["table"] ++ (maybe [] ((:[]) . styleAsClass) tableStyle')
-  in T.table' (HR.class'' tableClasses) contents
+table = table' HR.mkAttrs
