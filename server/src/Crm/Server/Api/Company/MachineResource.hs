@@ -3,6 +3,8 @@
 module Crm.Server.Api.Company.MachineResource (
   machineResource ) where
 
+import           Crm.Server.Boilerplate             ()
+
 import           Control.Monad                      (forM_)
 
 import           Control.Lens                       (view, _1)
@@ -12,16 +14,16 @@ import           Control.Monad.Trans.Except         (ExceptT)
 import           Data.Pool                          (withResource)
 import           Data.Text                          (Text)
 import           Database.PostgreSQL.Simple         (Connection)
-import           Opaleye                            (runQuery)
+import           Opaleye                            (runQuery, (.===))
 import           Opaleye.Manipulation               (runInsert,
-                                                     runInsertReturning)
+                                                     runInsertReturning, runUpdate)
 import           Opaleye.PGTypes                    (pgBool, pgDay, pgInt4,
                                                      pgStrictText)
 import           Rest.Dictionary.Combinators        (jsonI, jsonO)
 import           Rest.Handler                       (Handler, ListHandler)
 import           Rest.Resource                      (Resource, Void, create,
                                                      list, mkResourceId, name,
-                                                     schema)
+                                                     schema, statics)
 import qualified Rest.Schema                        as S
 import           Rest.Types.Error                   (Reason)
 
@@ -36,7 +38,7 @@ import           Crm.Shared.MyMaybe                 (toMaybe)
 import qualified Crm.Shared.UpkeepSequence          as US
 import qualified Crm.Shared.YearMonthDay            as YMD
 
-import           Crm.Server.Boilerplate             ()
+import           Crm.Server.Boilerplate             
 import           Crm.Server.CachedCore              (recomputeSingle)
 import           Crm.Server.DB
 import           Crm.Server.Handler                 (mkInputHandler',
@@ -48,7 +50,6 @@ import           Crm.Server.Database.MachineType
 import qualified Crm.Server.Database.UpkeepSequence as USD
 
 import           TupleTH                            (proj)
-
 
 createMachineHandler :: Handler (IdDependencies' C.CompanyId)
 createMachineHandler = mkInputHandler' (jsonO . jsonI) $
@@ -70,6 +71,22 @@ createMachineHandler = mkInputHandler' (jsonO . jsonI) $
   withResource pool $ \connection -> recomputeSingle companyId connection cache
   return machineId
 
+changeCompany ::
+  Connection ->
+  M.MachineId ->
+  C.CompanyId ->
+  IO () 
+changeCompany connection machineId newCompanyId = let
+  update columnsR = columnsR {
+      _companyFK = fmap pgInt4 newCompanyId ,
+      _machinePK = fmap (Just . pgInt4) machineId 
+    }
+  in do
+    runUpdate connection machinesTable update 
+      (\columnsR -> _machinePK columnsR .=== fmap pgInt4 machineId)
+    putStrLn $ show machineId
+    putStrLn $ show newCompanyId
+    return ()
 
 addMachine ::
   Connection ->
@@ -144,9 +161,17 @@ listing = mkListing' jsonO $ const $ do
     result = fmap (\(mm :: MachineRecord) -> (_machinePK mm, _machine mm)) otherMachines
   return result
 
-machineResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () Void
+changeCompanyHandler :: Handler (IdDependencies' C.CompanyId)
+changeCompanyHandler = mkInputHandler' (jsonI) $ \(ReassignPayload newMachineId) -> do
+  ((cache, pool), companyId) <- ask
+  liftIO $ withResource pool $ \connection ->
+    changeCompany connection (M.MachineId newMachineId) companyId
+  withResource pool $ \connection -> recomputeSingle companyId connection cache
+
+machineResource :: Resource (IdDependencies' C.CompanyId) (IdDependencies' C.CompanyId) Void () ()
 machineResource = mkResourceId {
   name = A.machines ,
-  schema = S.withListing () $ S.named [] ,
+  schema = S.withListing () $ S.named [("toCompany", S.static ())] ,
+  statics = \_ -> changeCompanyHandler ,
   list = const listing ,
   create = Just createMachineHandler }

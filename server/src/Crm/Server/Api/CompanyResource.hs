@@ -4,6 +4,8 @@
 
 module Crm.Server.Api.CompanyResource where
 
+import           System.IO.Unsafe
+
 import           Opaleye                     (pgDouble, pgInt4, pgStrictText, pgBool, 
                                               runDelete, (.===))
 import           Opaleye.Manipulation        (runInsertReturning, runUpdate)
@@ -20,6 +22,7 @@ import           Data.List                   (sortBy)
 import qualified Data.Map                    as M
 import           Data.Pool                   (withResource)
 import qualified Data.Text.ICU               as I
+import qualified Data.Text.ICU.Collate       as IC
 import           Data.Tuple.All              (sel2, sel3)
 
 import           Rest.Dictionary.Combinators (jsonI, jsonO)
@@ -78,13 +81,21 @@ createCompanyHandler = mkInputHandler' (jsonO . jsonI) $ \(newCompany, coordinat
 mapListing :: ListHandler Dependencies
 mapListing = mkListing' jsonO (const $ unsortedResult)
 
+{-
+order :: [a] -> (a -> Text) -> IO [a]
+order list mkText = do
+  locale <- IC.open (I.Locale "cs") 
+  let ioList = map (\a -> I.collate  ) list
+-}
+
 unsortedResult ::
   ExceptT (Reason a) Dependencies
   [(C.CompanyId, C.Company, C.CompanyState, MyMaybe C.Coordinates, [MK.MachineKindEnum])]
 unsortedResult = do
   (cache, _) <- ask
+  collator <- liftIO $ IC.open $ I.Locale "cs"
   content <- liftIO $ getCacheContent cache
-  let asList = map (\(a,(b,c,d,e)) -> (a,b,c,toMyMaybe d,e)) . M.toList
+  let asList = sortBy (\e1 e2 -> unsafePerformIO $ IC.collate collator (C.companyName . (view _2) $ e1) (C.companyName . (view _2) $ e2)) . map (\(a,(b,c,d,e)) -> (a,b,c,toMyMaybe d,e)) . M.toList
   return . asList $ content
 
 listing :: ListHandler Dependencies

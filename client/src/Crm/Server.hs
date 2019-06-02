@@ -61,6 +61,7 @@ module Crm.Server (
   deletePhoto ,
   deleteContactPerson ,
 
+  machineChangeCompany ,
   testEmployeesPage ,
   status ) where
 
@@ -602,6 +603,25 @@ updateMachine machineId machineTypeId machine linkedMachineId contactPersonId ma
 
 
 -- others
+
+data ReassignPayload = ReassignPayload {
+  companyId :: Int }
+
+machineChangeCompany ::
+  M.MachineId ->
+  C.CompanyId ->
+  R.CrmRouter ->
+  Fay () ->
+  Fay ()
+machineChangeCompany machineId companyId crmRouter callback =
+  withPassword Nothing $ \settings -> 
+    JQ.ajax' $ settings {
+      JQ.success = Defined $ \_ -> callback ,
+      JQ.data' = Defined $ ReassignPayload (C.getCompanyId companyId) ,
+      JQ.url = Defined $ apiRoot <> (pack $ "machines" ++ "/" ++ (show . M.getMachineId $ machineId) ++ "/" ++ "reassign" ++ "/" ++ "do") ,
+      JQ.type' = Defined post ,
+      JQ.processData = Defined False ,
+      JQ.contentType = Defined $ pack "application/json" }
 
 saveExtraFieldSettings :: 
   [(MK.MachineKindEnum, [(EF.ExtraFieldIdentification, MK.MachineKindSpecific)])] -> 

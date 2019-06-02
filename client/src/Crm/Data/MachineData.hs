@@ -47,7 +47,9 @@ data MachineDetail = MachineDetail {
   upkeeps :: [(UpkeepId, Maybe UpkeepId, Upkeep, UpkeepMachine, [Employee], [PhotoId])] ,
   companyId' :: CompanyId ,
   upkeepPhotoIds :: [PhotoId] ,
-  droppedUpkeepIds :: [UpkeepId] }
+  droppedUpkeepIds :: [UpkeepId] ,
+  otherCompanies :: [(CompanyId, Text)] ,
+  otherCompanyId :: Maybe CompanyId }
 
 data MachineNew = MachineNew {
   companyId :: CompanyId ,

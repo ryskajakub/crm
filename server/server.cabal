@@ -44,6 +44,7 @@ Library
     Crm.Server.Api.Company.RecommendationResource ,
     Crm.Server.Api.MachineResource ,
     Crm.Server.Api.Machine.PhotoResource ,
+    Crm.Server.Api.Machine.ReassignResource ,
     Crm.Server.Api.MachineTypeResource ,
     Crm.Server.Api.MachineType.MachineResource ,
     Crm.Server.Api.UpkeepResource ,

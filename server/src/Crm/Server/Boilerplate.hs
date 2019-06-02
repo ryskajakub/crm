@@ -4,9 +4,13 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeSynonymInstances #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Crm.Server.Boilerplate where
 
+import GHC.Generics
+import Data.Data
 import           Crm.TH                    (mkFayTransferables, fayInstance)
 
 import           Data.Aeson.Types          (toJSON, ToJSON, FromJSON, parseJSON)
@@ -35,6 +39,11 @@ import qualified Crm.Shared.ServerRender   as SR
 import           Crm.Shared.MyMaybe
 
 
+data ReassignPayload = ReassignPayload {
+  companyId :: Int }
+  deriving (Generic, Typeable, Data, Show)
+
+
 instance (FromJSON a, Data a) => FromJSON (MyMaybe a) where
   parseJSON = fayInstance
 
@@ -49,4 +58,5 @@ mkFayTransferables [''UM.UpkeepType, ''SR.Markup, ''M.ContactPersonForMachine, '
   ''E.EmployeeId, ''CP.ContactPersonId, ''C.CompanyId, ''MK.MachineKindEnum, ''US.UpkeepSequence, ''UM.UpkeepMachine, 
   ''U.Upkeep, ''U.UpkeepMarkup, ''MT.MyEither, ''MT.MachineType, ''D.Precision, ''D.YearMonthDay, ''M.Machine, ''C.Company, 
   ''E.Employee, ''PM.PhotoMeta, ''CP.ContactPerson, ''T.Task, ''T.TaskId, ''T.TaskMarkup, ''U.Upkeep2Markup, 
-  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy, ''PM.PhotoSource, ''C.CompanyState ]
+  ''UM.UpkeepMachineMarkup, ''M.MachineMarkup, ''M.MachineIdM, ''M.UpkeepBy, ''PM.PhotoSource, ''C.CompanyState ,
+  ''ReassignPayload ]

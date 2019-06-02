@@ -33,6 +33,7 @@ module Crm.Server.DB (
   tasksTable ,
   upkeepPhotosTable ,
   machineTypePhotosTable ,
+  machineQuery ,
   -- basic queries
   extraFieldSettingsQuery ,
   extraFieldsQuery ,
@@ -773,6 +774,14 @@ machineDetailQuery (M.MachineId machineId) = let
   in proc () -> do
     ((m,mt), cp) <- joined -< ()
     returnA -< (m, mt, cp)
+
+machineQuery ::
+  M.MachineId ->
+  Query MachinesTable
+machineQuery machineId = proc () -> do
+  machinesRow <- queryTable machinesTable -< ()
+  restrict -< _machinePK machinesRow .=== fmap pgInt4 machineId 
+  returnA -< machinesRow
 
 machinesInCompanyByUpkeepQuery :: U.UpkeepId -> Query (CompanyPK, MachinesTable, MachineTypesTable)
 machinesInCompanyByUpkeepQuery upkeepId = let

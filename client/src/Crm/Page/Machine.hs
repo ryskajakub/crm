@@ -5,12 +5,13 @@ module Crm.Page.Machine (
   machineNew ,
   machineDetail ) where
 
-import           Data.Text                        (fromString, Text, showInt)
+import           Data.Text                        (fromString, Text, showInt, putStrLn, pack, unpack)
 import           Prelude                          hiding (div, span, id, putStrLn)
 import qualified Prelude                 
 import           Data.Var                         (Var, modify)
 import           Data.Maybe                       (onJust, maybeToList)
 import           FFI                              (Defined(..))
+import qualified DOM
 
 import           HaskellReact                     hiding (row)
 import qualified HaskellReact.Bootstrap           as B
@@ -92,11 +93,13 @@ machineDetail ::
   Maybe MT.MachineTypeId ->
   [(P.PhotoId)] ->
   [U.UpkeepId] ->
+  [(C.CompanyId, Text)] ->
+  Maybe C.CompanyId ->
   (DOMElement, Fay ())
 machineDetail editing appVar router companyId calendarOpen (machine, 
     usageSetMode) machineTypeTuple machineId nextService photos upkeeps
     contactPersonId contactPersons v otherMachineId om extraFields 
-    machineTypeId' upkeepPhotoIds droppedUpkeepIds' =
+    machineTypeId' upkeepPhotoIds droppedUpkeepIds' otherCompanies otherCompanyId =
 
   (machineDisplay editing pageHeader button appVar calendarOpen (machine, 
       usageSetMode) machineTypeTuple extraRows extraGrid 
@@ -231,8 +234,45 @@ machineDetail editing appVar router companyId calendarOpen (machine,
       BTN.onClick = Defined $ const $ deleteMachine machineId (R.navigate (R.companyDetail companyId) router) router })
     "Smazat"
 
+  changeToOtherCompany = let 
+    otherCompaniesText = map (\(companyId, label) -> (fromString . show . C.getCompanyId $ companyId, label)) otherCompanies
+    in row'
+      Undefined
+      "Přehodit do firmy"
+      [
+      (div' (class' "col-md-6") [
+        I.select 
+          (mkAttrs { 
+            className = Defined "form-control"
+          })
+          (I.defaultInputAttributes {
+            I.onChange = Defined ( eventValue >=> DOM.parseInt >=> \newCompanyIdInt -> changeNavigationState $ \md -> case MD.machinePageMode md of 
+              Left machineDetail -> md { MD.machinePageMode = 
+                (Left $ machineDetail { MD.otherCompanyId = Just ( C.CompanyId newCompanyIdInt ) }) }
+              Right machineNew -> md )
+          })
+          ("default", "Nechat v této firmě")
+          otherCompaniesText
+      ])
+      ,
+      (div' (class' "col-md-3") [
+
+      let
+        changeCompanyHandler = const $ let 
+          Just ocId = otherCompanyId
+          in machineChangeCompany machineId ocId router BR.refresh
+        changeCompanyButton = BTN.button' 
+          (BTN.buttonProps {
+            BTN.bsStyle = Defined "danger" ,
+            BTN.onClick = Defined changeCompanyHandler })
+          "Přehoď do firmy"
+        in changeCompanyButton
+
+      ])
+      ]
+
   extraRows = (case (editing, photos) of
-    (Editing, _) -> [photoUploadRow]
+    (Editing, _) -> [photoUploadRow , changeToOtherCompany]
     (_, []) -> []
     _ -> [photoCarouselRow]) ++ extraRow ++ (if editing == Editing && null upkeeps && null photos
       then [deleteMachineRow]
