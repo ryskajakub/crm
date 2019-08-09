@@ -41,7 +41,7 @@ gulp.task('compile-sass', function () {
     .pipe(gulp.dest('build/'));
 });
 
-gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery', 'copy-images'], function() {
+gulp.task('copy-resources', ['copy-bootstrap', 'copy-jquery', 'copy-images', 'copy-jasny'], function() {
   return gulp.src(['files/*'])
     .pipe(gulp.dest('build/'));
 });
@@ -57,12 +57,12 @@ gulp.task('copy-images', function () {
 });
 
 gulp.task('copy-jasny', function () {
-  return gulp.src(['bower_components/jasny-bootstrap/dist/**'])
+  return gulp.src(['node_modules/jasny-bootstrap/dist/**'])
     .pipe(gulp.dest('build/jasny'));
 });
 
 gulp.task('copy-jquery', function () {
-  return gulp.src(['bower_components/jquery/dist/jquery.js'])
+  return gulp.src(['node_modules/jquery/dist/jquery.min.js'])
     .pipe(gulp.dest('build/'));
 });
 

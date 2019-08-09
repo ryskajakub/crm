@@ -24,6 +24,11 @@ flag build-run-server
   default:     False
   manual:      True
 
+flag build-restart
+  description: Builds restart server
+  default:     False
+  manual:      True
+
 flag profiling
   description: Turns on rtsopts
   default:     False
@@ -259,6 +264,25 @@ Executable gen-api
       Cabal ,
       regex-compat ,
       rest-gen 
+
+  else
+    buildable: False
+
+Executable restart
+  default-language:  Haskell2010
+  main-is:           Main.hs
+  hs-source-dirs:    restart
+  other-modules:
+  if flag(build-restart)
+    buildable: True
+    build-depends:
+      base ,
+      bytestring ,
+      wai ,
+      warp ,
+      http-types ,
+      text ,
+      process
 
   else
     buildable: False

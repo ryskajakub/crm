@@ -134,6 +134,8 @@ startRouter appVar = startedRouter where
       appState { D.navigation = D.ServerDown }) ,
     login' $-> ( const . const $
       modify appVar $ \appState -> appState { D.navigation = D.Login "" False } ) ,
+    restart' $-> ( const . const $
+      modify appVar $ \appState -> appState { D.navigation = D.Restart "" } ) ,
     dashboard' $-> ( const $
       fetchCompaniesForMap $ \companiesTriple ->
         modify appVar $ \appState -> appState { D.navigation = D.Dashboard companiesTriple }) ,

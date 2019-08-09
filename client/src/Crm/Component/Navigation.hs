@@ -31,6 +31,9 @@ navigation' router (body, callbacks) = do
       removeLocalStorage "password"
       navigate login router
 
+    refresh = do
+      navigate restart router
+
   simpleReactBody' ( div [
     navBar $ nav [
       li $ link [G.home, text2DOM " Seznam firem"] defaultFrontPage router ,
@@ -42,7 +45,8 @@ navigation' router (body, callbacks) = do
       li $ link [G.asterisk, text2DOM " Speciální pole"] extraFields router ,
       li $ link [G.print, text2DOM " Tisk denních plánů"] (dailyPlan todayYMD Nothing) router ,
       li $ link [G.camera, text2DOM " Fotky servisů"] upkeepPhotos router ,
-      li $ A.a''' (click logout) [G.logOut, text2DOM " Odhlášení"]] ,
+      li $ A.a''' (click logout) [G.logOut, text2DOM " Odhlášení"] ,
+      li $ A.a''' (click refresh) [G.refresh, text2DOM " Restartovat"]] ,
     div body ]) callbacks 
 
 navigation :: 

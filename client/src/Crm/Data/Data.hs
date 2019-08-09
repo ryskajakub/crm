@@ -51,6 +51,7 @@ data NavigationState =
     company :: C.Company } | 
   NotFound | 
   ServerDown |
+  Restart { password :: Text } |
   MachineScreen MachineData |
   UpkeepScreen UpkeepData |
   UpkeepHistory {

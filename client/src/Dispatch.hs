@@ -3,12 +3,12 @@
 
 module Dispatch where
 
-import           Prelude                   hiding (span, div, elem, id)
+import           Prelude                   hiding (span, div, elem, id, putStrLn)
 import qualified Prelude                   as P
 import           Data.Var                  (Var, newVar, subscribeAndRead)
 import           Data.LocalStorage
 import           Data.Defined              (fromDefined)
-import           Data.Text                 (fromString, (<>), showInt)
+import           Data.Text                 (fromString, (<>), showInt, putStrLn)
 import           Data.Maybe                (onJust, joinMaybe)
 
 import           HaskellReact              hiding (label)
@@ -27,7 +27,7 @@ import           Crm.Page.UpkeepPhoto      (addPhotoToUpkeepList, upkeepPhotos)
 import           Crm.Page.MachineSchema    (schema)
 import           Crm.Page.NotFound         (notFound, serverDown)
 import           Crm.Page.Dashboard        (dashboard)
-import           Crm.Page.Login            (login)
+import           Crm.Page.Login            (login, restart)
 import           Crm.Page.UpkeepPrint      (upkeepPrint)
 import qualified Crm.Data.Data             as D
 import qualified Crm.Data.MachineData      as MD
@@ -54,6 +54,14 @@ main' = do
       D.FrontPage ordering data' f renegates -> do
         n $ companiesList (D.focus appState) f router
           appVar' (fst ordering) (snd ordering) data' renegates
+      D.Restart password -> let
+        (body, callback) = emptyCallback $ restart appVar' router password
+        in putStrLn "here" >> simpleReactBody' body callback
+
+      D.Login password wrongPassword -> let
+        (body, callback) = emptyCallback $ login appVar' router password wrongPassword
+        in putStrLn "here lol" >> simpleReactBody' body callback
+
       D.NotFound -> n $ emptyCallback $ notFound
       D.ServerDown -> n $ emptyCallback $ serverDown
       D.CompanyDetail companyId' company' contactPersons companyTitleDisplay editing' machines' lastUpkeep -> n $

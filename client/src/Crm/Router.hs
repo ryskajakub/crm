@@ -11,6 +11,7 @@ module Crm.Router (
   link ,
   routeToText ,
 
+  restart' ,
   serverDown' ,
   login' ,
   dashboard' ,
@@ -41,6 +42,7 @@ module Crm.Router (
   calledUpkeeps' ,
   addUpkeepSubtask' ,
 
+  restart ,
   addUpkeepSubtask ,
   calledUpkeeps ,
   upkeepPhotoAdd ,
@@ -246,6 +248,9 @@ login' = prepareUnitRouteAndMkHandler "login"
 serverDown' :: RouteAndMkHandler ()
 serverDown' = prepareUnitRouteAndMkHandler "server-down"
 
+restart' :: RouteAndMkHandler ()
+restart' = prepareUnitRouteAndMkHandler "restart"
+
 upkeepPhotos' :: RouteAndMkHandler ()
 upkeepPhotos' = prepareUnitRouteAndMkHandler "upkeep-photos"
 
@@ -379,6 +384,9 @@ login = fst login' ()
 
 serverDown :: CrmRoute
 serverDown = fst serverDown' ()
+
+restart :: CrmRoute
+restart = fst restart' ()
 
 newCompany :: CrmRoute
 newCompany = fst companyDetail' leftNew
