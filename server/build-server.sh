@@ -1,2 +1,8 @@
 #!/bin/bash
-stack install --flag server:build-run-server --flag server:build-insert-pass --extra-lib-dirs=/usr/local/opt/icu4c/lib --extra-include-dirs=/usr/local/opt/icu4c/include
+stack install \
+  --flag server:build-insert-pass \
+  --flag server:build-gen-api \
+  --flag server:build-run-server \
+  --flag server:build-restart \
+  --file-watch \
+  --exec "./restart-server.sh"

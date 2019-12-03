@@ -1138,7 +1138,7 @@ initiateConnection = let
     connectUser = "haskell" ,
     connectDatabase = "crm" ,
     connectPassword = "haskell" ,
-    connectHost = "localhost" }
+    connectHost = "postgres" }
   in connect connectInfo
 
 withConnection :: (MonadIO m) => (Connection -> m a) -> m a

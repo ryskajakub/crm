@@ -11,6 +11,8 @@ module Crm.Server.Handler where
 
 import           Control.Monad               (forM_)
 
+import           Debug.Trace
+
 import qualified Codec.Binary.Base64.String  as B64
 import           Control.Monad.Error.Class   (throwError)
 import           Control.Monad.Trans.Except  (ExceptT, withExceptT)
@@ -19,6 +21,7 @@ import           Control.Monad.IO.Class      (liftIO, MonadIO)
 import qualified Crypto.Scrypt               as CS
 import           Data.Aeson.Types            (FromJSON)
 import           Data.JSON.Schema.Types      (JSONSchema)
+import qualified Data.List
 import           Data.Pool                   (withResource)
 import           Data.Text                   (pack, Text)
 import           Data.Text.Encoding          (encodeUtf8)
@@ -45,7 +48,7 @@ import           Crm.Server.Helpers
 import           TupleTH                     (reverseTuple, updateAtN)
 
 
-data PermissionType = Read | ReadWrite deriving Eq
+data PermissionType = Read | ReadWrite deriving (Eq, Show)
 
 data SessionId = Password { password :: Text }
 
@@ -86,20 +89,17 @@ verifyPassword pt connection (pass @ (Password inputPassword)) = do
         Read -> readonlyPasswordTable
         ReadWrite -> passwordTable
   dbPasswords <- liftIO $ runQuery connection $ queryTable table
-  let dbPassword' = headMay dbPasswords
-  case dbPassword' of
-    Just dbPassword -> 
+  case dbPasswords of
+    passwords -> 
       if passwordVerified
         then return ()
         else if pt == Read
           then verifyPassword ReadWrite connection pass
           else throwPasswordError "wrong password"
       where
-      passwordVerified = CS.verifyPass' passwordCandidate password'
-      password' = CS.EncryptedPass dbPassword
+      passwordVerified = Data.List.any (CS.verifyPass' passwordCandidate) encryptedPasses
+      encryptedPasses = map CS.EncryptedPass passwords
       passwordCandidate = CS.Pass . encodeUtf8 $ inputPassword
-    Nothing -> throwPasswordError
-      "password database in inconsistent state, there is either 0 or more than 1 passwords"
     where throwPasswordError = throwError . CustomReason . DomainReason . pack
 
 mkConstHandler' :: 
