@@ -79,15 +79,17 @@ upkeepPrint router appVar (date, datePickerData) employeeTasks data' employees =
   ifNonEmpty _ prepend list = prepend : list
   tasks = maybe [text2DOM ""] (\(_, tasks') -> ifNonEmpty tasks' (h3 "Další úkoly") . (:[]) . ul . renderTasks $ tasks') employeeTasks
   displayUpkeep (upkeep, company, _, machinesData) =
-      (tbody $ tr' (class' "empty-row") . tdColSpan 2 $ "|") :
-      (tbody' (class' "no-page-break") $
+    emptyRow :
       upkeepPrintDataHeader ++
-      (concat . rdrMachines $ machinesData) ++
-      generalDescription) : []
+      machines ++
+      generalDescription
+
     where
-    generalDescription = if (all isMarkupEmpty . U.workDescription $ upkeep)
+    emptyRow = tr' (class' "empty-row") . tdColSpan 2 $ "|"
+    machines = (concat . rdrMachines $ machinesData)
+    generalDescription = (if (all isMarkupEmpty . U.workDescription $ upkeep)
       then []
-      else [tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]]
+      else [tr' (class' "indent-cell") [tdColSpan 2 . renderMarkup . U.workDescription $ upkeep]]) :: [DOMElement]
     upkeepPrintDataHeader = let
       ifNonEmpty' toRender = if (null . pluckContactPersons $ machinesData) then [] else toRender
       in [
