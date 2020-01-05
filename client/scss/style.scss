@@ -365,3 +365,7 @@ tbody.past-services {
   -moz-border-radius: 0px;
   background-image: none;
 }
+
+.modal-open #photosModal {
+  overflow-x: visible;
+}
