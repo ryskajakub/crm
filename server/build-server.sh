@@ -1,8 +1,8 @@
 #!/bin/bash
 stack install \
+  --allow-different-user \
   --flag server:build-insert-pass \
   --flag server:build-gen-api \
   --flag server:build-run-server \
-  --flag server:build-restart \
-  --file-watch \
-  --exec "./restart-server.sh"
+  --flag server:build-restart
+~/.local/bin/run-server

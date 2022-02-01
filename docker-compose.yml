@@ -2,21 +2,9 @@ version: '3'
 services:
   main:
     build: .
-    depends_on:
-      - postgres
     volumes:
       - "./server:/app/server"
       - "./shared:/app/shared"
       - "./client:/app/client"
-    ports:
-      - 8000:8000
-  postgres:
-    image: postgres:9.5
-    restart: always
-    volumes:
-      - "./helpers/schema.sql:/docker-entrypoint-initdb.d/0-schema.sql"
-      - "./helpers/data.sql:/docker-entrypoint-initdb.d/1-data.sql"
-    environment:
-      POSTGRES_PASSWORD: haskell 
-      POSTGRES_USER: haskell
-      POSTGRES_DB: crm
+    command: ./build-server.sh
+    network_mode: "host"

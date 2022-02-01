@@ -14,6 +14,3 @@ RUN rm -r * .stack-work
 RUN mkdir -p /app/client
 RUN mkdir -p /app/shared
 ENV PATH="/root/.local/bin:${PATH}"
-
-ENTRYPOINT sleep 1000000000
-# RUN stack build --flag server:build-run-server 
