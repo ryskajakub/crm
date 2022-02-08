@@ -29,6 +29,7 @@ module HaskellReact.Tag.Input (
   reset ,
   search ,
   submit ,
+  select ,
   tel ,
   text ,
   time ,
@@ -40,6 +41,7 @@ import "fay-base" Prelude
 import "fay-base" Data.Text (Text, fromString)
 
 import HaskellReact.Tag.Construct
+import HaskellReact.Tag.Option
 import HaskellReact.Event
 
 type InputType = Text
@@ -162,3 +164,8 @@ textarea aAttrs iAttrs = constructDOMElement "textarea" aAttrs iAttrs (Null :: N
 password :: Attributes -> InputAttributes -> DOMElement
 password attributes inputAttributes =
   input attributes $ inputAttributes { type_ = password' }
+
+select :: Attributes -> InputAttributes -> (Text, Text) -> [(Text, Text)] -> DOMElement
+select attrs iattrs def oth = constructDOMElement "select" attrs iattrs options 
+  where
+    options = map (\opt -> option (fst opt) (snd opt) ) (def : oth) 

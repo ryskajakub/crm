@@ -14,9 +14,10 @@
     "gulp": "~3.8.10",
     "gulp-clean": "~0.3.1",
     "gulp-concat": "~2.4.1",
-    "gulp-sass": "^2.3.2",
+    "gulp-sass": "^5.1.0",
     "gulp-shell": "~0.2.10",
     "gulp-webpack": "~1.0.0",
+    "sass": "^1.49.4",
     "underscore": "~1.7.0",
     "webpack": "~1.4.9"
   },
@@ -34,5 +35,8 @@
   "author": "ryskajakub@seznam.cz",
   "bugs": {
     "url": "https://github.com/coubeatczech/crm/issues"
+  },
+  "resolutions": {
+    "graceful-fs": "^4.2.9"
   }
 }

@@ -4,4 +4,3 @@ stylesheets/
 .sass-cache/
 build/
 tmp/
-generated-api/

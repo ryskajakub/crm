@@ -1,0 +1,5 @@
+version: '3'
+services:
+  main:
+    command: bash -c "./build-server.sh && /root/.local/bin/run-server"
+    restart: always

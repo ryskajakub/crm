@@ -1,16 +1,7 @@
 version: '3'
 services:
-  main:
-    build: .
-    volumes:
-      - "./server:/app/server"
-      - "./shared:/app/shared"
-      - "./client:/app/client"
-    command: sleep 100000000
-    network_mode: "host"
   fay: 
     build: .
-    command: sleep 100000000
     volumes:
       - "./shared:/app/shared"
       - "./client:/app/client"

@@ -2,17 +2,17 @@ var gulp = require("gulp");
 var shell = require("gulp-shell");
 var clean = require('gulp-clean');
 var webpack = require('gulp-webpack');
-var sass = require('gulp-sass');
+const sass = require('gulp-sass')(require('sass'));
 var _ = require('underscore');
 
 var commonSources = [
-  '../../fay-react/core/src/' ,
-  '../../fay-react/wrappers/src/' ,
+  '../fay-react/core/src/' ,
+  '../fay-react/wrappers/src/' ,
   './shared/' ,
-  '../../fay-dom/src/' ,
-  '../../fay-jquery/src/' ,
-  '../../fay-moment/src/' ,
-  '../../fay-googlemaps/src' ];
+  '../fay-dom/src/' ,
+  '../fay-jquery/src/' ,
+  '../fay-moment/src/' ,
+  '../fay-googlemaps/src' ];
 var playgroundSources = commonSources.concat('playground/');
 var mainSources = commonSources.concat('src/').concat('generated-api/src');
 
@@ -67,7 +67,7 @@ gulp.task('copy-jquery', function () {
 });
 
 gulp.task('compile', function() {
-  var fayCommand = "/Users/ryskaj/.cabal/bin/fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js";
+  var fayCommand = "fay --no-optimized-newtypes --strict HaskellReact.ReactCalendar --pretty <%= file.path %> --include " + sourcesCommaDelimited + " --output tmp/HaskellReact.js";
   return gulp.src('src/Main.hs', {read: false})
     .pipe(shell([fayCommand]));
 });

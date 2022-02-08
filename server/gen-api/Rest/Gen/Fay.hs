@@ -31,6 +31,7 @@ import Rest.Gen.Types
 import qualified Rest.Gen.Base.ActionInfo.Ident as Ident
 import qualified Data.Generics.Uniplate.Data    as U
 
+import Debug.Trace (trace)
 
 rewriteModuleNames :: [(H.ModuleName, H.ModuleName)] -> H.Module -> H.Module
 rewriteModuleNames rews = U.transformBi $ \m -> lookupJustDef m m rews
@@ -231,7 +232,7 @@ mkFunction res (ApiAction _ lnk ai) = ([typeSignature, functionBinding], usedImp
     Delete -> "delete"
     List -> "get"
     Update -> "put"
-
+    Modify -> "modify"
 
 linkToURL :: Maybe Ident -> String -> Link -> ([H.Exp], [H.Name])
 linkToURL mId' res lnk = urlParts mId' res lnk ([], [])

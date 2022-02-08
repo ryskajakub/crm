@@ -5,4 +5,3 @@ stack install \
   --flag server:build-gen-api \
   --flag server:build-run-server \
   --flag server:build-restart
-~/.local/bin/run-server
