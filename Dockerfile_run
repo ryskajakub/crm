@@ -1,0 +1,6 @@
+FROM ubuntu:18.04
+
+RUN apt-get update && apt-get -y install curl libghc-postgresql-libpq-dev libghc-text-icu-dev libghc-gd-dev postgresql-client vim net-tools cabal-install locales npm gulp cpphs
+
+COPY run-server /run-server
+CMD /run-server

@@ -1,0 +1,4 @@
+version: '3'
+services:
+  main:
+    command: bash -c "./build-server.sh && cp /root/.local/bin/run-server /app/server/build"
