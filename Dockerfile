@@ -24,3 +24,5 @@ RUN rm -r * .stack-work
 RUN mkdir -p /app/client
 RUN mkdir -p /app/shared
 ENV PATH="/root/.local/bin:${PATH}"
+
+RUN apt-get update && apt-get -y install imagemagick
