@@ -3,6 +3,7 @@ import "bootstrap/dist/css/bootstrap.css";
 
 import { useEffect, useReducer, useState } from "react";
 import axios from "axios";
+import { DateTime } from "luxon";
 
 /**
  * @typedef { { type: "initial" } } Initial
@@ -16,14 +17,16 @@ import axios from "axios";
  * @typedef { { type: "set_failure" } } SetFailure
  * @typedef { { type: "set_success", upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } SetSuccess
  * @typedef { { type: "set_mileage", machine_id: number, mileage: number } } SetMileage
- * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string } } SetJob
+ * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string, result: import("./Data.t").ParsedValue<DateTime>["result"] } } SetJob
+ * @typedef { { type: "set_job_note", index: number, value: string } } SetJobNote
  * @typedef { { type: "set_part", index: number, field: Exclude<keyof import("./Data.t").Part, "machine_id">, value: string } } SetPart
  * @typedef { { type: "set_part_link", index: number, machine_id: number | null } } SetPartLink
  * @typedef { { type: "set_string", field: Extract<keyof import("./Data.t").FormState, "recommendation" | "description">, value: string } } SetString
  * @typedef { { type: "set_boolean", field: Extract<keyof import("./Data.t").FormState, "warranty" | "noFaults">, value: boolean } } SetBoolean
  * @typedef { { type: "remove_at_index", field: Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees">, index: number } } RemoveAtIndex
+ * @typedef { { type: "display_errors" } } DisplayErrors
  * @typedef { { type: "add_item", field: Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees"> } } AddItem
- * @typedef { SetEmployees | SetKm | SetTransport | SetFailure | SetSuccess | SetMileage | SetJob | SetPart | SetPartLink | SetString | SetBoolean | RemoveAtIndex | AddItem } Action
+ * @typedef { SetEmployees | SetKm | SetTransport | SetFailure | SetSuccess | SetMileage | SetJob | SetPart | SetPartLink | SetString | SetBoolean | RemoveAtIndex | AddItem | DisplayErrors | SetJobNote } Action
  *
  */
 
@@ -33,6 +36,12 @@ import axios from "axios";
  * @returns { import("./Data.t").Unpack<import("./Data.t").FormState[T]> }
  */
 function newItem(field) {
+  const newValidatedField = {
+    value: "",
+    error: "",
+    displayError: false,
+  };
+
   switch (field) {
     case "employees":
       // @ts-ignore
@@ -40,13 +49,13 @@ function newItem(field) {
     case "jobs":
       // @ts-ignore
       return {
-        date: "",
-        travelThereFrom: "",
-        travelThereTo: "",
-        workFrom: "",
-        workTo: "",
-        travelBackFrom: "",
-        travelBackTo: "",
+        date: newValidatedField,
+        travelThereFrom: newValidatedField,
+        travelThereTo: newValidatedField,
+        workFrom: newValidatedField,
+        workTo: newValidatedField,
+        travelBackFrom: newValidatedField,
+        travelBackTo: newValidatedField,
         note: "",
       };
     case "parts":
@@ -104,7 +113,7 @@ function renderParts(parts, machines, dispatch) {
       dispatch(setPart);
     };
     return (
-      <div className="row">
+      <div key={index} className="row">
         <div className="col-lg-1">{index + 1}</div>
         <div className="col-lg">
           <input
@@ -175,7 +184,7 @@ function renderParts(parts, machines, dispatch) {
               viewBox="0 0 16 16"
             >
               <path
-                fill-rule="evenodd"
+                fillRule="evenodd"
                 d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
               />
             </svg>
@@ -214,90 +223,149 @@ function renderParts(parts, machines, dispatch) {
 }
 
 /**
- * @param { import("./Data.t").Job[] } jobs
+ * @param { import("./Data.t").ValidatedJob[] } jobs
  * @param { React.Dispatch<Action> } dispatch
  * @returns { React.ReactElement }
  */
 function renderJobs(jobs, dispatch) {
   const jobsRendered = jobs.map((job, index) => {
-    /** @type { (field: keyof import("./Data.t").Job) => import("react").ChangeEventHandler<HTMLInputElement> } */
-    const onChange = (field) => (e) => {
+    /** @type { (field: keyof import("./Data.t").Job, parse: (value: string) => import("./Data.t").ParsedValue<DateTime>["result"]) => import("react").ChangeEventHandler<HTMLInputElement> } */
+    const onChange = (field, parse) => (e) => {
       const value = e.target.value;
+
+      const result = parse(value);
+
       /** @type { SetJob } */
       const setJob = {
         type: "set_job",
         field,
         index,
         value,
+        result,
       };
       dispatch(setJob);
     };
 
+    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<DateTime>["result"] } */
+    const parseDate = (inputValue) => {
+      const value = DateTime.fromFormat(inputValue, "d.L.y");
+
+      /** @type { import("./Data.t").ParsedValue<DateTime>["result"] } */
+      return value.isValid
+        ? { type: "ok", value }
+        : { type: "error", error: "špatné datum" };
+    };
+
+    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<DateTime>["result"] } */
+    const parseTime = (inputValue) => {
+      const value = DateTime.fromFormat(inputValue, "H:m");
+
+      if (value.isValid) {
+        return { type: "ok", value };
+      } else {
+        const value2 = DateTime.fromFormat(inputValue, "H");
+
+        /** @type { import("./Data.t").ParsedValue<DateTime>["result"] } */
+        return value2.isValid
+          ? { type: "ok", value: value2 }
+          : { type: "error", error: "špatný čas" };
+      }
+    };
+
+    /** { Extract<keyof Job, "travelThereFrom" | "travelThereTo" | "workFrom" | "workTo" | "travelBackFrom" | "travelBackTo">[] } */
+    const timeKeys = /** @type {const} */ ([
+      "travelThereFrom",
+      "travelThereTo",
+      "workFrom",
+      "workTo",
+      "travelBackFrom",
+      "travelBackTo",
+    ]);
+
     return (
-      <div className="row">
+      <div key={index} className="row">
         <div className="col-lg-2">
           <input
             type="text"
             className="form-control"
-            defaultValue={job.date}
-            onChange={onChange("date")}
-            value={jobs[index].date}
+            onChange={onChange("date", parseDate)}
+            value={job.date.value}
+            id={`date${index}`}
+          />
+          {job.date.displayError && job.date.result.type === "error" && (
+            <label htmlFor={`date${index}`} className="text-danger">
+              {job.date.result.error}
+            </label>
+          )}
+        </div>
+        <div className="col-lg-1">
+          <input
+            type="text"
+            className="form-control"
+            onChange={onChange("travelThereFrom", parseTime)}
+            value={job.travelThereFrom.value}
+            id={`travelThereFrom${index}`}
+          />
+          {job.date.displayError && job.date.result.type === "error" && (
+            <label htmlFor={`travelThereFrom${index}`} className="text-danger">
+              {job.date.result.error}
+            </label>
+          )}
+        </div>
+        <div className="col-lg-1">
+          <input
+            type="text"
+            className="form-control"
+            onChange={onChange("travelThereTo", parseTime)}
+            value={job.travelThereTo.value}
           />
         </div>
         <div className="col-lg-1">
           <input
             type="text"
             className="form-control"
-            onChange={onChange("travelThereFrom")}
-            value={jobs[index].travelThereFrom}
+            onChange={onChange("workFrom", parseTime)}
+            value={job.workFrom.value}
           />
         </div>
         <div className="col-lg-1">
           <input
             type="text"
             className="form-control"
-            onChange={onChange("travelThereTo")}
-            value={jobs[index].travelThereTo}
+            onChange={onChange("workTo", parseTime)}
+            value={job.workTo.value}
           />
         </div>
         <div className="col-lg-1">
           <input
             type="text"
             className="form-control"
-            onChange={onChange("workFrom")}
-            value={jobs[index].workFrom}
+            onChange={onChange("travelBackFrom", parseTime)}
+            value={job.travelBackFrom.value}
           />
         </div>
         <div className="col-lg-1">
           <input
             type="text"
             className="form-control"
-            onChange={onChange("workTo")}
-            value={jobs[index].workTo}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelBackFrom")}
-            value={jobs[index].travelBackFrom}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelBackTo")}
-            value={jobs[index].travelBackTo}
+            onChange={onChange("travelBackTo", parseTime)}
+            value={job.travelBackTo.value}
           />
         </div>
         <div className="col-lg">
           <input
             type="text"
             className="form-control"
-            onChange={onChange("note")}
-            value={jobs[index].note}
+            onChange={(e) => {
+              /** @type { SetJobNote } */
+              const setJobNote = {
+                type: "set_job_note",
+                index,
+                value: e.target.value,
+              };
+              dispatch(setJobNote);
+            }}
+            value={job.note}
           />
         </div>
         <div className="col-lg-1">
@@ -318,7 +386,7 @@ function renderJobs(jobs, dispatch) {
                 viewBox="0 0 16 16"
               >
                 <path
-                  fill-rule="evenodd"
+                  fillRule="evenodd"
                   d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
                 />
               </svg>
@@ -451,7 +519,7 @@ function renderEmployees(employees, available_employees, dispatch) {
               viewBox="0 0 16 16"
             >
               <path
-                fill-rule="evenodd"
+                fillRule="evenodd"
                 d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
               />
             </svg>
@@ -548,7 +616,18 @@ const App = () => {
         return setPartialState((success) => ({
           jobs: replaceAtIndex(success.formState.jobs, action.index, {
             ...success.formState.jobs[action.index],
-            [action.field]: action.value,
+            [action.field]: {
+              ...success.formState.jobs[action.index],
+              result: action.result,
+              value: action.value,
+            },
+          }),
+        }));
+      case "set_job_note":
+        return setPartialState((success) => ({
+          jobs: replaceAtIndex(success.formState.jobs, action.index, {
+            ...success.formState.jobs[action.index],
+            note: action.value,
           }),
         }));
       case "set_part":
@@ -578,11 +657,29 @@ const App = () => {
         }));
       case "remove_at_index":
         return setPartialState((state) => ({
-          // @ts-ignore
           [action.field]: removeAtIndex(
+            // @ts-ignore
             state.formState[action.field],
             action.index
           ),
+        }));
+      case "display_errors":
+        /** @type { <A>(validatedValue: import("./Data.t").ParsedValue<A> ) => import("./Data.t").ParsedValue<A> } */
+        const displayError = (validatedValue) => ({
+          ...validatedValue,
+          displayError: true,
+        });
+        return setPartialState((state) => ({
+          jobs: state.formState.jobs.map((job) => ({
+            ...job,
+            date: displayError(job.date),
+            travelThereFrom: displayError(job.travelThereFrom),
+            travelThereTo: displayError(job.travelThereTo),
+            workFrom: displayError(job.workFrom),
+            workTo: displayError(job.workTo),
+            travelBackFrom: displayError(job.travelBackFrom),
+            travelBackTo: displayError(job.travelBackTo),
+          })),
         }));
     }
   };
@@ -607,6 +704,9 @@ const App = () => {
         const defaultDate = `${upkeep.date.getDate()}. ${
           upkeep.date.getMonth() + 1
         }. ${upkeep.date.getFullYear()}`;
+
+        const newJob = newItem("jobs");
+
         /** @type { import("./Data.t").FormState } */
         const formState = {
           employees: upkeep.employees,
@@ -615,8 +715,11 @@ const App = () => {
           mileages: {},
           jobs: [
             {
-              ...newItem("jobs"),
-              date: defaultDate,
+              ...newJob,
+              date: {
+                ...newJob.date,
+                value: defaultDate,
+              },
             },
           ],
           parts: [newItem("parts")],
@@ -656,7 +759,12 @@ const App = () => {
   /** @type {(data: import("./Data.t").Upkeep, state: import("./Data.t").FormState) => React.ReactElement} */
   const renderData = (data, state) => {
     return (
-      <form>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          dispatch({ type: "display_errors" });
+        }}
+      >
         <div className="container-lg">
           <div className="row">
             <div className="col-lg-8 mb-4">
@@ -898,6 +1006,13 @@ const App = () => {
                   Ne
                 </label>
               </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-lg-6">
+              <button type="submit" className="btn btn-primary btn-lg">
+                Dokončit
+              </button>
             </div>
           </div>
           <div className="row">

@@ -1,3 +1,5 @@
+import { DateTime } from "luxon";
+
 export type Unpack<A extends any[]> = A extends (infer B)[] ? B : never;
 
 export type FormState = {
@@ -5,12 +7,18 @@ export type FormState = {
   km: number;
   transport: Transport;
   mileages: Record<number, number>;
-  jobs: Job[];
+  jobs: ValidatedJob[];
   parts: Part[];
   description: string;
   recommendation: string;
   warranty: boolean | null;
   noFaults: boolean | null;
+};
+
+export type ParsedValue<A> = {
+  value: string;
+  result: { type: "error"; error: string } | { type: "ok"; value: A };
+  displayError: boolean;
 };
 
 export type Job = {
@@ -23,6 +31,11 @@ export type Job = {
   travelBackTo: string;
   note: string;
 };
+
+export type ValidatedJob = {
+  [K in Exclude<keyof Job, "note">]: ParsedValue<DateTime>;
+} &
+  Pick<Job, "note">;
 
 export type Part = {
   number: string;
