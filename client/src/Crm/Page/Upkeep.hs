@@ -29,6 +29,7 @@ import qualified Crm.Shared.Upkeep                as U
 import qualified Crm.Shared.Employee              as E
 import qualified Crm.Shared.UpkeepMachine         as UM
 import qualified Crm.Shared.UpkeepSequence        as US
+import qualified Crm.Shared.Upkeep                as U
 
 import qualified Crm.Data.Data                    as D
 import qualified Crm.Data.UpkeepData              as UD
@@ -71,7 +72,8 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
       th "Poznámky" ,
       th "Datum" ,
       th $ B.tooltip (B.TooltipData "tooltip" (Defined "left") (Defined "Přeplánovat") Undefined) G.edit ,
-      th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ]
+      th $ B.tooltip (B.TooltipData "tooltip" (Defined "right") (Defined "Uzavřít") Undefined) G.check ,
+      th $ "List" ]
     body = tbody $ map (\(upkeepId, upkeep, superUpkeepId, companyId, company, notes, employees) -> let
 
       (cName, cAddress) = maybe ([R.link
@@ -103,7 +105,8 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
         td $ R.link
           (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Uzavřít") Undefined) G.check)
           (R.upkeepDetail upkeepId)
-          router ]) data'
+          router ,
+        td $ A.a ("/ts/list?id=" <> (fromString . show . U.getUpkeepId $ upkeepId)) "List"]) data'
 
   pageInfo' = pageInfo pageTitle $ Just pageAdvice
 

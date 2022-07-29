@@ -10,7 +10,7 @@ services:
     network_mode: "host"
   fay: 
     build: .
-    command: sleep 100000000
+    command: bash -c "./build-server.sh && /root/.local/bin/run-server"
     volumes:
       - "./shared:/app/shared"
       - "./client:/app/client"
