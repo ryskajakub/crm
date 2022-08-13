@@ -36,10 +36,14 @@ import { DateTime } from "luxon";
  * @returns { import("./Data.t").Unpack<import("./Data.t").FormState[T]> }
  */
 function newItem(field) {
+  /** @type {import("./Data.t").ParsedValue<any>} */
   const newValidatedField = {
     value: "",
-    error: "",
     displayError: false,
+    result: {
+      type: "error",
+      error: "",
+    },
   };
 
   switch (field) {
@@ -298,60 +302,26 @@ function renderJobs(jobs, dispatch) {
             </label>
           )}
         </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelThereFrom", parseTime)}
-            value={job.travelThereFrom.value}
-            id={`travelThereFrom${index}`}
-          />
-          {job.date.displayError && job.date.result.type === "error" && (
-            <label htmlFor={`travelThereFrom${index}`} className="text-danger">
-              {job.date.result.error}
-            </label>
-          )}
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelThereTo", parseTime)}
-            value={job.travelThereTo.value}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("workFrom", parseTime)}
-            value={job.workFrom.value}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("workTo", parseTime)}
-            value={job.workTo.value}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelBackFrom", parseTime)}
-            value={job.travelBackFrom.value}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("travelBackTo", parseTime)}
-            value={job.travelBackTo.value}
-          />
-        </div>
+
+        {timeKeys.map((timeKey) => {
+          const result = job[timeKey].result;
+          return (
+            <div key={timeKey} className="col-lg-1">
+              <input
+                type="text"
+                className="form-control"
+                onChange={onChange(timeKey, parseTime)}
+                value={job[timeKey].value}
+                id={`${timeKey}${index}`}
+              />
+              {job[timeKey].displayError && result.type === "error" && (
+                <label htmlFor={`${timeKey}${index}`} className="text-danger">
+                  {result.error}
+                </label>
+              )}
+            </div>
+          );
+        })}
         <div className="col-lg">
           <input
             type="text"
