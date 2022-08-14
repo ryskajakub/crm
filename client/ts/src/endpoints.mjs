@@ -18,6 +18,18 @@ const clientConfig = {
 
 app.use(bodyParser.json());
 
+// /** (upkeepId: number) => Promise<null | ParsedForm> */
+// const queryFormData(upkeepId) => {
+//   const client = new Client(clientConfig);
+//   try {
+//     await client.connect();
+//     client.query()
+//   } catch {
+//   } finally {
+//     client.end();
+//   }
+// }
+
 app.get("/tsapi/data/:id", async (req, res) => {
   const client = new Client(clientConfig);
   try {
@@ -72,22 +84,25 @@ app.put("/tsapi/data/:id", async (req, res) => {
   /** @type { import("./Data.t").ParsedForm } */
   const body = {
     ...rawBody,
-    jobs: rawBody.jobs.map((j) => ({
-      ...j,
-      date: new Date(j.date),
-      travelThereFrom: new Date(j.travelThereFrom),
-      travelThereTo: new Date(j.travelThereTo),
-      workFrom: new Date(j.workFrom),
-      workTo: new Date(j.workTo),
-      travelBackFrom: new Date(j.travelBackFrom),
-      travelBackTo: new Date(j.travelBackTo),
-    })),
+    jobs: rawBody.jobs.map((j) => {
+      return {
+        ...j,
+        date: new Date(j.date),
+        travelThereFrom: new Date(j.travelThereFrom),
+        travelThereTo: new Date(j.travelThereTo),
+        workFrom: new Date(j.workFrom),
+        workTo: new Date(j.workTo),
+        travelBackFrom: new Date(j.travelBackFrom),
+        travelBackTo: new Date(j.travelBackTo),
+      };
+    }),
   };
 
   const client = new Client(clientConfig);
   try {
     await client.connect();
-    client.query(`delete from upkeep_employees where upkeep_id = $1`, [
+    await client.query(`BEGIN TRANSACTION`);
+    await client.query(`delete from upkeep_employees where upkeep_id = $1`, [
       upkeepId,
     ]);
     await Promise.all(
@@ -99,7 +114,7 @@ app.put("/tsapi/data/:id", async (req, res) => {
       })
     );
     await client.query(
-      `update upkeeps set work_description = $1, recommendation = $2 where upkeep_id = $3`,
+      `update upkeeps set work_description = $1, recommendation = $2 where id = $3`,
       [body.description, body.recommendation, upkeepId]
     );
     await client.query(
@@ -114,30 +129,36 @@ app.put("/tsapi/data/:id", async (req, res) => {
     await Promise.all(
       body.parts.map(async (part) => {
         return await client.query(
-          `insert into upkeep_parts(upkeep_id, number, name, quantity, machine_id) values ($1, $2, $3, $4, $5)`,
+          `insert into upkeep_form_parts(upkeep_id, number, name, quantity, machine_id) values ($1, $2, $3, $4, $5)`,
           [upkeepId, part.number, part.name, part.quantity, part.machine_id]
         );
       })
     );
     await Promise.all(
       body.jobs.map(async (job) => {
+        /** @type {(date: Date) => string} */
+        const toTime = (date) => `${date.getHours()}:${date.getMinutes()}`;
+
         return await client.query(
-          `insert into upkeep_jobs(upkeep_id, date_, travel_there_from, travel_there_to, work_from, work_to, travel_back_from, travel_back_to, note) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+          `insert into upkeep_form_jobs(upkeep_id, date_, travel_there_from, travel_there_to, work_from, work_to, travel_back_from, travel_back_to, note) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             upkeepId,
             job.date,
-            job.travelThereFrom,
-            job.travelThereTo,
-            job.workFrom,
-            job.workTo,
-            job.travelBackFrom,
-            job.travelBackTo,
+            toTime(job.travelThereFrom),
+            toTime(job.travelThereTo),
+            toTime(job.workFrom),
+            toTime(job.workTo),
+            toTime(job.travelBackFrom),
+            toTime(job.travelBackTo),
             job.note,
           ]
         );
       })
     );
+    await client.query("COMMIT");
+    res.send();
   } catch (e) {
+    await client.query("ROLLBACK");
     console.log(e);
     res.status(500).send();
   } finally {
@@ -154,7 +175,7 @@ app.put("/tsapi/upload/:upkeepId", async (req, res) => {
   try {
     await client.connect();
     client.query(
-      `insert into upkeep_signatures(upkeep_id, theirs, ours) values ($1, $2, $3)`,
+      `insert into upkeep_form_signatures(upkeep_id, theirs, ours) values ($1, $2, $3)`,
       [upkeepId, data.theirs, data.ours]
     );
   } catch (e) {
@@ -164,11 +185,8 @@ app.put("/tsapi/upload/:upkeepId", async (req, res) => {
     return client.end();
   }
 
-  // @ts-ignore
   res.send();
 });
-
-app.get;
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);

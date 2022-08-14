@@ -89,7 +89,7 @@ function newItem(field) {
     displayError: false,
     result: {
       type: "error",
-      error: "",
+      error: "Nevyplněno",
     },
   };
 
@@ -292,7 +292,6 @@ function renderParts(signature, parts, machines, dispatch) {
   ];
 
   return [
-    ...partsRenderedRows,
     div({ className: "row" }, [
       div({ className: "col-lg-1" }, strong("Pořadí")),
       div({ className: "col-lg" }, strong("Číslo materiálu")),
@@ -301,6 +300,7 @@ function renderParts(signature, parts, machines, dispatch) {
       div({ className: "col-lg-2" }, strong("Zařízení")),
       div({ className: "col-lg-1" }),
     ]),
+    ...partsRenderedRows,
   ];
 }
 
@@ -480,7 +480,6 @@ function renderJobs(signature, jobs, dispatch) {
   ];
 
   return [
-    ...renderedJobRows,
     div({ className: "row" }, [
       div({ className: "col-lg-1" }, strong("Den, rok")),
       div({ className: "col-lg" }, strong("Cesta tam")),
@@ -499,6 +498,7 @@ function renderJobs(signature, jobs, dispatch) {
       div({ className: "col-lg" }),
       div({ className: "col-lg-1" }),
     ]),
+    ...renderedJobRows,
   ];
 }
 
@@ -506,9 +506,10 @@ function renderJobs(signature, jobs, dispatch) {
  * @param { boolean } signature
  * @param { import("./Data.t").Upkeep["machines"] } machines
  * @param { React.Dispatch<Action> } dispatch
+ * @param { Record<number, number> } mileages
  * @returns { React.ReactElement[] }
  */
-function renderMachines(signature, machines, dispatch) {
+function renderMachines(signature, machines, mileages, dispatch) {
   const renderedMachines = machines.map((machine) => {
     return div({ key: machine.machine_id, className: "row" }, [
       div(
@@ -521,7 +522,7 @@ function renderMachines(signature, machines, dispatch) {
         input({
           type: "number",
           className: "form-control",
-          value: machine.mileage,
+          value: mileages[machine.machine_id],
           onChange: (e) => {
             const value = Number(e.target.value);
             dispatch({
@@ -849,6 +850,10 @@ export const App = (appProps) => {
               date: {
                 ...newJob.date,
                 value: defaultDate,
+                result: {
+                  type: "ok",
+                  value: DateTime.fromJSDate(upkeep.date),
+                },
               },
             },
           ],
@@ -928,7 +933,7 @@ export const App = (appProps) => {
             /** @type {SubmitJob[]} */ [{ date: job.date }]
           );
           // @ts-ignore
-          return r;
+          return {...r[0], note: job.note};
         };
 
         /** @type {import("./Data.t").ParsedForm} */
@@ -941,7 +946,7 @@ export const App = (appProps) => {
         };
 
         await axios.put(`/tsapi/data/${upkeepId}`, parsedForm);
-        window.location.href = window.location.href + `&signature=true`;
+        // window.location.href = window.location.href + `&signature=true`;
       }
     };
 
@@ -1069,24 +1074,20 @@ export const App = (appProps) => {
 
     const radiosRow = div({ className: "row" }, [
       div({ className: "col-lg-12" }, "Rozhodnutí o závadě"),
-      div(
-        { className: "col-lg-6" },
-        mkCheckboxes("warranty", "Záruční oprava"),
-        mkCheckboxes(
-          "noFaults",
-          "Zařízení bylo zprovozněno a pracuje bez závad"
-        )
-      ),
+      mkCheckboxes("warranty", "Záruční oprava"),
+      mkCheckboxes("noFaults", "Zařízení bylo zprovozněno a pracuje bez závad"),
     ]);
 
     const submitButton = when(
       !signature,
       div(
         { className: "row" },
-        div({ className: "col-lg-6" }),
-        button(
-          { type: "submit", className: "btn btn-primary btn-lg" },
-          "Dokončit"
+        div(
+          { className: "col-lg-6" },
+          button(
+            { type: "submit", className: "btn btn-primary btn-lg" },
+            "Dokončit"
+          )
         )
       )
     );
@@ -1167,16 +1168,15 @@ export const App = (appProps) => {
           data.available_employees,
           dispatch
         ),
-        ...renderMachines(signature, data.machines, dispatch),
+        ...renderMachines(signature, data.machines, state.mileages, dispatch),
         ...renderJobs(signature, state.jobs, dispatch),
         ...renderParts(signature, state.parts, data.machines, dispatch),
         textareas,
         radiosRow,
         submitButton,
-        ...mkSignatures()
+        ...mkSignatures(),
       ])
     );
-
   };
 
   const renderFailure = () => {
@@ -1217,11 +1217,7 @@ export const App = (appProps) => {
   } else {
     switch (state.type) {
       case "success":
-        return renderData(
-          state.upkeep,
-          state.formState,
-          state.upkeepId
-        );
+        return renderData(state.upkeep, state.formState, state.upkeepId);
       case "failure":
         return renderFailure();
       case "initial":
