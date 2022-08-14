@@ -4,7 +4,6 @@ import SignatureCanvas from "react-signature-canvas";
 import { useEffect, useReducer, useRef, useState } from "react";
 import axios from "axios";
 import { DateTime } from "luxon";
-import React from "react";
 
 import h from "react-hyperscript";
 import hh from "hyperscript-helpers";
