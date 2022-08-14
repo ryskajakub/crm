@@ -1,5 +1,13 @@
 import { DateTime } from "luxon";
 
+export type Payload<T> = T extends Date
+  ? string
+  : T extends {}
+  ? { [K in keyof T]: Payload<T[K]> }
+  : T extends [infer X]
+  ? [Payload<X>]
+  : T;
+
 export type Unpack<A extends any[]> = A extends (infer B)[] ? B : never;
 
 export type FormState = {
@@ -11,12 +19,22 @@ export type FormState = {
   parts: Part[];
   description: string;
   recommendation: string;
-  warranty: boolean | null;
-  noFaults: boolean | null;
+  warranty: ParsedValue<boolean | null, boolean>;
+  noFaults: ParsedValue<boolean | null, boolean>;
 };
 
-export type ParsedValue<A> = {
-  value: string;
+export type ParsedForm = Omit<
+  FormState,
+  "jobs" | "warranty" | "noFaults" | "employees"
+> & {
+  employees: number[];
+  jobs: SubmitJob[];
+  warranty: boolean;
+  noFaults: boolean;
+};
+
+export type ParsedValue<Value, A> = {
+  value: Value;
   result: { type: "error"; error: string } | { type: "ok"; value: A };
   displayError: boolean;
 };
@@ -32,10 +50,13 @@ export type Job = {
   note: string;
 };
 
-export type ValidatedJob = {
-  [K in Exclude<keyof Job, "note">]: ParsedValue<DateTime>;
+export type TypedJob<T> = {
+  [K in Exclude<keyof Job, "note">]: T;
 } &
   Pick<Job, "note">;
+
+export type ValidatedJob = TypedJob<ParsedValue<string, DateTime>>;
+export type SubmitJob = TypedJob<Date>;
 
 export type Part = {
   number: string;
@@ -45,6 +66,11 @@ export type Part = {
 };
 
 export type Transport = "reality" | "km";
+
+export type Signatures = {
+  ours: string;
+  theirs: string;
+};
 
 export type Upkeep = {
   company_name: string;

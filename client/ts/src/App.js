@@ -1,13 +1,24 @@
-import "./App.css";
 import "bootstrap/dist/css/bootstrap.css";
 
-import { useEffect, useReducer, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
+import { useEffect, useReducer, useRef, useState } from "react";
 import axios from "axios";
 import { DateTime } from "luxon";
+import React from "react";
+
+import h from "react-hyperscript";
+import hh from "hyperscript-helpers";
+
+// @ts-ignore
+import svgs from "hyperscript-helpers/dist/svg";
+
+const { div, strong, input, select, option, button, svg, label } = hh(h);
+/** @type {{ path: import("hyperscript-helpers").HyperScriptHelperFn }} */
+const { path } = svgs(h);
 
 /**
  * @typedef { { type: "initial" } } Initial
- * @typedef { { type: "success", upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } Success
+ * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState, signature: boolean } } Success
  * @typedef { { type: "failure" } } Failure
  * @typedef { Initial | Success | Failure } State
  *
@@ -15,20 +26,42 @@ import { DateTime } from "luxon";
  * @typedef { { type: "set_km", km: number } } SetKm
  * @typedef { { type: "set_transport", transport: import("./Data.t").Transport } } SetTransport
  * @typedef { { type: "set_failure" } } SetFailure
- * @typedef { { type: "set_success", upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } SetSuccess
+ * @typedef { { type: "set_success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState, signature: boolean } } SetSuccess
  * @typedef { { type: "set_mileage", machine_id: number, mileage: number } } SetMileage
- * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string, result: import("./Data.t").ParsedValue<DateTime>["result"] } } SetJob
+ * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string, result: import("./Data.t").ParsedValue<string, DateTime>["result"] } } SetJob
  * @typedef { { type: "set_job_note", index: number, value: string } } SetJobNote
  * @typedef { { type: "set_part", index: number, field: Exclude<keyof import("./Data.t").Part, "machine_id">, value: string } } SetPart
  * @typedef { { type: "set_part_link", index: number, machine_id: number | null } } SetPartLink
  * @typedef { { type: "set_string", field: Extract<keyof import("./Data.t").FormState, "recommendation" | "description">, value: string } } SetString
- * @typedef { { type: "set_boolean", field: Extract<keyof import("./Data.t").FormState, "warranty" | "noFaults">, value: boolean } } SetBoolean
+ * @typedef { { type: "set_boolean", field: Extract<keyof import("./Data.t").FormState, "warranty" | "noFaults">, value: import("./Data.t").ParsedValue<null | boolean, boolean> } } SetBoolean
  * @typedef { { type: "remove_at_index", field: Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees">, index: number } } RemoveAtIndex
  * @typedef { { type: "display_errors" } } DisplayErrors
  * @typedef { { type: "add_item", field: Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees"> } } AddItem
  * @typedef { SetEmployees | SetKm | SetTransport | SetFailure | SetSuccess | SetMileage | SetJob | SetPart | SetPartLink | SetString | SetBoolean | RemoveAtIndex | AddItem | DisplayErrors | SetJobNote } Action
- *
+ * @typedef {Extract<keyof import("./Data.t").Job, "travelThereFrom" | "travelThereTo" | "workFrom" | "workTo" | "travelBackFrom" | "travelBackTo">} TimeKey
  */
+
+/** @type {(condition: boolean, element: React.ReactElement) => React.ReactElement} */
+const when = (condition, element) => {
+  if (condition) {
+    return element;
+  } else {
+    return h(React.Fragment);
+  }
+};
+
+/** @type { readonly TimeKey[] } */
+const timeKeys = /** @type {const} */ ([
+  "travelThereFrom",
+  "travelThereTo",
+  "workFrom",
+  "workTo",
+  "travelBackFrom",
+  "travelBackTo",
+]);
+
+/** @type { readonly (Extract<keyof import("./Data.t").Job, "date"> | TimeKey)[] } */
+const validatedJobKeys = [...timeKeys, "date"];
 
 /**
  * @template {Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees">} T
@@ -36,7 +69,7 @@ import { DateTime } from "luxon";
  * @returns { import("./Data.t").Unpack<import("./Data.t").FormState[T]> }
  */
 function newItem(field) {
-  /** @type {import("./Data.t").ParsedValue<any>} */
+  /** @type {import("./Data.t").ParsedValue<string, DateTime>} */
   const newValidatedField = {
     value: "",
     displayError: false,
@@ -97,12 +130,13 @@ function removeAtIndex(array, index) {
 }
 
 /**
+ * @param { boolean } signature
  * @param { import("./Data.t").Part[] } parts
  * @param { Pick<import("./Data.t").Unpack<import("./Data.t").Upkeep["machines"]>, "machine_id" | "serial_number" | "manufacturer">[] } machines
  * @param { React.Dispatch<Action> } dispatch
- * @returns { React.ReactElement }
+ * @returns { React.ReactElement[] }
  */
-function renderParts(parts, machines, dispatch) {
+function renderParts(signature, parts, machines, dispatch) {
   const partsRendered = parts.map((part, index) => {
     /** @type { (field: SetPart["field"]) => import("react").ChangeEventHandler<HTMLInputElement> } */
     const onChange = (field) => (e) => {
@@ -116,37 +150,41 @@ function renderParts(parts, machines, dispatch) {
       };
       dispatch(setPart);
     };
-    return (
-      <div key={index} className="row">
-        <div className="col-lg-1">{index + 1}</div>
-        <div className="col-lg">
-          <input
-            type="text"
-            className="form-control"
-            value={parts[index].number}
-            onChange={onChange("number")}
-          />
-        </div>
-        <div className="col-lg">
-          <input
-            type="text"
-            className="form-control"
-            value={parts[index].name}
-            onChange={onChange("name")}
-          />
-        </div>
-        <div className="col-lg-1">
-          <input
-            type="text"
-            className="form-control"
-            value={parts[index].quantity}
-            onChange={onChange("quantity")}
-          />
-        </div>
-        <div className="col-lg-2">
-          <select
-            value={part.machine_id || "---"}
-            onChange={(e) => {
+    return div({ key: index, className: "row" }, [
+      div({ className: "col-lg-1" }, index + 1),
+      div(
+        { className: "col-lg" },
+        input({
+          type: "text",
+          className: "form-control",
+          value: parts[index].number,
+          onChange: onChange("number"),
+        })
+      ),
+      div(
+        { className: "col-lg" },
+        input({
+          type: "text",
+          className: "form-control",
+          value: parts[index].name,
+          onChange: onChange("name"),
+        })
+      ),
+      div(
+        { className: "col-lg-1" },
+        input({
+          type: "text",
+          className: "form-control",
+          value: parts[index].quantity,
+          onChange: onChange("quantity"),
+        })
+      ),
+      div(
+        { className: "col-lg-2" },
+        select(
+          {
+            value: part.machine_id || "---",
+            onChange: (e) => {
               const value = e.target.value;
               const valueParsed = value === "---" ? null : Number(value);
               /** @type { SetPartLink } */
@@ -156,84 +194,99 @@ function renderParts(parts, machines, dispatch) {
                 machine_id: valueParsed,
               };
               dispatch(setParkLink);
-            }}
-            className="form-select"
-          >
-            <option key={null} value="---">
-              ---
-            </option>
-            {machines.map((m) => {
-              return (
-                <option key={m.machine_id} value={m.machine_id}>
-                  {m.manufacturer} {m.serial_number}
-                </option>
-              );
-            })}
-          </select>
-        </div>
-        <div className="col-lg-1">
-          <button
-            className="btn btn-danger"
-            type="button"
-            onClick={() =>
-              dispatch({ type: "remove_at_index", field: "parts", index })
-            }
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-dash-lg"
-              viewBox="0 0 16 16"
-            >
-              <path
-                fillRule="evenodd"
-                d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
-              />
-            </svg>
-          </button>
-        </div>
-      </div>
-    );
+            },
+            className: "form-select",
+          },
+          [
+            option({ key: null, value: "---" }, "---"),
+            ...[
+              machines.map((m) => {
+                return option(
+                  { key: m.machine_id, value: m.machine_id },
+                  `${m.manufacturer} ${m.serial_number}`
+                );
+              }),
+            ],
+          ]
+        )
+      ),
+      div(
+        { className: "col-lg-1" },
+        signature
+          ? ""
+          : button(
+              {
+                className: "btn btn-danger",
+                type: "button",
+                onClick: () =>
+                  dispatch({ type: "remove_at_index", field: "parts", index }),
+              },
+              svg(
+                {
+                  xmlns: "http://www.w3.org/2000/svg",
+                  width: "16",
+                  height: "16",
+                  fill: "currentColor",
+                  className: "bi bi-dash-lg",
+                  viewBox: "0 0 16 16",
+                },
+                path({
+                  fillRule: "evenodd",
+                  d:
+                    "M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z",
+                })
+              )
+            )
+      ),
+    ]);
   });
-  return (
-    <>
-      {partsRendered}
-      <div className="row">
-        <div className="col-lg-12">
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={() => {
-              dispatch({ type: "add_item", field: "parts" });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-plus"
-              viewBox="0 0 16 16"
-            >
-              <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </>
-  );
+  return [
+    ...partsRendered,
+    signature
+      ? ""
+      : div(
+          { className: "row" },
+          div(
+            {
+              className: "col-lg-12",
+            },
+            button(
+              {
+                type: "button",
+                className: "btn btn-primary",
+                onClick: () => {
+                  dispatch({ type: "add_item", field: "parts" });
+                },
+              },
+              svg(
+                {
+                  xmlns: "http://www.w3.org/2000/svg",
+                  width: "16",
+                  height: "16",
+                  fill: "currentColor",
+                  className: "bi bi-plus",
+                  viewBox: "0 0 16 16",
+                },
+                path({
+                  d:
+                    "M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z",
+                })
+              )
+            )
+          )
+        ),
+  ];
 }
 
 /**
+ * @param { boolean } signature
  * @param { import("./Data.t").ValidatedJob[] } jobs
  * @param { React.Dispatch<Action> } dispatch
- * @returns { React.ReactElement }
+ * @returns { React.ReactElement[] }
  */
-function renderJobs(jobs, dispatch) {
+function renderJobs(signature, jobs, dispatch) {
   const jobsRendered = jobs.map((job, index) => {
-    /** @type { (field: keyof import("./Data.t").Job, parse: (value: string) => import("./Data.t").ParsedValue<DateTime>["result"]) => import("react").ChangeEventHandler<HTMLInputElement> } */
+    /** @type { (field: keyof import("./Data.t").Job, parse: (value: string) => import("./Data.t").ParsedValue<string, DateTime>["result"]) => import("react").ChangeEventHandler<HTMLInputElement> } */
     const onChange = (field, parse) => (e) => {
       const value = e.target.value;
 
@@ -250,17 +303,17 @@ function renderJobs(jobs, dispatch) {
       dispatch(setJob);
     };
 
-    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<DateTime>["result"] } */
+    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<string, DateTime>["result"] } */
     const parseDate = (inputValue) => {
       const value = DateTime.fromFormat(inputValue, "d.L.y");
 
-      /** @type { import("./Data.t").ParsedValue<DateTime>["result"] } */
+      /** @type { import("./Data.t").ParsedValue<string, DateTime>["result"] } */
       return value.isValid
         ? { type: "ok", value }
         : { type: "error", error: "špatné datum" };
     };
 
-    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<DateTime>["result"] } */
+    /** @type { (inputValue: string) => import("./Data.t").ParsedValue<string, DateTime>["result"] } */
     const parseTime = (inputValue) => {
       const value = DateTime.fromFormat(inputValue, "H:m");
 
@@ -269,174 +322,180 @@ function renderJobs(jobs, dispatch) {
       } else {
         const value2 = DateTime.fromFormat(inputValue, "H");
 
-        /** @type { import("./Data.t").ParsedValue<DateTime>["result"] } */
+        /** @type { import("./Data.t").ParsedValue<string, DateTime>["result"] } */
         return value2.isValid
           ? { type: "ok", value: value2 }
           : { type: "error", error: "špatný čas" };
       }
     };
 
-    /** { Extract<keyof Job, "travelThereFrom" | "travelThereTo" | "workFrom" | "workTo" | "travelBackFrom" | "travelBackTo">[] } */
-    const timeKeys = /** @type {const} */ ([
-      "travelThereFrom",
-      "travelThereTo",
-      "workFrom",
-      "workTo",
-      "travelBackFrom",
-      "travelBackTo",
+    return div({ key: index, className: "row" }, [
+      div({ className: "col-lg-2" }, [
+        input({
+          type: "text",
+          className: "form-control",
+          onChange: onChange("date", parseDate),
+          value: job.date.value,
+          id: `date${index}`,
+        }),
+        job.date.displayError && job.date.result.type === "error"
+          ? label(
+              { htmlFor: `date${index}`, className: "text-danger" },
+              job.date.result.error
+            )
+          : "",
+      ]),
+      ...timeKeys.map((timeKey) => {
+        const result = job[timeKey].result;
+        return div({ key: timeKey, className: "col-lg-1" }, [
+          input({
+            type: "text",
+            className: "form-control",
+            onChange: onChange(timeKey, parseTime),
+            value: job[timeKey].value,
+            id: `${timeKey}${index}`,
+          }),
+          job[timeKey].displayError && result.type === "error"
+            ? label(
+                { htmlFor: `${timeKey}${index}`, className: "text-danger" },
+                result.error
+              )
+            : "",
+        ]);
+      }),
+      div(
+        { className: "col-lg" },
+        input({
+          type: "text",
+          className: "form-control",
+          onChange: (e) => {
+            /** @type { SetJobNote } */
+            const setJobNote = {
+              type: "set_job_note",
+              index,
+              value: e.target.value,
+            };
+            dispatch(setJobNote);
+          },
+          value: job.note,
+        })
+      ),
+      div(
+        { className: "col-lg-1" },
+        when(
+          index !== 0 && !signature,
+          button(
+            {
+              className: "btn btn-danger",
+              type: "button",
+              onClick: () =>
+                dispatch({ type: "remove_at_index", field: "jobs", index }),
+            },
+            svg(
+              {
+                xmlns: "http://www.w3.org/2000/svg",
+                width: "16",
+                height: "16",
+                fill: "currentColor",
+                className: "bi bi-dash-lg",
+                viewBox: "0 0 16 16",
+              },
+              path({
+                fillRule: "evenodd",
+                d:
+                  "M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z",
+              })
+            )
+          )
+        )
+      ),
     ]);
-
-    return (
-      <div key={index} className="row">
-        <div className="col-lg-2">
-          <input
-            type="text"
-            className="form-control"
-            onChange={onChange("date", parseDate)}
-            value={job.date.value}
-            id={`date${index}`}
-          />
-          {job.date.displayError && job.date.result.type === "error" && (
-            <label htmlFor={`date${index}`} className="text-danger">
-              {job.date.result.error}
-            </label>
-          )}
-        </div>
-
-        {timeKeys.map((timeKey) => {
-          const result = job[timeKey].result;
-          return (
-            <div key={timeKey} className="col-lg-1">
-              <input
-                type="text"
-                className="form-control"
-                onChange={onChange(timeKey, parseTime)}
-                value={job[timeKey].value}
-                id={`${timeKey}${index}`}
-              />
-              {job[timeKey].displayError && result.type === "error" && (
-                <label htmlFor={`${timeKey}${index}`} className="text-danger">
-                  {result.error}
-                </label>
-              )}
-            </div>
-          );
-        })}
-        <div className="col-lg">
-          <input
-            type="text"
-            className="form-control"
-            onChange={(e) => {
-              /** @type { SetJobNote } */
-              const setJobNote = {
-                type: "set_job_note",
-                index,
-                value: e.target.value,
-              };
-              dispatch(setJobNote);
-            }}
-            value={job.note}
-          />
-        </div>
-        <div className="col-lg-1">
-          {index !== 0 && (
-            <button
-              className="btn btn-danger"
-              type="button"
-              onClick={() =>
-                dispatch({ type: "remove_at_index", field: "jobs", index })
-              }
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                className="bi bi-dash-lg"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
-    );
   });
-  return (
-    <>
-      {jobsRendered}
-      <div className="row">
-        <div className="col-lg-12">
-          <button
-            className="btn btn-danger"
-            type="button"
-            onClick={() => {
-              dispatch({ type: "add_item", field: "jobs" });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-calendar-plus"
-              viewBox="0 0 16 16"
-            >
-              <path d="M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z" />
-              <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z" />
-            </svg>
-          </button>
-        </div>
-      </div>
-    </>
-  );
+
+  return [
+    ...jobsRendered,
+    !signature
+      ? ""
+      : div(
+          { className: "row" },
+          div(
+            { className: "col-lg-12" },
+            button(
+              {
+                className: "btn btn-danger",
+                type: "button",
+                onClick: () => {
+                  dispatch({ type: "add_item", field: "jobs" });
+                },
+              },
+              svg(
+                {
+                  xmlns: "http://www.w3.org/2000/svg",
+                  width: "16",
+                  height: "16",
+                  fill: "currentColor",
+                  className: "bi bi-calendar-plus",
+                  viewBox: "0 0 16 16",
+                },
+                [
+                  path({
+                    d:
+                      "M8 7a.5.5 0 0 1 .5.5V9H10a.5.5 0 0 1 0 1H8.5v1.5a.5.5 0 0 1-1 0V10H6a.5.5 0 0 1 0-1h1.5V7.5A.5.5 0 0 1 8 7z",
+                  }),
+                  path({
+                    d:
+                      "M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z",
+                  }),
+                ]
+              )
+            )
+          )
+        ),
+  ];
 }
 
 /**
+ * @param { boolean } signature
  * @param { import("./Data.t").Upkeep["machines"] } machines
  * @param { React.Dispatch<Action> } dispatch
- * @returns { React.ReactElement }
+ * @returns { React.ReactElement[] }
  */
-function renderMachines(machines, dispatch) {
-  const rows = machines.map((machine) => {
-    return (
-      <div key={machine.machine_id} className="row">
-        <div className="col-lg-4">
-          Typ zařízení: {machine.manufacturer} {machine.type}
-        </div>
-        <div className="col-lg-4">v. č. {machine.serial_number}</div>
-        <div className="col-lg-2">
-          <input
-            type="number"
-            className="form-control"
-            value={machine.mileage}
-            onChange={(e) => {
-              const value = Number(e.target.value);
-              dispatch({
-                type: "set_mileage",
-                machine_id: machine.machine_id,
-                mileage: value,
-              });
-            }}
-          />
-        </div>
-      </div>
-    );
+function renderMachines(signature, machines, dispatch) {
+  return machines.map((machine) => {
+    return div({ key: machine.machine_id, className: "row" }, [
+      div(
+        { className: "col-lg-4" },
+        `Typ zařízení: ${machine.manufacturer} ${machine.type}`
+      ),
+      div({ className: "col-lg-4" }, `v. č. ${machine.serial_number}`),
+      div(
+        { className: "col-lg-2" },
+        input({
+          type: "number",
+          className: "form-control",
+          value: machine.mileage,
+          onChange: (e) => {
+            const value = Number(e.target.value);
+            dispatch({
+              type: "set_mileage",
+              machine_id: machine.machine_id,
+              mileage: value,
+            });
+          },
+        })
+      ),
+    ]);
   });
-  return <>{rows}</>;
 }
 
 /**
+ * @param { boolean } signature
  * @param { (number | null)[] } employees
  * @param { import("./Data.t").Upkeep["available_employees"] } available_employees
  * @param { React.Dispatch<Action> } dispatch
  * @returns { React.ReactElement }
  */
-function renderEmployees(employees, available_employees, dispatch) {
+function renderEmployees(signature, employees, available_employees, dispatch) {
   /** @type { (newEmployeesState: (number | null)[]) => void } */
   const setEmployees = (newEmployeesState) => {
     dispatch({ type: "set_employees", employees: newEmployeesState });
@@ -458,6 +517,7 @@ function renderEmployees(employees, available_employees, dispatch) {
       <div className="col-lg-2" key={index}>
         <div className="input-group">
           <select
+            disabled={signature}
             value={employee || "---"}
             onChange={change}
             className="form-select"
@@ -473,27 +533,33 @@ function renderEmployees(employees, available_employees, dispatch) {
               );
             })}
           </select>
-          <button
-            className="btn btn-danger"
-            type="button"
-            onClick={() => {
-              dispatch({ type: "remove_at_index", field: "employees", index });
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              fill="currentColor"
-              className="bi bi-dash-lg"
-              viewBox="0 0 16 16"
+          {!signature && (
+            <button
+              className="btn btn-danger"
+              type="button"
+              onClick={() => {
+                dispatch({
+                  type: "remove_at_index",
+                  field: "employees",
+                  index,
+                });
+              }}
             >
-              <path
-                fillRule="evenodd"
-                d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
-              />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                fill="currentColor"
+                className="bi bi-dash-lg"
+                viewBox="0 0 16 16"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
+                />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     );
@@ -527,7 +593,7 @@ function renderEmployees(employees, available_employees, dispatch) {
   return (
     <>
       {renderedEmployees}
-      {newEmployee}
+      {!signature && newEmployee}
     </>
   );
 }
@@ -566,8 +632,10 @@ const App = () => {
       case "set_success":
         return {
           type: "success",
+          upkeepId: action.upkeepId,
           formState: action.formState,
           upkeep: action.upkeep,
+          signature: action.signature,
         };
       case "set_employees":
         return setPartialState({ employees: action.employees });
@@ -634,7 +702,7 @@ const App = () => {
           ),
         }));
       case "display_errors":
-        /** @type { <A>(validatedValue: import("./Data.t").ParsedValue<A> ) => import("./Data.t").ParsedValue<A> } */
+        /** @type { <B, A>(validatedValue: import("./Data.t").ParsedValue<B, A> ) => import("./Data.t").ParsedValue<B, A> } */
         const displayError = (validatedValue) => ({
           ...validatedValue,
           displayError: true,
@@ -650,10 +718,21 @@ const App = () => {
             travelBackFrom: displayError(job.travelBackFrom),
             travelBackTo: displayError(job.travelBackTo),
           })),
+          warranty: displayError(state.formState.warranty),
+          noFaults: displayError(state.formState.noFaults),
         }));
     }
   };
   const [state, dispatch] = useReducer(reducer, { type: "initial" });
+
+  const [signatureTheirs, setSignatureTheirs] = useState(false);
+  const [signatureOurs, setSignatureOurs] = useState(false);
+  const signatureTheirsRef = useRef(
+    /** @type { null | SignatureCanvas } */ (null)
+  );
+  const signatureOursRef = useRef(
+    /** @type { null | SignatureCanvas } */ (null)
+  );
 
   const [initialLoaded, setInitialLoaded] = useState(
     /** @type {boolean} */ (false)
@@ -661,12 +740,15 @@ const App = () => {
 
   const downloadData = async () => {
     const urlParams = new URLSearchParams(window.location.search);
-    const myParam = urlParams.get("id");
-    if (myParam) {
+    const id = urlParams.get("id");
+    const signature = urlParams.get("signature");
+    const idInt = Number(id);
+    if (id && !Number.isNaN(idInt)) {
       try {
-        /** @type { import("axios").AxiosResponse<import("./Data.t").Upkeep> } */
-        const response = await axios.get(`/tsapi?id=${myParam}`);
+        /** @type { import("axios").AxiosResponse<import("./Data.t").Payload<import("./Data.t").Upkeep>> } */
+        const response = await axios.get(`/tsapi/data/${id}`);
         const data = response.data;
+        /** @type { import("./Data.t").Upkeep } */
         const upkeep = {
           ...data,
           date: new Date(data.date),
@@ -676,6 +758,16 @@ const App = () => {
         }. ${upkeep.date.getFullYear()}`;
 
         const newJob = newItem("jobs");
+
+        /** @type { import("./Data.t").ParsedValue<boolean | null, boolean> } */
+        const boolean = {
+          displayError: false,
+          result: {
+            type: "error",
+            error: "musí být vyplněno",
+          },
+          value: null,
+        };
 
         /** @type { import("./Data.t").FormState } */
         const formState = {
@@ -695,13 +787,15 @@ const App = () => {
           parts: [newItem("parts")],
           description: "",
           recommendation: "",
-          noFaults: null,
-          warranty: null,
+          noFaults: boolean,
+          warranty: boolean,
         };
         dispatch({
           type: "set_success",
           upkeep,
+          upkeepId: idInt,
           formState: formState,
+          signature: signature === "true",
         });
       } catch {
         dispatch({ type: "set_failure" });
@@ -726,13 +820,73 @@ const App = () => {
     }, 500);
   }, []);
 
-  /** @type {(data: import("./Data.t").Upkeep, state: import("./Data.t").FormState) => React.ReactElement} */
-  const renderData = (data, state) => {
+  /** @type {(signature: boolean, data: import("./Data.t").Upkeep, state: import("./Data.t").FormState, upkeepId: number) => React.ReactElement} */
+  const renderData = (signature, data, state, upkeepId) => {
+    const submitSignature = async () => {
+      const ours = signatureTheirsRef.current
+        ?.getSignaturePad()
+        .toDataURL("image/jpeg");
+      const theirs = signatureTheirsRef.current
+        ?.getSignaturePad()
+        .toDataURL("image/jpeg");
+      if (ours !== undefined && theirs !== undefined) {
+        /** @type { import("./Data.t").Signatures } */
+        const body = { ours, theirs };
+        await axios.put(`/tsapi/upload/1`, body);
+      }
+    };
+
+    const submitData = async () => {
+      const anyJobError = state.jobs.some((job) =>
+        validatedJobKeys.some((k) => job[k].result.type === "error")
+      );
+      if (
+        anyJobError ||
+        state.noFaults.result.type === "error" ||
+        state.warranty.result.type === "error"
+      ) {
+        dispatch({ type: "display_errors" });
+      } else {
+        /** @type {(job: import("./Data.t").ValidatedJob) => import("./Data.t").SubmitJob[]} */
+        const traverseJob = (job) => {
+          const r = validatedJobKeys.reduce(
+            (acc, key) => {
+              const result = job[key].result;
+              if (result.type === "ok" && acc.length === 1) {
+                return [{ ...acc[0], [key]: result.value }];
+              } else {
+                return [];
+              }
+            },
+            /** @type {SubmitJob[]} */ [{ date: job.date }]
+          );
+          // @ts-ignore
+          return r;
+        };
+
+        /** @type {import("./Data.t").ParsedForm} */
+        const parsedForm = {
+          ...state,
+          employees: state.employees.flatMap((e) => (e !== null ? [e] : [])),
+          warranty: state.warranty.result.value,
+          noFaults: state.noFaults.result.value,
+          jobs: state.jobs.flatMap((job) => traverseJob(job)),
+        };
+
+        await axios.put(`/tsapi/data/${upkeepId}`, parsedForm);
+        window.location.href = window.location.href + `&signature=true`;
+      }
+    };
+
     return (
       <form
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          dispatch({ type: "display_errors" });
+          if (signature) {
+            await submitSignature();
+          } else {
+            await submitData();
+          }
         }}
       >
         <div className="container-lg">
@@ -747,6 +901,7 @@ const App = () => {
               <strong>Ujeté km</strong>:
               <div className="form-check">
                 <input
+                  disabled={signature}
                   className="form-check-input"
                   type="radio"
                   name="transport"
@@ -761,6 +916,7 @@ const App = () => {
               </div>
               <div className="form-check">
                 <input
+                  disabled={signature}
                   className="form-check-input"
                   type="radio"
                   name="transport"
@@ -771,6 +927,7 @@ const App = () => {
                 />
                 <label className="form-check-label" htmlFor="transport_km">
                   <input
+                    disabled={signature}
                     className="form-control"
                     type="number"
                     value={state.km}
@@ -788,6 +945,7 @@ const App = () => {
               <strong>Jméno technika:</strong>
             </div>
             {renderEmployees(
+              signature,
               state.employees,
               data.available_employees,
               dispatch
@@ -804,7 +962,7 @@ const App = () => {
               <strong>Počet mth</strong>
             </div>
           </div>
-          {renderMachines(data.machines, dispatch)}
+          {renderMachines(signature, data.machines, dispatch)}
           <div className="row">
             <div className="col-lg-1">
               <strong>Den, rok</strong>
@@ -833,7 +991,7 @@ const App = () => {
             <div className="col-lg"></div>
             <div className="col-lg-1"></div>
           </div>
-          {renderJobs(state.jobs, dispatch)}
+          {renderJobs(signature, state.jobs, dispatch)}
           <div className="row">
             <div className="col-lg-1">
               <strong>Pořadí</strong>
@@ -852,13 +1010,14 @@ const App = () => {
             </div>
             <div className="col-lg-1"></div>
           </div>
-          {renderParts(state.parts, data.machines, dispatch)}
+          {renderParts(signature, state.parts, data.machines, dispatch)}
           <div className="row">
             <div className="col-lg-12">
               <strong>Popis činnosti</strong>
             </div>
             <div className="col-lg-12">
               <textarea
+                disabled={signature}
                 value={state.description}
                 onChange={(e) =>
                   dispatch({
@@ -876,6 +1035,7 @@ const App = () => {
             </div>
             <div className="col-lg-12">
               <textarea
+                disabled={signature}
                 value={state.recommendation}
                 onChange={(e) =>
                   dispatch({
@@ -892,52 +1052,75 @@ const App = () => {
           <div className="row">
             <div className="col-lg-12">Rozhodnutí o závadě</div>
             <div className="col-lg-6">
-              <strong>Záruční oprava</strong>
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="radio"
-                  name="warranty"
-                  id="warranty_yes"
-                  value="yes"
-                  onChange={() =>
-                    dispatch({
-                      type: "set_boolean",
-                      field: "warranty",
-                      value: true,
-                    })
-                  }
-                  checked={state.warranty === true}
-                />
-                <label className="form-check-label" htmlFor="warranty_yes">
-                  Ano
-                </label>
+              <div>
+                <strong>Záruční oprava</strong>
+                <div className="form-check form-check-inline">
+                  <input
+                    disabled={signature}
+                    className="form-check-input"
+                    type="radio"
+                    name="warranty"
+                    id="warranty_yes"
+                    value="yes"
+                    onChange={() =>
+                      dispatch({
+                        type: "set_boolean",
+                        field: "warranty",
+                        value: {
+                          displayError: false,
+                          value: true,
+                          result: {
+                            type: "ok",
+                            value: true,
+                          },
+                        },
+                      })
+                    }
+                    checked={state.warranty.value === true}
+                  />
+                  <label className="form-check-label" htmlFor="warranty_yes">
+                    Ano
+                  </label>
+                </div>
+                <div className="form-check form-check-inline">
+                  <input
+                    disabled={signature}
+                    className="form-check-input"
+                    type="radio"
+                    name="warranty"
+                    id="warranty_no"
+                    value="no"
+                    onChange={() =>
+                      dispatch({
+                        type: "set_boolean",
+                        field: "warranty",
+                        value: {
+                          displayError: false,
+                          value: false,
+                          result: {
+                            type: "ok",
+                            value: false,
+                          },
+                        },
+                      })
+                    }
+                    checked={state.warranty.value === false}
+                  />
+                  <label className="form-check-label" htmlFor="warranty_no">
+                    Ne
+                  </label>
+                </div>
               </div>
-              <div className="form-check form-check-inline">
-                <input
-                  className="form-check-input"
-                  type="radio"
-                  name="warranty"
-                  id="warranty_no"
-                  value="no"
-                  onChange={() =>
-                    dispatch({
-                      type: "set_boolean",
-                      field: "warranty",
-                      value: false,
-                    })
-                  }
-                  checked={state.warranty === false}
-                />
-                <label className="form-check-label" htmlFor="warranty_no">
-                  Ne
-                </label>
-              </div>
+              {state.warranty.displayError &&
+                state.warranty.result.type === "error" && (
+                  <span>{state.warranty.result.error}</span>
+                )}
             </div>
             <div className="col-lg-6">
               Zařízení bylo zprovozněno a pracuje bez závad
               <div className="form-check form-check-inline">
                 <input
+                  disabled={signature}
                   className="form-check-input"
                   type="radio"
                   name="noFaults"
@@ -947,10 +1130,17 @@ const App = () => {
                     dispatch({
                       type: "set_boolean",
                       field: "noFaults",
-                      value: true,
+                      value: {
+                        displayError: false,
+                        value: true,
+                        result: {
+                          type: "ok",
+                          value: true,
+                        },
+                      },
                     })
                   }
-                  checked={state.noFaults === true}
+                  checked={state.noFaults.value === true}
                 />
                 <label className="form-check-label" htmlFor="noFaults_yes">
                   Ano
@@ -958,6 +1148,7 @@ const App = () => {
               </div>
               <div className="form-check form-check-inline">
                 <input
+                  disabled={signature}
                   className="form-check-input"
                   type="radio"
                   name="noFaults"
@@ -967,10 +1158,17 @@ const App = () => {
                     dispatch({
                       type: "set_boolean",
                       field: "noFaults",
-                      value: false,
+                      value: {
+                        displayError: false,
+                        value: false,
+                        result: {
+                          type: "ok",
+                          value: false,
+                        },
+                      },
                     })
                   }
-                  checked={state.noFaults === false}
+                  checked={state.noFaults.value === false}
                 />
                 <label className="form-check-label" htmlFor="noFaults_no">
                   Ne
@@ -978,17 +1176,60 @@ const App = () => {
               </div>
             </div>
           </div>
-          <div className="row">
-            <div className="col-lg-6">
-              <button type="submit" className="btn btn-primary btn-lg">
-                Dokončit
-              </button>
+          {!signature && (
+            <div className="row">
+              <div className="col-lg-6">
+                <button type="submit" className="btn btn-primary btn-lg">
+                  Dokončit
+                </button>
+              </div>
             </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-6">Provedenou práci převzal</div>
-            <div className="col-lg-6">Za 2e předal</div>
-          </div>
+          )}
+          {signature && (
+            <>
+              <div className="row">
+                <div className="col-lg-6">Provedenou práci převzal</div>
+                <div className="col-lg-6">Za 2e předal</div>
+              </div>
+              <div className="row">
+                <div className="col-lg-6">
+                  <SignatureCanvas
+                    canvasProps={{
+                      style: { border: "1px solid black" },
+                      width: 400,
+                      height: 100,
+                      className: "sigCanvas",
+                    }}
+                    onEnd={() => setSignatureTheirs(true)}
+                    ref={(ref) => (signatureTheirsRef.current = ref)}
+                  />
+                </div>
+                <div className="col-lg-6">
+                  <SignatureCanvas
+                    canvasProps={{
+                      style: { border: "1px solid black" },
+                      width: 400,
+                      height: 100,
+                      className: "sigCanvas",
+                    }}
+                    onEnd={() => setSignatureOurs(true)}
+                    ref={(ref) => (signatureOursRef.current = ref)}
+                  />
+                </div>
+              </div>
+              <div className="row mt-5 mb-5">
+                <div className="col-lg">
+                  <button
+                    disabled={!signatureOurs || !signatureTheirs}
+                    type="submit"
+                    className="btn btn-primary btn-lg"
+                  >
+                    Nahrát
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </form>
     );
@@ -1023,7 +1264,12 @@ const App = () => {
   } else {
     switch (state.type) {
       case "success":
-        return renderData(state.upkeep, state.formState);
+        return renderData(
+          state.signature,
+          state.upkeep,
+          state.formState,
+          state.upkeepId
+        );
       case "failure":
         return renderFailure();
       case "initial":
