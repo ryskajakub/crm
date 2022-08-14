@@ -12,13 +12,27 @@ import hh from "hyperscript-helpers";
 // @ts-ignore
 import svgs from "hyperscript-helpers/dist/svg";
 
-const { div, strong, input, select, option, button, svg, label } = hh(h);
+const {
+  div,
+  strong,
+  input,
+  select,
+  option,
+  button,
+  svg,
+  label,
+  p,
+  span,
+  textarea,
+  img,
+  form,
+} = hh(h);
 /** @type {{ path: import("hyperscript-helpers").HyperScriptHelperFn }} */
 const { path } = svgs(h);
 
 /**
  * @typedef { { type: "initial" } } Initial
- * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState, signature: boolean } } Success
+ * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } Success
  * @typedef { { type: "failure" } } Failure
  * @typedef { Initial | Success | Failure } State
  *
@@ -26,7 +40,7 @@ const { path } = svgs(h);
  * @typedef { { type: "set_km", km: number } } SetKm
  * @typedef { { type: "set_transport", transport: import("./Data.t").Transport } } SetTransport
  * @typedef { { type: "set_failure" } } SetFailure
- * @typedef { { type: "set_success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState, signature: boolean } } SetSuccess
+ * @typedef { { type: "set_success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } SetSuccess
  * @typedef { { type: "set_mileage", machine_id: number, mileage: number } } SetMileage
  * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string, result: import("./Data.t").ParsedValue<string, DateTime>["result"] } } SetJob
  * @typedef { { type: "set_job_note", index: number, value: string } } SetJobNote
@@ -240,7 +254,7 @@ function renderParts(signature, parts, machines, dispatch) {
       ),
     ]);
   });
-  return [
+  const partsRenderedRows = [
     ...partsRendered,
     signature
       ? ""
@@ -275,6 +289,18 @@ function renderParts(signature, parts, machines, dispatch) {
             )
           )
         ),
+  ];
+
+  return [
+    ...partsRenderedRows,
+    div({ className: "row" }, [
+      div({ className: "col-lg-1" }, strong("Pořadí")),
+      div({ className: "col-lg" }, strong("Číslo materiálu")),
+      div({ className: "col-lg" }, strong("Název materiálu")),
+      div({ className: "col-lg-1" }, strong("Množství")),
+      div({ className: "col-lg-2" }, strong("Zařízení")),
+      div({ className: "col-lg-1" }),
+    ]),
   ];
 }
 
@@ -412,7 +438,7 @@ function renderJobs(signature, jobs, dispatch) {
     ]);
   });
 
-  return [
+  const renderedJobRows = [
     ...jobsRendered,
     !signature
       ? ""
@@ -452,6 +478,28 @@ function renderJobs(signature, jobs, dispatch) {
           )
         ),
   ];
+
+  return [
+    ...renderedJobRows,
+    div({ className: "row" }, [
+      div({ className: "col-lg-1" }, strong("Den, rok")),
+      div({ className: "col-lg" }, strong("Cesta tam")),
+      div({ className: "col-lg" }, strong("Práce")),
+      div({ className: "col-lg" }, strong("Cesta zpět")),
+      div({ className: "col-lg-2" }, strong("Poznámky")),
+    ]),
+    div({ className: "row" }, [
+      div({ className: "col-lg-2" }, "Datum"),
+      div({ className: "col-lg-1" }, "od"),
+      div({ className: "col-lg-1" }, "do"),
+      div({ className: "col-lg-1" }, "od"),
+      div({ className: "col-lg-1" }, "do"),
+      div({ className: "col-lg-1" }, "od"),
+      div({ className: "col-lg-1" }, "do"),
+      div({ className: "col-lg" }),
+      div({ className: "col-lg-1" }),
+    ]),
+  ];
 }
 
 /**
@@ -461,7 +509,7 @@ function renderJobs(signature, jobs, dispatch) {
  * @returns { React.ReactElement[] }
  */
 function renderMachines(signature, machines, dispatch) {
-  return machines.map((machine) => {
+  const renderedMachines = machines.map((machine) => {
     return div({ key: machine.machine_id, className: "row" }, [
       div(
         { className: "col-lg-4" },
@@ -486,6 +534,15 @@ function renderMachines(signature, machines, dispatch) {
       ),
     ]);
   });
+
+  return [
+    div({ className: "row" }, [
+      div({ className: "col-lg-4" }, strong("Typ zařízení")),
+      div({ className: "col-lg-4" }, strong("Výrobní číslo")),
+      div({ className: "col-lg-3" }, strong("Počet mth")),
+    ]),
+    ...renderedMachines,
+  ];
 }
 
 /**
@@ -501,6 +558,7 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
     dispatch({ type: "set_employees", employees: newEmployeesState });
   };
 
+  /** @type { React.ReactElement[] } */
   const renderedEmployees = employees.map((employee, index) => {
     /** @type { import("react").ChangeEventHandler<HTMLSelectElement> } */
     const change = (e) => {
@@ -513,95 +571,107 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
       ];
       setEmployees(newEmployeesState);
     };
-    return (
-      <div className="col-lg-2" key={index}>
-        <div className="input-group">
-          <select
-            disabled={signature}
-            value={employee || "---"}
-            onChange={change}
-            className="form-select"
-          >
-            <option key={null} value="---">
-              ---
-            </option>
-            {available_employees.map((a) => {
-              return (
-                <option key={a.id} value={a.id}>
-                  {a.name}
-                </option>
-              );
-            })}
-          </select>
-          {!signature && (
-            <button
-              className="btn btn-danger"
-              type="button"
-              onClick={() => {
+
+    return div(
+      {
+        className: "col-lg-2",
+        key: index,
+      },
+      div({ className: "input-group" }, [
+        select(
+          {
+            value: employee || "---",
+            onChange: change,
+            className: "form-select",
+          },
+          [
+            option({ key: null, value: "---" }, "---"),
+            ...available_employees.map((a) => {
+              return option({ key: a.id, value: a.id }, a.name);
+            }),
+          ]
+        ),
+        when(
+          !signature,
+          button(
+            {
+              className: "btn btn-danger",
+              type: "button",
+              onClick: () => {
                 dispatch({
                   type: "remove_at_index",
                   field: "employees",
                   index,
                 });
-              }}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                width="16"
-                height="16"
-                fill="currentColor"
-                className="bi bi-dash-lg"
-                viewBox="0 0 16 16"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z"
-                />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
+              },
+            },
+            svg(
+              {
+                xmlns: "http://www.w3.org/2000/svg",
+                width: "16",
+                height: "16",
+                fill: "currentColor",
+                className: "bi bi-dash-lg",
+                viewBox: "0 0 16 16",
+              },
+              path({
+                fillRule: "evenodd",
+                d:
+                  "M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z",
+              })
+            )
+          )
+        ),
+      ])
     );
   });
 
-  const newEmployee = (
-    <div className="col-lg-2">
-      <button
-        type="button"
-        className="btn btn-primary"
-        onClick={() => dispatch({ type: "add_item", field: "employees" })}
-      >
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="16"
-          height="16"
-          fill="currentColor"
-          className="bi bi-person-plus"
-          viewBox="0 0 16 16"
-        >
-          <path d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z" />
-          <path
-            fillRule="evenodd"
-            d="M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z"
-          />
-        </svg>
-      </button>
-    </div>
-  );
+  const mkNewEmployee = () =>
+    div(
+      { className: "col-lg-2" },
+      button(
+        {
+          type: "button",
+          className: "btn btn-primary",
+          onClick: () => dispatch({ type: "add_item", field: "employees" }),
+        },
+        svg(
+          {
+            xmlns: "http://www.w3.org/2000/svg",
+            width: "16",
+            height: "16",
+            fill: "currentColor",
+            className: "bi bi-person-plus",
+            viewBox: "0 0 16 16",
+          },
+          [
+            path({
+              d:
+                "M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H1s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C9.516 10.68 8.289 10 6 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z",
+            }),
+            path({
+              fillRule: "evenodd",
+              d:
+                "M13.5 5a.5.5 0 0 1 .5.5V7h1.5a.5.5 0 0 1 0 1H14v1.5a.5.5 0 0 1-1 0V8h-1.5a.5.5 0 0 1 0-1H13V5.5a.5.5 0 0 1 .5-.5z",
+            }),
+          ]
+        )
+      )
+    );
 
-  return (
-    <>
-      {renderedEmployees}
-      {!signature && newEmployee}
-    </>
-  );
+  return div({ className: "row" }, [
+    div({ className: "col-lg-2" }, strong("Jméno technika:")),
+    ...renderedEmployees,
+    when(!signature, mkNewEmployee()),
+  ]);
 }
 
 /**
- * @type { React.FC }
+ * @type { React.FC<import("./Data.t").AppProps> }
  */
-const App = () => {
+export const App = (appProps) => {
+  const { signature } = appProps;
+
   /** @type {(state: State, action: Action) => State} */
   const reducer = (state, action) => {
     /** @type {(f: (success: Success) => State) => State } */
@@ -635,7 +705,6 @@ const App = () => {
           upkeepId: action.upkeepId,
           formState: action.formState,
           upkeep: action.upkeep,
-          signature: action.signature,
         };
       case "set_employees":
         return setPartialState({ employees: action.employees });
@@ -741,7 +810,6 @@ const App = () => {
   const downloadData = async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get("id");
-    const signature = urlParams.get("signature");
     const idInt = Number(id);
     if (id && !Number.isNaN(idInt)) {
       try {
@@ -795,7 +863,6 @@ const App = () => {
           upkeep,
           upkeepId: idInt,
           formState: formState,
-          signature: signature === "true",
         });
       } catch {
         dispatch({ type: "set_failure" });
@@ -820,8 +887,8 @@ const App = () => {
     }, 500);
   }, []);
 
-  /** @type {(signature: boolean, data: import("./Data.t").Upkeep, state: import("./Data.t").FormState, upkeepId: number) => React.ReactElement} */
-  const renderData = (signature, data, state, upkeepId) => {
+  /** @type {(data: import("./Data.t").Upkeep, state: import("./Data.t").FormState, upkeepId: number) => React.ReactElement} */
+  const renderData = (data, state, upkeepId) => {
     const submitSignature = async () => {
       const ours = signatureTheirsRef.current
         ?.getSignaturePad()
@@ -878,384 +945,270 @@ const App = () => {
       }
     };
 
-    return (
-      <form
-        onSubmit={async (event) => {
+    const header = div({ className: "row" }, [
+      div({ className: "col-lg-8 mb-4" }, [
+        strong("Zákazník"),
+        " ",
+        span(
+          { className: "position-relative", style: { top: "1rem" } },
+          data.company_name
+        ),
+      ]),
+      div({ className: "col-lg-4" }, [
+        strong("Ujeté km"),
+        div({ className: "form-check" }, [
+          label(
+            { className: "form-check-label", htmlFor: "transport_reality" },
+            "Dle skutečnosti"
+          ),
+          input({
+            className: "form-check-input",
+            type: "radio",
+            name: "transport",
+            id: "transport_reality",
+            value: "reality",
+            onChange: handleTransport,
+            checked: state.transport === "reality",
+          }),
+        ]),
+        div({ className: "form-check" }, [
+          input({
+            className: "form-check-input",
+            type: "radio",
+            name: "transport",
+            id: "transport_km",
+            value: "km",
+            onChange: handleTransport,
+            checked: state.transport === "km",
+          }),
+          label({ className: "form-check-label", htmlFor: "transport_km" }, [
+            input({
+              className: "form-control",
+              type: "number",
+              value: state.km,
+              onChange: (e) =>
+                dispatch({ type: "set_km", km: Number(e.target.value) }),
+            }),
+            "Km",
+          ]),
+        ]),
+      ]),
+    ]);
+
+    /** @type {(rows: number, field: Extract<keyof import("./Data.t").FormState, "description" | "recommendation">, label: string) => React.ReactElement[]} */
+    const mkTextarea = (rows, field, label) => [
+      div({ className: "col-lg-12" }, strong(label)),
+      div(
+        { className: "col-lg-12" },
+        textarea({
+          value: state[field],
+          onChange: (e) =>
+            dispatch({
+              type: "set_string",
+              value: e.target.value,
+              field,
+            }),
+          className: "form-control",
+          rows,
+        })
+      ),
+    ];
+
+    const textareas = div({ className: "row" }, [
+      mkTextarea(8, "description", "Popis činnosti"),
+      mkTextarea(3, "recommendation", "Popis činnosti"),
+    ]);
+
+    /** @type {(field: Extract<keyof import("./Data.t").FormState, "warranty" | "noFaults">, display: string) => React.ReactElement} */
+    const mkCheckboxes = (field, display) => {
+      /** @type {(boolean: boolean, value: string, label_ : string) => React.ReactElement} */
+      const mkCheckbox = (boolean, value, label_) =>
+        div({ className: "form-check form-check-inline" }, [
+          input({
+            className: "form-check-input",
+            type: "radio",
+            name: field,
+            id: `${field}_${value}`,
+            value,
+            onChange: () =>
+              dispatch({
+                type: "set_boolean",
+                field,
+                value: {
+                  displayError: false,
+                  value: boolean,
+                  result: {
+                    type: "ok",
+                    value: true,
+                  },
+                },
+              }),
+            checked: state[field].value === boolean,
+          }),
+          label(
+            { className: "form-check-label", htmlFor: `${field}_${value}` },
+            label_
+          ),
+        ]);
+
+      const fieldValue = state[field];
+
+      return div({ className: "col-lg-6" }, [
+        div([
+          strong(display),
+          mkCheckbox(true, "yes", "ano"),
+          mkCheckbox(false, "no", "Ne"),
+        ]),
+        fieldValue.displayError && fieldValue.result.type === "error" ? (
+          <span>{fieldValue.result.error}</span>
+        ) : (
+          ""
+        ),
+      ]);
+    };
+
+    const radiosRow = div({ className: "row" }, [
+      div({ className: "col-lg-12" }, "Rozhodnutí o závadě"),
+      div(
+        { className: "col-lg-6" },
+        mkCheckboxes("warranty", "Záruční oprava"),
+        mkCheckboxes(
+          "noFaults",
+          "Zařízení bylo zprovozněno a pracuje bez závad"
+        )
+      ),
+    ]);
+
+    const submitButton = when(
+      !signature,
+      div(
+        { className: "row" },
+        div({ className: "col-lg-6" }),
+        button(
+          { type: "submit", className: "btn btn-primary btn-lg" },
+          "Dokončit"
+        )
+      )
+    );
+
+    const mkSignatures = () => {
+      return !signature
+        ? []
+        : [
+            div({ className: "row" }, [
+              div({ className: "col-lg-6" }, "Provedenou práci převzal"),
+              div({ className: "col-lg-6" }, "Za 2e předal"),
+            ]),
+            div({ className: "row" }, [
+              div(
+                { className: "col-lg-6" },
+                appProps.data.type === "client"
+                  ? h(SignatureCanvas, {
+                      canvasProps: {
+                        style: { border: "1px solid black" },
+                        width: 400,
+                        height: 100,
+                        className: "sigCanvas",
+                      },
+                      onEnd: () => setSignatureTheirs(true),
+                      ref: (ref) => (signatureTheirsRef.current = ref),
+                    })
+                  : img({ src: appProps.data.signatures.theirs })
+              ),
+              div(
+                { className: "col-lg-6" },
+                appProps.data.type === "client"
+                  ? h(SignatureCanvas, {
+                      canvasProps: {
+                        style: { border: "1px solid black" },
+                        width: 400,
+                        height: 100,
+                        className: "sigCanvas",
+                      },
+                      onEnd: () => setSignatureOurs(true),
+                      ref: (ref) => (signatureOursRef.current = ref),
+                    })
+                  : img({ src: appProps.data.signatures.ours })
+              ),
+            ]),
+            div(
+              { className: "row mt-5 mb-5" },
+              div(
+                { className: "col-lg" },
+                button(
+                  {
+                    disabled: !signatureOurs || !signatureTheirs,
+                    type: "submit",
+                    className: "btn btn-primary btn-lg",
+                  },
+                  "Nahrát"
+                )
+              )
+            ),
+          ];
+    };
+
+    return form(
+      {
+        onSubmit: async (event) => {
           event.preventDefault();
           if (signature) {
             await submitSignature();
           } else {
             await submitData();
           }
-        }}
-      >
-        <div className="container-lg">
-          <div className="row">
-            <div className="col-lg-8 mb-4">
-              <strong>Zákazník</strong>:{" "}
-              <span className="position-relative" style={{ top: "1rem" }}>
-                {data.company_name}
-              </span>
-            </div>
-            <div className="col-lg-4">
-              <strong>Ujeté km</strong>:
-              <div className="form-check">
-                <input
-                  disabled={signature}
-                  className="form-check-input"
-                  type="radio"
-                  name="transport"
-                  id="transport_reality"
-                  value="reality"
-                  onChange={handleTransport}
-                  checked={state.transport === "reality"}
-                />
-                <label className="form-check-label" htmlFor="transport_reality">
-                  Dle skutečnosti
-                </label>
-              </div>
-              <div className="form-check">
-                <input
-                  disabled={signature}
-                  className="form-check-input"
-                  type="radio"
-                  name="transport"
-                  id="transport_km"
-                  value="km"
-                  onChange={handleTransport}
-                  checked={state.transport === "km"}
-                />
-                <label className="form-check-label" htmlFor="transport_km">
-                  <input
-                    disabled={signature}
-                    className="form-control"
-                    type="number"
-                    value={state.km}
-                    onChange={(e) =>
-                      dispatch({ type: "set_km", km: Number(e.target.value) })
-                    }
-                  />
-                  Km
-                </label>
-              </div>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-2">
-              <strong>Jméno technika:</strong>
-            </div>
-            {renderEmployees(
-              signature,
-              state.employees,
-              data.available_employees,
-              dispatch
-            )}
-          </div>
-          <div className="row">
-            <div className="col-lg-4">
-              <strong>Typ zařízení</strong>
-            </div>
-            <div className="col-lg-4">
-              <strong>Výrobní číslo</strong>
-            </div>
-            <div className="col-lg-3">
-              <strong>Počet mth</strong>
-            </div>
-          </div>
-          {renderMachines(signature, data.machines, dispatch)}
-          <div className="row">
-            <div className="col-lg-1">
-              <strong>Den, rok</strong>
-            </div>
-            <div className="col-lg">
-              <strong>Cesta tam</strong>
-            </div>
-            <div className="col-lg">
-              <strong>Práce</strong>
-            </div>
-            <div className="col-lg">
-              <strong>Cesta zpět</strong>
-            </div>
-            <div className="col-lg-2">
-              <strong>Poznámky</strong>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-2">Datum</div>
-            <div className="col-lg-1">od</div>
-            <div className="col-lg-1">do</div>
-            <div className="col-lg-1">od</div>
-            <div className="col-lg-1">do</div>
-            <div className="col-lg-1">od</div>
-            <div className="col-lg-1">do</div>
-            <div className="col-lg"></div>
-            <div className="col-lg-1"></div>
-          </div>
-          {renderJobs(signature, state.jobs, dispatch)}
-          <div className="row">
-            <div className="col-lg-1">
-              <strong>Pořadí</strong>
-            </div>
-            <div className="col-lg">
-              <strong>Číslo materiálu</strong>
-            </div>
-            <div className="col-lg">
-              <strong>Název materiálu</strong>
-            </div>
-            <div className="col-lg-1">
-              <strong>Množství</strong>
-            </div>
-            <div className="col-lg-2">
-              <strong>Zařízení</strong>
-            </div>
-            <div className="col-lg-1"></div>
-          </div>
-          {renderParts(signature, state.parts, data.machines, dispatch)}
-          <div className="row">
-            <div className="col-lg-12">
-              <strong>Popis činnosti</strong>
-            </div>
-            <div className="col-lg-12">
-              <textarea
-                disabled={signature}
-                value={state.description}
-                onChange={(e) =>
-                  dispatch({
-                    type: "set_string",
-                    value: e.target.value,
-                    field: "description",
-                  })
-                }
-                className="form-control"
-                rows={8}
-              ></textarea>
-            </div>
-            <div className="col-lg-12">
-              <strong>Doporučení</strong>
-            </div>
-            <div className="col-lg-12">
-              <textarea
-                disabled={signature}
-                value={state.recommendation}
-                onChange={(e) =>
-                  dispatch({
-                    type: "set_string",
-                    value: e.target.value,
-                    field: "recommendation",
-                  })
-                }
-                className="form-control"
-                rows={3}
-              ></textarea>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-lg-12">Rozhodnutí o závadě</div>
-            <div className="col-lg-6">
-              <div>
-                <strong>Záruční oprava</strong>
-                <div className="form-check form-check-inline">
-                  <input
-                    disabled={signature}
-                    className="form-check-input"
-                    type="radio"
-                    name="warranty"
-                    id="warranty_yes"
-                    value="yes"
-                    onChange={() =>
-                      dispatch({
-                        type: "set_boolean",
-                        field: "warranty",
-                        value: {
-                          displayError: false,
-                          value: true,
-                          result: {
-                            type: "ok",
-                            value: true,
-                          },
-                        },
-                      })
-                    }
-                    checked={state.warranty.value === true}
-                  />
-                  <label className="form-check-label" htmlFor="warranty_yes">
-                    Ano
-                  </label>
-                </div>
-                <div className="form-check form-check-inline">
-                  <input
-                    disabled={signature}
-                    className="form-check-input"
-                    type="radio"
-                    name="warranty"
-                    id="warranty_no"
-                    value="no"
-                    onChange={() =>
-                      dispatch({
-                        type: "set_boolean",
-                        field: "warranty",
-                        value: {
-                          displayError: false,
-                          value: false,
-                          result: {
-                            type: "ok",
-                            value: false,
-                          },
-                        },
-                      })
-                    }
-                    checked={state.warranty.value === false}
-                  />
-                  <label className="form-check-label" htmlFor="warranty_no">
-                    Ne
-                  </label>
-                </div>
-              </div>
-              {state.warranty.displayError &&
-                state.warranty.result.type === "error" && (
-                  <span>{state.warranty.result.error}</span>
-                )}
-            </div>
-            <div className="col-lg-6">
-              Zařízení bylo zprovozněno a pracuje bez závad
-              <div className="form-check form-check-inline">
-                <input
-                  disabled={signature}
-                  className="form-check-input"
-                  type="radio"
-                  name="noFaults"
-                  id="noFaults_yes"
-                  value="yes"
-                  onChange={() =>
-                    dispatch({
-                      type: "set_boolean",
-                      field: "noFaults",
-                      value: {
-                        displayError: false,
-                        value: true,
-                        result: {
-                          type: "ok",
-                          value: true,
-                        },
-                      },
-                    })
-                  }
-                  checked={state.noFaults.value === true}
-                />
-                <label className="form-check-label" htmlFor="noFaults_yes">
-                  Ano
-                </label>
-              </div>
-              <div className="form-check form-check-inline">
-                <input
-                  disabled={signature}
-                  className="form-check-input"
-                  type="radio"
-                  name="noFaults"
-                  id="noFaults_no"
-                  value="no"
-                  onChange={() =>
-                    dispatch({
-                      type: "set_boolean",
-                      field: "noFaults",
-                      value: {
-                        displayError: false,
-                        value: false,
-                        result: {
-                          type: "ok",
-                          value: false,
-                        },
-                      },
-                    })
-                  }
-                  checked={state.noFaults.value === false}
-                />
-                <label className="form-check-label" htmlFor="noFaults_no">
-                  Ne
-                </label>
-              </div>
-            </div>
-          </div>
-          {!signature && (
-            <div className="row">
-              <div className="col-lg-6">
-                <button type="submit" className="btn btn-primary btn-lg">
-                  Dokončit
-                </button>
-              </div>
-            </div>
-          )}
-          {signature && (
-            <>
-              <div className="row">
-                <div className="col-lg-6">Provedenou práci převzal</div>
-                <div className="col-lg-6">Za 2e předal</div>
-              </div>
-              <div className="row">
-                <div className="col-lg-6">
-                  <SignatureCanvas
-                    canvasProps={{
-                      style: { border: "1px solid black" },
-                      width: 400,
-                      height: 100,
-                      className: "sigCanvas",
-                    }}
-                    onEnd={() => setSignatureTheirs(true)}
-                    ref={(ref) => (signatureTheirsRef.current = ref)}
-                  />
-                </div>
-                <div className="col-lg-6">
-                  <SignatureCanvas
-                    canvasProps={{
-                      style: { border: "1px solid black" },
-                      width: 400,
-                      height: 100,
-                      className: "sigCanvas",
-                    }}
-                    onEnd={() => setSignatureOurs(true)}
-                    ref={(ref) => (signatureOursRef.current = ref)}
-                  />
-                </div>
-              </div>
-              <div className="row mt-5 mb-5">
-                <div className="col-lg">
-                  <button
-                    disabled={!signatureOurs || !signatureTheirs}
-                    type="submit"
-                    className="btn btn-primary btn-lg"
-                  >
-                    Nahrát
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </form>
+        },
+      },
+      div({ className: "container-lg" }, [
+        header,
+        renderEmployees(
+          signature,
+          state.employees,
+          data.available_employees,
+          dispatch
+        ),
+        ...renderMachines(signature, data.machines, dispatch),
+        ...renderJobs(signature, state.jobs, dispatch),
+        ...renderParts(signature, state.parts, data.machines, dispatch),
+        textareas,
+        radiosRow,
+        submitButton,
+        ...mkSignatures()
+      ])
     );
+
   };
 
   const renderFailure = () => {
-    return <div>Failed</div>;
+    return div("Failed");
   };
 
   const renderInitial = () => {
-    return (
-      <div className="container-lg">
-        <div className="row">
-          <div className="col">
-            <div className="d-flex justify-content-center">
-              <div
-                className="spinner-border mt-5"
-                style={{ width: "5rem", height: "5rem" }}
-              >
-                <span className="visually-hidden">Načítá se...</span>
-              </div>
-            </div>
-            <p className="text-center mt-5">Načítá se...</p>
-          </div>
-        </div>
-      </div>
+    return div(
+      { className: "container-lg" },
+      div(
+        {
+          className: "row",
+        },
+        div({ className: "col" }, [
+          div(
+            { className: "d-flex justify-content-center" },
+            div(
+              {
+                className: "spinner-border mt-5",
+                style: { width: "5rem", height: "5rem" },
+              },
+              span(
+                {
+                  className: "visually-hidden",
+                },
+                "Načítá se..."
+              )
+            )
+          ),
+          p({ className: "text-center mt-5" }, "Načítá se..."),
+        ])
+      )
     );
   };
 
@@ -1265,7 +1218,6 @@ const App = () => {
     switch (state.type) {
       case "success":
         return renderData(
-          state.signature,
           state.upkeep,
           state.formState,
           state.upkeepId
@@ -1278,4 +1230,8 @@ const App = () => {
   }
 };
 
-export default App;
+export const AppWithSignature = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const signature = urlParams.get("signature");
+  return h(App, { data: { type: "client" }, signature: signature === "true" });
+};

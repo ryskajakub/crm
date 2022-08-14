@@ -88,3 +88,17 @@ export type Upkeep = {
   }[];
   date: Date;
 };
+
+export type AppPropsDataClient = {
+  type: "client";
+};
+
+export type AppPropsDataServer = {
+  type: "server";
+  parsedForm: ParsedForm;
+  signatures: Signatures;
+};
+
+export type AppPropsData = AppPropsDataServer | AppPropsDataClient;
+
+export type AppProps = { data: AppPropsData; signature: boolean };
