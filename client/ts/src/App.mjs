@@ -289,9 +289,9 @@ function renderParts(signature, parts, machines, dispatch) {
       dispatch(setPart);
     };
     return div({ key: index, className: "row" }, [
-      div({ className: "col-lg-1" }, index + 1),
+      div({ className: "col-md-1" }, index + 1),
       div(
-        { className: "col-lg" },
+        { className: "col-md" },
         signature
           ? parts[index].number
           : input({
@@ -302,7 +302,7 @@ function renderParts(signature, parts, machines, dispatch) {
             })
       ),
       div(
-        { className: "col-lg" },
+        { className: "col-md" },
         signature
           ? part.name
           : input({
@@ -313,7 +313,7 @@ function renderParts(signature, parts, machines, dispatch) {
             })
       ),
       div(
-        { className: "col-lg-1" },
+        { className: "col-md-1" },
         signature
           ? part.quantity
           : input({
@@ -324,7 +324,7 @@ function renderParts(signature, parts, machines, dispatch) {
             })
       ),
       div(
-        { className: "col-lg-2" },
+        { className: "col-md-2" },
         signature
           ? ((m) =>
               m === undefined ? "---" : `${m.manufacturer} ${m.serial_number}`)(
@@ -362,7 +362,7 @@ function renderParts(signature, parts, machines, dispatch) {
             )
       ),
       div(
-        { className: "col-lg-1" },
+        { className: "col-md-1" },
         signature
           ? ""
           : button(
@@ -378,7 +378,7 @@ function renderParts(signature, parts, machines, dispatch) {
                   width: "16",
                   height: "16",
                   fill: "currentColor",
-                  className: "bi bi-dash-lg",
+                  className: "bi bi-dash-md",
                   viewBox: "0 0 16 16",
                 },
                 path({
@@ -399,7 +399,7 @@ function renderParts(signature, parts, machines, dispatch) {
           { className: "row" },
           div(
             {
-              className: "col-lg-12",
+              className: "col-md-12",
             },
             button(
               {
@@ -430,12 +430,12 @@ function renderParts(signature, parts, machines, dispatch) {
 
   return [
     div({ className: "row" }, [
-      div({ className: "col-lg-1" }, strong("Pořadí")),
-      div({ className: "col-lg" }, strong("Číslo materiálu")),
-      div({ className: "col-lg" }, strong("Název materiálu")),
-      div({ className: "col-lg-1" }, strong("Množství")),
-      div({ className: "col-lg-2" }, strong("Zařízení")),
-      div({ className: "col-lg-1" }),
+      div({ className: "col-md-1" }, strong("Pořadí")),
+      div({ className: "col-md" }, strong("Číslo materiálu")),
+      div({ className: "col-md" }, strong("Název materiálu")),
+      div({ className: "col-md-1" }, strong("Množství")),
+      div({ className: "col-md-2" }, strong("Zařízení")),
+      div({ className: "col-md-1" }),
     ]),
     ...partsRenderedRows,
   ];
@@ -493,7 +493,7 @@ function renderJobs(signature, jobs, dispatch) {
     };
 
     return div({ key: index, className: "row" }, [
-      div({ className: "col-lg-2" }, [
+      div({ className: "col-md-2" }, [
         signature
           ? job.date.value
           : input({
@@ -512,7 +512,7 @@ function renderJobs(signature, jobs, dispatch) {
       ]),
       ...timeKeys.map((timeKey) => {
         const result = job[timeKey].result;
-        return div({ key: timeKey, className: "col-lg-1" }, [
+        return div({ key: timeKey, className: "col-md-1" }, [
           signature
             ? job[timeKey].value
             : input({
@@ -531,7 +531,7 @@ function renderJobs(signature, jobs, dispatch) {
         ]);
       }),
       div(
-        { className: "col-lg" },
+        { className: "col-md" },
         signature
           ? job.note
           : input({
@@ -552,7 +552,7 @@ function renderJobs(signature, jobs, dispatch) {
             })
       ),
       div(
-        { className: "col-lg-1" },
+        { className: "col-md-1" },
         when(
           index !== 0 && !signature,
           button(
@@ -568,7 +568,7 @@ function renderJobs(signature, jobs, dispatch) {
                 width: "16",
                 height: "16",
                 fill: "currentColor",
-                className: "bi bi-dash-lg",
+                className: "bi bi-dash-md",
                 viewBox: "0 0 16 16",
               },
               path({
@@ -590,7 +590,7 @@ function renderJobs(signature, jobs, dispatch) {
       : div(
           { className: "row" },
           div(
-            { className: "col-lg-12" },
+            { className: "col-md-12" },
             button(
               {
                 className: "btn btn-danger",
@@ -626,22 +626,22 @@ function renderJobs(signature, jobs, dispatch) {
 
   return [
     div({ className: "row" }, [
-      div({ className: "col-lg-1" }, strong("Den, rok")),
-      div({ className: "col-lg" }, strong("Cesta tam")),
-      div({ className: "col-lg" }, strong("Práce")),
-      div({ className: "col-lg" }, strong("Cesta zpět")),
-      div({ className: "col-lg-2" }, strong("Poznámky")),
+      div({ className: "col-md-1" }, strong("Den, rok")),
+      div({ className: "col-md" }, strong("Cesta tam")),
+      div({ className: "col-md" }, strong("Práce")),
+      div({ className: "col-md" }, strong("Cesta zpět")),
+      div({ className: "col-md-2" }, strong("Poznámky")),
     ]),
     div({ className: "row" }, [
-      div({ className: "col-lg-2" }, "Datum"),
-      div({ className: "col-lg-1" }, "od"),
-      div({ className: "col-lg-1" }, "do"),
-      div({ className: "col-lg-1" }, "od"),
-      div({ className: "col-lg-1" }, "do"),
-      div({ className: "col-lg-1" }, "od"),
-      div({ className: "col-lg-1" }, "do"),
-      div({ className: "col-lg" }),
-      div({ className: "col-lg-1" }),
+      div({ className: "col-md-2" }, "Datum"),
+      div({ className: "col-md-1" }, "od"),
+      div({ className: "col-md-1" }, "do"),
+      div({ className: "col-md-1" }, "od"),
+      div({ className: "col-md-1" }, "do"),
+      div({ className: "col-md-1" }, "od"),
+      div({ className: "col-md-1" }, "do"),
+      div({ className: "col-md" }),
+      div({ className: "col-md-1" }),
     ]),
     ...renderedJobRows,
   ];
@@ -658,12 +658,12 @@ function renderMachines(signature, machines, mileages, dispatch) {
   const renderedMachines = machines.map((machine) => {
     return div({ key: machine.machine_id, className: "row" }, [
       div(
-        { className: "col-lg-4" },
+        { className: "col-md-4" },
         `Typ zařízení: ${machine.manufacturer} ${machine.type}`
       ),
-      div({ className: "col-lg-4" }, `v. č. ${machine.serial_number}`),
+      div({ className: "col-md-4" }, `v. č. ${machine.serial_number}`),
       div(
-        { className: "col-lg-2" },
+        { className: "col-md-2" },
         signature
           ? mileages[machine.machine_id]
           : input({
@@ -687,9 +687,9 @@ function renderMachines(signature, machines, mileages, dispatch) {
 
   return [
     div({ className: "row" }, [
-      div({ className: "col-lg-4" }, strong("Typ zařízení")),
-      div({ className: "col-lg-4" }, strong("Výrobní číslo")),
-      div({ className: "col-lg-3" }, strong("Počet mth")),
+      div({ className: "col-md-4" }, strong("Typ zařízení")),
+      div({ className: "col-md-4" }, strong("Výrobní číslo")),
+      div({ className: "col-md-3" }, strong("Počet mth")),
     ]),
     ...renderedMachines,
   ];
@@ -724,7 +724,7 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
 
     return div(
       {
-        className: "col-lg-2",
+        className: "col-md-2",
         key: index,
       },
       signature
@@ -763,7 +763,7 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
                     width: "16",
                     height: "16",
                     fill: "currentColor",
-                    className: "bi bi-dash-lg",
+                    className: "bi bi-dash-md",
                     viewBox: "0 0 16 16",
                   },
                   path({
@@ -780,7 +780,7 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
 
   const mkNewEmployee = () =>
     div(
-      { className: "col-lg-2" },
+      { className: "col-md-2" },
       button(
         {
           type: "button",
@@ -812,7 +812,7 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
     );
 
   return div({ className: "row" }, [
-    div({ className: "col-lg-2" }, strong("Jméno technika:")),
+    div({ className: "col-md-2" }, strong("Jméno technika:")),
     ...renderedEmployees,
     when(!signature, mkNewEmployee()),
   ]);
@@ -1088,7 +1088,7 @@ export const App = (appProps) => {
     };
 
     const header = div({ className: "row" }, [
-      div({ className: "col-lg-8 mb-4" }, [
+      div({ className: "col-md-8 mb-4" }, [
         strong("Zákazník"),
         " ",
         span(
@@ -1096,7 +1096,7 @@ export const App = (appProps) => {
           data.company_name
         ),
       ]),
-      div({ className: "col-lg-4" }, [
+      div({ className: "col-md-4" }, [
         strong("Ujeté km: "),
         ...(signature
           ? [
@@ -1152,9 +1152,9 @@ export const App = (appProps) => {
 
     /** @type {(rows: number, field: Extract<keyof import("./Data.t").FormState, "description" | "recommendation">, label: string) => React.ReactElement[]} */
     const mkTextarea = (rows, field, label) => [
-      div({ className: "col-lg-12" }, strong(label)),
+      div({ className: "col-md-12" }, strong(label)),
       div(
-        { className: "col-lg-12" },
+        { className: "col-md-12" },
         signature
           ? p(field)
           : textarea({
@@ -1213,7 +1213,7 @@ export const App = (appProps) => {
 
       const fieldValue = state[field];
 
-      return div({ className: "col-lg-6" }, [
+      return div({ className: "col-md-6" }, [
         div([
           strong(display),
           mkCheckbox(true, "yes", "ano"),
@@ -1226,7 +1226,7 @@ export const App = (appProps) => {
     };
 
     const radiosRow = div({ className: "row" }, [
-      div({ className: "col-lg-12" }, "Rozhodnutí o závadě"),
+      div({ className: "col-md-12" }, "Rozhodnutí o závadě"),
       mkCheckboxes("warranty", "Záruční oprava: "),
       mkCheckboxes(
         "noFaults",
@@ -1239,9 +1239,9 @@ export const App = (appProps) => {
       div(
         { className: "row" },
         div(
-          { className: "col-lg-6" },
+          { className: "col-md-6" },
           button(
-            { type: "submit", className: "btn btn-primary btn-lg" },
+            { type: "submit", className: "btn btn-primary btn-md" },
             edit ? "Editovat" : "Dokončit"
           )
         )
@@ -1265,7 +1265,7 @@ export const App = (appProps) => {
       const [setSignatureWhose, signatureWhoseRef] = mk();
 
       return div(
-        { className: "col-lg-6" },
+        { className: "col-md-6" },
         appProps.data.type === "client"
           ? signatures
             ? img({ src: signatures[whose] })
@@ -1288,8 +1288,8 @@ export const App = (appProps) => {
         ? []
         : [
             div({ className: "row" }, [
-              div({ className: "col-lg-6" }, "Provedenou práci převzal"),
-              div({ className: "col-lg-6" }, "Za 2e předal"),
+              div({ className: "col-md-6" }, "Provedenou práci převzal"),
+              div({ className: "col-md-6" }, "Za 2e předal"),
             ]),
             div({ className: "row" }, [
               mkSignature("theirs"),
@@ -1298,12 +1298,12 @@ export const App = (appProps) => {
             div(
               { className: "row mt-5 mb-5" },
               div(
-                { className: "col-lg" },
+                { className: "col-md" },
                 button(
                   {
                     disabled: !signatureOurs || !signatureTheirs,
                     type: "submit",
-                    className: "btn btn-primary btn-lg",
+                    className: "btn btn-primary btn-md",
                   },
                   "Nahrát"
                 )
@@ -1325,7 +1325,7 @@ export const App = (appProps) => {
           }
         },
       },
-      div({ className: "container-lg" }, [
+      div({ className: "container-md" }, [
         header,
         renderEmployees(
           signature,
@@ -1350,7 +1350,7 @@ export const App = (appProps) => {
 
   const renderInitial = () => {
     return div(
-      { className: "container-lg" },
+      { className: "container-md" },
       div(
         {
           className: "row",

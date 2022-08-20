@@ -3,9 +3,10 @@ import bodyParser from "body-parser";
 
 import fs from "fs";
 
-import htmlPdf from "html-pdf";
 import h from "react-hyperscript";
 import * as ReactDOMServer from "react-dom/server";
+
+import htmlPdfNode from "html-pdf-node"
 
 // @ts-ignore
 import pg from "pg";
@@ -257,7 +258,6 @@ app.post(`/tsapi/abc`, async (req, res) => {
       .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
       .toString();
 
-    // console.log(style)
 
     const html = `
 <html lang="en">
@@ -272,12 +272,8 @@ app.post(`/tsapi/abc`, async (req, res) => {
 </html>
     `;
 
-    htmlPdf.create(html).toFile("/tmp/abc.pdf", (err, res) => {
-      console.log(err);
-      console.log(res);
-    });
-
-    fs.writeFileSync(`/tmp/abc.html`, html);
+    const result = await htmlPdfNode.generatePdf({content: html}, {format: "A4"})
+    console.log(result.toString())
 
     res.send();
   } else {
