@@ -6,12 +6,14 @@ import fs from "fs";
 import h from "react-hyperscript";
 import * as ReactDOMServer from "react-dom/server";
 
-import htmlPdfNode from "html-pdf-node"
+import htmlPdfNode from "html-pdf-node";
 
 // @ts-ignore
 import pg from "pg";
 import { App } from "./App.mjs";
 import { DateTime } from "luxon";
+
+import puppeteer from "puppeteer";
 
 const { Client } = pg;
 
@@ -258,7 +260,6 @@ app.post(`/tsapi/abc`, async (req, res) => {
       .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
       .toString();
 
-
     const html = `
 <html lang="en">
   <head>
@@ -272,8 +273,28 @@ app.post(`/tsapi/abc`, async (req, res) => {
 </html>
     `;
 
-    const result = await htmlPdfNode.generatePdf({content: html}, {format: "A4"})
-    console.log(result.toString())
+    let args = ["--no-sandbox", "--disable-setuid-sandbox"];
+
+    const browser = await puppeteer.launch({
+      args: args,
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: ["networkidle0", "load"] });
+
+    const pdfData = await page.pdf({scale: 0.77})
+    await browser.close()
+
+    const buffer = Buffer.from(Object.values(pdfData))
+
+    /*
+    const result = await htmlPdfNode.generatePdf(
+      { content: html },
+      { format: "A4", landscape: true, scale: 0.77 }
+    );
+    */
+
+    fs.writeFileSync("/tmp/abc1.pdf", buffer);
+    fs.writeFileSync("/tmp/abc1.html", html);
 
     res.send();
   } else {

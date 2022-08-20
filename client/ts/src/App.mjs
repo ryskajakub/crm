@@ -313,7 +313,7 @@ function renderParts(signature, parts, machines, dispatch) {
             })
       ),
       div(
-        { className: "col-md-1" },
+        { className: "col-md-2" },
         signature
           ? part.quantity
           : input({
@@ -433,7 +433,7 @@ function renderParts(signature, parts, machines, dispatch) {
       div({ className: "col-md-1" }, strong("Pořadí")),
       div({ className: "col-md" }, strong("Číslo materiálu")),
       div({ className: "col-md" }, strong("Název materiálu")),
-      div({ className: "col-md-1" }, strong("Množství")),
+      div({ className: "col-md-2" }, strong("Množství")),
       div({ className: "col-md-2" }, strong("Zařízení")),
       div({ className: "col-md-1" }),
     ]),
@@ -468,7 +468,7 @@ function renderJobs(signature, jobs, dispatch) {
 
     /** @type { (inputValue: string) => import("./Data.t").ParsedValue<string, DateTime>["result"] } */
     const parseDate = (inputValue) => {
-      const value = DateTime.fromFormat(inputValue, "d.L.y");
+      const value = DateTime.fromFormat(inputValue.replaceAll(" ",""), "d.L.y");
 
       /** @type { import("./Data.t").ParsedValue<string, DateTime>["result"] } */
       return value.isValid
@@ -626,11 +626,11 @@ function renderJobs(signature, jobs, dispatch) {
 
   return [
     div({ className: "row" }, [
-      div({ className: "col-md-1" }, strong("Den, rok")),
-      div({ className: "col-md" }, strong("Cesta tam")),
-      div({ className: "col-md" }, strong("Práce")),
-      div({ className: "col-md" }, strong("Cesta zpět")),
-      div({ className: "col-md-2" }, strong("Poznámky")),
+      div({ className: "col-md-2" }, strong("Den, rok")),
+      div({ className: "col-md-2" }, strong("Cesta tam")),
+      div({ className: "col-md-2" }, strong("Práce")),
+      div({ className: "col-md-2" }, strong("Cesta zpět")),
+      div({ className: "col-md" }, strong("Poznámky")),
     ]),
     div({ className: "row" }, [
       div({ className: "col-md-2" }, "Datum"),
@@ -1156,7 +1156,7 @@ export const App = (appProps) => {
       div(
         { className: "col-md-12" },
         signature
-          ? p(field)
+          ? p(state[field])
           : textarea({
               value: state[field],
               onChange: /** @type { React.ChangeEventHandler<HTMLTextAreaElement> } */ (
@@ -1175,7 +1175,7 @@ export const App = (appProps) => {
 
     const textareas = div({ className: "row" }, [
       mkTextarea(8, "description", "Popis činnosti"),
-      mkTextarea(3, "recommendation", "Popis činnosti"),
+      mkTextarea(3, "recommendation", "Doporučení"),
     ]);
 
     /** @type {(field: Extract<keyof import("./Data.t").FormState, "warranty" | "noFaults">, display: string) => React.ReactElement} */
@@ -1295,7 +1295,7 @@ export const App = (appProps) => {
               mkSignature("theirs"),
               mkSignature("ours"),
             ]),
-            div(
+            appProps.data.type === "server" ? "" : div(
               { className: "row mt-5 mb-5" },
               div(
                 { className: "col-md" },
