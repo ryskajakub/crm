@@ -1,8 +1,16 @@
 import express from "express";
 import bodyParser from "body-parser";
 
+import fs from "fs";
+
+import htmlPdf from "html-pdf";
+import h from "react-hyperscript";
+import * as ReactDOMServer from "react-dom/server";
+
 // @ts-ignore
 import pg from "pg";
+import { App } from "./App.mjs";
+import { DateTime } from "luxon";
 
 const { Client } = pg;
 
@@ -32,11 +40,14 @@ join (
 ) as ufp on ufp.upkeep_id = uf.upkeep_id
 `;
 
-app.get("/tsapi/data/:id", async (req, res) => {
+/**
+ * @param {number} upkeepId
+ * @returns { Promise<import("./Data.t").Db<import("./Data.t").DownloadData>[]> }
+ */
+async function getAllData(upkeepId) {
   const client = new Client(clientConfig);
   try {
     await client.connect();
-    const upkeepId = req.params.id;
     const q = `select 
 json_build_object('description', upkeeps.work_description, 'recommendation', upkeeps.recommendation, 'company_name', companies.name, 'employees', COALESCE(u.employees, json_build_array()), 'available_employees', (select json_agg(json_build_object('id', id, 'name', name)) as e from employees), 'machines', um.machines, 'date', upkeeps.date_) as upkeep,
 jf.form,
@@ -63,7 +74,22 @@ join (
 where upkeeps.id = $1
     `;
     const result = await client.query(q, [upkeepId]);
+    /** @type { import("./Data.t").Db<import("./Data.t").DownloadData>[] } */
     const rows = result.rows;
+
+    return rows;
+  } catch (e) {
+    console.log(e);
+  } finally {
+    client.end();
+  }
+}
+
+app.get("/tsapi/data/:id", async (req, res) => {
+  const client = new Client(clientConfig);
+  try {
+    const rows = await getAllData(Number(req.params.id));
+
     if (rows.length === 1) {
       res.send(rows[0]);
     } else {
@@ -201,6 +227,61 @@ app.put("/tsapi/signatures/:upkeepId", async (req, res) => {
     res.status(500).send();
   } finally {
     return client.end();
+  }
+});
+
+app.post(`/tsapi/abc`, async (req, res) => {
+  const upkeepId = 1283;
+
+  const datas = await getAllData(upkeepId);
+  const data = datas[0];
+
+  if (data.form && data.signatures) {
+    /** @type { import("./Data.t").AppPropsDataServer } */
+    const appPropsData = {
+      type: "server",
+      parsedForm: data.form,
+      signatures: data.signatures,
+      upkeep: {
+        ...data.upkeep,
+        date: DateTime.fromISO(data.upkeep.date),
+      },
+      upkeepId,
+    };
+
+    const reactApp = h(App, { data: appPropsData, signature: true });
+
+    const body = ReactDOMServer.renderToString(reactApp);
+
+    const style = fs
+      .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
+      .toString();
+
+    // console.log(style)
+
+    const html = `
+<html lang="en">
+  <head>
+  <style>
+    ${style}
+  </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+    `;
+
+    htmlPdf.create(html).toFile("/tmp/abc.pdf", (err, res) => {
+      console.log(err);
+      console.log(res);
+    });
+
+    fs.writeFileSync(`/tmp/abc.html`, html);
+
+    res.send();
+  } else {
+    res.send();
   }
 });
 

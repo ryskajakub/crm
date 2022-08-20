@@ -1,4 +1,4 @@
-import "bootstrap/dist/css/bootstrap.css";
+//import "bootstrap/dist/css/bootstrap.css";
 
 import SignatureCanvas from "react-signature-canvas";
 import React, { useEffect, useReducer, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import h from "react-hyperscript";
 import hh from "hyperscript-helpers";
 
 // @ts-ignore
-import svgs from "hyperscript-helpers/dist/svg";
+import svgs from "hyperscript-helpers/dist/svg.js";
 
 const {
   div,
@@ -86,6 +86,80 @@ function printDate(dateTime) {
 }
 
 const FRONTEND_TIME_FORMAT = `H:mm`;
+
+/**
+ * @param {import("./Data.t").Upkeep} upkeep
+ * @param {import("./Data.t").Payload<import("./Data.t").ServerForm> | null} form
+ * @returns { import("./Data.t").Form<import("./Data.t").FormState> }
+ */
+function mkFormData(upkeep, form) {
+  const mkNewJobs = () => {
+    const nj = newItem("jobs");
+
+    /** @type { import("./Data.t").Form<import("./Data.t").Job> } */
+    const newJob = {
+      ...nj,
+      date: {
+        ...nj.date,
+        displayError: false,
+        value: printDate(upkeep.date),
+        result: {
+          type: "ok",
+          value: upkeep.date,
+        },
+      },
+    };
+    return [newJob];
+  };
+
+  /** @type { import("./Data.t").ParsedValue<boolean | null, boolean> } */
+  const boolean = {
+    displayError: false,
+    result: {
+      type: "error",
+      error: "musí být vyplněno",
+    },
+    value: null,
+  };
+
+  /** @type {( booleanValue: boolean ) => import("./Data.t").ParsedValue<boolean | null, boolean> } */
+  const mkBoolean = (booleanValue) => {
+    return {
+      displayError: false,
+      result: {
+        type: "ok",
+        value: booleanValue,
+      },
+      value: booleanValue,
+    };
+  };
+
+  /** @type { Record<number, number> } */
+  const mileages = upkeep.machines.reduce(
+    (acc, m) => ({ ...acc, [m.machine_id]: m.mileage }),
+    {}
+  );
+
+  /** @type {(payloadJobs: import("./Data.t").Payload<import("./Data.t").Job>[]) => import("./Data.t").Form<import("./Data.t").Job>[] } */
+  const convertJobs = (payloadJobs) => {
+    return payloadJobs.map(mkFormJob);
+  };
+
+  const formState = {
+    employees: upkeep.employees,
+    km: form === null ? 0 : form.km,
+    transport: form === null ? "reality" : form.transport,
+    mileages,
+    jobs: form === null ? mkNewJobs() : convertJobs(form.jobs),
+    parts: form === null ? [newItem("parts")] : form.parts,
+    description: upkeep.description,
+    recommendation: upkeep.recommendation,
+    noFaults: form === null ? boolean : mkBoolean(form.noFaults),
+    warranty: form === null ? boolean : mkBoolean(form.warranty),
+  };
+
+  return formState;
+}
 
 /**
  * @param { import("./Data.t").Payload<import("./Data.t").Job>} job
@@ -872,7 +946,25 @@ export const App = (appProps) => {
         }));
     }
   };
-  const [state, dispatch] = useReducer(reducer, { type: "initial" });
+
+  /** @type {() => State } */
+  const mkInitialState = () => {
+    switch (appProps.data.type) {
+      case "client":
+        return { type: "initial" };
+      case "server":
+        return {
+          type: "success",
+          edit: false,
+          upkeepId: appProps.data.upkeepId,
+          formState: mkFormData(appProps.data.upkeep, appProps.data.parsedForm),
+          upkeep: appProps.data.upkeep,
+          signatures: appProps.data.signatures,
+        };
+    }
+  };
+
+  const [state, dispatch] = useReducer(reducer, mkInitialState());
 
   const [signatureTheirs, setSignatureTheirs] = useState(false);
   const [signatureOurs, setSignatureOurs] = useState(false);
@@ -884,7 +976,7 @@ export const App = (appProps) => {
   );
 
   const [initialLoaded, setInitialLoaded] = useState(
-    /** @type {boolean} */ (false)
+    /** @type {boolean} */ (appProps.data.type === "server" ? true : false)
   );
 
   const downloadData = async () => {
@@ -902,86 +994,8 @@ export const App = (appProps) => {
           date: DateTime.fromJSDate(new Date(data.upkeep.date)),
         };
 
-        const mkNewJobs = () => {
-          const nj = newItem("jobs");
+        const formState = mkFormData(upkeep, data.form);
 
-          /** @type { import("./Data.t").Form<import("./Data.t").Job> } */
-          const newJob = {
-            ...nj,
-            date: {
-              ...nj.date,
-              displayError: false,
-              value: printDate(upkeep.date),
-              result: {
-                type: "ok",
-                value: upkeep.date,
-              },
-            },
-          };
-          return [newJob];
-        };
-
-        /** @type { import("./Data.t").ParsedValue<boolean | null, boolean> } */
-        const boolean = {
-          displayError: false,
-          result: {
-            type: "error",
-            error: "musí být vyplněno",
-          },
-          value: null,
-        };
-
-        /** @type {( booleanValue: boolean ) => import("./Data.t").ParsedValue<boolean | null, boolean> } */
-        const mkBoolean = (booleanValue) => {
-          return {
-            displayError: false,
-            result: {
-              type: "ok",
-              value: booleanValue,
-            },
-            value: booleanValue,
-          };
-        };
-
-        /** @type { Record<number, number> } */
-        const mileages = data.upkeep.machines.reduce(
-          (acc, m) => ({ ...acc, [m.machine_id]: m.mileage }),
-          {}
-        );
-
-        /** @type {(payloadJobs: import("./Data.t").Payload<import("./Data.t").Job>[]) => import("./Data.t").Form<import("./Data.t").Job>[] } */
-        const convertJobs = (payloadJobs) => {
-          return payloadJobs.map(mkFormJob);
-        };
-
-        /** @type { import("./Data.t").Form<import("./Data.t").FormState> } */
-        const formState = {
-          employees: upkeep.employees,
-          km: data.form?.km === undefined ? 0 : data.form.km,
-          transport:
-            data.form?.transport === undefined
-              ? "reality"
-              : data.form.transport,
-          mileages,
-          jobs:
-            data.form?.jobs === undefined
-              ? mkNewJobs()
-              : convertJobs(data.form.jobs),
-          parts:
-            data.form?.parts === undefined
-              ? [newItem("parts")]
-              : data.form.parts,
-          description: data.upkeep.description,
-          recommendation: data.upkeep.recommendation,
-          noFaults:
-            data.form?.noFaults === undefined
-              ? boolean
-              : mkBoolean(data.form.noFaults),
-          warranty:
-            data.form?.warranty === undefined
-              ? boolean
-              : mkBoolean(data.form.warranty),
-        };
         dispatch({
           type: "set_success",
           upkeep,
@@ -1205,11 +1219,9 @@ export const App = (appProps) => {
           mkCheckbox(true, "yes", "ano"),
           mkCheckbox(false, "no", "Ne"),
         ]),
-        fieldValue.displayError && fieldValue.result.type === "error" ? (
-          <span>{fieldValue.result.error}</span>
-        ) : (
-          ""
-        ),
+        fieldValue.displayError && fieldValue.result.type === "error"
+          ? span(fieldValue.result.error)
+          : "",
       ]);
     };
 

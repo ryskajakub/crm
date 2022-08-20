@@ -43,7 +43,7 @@ export type Form<T> = null extends T
 export type Db<T> = null extends T
   ? Db<Exclude<T, null>> | null
   : T extends DateTime
-  ? Date
+  ? string
   : T extends Time
   ? string
   : T extends Radio
@@ -160,8 +160,10 @@ export type AppPropsDataClient = {
 
 export type AppPropsDataServer = {
   type: "server";
-  parsedForm: ServerForm;
-  signatures: Signatures;
+  parsedForm: Payload<ServerForm>;
+  signatures: Ts<Signatures>;
+  upkeep: Ts<Upkeep>,
+  upkeepId: number,
 };
 
 export type AppPropsData = AppPropsDataServer | AppPropsDataClient;

@@ -26,8 +26,9 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "server": "nodemon src/endpoints.mjs",
-    "typecheck": "tsc"
+    "dev": "nodemon src/endpoints.mjs",
+    "typecheck": "tsc",
+    "server": "OPENSSL_CONF=/dev/null node src/endpoints.mjs"
   },
   "eslintConfig": {
     "extends": [
@@ -51,12 +52,15 @@
     ]
   },
   "dependencies": {
+    "@types/html-pdf": "^3.0.0",
     "@types/react-hyperscript": "^3.0.9",
     "body-parser": "^1.20.0",
     "express": "^4.18.1",
+    "html-pdf": "^3.0.1",
     "hyperscript": "^2.0.2",
     "hyperscript-helpers": "^3.0.3",
     "luxon": "^3.0.1",
+    "pdf-creator-node": "^2.3.5",
     "pg": "^8.7.3",
     "react-hyperscript": "^3.2.0"
   }
