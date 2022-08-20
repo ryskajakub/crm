@@ -1,7 +1,7 @@
 import "bootstrap/dist/css/bootstrap.css";
 
 import SignatureCanvas from "react-signature-canvas";
-import { useEffect, useReducer, useRef, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import axios from "axios";
 import { DateTime } from "luxon";
 
@@ -14,12 +14,12 @@ import svgs from "hyperscript-helpers/dist/svg";
 const {
   div,
   strong,
-  input,
   select,
   option,
   button,
   svg,
   label,
+  input,
   p,
   span,
   textarea,
@@ -31,7 +31,7 @@ const { path } = svgs(h);
 
 /**
  * @typedef { { type: "initial" } } Initial
- * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } Success
+ * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").Form<import("./Data.t").FormState>, edit: boolean, signatures: import("./Data.t").Signatures | null } } Success
  * @typedef { { type: "failure" } } Failure
  * @typedef { Initial | Success | Failure } State
  *
@@ -39,7 +39,7 @@ const { path } = svgs(h);
  * @typedef { { type: "set_km", km: number } } SetKm
  * @typedef { { type: "set_transport", transport: import("./Data.t").Transport } } SetTransport
  * @typedef { { type: "set_failure" } } SetFailure
- * @typedef { { type: "set_success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").FormState } } SetSuccess
+ * @typedef { { type: "set_success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").Form<import("./Data.t").FormState>, edit: boolean, signatures: import("./Data.t").Signatures | null } } SetSuccess
  * @typedef { { type: "set_mileage", machine_id: number, mileage: number } } SetMileage
  * @typedef { { type: "set_job", index: number, field: keyof import("./Data.t").Job, value: string, result: import("./Data.t").ParsedValue<string, DateTime>["result"] } } SetJob
  * @typedef { { type: "set_job_note", index: number, value: string } } SetJobNote
@@ -77,9 +77,60 @@ const timeKeys = /** @type {const} */ ([
 const validatedJobKeys = [...timeKeys, "date"];
 
 /**
+ * @param { DateTime } dateTime
+ * @returns { string }
+ */
+function printDate(dateTime) {
+  const date = dateTime.toJSDate();
+  return `${date.getDate()}. ${date.getMonth() + 1}. ${date.getFullYear()}`;
+}
+
+const FRONTEND_TIME_FORMAT = `H:mm`;
+
+/**
+ * @param { import("./Data.t").Payload<import("./Data.t").Job>} job
+ * @returns { import("./Data.t").Form<import("./Data.t").Job> }
+ */
+function mkFormJob(job) {
+  /** @type { (time: string) => import("./Data.t").ParsedValue<string, DateTime> } */
+  const mkTimeField = (time) => {
+    const dateTime = DateTime.fromFormat(time, "H:mm:ss");
+
+    const formattedTime = dateTime.toFormat(FRONTEND_TIME_FORMAT);
+
+    return {
+      displayError: false,
+      value: formattedTime,
+      result: {
+        type: "ok",
+        value: dateTime,
+      },
+    };
+  };
+
+  return {
+    ...job,
+    date: {
+      value: printDate(DateTime.fromISO(job.date)),
+      displayError: false,
+      result: {
+        type: "ok",
+        value: DateTime.fromJSDate(new Date(job.date)),
+      },
+    },
+    travelThereTo: mkTimeField(job.travelThereTo),
+    travelThereFrom: mkTimeField(job.travelThereFrom),
+    workFrom: mkTimeField(job.workFrom),
+    workTo: mkTimeField(job.workTo),
+    travelBackFrom: mkTimeField(job.travelBackFrom),
+    travelBackTo: mkTimeField(job.travelBackTo),
+  };
+}
+
+/**
  * @template {Extract<keyof import("./Data.t").FormState, "jobs" | "parts" | "employees">} T
  * @param {T} field
- * @returns { import("./Data.t").Unpack<import("./Data.t").FormState[T]> }
+ * @returns { import("./Data.t").Form<import("./Data.t").Unpack<import("./Data.t").FormState[T]>> }
  */
 function newItem(field) {
   /** @type {import("./Data.t").ParsedValue<string, DateTime>} */
@@ -167,61 +218,74 @@ function renderParts(signature, parts, machines, dispatch) {
       div({ className: "col-lg-1" }, index + 1),
       div(
         { className: "col-lg" },
-        input({
-          type: "text",
-          className: "form-control",
-          value: parts[index].number,
-          onChange: onChange("number"),
-        })
+        signature
+          ? parts[index].number
+          : input({
+              type: "text",
+              className: "form-control",
+              value: parts[index].number,
+              onChange: onChange("number"),
+            })
       ),
       div(
         { className: "col-lg" },
-        input({
-          type: "text",
-          className: "form-control",
-          value: parts[index].name,
-          onChange: onChange("name"),
-        })
+        signature
+          ? part.name
+          : input({
+              type: "text",
+              className: "form-control",
+              value: parts[index].name,
+              onChange: onChange("name"),
+            })
       ),
       div(
         { className: "col-lg-1" },
-        input({
-          type: "text",
-          className: "form-control",
-          value: parts[index].quantity,
-          onChange: onChange("quantity"),
-        })
+        signature
+          ? part.quantity
+          : input({
+              type: "text",
+              className: "form-control",
+              value: parts[index].quantity,
+              onChange: onChange("quantity"),
+            })
       ),
       div(
         { className: "col-lg-2" },
-        select(
-          {
-            value: part.machine_id || "---",
-            onChange: (e) => {
-              const value = e.target.value;
-              const valueParsed = value === "---" ? null : Number(value);
-              /** @type { SetPartLink } */
-              const setParkLink = {
-                type: "set_part_link",
-                index,
-                machine_id: valueParsed,
-              };
-              dispatch(setParkLink);
-            },
-            className: "form-select",
-          },
-          [
-            option({ key: null, value: "---" }, "---"),
-            ...[
-              machines.map((m) => {
-                return option(
-                  { key: m.machine_id, value: m.machine_id },
-                  `${m.manufacturer} ${m.serial_number}`
-                );
-              }),
-            ],
-          ]
-        )
+        signature
+          ? ((m) =>
+              m === undefined ? "---" : `${m.manufacturer} ${m.serial_number}`)(
+              machines.find((x) => x.machine_id === part.machine_id)
+            )
+          : select(
+              {
+                value: part.machine_id || "---",
+                onChange: /** @type{  React.ChangeEventHandler<HTMLSelectElement> } */ (
+                  e
+                ) => {
+                  const value = e.target.value;
+                  const valueParsed = value === "---" ? null : Number(value);
+                  /** @type { SetPartLink } */
+                  const setParkLink = {
+                    type: "set_part_link",
+                    index,
+                    machine_id: valueParsed,
+                  };
+                  dispatch(setParkLink);
+                },
+                className: "form-select",
+              },
+              [
+                option({ key: null, value: "---" }, "---"),
+                ...[
+                  machines.map((m) => {
+                    return option(
+                      { key: m.machine_id, value: m.machine_id },
+                      `${m.manufacturer} ${m.serial_number}`
+                    );
+                  }),
+                ],
+              ]
+            )
       ),
       div(
         { className: "col-lg-1" },
@@ -305,7 +369,7 @@ function renderParts(signature, parts, machines, dispatch) {
 
 /**
  * @param { boolean } signature
- * @param { import("./Data.t").ValidatedJob[] } jobs
+ * @param { import("./Data.t").Form<import("./Data.t").Job>[] } jobs
  * @param { React.Dispatch<Action> } dispatch
  * @returns { React.ReactElement[] }
  */
@@ -356,13 +420,15 @@ function renderJobs(signature, jobs, dispatch) {
 
     return div({ key: index, className: "row" }, [
       div({ className: "col-lg-2" }, [
-        input({
-          type: "text",
-          className: "form-control",
-          onChange: onChange("date", parseDate),
-          value: job.date.value,
-          id: `date${index}`,
-        }),
+        signature
+          ? job.date.value
+          : input({
+              type: "text",
+              className: "form-control",
+              onChange: onChange("date", parseDate),
+              value: job.date.value,
+              id: `date${index}`,
+            }),
         job.date.displayError && job.date.result.type === "error"
           ? label(
               { htmlFor: `date${index}`, className: "text-danger" },
@@ -373,13 +439,15 @@ function renderJobs(signature, jobs, dispatch) {
       ...timeKeys.map((timeKey) => {
         const result = job[timeKey].result;
         return div({ key: timeKey, className: "col-lg-1" }, [
-          input({
-            type: "text",
-            className: "form-control",
-            onChange: onChange(timeKey, parseTime),
-            value: job[timeKey].value,
-            id: `${timeKey}${index}`,
-          }),
+          signature
+            ? job[timeKey].value
+            : input({
+                type: "text",
+                className: "form-control",
+                onChange: onChange(timeKey, parseTime),
+                value: job[timeKey].value,
+                id: `${timeKey}${index}`,
+              }),
           job[timeKey].displayError && result.type === "error"
             ? label(
                 { htmlFor: `${timeKey}${index}`, className: "text-danger" },
@@ -390,20 +458,24 @@ function renderJobs(signature, jobs, dispatch) {
       }),
       div(
         { className: "col-lg" },
-        input({
-          type: "text",
-          className: "form-control",
-          onChange: (e) => {
-            /** @type { SetJobNote } */
-            const setJobNote = {
-              type: "set_job_note",
-              index,
-              value: e.target.value,
-            };
-            dispatch(setJobNote);
-          },
-          value: job.note,
-        })
+        signature
+          ? job.note
+          : input({
+              type: "text",
+              className: "form-control",
+              onChange: /** @type { React.ChangeEventHandler<HTMLInputElement> } */ (
+                e
+              ) => {
+                /** @type { SetJobNote } */
+                const setJobNote = {
+                  type: "set_job_note",
+                  index,
+                  value: e.target.value,
+                };
+                dispatch(setJobNote);
+              },
+              value: job.note,
+            })
       ),
       div(
         { className: "col-lg-1" },
@@ -439,7 +511,7 @@ function renderJobs(signature, jobs, dispatch) {
 
   const renderedJobRows = [
     ...jobsRendered,
-    !signature
+    signature
       ? ""
       : div(
           { className: "row" },
@@ -518,19 +590,23 @@ function renderMachines(signature, machines, mileages, dispatch) {
       div({ className: "col-lg-4" }, `v. č. ${machine.serial_number}`),
       div(
         { className: "col-lg-2" },
-        input({
-          type: "number",
-          className: "form-control",
-          value: mileages[machine.machine_id],
-          onChange: (e) => {
-            const value = Number(e.target.value);
-            dispatch({
-              type: "set_mileage",
-              machine_id: machine.machine_id,
-              mileage: value,
-            });
-          },
-        })
+        signature
+          ? mileages[machine.machine_id]
+          : input({
+              type: "number",
+              className: "form-control",
+              value: mileages[machine.machine_id],
+              onChange: /** @type { React.ChangeEventHandler<HTMLInputElement> } */ (
+                e
+              ) => {
+                const value = Number(e.target.value);
+                dispatch({
+                  type: "set_mileage",
+                  machine_id: machine.machine_id,
+                  mileage: value,
+                });
+              },
+            })
       ),
     ]);
   });
@@ -577,52 +653,54 @@ function renderEmployees(signature, employees, available_employees, dispatch) {
         className: "col-lg-2",
         key: index,
       },
-      div({ className: "input-group" }, [
-        select(
-          {
-            value: employee || "---",
-            onChange: change,
-            className: "form-select",
-          },
-          [
-            option({ key: null, value: "---" }, "---"),
-            ...available_employees.map((a) => {
-              return option({ key: a.id, value: a.id }, a.name);
-            }),
-          ]
-        ),
-        when(
-          !signature,
-          button(
-            {
-              className: "btn btn-danger",
-              type: "button",
-              onClick: () => {
-                dispatch({
-                  type: "remove_at_index",
-                  field: "employees",
-                  index,
-                });
-              },
-            },
-            svg(
+      signature
+        ? available_employees.find((a) => a.id === employee)?.name
+        : div({ className: "input-group" }, [
+            select(
               {
-                xmlns: "http://www.w3.org/2000/svg",
-                width: "16",
-                height: "16",
-                fill: "currentColor",
-                className: "bi bi-dash-lg",
-                viewBox: "0 0 16 16",
+                value: employee || "---",
+                onChange: change,
+                className: "form-select",
               },
-              path({
-                fillRule: "evenodd",
-                d:
-                  "M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z",
-              })
-            )
-          )
-        ),
-      ])
+              [
+                option({ key: null, value: "---" }, "---"),
+                ...available_employees.map((a) => {
+                  return option({ key: a.id, value: a.id }, a.name);
+                }),
+              ]
+            ),
+            when(
+              !signature,
+              button(
+                {
+                  className: "btn btn-danger",
+                  type: "button",
+                  onClick: () => {
+                    dispatch({
+                      type: "remove_at_index",
+                      field: "employees",
+                      index,
+                    });
+                  },
+                },
+                svg(
+                  {
+                    xmlns: "http://www.w3.org/2000/svg",
+                    width: "16",
+                    height: "16",
+                    fill: "currentColor",
+                    className: "bi bi-dash-lg",
+                    viewBox: "0 0 16 16",
+                  },
+                  path({
+                    fillRule: "evenodd",
+                    d:
+                      "M2 8a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11A.5.5 0 0 1 2 8Z",
+                  })
+                )
+              )
+            ),
+          ])
     );
   });
 
@@ -683,7 +761,7 @@ export const App = (appProps) => {
       }
     };
 
-    /** @type { (partial: ((state: Success) => Partial<import("./Data.t").FormState>) | Partial<import("./Data.t").FormState>) => State } */
+    /** @type { (partial: ((state: Success) => Partial<import("./Data.t").Form<import("./Data.t").FormState>>) | Partial<import("./Data.t").Form<import("./Data.t").FormState>>) => State } */
     const setPartialState = (partial) => {
       return ifSuccess((state) => {
         return {
@@ -705,6 +783,8 @@ export const App = (appProps) => {
           upkeepId: action.upkeepId,
           formState: action.formState,
           upkeep: action.upkeep,
+          edit: action.edit,
+          signatures: action.signatures,
         };
       case "set_employees":
         return setPartialState({ employees: action.employees });
@@ -813,19 +893,33 @@ export const App = (appProps) => {
     const idInt = Number(id);
     if (id && !Number.isNaN(idInt)) {
       try {
-        /** @type { import("axios").AxiosResponse<import("./Data.t").Payload<import("./Data.t").Upkeep>> } */
+        /** @type { import("axios").AxiosResponse<import("./Data.t").Payload<import("./Data.t").DownloadData>> } */
         const response = await axios.get(`/tsapi/data/${id}`);
         const data = response.data;
-        /** @type { import("./Data.t").Upkeep } */
+        /** @type { import("./Data.t").Ts<import("./Data.t").Upkeep> } */
         const upkeep = {
-          ...data,
-          date: new Date(data.date),
+          ...data.upkeep,
+          date: DateTime.fromJSDate(new Date(data.upkeep.date)),
         };
-        const defaultDate = `${upkeep.date.getDate()}. ${
-          upkeep.date.getMonth() + 1
-        }. ${upkeep.date.getFullYear()}`;
 
-        const newJob = newItem("jobs");
+        const mkNewJobs = () => {
+          const nj = newItem("jobs");
+
+          /** @type { import("./Data.t").Form<import("./Data.t").Job> } */
+          const newJob = {
+            ...nj,
+            date: {
+              ...nj.date,
+              displayError: false,
+              value: printDate(upkeep.date),
+              result: {
+                type: "ok",
+                value: upkeep.date,
+              },
+            },
+          };
+          return [newJob];
+        };
 
         /** @type { import("./Data.t").ParsedValue<boolean | null, boolean> } */
         const boolean = {
@@ -837,36 +931,64 @@ export const App = (appProps) => {
           value: null,
         };
 
-        /** @type { import("./Data.t").FormState } */
+        /** @type {( booleanValue: boolean ) => import("./Data.t").ParsedValue<boolean | null, boolean> } */
+        const mkBoolean = (booleanValue) => {
+          return {
+            displayError: false,
+            result: {
+              type: "ok",
+              value: booleanValue,
+            },
+            value: booleanValue,
+          };
+        };
+
+        /** @type { Record<number, number> } */
+        const mileages = data.upkeep.machines.reduce(
+          (acc, m) => ({ ...acc, [m.machine_id]: m.mileage }),
+          {}
+        );
+
+        /** @type {(payloadJobs: import("./Data.t").Payload<import("./Data.t").Job>[]) => import("./Data.t").Form<import("./Data.t").Job>[] } */
+        const convertJobs = (payloadJobs) => {
+          return payloadJobs.map(mkFormJob);
+        };
+
+        /** @type { import("./Data.t").Form<import("./Data.t").FormState> } */
         const formState = {
           employees: upkeep.employees,
-          km: 0,
-          transport: "reality",
-          mileages: {},
-          jobs: [
-            {
-              ...newJob,
-              date: {
-                ...newJob.date,
-                value: defaultDate,
-                result: {
-                  type: "ok",
-                  value: DateTime.fromJSDate(upkeep.date),
-                },
-              },
-            },
-          ],
-          parts: [newItem("parts")],
-          description: "",
-          recommendation: "",
-          noFaults: boolean,
-          warranty: boolean,
+          km: data.form?.km === undefined ? 0 : data.form.km,
+          transport:
+            data.form?.transport === undefined
+              ? "reality"
+              : data.form.transport,
+          mileages,
+          jobs:
+            data.form?.jobs === undefined
+              ? mkNewJobs()
+              : convertJobs(data.form.jobs),
+          parts:
+            data.form?.parts === undefined
+              ? [newItem("parts")]
+              : data.form.parts,
+          description: data.upkeep.description,
+          recommendation: data.upkeep.recommendation,
+          noFaults:
+            data.form?.noFaults === undefined
+              ? boolean
+              : mkBoolean(data.form.noFaults),
+          warranty:
+            data.form?.warranty === undefined
+              ? boolean
+              : mkBoolean(data.form.warranty),
         };
         dispatch({
           type: "set_success",
           upkeep,
           upkeepId: idInt,
-          formState: formState,
+          formState,
+          edit: data.form !== null,
+          signatures: data.signatures,
         });
       } catch {
         dispatch({ type: "set_failure" });
@@ -891,19 +1013,19 @@ export const App = (appProps) => {
     }, 500);
   }, []);
 
-  /** @type {(data: import("./Data.t").Upkeep, state: import("./Data.t").FormState, upkeepId: number) => React.ReactElement} */
-  const renderData = (data, state, upkeepId) => {
+  /** @type {(data: import("./Data.t").Upkeep, state: import("./Data.t").Form<import("./Data.t").FormState>, upkeepId: number, edit: boolean, signatures: import("./Data.t").Signatures | null) => React.ReactElement} */
+  const renderData = (data, state, upkeepId, edit, signatures) => {
     const submitSignature = async () => {
-      const ours = signatureTheirsRef.current
+      const ours = signatureOursRef.current
         ?.getSignaturePad()
-        .toDataURL("image/jpeg");
+        .toDataURL("image/png");
       const theirs = signatureTheirsRef.current
         ?.getSignaturePad()
-        .toDataURL("image/jpeg");
+        .toDataURL("image/png");
       if (ours !== undefined && theirs !== undefined) {
         /** @type { import("./Data.t").Signatures } */
         const body = { ours, theirs };
-        await axios.put(`/tsapi/upload/1`, body);
+        await axios.put(`/tsapi/signatures/${upkeepId}`, body);
       }
     };
 
@@ -918,24 +1040,26 @@ export const App = (appProps) => {
       ) {
         dispatch({ type: "display_errors" });
       } else {
-        /** @type {(job: import("./Data.t").ValidatedJob) => import("./Data.t").SubmitJob[]} */
+        /** @type {(job: import("./Data.t").Form<import("./Data.t").Job>) => import("./Data.t").Payload<import("./Data.t").Job[]>} */
         const traverseJob = (job) => {
-          const r = validatedJobKeys.reduce(
-            (acc, key) => {
-              const result = job[key].result;
-              if (result.type === "ok" && acc.length === 1) {
-                return [{ ...acc[0], [key]: result.value }];
-              } else {
-                return [];
-              }
-            },
-            /** @type {SubmitJob[]} */ [{ date: job.date }]
-          );
+          const r = timeKeys.reduce((acc, key) => {
+            const result = job[key].result;
+            if (result.type === "ok" && acc.length === 1) {
+              return [
+                {
+                  ...acc[0],
+                  [key]: result.value.toFormat(FRONTEND_TIME_FORMAT),
+                },
+              ];
+            } else {
+              return [];
+            }
+          }, /** @type { import("./Data.t").Payload<import("./Data.t").Job>[]} */ ([{ date: job.date.result.type === "ok" ? job.date.result.value.toISODate() : "" }]));
           // @ts-ignore
-          return {...r[0], note: job.note};
+          return { ...r[0], note: job.note };
         };
 
-        /** @type {import("./Data.t").ParsedForm} */
+        /** @type {import("./Data.t").Payload<import("./Data.t").FormState>} */
         const parsedForm = {
           ...state,
           employees: state.employees.flatMap((e) => (e !== null ? [e] : [])),
@@ -959,43 +1083,56 @@ export const App = (appProps) => {
         ),
       ]),
       div({ className: "col-lg-4" }, [
-        strong("Ujeté km"),
-        div({ className: "form-check" }, [
-          label(
-            { className: "form-check-label", htmlFor: "transport_reality" },
-            "Dle skutečnosti"
-          ),
-          input({
-            className: "form-check-input",
-            type: "radio",
-            name: "transport",
-            id: "transport_reality",
-            value: "reality",
-            onChange: handleTransport,
-            checked: state.transport === "reality",
-          }),
-        ]),
-        div({ className: "form-check" }, [
-          input({
-            className: "form-check-input",
-            type: "radio",
-            name: "transport",
-            id: "transport_km",
-            value: "km",
-            onChange: handleTransport,
-            checked: state.transport === "km",
-          }),
-          label({ className: "form-check-label", htmlFor: "transport_km" }, [
-            input({
-              className: "form-control",
-              type: "number",
-              value: state.km,
-              onChange: (e) =>
-                dispatch({ type: "set_km", km: Number(e.target.value) }),
-            }),
-            "Km",
-          ]),
-        ]),
+        strong("Ujeté km: "),
+        ...(signature
+          ? [
+              state.transport === "reality"
+                ? "Dle skutečnosti"
+                : `${state.km} km`,
+            ]
+          : [
+              div({ className: "form-check" }, [
+                label(
+                  {
+                    className: "form-check-label",
+                    htmlFor: "transport_reality",
+                  },
+                  "Dle skutečnosti"
+                ),
+                input({
+                  className: "form-check-input",
+                  type: "radio",
+                  name: "transport",
+                  id: "transport_reality",
+                  value: "reality",
+                  onChange: handleTransport,
+                  checked: state.transport === "reality",
+                }),
+              ]),
+              div({ className: "form-check" }, [
+                input({
+                  className: "form-check-input",
+                  type: "radio",
+                  name: "transport",
+                  id: "transport_km",
+                  value: "km",
+                  onChange: handleTransport,
+                  checked: state.transport === "km",
+                }),
+                div({ className: "input-group" }, [
+                  input({
+                    className: "form-control",
+                    type: "number",
+                    value: state.km,
+                    onChange: /** @type { React.ChangeEventHandler<HTMLInputElement> } */ (
+                      e
+                    ) =>
+                      dispatch({ type: "set_km", km: Number(e.target.value) }),
+                  }),
+                  span({ className: "input-group-text" }, "km"),
+                ]),
+              ]),
+            ]),
       ]),
     ]);
 
@@ -1004,17 +1141,21 @@ export const App = (appProps) => {
       div({ className: "col-lg-12" }, strong(label)),
       div(
         { className: "col-lg-12" },
-        textarea({
-          value: state[field],
-          onChange: (e) =>
-            dispatch({
-              type: "set_string",
-              value: e.target.value,
-              field,
-            }),
-          className: "form-control",
-          rows,
-        })
+        signature
+          ? p(field)
+          : textarea({
+              value: state[field],
+              onChange: /** @type { React.ChangeEventHandler<HTMLTextAreaElement> } */ (
+                e
+              ) =>
+                dispatch({
+                  type: "set_string",
+                  value: e.target.value,
+                  field,
+                }),
+              className: "form-control",
+              rows,
+            })
       ),
     ];
 
@@ -1029,6 +1170,7 @@ export const App = (appProps) => {
       const mkCheckbox = (boolean, value, label_) =>
         div({ className: "form-check form-check-inline" }, [
           input({
+            disabled: signature,
             className: "form-check-input",
             type: "radio",
             name: field,
@@ -1043,7 +1185,7 @@ export const App = (appProps) => {
                   value: boolean,
                   result: {
                     type: "ok",
-                    value: true,
+                    value: boolean,
                   },
                 },
               }),
@@ -1073,8 +1215,11 @@ export const App = (appProps) => {
 
     const radiosRow = div({ className: "row" }, [
       div({ className: "col-lg-12" }, "Rozhodnutí o závadě"),
-      mkCheckboxes("warranty", "Záruční oprava"),
-      mkCheckboxes("noFaults", "Zařízení bylo zprovozněno a pracuje bez závad"),
+      mkCheckboxes("warranty", "Záruční oprava: "),
+      mkCheckboxes(
+        "noFaults",
+        "Zařízení bylo zprovozněno a pracuje bez závad: "
+      ),
     ]);
 
     const submitButton = when(
@@ -1085,11 +1230,46 @@ export const App = (appProps) => {
           { className: "col-lg-6" },
           button(
             { type: "submit", className: "btn btn-primary btn-lg" },
-            "Dokončit"
+            edit ? "Editovat" : "Dokončit"
           )
         )
       )
     );
+
+    /** @type { (whose: "theirs" | "ours") => any } */
+    const mkSignature = (whose) => {
+      const mk = () => {
+        switch (whose) {
+          case "theirs":
+            return /** @type {const} */ ([
+              setSignatureTheirs,
+              signatureTheirsRef,
+            ]);
+          case "ours":
+            return /** @type {const} */ ([setSignatureOurs, signatureOursRef]);
+        }
+      };
+
+      const [setSignatureWhose, signatureWhoseRef] = mk();
+
+      return div(
+        { className: "col-lg-6" },
+        appProps.data.type === "client"
+          ? signatures
+            ? img({ src: signatures[whose] })
+            : h(SignatureCanvas, {
+                canvasProps: {
+                  style: { border: "1px solid black" },
+                  width: 400,
+                  height: 100,
+                  className: "sigCanvas",
+                },
+                onEnd: () => setSignatureWhose(true),
+                ref: (ref) => (signatureWhoseRef.current = ref),
+              })
+          : img({ src: appProps.data.signatures[whose] })
+      );
+    };
 
     const mkSignatures = () => {
       return !signature
@@ -1100,36 +1280,8 @@ export const App = (appProps) => {
               div({ className: "col-lg-6" }, "Za 2e předal"),
             ]),
             div({ className: "row" }, [
-              div(
-                { className: "col-lg-6" },
-                appProps.data.type === "client"
-                  ? h(SignatureCanvas, {
-                      canvasProps: {
-                        style: { border: "1px solid black" },
-                        width: 400,
-                        height: 100,
-                        className: "sigCanvas",
-                      },
-                      onEnd: () => setSignatureTheirs(true),
-                      ref: (ref) => (signatureTheirsRef.current = ref),
-                    })
-                  : img({ src: appProps.data.signatures.theirs })
-              ),
-              div(
-                { className: "col-lg-6" },
-                appProps.data.type === "client"
-                  ? h(SignatureCanvas, {
-                      canvasProps: {
-                        style: { border: "1px solid black" },
-                        width: 400,
-                        height: 100,
-                        className: "sigCanvas",
-                      },
-                      onEnd: () => setSignatureOurs(true),
-                      ref: (ref) => (signatureOursRef.current = ref),
-                    })
-                  : img({ src: appProps.data.signatures.ours })
-              ),
+              mkSignature("theirs"),
+              mkSignature("ours"),
             ]),
             div(
               { className: "row mt-5 mb-5" },
@@ -1150,8 +1302,10 @@ export const App = (appProps) => {
 
     return form(
       {
-        onSubmit: async (event) => {
-          event.preventDefault();
+        onSubmit: /** @type { React.FormEventHandler<HTMLElement> } */ async (
+          e
+        ) => {
+          e.preventDefault();
           if (signature) {
             await submitSignature();
           } else {
@@ -1216,7 +1370,13 @@ export const App = (appProps) => {
   } else {
     switch (state.type) {
       case "success":
-        return renderData(state.upkeep, state.formState, state.upkeepId);
+        return renderData(
+          state.upkeep,
+          state.formState,
+          state.upkeepId,
+          state.edit,
+          state.signatures
+        );
       case "failure":
         return renderFailure();
       case "initial":

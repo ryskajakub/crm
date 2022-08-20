@@ -1,62 +1,114 @@
 import { DateTime } from "luxon";
 
-export type Payload<T> = T extends Date
-  ? string
-  : T extends {}
-  ? { [K in keyof T]: Payload<T[K]> }
-  : T extends [infer X]
-  ? [Payload<X>]
-  : T;
-
-export type Unpack<A extends any[]> = A extends (infer B)[] ? B : never;
-
-export type FormState = {
-  employees: (number | null)[];
-  km: number;
-  transport: Transport;
-  mileages: Record<number, number>;
-  jobs: ValidatedJob[];
-  parts: Part[];
-  description: string;
-  recommendation: string;
-  warranty: ParsedValue<boolean | null, boolean>;
-  noFaults: ParsedValue<boolean | null, boolean>;
-};
-
-export type ParsedForm = Omit<
-  FormState,
-  "jobs" | "warranty" | "noFaults" | "employees"
-> & {
-  employees: number[];
-  jobs: SubmitJob[];
-  warranty: boolean;
-  noFaults: boolean;
-};
-
 export type ParsedValue<Value, A> = {
   value: Value;
   result: { type: "error"; error: string } | { type: "ok"; value: A };
   displayError: boolean;
 };
 
-export type Job = {
-  date: string;
-  travelThereFrom: string;
-  travelThereTo: string;
-  workFrom: string;
-  workTo: string;
-  travelBackFrom: string;
-  travelBackTo: string;
-  note: string;
+export type Payload<T> = null extends T
+  ? Payload<Exclude<T, null>> | null
+  : T extends DateTime
+  ? string
+  : T extends Time
+  ? string
+  : T extends Radio
+  ? boolean
+  : T extends IdItem
+  ? number
+  : T extends {}
+  ? { [K in keyof T]: Payload<T[K]> }
+  : T extends [infer X]
+  ? [Payload<X>]
+  : T;
+
+export type XXX = Payload<{ item: Date }>;
+
+export type Form<T> = null extends T
+  ? Form<Exclude<T, null>> | null
+  : T extends DateTime
+  ? ParsedValue<string, DateTime>
+  : T extends Time
+  ? ParsedValue<string, DateTime>
+  : T extends Radio
+  ? ParsedValue<boolean | null, boolean>
+  : T extends IdItem
+  ? null | number
+  : T extends {}
+  ? { [K in keyof T]: Form<T[K]> }
+  : T extends [infer X]
+  ? [Form<X>]
+  : T;
+
+export type Db<T> = null extends T
+  ? Db<Exclude<T, null>> | null
+  : T extends DateTime
+  ? Date
+  : T extends Time
+  ? string
+  : T extends Radio
+  ? boolean
+  : T extends IdItem
+  ? number
+  : T extends {}
+  ? { [K in keyof T]: Db<T[K]> }
+  : T extends [infer X]
+  ? [Db<X>]
+  : T;
+
+export type Ts<T> = null extends T
+  ? Ts<Exclude<T, null>> | null
+  : T extends DateTime
+  ? DateTime
+  : T extends Time
+  ? DateTime
+  : T extends Radio
+  ? boolean
+  : T extends IdItem
+  ? number
+  : T extends {}
+  ? { [K in keyof T]: Ts<T[K]> }
+  : T extends [infer X]
+  ? [Ts<X>]
+  : T;
+
+export type Unpack<A extends any[]> = A extends (infer B)[] ? B : never;
+
+export class Time {
+  private __time: null = null;
+}
+
+export class Radio {
+  private __radio: null = null;
+}
+
+export class IdItem {
+  private __idItem: null = null;
+}
+
+export type FormState = {
+  employees: IdItem[];
+  km: number;
+  transport: Transport;
+  mileages: Record<number, number>;
+  jobs: Job[];
+  parts: Part[];
+  description: string;
+  recommendation: string;
+  warranty: Radio;
+  noFaults: Radio;
 };
 
-export type TypedJob<T> = {
-  [K in Exclude<keyof Job, "note">]: T;
-} &
-  Pick<Job, "note">;
-
-export type ValidatedJob = TypedJob<ParsedValue<string, DateTime>>;
-export type SubmitJob = TypedJob<Date>;
+export type Job = {
+  date: DateTime;
+  travelThereFrom: Time;
+  travelThereTo: Time;
+  workFrom: Time;
+  workTo: Time;
+  travelBackFrom: Time;
+  travelBackTo: Time;
+  note: string;
+};
 
 export type Part = {
   number: string;
@@ -86,7 +138,20 @@ export type Upkeep = {
     manufacturer: string;
     machine_id: number;
   }[];
-  date: Date;
+  date: DateTime;
+  description: string;
+  recommendation: string;
+};
+
+export type ServerForm = Omit<
+  FormState,
+  "employees" | "mileages" | "description" | "recommendation"
+>;
+
+export type DownloadData = {
+  upkeep: Upkeep;
+  form: ServerForm | null;
+  signatures: Signatures | null;
 };
 
 export type AppPropsDataClient = {
@@ -95,7 +160,7 @@ export type AppPropsDataClient = {
 
 export type AppPropsDataServer = {
   type: "server";
-  parsedForm: ParsedForm;
+  parsedForm: ServerForm;
   signatures: Signatures;
 };
 
