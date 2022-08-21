@@ -1,12 +1,14 @@
 import express from "express";
 import bodyParser from "body-parser";
 
+import crypto from "crypto";
+
 import fs from "fs";
 
 import h from "react-hyperscript";
 import * as ReactDOMServer from "react-dom/server";
 
-import htmlPdfNode from "html-pdf-node";
+import { fromBuffer } from "pdf2pic";
 
 // @ts-ignore
 import pg from "pg";
@@ -14,6 +16,9 @@ import { App } from "./App.mjs";
 import { DateTime } from "luxon";
 
 import puppeteer from "puppeteer";
+
+import Mailgun from "mailgun.js";
+import formData from "form-data";
 
 const { Client } = pg;
 
@@ -28,6 +33,112 @@ const clientConfig = {
 };
 
 app.use(bodyParser.json());
+
+/**
+ * @param {Buffer} pdf
+ * @param {any} client
+ * @param {number} upkeepId
+ * @returns { Promise<void> }
+ */
+async function savePicture(pdf, client, upkeepId) {
+  const random = crypto.randomBytes(16).toString("hex");
+  const name = `${random}`;
+  await fromBuffer(pdf, {
+    quality: 1000,
+    density: 1000,
+    width: 1140,
+    height: 1140 * 1.4142857142857144,
+    format: "jpeg",
+    saveFilename: name,
+    savePath: "/tmp",
+  })(1, false);
+
+  const imgData = fs.readFileSync(`/tmp/${name}.1.jpeg`, "hex");
+  const allImgData = "\\x" + imgData;
+  const result = await client.query(
+    `insert into photos(data) values ($1) returning id`,
+    [allImgData]
+  );
+  /** @type { {id: number}[] } */
+  const rows = result.rows;
+  const returnedId = rows[0].id
+  await client.query(`insert into photos_meta(photo_id, mime_type, file_name) values($1, 'image/jpeg', 'image.jpg', [returnedId])
+  await client.query('insert into upkeep_photos(photo_id, upkeep_id)values ($1, $2)', [returnedId, upkeepId])
+`)
+}
+
+/**
+ * @param {Buffer} pdf
+ * @param {any} client
+ * @returns { Promise<void> }
+ */
+async function sendMails(pdf, client) {
+  const mailgun = new Mailgun(formData);
+  // const mg = mailgun.client({})
+  // mg.messages.create()
+}
+
+/**
+ * @param {number} upkeepId
+ * @param {any} client
+ * @returns { Promise<Buffer> }
+ */
+async function generatePdf(upkeepId, client) {
+  const datas = await getAllData(upkeepId, client);
+  const data = datas[0];
+
+  if (datas[0] && data.form && data.signatures) {
+    /** @type { import("./Data.t").AppPropsDataServer } */
+    const appPropsData = {
+      type: "server",
+      parsedForm: data.form,
+      signatures: data.signatures,
+      upkeep: {
+        ...data.upkeep,
+        date: DateTime.fromISO(data.upkeep.date),
+      },
+      upkeepId,
+    };
+
+    const reactApp = h(App, { data: appPropsData, signature: true });
+
+    const body = ReactDOMServer.renderToString(reactApp);
+
+    const style = fs
+      .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
+      .toString();
+
+    const html = `
+<html lang="en">
+  <head>
+  <style>
+    ${style}
+  </style>
+  </head>
+  <body>
+    ${body}
+  </body>
+</html>
+    `;
+
+    let args = ["--no-sandbox", "--disable-setuid-sandbox"];
+
+    const browser = await puppeteer.launch({
+      args: args,
+    });
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: ["networkidle0", "load"] });
+
+    const pdfData = await page.pdf({ scale: 0.77 });
+    await browser.close();
+
+    const buffer = Buffer.from(Object.values(pdfData));
+
+    return buffer;
+  } else {
+    throw new Error("db");
+  }
+}
 
 const q1 = `select uf.upkeep_id, json_build_object('warranty', warranty, 'noFaults', no_faults, 'km', CASE WHEN transport is null THEN 0 ELSE transport END, 'transport', CASE WHEN transport IS NULL THEN 'reality' ELSE 'km' END, 'jobs', ufj.jobs, 'parts', ufp.parts) as form from upkeep_forms as uf
 join (
@@ -45,12 +156,11 @@ join (
 
 /**
  * @param {number} upkeepId
+ * @param {any} client
  * @returns { Promise<import("./Data.t").Db<import("./Data.t").DownloadData>[]> }
  */
-async function getAllData(upkeepId) {
-  const client = new Client(clientConfig);
+async function getAllData(upkeepId, client) {
   try {
-    await client.connect();
     const q = `select 
 json_build_object('description', upkeeps.work_description, 'recommendation', upkeeps.recommendation, 'company_name', companies.name, 'employees', COALESCE(u.employees, json_build_array()), 'available_employees', (select json_agg(json_build_object('id', id, 'name', name)) as e from employees), 'machines', um.machines, 'date', upkeeps.date_) as upkeep,
 jf.form,
@@ -83,15 +193,13 @@ where upkeeps.id = $1
     return rows;
   } catch (e) {
     console.log(e);
-  } finally {
-    client.end();
   }
 }
 
 app.get("/tsapi/data/:id", async (req, res) => {
   const client = new Client(clientConfig);
   try {
-    const rows = await getAllData(Number(req.params.id));
+    const rows = await getAllData(Number(req.params.id), client);
 
     if (rows.length === 1) {
       res.send(rows[0]);
@@ -214,7 +322,12 @@ app.put("/tsapi/data/:id", async (req, res) => {
 app.put("/tsapi/signatures/:upkeepId", async (req, res) => {
   /** @type { import("./Data.t").Signatures } */
   const data = req.body;
-  const upkeepId = req.params.upkeepId;
+  const upkeepId = Number(req.params.upkeepId);
+
+  if (Number.isNaN(upkeepId)) {
+    res.status(400).send();
+    return;
+  }
 
   const client = new Client(clientConfig);
   try {
@@ -224,6 +337,10 @@ app.put("/tsapi/signatures/:upkeepId", async (req, res) => {
       `insert into upkeep_form_signatures(upkeep_id, theirs, ours) values ($1, $2, $3)`,
       [upkeepId, data.theirs, data.ours]
     );
+
+    const pdf = await generatePdf(upkeepId, client);
+    await savePicture(pdf, client, upkeepId);
+    await sendMails(pdf, client);
     res.status(204).send();
   } catch (e) {
     console.log(e);
@@ -234,71 +351,16 @@ app.put("/tsapi/signatures/:upkeepId", async (req, res) => {
 });
 
 app.post(`/tsapi/abc`, async (req, res) => {
-  const upkeepId = 1283;
-
-  const datas = await getAllData(upkeepId);
-  const data = datas[0];
-
-  if (data.form && data.signatures) {
-    /** @type { import("./Data.t").AppPropsDataServer } */
-    const appPropsData = {
-      type: "server",
-      parsedForm: data.form,
-      signatures: data.signatures,
-      upkeep: {
-        ...data.upkeep,
-        date: DateTime.fromISO(data.upkeep.date),
-      },
-      upkeepId,
-    };
-
-    const reactApp = h(App, { data: appPropsData, signature: true });
-
-    const body = ReactDOMServer.renderToString(reactApp);
-
-    const style = fs
-      .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
-      .toString();
-
-    const html = `
-<html lang="en">
-  <head>
-  <style>
-    ${style}
-  </style>
-  </head>
-  <body>
-    ${body}
-  </body>
-</html>
-    `;
-
-    let args = ["--no-sandbox", "--disable-setuid-sandbox"];
-
-    const browser = await puppeteer.launch({
-      args: args,
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: ["networkidle0", "load"] });
-
-    const pdfData = await page.pdf({scale: 0.77})
-    await browser.close()
-
-    const buffer = Buffer.from(Object.values(pdfData))
-
-    /*
-    const result = await htmlPdfNode.generatePdf(
-      { content: html },
-      { format: "A4", landscape: true, scale: 0.77 }
-    );
-    */
-
-    fs.writeFileSync("/tmp/abc1.pdf", buffer);
-    fs.writeFileSync("/tmp/abc1.html", html);
-
+  const client = new Client(clientConfig);
+  try {
+    client.connect();
+    const pdf = await generatePdf(1283, client);
+    await savePicture(pdf, client);
     res.send();
-  } else {
+  } catch (e) {
     res.send();
+  } finally {
+    client.end();
   }
 });
 
