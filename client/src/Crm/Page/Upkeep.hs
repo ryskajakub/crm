@@ -105,8 +105,9 @@ plannedUpkeeps'' pageTitle pageAdvice router upkeepCompanies = let
         td $ R.link
           (B.tooltip (B.TooltipData "tooltip" (Defined "bottom") (Defined "Uzavřít") Undefined) G.check)
           (R.upkeepDetail upkeepId)
-          router ,
-        td $ A.a ("/ts/list?id=" <> (fromString . show . U.getUpkeepId $ upkeepId)) "List"]) data'
+          router 
+        -- , td $ A.a ("/tsapp/?id=" <> (fromString . show . U.getUpkeepId $ upkeepId)) "List"
+        ]) data' 
 
   pageInfo' = pageInfo pageTitle $ Just pageAdvice
 

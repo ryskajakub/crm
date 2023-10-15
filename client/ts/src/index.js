@@ -1,6 +1,6 @@
 import ReactDOM from "react-dom/client";
 import "./index.css";
-import { AppWithSignature } from "./App";
+import { AppWithSignature } from "./App.mjs";
 
 import h from "react-hyperscript";
 

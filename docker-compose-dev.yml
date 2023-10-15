@@ -1,0 +1,21 @@
+version: '3'
+services:
+  main:
+    build: .
+    volumes:
+      - "./server:/app/server"
+      - "./shared:/app/shared"
+      - "./client:/app/client"
+    command: bash -c "./build-server.sh && /root/.local/bin/run-server"
+    network_mode: "host"
+  fay: 
+    build: .
+    command: bash -c "cd /app/client && gulp"
+    volumes:
+      - "./shared:/app/shared"
+      - "./client:/app/client"
+      - "./fay-dom:/app/fay-dom"
+      - "./fay-googlemaps:/app/fay-googlemaps"
+      - "./fay-jquery:/app/fay-jquery"
+      - "./fay-moment:/app/fay-moment"
+      - "./fay-react:/app/fay-react"

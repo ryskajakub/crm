@@ -3,10 +3,10 @@ import bodyParser from "body-parser";
 
 import crypto from "crypto";
 
-import fs from "fs";
-
 import h from "react-hyperscript";
 import * as ReactDOMServer from "react-dom/server";
+
+import fs from "fs";
 
 import { fromBuffer } from "pdf2pic";
 
@@ -53,7 +53,7 @@ async function savePicture(pdf, client, upkeepId) {
     savePath: "/tmp",
   })(1, false);
 
-  const imgData = fs.readFileSync(`/tmp/${name}.1.jpeg`, "hex");
+  const imgData = await fs.promises.readFile(`/tmp/${name}.1.jpeg`, "hex");
   const allImgData = "\\x" + imgData;
   const result = await client.query(
     `insert into photos(data) values ($1) returning id`,
@@ -61,21 +61,51 @@ async function savePicture(pdf, client, upkeepId) {
   );
   /** @type { {id: number}[] } */
   const rows = result.rows;
-  const returnedId = rows[0].id
-  await client.query(`insert into photos_meta(photo_id, mime_type, file_name) values($1, 'image/jpeg', 'image.jpg', [returnedId])
-  await client.query('insert into upkeep_photos(photo_id, upkeep_id)values ($1, $2)', [returnedId, upkeepId])
-`)
+  const returnedId = rows[0].id;
+  await client.query(
+    "insert into photos_meta(photo_id, mime_type, file_name) values($1, $2, $3)",
+    [returnedId, "image/jpeg", "image.jpg"]
+  );
+  await client.query(
+    "insert into upkeep_photos(photo_id, upkeep_id)values ($1, $2)",
+    [returnedId, upkeepId]
+  );
 }
 
 /**
  * @param {Buffer} pdf
- * @param {any} client
+ * @param {string} to
  * @returns { Promise<void> }
  */
-async function sendMails(pdf, client) {
+async function sendMails(pdf, to) {
   const mailgun = new Mailgun(formData);
-  // const mg = mailgun.client({})
-  // mg.messages.create()
+  const mg = mailgun.client({
+    username: "api",
+    key: process.env.MAILGUN_API_KEY || "",
+    url: "https://api.mailgun.net",
+  });
+
+  await mg.messages.create("2e.cz", {
+    from: "info@2e.cz",
+    to,
+    // cc: "ryska@2e.cz",
+    subject: `Servisní list 2e`,
+    text: `Dobrý den, 
+
+posíláme v příloze servisní list.
+
+S pozdravem
+2e.cz
+`,
+    attachment: [
+      {
+        data: pdf,
+        filename: "servisni-list-2e.pdf",
+      },
+    ],
+  });
+
+  console.log(`sent message to ryskajakub@seznam.cz`);
 }
 
 /**
@@ -104,9 +134,11 @@ async function generatePdf(upkeepId, client) {
 
     const body = ReactDOMServer.renderToString(reactApp);
 
-    const style = fs
-      .readFileSync(`/app/node_modules/bootstrap/dist/css/bootstrap.min.css`)
-      .toString();
+    const style = (
+      await fs.promises.readFile(
+        `/app/node_modules/bootstrap/dist/css/bootstrap.min.css`
+      )
+    ).toString();
 
     const html = `
 <html lang="en">
@@ -193,13 +225,21 @@ where upkeeps.id = $1
     return rows;
   } catch (e) {
     console.log(e);
+    return [];
   }
 }
 
 app.get("/tsapi/data/:id", async (req, res) => {
   const client = new Client(clientConfig);
+
+  const id = Number(req.params.id);
+  if (Number.isNaN(id)) {
+    res.status(400).send();
+  }
+
   try {
-    const rows = await getAllData(Number(req.params.id), client);
+    await client.connect();
+    const rows = await getAllData(id, client);
 
     if (rows.length === 1) {
       res.send(rows[0]);
@@ -223,18 +263,7 @@ app.put("/tsapi/data/:id", async (req, res) => {
   }
 
   /** @type { import("./Data.t").Payload<import("./Data.t").FormState> } */
-  const rawBody = req.body;
-
-  /** @type { import("./Data.t").Db<import("./Data.t").FormState> } */
-  const body = {
-    ...rawBody,
-    jobs: rawBody.jobs.map((j) => {
-      return {
-        ...j,
-        date: new Date(j.date),
-      };
-    }),
-  };
+  const body = req.body;
 
   const client = new Client(clientConfig);
   try {
@@ -296,7 +325,7 @@ app.put("/tsapi/data/:id", async (req, res) => {
           `insert into upkeep_form_jobs(upkeep_id, date_, travel_there_from, travel_there_to, work_from, work_to, travel_back_from, travel_back_to, note) values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
           [
             upkeepId,
-            job.date,
+            new Date(job.date),
             job.travelThereFrom,
             job.travelThereTo,
             job.workFrom,
@@ -332,17 +361,20 @@ app.put("/tsapi/signatures/:upkeepId", async (req, res) => {
   const client = new Client(clientConfig);
   try {
     await client.connect();
+    await client.query(`BEGIN TRANSACTION`);
     await client.query(`delete from upkeep_form_signatures`);
     await client.query(
       `insert into upkeep_form_signatures(upkeep_id, theirs, ours) values ($1, $2, $3)`,
       [upkeepId, data.theirs, data.ours]
     );
-
+    await client.query(`insert into upkeep_form_mails(upkeep_id, email, sent_at) values ($1, $2, $3)`, [upkeepId, data.email, new Date()])
     const pdf = await generatePdf(upkeepId, client);
     await savePicture(pdf, client, upkeepId);
-    await sendMails(pdf, client);
+    await sendMails(pdf, data.email);
+    await client.query("COMMIT");
     res.status(204).send();
   } catch (e) {
+    await client.query("ROLLBACK");
     console.log(e);
     res.status(500).send();
   } finally {
@@ -354,12 +386,13 @@ app.post(`/tsapi/abc`, async (req, res) => {
   const client = new Client(clientConfig);
   try {
     client.connect();
-    const pdf = await generatePdf(1283, client);
-    await savePicture(pdf, client);
-    res.send();
+    const pdf = await generatePdf(3737, client);
+    await sendMails(pdf, "", client);
+    // await savePicture(pdf, client, 3737);
   } catch (e) {
-    res.send();
+    console.log(e);
   } finally {
+    res.send();
     client.end();
   }
 });

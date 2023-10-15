@@ -1,6 +1,6 @@
 //import "bootstrap/dist/css/bootstrap.css";
 
-import SignatureCanvas from "react-signature-canvas";
+import SignatureCanvas1 from "react-signature-canvas";
 import React, { useEffect, useReducer, useRef, useState } from "react";
 import axios from "axios";
 import { DateTime } from "luxon";
@@ -10,6 +10,9 @@ import hh from "hyperscript-helpers";
 
 // @ts-ignore
 import svgs from "hyperscript-helpers/dist/svg.js";
+
+// @ts-ignore
+const SignatureCanvas = SignatureCanvas1.default;
 
 const {
   div,
@@ -34,6 +37,9 @@ const { path } = svgs(h);
  * @typedef { { type: "success", upkeepId: number, upkeep: import("./Data.t").Upkeep, formState: import("./Data.t").Form<import("./Data.t").FormState>, edit: boolean, signatures: import("./Data.t").Signatures | null } } Success
  * @typedef { { type: "failure" } } Failure
  * @typedef { Initial | Success | Failure } State
+ *
+ * @typedef { { type: "progress" } } Progress
+ * @typedef { Progress | Initial | Failure } Submitting
  *
  * @typedef { { type: "set_employees", employees: (number | null)[] } } SetEmployees
  * @typedef { { type: "set_km", km: number } } SetKm
@@ -468,7 +474,10 @@ function renderJobs(signature, jobs, dispatch) {
 
     /** @type { (inputValue: string) => import("./Data.t").ParsedValue<string, DateTime>["result"] } */
     const parseDate = (inputValue) => {
-      const value = DateTime.fromFormat(inputValue.replaceAll(" ",""), "d.L.y");
+      const value = DateTime.fromFormat(
+        inputValue.replaceAll(" ", ""),
+        "d.L.y"
+      );
 
       /** @type { import("./Data.t").ParsedValue<string, DateTime>["result"] } */
       return value.isValid
@@ -966,8 +975,14 @@ export const App = (appProps) => {
 
   const [state, dispatch] = useReducer(reducer, mkInitialState());
 
+  const [submitting, setSubmitting] = useState(
+    /** @type { Submitting } */ ({ type: "initial" })
+  );
+
   const [signatureTheirs, setSignatureTheirs] = useState(false);
   const [signatureOurs, setSignatureOurs] = useState(false);
+  const [email, setEmail] = useState("");
+
   const signatureTheirsRef = useRef(
     /** @type { null | SignatureCanvas } */ (null)
   );
@@ -1038,8 +1053,14 @@ export const App = (appProps) => {
         .toDataURL("image/png");
       if (ours !== undefined && theirs !== undefined) {
         /** @type { import("./Data.t").Signatures } */
-        const body = { ours, theirs };
-        await axios.put(`/tsapi/signatures/${upkeepId}`, body);
+        const body = { ours, theirs, email };
+        try {
+          setSubmitting({ type: "progress" });
+          await axios.put(`/tsapi/signatures/${upkeepId}`, body);
+          window.location.href = "/#planned";
+        } catch {
+          setSubmitting({ type: "failure" });
+        }
       }
     };
 
@@ -1082,8 +1103,13 @@ export const App = (appProps) => {
           jobs: state.jobs.flatMap((job) => traverseJob(job)),
         };
 
-        await axios.put(`/tsapi/data/${upkeepId}`, parsedForm);
-        // window.location.href = window.location.href + `&signature=true`;
+        try {
+          setSubmitting({ type: "progress" });
+          await axios.put(`/tsapi/data/${upkeepId}`, parsedForm);
+          window.location.href = window.location.href + `&signature=true`;
+        } catch (e) {
+          setSubmitting({ type: "failure" });
+        }
       }
     };
 
@@ -1182,6 +1208,7 @@ export const App = (appProps) => {
     const mkCheckboxes = (field, display) => {
       /** @type {(boolean: boolean, value: string, label_ : string) => React.ReactElement} */
       const mkCheckbox = (boolean, value, label_) =>
+        signature ? (state[field].value === boolean ? label_ : "") :
         div({ className: "form-check form-check-inline" }, [
           input({
             disabled: signature,
@@ -1216,11 +1243,11 @@ export const App = (appProps) => {
       return div({ className: "col-md-6" }, [
         div([
           strong(display),
-          mkCheckbox(true, "yes", "ano"),
+          mkCheckbox(true, "yes", "Ano"),
           mkCheckbox(false, "no", "Ne"),
         ]),
         fieldValue.displayError && fieldValue.result.type === "error"
-          ? span(fieldValue.result.error)
+          ? span({ className: "text-danger" }, fieldValue.result.error)
           : "",
       ]);
     };
@@ -1237,12 +1264,24 @@ export const App = (appProps) => {
     const submitButton = when(
       !signature,
       div(
-        { className: "row" },
+        { className: "row mt-5 mb-5" },
         div(
-          { className: "col-md-6" },
+          { className: "col-md-12 d-flex flex-row-reverse" },
           button(
-            { type: "submit", className: "btn btn-primary btn-md" },
-            edit ? "Editovat" : "Dokončit"
+            {
+              type: "submit",
+              className: "btn btn-primary btn-md",
+              disabled: submitting.type !== "initial",
+            },
+            [
+              ...(submitting.type !== "progress"
+                ? []
+                : [
+                    span({ className: "spinner-border spinner-border-sm" }),
+                    " ",
+                  ]),
+              edit ? "Podepsat" : "Dokončit",
+            ]
           )
         )
       )
@@ -1267,7 +1306,7 @@ export const App = (appProps) => {
       return div(
         { className: "col-md-6" },
         appProps.data.type === "client"
-          ? signatures
+          ? signatures !== null
             ? img({ src: signatures[whose] })
             : h(SignatureCanvas, {
                 canvasProps: {
@@ -1295,20 +1334,67 @@ export const App = (appProps) => {
               mkSignature("theirs"),
               mkSignature("ours"),
             ]),
-            appProps.data.type === "server" ? "" : div(
-              { className: "row mt-5 mb-5" },
-              div(
-                { className: "col-md" },
-                button(
-                  {
-                    disabled: !signatureOurs || !signatureTheirs,
-                    type: "submit",
-                    className: "btn btn-primary btn-md",
-                  },
-                  "Nahrát"
-                )
-              )
-            ),
+
+            ...(signatures === null ? [
+              div({ className: "row" }, [
+                div({ className: "col-md-4" }, [
+                  strong("E-mail")
+                ]),
+              ]),
+              div({ className: "row" }, [
+                div({ className: "col-md-4" }, [
+                  div({ className: "input-group" }, [
+                    input({
+                      className: "form-control",
+                      type: "email",
+                      value: email,
+                      onChange: /** @type { React.ChangeEventHandler<HTMLInputElement> } */ (
+                        e
+                      ) => setEmail(e.target.value),
+                    }),
+                  ]),
+                ]),
+              ]),
+            ] : []),
+
+            appProps.data.type === "server"
+              ? ""
+              : div(
+                  { className: "row mt-5 mb-5" },
+                  div({ className: "col-md d-flex justify-content-between" }, [
+                    button(
+                      {
+                        type: "button",
+                        className: "btn btn-primary",
+                        onClick: () => {
+                          window.history.back();
+                        },
+                      },
+                      "Zpět"
+                    ),
+                    button(
+                      {
+                        disabled:
+                          !signatureOurs ||
+                          !signatureTheirs ||
+                          submitting.type !== "initial",
+                        type: "submit",
+                        className: "btn btn-primary",
+                      },
+                      [
+                        ...(submitting.type !== "progress"
+                          ? []
+                          : [
+                              span({
+                                className: "spinner-border spinner-border-sm",
+                              }),
+                              " ",
+                            ]),
+                        "Nahrát",
+                      ]
+                    ),
+                  ])
+                ),
           ];
     };
 
