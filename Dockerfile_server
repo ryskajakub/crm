@@ -20,3 +20,5 @@ COPY server/stack.yaml stack.yaml
 COPY server/server.cabal server.cabal
 RUN until stack build --only-snapshot ; do : ; done
 RUN stack build --only-snapshot --flag server:build-insert-pass --flag server:build-gen-api --flag server:build-run-server --flag server:build-restart
+
+RUN cat /etc/ImageMagick-6/policy.xml | grep -B 10000 PDF | head -n -1 > /policy.xml && echo '<policy domain="coder" rights="read|write" pattern="PDF" />' >> /policy.xml && cat /etc/ImageMagick-6/policy.xml | grep -A 10000 PDF | tail -n +2 >> /policy.xml && mv /policy.xml /etc/ImageMagick-6/policy.xml

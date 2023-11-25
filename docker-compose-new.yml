@@ -56,14 +56,40 @@ services:
   nginx:
     image: nginx
     volumes:
-      - ./helpers/crm:/etc/nginx/conf.d/default.conf:ro
+      - ./helpers/crm-dev.nginx:/etc/nginx/conf.d/default.conf:ro
       - client_build:/var/www/crm/client/build
     command: [nginx-debug, "-g", "daemon off;"]
     depends_on:
       - server
       - client
+      - typescript_server
+      - typescript_client
     network_mode: "host"
 
   adminer:
     image: adminer
     network_mode: "host"
+
+  typescript_server:
+    build: 
+      context: .
+      dockerfile: Dockerfile_typescript
+    volumes:
+      - "./client/ts/src:/app/src:ro"
+      - "./client/ts/package.json:/app/package.json:ro"
+      - "./client/ts/yarn.lock:/app/yarn.lock:ro"
+    command: bash -c "yarn install --frozen-lockfile && yarn run dev"
+    network_mode: "host"
+    working_dir: /app
+
+  typescript_client:
+    image: node:16
+    volumes:
+      - "./client/ts/src:/app/src:ro"
+      - "./client/ts/package.json:/app/package.json:ro"
+      - "./client/ts/yarn.lock:/app/yarn.lock:ro"
+      - "./client/ts/public:/app/public:ro"
+    command: bash -c "yarn install --frozen-lockfile && yarn run start"
+    network_mode: "host"
+    working_dir: /app
+

@@ -8,6 +8,18 @@ server {
     proxy_pass http://localhost:8000;
   }
 
+  location /tsapi {
+    proxy_pass http://localhost:8001/tsapi;
+  }
+
+  location /tsapp {
+    proxy_pass http://localhost:3000;
+  }
+
+  location /static {
+    proxy_pass http://localhost:3000/static;
+  }
+
   location / {
     try_files /$uri /index.html;
   }
