@@ -1,0 +1,146 @@
+Usage: stack install [TARGET] [--dry-run] [--pedantic] [--fast] 
+                     [--ghc-options OPTIONS] [--flag PACKAGE:[-]FLAG] 
+                     [--dependencies-only | --only-snapshot | 
+                       --only-dependencies | --only-locals] 
+                     [--file-watch | --file-watch-poll] [--watch-all] 
+                     [--exec COMMAND [ARGUMENT(S)]] [--only-configure] [--trace]
+                     [--profile] [--no-strip] [--[no-]library-profiling] 
+                     [--[no-]executable-profiling] [--[no-]library-stripping] 
+                     [--[no-]executable-stripping] [--[no-]haddock] 
+                     [--haddock-arguments HADDOCK_ARGS] [--[no-]open] 
+                     [--[no-]haddock-deps] [--[no-]haddock-internal] 
+                     [--[no-]haddock-hyperlink-source] [--[no-]copy-bins] 
+                     [--[no-]copy-compiler-tool] [--[no-]prefetch] 
+                     [--[no-]keep-going] [--[no-]keep-tmp-files] 
+                     [--[no-]force-dirty] [--[no-]test] [--[no-]rerun-tests] 
+                     [--ta|--test-arguments TEST_ARGS] [--coverage] 
+                     [--no-run-tests] [--test-suite-timeout ARG] [--[no-]bench] 
+                     [--ba|--benchmark-arguments BENCH_ARGS] 
+                     [--no-run-benchmarks] [--[no-]reconfigure] 
+                     [--[no-]cabal-verbose] [--[no-]split-objs] [--skip ARG] 
+                     [--[no-]interleaved-output] [--ddump-dir ARG] 
+                     [--setup-info-yaml URL] [--snapshot-location-base URL] 
+                     [--help]
+  Shortcut for 'build --copy-bins'
+
+Available options:
+  TARGET                   If none specified, use all local packages. See
+                           https://docs.haskellstack.org/en/stable/build_command/#target-syntax
+                           for details.
+  --dry-run                Don't build anything, just prepare to
+  --pedantic               Turn on -Wall and -Werror
+  --fast                   Turn off optimizations (-O0)
+  --ghc-options OPTIONS    Additional options passed to GHC
+  --flag PACKAGE:[-]FLAG   Override flags set in stack.yaml (applies to local
+                           packages and extra-deps)
+  --dependencies-only      A synonym for --only-dependencies
+  --only-snapshot          Only build packages for the snapshot database, not
+                           the local database
+  --only-dependencies      Only build packages that are dependencies of targets
+                           on the command line
+  --only-locals            Only build packages in the local database, fail if
+                           the build plan includes the snapshot database
+  --file-watch             Watch for changes in local files and automatically
+                           rebuild. Ignores files in VCS boring/ignore file
+  --file-watch-poll        Like --file-watch, but polling the filesystem instead
+                           of using events
+  --watch-all              Watch all local files not taking targets into account
+  --exec COMMAND [ARGUMENT(S)]
+                           Command and argument(s) to run after a successful
+                           build
+  --only-configure         Only perform the configure step, not any builds.
+                           Intended for tool usage, may break when used on
+                           multiple packages at once!
+  --trace                  Enable profiling in libraries, executables, etc. for
+                           all expressions and generate a backtrace on exception
+  --profile                profiling in libraries, executables, etc. for all
+                           expressions and generate a profiling report in tests
+                           or benchmarks
+  --no-strip               Disable DWARF debugging symbol stripping in
+                           libraries, executables, etc. for all expressions,
+                           producing larger executables but allowing the use of
+                           standard debuggers/profiling tools/other utilities
+                           that use debugging symbols.
+  --[no-]library-profiling Enable/disable library profiling for TARGETs and all
+                           its dependencies (default: disabled)
+  --[no-]executable-profiling
+                           Enable/disable executable profiling for TARGETs and
+                           all its dependencies (default: disabled)
+  --[no-]library-stripping Enable/disable library stripping for TARGETs and all
+                           its dependencies (default: enabled)
+  --[no-]executable-stripping
+                           Enable/disable executable stripping for TARGETs and
+                           all its dependencies (default: enabled)
+  --[no-]haddock           Enable/disable generating Haddocks the package(s) in
+                           this directory/configuration (default: disabled)
+  --haddock-arguments HADDOCK_ARGS
+                           Arguments passed to the haddock program
+  --[no-]open              Enable/disable opening the local Haddock
+                           documentation in the browser (default: disabled)
+  --[no-]haddock-deps      Enable/disable building Haddocks for dependencies
+                           (default: true if building Haddocks, false otherwise)
+  --[no-]haddock-internal  Enable/disable building Haddocks for internal modules
+                           (like cabal haddock --internal) (default: disabled)
+  --[no-]haddock-hyperlink-source
+                           Enable/disable building hyperlinked source for
+                           Haddock (like haddock --hyperlinked-source) (default:
+                           enabled)
+  --[no-]copy-bins         Enable/disable copying binaries to local-bin (see
+                           'stack path') (default: disabled)
+  --[no-]copy-compiler-tool
+                           Enable/disable copying binaries of targets to
+                           compiler-tools-bin (see 'stack path') (default:
+                           disabled)
+  --[no-]prefetch          Enable/disable Fetch packages necessary for the build
+                           immediately, useful with --dry-run (default:
+                           disabled)
+  --[no-]keep-going        Enable/disable continue running after a step fails
+                           (default: false for build, true for test/bench)
+  --[no-]keep-tmp-files    Enable/disable keep intermediate files and build
+                           directories (default: disabled)
+  --[no-]force-dirty       Enable/disable Force treating all local packages as
+                           having dirty files (useful for cases where stack
+                           can't detect a file change (default: disabled)
+  --[no-]test              Enable/disable testing the package(s) in this
+                           directory/configuration (default: disabled)
+  --[no-]rerun-tests       Enable/disable running already successful tests
+                           (default: enabled)
+  --ta,--test-arguments TEST_ARGS
+                           Arguments passed in to the test suite program
+  --coverage               Generate a code coverage report
+  --no-run-tests           Disable running of tests. (Tests will still be
+                           built.)
+  --test-suite-timeout ARG Maximum test suite run time in seconds.
+  --[no-]bench             Enable/disable benchmarking the package(s) in this
+                           directory/configuration (default: disabled)
+  --ba,--benchmark-arguments BENCH_ARGS
+                           Forward BENCH_ARGS to the benchmark suite. Supports
+                           templates from `cabal bench`
+  --no-run-benchmarks      Disable running of benchmarks. (Benchmarks will still
+                           be built.)
+  --[no-]reconfigure       Enable/disable Perform the configure step even if
+                           unnecessary. Useful in some corner cases with custom
+                           Setup.hs files (default: disabled)
+  --[no-]cabal-verbose     Enable/disable Ask Cabal to be verbose in its output
+                           (default: disabled)
+  --[no-]split-objs        Enable/disable Enable split-objs, to reduce output
+                           size (at the cost of build time). Note that this
+                           feature is EXPERIMENTAL, and its behavior may be
+                           changed and improved. You will need to clean your
+                           workdirs before use. If you want to compile all
+                           dependencies with split-objs, you will need to delete
+                           the snapshot (and all snapshots that could reference
+                           that snapshot). (default: disabled)
+  --skip ARG               Skip given component, can be specified multiple times
+  --[no-]interleaved-output
+                           Enable/disable Print concurrent GHC output to the
+                           console with a prefix for the package name (default:
+                           enabled)
+  --ddump-dir ARG          Specify output ddump-files
+  --setup-info-yaml URL    Alternate URL or relative / absolute path for stack
+                           dependencies
+  --snapshot-location-base URL
+                           The base location of LTS/Nightly snapshots
+  --help                   Show this help text
+
+Run 'stack --help' for global options that apply to all subcommands.

@@ -1,0 +1,23 @@
+FROM ubuntu:20.04
+
+COPY preseed.txt /preseed.txt
+ENV DEBIAN_FRONTEND noninteractive 
+ENV DEBCONF_NONINTERACTIVE_SEEN true
+RUN debconf-set-selections /preseed.txt
+
+RUN apt-get update && apt-get -y install curl vim net-tools cabal-install locales happy npm cpphs
+RUN cabal update && cabal install fay fay-base fay-text cpphs
+RUN npm i -g gulp-cli
+
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && locale-gen
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8
+
+RUN mkdir -p /app/client
+COPY client/package.json /app/client/package.json
+COPY client/package-lock.json /app/client/package-lock.json
+WORKDIR /app/client
+RUN npm ci
+
+RUN mkdir tmp

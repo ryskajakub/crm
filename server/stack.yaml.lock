@@ -5,15 +5,64 @@
 
 packages:
 - completed:
-    hackage: fay-0.23.1.12@sha256:4dd008fc4b03b8fc6e67eff2fb1c42b4f5552529bdd4f63f4290ef25a5327e0b,5965
+    hackage: scrypt-0.5.0@sha256:d01de43bb28cc449c085932201be5d5e9f141761a424600594f00cfce7f53edb,2070
     pantry-tree:
-      size: 29746
-      sha256: 2d575f57783ccd7d6711dc72acfe583fedcc9f614ed4ba3f4d069c8793825e9e
+      size: 618
+      sha256: 023bbcc1affc0d0084b19324b7474b6a940f6c6f659a42e3101c422565fa3fa3
   original:
-    hackage: fay-0.23.1.12
+    hackage: scrypt-0.5.0
+- completed:
+    hackage: rest-types-1.14.0.1@sha256:7b2771d02a8e0c49e92839fd69f09df782774370cfcc1de2875ed165a4174197,1138
+    pantry-tree:
+      size: 734
+      sha256: 0a368d91c350145cd1f40975b23e0319c1e848ffefa2c203c45b6587390f7eff
+  original:
+    hackage: rest-types-1.14.0.1
+- completed:
+    hackage: tuple-th-0.2.5@sha256:8c78a331af3b14684c5cde003b8c7db764faa900a293c367703c3b610a607078,849
+    pantry-tree:
+      size: 257
+      sha256: 3f67881eefa82d3a77b1899cfc44ee0f8d19999a217d335639cb8b2703bc024b
+  original:
+    hackage: tuple-th-0.2.5
+- completed:
+    hackage: rest-gen-0.17.1@sha256:bb7fdec31e79ad5a274ac49ac4778f8c0e80bc20e67951962a236901a0764905,2367
+    pantry-tree:
+      size: 1955
+      sha256: 96690b9c91959ea419dd51748274f47645344e4734b9973bf3652b3087685f35
+  original:
+    hackage: rest-gen-0.17.1
+- completed:
+    hackage: regular-0.3.4.4@sha256:3ce38f1af2edc138b690a138e776637e5fd1ede9ee5151a31c4be77a73133943,2621
+    pantry-tree:
+      size: 1437
+      sha256: db59688dd741ea00e4dd0ffbbaa244121b4e2190134f146eeb883d64b663a42c
+  original:
+    hackage: regular-0.3.4.4
+- completed:
+    hackage: product-profunctors-0.7.1.0@sha256:56aad124ad4489c1e22a606800ebc4bd6e30ce1a3b66a0b42dc415a6e002bae5,1612
+    pantry-tree:
+      size: 1074
+      sha256: a689bc1fee36d74826e2b2b0688a82037d0043d576ffa553ee63e28c79f95061
+  original:
+    hackage: product-profunctors-0.7.1.0
+- completed:
+    hackage: opaleye-0.5.1.1@sha256:3c65d0ce278aac06d520969f71861d7ff7d476d730b654522d21d76a1c1269c8,4892
+    pantry-tree:
+      size: 4050
+      sha256: 47266d0bb44d164e2e6a2a472180948ed103e0e2fe820839d89432475390079a
+  original:
+    hackage: opaleye-0.5.1.1
+- completed:
+    hackage: postgresql-simple-0.5.2.1@sha256:602ef86a179384df1a33105dab2942d0d1ca75e3af0d66d6c64da7e6334483b3,3597
+    pantry-tree:
+      size: 3600
+      sha256: 02975e9bae27a394cd5aa127a7be03060290037687a57286a6b10a79d36bd384
+  original:
+    hackage: postgresql-simple-0.5.2.1
 snapshots:
 - completed:
-    size: 504292
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/7/24.yaml
-    sha256: 06475226ae77d200ef106e999bfb280cb658f1ebb166b56f6f579890aab66942
-  original: lts-7.24
+    size: 285605
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/3/13.yaml
+    sha256: 0eaf634232b45a3c56e5f30e01037eb15f8111ad12ea332b7dd9ce1280b3165d
+  original: lts-3.13

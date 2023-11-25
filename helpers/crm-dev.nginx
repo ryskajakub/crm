@@ -1,0 +1,15 @@
+server {
+
+  client_max_body_size 2M;
+
+  root /var/www/crm/client/build;
+
+  location /api {
+    proxy_pass http://localhost:8000;
+  }
+
+  location / {
+    try_files /$uri /index.html;
+  }
+
+}

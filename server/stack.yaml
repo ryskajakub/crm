@@ -1,21 +1,14 @@
 flags: {}
 packages:
 - '.'
-resolver: lts-7.24
-extra-deps:
-- fay-0.23.1.12
-compiler-check: match-exact
-compiler: ghc-8.0.1.20161117
-setup-info:
-  ghc:
-    macosx:
-      8.0.1.20161117:
-        url: https://downloads.haskell.org/~ghc/8.0.2-rc1/ghc-8.0.1.20161117-x86_64-apple-darwin.tar.xz
-        content-length: 113379688
-        sha1: 53ed03d986a49ea680c291540ce44ce469514d7c
-    linux64:
-      8.0.1.20161117:
-        url: http://downloads.haskell.org/~ghc/8.0.2-rc1/ghc-8.0.1.20161117-x86_64-deb8-linux.tar.xz
-        content-length: 112047972
-        sha1: 6a6e4c9c53c71cc84b6966a9f61948542fd2f15a
+extra-deps: 
+- scrypt-0.5.0
+- rest-types-1.14.0.1
+- tuple-th-0.2.5
+- rest-gen-0.17.1
+- regular-0.3.4.4
+- product-profunctors-0.7.1.0
+- opaleye-0.5.1.1
+- postgresql-simple-0.5.2.1
 
+resolver: lts-3.13

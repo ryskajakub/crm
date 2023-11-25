@@ -1,0 +1,22 @@
+FROM ubuntu:16.04
+
+RUN mkdir -p /app/server
+WORKDIR /app/
+
+RUN apt-get update && apt-get -y install curl libghc-postgresql-libpq-dev libghc-text-icu-dev libghc-gd-dev postgresql-client vim net-tools cabal-install locales npm cpphs happy wget g++ gcc libc6-dev libffi-dev libgmp-dev make xz-utils zlib1g-dev git gnupg netbase imagemagick
+ 
+RUN wget https://github.com/commercialhaskell/stack/releases/download/v2.7.1/stack-2.7.1-linux-x86_64.tar.gz
+RUN tar xvzf stack-2.7.1-linux-x86_64.tar.gz
+ENV PATH="/app/stack-2.7.1-linux-x86_64/:${PATH}"
+
+RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
+    locale-gen
+ENV LANG en_US.UTF-8  
+ENV LANGUAGE en_US:en  
+ENV LC_ALL en_US.UTF-8
+
+WORKDIR /app/server
+COPY server/stack.yaml stack.yaml
+COPY server/server.cabal server.cabal
+RUN until stack build --only-snapshot ; do : ; done
+RUN stack build --only-snapshot --flag server:build-insert-pass --flag server:build-gen-api --flag server:build-run-server --flag server:build-restart
