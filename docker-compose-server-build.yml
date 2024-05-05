@@ -1,4 +1,4 @@
 version: '3'
 services:
-  main:
+  server:
     command: bash -c "./build-server.sh && mkdir -p /app/server/build && cp /root/.local/bin/run-server /app/server/build"

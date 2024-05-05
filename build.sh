@@ -1,9 +1,9 @@
 rm -rf ./archive ;
-docker-compose --file docker-compose.yml --file docker-compose-server-build.yml --file docker-compose-fay-build.yml up &&
-bash -c 'cd client/ts && yarn run build' &&
-sudo chown -R coub:coub ./client/build &&
-sudo chown -R coub:coub ./server/build &&
-sudo chown -R coub:coub ./client/ts/build &&
+docker compose --file docker-compose.yml --file docker-compose-build.yml up &&
+bash -c 'cd client/ts && yarn && yarn run build' &&
+sudo chown -R 1000 ./client/build &&
+sudo chown -R 1000 ./server/build &&
+sudo chown -R 1000 ./client/ts/build &&
 mkdir -p archive/client &&
 mkdir -p archive/server &&
 mkdir -p archive/tsapp &&

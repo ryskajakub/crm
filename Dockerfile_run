@@ -1,7 +1,6 @@
-FROM ubuntu:18.04
+FROM ubuntu:16.04
 
-RUN apt-get update && apt-get -y install curl libghc-postgresql-libpq-dev libghc-text-icu-dev libghc-gd-dev postgresql-client vim net-tools cabal-install locales npm gulp cpphs
-RUN apt-get update && apt-get -y install imagemagick
+RUN apt-get update && apt-get -y install curl libghc-postgresql-libpq-dev libghc-text-icu-dev libghc-gd-dev postgresql-client vim net-tools cabal-install locales npm cpphs happy wget g++ gcc libc6-dev libffi-dev libgmp-dev make xz-utils zlib1g-dev git gnupg netbase imagemagick
 
 RUN cat /etc/ImageMagick-6/policy.xml | grep -B 10000 PDF | head -n -1 > /policy.xml && echo '<policy domain="coder" rights="read|write" pattern="PDF" />' >> /policy.xml && cat /etc/ImageMagick-6/policy.xml | grep -A 10000 PDF | tail -n +2 >> /policy.xml && mv /policy.xml /etc/ImageMagick-6/policy.xml
 

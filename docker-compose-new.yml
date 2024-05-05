@@ -13,7 +13,6 @@ services:
       - "./shared:/app/shared"
       - "./client:/app/client"
     command: bash -c "stack install --allow-different-user --flag server:build-run-server --file-watch --exec /root/.local/bin/run-server"
-    # command: tail -f /dev/null
     network_mode: "host"
     depends_on:
       - postgres

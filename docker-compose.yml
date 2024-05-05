@@ -1,21 +1,45 @@
 version: '3'
+
+volumes:
+  client_build:
+
 services:
-  main:
-    build: .
+  server:
+    build: 
+      context: .
+      dockerfile: Dockerfile_server
     volumes:
       - "./server:/app/server"
       - "./shared:/app/shared"
       - "./client:/app/client"
-    command: sleep 100000000
+    # command: bash -c "stack install --allow-different-user --flag server:build-run-server --file-watch --exec /root/.local/bin/run-server"
+    command: bash -c "./build-server.sh && mkdir -p /app/server/build && cp /root/.local/bin/run-server /app/server/build"
     network_mode: "host"
-  fay: 
-    build: .
-    command: bash -c "./build-server.sh && /root/.local/bin/run-server"
+    stdin_open: true
+
+  client: 
+    build: 
+      context: .
+      dockerfile: Dockerfile_client
     volumes:
-      - "./shared:/app/shared"
-      - "./client:/app/client"
-      - "./fay-dom:/app/fay-dom"
-      - "./fay-googlemaps:/app/fay-googlemaps"
-      - "./fay-jquery:/app/fay-jquery"
-      - "./fay-moment:/app/fay-moment"
-      - "./fay-react:/app/fay-react"
+      - "./shared:/app/shared:ro"
+      - "./client/bootstrap:/app/client/bootstrap:ro"
+      - "./client/bootstrap-3.2.0-dist:/app/client/bootstrap-dist:ro"
+      - "./client/files:/app/client/files:ro"
+      - "./client/generated-api:/app/client/generated-api:ro"
+      - "./client/images:/app/client/images:ro"
+      - "./client/scss:/app/client/scss:ro"
+      - "./client/shared:/app/client/shared:ro"
+      - "./client/src:/app/client/src:ro"
+      - "./client/gulpfile.js:/app/client/gulpfile.js:ro"
+      - "./client/package-lock.json:/app/client/package-lock.json:ro"
+      - "./client/package.json:/app/client/package.json:ro"
+      - "./fay-dom:/app/fay-dom:ro"
+      - "./fay-googlemaps:/app/fay-googlemaps:ro"
+      - "./fay-jquery:/app/fay-jquery:ro"
+      - "./fay-moment:/app/fay-moment:ro"
+      - "./fay-react:/app/fay-react:ro"
+      # - "client_build:/app/client/build"
+    # command: bash -c 'gulp webpack && gulp watch'
+    command: bash -c "gulp copy-resources compile-sass webpack"
+    network_mode: "host"

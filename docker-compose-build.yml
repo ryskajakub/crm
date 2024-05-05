@@ -1,0 +1,7 @@
+version: '3'
+
+services:
+
+  client: 
+    volumes:
+      - "./client/build:/app/client/build"

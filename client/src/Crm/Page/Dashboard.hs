@@ -28,7 +28,7 @@ dashboard _ companies = (element, constructMap) where
   constructMap = do
     let 
       czCenter = mkLatLng 49.7437400818 15.3386173248
-      mapOptions = mkMapOptions 8 czCenter
+      mapOptions = mkMapOptions 8 czCenter (pack "b58810a96a89ef00")
       companiesWithCoords = mapMaybe (\(a,b,mbYmd,coords) -> (\x -> (a,b,mbYmd,x)) `onJust` coords) companies
     mapContainer <- getElementById $ pack "dashboard-map"
     googleMap <- mkMap mapContainer mapOptions
